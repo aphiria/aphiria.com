@@ -1,0 +1,6 @@
+<phpunit
+    bootstrap="vendor/autoload.php"
+    colors="true">
+    <testsuite name="Aphiria.com">
+    </testsuite>
+</phpunit>
