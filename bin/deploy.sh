@@ -28,7 +28,5 @@ then
 fi
 
 target_dir=/var/www/html/releases/$BUILD_ID
-echo "Creating target directory on host"
-rsync -a --rsync-path="mkdir -p $target_dir"
 echo "rsync'ing to host"
-rsync -r --delete-after --quiet "$SOURCE_DIR" $SSH_USER@$SSH_HOST:$target_dir
+rsync -aq --delete-after --rsync-path="mkdir -p $target_dir && rsync" "$SOURCE_DIR" $SSH_USER@$SSH_HOST:$target_dir
