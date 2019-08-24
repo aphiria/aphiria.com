@@ -16,6 +16,11 @@ install:
 git:
   depth: false
 
+before_script:
+  - composer self-update
+  - composer install
+  - composer dump-autoload -o
+
 script:
   - vendor/bin/phpunit --verbose
 
