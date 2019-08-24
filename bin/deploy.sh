@@ -27,6 +27,6 @@ then
     exit 1
 fi
 
-target_dir=/var/www/html/releases/$BUILD_ID
+target_dir=/var/www/html/releases/$BUILD_ID/
 echo "rsync'ing to host"
 rsync -aq --delete-after --rsync-path="mkdir -p $target_dir && rsync" "$SOURCE_DIR" $SSH_USER@$SSH_HOST:$target_dir

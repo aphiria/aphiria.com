@@ -24,9 +24,10 @@ before_script:
 script:
   - vendor/bin/phpunit --verbose
 
+# Purposely leaving trailing slash on the source directory so that the contents get copied
 deploy:
   - provider: script
-    script: bash bin/deploy.sh $TRAVIS_BUILD_DIR $TRAVIS_BUILD_ID $SSH_USER $SSH_HOST
+    script: bash bin/deploy.sh $TRAVIS_BUILD_DIR/ $TRAVIS_BUILD_ID $SSH_USER $SSH_HOST
     on:
       branch: master
     skip_cleanup: true
