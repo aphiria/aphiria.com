@@ -27,6 +27,13 @@ then
     exit 1
 fi
 
-target_dir=/var/www/html/releases/$BUILD_ID/
+html_dir=/var/www/html
+target_dir=$html_dir/releases/$BUILD_ID/
 echo "rsync'ing to host"
 rsync -aq --delete-after --rsync-path="mkdir -p $target_dir && rsync" "$SOURCE_DIR" $SSH_USER@$SSH_HOST:$target_dir
+
+echo "Creating symlinks and swapping"
+ssh $SSH_USER@$SSH_HOST <<EOF
+ln -snf $(readlink $html_dir/current) $html_dir/previous
+ln -snf $target_dir $html_dir/current
+EOF
