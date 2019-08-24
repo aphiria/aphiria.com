@@ -27,4 +27,5 @@ then
     exit 1
 fi
 
+echo "rsync'ing to host"
 rsync -r --delete-after --quiet "$SOURCE_DIR" $SSH_USER@$SSH_HOST:/var/www/html/releases/$BUILD_ID

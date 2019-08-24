@@ -1,17 +1,17 @@
 language: php
 
 php:
-    - 7.4snapshot
+  - 7.4snapshot
 
 # Deploy the key to tmp so that it doesn't get deployed by accident
 before_install:
-  - openssl aes-256-cbc -K $encrypted_7a7d370247be_key -iv $encrypted_7a7d370247be_iv -in deploy_rsa.enc -out /tmp/deploy_rsa -d
+  - openssl aes-256-cbc -K $encrypted_7a7d370247be_key -iv $encrypted_7a7d370247be_iv -in ./bin/deploy_rsa.enc -out /tmp/deploy_rsa -d
   - eval "$(ssh-agent -s)"
   - chmod 600 /tmp/deploy_rsa
   - ssh-add /tmp/deploy_rsa
 
 install:
-    - echo '|1|n3TAfstvbCIPFgixTSwJlNYBR00=|Rbza3EHH26use64MmWiXi1oKfoU= ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC2sXlPCPRtUQ1/zjVFtwi5DAYFZqb1uCEXeRZRMrk4rcn2fp01w7vX9YSHaB+0Uvt9Mf9inygsOEFvo8Zf965tQ9ME3oEm1b8jg0SmU1NGnwAVkBr+2yoCTPbecE2gCFK2gi+dw8Fu4+pVIxM0/AbSPmvQLNJ4Fbk0JulvJ9VwQnGJ4rZeMOlNAVYA4qs7dWNmNCpAGcDmCfiNRHFQKghFQXYOvk2DGN/3BhCCr1tjA9lNhalMI+bB4Wx3WSmaxww8BFVV8mSHVKaXcHdjEFbBt5JK0YMIAf/4JKJHD2V5ue8lpVZa1p0N+4yp9NCFudcYB42ww0wAONbulM0SDKgT' >> $HOME/.ssh/known_hosts
+  - echo '|1|n3TAfstvbCIPFgixTSwJlNYBR00=|Rbza3EHH26use64MmWiXi1oKfoU= ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC2sXlPCPRtUQ1/zjVFtwi5DAYFZqb1uCEXeRZRMrk4rcn2fp01w7vX9YSHaB+0Uvt9Mf9inygsOEFvo8Zf965tQ9ME3oEm1b8jg0SmU1NGnwAVkBr+2yoCTPbecE2gCFK2gi+dw8Fu4+pVIxM0/AbSPmvQLNJ4Fbk0JulvJ9VwQnGJ4rZeMOlNAVYA4qs7dWNmNCpAGcDmCfiNRHFQKghFQXYOvk2DGN/3BhCCr1tjA9lNhalMI+bB4Wx3WSmaxww8BFVV8mSHVKaXcHdjEFbBt5JK0YMIAf/4JKJHD2V5ue8lpVZa1p0N+4yp9NCFudcYB42ww0wAONbulM0SDKgT' >> $HOME/.ssh/known_hosts
 
 git:
   depth: false
