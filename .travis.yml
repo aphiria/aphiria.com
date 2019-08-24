@@ -16,6 +16,9 @@ install:
 git:
   depth: false
 
+script:
+  - vendor/bin/phpunit --verbose
+
 deploy:
   - provider: script
     script: bash bin/deploy.sh $TRAVIS_BUILD_DIR $TRAVIS_BUILD_ID $SSH_USER $SSH_HOST
