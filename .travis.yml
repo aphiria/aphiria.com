@@ -33,7 +33,9 @@ deploy:
 
 notifications:
   email:
-    - dave@aphiria.com
+    recipients:
+      - dave@aphiria.com
+    on_success: always
 
 sudo: false
 
