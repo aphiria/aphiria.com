@@ -19,12 +19,15 @@
                 min-height: 330px;
             }
 
+            body {
+                padding: 10px;
+            }
+
             h1, h2, h3, h4, h5, h6 {
                 font-weight: 200;
             }
 
-            h1 {
-                font-size: 3em;
+            header {
                 border-bottom: 1px solid #ddd;
             }
 
@@ -39,7 +42,7 @@
             }
 
             a:hover {
-                color: #369;
+                color: #333;
             }
 
             span#github-links {
@@ -48,6 +51,10 @@
 
             span.divider {
                 color: #555;
+            }
+
+            h2#coming-soon {
+                color: #aaa;
             }
 
             footer {
@@ -59,17 +66,22 @@
         </style>
     </head>
     <body>
+        <header>
+            <img src="images/aphiria-logo.png" alt="Aphiria" title="Aphiria">
+        </header>
         <main>
-            <h1>Aphiria - Coming Soon</h1>
             <h2>A simple, extensible REST API framework</h2>
             <span id="github-links">
-                <a id="source" href="https://github.com/aphiria/aphiria" target="_blank" title="Source code on GitHub">Source</a>
-                <span class="divider">|</span>
                 <a href="https://github.com/aphiria/docs" target="_blank" title="Documentation on GitHub">Docs</a>
+                <span class="divider">&bull;</span>
+                <a id="source" href="https://github.com/aphiria/aphiria" target="_blank" title="Source code on GitHub">Code</a>
             </span>
+            <h2 id="coming-soon">Coming soon</h2>
         </main>
         <footer>
-            A spiritual successor to <a href="https://www.opulencephp.com" target="_blank" title="Opulence">Opulence</a>, by David Young
+            A spiritual successor to <a href="https://www.opulencephp.com" target="_blank" title="Opulence">Opulence&reg;</a>
+            <br>
+            Written by <a href="https://github.com/davidbyoung" target="_blank" title="David Young's GitHub">David Young</a>
         </footer>
     </body>
 </html>
