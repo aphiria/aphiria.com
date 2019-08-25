@@ -4,7 +4,6 @@
         <meta name="viewport" content="initial-scale=1" />
         <title>Aphiria - A simple, extensible REST API framework</title>
         <link href="//fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,700italic,300,400,700" rel="stylesheet">
-        <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css" rel="stylesheet">
         <style>
             * {
                 box-sizing: border-box;
@@ -15,18 +14,62 @@
                 font-size: 14px;
                 line-height: 1.7;
                 color: #111;
-                background-color: #eee;
                 text-align: center;
+                font-weight: 200;
+                min-height: 330px;
+            }
+
+            h1, h2, h3, h4, h5, h6 {
+                font-weight: 200;
+            }
+
+            h1 {
+                font-size: 3em;
+                border-bottom: 1px solid #ddd;
+            }
+
+            h2 {
+                font-size: 1.6em;
             }
 
             a, a:link, a:active, a:visited {
                 color: #69c;
                 text-decoration: none;
+                transition: all .3s ease;
+            }
+
+            a:hover {
+                color: #369;
+            }
+
+            span#github-links {
+                font-size: 2em;
+            }
+
+            span.divider {
+                color: #555;
+            }
+
+            footer {
+                position: fixed;
+                width: 100%;
+                bottom: 0;
+                padding-bottom: 30px;
             }
         </style>
     </head>
     <body>
-        <h1>Coming Soon</h1>
-        <a href="https://github.com/aphiria" target="_blank" style="font-size: 36px;"><i class="fa fa-github"></i> Source</a>
+        <main>
+            <h1>Aphiria - Coming Soon</h1>
+            <h2>A simple, extensible REST API framework</h2>
+            <span id="github-links">
+                <a id="source" href="https://github.com/aphiria/aphiria" target="_blank" title="Source code on GitHub">Source</a>
+                <span class="divider">|</span>
+                <a href="https://github.com/aphiria/docs" target="_blank" title="Documentation on GitHub">Docs</a>
+            </span>
+        </main>
+        <footer>
+            A spiritual successor to <a href="https://www.opulencephp.com" target="_blank" title="Opulence">Opulence</a>, by David Young
+        </footer>
     </body>
 </html>
