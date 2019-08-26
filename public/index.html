@@ -14,66 +14,11 @@
         <meta name="theme-color" content="#ffffff">
         <!-- Fonts -->
         <link href="//fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,700italic,300,400,700" rel="stylesheet">
-        <style>
-            * {
-                box-sizing: border-box;
-            }
-
-            html {
-                font-family: 'Open Sans', 'Segoe UI', arial, sans-serif;
-                font-size: 14px;
-                line-height: 1.7;
-                color: #111;
-                text-align: center;
-                font-weight: 200;
-                min-height: 330px;
-            }
-
-            body {
-                padding: 10px;
-            }
-
-            h1, h2, h3, h4, h5, h6 {
-                font-weight: 200;
-            }
-
-            header {
-                border-bottom: 1px solid #ddd;
-            }
-
-            h2 {
-                font-size: 1.6em;
-            }
-
-            a, a:link, a:active, a:visited {
-                color: #69c;
-                text-decoration: none;
-                transition: all .3s ease;
-            }
-
-            a:hover {
-                color: #333;
-            }
-
-            span#github-links {
-                font-size: 2em;
-            }
-
-            span.divider {
-                color: #555;
-            }
-
-            h2#coming-soon {
-                color: #aaa;
-            }
-
-            footer {
-                position: fixed;
-                width: 100%;
-                bottom: 0;
-                padding-bottom: 30px;
-            }
-        </style>
+        <link href="https://fonts.googleapis.com/css?family=Source+Code+Pro&display=swap" rel="stylesheet">
+        <!-- Stylesheets -->
+        <link href="css/style.css" rel="stylesheet">
+        <link href="css/prism.css" rel="stylesheet">
+        <!-- Scripts -->
     </head>
     <body>
         <header>
@@ -81,6 +26,10 @@
         </header>
         <main>
             <h2>A simple, extensible REST API framework</h2>
+            <pre class="language-php"><code class="language-php">// Automatic content negotiation of requests and responses with POPOs
+$users = new UserService();
+$routes-&gt;map('POST', 'users/:id')
+    -&gt;toClosure(fn (User $user) =&gt; $this-&gt;ok($users->create($user)));</code></pre>
             <span id="github-links">
                 <a href="https://github.com/aphiria/docs" target="_blank" title="Documentation on GitHub">Docs</a>
                 <span class="divider">&bull;</span>
@@ -89,9 +38,10 @@
             <h2 id="coming-soon">Coming soon</h2>
         </main>
         <footer>
-            A spiritual successor to <a href="https://www.opulencephp.com" target="_blank" title="Opulence">Opulence&reg;</a>
+            A spiritual successor to <a href="https://www.opulencephp.com" target="_blank" title="Opulence">Opulence</a>&reg;
             <br>
             Written by <a href="https://github.com/davidbyoung" target="_blank" title="David Young's GitHub">David Young</a>
         </footer>
+        <script src="js/prism.js"></script>
     </body>
 </html>
