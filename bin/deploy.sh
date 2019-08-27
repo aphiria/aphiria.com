@@ -1,7 +1,7 @@
 set -e
 
 SOURCE_DIR="$1"
-BUILD_NUMBER="$2"
+BUILD_ID="$2"
 SSH_USER="$3"
 SSH_HOST="$4"
 
@@ -11,9 +11,9 @@ then
     exit 1
 fi
 
-if [ -z "$BUILD_NUMBER" ]
+if [ -z "$BUILD_ID" ]
 then
-    echo "No build number specified"
+    echo "No build ID specified"
     exit 1
 fi
 
@@ -30,7 +30,7 @@ then
 fi
 
 html_dir=/var/www/html
-target_dir=$html_dir/releases/$BUILD_NUMBER
+target_dir=$html_dir/releases/$BUILD_ID
 echo "rsync'ing to host"
 # Purposely leaving trailing slash on the source directory so that the contents get copied
 rsync -aq --delete-after --rsync-path="mkdir -p $target_dir/ && rsync" "$SOURCE_DIR/" $SSH_USER@$SSH_HOST:$target_dir/
