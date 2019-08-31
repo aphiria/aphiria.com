@@ -17,7 +17,9 @@ use Aphiria\Configuration\IModuleBuilder;
 use Aphiria\Console\Commands\CommandRegistry;
 use Aphiria\DependencyInjection\IContainer;
 use App\Databases\Bootstrappers\SqlBootstrapper;
-use App\Documentation\Bootstrappers\SearchBootstrapper;
+use App\Documentation\Bootstrappers\DocumentationBootstrapper;
+use App\Documentation\Console\Commands\CompileDocsCommand;
+use App\Documentation\Console\Commands\CompileDocsCommandHandler;
 
 /**
  * Defines the documentation module builder
@@ -42,11 +44,14 @@ final class DocumentationModuleBuilder implements IModuleBuilder
     {
         $appBuilder->withBootstrappers(fn () => [
             new SqlBootstrapper(),
-            new SearchBootstrapper()
+            new DocumentationBootstrapper()
         ]);
 
         $appBuilder->withConsoleCommands(function (CommandRegistry $commands) {
-            // TODO
+            $commands->registerCommand(
+                new CompileDocsCommand(),
+                fn () => $this->container->resolve(CompileDocsCommandHandler::class)
+            );
         });
     }
 }

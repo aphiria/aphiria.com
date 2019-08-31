@@ -13,14 +13,26 @@
         }
     ],
     "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "App\\": "src"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "App\\Tests\\": "tests"
+        }
+    },
     "require": {
         "aphiria/api": "1.0.*@dev",
         "aphiria/configuration": "1.0.*@dev",
         "aphiria/console": "1.0.*@dev",
         "aphiria/exceptions": "1.0.*@dev",
+        "erusev/parsedown": "1.7.2",
         "ext-mbstring": "*",
         "ext-pdo": "*",
         "opulence/databases": "1.1.*",
+        "paquettg/php-html-parser": "2.1.*",
         "php": "^7.4",
         "symfony/dotenv": "~4.3"
     },
