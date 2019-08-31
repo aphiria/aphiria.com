@@ -1,6 +1,8 @@
+.env
+!.env.dist
 /.idea/
 /.php_cs.cache
-.phpunit.result.cache
+/.phpunit.result.cache
 /composer.lock
 /composer.phar
 /nbproject/
