@@ -14,12 +14,13 @@ namespace App\Documentation\Api\Controllers;
 
 use Aphiria\Api\Controllers\Controller;
 use Aphiria\RouteAnnotations\Annotations\Get;
+use Aphiria\RouteAnnotations\Annotations\RouteGroup;
 use App\Documentation\DocumentationService;
 use App\Documentation\Searching\SearchResult;
-use App\Documentation\Searching\SearchIndex;
 
 /**
  * Defines the controller that handles searches
+ * @RouteGroup("api/docs")
  */
 final class SearchController extends Controller
 {
@@ -39,7 +40,7 @@ final class SearchController extends Controller
      *
      * @param string $query The search query
      * @return SearchResult[] The list of search results
-     * @Get("docs/search")
+     * @Get("search")
      */
     public function searchDocs(string $query): array
     {
