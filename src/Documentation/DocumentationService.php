@@ -97,17 +97,19 @@ final class DocumentationService
 
         foreach ($markdownFilesByBranch as $branch => $markdownFiles) {
             $htmlFiles[$branch] = [];
+            $branchDocDir = "$this->htmlDocPath/$branch";
+
+            if ($this->files->exists($branchDocDir)) {
+                $this->files->deleteDirectory($branchDocDir);
+            }
+
+            $this->files->makeDirectory($branchDocDir);
 
             foreach ($markdownFiles as $markdownFile) {
+                $htmlDocFilename = "$branchDocDir/{$this->files->getFileName($markdownFile)}.html";
                 $html = $this->markdownParser->text($this->files->read($markdownFile));
-                $compiledDocFilename = sprintf(
-                    '%s/%s/%s.html',
-                    $this->htmlDocPath,
-                    $branch,
-                    $this->files->getFileName($markdownFile)
-                );
-                $this->files->write($compiledDocFilename, $html);
-                $htmlFiles[$branch][] = $compiledDocFilename;
+                $this->files->write($htmlDocFilename, $html);
+                $htmlFiles[$branch][] = $htmlDocFilename;
             }
         }
 
