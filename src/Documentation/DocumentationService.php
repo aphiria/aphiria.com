@@ -15,7 +15,7 @@ namespace App\Documentation;
 use Aphiria\IO\FileSystem;
 use Aphiria\IO\FileSystemException;
 use App\Documentation\Searching\IndexingFailedException;
-use App\Documentation\Searching\SearchIndex;
+use App\Documentation\Searching\ISearchIndex;
 use App\Documentation\Searching\SearchResult;
 use Parsedown;
 
@@ -30,8 +30,8 @@ final class DocumentationService
     private DocumentationDownloader $downloader;
     /** @var Parsedown The Markdown parser */
     private Parsedown $markdownParser;
-    /** @var SearchIndex The doc search index */
-    private SearchIndex $searchIndex;
+    /** @var ISearchIndex The doc search index */
+    private ISearchIndex $searchIndex;
     /** @var string The path to store HTML docs in */
     private string $htmlDocPath;
     /** @var FileSystem The file helper */
@@ -41,14 +41,14 @@ final class DocumentationService
      * @param DocumentationMetadata $metadata The doc metadata
      * @param DocumentationDownloader $downloader The doc downloader
      * @param Parsedown $markdownParser The Markdown parser
-     * @param SearchIndex $searchIndex The doc search index
+     * @param ISearchIndex $searchIndex The doc search index
      * @param string $htmlDocPath The path to store HTML docs in
      */
     public function __construct(
         DocumentationMetadata $metadata,
         DocumentationDownloader $downloader,
         Parsedown $markdownParser,
-        SearchIndex $searchIndex,
+        ISearchIndex $searchIndex,
         string $htmlDocPath
     ) {
         $this->metadata = $metadata;
@@ -60,12 +60,12 @@ final class DocumentationService
     }
 
     /**
-     * Creates our documentation, which includes cloning it, compiling the Markdown, and indexing it
+     * Builds our documentation, which includes cloning it, compiling the Markdown, and indexing it
      *
      * @throws FileSystemException Thrown if there was an error reading or writing to the file system
      * @throws IndexingFailedException Thrown if there was an error creating an index
      */
-    public function createDocs(): void
+    public function buildDocs(): void
     {
         $markdownFilesByBranch = $this->downloader->downloadDocs();
         $htmlFilesByBranch = $this->createHtmlDocs($markdownFilesByBranch);
@@ -79,7 +79,7 @@ final class DocumentationService
      * @param string $query The raw search query
      * @return SearchResult[] The list of search results
      */
-    public function search(string $query): array
+    public function searchDocs(string $query): array
     {
         return $this->searchIndex->query($query);
     }

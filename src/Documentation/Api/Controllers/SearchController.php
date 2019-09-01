@@ -19,7 +19,7 @@ use App\Documentation\DocumentationService;
 use App\Documentation\Searching\SearchResult;
 
 /**
- * Defines the controller that handles searches
+ * Defines the controller that handles doc searches
  * @RouteGroup("docs")
  */
 final class SearchController extends Controller
@@ -44,6 +44,6 @@ final class SearchController extends Controller
      */
     public function searchDocs(string $query): array
     {
-        return $this->docs->search($query);
+        return $this->docs->searchDocs($query);
     }
 }

@@ -15,12 +15,12 @@ namespace App\Documentation\Console\Commands;
 use Aphiria\Console\Commands\Command;
 
 /**
- * Defines the command for compiling docs
+ * Defines the command for creating docs
  */
-final class CompileDocsCommand extends Command
+final class BuildDocsCommand extends Command
 {
     public function __construct()
     {
-        parent::__construct('compile:docs', [], [], 'Compiles our documentation into searchable HTML');
+        parent::__construct('docs:build', [], [], 'Builds our documentation into searchable HTML');
     }
 }

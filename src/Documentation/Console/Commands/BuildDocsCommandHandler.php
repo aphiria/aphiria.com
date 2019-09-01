@@ -15,12 +15,14 @@ namespace App\Documentation\Console\Commands;
 use Aphiria\Console\Commands\ICommandHandler;
 use Aphiria\Console\Input\Input;
 use Aphiria\Console\Output\IOutput;
+use Aphiria\IO\FileSystemException;
 use App\Documentation\DocumentationService;
+use App\Documentation\Searching\IndexingFailedException;
 
 /**
- * Defines the command handler for doc compilation
+ * Defines the command handler for doc building
  */
-final class CompileDocsCommandHandler implements ICommandHandler
+final class BuildDocsCommandHandler implements ICommandHandler
 {
     /** @var DocumentationService The doc service */
     private DocumentationService $docs;
@@ -38,7 +40,12 @@ final class CompileDocsCommandHandler implements ICommandHandler
      */
     public function handle(Input $input, IOutput $output)
     {
-        $this->docs->createDocs();
-        $output->writeln('<success>Documentation compiled</success>');
+        try {
+            $this->docs->buildDocs();
+            $output->writeln('<success>Documentation built</success>');
+        } catch (FileSystemException | IndexingFailedException $ex) {
+            $output->writeln('<fatal>Failed to build docs</fatal>');
+            $output->writeln("<info>{$ex->getMessage()}</info>");
+        }
     }
 }

@@ -42,15 +42,9 @@ sudo chown -R 1000:48 $target_dir/public-web/raw-docs
 sudo chown -R 1000:48 $target_dir/tmp
 sudo chmod -R 755 $target_dir/public-web/raw-docs
 sudo chmod -R 755 $target_dir/tmp
-php $target_dir/aphiria compile:docs
+php $target_dir/aphiria docs:build
 sudo chown -R 48:48 $target_dir/public-web/raw-docs
 sudo chown -R 48:48 $target_dir/tmp
-ln -snf $(readlink $html_dir/current) $html_dir/previous
-ln -snf $target_dir $html_dir/current
-EOF
-
-echo "Creating symlinks and swapping"
-ssh $SSH_USER@$SSH_HOST /bin/bash <<EOF
 ln -snf $(readlink $html_dir/current) $html_dir/previous
 ln -snf $target_dir $html_dir/current
 EOF

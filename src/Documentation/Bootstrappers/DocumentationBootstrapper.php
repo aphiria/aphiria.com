@@ -17,7 +17,7 @@ use Aphiria\DependencyInjection\IContainer;
 use App\Documentation\DocumentationDownloader;
 use App\Documentation\DocumentationMetadata;
 use App\Documentation\DocumentationService;
-use App\Documentation\Searching\SearchIndex;
+use App\Documentation\Searching\PostgreSqlSearchIndex;
 use Opulence\Databases\IConnection;
 use Parsedown;
 
@@ -34,7 +34,7 @@ final class DocumentationBootstrapper extends Bootstrapper
         $metadata = new DocumentationMetadata([
             'master' => $this->getMasterBranchDocConfig()
         ]);
-        $searchIndex = new SearchIndex(
+        $searchIndex = new PostgreSqlSearchIndex(
             $_ENV['DOC_TOKENS_TABLE_NAME'],
             $container->resolve(IConnection::class),
             __DIR__ . '/../../../.env'

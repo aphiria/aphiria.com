@@ -18,8 +18,8 @@ use Aphiria\Console\Commands\CommandRegistry;
 use Aphiria\DependencyInjection\IContainer;
 use App\Databases\Bootstrappers\SqlBootstrapper;
 use App\Documentation\Bootstrappers\DocumentationBootstrapper;
-use App\Documentation\Console\Commands\CompileDocsCommand;
-use App\Documentation\Console\Commands\CompileDocsCommandHandler;
+use App\Documentation\Console\Commands\BuildDocsCommand;
+use App\Documentation\Console\Commands\BuildDocsCommandHandler;
 
 /**
  * Defines the documentation module builder
@@ -49,8 +49,8 @@ final class DocumentationModuleBuilder implements IModuleBuilder
 
         $appBuilder->withConsoleCommands(function (CommandRegistry $commands) {
             $commands->registerCommand(
-                new CompileDocsCommand(),
-                fn () => $this->container->resolve(CompileDocsCommandHandler::class)
+                new BuildDocsCommand(),
+                fn () => $this->container->resolve(BuildDocsCommandHandler::class)
             );
         });
     }

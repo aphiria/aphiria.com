@@ -21,9 +21,9 @@ use PHPHtmlParser\Dom;
 use PHPHtmlParser\Dom\HtmlNode;
 
 /**
- * Defines the documentation search index
+ * Defines the documentation search index backed by PostgreSQL
  */
-final class SearchIndex
+final class PostgreSqlSearchIndex implements ISearchIndex
 {
     /** @var int The maximum number of search results we'll return */
     private const MAX_NUM_SEARCH_RESULTS = 5;
@@ -75,6 +75,7 @@ final class SearchIndex
                 $dom = (new Dom)->loadFromFile($htmlPath);
                 $h1 = $h2 = $h3 = $h4 = $h5 = null;
 
+                // Scan the documentation and index the elements as well as their nearest previous <h*> siblings
                 /** @var HtmlNode $currNode */
                 foreach ($dom->root->getChildren() as $currNode) {
                     // Check if we need to reset the nearest headers
@@ -217,7 +218,10 @@ EOF);
      */
     private function createAndSeedTable(array $indexEntries): void
     {
-        // Update the current token table name (limited to 8 chars so we don't go over PostgreSQL name length limits)
+        /**
+         * Update the current token table name (limited to 8 chars so we don't go over PostgreSQL name length limits).
+         * This is done so that reindexing the website only impacts this instance of the site.
+         */
         $this->tokenTableName = 'tokens_' . substr(hash('sha256', \random_bytes(32)), 0, 8);
         $this->connection->beginTransaction();
         $this->createTable();
