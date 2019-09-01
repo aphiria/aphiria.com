@@ -70,11 +70,7 @@ final class DocumentationService
         $markdownFilesByBranch = $this->downloader->downloadDocs();
         $htmlFilesByBranch = $this->createHtmlDocs($markdownFilesByBranch);
         $htmlFilesToIndex = $htmlFilesByBranch[$this->metadata->getDefaultBranch()];
-
-        foreach ($htmlFilesToIndex as $htmlFile) {
-            $filename = \pathinfo($htmlFile, \PATHINFO_FILENAME);
-            $this->searchIndex->buildSearchIndex($filename, $this->files->read($htmlFile));
-        }
+        $this->searchIndex->buildSearchIndex($htmlFilesToIndex);
     }
 
     /**

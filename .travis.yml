@@ -22,7 +22,6 @@ before_script:
   - composer dump-autoload -o
   - chmod -R 755 resources
   - chmod -R 755 tmp
-  - php apex compile:docs
 
 script:
   - vendor/bin/phpunit --verbose

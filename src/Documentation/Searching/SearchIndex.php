@@ -12,6 +12,8 @@ declare(strict_types=1);
 
 namespace App\Documentation\Searching;
 
+use Aphiria\IO\FileSystem;
+use Aphiria\IO\FileSystemException;
 use Exception;
 use Opulence\Databases\IConnection;
 use PDO;
@@ -36,65 +38,78 @@ final class SearchIndex
         'li' => 'D',
         'blockquote' => 'D'
     ];
+    /** @var string The name of the table to point to (MUST BE SECURE BECAUSE IT'S USED DIRECTLY IN QUERIES) */
+    private string $tokenTableName;
     /** @var IConnection The DB connection to use */
     private IConnection $connection;
+    /** @var string The path to the .env file to update whenever we build the search index */
+    private string $envPath;
+    /** @var FileSystem The file helpers */
+    private FileSystem $files;
 
     /**
+     * @param string $tokenTableName The name of the table to point to (MUST BE SECURE BECAUSE IT'S USED DIRECTLY IN QUERIES)
      * @param IConnection $connection The DB connection to use
+     * @param string $envPath The path to the .env file to update whenever we build the search index
      */
-    public function __construct(IConnection $connection)
+    public function __construct(string $tokenTableName, IConnection $connection, string $envPath)
     {
+        $this->tokenTableName = $tokenTableName;
         $this->connection = $connection;
+        $this->envPath = $envPath;
+        $this->files = new FileSystem();
     }
 
     /**
-     * Builds up a search index for a document
+     * Builds up a search index for a list of document paths
      *
-     * @param string $filename The name of the file that is being indexed
-     * @param string $text The text to index
-     * @throws IndexingFailedException Thrown when there was a failure to index the document
+     * @param string[] $htmlPaths The paths to the HTML docs
+     * @throws IndexingFailedException Thrown when there was a failure to index the documents
      */
-    public function buildSearchIndex(string $filename, string $text): void
+    public function buildSearchIndex(array $htmlPaths): void
     {
         try {
             $indexEntries = [];
-            $dom = (new Dom)->load($text);
-            $h1 = $h2 = $h3 = $h4 = $h5 = null;
 
-            /** @var HtmlNode $currNode */
-            foreach ($dom->root->getChildren() as $currNode) {
-                // Check if we need to reset the nearest headers
-                switch ($currNode->getTag()->name()) {
-                    case 'h1':
-                        $h1 = $currNode;
-                        $h2 = $h3 = $h4 = $h5 = null;
-                        break;
-                    case 'h2':
-                        $h2 = $currNode;
-                        $h3 = $h4 = $h5 = null;
-                        break;
-                    case 'h3':
-                        $h3 = $currNode;
-                        $h4 = $h5 = null;
-                        break;
-                    case 'h4':
-                        $h4 = $currNode;
-                        $h5 = null;
-                        break;
-                    case 'h5':
-                        $h5 = $currNode;
-                        break;
-                }
+            foreach ($htmlPaths as $htmlPath) {
+                $dom = (new Dom)->loadFromFile($htmlPath);
+                $h1 = $h2 = $h3 = $h4 = $h5 = null;
 
-                // Only index specific elements
-                if (isset(self::$htmlElementsToWeights[$currNode->getTag()->name()])) {
-                    $indexEntries[] = self::createIndexEntry($filename, $currNode, $h1, $h2, $h3, $h4, $h5);
+                /** @var HtmlNode $currNode */
+                foreach ($dom->root->getChildren() as $currNode) {
+                    // Check if we need to reset the nearest headers
+                    switch ($currNode->getTag()->name()) {
+                        case 'h1':
+                            $h1 = $currNode;
+                            $h2 = $h3 = $h4 = $h5 = null;
+                            break;
+                        case 'h2':
+                            $h2 = $currNode;
+                            $h3 = $h4 = $h5 = null;
+                            break;
+                        case 'h3':
+                            $h3 = $currNode;
+                            $h4 = $h5 = null;
+                            break;
+                        case 'h4':
+                            $h4 = $currNode;
+                            $h5 = null;
+                            break;
+                        case 'h5':
+                            $h5 = $currNode;
+                            break;
+                    }
+
+                    // Only index specific elements
+                    if (isset(self::$htmlElementsToWeights[$currNode->getTag()->name()])) {
+                        $filename = \pathinfo($htmlPath, \PATHINFO_FILENAME);
+                        $indexEntries[] = self::createIndexEntry($filename, $currNode, $h1, $h2, $h3, $h4, $h5);
+                    }
                 }
             }
 
-            $this->saveIndexEntries($indexEntries);
+            $this->createAndSeedTable($indexEntries);
         } catch (Exception $ex) {
-            error_log($ex->getMessage());
             throw new IndexingFailedException('Failed to index document', 0, $ex);
         }
     }
@@ -110,7 +125,7 @@ final class SearchIndex
         $statement = $this->connection->prepare(<<<EOF
 SELECT link, html_element_type, rank, ts_headline('english', h1_inner_text, query, 'StartSel = <em>, StopSel = </em>') as h1_highlights, ts_headline('english', h2_inner_text, query, 'StartSel = <em>, StopSel = </em>') as h2_highlights, ts_headline('english', h3_inner_text, query, 'StartSel = <em>, StopSel = </em>') as h3_highlights, ts_headline('english', h4_inner_text, query, 'StartSel = <em>, StopSel = </em>') as h4_highlights, ts_headline('english', h5_inner_text, query, 'StartSel = <em>, StopSel = </em>') as h5_highlights, ts_headline('english', inner_text, query, 'StartSel = <em>, StopSel = </em>') as inner_text_highlights
 FROM (SELECT link, html_element_type, h1_inner_text, h2_inner_text, h3_inner_text, h4_inner_text, h5_inner_text, inner_text, ts_rank_cd(tokens, query) AS rank, query
-    FROM tokens, plainto_tsquery('english', :query) AS query
+    FROM {$this->tokenTableName}, plainto_tsquery('english', :query) AS query
     WHERE tokens @@ query
     ORDER BY rank DESC
     LIMIT :maxResults) AS query_results;
@@ -195,46 +210,111 @@ EOF);
     }
 
     /**
-     * Saves index entries to the database
+     * Creates and seeds the doc table
      *
      * @param IndexEntry[] $indexEntries The index entries to save
+     * @throws FileSystemException Thrown if there was an error updating the .env file
      */
-    private function saveIndexEntries(array $indexEntries): void
+    private function createAndSeedTable(array $indexEntries): void
     {
+        // Update the current token table name (limited to 8 chars so we don't go over PostgreSQL name length limits)
+        $this->tokenTableName = 'tokens_' . substr(hash('sha256', \random_bytes(32)), 0, 8);
         $this->connection->beginTransaction();
-        // To speed up inserts, drop the index, and recreate it afterwards
-        $this->connection->prepare('DROP INDEX token_idx')->execute();
+        $this->createTable();
 
         foreach ($indexEntries as $indexEntry) {
-            $statement = $this->connection->prepare(<<<EOF
-INSERT INTO tokens (h1_inner_text, h2_inner_text, h3_inner_text, h4_inner_text, h5_inner_text, link, html_element_type, inner_text, html_element_weight) 
-VALUES (:h1InnerText, :h2InnerText, :h3InnerText, :h4InnerText, :h5InnerText, :link, :htmlElementType, :innerText, :htmlElementWeight)
-EOF
-);
-            $statement->bindValues([
-                'h1InnerText' => $indexEntry->h1InnerText,
-                'h2InnerText' => $indexEntry->h2InnerText,
-                'h3InnerText' => $indexEntry->h3InnerText,
-                'h4InnerText' => $indexEntry->h4InnerText,
-                'h5InnerText' => $indexEntry->h5InnerText,
-                'link' => $indexEntry->link,
-                'htmlElementType' => $indexEntry->htmlElementType,
-                'innerText' => $indexEntry->innerText,
-                'htmlElementWeight' => $indexEntry->htmlElementWeight
-            ]);
-            $statement->execute();
+            $this->insertIndexEntry($indexEntry);
         }
 
-        // Set up our weighted tokens
+        $this->updateTokens();
+        $this->createTableIndex();
+        $this->connection->commit();
+        $this->updateEnvFile();
+    }
+
+    /**
+     * Creates the table that will hold our docs
+     */
+    private function createTable(): void
+    {
         $statement = $this->connection->prepare(<<<EOF
-UPDATE tokens SET tokens = setweight(to_tsvector('english', COALESCE(inner_text, '')), html_element_weight::"char")
+CREATE TABLE {$this->tokenTableName} (
+    id serial primary key,
+    h1_inner_text TEXT,
+    h2_inner_text TEXT,
+    h3_inner_text TEXT,
+    h4_inner_text TEXT,
+    h5_inner_text TEXT,
+    link TEXT NOT NULL,
+    html_element_type TEXT NOT NULL,
+    inner_text TEXT NOT NULL,
+    html_element_weight CHAR NOT NULL,
+    tokens tsvector
+)
 EOF
 );
         $statement->execute();
+    }
 
-        // Recreate our index
-        $this->connection->prepare('CREATE INDEX token_idx ON tokens USING gin(tokens)')->execute();
+    /**
+     * Creates an index on the table for faster querying
+     */
+    private function createTableIndex(): void
+    {
+        $statement = $this->connection->prepare(<<<EOF
+CREATE INDEX {$this->tokenTableName}_token_idx ON {$this->tokenTableName} USING gin(tokens)
+EOF
+);
+        $statement->execute();
+    }
 
-        $this->connection->commit();
+    /**
+     * Inserts an index entry into the database
+     *
+     * @param IndexEntry $indexEntry The entry to insert
+     */
+    private function insertIndexEntry(IndexEntry $indexEntry): void
+    {
+        $statement = $this->connection->prepare(<<<EOF
+INSERT INTO {$this->tokenTableName} (h1_inner_text, h2_inner_text, h3_inner_text, h4_inner_text, h5_inner_text, link, html_element_type, inner_text, html_element_weight) 
+VALUES (:h1InnerText, :h2InnerText, :h3InnerText, :h4InnerText, :h5InnerText, :link, :htmlElementType, :innerText, :htmlElementWeight)
+EOF
+        );
+        $statement->bindValues([
+            'h1InnerText' => $indexEntry->h1InnerText,
+            'h2InnerText' => $indexEntry->h2InnerText,
+            'h3InnerText' => $indexEntry->h3InnerText,
+            'h4InnerText' => $indexEntry->h4InnerText,
+            'h5InnerText' => $indexEntry->h5InnerText,
+            'link' => $indexEntry->link,
+            'htmlElementType' => $indexEntry->htmlElementType,
+            'innerText' => $indexEntry->innerText,
+            'htmlElementWeight' => $indexEntry->htmlElementWeight
+        ]);
+        $statement->execute();
+    }
+
+    /**
+     * Updates the .env file to point to the new table
+     *
+     * @throws FileSystemException Thrown if there was an error reading or writing to the file system
+     */
+    private function updateEnvFile(): void
+    {
+        $currEnvContents = $this->files->read($this->envPath);
+        $newContents = \preg_replace('/DOC_TOKENS_TABLE_NAME=[^\r\n]+/', "DOC_TOKENS_TABLE_NAME={$this->tokenTableName}", $currEnvContents);
+        $this->files->write($this->envPath, $newContents);
+    }
+
+    /**
+     * Updates the tokens in all our rows
+     */
+    private function updateTokens(): void
+    {
+        $statement = $this->connection->prepare(<<<EOF
+UPDATE {$this->tokenTableName} SET tokens = setweight(to_tsvector('english', COALESCE(inner_text, '')), html_element_weight::"char")
+EOF
+        );
+        $statement->execute();
     }
 }

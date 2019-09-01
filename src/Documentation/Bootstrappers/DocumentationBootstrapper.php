@@ -34,7 +34,11 @@ final class DocumentationBootstrapper extends Bootstrapper
         $metadata = new DocumentationMetadata([
             'master' => $this->getMasterBranchDocConfig()
         ]);
-        $searchIndex = new SearchIndex($container->resolve(IConnection::class));
+        $searchIndex = new SearchIndex(
+            $_ENV['DOC_TOKENS_TABLE_NAME'],
+            $container->resolve(IConnection::class),
+            __DIR__ . '/../../../.env'
+        );
         $markdownParser = new Parsedown();
         $docs = new DocumentationService(
             $metadata,
