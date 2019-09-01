@@ -22,14 +22,14 @@ use Aphiria\Net\Http\StreamResponseWriter;
 use App\Config;
 use Symfony\Component\Dotenv\Dotenv;
 
-require_once __DIR__ . '/../../vendor/autoload.php';
+require_once __DIR__ . '/../vendor/autoload.php';
 
 /**
  * ----------------------------------------------------------
  * Load environment config files
  * ----------------------------------------------------------
  */
-(new Dotenv)->loadEnv(__DIR__ . '/../../.env');
+(new Dotenv)->loadEnv(__DIR__ . '/../.env');
 
 /**
  * ----------------------------------------------------------
@@ -41,7 +41,7 @@ $container->bindInstance([IContainer::class, Container::class], $container);
 $bootstrapperDispatcher = new BindingInspectorBootstrapperDispatcher(
     $container,
     $_ENV['APP_ENV'] === 'production'
-        ? new FileBootstrapperBindingCache(__DIR__ . '/../../tmp/framework/bootstrapperInspections.txt')
+        ? new FileBootstrapperBindingCache(__DIR__ . '/../tmp/framework/bootstrapperInspections.txt')
         : null
 );
 $container->bindInstance(IBootstrapperDispatcher::class, $bootstrapperDispatcher);

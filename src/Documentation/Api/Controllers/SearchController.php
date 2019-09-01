@@ -20,7 +20,7 @@ use App\Documentation\Searching\SearchResult;
 
 /**
  * Defines the controller that handles searches
- * @RouteGroup("api/docs")
+ * @RouteGroup("docs")
  */
 final class SearchController extends Controller
 {
