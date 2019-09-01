@@ -45,7 +45,7 @@ final class DocumentationBootstrapper extends Bootstrapper
             new DocumentationDownloader($metadata->getBranches(), __DIR__ . '/../../../tmp/docs'),
             $markdownParser,
             $searchIndex,
-            __DIR__ . '/../../../resources/docs'
+            __DIR__ . '/../../../public-web/raw-docs'
         );
         $container->bindInstance(DocumentationService::class, $docs);
     }
