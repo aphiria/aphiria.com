@@ -42,7 +42,7 @@ sudo chown -R 1000:48 $target_dir/resources
 sudo chown -R 1000:48 $target_dir/tmp
 sudo chmod -R 755 $target_dir/resources
 sudo chmod -R 755 $target_dir/tmp
-php aphiria compile:docs
+php $target_dir/aphiria compile:docs
 sudo chown -R 48:48 $target_dir/resources
 sudo chown -R 48:48 $target_dir/tmp
 ln -snf $(readlink $html_dir/current) $html_dir/previous
