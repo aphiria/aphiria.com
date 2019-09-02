@@ -63,16 +63,77 @@ body > header {
 body > header > nav {
   text-align: left;
 }
-body > header > nav ul li {
+body > header > nav > ul {
+  /* We want to be able to show the doc search next to the list */
+  display: inline-block;
+}
+body > header > nav > ul li {
   display: inline-block;
   font-size: 1.9em;
 }
-body > header > nav ul li:not(:last-child) {
+body > header > nav > ul li:not(:last-child) {
   padding-right: 30px;
 }
-body > header > nav ul li img.logo {
+body > header > nav > ul li img.logo {
   height: 60px;
   vertical-align: bottom;
+}
+body > header > nav span.doc-search {
+  display: inline-block;
+  position: relative;
+}
+body > header > nav span.doc-search img.search-icon {
+  height: 20px;
+  position: absolute;
+  left: 0;
+  /* Get this to line up with the text in the input */
+  top: 0.25em;
+  bottom: 0;
+}
+body > header > nav span.doc-search input {
+  width: 100%;
+  padding-left: 25px;
+}
+body > header > nav span.doc-search ul.search-results {
+  list-style: inside none;
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  border-width: 0 1px 1px 1px;
+  border-style: solid;
+  border-color: #ccc;
+  background: #fff;
+  z-index: 1;
+  padding: 0;
+}
+body > header > nav span.doc-search ul.search-results li {
+  font-size: 16px;
+  width: 100%;
+  padding: 0;
+}
+body > header > nav span.doc-search ul.search-results li a:hover {
+  background: #eef7ff;
+}
+body > header > nav span.doc-search ul.search-results li .search-result-context {
+  border-bottom: 1px solid #ccc;
+}
+body > header > nav span.doc-search ul.search-results li .search-result-context h1, body > header > nav span.doc-search ul.search-results li .search-result-context h2, body > header > nav span.doc-search ul.search-results li .search-result-context h3, body > header > nav span.doc-search ul.search-results li .search-result-context h4, body > header > nav span.doc-search ul.search-results li .search-result-context h5, body > header > nav span.doc-search ul.search-results li .search-result-context h6 {
+  font-size: 1em;
+  display: inline;
+}
+body > header > nav span.doc-search ul.search-results li a, body > header > nav span.doc-search ul.search-results li.no-results {
+  /* Make the results take up the entire list item */
+  display: block;
+  padding: 10px 5px;
+  color: #111;
+}
+body > header > nav span.doc-search ul.search-results li em {
+  background-color: #def;
+}
+body > header > nav span.doc-search ul.search-results li:not(:last-of-type) {
+  border-bottom: 1px solid #ccc;
 }
 
 img {
@@ -98,13 +159,27 @@ ol {
   list-style-position: inside;
 }
 
+input[type=text] {
+  border-width: 0 0 1px 0;
+  border-style: solid;
+  border-color: #bbb;
+  transition: border-color 0.3s ease;
+  font-size: 1em;
+  box-shadow: none;
+  outline: none;
+  padding: 0.25em 0;
+}
+input[type=text]:focus {
+  border-bottom-color: #555;
+}
+
 body > footer {
   text-align: center;
   padding: 20px 0;
   background: linear-gradient(0.25turn, #fff 0%, #f7f7f7 10%, #f7f7f7 90%, #fff 100%);
   border-top: 1px solid #ddd;
 }
-body > footer > nav ul li {
+body > footer > nav > ul li {
   display: inline-block;
 }
 
@@ -212,6 +287,10 @@ blockquote {
   /* Don't display the sidebar on non-doc pages */
   body:not(.docs) nav.sidebar {
     display: none;
+  }
+
+  body > header nav span.doc-search {
+    width: 700px;
   }
 
   body.docs > main article {

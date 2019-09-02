@@ -1,8 +1,10 @@
 $fullExperienceSiteWidth: 1280px;
+$baseFontColor: #111;
 $docSidebarWidth: 230px;
 $headerHeight: 34px;
 $fontSize: 16px;
 $codeBackgroundColor: #f9f9f9;
+$inputVerticalPadding: 0.25em;
 
 * {
     box-sizing: border-box;
@@ -12,7 +14,7 @@ html {
     font-family: 'Segoe UI', arial, sans-serif;
     font-size: $fontSize;
     line-height: 1.7;
-    color: #111;
+    color: $baseFontColor;
     text-align: left;
     font-weight: 200;
     min-height: 500px;
@@ -73,17 +75,90 @@ body > header {
     & > nav {
         text-align: left;
 
-        ul li {
+        & > ul {
+            /* We want to be able to show the doc search next to the list */
             display: inline-block;
-            font-size: 1.9em;
 
-            &:not(:last-child) {
-                padding-right: 30px;
+            li {
+                display: inline-block;
+                font-size: 1.9em;
+
+                &:not(:last-child) {
+                    padding-right: 30px;
+                }
+
+                img.logo {
+                    height: 60px;
+                    vertical-align: bottom;
+                }
+            }
+        }
+
+        span.doc-search {
+            display: inline-block;
+            position: relative;
+
+            img.search-icon {
+                height: 20px;
+                position: absolute;
+                left: 0;
+                /* Get this to line up with the text in the input */
+                top: $inputVerticalPadding;
+                bottom: 0;
             }
 
-            img.logo {
-                height: 60px;
-                vertical-align: bottom;
+            input {
+                width: 100%;
+                padding-left: 25px;
+            }
+
+            ul.search-results {
+                list-style: inside none;
+                display: none;
+                position: absolute;
+                top: 100%;
+                left: 0;
+                right: 0;
+                border-width: 0 1px 1px 1px;
+                border-style: solid;
+                border-color: #ccc;
+                background: #fff;
+                z-index: 1;
+                padding: 0;
+
+                li {
+                    font-size: $fontSize;
+                    width: 100%;
+                    padding: 0;
+
+                    a:hover {
+                        background: #eef7ff;
+                    }
+
+                    .search-result-context {
+                        border-bottom: 1px solid #ccc;
+
+                        h1, h2, h3, h4, h5, h6 {
+                            font-size: 1em;
+                            display: inline;
+                        }
+                    }
+
+                    a, &.no-results {
+                        /* Make the results take up the entire list item */
+                        display: block;
+                        padding: 10px 5px;
+                        color: $baseFontColor;
+                    }
+
+                    em {
+                        background-color: #def;
+                    }
+
+                    &:not(:last-of-type) {
+                        border-bottom: 1px solid #ccc;
+                    }
+                }
             }
         }
     }
@@ -114,16 +189,31 @@ ol {
     list-style-position: inside;
 }
 
+input{
+    &[type=text] {
+        border-width: 0 0 1px 0;
+        border-style: solid;
+        border-color: #bbb;
+        transition: border-color .3s ease;
+        font-size: 1em;
+        box-shadow: none;
+        outline: none;
+        padding: $inputVerticalPadding 0;
+
+        &:focus {
+            border-bottom-color: #555;
+        }
+    }
+}
+
 body > footer {
     text-align: center;
     padding: 20px 0;
     background: linear-gradient(.25turn, #fff 0%, #f7f7f7 10%, #f7f7f7 90%, #fff 100%);
     border-top: 1px solid #ddd;
 
-    & > nav {
-        ul li {
-            display: inline-block;
-        }
+    & > nav > ul li {
+        display: inline-block;
     }
 }
 
@@ -252,6 +342,10 @@ blockquote {
     /* Don't display the sidebar on non-doc pages */
     body:not(.docs) nav.sidebar {
         display: none;
+    }
+
+    body > header nav span.doc-search {
+        width: 700px;
     }
 
     body.docs > main article {

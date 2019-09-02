@@ -15,7 +15,6 @@ namespace App\Web;
 use Aphiria\IO\FileSystem;
 use Aphiria\IO\FileSystemException;
 use App\Documentation\DocumentationMetadata;
-use DOMDocument;
 
 /**
  * Defines the compiler for our views
@@ -95,6 +94,7 @@ final class ViewCompiler
         $headContents = $this->files->read("{$this->rawViewPath}/partials/head.html");
         $compiledHeadContents = $this->compileTag($headContents, 'metadataKeywords', implode(',', $metadataKeywords));
         $compiledHeadContents = $this->compileTag($compiledHeadContents, 'metadataDescription', $metadataDescription);
+        $compiledHeadContents = $this->compileTag($compiledHeadContents, 'apiUri', $_ENV['APP_API_URL']);
         $compiledPageContents = $this->compileTag($pageContents, 'head', $compiledHeadContents);
 
         // Compile the main nav

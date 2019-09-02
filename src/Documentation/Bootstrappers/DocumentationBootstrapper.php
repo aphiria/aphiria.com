@@ -38,6 +38,7 @@ final class DocumentationBootstrapper extends Bootstrapper
         $searchIndex = new PostgreSqlSearchIndex(
             $_ENV['DOC_TOKENS_TABLE_NAME'],
             $container->resolve(IConnection::class),
+            "/docs/{$metadata->getDefaultVersion()}/",
             __DIR__ . '/../../../.env'
         );
         $markdownParser = new Parsedown();

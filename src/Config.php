@@ -14,12 +14,14 @@ namespace App;
 
 use Aphiria\Configuration\AphiriaComponentBuilder;
 use Aphiria\Configuration\IApplicationBuilder;
+use Aphiria\Configuration\Middleware\MiddlewareBinding;
 use Aphiria\DependencyInjection\IContainer;
 use App\Api\Bootstrappers\ContentNegotiatorBootstrapper;
 use App\Api\Bootstrappers\DependencyInjectionBootstrapper;
 use App\Api\Bootstrappers\ExceptionHandlerBootstrapper;
 use App\Api\Bootstrappers\RoutingBootstrapper;
 use App\Api\Bootstrappers\SerializerBootstrapper;
+use App\Api\Middleware\Cors;
 use App\Documentation\DocumentationModuleBuilder;
 use App\Logging\Bootstrappers\LoggerBootstrapper;
 use App\Web\WebModuleBuilder;
@@ -66,6 +68,11 @@ final class Config
             new LoggerBootstrapper,
             new ContentNegotiatorBootstrapper,
             new RoutingBootstrapper
+        ]);
+
+        // Register any global middleware
+        $this->appBuilder->withGlobalMiddleware(fn () => [
+            new MiddlewareBinding(Cors::class)
         ]);
 
         // Register any modules
