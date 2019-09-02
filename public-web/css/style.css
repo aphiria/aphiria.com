@@ -116,12 +116,16 @@ body > header > nav span.doc-search ul.search-results li {
 body > header > nav span.doc-search ul.search-results li a:hover {
   background: #eef7ff;
 }
+body > header > nav span.doc-search ul.search-results li h1, body > header > nav span.doc-search ul.search-results li h2, body > header > nav span.doc-search ul.search-results li h3, body > header > nav span.doc-search ul.search-results li h4, body > header > nav span.doc-search ul.search-results li h5, body > header > nav span.doc-search ul.search-results li h6 {
+  margin: 0;
+}
 body > header > nav span.doc-search ul.search-results li .search-result-context {
   border-bottom: 1px solid #ccc;
 }
 body > header > nav span.doc-search ul.search-results li .search-result-context h1, body > header > nav span.doc-search ul.search-results li .search-result-context h2, body > header > nav span.doc-search ul.search-results li .search-result-context h3, body > header > nav span.doc-search ul.search-results li .search-result-context h4, body > header > nav span.doc-search ul.search-results li .search-result-context h5, body > header > nav span.doc-search ul.search-results li .search-result-context h6 {
   font-size: 1em;
   display: inline;
+  margin: 0;
 }
 body > header > nav span.doc-search ul.search-results li a, body > header > nav span.doc-search ul.search-results li.no-results {
   /* Make the results take up the entire list item */

@@ -135,12 +135,17 @@ body > header {
                         background: #eef7ff;
                     }
 
+                    h1, h2, h3, h4, h5, h6 {
+                        margin: 0;
+                    }
+
                     .search-result-context {
                         border-bottom: 1px solid #ccc;
 
                         h1, h2, h3, h4, h5, h6 {
                             font-size: 1em;
                             display: inline;
+                            margin: 0;
                         }
                     }
 
