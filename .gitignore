@@ -6,5 +6,7 @@
 /composer.lock
 /composer.phar
 /nbproject/
+/public-web/docs/
+/public-web/index.html
 /phpunit.phar
 /vendor/

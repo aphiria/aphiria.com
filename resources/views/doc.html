@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>{{ docTitle }} | Aphiria</title>
+        {{ head }}
+    </head>
+    <body>
+        <header>
+            {{ mainNav }}
+        </header>
+        <main>
+            {{ docSideNav }}
+            <article>
+                {{ doc }}
+                <footer>
+                    <a href="https://github.com/aphiria/docs/blob/{{ docVersion }}/{{ docFilename }}.md" target="_blank" title="Edit this document"><i class="fa fa-pencil" aria-hidden="true"></i> Edit this document</a>
+                </footer>
+            </article>
+        </main>
+        <footer>
+            {{ footerNav }}
+            A spiritual successor to <a href="https://www.opulencephp.com" target="_blank" title="Opulence">Opulence</a>&reg;
+            <br>
+            Written by <a href="https://github.com/davidbyoung" target="_blank" title="David Young's GitHub">David Young</a>
+        </footer>
+        <script src="/js/prism.js"></script>
+    </body>
+</html>

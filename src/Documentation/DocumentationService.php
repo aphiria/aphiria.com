@@ -69,7 +69,7 @@ final class DocumentationService
     {
         $markdownFilesByBranch = $this->downloader->downloadDocs();
         $htmlFilesByBranch = $this->createHtmlDocs($markdownFilesByBranch);
-        $htmlFilesToIndex = $htmlFilesByBranch[$this->metadata->getDefaultBranch()];
+        $htmlFilesToIndex = $htmlFilesByBranch[$this->metadata->getDefaultVersion()];
         $this->searchIndex->buildSearchIndex($htmlFilesToIndex);
     }
 

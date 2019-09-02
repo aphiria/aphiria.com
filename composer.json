@@ -29,6 +29,7 @@
         "aphiria/console": "1.0.*@dev",
         "aphiria/exceptions": "1.0.*@dev",
         "erusev/parsedown": "1.7.2",
+        "ext-dom": "*",
         "ext-mbstring": "*",
         "ext-pdo": "*",
         "opulence/databases": "1.1.*",

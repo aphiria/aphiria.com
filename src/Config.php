@@ -22,6 +22,7 @@ use App\Api\Bootstrappers\RoutingBootstrapper;
 use App\Api\Bootstrappers\SerializerBootstrapper;
 use App\Documentation\DocumentationModuleBuilder;
 use App\Logging\Bootstrappers\LoggerBootstrapper;
+use App\Web\WebModuleBuilder;
 
 /**
  * Defines the application configuration
@@ -69,5 +70,6 @@ final class Config
 
         // Register any modules
         $this->appBuilder->withModule(new DocumentationModuleBuilder($this->container));
+        $this->appBuilder->withModule(new WebModuleBuilder($this->container));
     }
 }

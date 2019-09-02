@@ -34,6 +34,7 @@ final class DocumentationBootstrapper extends Bootstrapper
         $metadata = new DocumentationMetadata([
             'master' => $this->getMasterBranchDocConfig()
         ]);
+        $container->bindInstance(DocumentationMetadata::class, $metadata);
         $searchIndex = new PostgreSqlSearchIndex(
             $_ENV['DOC_TOKENS_TABLE_NAME'],
             $container->resolve(IConnection::class),
@@ -45,7 +46,7 @@ final class DocumentationBootstrapper extends Bootstrapper
             new DocumentationDownloader($metadata->getBranches(), __DIR__ . '/../../../tmp/docs'),
             $markdownParser,
             $searchIndex,
-            __DIR__ . '/../../../public-web/raw-docs'
+            __DIR__ . '/../../../resources/views/partials/docs'
         );
         $container->bindInstance(DocumentationService::class, $docs);
     }

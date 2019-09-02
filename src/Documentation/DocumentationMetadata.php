@@ -12,13 +12,15 @@ declare(strict_types=1);
 
 namespace App\Documentation;
 
+use InvalidArgumentException;
+
 /**
  * Contains metadata about all of our documentation
  */
 final class DocumentationMetadata
 {
     /** @var string The default doc branch to display */
-    private const DEFAULT_BRANCH = 'master';
+    private const DEFAULT_VERSION = 'master';
     /** @var array The associative array that contains our metadata */
     private array $config;
 
@@ -41,32 +43,6 @@ final class DocumentationMetadata
     }
 
     /**
-     * Gets the branch names to their titles
-     *
-     * @return array The mapping of branch names to their titles
-     */
-    public function getBranchTitles(): array
-    {
-        $titles = [];
-
-        foreach ($this->config as $name => $data) {
-            $titles[$name] = $data['title'];
-        }
-
-        return $titles;
-    }
-
-    /**
-     * Gets the default branch to display
-     *
-     * @return string The default branch
-     */
-    public function getDefaultBranch(): string
-    {
-        return self::DEFAULT_BRANCH;
-    }
-
-    /**
      * Gets the name of the default doc for a version
      *
      * @param string $version The version to get
@@ -75,6 +51,16 @@ final class DocumentationMetadata
     public function getDefaultDoc(string $version): string
     {
         return $this->config[$version]['default'];
+    }
+
+    /**
+     * Gets the default branch to display
+     *
+     * @return string The default version
+     */
+    public function getDefaultVersion(): string
+    {
+        return self::DEFAULT_VERSION;
     }
 
     /**
@@ -89,38 +75,29 @@ final class DocumentationMetadata
     }
 
     /**
-     * Gets all of the docs for a branch as a flattened array
+     * Gets the docs, broken up by logical sections
      *
-     * @param string $version The version to get
-     * @return array The flattened docs
+     * @param string $version The version whose doc sections we want
+     * @return array The mapping of doc sections to doc metadata
+     * @throws InvalidArgumentException Thrown if no doc exists with the input version
      */
-    public function getFlattenedDocs(string $version): array
+    public function getDocSections(string $version): array
     {
-        $flattenedDocs = [];
-
-        foreach ($this->config[$version]['docs'] as $sectionHeader => $docs) {
-            $flattenedDocs = \array_merge($flattenedDocs, $docs);
+        if (!$this->hasVersion($version)) {
+            throw new InvalidArgumentException("No document with version $version exists");
         }
 
-        return $flattenedDocs;
+        return $this->config[$version]['docs'];
     }
 
     /**
-     * Gets whether or not a doc exists for a specific version
+     * Gets the list of doc versions
      *
-     * @param string $version The name of the version to get
-     * @param string $name The name of the document
-     * @return bool True if the document exists, otherwise false
+     * @return string[] The list of doc versions
      */
-    public function hasDoc(string $version, string $name): bool
+    public function getDocVersions(): array
     {
-        if (!isset($this->config[$version])) {
-            return false;
-        }
-
-        $docs = $this->getFlattenedDocs($version);
-
-        return isset($docs[$name]);
+        return \array_keys($this->config);
     }
 
     /**

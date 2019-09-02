@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>Aphiria - A simple, extensible REST API framework</title>
+        {{ head }}
+    </head>
+    <body>
+        <header>
+            {{ mainNav }}
+        </header>
+        <main>
+            <h2>A simple, extensible REST API framework for PHP</h2>
+            <pre class="language-php"><code class="language-php">// Automatic content negotiation of requests and responses with POPOs
+        $users = new UserService();
+        $routes-&gt;map('POST', 'users/:id')
+            -&gt;toClosure(fn (User $user) =&gt; $this-&gt;ok($users->create($user)));</code></pre>
+            <span id="github-links">
+                        <a href="https://github.com/aphiria/docs" target="_blank" title="Documentation on GitHub">Docs</a>
+                        <span class="divider">&bull;</span>
+                        <a id="source" href="https://github.com/aphiria/aphiria" target="_blank" title="Source code on GitHub">Code</a>
+                    </span>
+            <h2 id="coming-soon">Coming soon</h2>
+        </main>
+        <footer>
+            {{ footerNav }}
+            A spiritual successor to <a href="https://www.opulencephp.com" target="_blank" title="Opulence">Opulence</a>&reg;
+            <br>
+            Written by <a href="https://github.com/davidbyoung" target="_blank" title="David Young's GitHub">David Young</a>
+        </footer>
+        <script src="/js/prism.js"></script>
+    </body>
+</html>
