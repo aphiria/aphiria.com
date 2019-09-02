@@ -4,7 +4,7 @@
         <title>{{ docTitle }} | Aphiria</title>
         {{ head }}
     </head>
-    <body>
+    <body class="docs">
         <header>
             {{ mainNav }}
         </header>
@@ -23,6 +23,10 @@
             <br>
             Written by <a href="https://github.com/davidbyoung" target="_blank" title="David Young's GitHub">David Young</a>
         </footer>
+        <script>
+            const sidebar = document.querySelector("nav.sidebar");
+            document.querySelector("body > main").style.minHeight = (sidebar.offsetTop + sidebar.scrollHeight + 10) + "px";
+        </script>
         <script src="/js/prism.js"></script>
     </body>
 </html>
