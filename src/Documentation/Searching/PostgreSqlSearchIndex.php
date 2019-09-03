@@ -156,8 +156,9 @@ UNION
 ORDER BY rank DESC
 LIMIT :maxResults
 EOF);
+        // The query must be lower cased for our full text search to work appropriately
         $statement->bindValues([
-            'query' => $query,
+            'query' => \mb_strtolower($query),
             'maxResults' => self::MAX_NUM_SEARCH_RESULTS
         ]);
         $statement->execute();
