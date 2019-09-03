@@ -138,7 +138,8 @@ body > header > nav span.doc-search ul.search-results li a, body > header > nav 
   color: #111;
 }
 body > header > nav span.doc-search ul.search-results li em {
-  background-color: #e0f1ff;
+  font-weight: 500;
+  font-style: normal;
 }
 body > header > nav span.doc-search ul.search-results li:not(:last-of-type) {
   border-bottom: 1px solid #ccc;
