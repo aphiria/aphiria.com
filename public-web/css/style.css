@@ -61,6 +61,7 @@ body > header {
   border-bottom: 1px solid #ddd;
 }
 body > header > nav {
+  position: relative;
   text-align: left;
 }
 body > header > nav > ul {
@@ -70,6 +71,7 @@ body > header > nav > ul {
 body > header > nav > ul li {
   display: inline-block;
   font-size: 1.9em;
+  padding-bottom: 0;
 }
 body > header > nav > ul li:not(:last-child) {
   padding-right: 30px;
@@ -80,7 +82,9 @@ body > header > nav > ul li img.logo {
 }
 body > header > nav span.doc-search {
   display: inline-block;
-  position: relative;
+  position: absolute;
+  right: 0;
+  bottom: 20px;
 }
 body > header > nav span.doc-search img.search-icon {
   height: 20px;
@@ -134,7 +138,7 @@ body > header > nav span.doc-search ul.search-results li a, body > header > nav 
   color: #111;
 }
 body > header > nav span.doc-search ul.search-results li em {
-  background-color: #def;
+  background-color: #e0f1ff;
 }
 body > header > nav span.doc-search ul.search-results li:not(:last-of-type) {
   border-bottom: 1px solid #ccc;

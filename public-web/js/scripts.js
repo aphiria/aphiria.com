@@ -1,4 +1,9 @@
 window.addEventListener('load', loadEvent => {
+    // Add focus to the search bar as long as there's no hash (autofocus attribute prevents scrolling to the ID held in the hash)
+    if (!window.location.hash) {
+        document.getElementById('search-query').focus();
+    }
+
     const searchInputElem = document.getElementById('search-query');
     const searchResultsElem = document.querySelector('.search-results');
     const detectClickOffSearch = clickEvent => {
@@ -15,7 +20,7 @@ window.addEventListener('load', loadEvent => {
         if (searchInputElem.value.length === 0) {
             searchResultsElem.style.display = 'none';
             document.removeEventListener('click', detectClickOffSearch);
-        } else if (searchInputElem.value.length >= 2) {
+        } else {
             timer = setTimeout(() => {
                 fetch (`${apiUri}/docs/search?query=${encodeURIComponent(searchInputElem.value)}`)
                     .then ((response) => response.json())

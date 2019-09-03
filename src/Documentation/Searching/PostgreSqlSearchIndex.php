@@ -127,26 +127,34 @@ final class PostgreSqlSearchIndex implements ISearchIndex
      */
     public function query(string $query): array
     {
-        $tsHeadlineOptions = 'StartSel = <em>, StopSel = </em>';
-        /*
+        /**
+         * This query is doing two things - using natural English language processing to match on prefixes of words, eg
+         * 'route' matches 'routes' as well as 'routing'.  The second part of the query is a fallback to simple,
+         * non-prefix matching.  In other words, 'rou' will be matched by 'routes' and 'routing' even though they don't
+         * share a common English prefix ('rout' is the prefix, not 'rou').  So, we query up to maxResults from both
+         * search methods, then order the entire set and limit it to maxResults.  Technically, we might over-query, but
+         * that's not a big penalty.
+         *
+         * The goofy array_to_string(string_to_array(...)) stuff is splitting a query by spaces, adding ':*' after
+         * each term, and joining them with '&' so that it forms a valid tsquery.
+         */
+        $tsHeadlineOptions = 'StartSel=<em>, StopSel=</em>';
         $statement = $this->connection->prepare(<<<EOF
-SELECT link, html_element_type, rank, ts_headline('english', h1_inner_text, query, '{$tsHeadlineOptions}') as h1_highlights, ts_headline('english', h2_inner_text, query, '{$tsHeadlineOptions}') as h2_highlights, ts_headline('english', h3_inner_text, query, '{$tsHeadlineOptions}') as h3_highlights, ts_headline('english', h4_inner_text, query, '{$tsHeadlineOptions}') as h4_highlights, ts_headline('english', h5_inner_text, query, '{$tsHeadlineOptions}') as h5_highlights, ts_headline('english', inner_text, query, '{$tsHeadlineOptions}') as inner_text_highlights
-FROM (SELECT link, html_element_type, h1_inner_text, h2_inner_text, h3_inner_text, h4_inner_text, h5_inner_text, inner_text, ts_rank_cd(tokens, query) AS rank, query
-    FROM {$this->tokenTableName}, plainto_tsquery('english', :query) AS query
-    WHERE tokens @@ query
-    ORDER BY rank DESC
-    LIMIT :maxResults) AS query_results;
-EOF);*/
-        $statement = $this->connection->prepare(<<<EOF
-SELECT link, html_element_type, rank, ts_headline('english', h1_inner_text, query, '{$tsHeadlineOptions}') as h1_highlights, ts_headline('english', h2_inner_text, query, '{$tsHeadlineOptions}') as h2_highlights, ts_headline('english', h3_inner_text, query, '{$tsHeadlineOptions}') as h3_highlights, ts_headline('english', h4_inner_text, query, '{$tsHeadlineOptions}') as h4_highlights, ts_headline('english', h5_inner_text, query, '{$tsHeadlineOptions}') as h5_highlights, ts_headline('english', inner_text, query, '{$tsHeadlineOptions}') as inner_text_highlights
-FROM ((SELECT link, html_element_type, h1_inner_text, h2_inner_text, h3_inner_text, h4_inner_text, h5_inner_text, inner_text, ts_rank_cd(tokens, query) AS rank, query
-      FROM {$this->tokenTableName}, plainto_tsquery('english', :query) AS query
-      WHERE tokens @@ query)
-    UNION (SELECT link, html_element_type, h1_inner_text, h2_inner_text, h3_inner_text, h4_inner_text, h5_inner_text, inner_text, ts_rank_cd(tokens, query) AS rank, query
-           FROM {$this->tokenTableName}, (SELECT (plainto_tsquery(:query)::text || ':*')::tsquery AS query) AS query
-           WHERE inner_text SIMILAR TO '%' || :query || '%')
-    ORDER BY rank DESC
-    LIMIT :maxResults) AS query_results
+(SELECT link, html_element_type, rank, ts_headline('english', h1_inner_text, query, '{$tsHeadlineOptions}') as h1_highlights, ts_headline('english', h2_inner_text, query, '{$tsHeadlineOptions}') as h2_highlights, ts_headline('english', h3_inner_text, query, '{$tsHeadlineOptions}') as h3_highlights, ts_headline('english', h4_inner_text, query, '{$tsHeadlineOptions}') as h4_highlights, ts_headline('english', h5_inner_text, query, '{$tsHeadlineOptions}') as h5_highlights, ts_headline('english', inner_text, query, '{$tsHeadlineOptions}') as inner_text_highlights
+FROM (SELECT link, html_element_type, h1_inner_text, h2_inner_text, h3_inner_text, h4_inner_text, h5_inner_text, inner_text, ts_rank_cd(english_tokens, query) AS rank, query
+        FROM {$this->tokenTableName}, plainto_tsquery('english', :query) AS query
+        WHERE english_tokens @@ query
+        ORDER BY rank DESC
+        LIMIT :maxResults) AS english_matching_query)
+UNION
+(SELECT link, html_element_type, rank, ts_headline(h1_inner_text, query, '{$tsHeadlineOptions}') as h1_highlights, ts_headline(h2_inner_text, query, '{$tsHeadlineOptions}') as h2_highlights, ts_headline(h3_inner_text, query, '{$tsHeadlineOptions}') as h3_highlights, ts_headline(h4_inner_text, query, '{$tsHeadlineOptions}') as h4_highlights, ts_headline(h5_inner_text, query, '{$tsHeadlineOptions}') as h5_highlights, ts_headline(inner_text, query, '{$tsHeadlineOptions}') as inner_text_highlights
+    FROM (SELECT link, html_element_type, h1_inner_text, h2_inner_text, h3_inner_text, h4_inner_text, h5_inner_text, inner_text, ts_rank_cd(simple_tokens, query) AS rank, query
+          FROM {$this->tokenTableName}, (SELECT (SELECT (array_to_string(string_to_array(:query, ' '), ':* & ') || ':*'))::tsquery AS query) AS query
+          WHERE simple_tokens @@ query
+          ORDER BY rank DESC
+          LIMIT :maxResults) AS non_english_matching_query)
+ORDER BY rank DESC
+LIMIT :maxResults
 EOF);
         $statement->bindValues([
             'query' => $query,
@@ -192,7 +200,7 @@ EOF);
         }
 
         $this->updateTokens();
-        $this->createTableIndex();
+        $this->createTableIndices();
         $this->connection->commit();
         $this->updateEnvFile();
     }
@@ -272,7 +280,8 @@ CREATE TABLE {$this->tokenTableName} (
     html_element_type TEXT NOT NULL,
     inner_text TEXT NOT NULL,
     html_element_weight CHAR NOT NULL,
-    tokens tsvector
+    english_tokens tsvector,
+    simple_tokens tsvector
 )
 EOF
 );
@@ -280,14 +289,19 @@ EOF
     }
 
     /**
-     * Creates an index on the table for faster querying
+     * Creates the indices on the table for faster querying
      */
-    private function createTableIndex(): void
+    private function createTableIndices(): void
     {
         $statement = $this->connection->prepare(<<<EOF
-CREATE INDEX {$this->tokenTableName}_token_idx ON {$this->tokenTableName} USING gin(tokens)
+CREATE INDEX {$this->tokenTableName}_english_token_idx ON {$this->tokenTableName} USING gin(english_tokens)
 EOF
 );
+        $statement->execute();
+        $statement = $this->connection->prepare(<<<EOF
+CREATE INDEX {$this->tokenTableName}_simple_token_idx ON {$this->tokenTableName} USING gin(simple_tokens)
+EOF
+        );
         $statement->execute();
     }
 
@@ -335,7 +349,7 @@ EOF
     private function updateTokens(): void
     {
         $statement = $this->connection->prepare(<<<EOF
-UPDATE {$this->tokenTableName} SET tokens = setweight(to_tsvector('english', COALESCE(inner_text, '')), html_element_weight::"char")
+UPDATE {$this->tokenTableName} SET english_tokens = setweight(to_tsvector('english', COALESCE(inner_text, '')), html_element_weight::"char"), simple_tokens = setweight(to_tsvector(COALESCE(inner_text, '')), html_element_weight::"char")
 EOF
         );
         $statement->execute();

@@ -92,21 +92,20 @@ final class ViewCompiler
     ): string {
         // Compile the head
         $headContents = $this->files->read("{$this->rawViewPath}/partials/head.html");
-        $compiledHeadContents = $this->compileTag($headContents, 'metadataKeywords', implode(',', $metadataKeywords));
-        $compiledHeadContents = $this->compileTag($compiledHeadContents, 'metadataDescription', $metadataDescription);
-        $compiledHeadContents = $this->compileTag($compiledHeadContents, 'apiUri', $_ENV['APP_API_URL']);
-        $compiledPageContents = $this->compileTag($pageContents, 'head', $compiledHeadContents);
+        $compiledHeadContents = $this->compileTag('metadataKeywords', implode(',', $metadataKeywords), $headContents);
+        $compiledHeadContents = $this->compileTag('metadataDescription', $metadataDescription, $compiledHeadContents);
+        $compiledHeadContents = $this->compileTag('apiUri', $_ENV['APP_API_URL'], $compiledHeadContents);
+        $compiledPageContents = $this->compileTag('head', $compiledHeadContents, $pageContents);
 
         // Compile the main nav
         $mainNavContents = $this->files->read("{$this->rawViewPath}/partials/main-nav.html");
         $defaultDocVersion = $this->docMetadata->getDefaultVersion();
-        $compiledMainNavContents = $this->compileTag($mainNavContents, 'docLink', "/docs/$defaultDocVersion/{$this->docMetadata->getDefaultDoc($defaultDocVersion)}.html");
-        $compiledPageContents = $this->compileTag($compiledPageContents, 'mainNav', $compiledMainNavContents);
+        $compiledMainNavContents = $this->compileTag('docLink', "/docs/$defaultDocVersion/{$this->docMetadata->getDefaultDoc($defaultDocVersion)}.html", $mainNavContents);
+        $compiledPageContents = $this->compileTag('mainNav', $compiledMainNavContents, $compiledPageContents);
 
-        // Compile the footer nav
-        $footerNavContents = $this->files->read("{$this->rawViewPath}/partials/footer-nav.html");
-        $compiledFooterNavContents = $this->compileTag($footerNavContents, 'docLink', "/docs/$defaultDocVersion/{$this->docMetadata->getDefaultDoc($defaultDocVersion)}.html");
-        $compiledPageContents = $this->compileTag($compiledPageContents, 'footerNav', $compiledFooterNavContents);
+        // Compile the footer
+        $footerContents = $this->files->read("{$this->rawViewPath}/partials/footer.html");
+        $compiledPageContents = $this->compileTag('footer', $footerContents, $compiledPageContents);
 
         return $compiledPageContents;
     }
@@ -130,19 +129,19 @@ final class ViewCompiler
             $allCompiledSectionContents = '';
 
             foreach ($this->docMetadata->getDocSections($version) as $section => $docs) {
-                $compiledSectionContents = $this->compileTag($sideNavSectionContents, 'docSectionTitle', $section);
+                $compiledSectionContents = $this->compileTag('docSectionTitle', $section, $sideNavSectionContents);
                 $docSectionListItems = '';
 
                 foreach ($docs as $docName => $doc) {
                     $docSectionListItems .= '<li><a href="/docs/' . $version . '/' . $docName . '.html" title="View documentation for ' . $doc['title'] . '">' . $doc['linkText'] . '</a></li>';
                 }
 
-                $compiledSectionContents = $this->compileTag($compiledSectionContents, 'docSectionListItems', $docSectionListItems);
+                $compiledSectionContents = $this->compileTag('docSectionListItems', $docSectionListItems, $compiledSectionContents);
                 $allCompiledSectionContents .= $compiledSectionContents;
             }
 
             $sideNavContents = $this->files->read("{$this->rawViewPath}/partials/doc-side-nav.html");
-            $compiledSideNav = $this->compileTag($sideNavContents, 'sections', $allCompiledSectionContents);
+            $compiledSideNav = $this->compileTag('sections', $allCompiledSectionContents, $sideNavContents);
 
             // Compile the page
             foreach ($this->docMetadata->getDocs($version) as $section => $docs) {
@@ -153,11 +152,11 @@ final class ViewCompiler
                         $doc['description']
                     );
                     $docContents = $this->files->read("{$this->rawViewPath}/partials/docs/$version/$docName.html");
-                    $compiledDocPageContents = $this->compileTag($compiledDocPageContents, 'doc', $docContents);
-                    $compiledDocPageContents = $this->compileTag($compiledDocPageContents, 'docTitle', $doc['title']);
-                    $compiledDocPageContents = $this->compileTag($compiledDocPageContents, 'docVersion', $version);
-                    $compiledDocPageContents = $this->compileTag($compiledDocPageContents, 'docFilename', $docName);
-                    $compiledDocPageContents = $this->compileTag($compiledDocPageContents, 'docSideNav', $compiledSideNav);
+                    $compiledDocPageContents = $this->compileTag('doc', $docContents, $compiledDocPageContents);
+                    $compiledDocPageContents = $this->compileTag('docTitle', $doc['title'], $compiledDocPageContents);
+                    $compiledDocPageContents = $this->compileTag('docVersion', $version, $compiledDocPageContents);
+                    $compiledDocPageContents = $this->compileTag('docFilename', $docName, $compiledDocPageContents);
+                    $compiledDocPageContents = $this->compileTag('docSideNav', $compiledSideNav, $compiledDocPageContents);
                     $this->files->write("{$this->compiledViewPath}/docs/$version/$docName.html", $compiledDocPageContents);
                 }
             }
@@ -183,13 +182,13 @@ final class ViewCompiler
     /**
      * Compiles a tag
      *
-     * @param string $pageContents The page contents that contain the tag
      * @param string $name The name of the tag to compile
      * @param string $tagContents The contents to fill the tag with
+     * @param string $subject The subject to compile that tag in
      * @return string The compiled tag
      */
-    private function compileTag(string $pageContents, string $name, string $tagContents): string
+    private function compileTag(string $name, string $tagContents, string $subject): string
     {
-        return \str_replace("{{ $name }}", $tagContents, $pageContents);
+        return \str_replace("{{ $name }}", $tagContents, $subject);
     }
 }
