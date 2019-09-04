@@ -16,14 +16,11 @@
                     <a href="https://github.com/aphiria/docs/blob/{{ docVersion }}/{{ docFilename }}.md" target="_blank" title="Edit this document">Edit this document</a>
                 </footer>
             </article>
+            <div id="gray-out"></div>
         </main>
         <footer>
             {{ footer }}
         </footer>
-        <script>
-            const sidebar = document.querySelector("nav.sidebar");
-            document.querySelector("body > main").style.minHeight = (sidebar.offsetTop + sidebar.scrollHeight + 10) + "px";
-        </script>
         <script src="/js/prism.js"></script>
     </body>
 </html>

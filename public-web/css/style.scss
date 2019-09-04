@@ -18,10 +18,12 @@ html {
     text-align: left;
     font-weight: 200;
     min-height: 500px;
+    overflow-x: hidden;
 }
 
 body {
     margin: 0;
+    overflow-x: hidden;
 }
 
 h1, h2, h3, h4, h5, h6 {
@@ -112,6 +114,11 @@ input {
 
 body > header {
     margin: 0 5%;
+    position: fixed;
+    left: 0;
+    right: 0;
+    background: #fff;
+    z-index: 1;
 
     & > nav {
         position: relative;
@@ -125,10 +132,6 @@ body > header {
                 display: inline-block;
                 font-size: 1.9em;
                 padding-bottom: 0;
-
-                &:not(:last-child) {
-                    padding-right: 30px;
-                }
 
                 img.logo {
                     vertical-align: bottom;
@@ -252,6 +255,7 @@ body > footer {
 body > main {
     margin: 0 5%;
     position: relative;
+    padding-bottom: 10px;
 
     nav.sidebar {
         padding-top: 10px;
@@ -279,17 +283,17 @@ body > main {
     }
 }
 
+body:not(.docs) > header {
+    /* We only want the mobile menu on the doc pages */
+    ul li#mobile-menu {
+        display: none;
+    }
+}
+
 body.docs > main article {
     h2, h3, h4, h5 {
-        /*padding-top: $headerHeight;
-        margin-top: -1*$headerHeight + 20;*/
         margin-bottom: 0;
         color: #555;
-    }
-
-    h1:first-of-type {
-        /* For the first header in the docs, we want it to appear as high up as possible */
-        margin-top: 0;
     }
 
     footer {
@@ -362,10 +366,64 @@ blockquote {
 
 /* Mobile experience site settings */
 @media screen and (max-device-width: $fullExperienceSiteWidth - 1px) {
+    $headerLogoHeight: 40px;
+    $searchBarHeight: 20px;
+    $headerHeight: $headerLogoHeight + $searchBarHeight + 40px;
+
     body > header, body > main, body > footer {
         /* Take the parts to the edge of the screen to not waste space */
         margin-left: 0;
         margin-right: 0;
+    }
+
+    body.nav-open {
+        nav.sidebar {
+            -moz-transform: translate3d(-100%, 0, 0);
+            -ms-transform: translate3d(-100%, 0, 0);
+            -webkit-transform: translate3d(-100%, 0, 0);
+            transform: translate3d(-100%, 0, 0);
+            -moz-transition: .3s;
+            -webkit-transition: .3s;
+            transition: transform .3s;
+        }
+
+        #gray-out {
+            visibility: visible;
+            background: rgba(0, 0, 0, .5);
+            transition: background .3s ease;
+        }
+    }
+
+    body > header {
+        /* Account for 20px of padding */
+        /*height: $headerLogoHeight + 20px;*/
+    }
+
+    body > main {
+        /* Account for both the main nav padding and search bar padding, and then pad a little extra so we're not right up against the search bar */
+        padding: $headerHeight + 10px 10px 10px 10px;
+
+        nav.sidebar {
+            position: fixed;
+            border-left: 1px solid #f1f1f1;
+            left: 100%;
+            /* We want this to appear just below the main nav.  The additional 20px is the padding in the nav bar. */
+            top: $headerLogoHeight + 20px;
+            bottom: 0;
+            min-width: 25%;
+            padding-left: 10px;
+            padding-bottom: 10px;
+            background: #f1f1f1;
+            z-index: 5;
+            -webkit-transition: -webkit-transform .3s;
+            -moz-transition: -moz-transform .3s;
+            -o-transition: -o-transform .3s;
+            transition: transform .3s;
+
+            li {
+                white-space: nowrap;
+            }
+        }
     }
 
     body > header > nav {
@@ -373,12 +431,22 @@ blockquote {
             display: block;
         }
 
-        ul.main-nav li {
-            /* Make the links less huge */
-            font-size: 1.4em;
+        ul.main-nav {
+            /* Keep the mobile menu in line with the other menu items */
+            position: relative;
 
-            img.logo {
-                height: 40px;
+            li {
+                /* Make the links less huge */
+                font-size: 1.4em;
+
+                &:nth-child(1), &:nth-child(2) {
+                    /* The selector would need to be reworked if we add more links.  We don't care about padding against the mobile menu item. */
+                    padding-right: 0.7em;
+                }
+
+                img.logo {
+                    height: $headerLogoHeight;
+                }
             }
         }
 
@@ -391,14 +459,52 @@ blockquote {
         }
     }
 
+    body.docs {
+        & > header {
+            ul li#mobile-menu {
+                display: inline-block;
+                position: absolute;
+                right: 10px;
+                top: -5px;
+                font-size: 3em;
+                line-height: normal;
+            }
+        }
+
+        & > main article {
+            h1, h2, h3, h4, h5 {
+                /* Make sure that tapping a link to a doc section makes the header visible from underneath the main nav */
+                padding-top: $headerHeight+10px;
+                margin-top: -1*$headerHeight;
+                margin-bottom: 0;
+            }
+        }
+    }
+
     body > footer {
         /* Gradient looks strange on small screens */
         background: $footerBackgroundColor;
+    }
+
+    #gray-out {
+        /*display: none;*/
+        visibility: hidden;
+        background: rgba(0, 0, 0, 0);
+        position: fixed;
+        /* We want this to appear just below the main nav.  The additional 20px is the padding in the nav bar. */
+        top: $headerLogoHeight + 20px;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 1;
     }
 }
 
 /* Full experience site settings */
 @media screen and (min-device-width: $fullExperienceSiteWidth) {
+    $headerLogoHeight: 60px;
+    $headerHeight: $headerLogoHeight + 20px;
+
     body.home > main pre {
         width: 700px;
         margin: 0 auto;
@@ -415,10 +521,24 @@ blockquote {
 
     body > header {
         border-bottom: 1px solid #ddd;
+        height: $headerHeight;
 
         nav {
-            ul.main-nav li img.logo {
-                height: 60px;
+            ul.main-nav {
+                li {
+                    &:nth-child(1), &:nth-child(2) {
+                        /* The selector would need to be reworked if we add more links.  We don't care about padding against the mobile menu item. */
+                        padding-right: 1em;
+                    }
+
+                    &#mobile-menu {
+                        display: none;
+                    }
+
+                    img.logo {
+                        height: $headerLogoHeight;
+                    }
+                }
             }
 
             span.doc-search {
@@ -435,18 +555,30 @@ blockquote {
         margin: 0 0 0 $docSidebarWidth;
         padding: 20px 0 10px 60px;
         width: 750px;
+
+        h1, h2, h3, h4, h5 {
+            /* Make sure that tapping a link to a doc section makes the header visible from underneath the main nav */
+            padding-top: $headerHeight;
+            margin-top: -1*$headerHeight;
+        }
     }
 
     body > main {
+        padding-top: $headerHeight;
+
         nav.sidebar {
             position: absolute;
-            top: 0;
+            top: $headerHeight;
             bottom: 0;
             padding: 20px 10px 10px 0;
             float: left;
             width: $docSidebarWidth;
             border-right: 1px solid #ddd;
         }
+    }
+
+    #gray-out {
+        display: none;
     }
 }
 

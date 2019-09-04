@@ -1,299 +1,491 @@
 * {
-  box-sizing: border-box; }
+  box-sizing: border-box;
+}
 
 html {
-  font-family: 'Segoe UI', arial, sans-serif;
+  font-family: "Segoe UI", arial, sans-serif;
   font-size: 16px;
   line-height: 1.7;
   color: #111;
   text-align: left;
   font-weight: 200;
-  min-height: 500px; }
+  min-height: 500px;
+  overflow-x: hidden;
+}
 
 body {
-  margin: 0; }
+  margin: 0;
+  overflow-x: hidden;
+}
 
 h1, h2, h3, h4, h5, h6 {
-  font-weight: 200; }
+  font-weight: 200;
+}
 
 h1 {
-  font-size: 30px; }
+  font-size: 30px;
+}
 
 h2 {
-  font-size: 24px; }
-  h2.site-slogan {
-    text-align: center; }
+  font-size: 24px;
+}
+h2.site-slogan {
+  text-align: center;
+}
 
 h3 {
-  font-size: 22px; }
+  font-size: 22px;
+}
 
 h4 {
-  font-size: 18px; }
+  font-size: 18px;
+}
 
 h5 {
-  font-size: 16px; }
+  font-size: 16px;
+}
 
 h6 {
-  font-size: 14px; }
+  font-size: 14px;
+}
 
 a, a:link, a:active, a:visited {
   color: #07c;
   text-decoration: none;
-  transition: all .3s ease; }
+  transition: all 0.3s ease;
+}
 a:hover {
-  color: #111; }
+  color: #111;
+}
 
 img {
-  border: none; }
+  border: none;
+}
 
 ul, ol {
   padding: 10px 1em;
-  margin: 0; }
-  ul ul, ul ol, ol ul, ol ol {
-    padding: 0 0 0 25px; }
-  ul > li:not(:last-child), ol > li:not(:last-child) {
-    padding-bottom: 2px; }
+  margin: 0;
+}
+ul ul, ul ol, ol ul, ol ol {
+  padding: 0 0 0 25px;
+}
+ul > li:not(:last-child), ol > li:not(:last-child) {
+  padding-bottom: 2px;
+}
 
 ul {
-  list-style: inside disc; }
+  list-style: inside disc;
+}
 
 ol {
-  list-style-position: inside; }
+  list-style-position: inside;
+}
 
 input[type=text] {
   border-width: 0 0 1px 0;
   border-style: solid;
   border-color: #bbb;
-  transition: border-color .3s ease;
+  transition: border-color 0.3s ease;
   font-size: 1em;
   box-shadow: none;
   outline: none;
-  padding: 0.25em 0; }
-  input[type=text]:focus {
-    border-bottom-color: #555; }
+  padding: 0.25em 0;
+}
+input[type=text]:focus {
+  border-bottom-color: #555;
+}
 
 body > header {
-  margin: 0 5%; }
-  body > header > nav {
-    position: relative;
-    text-align: left; }
-    body > header > nav > ul.main-nav {
-      /* We want to be able to show the doc search next to the list */
-      display: inline-block; }
-      body > header > nav > ul.main-nav li {
-        display: inline-block;
-        font-size: 1.9em;
-        padding-bottom: 0; }
-        body > header > nav > ul.main-nav li:not(:last-child) {
-          padding-right: 30px; }
-        body > header > nav > ul.main-nav li img.logo {
-          vertical-align: bottom; }
-    body > header > nav span.doc-search img.search-icon {
-      height: 20px;
-      position: absolute;
-      left: 0;
-      /* Get this to line up with the text in the input */
-      top: 0.25em;
-      bottom: 0; }
-    body > header > nav span.doc-search input#search-query {
-      width: 100%;
-      padding-left: 25px;
-      background: url("/images/search-icon.svg") no-repeat 0 25%;
-      background-size: 20px 20px; }
-    body > header > nav span.doc-search ul.search-results {
-      list-style: inside none;
-      display: none;
-      position: absolute;
-      top: 100%;
-      left: 0;
-      right: 0;
-      border-width: 0 1px 1px 1px;
-      border-style: solid;
-      border-color: #ccc;
-      background: #fff;
-      z-index: 1;
-      padding: 0; }
-      body > header > nav span.doc-search ul.search-results li {
-        font-size: 0.9rem;
-        width: 100%;
-        padding: 0; }
-        body > header > nav span.doc-search ul.search-results li a:hover {
-          background: #eef7ff; }
-        body > header > nav span.doc-search ul.search-results li h1, body > header > nav span.doc-search ul.search-results li h2, body > header > nav span.doc-search ul.search-results li h3, body > header > nav span.doc-search ul.search-results li h4, body > header > nav span.doc-search ul.search-results li h5, body > header > nav span.doc-search ul.search-results li h6 {
-          margin: 0; }
-        body > header > nav span.doc-search ul.search-results li h1.search-result-text {
-          font-size: 1.6rem; }
-        body > header > nav span.doc-search ul.search-results li h2.search-result-text {
-          font-size: 1.5rem; }
-        body > header > nav span.doc-search ul.search-results li h3.search-result-text {
-          font-size: 1.4rem; }
-        body > header > nav span.doc-search ul.search-results li h4.search-result-text {
-          font-size: 1.3rem; }
-        body > header > nav span.doc-search ul.search-results li h5.search-result-text {
-          font-size: 1.2rem; }
-        body > header > nav span.doc-search ul.search-results li p, body > header > nav span.doc-search ul.search-results li blockquote {
-          background-color: #f7f7f7;
-          margin: 10px;
-          padding: 10px; }
-        body > header > nav span.doc-search ul.search-results li .search-result-context {
-          border-bottom: 1px solid #ccc; }
-          body > header > nav span.doc-search ul.search-results li .search-result-context h1, body > header > nav span.doc-search ul.search-results li .search-result-context h2, body > header > nav span.doc-search ul.search-results li .search-result-context h3, body > header > nav span.doc-search ul.search-results li .search-result-context h4, body > header > nav span.doc-search ul.search-results li .search-result-context h5, body > header > nav span.doc-search ul.search-results li .search-result-context h6 {
-            font-size: 1em;
-            display: inline;
-            margin: 0; }
-        body > header > nav span.doc-search ul.search-results li a, body > header > nav span.doc-search ul.search-results li.no-results {
-          /* Make the results take up the entire list item */
-          display: block;
-          padding: 10px;
-          color: #111; }
-        body > header > nav span.doc-search ul.search-results li em {
-          font-weight: 500;
-          font-style: normal; }
-        body > header > nav span.doc-search ul.search-results li:not(:last-of-type) {
-          border-bottom: 1px solid #ccc; }
+  margin: 0 5%;
+  position: fixed;
+  left: 0;
+  right: 0;
+  background: #fff;
+  z-index: 1;
+}
+body > header > nav {
+  position: relative;
+  text-align: left;
+}
+body > header > nav > ul.main-nav {
+  /* We want to be able to show the doc search next to the list */
+  display: inline-block;
+}
+body > header > nav > ul.main-nav li {
+  display: inline-block;
+  font-size: 1.9em;
+  padding-bottom: 0;
+}
+body > header > nav > ul.main-nav li img.logo {
+  vertical-align: bottom;
+}
+body > header > nav span.doc-search img.search-icon {
+  height: 20px;
+  position: absolute;
+  left: 0;
+  /* Get this to line up with the text in the input */
+  top: 0.25em;
+  bottom: 0;
+}
+body > header > nav span.doc-search input#search-query {
+  width: 100%;
+  padding-left: 25px;
+  background: url("/images/search-icon.svg") no-repeat 0 25%;
+  background-size: 20px 20px;
+}
+body > header > nav span.doc-search ul.search-results {
+  list-style: inside none;
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  border-width: 0 1px 1px 1px;
+  border-style: solid;
+  border-color: #ccc;
+  background: #fff;
+  z-index: 1;
+  padding: 0;
+}
+body > header > nav span.doc-search ul.search-results li {
+  font-size: 0.9rem;
+  width: 100%;
+  padding: 0;
+}
+body > header > nav span.doc-search ul.search-results li a:hover {
+  background: #eef7ff;
+}
+body > header > nav span.doc-search ul.search-results li h1, body > header > nav span.doc-search ul.search-results li h2, body > header > nav span.doc-search ul.search-results li h3, body > header > nav span.doc-search ul.search-results li h4, body > header > nav span.doc-search ul.search-results li h5, body > header > nav span.doc-search ul.search-results li h6 {
+  margin: 0;
+}
+body > header > nav span.doc-search ul.search-results li h1.search-result-text {
+  font-size: 1.6rem;
+}
+body > header > nav span.doc-search ul.search-results li h2.search-result-text {
+  font-size: 1.5rem;
+}
+body > header > nav span.doc-search ul.search-results li h3.search-result-text {
+  font-size: 1.4rem;
+}
+body > header > nav span.doc-search ul.search-results li h4.search-result-text {
+  font-size: 1.3rem;
+}
+body > header > nav span.doc-search ul.search-results li h5.search-result-text {
+  font-size: 1.2rem;
+}
+body > header > nav span.doc-search ul.search-results li p, body > header > nav span.doc-search ul.search-results li blockquote {
+  background-color: #f7f7f7;
+  margin: 10px;
+  padding: 10px;
+}
+body > header > nav span.doc-search ul.search-results li .search-result-context {
+  border-bottom: 1px solid #ccc;
+}
+body > header > nav span.doc-search ul.search-results li .search-result-context h1, body > header > nav span.doc-search ul.search-results li .search-result-context h2, body > header > nav span.doc-search ul.search-results li .search-result-context h3, body > header > nav span.doc-search ul.search-results li .search-result-context h4, body > header > nav span.doc-search ul.search-results li .search-result-context h5, body > header > nav span.doc-search ul.search-results li .search-result-context h6 {
+  font-size: 1em;
+  display: inline;
+  margin: 0;
+}
+body > header > nav span.doc-search ul.search-results li a, body > header > nav span.doc-search ul.search-results li.no-results {
+  /* Make the results take up the entire list item */
+  display: block;
+  padding: 10px;
+  color: #111;
+}
+body > header > nav span.doc-search ul.search-results li em {
+  font-weight: 500;
+  font-style: normal;
+}
+body > header > nav span.doc-search ul.search-results li:not(:last-of-type) {
+  border-bottom: 1px solid #ccc;
+}
 
 body > footer {
   text-align: center;
   padding: 20px;
   margin: 0 5%;
   background: linear-gradient(0.25turn, #fff 0%, #f7f7f7 10%, #f7f7f7 90%, #fff 100%);
-  border-top: 1px solid #ddd; }
-  body > footer > nav > ul li {
-    display: inline-block; }
+  border-top: 1px solid #ddd;
+}
+body > footer > nav > ul li {
+  display: inline-block;
+}
 
 body > main {
   margin: 0 5%;
-  position: relative; }
-  body > main nav.sidebar {
-    padding-top: 10px;
-    overflow-y: auto; }
-    body > main nav.sidebar section:not(:last-child) {
-      margin-bottom: 25px; }
-    body > main nav.sidebar section h5 {
-      margin: 0 0 15px 0; }
-    body > main nav.sidebar ul {
-      padding-top: 0;
-      padding-bottom: 0;
-      list-style: inside none; }
-      body > main nav.sidebar ul:not(:last-child) {
-        margin-bottom: 20px; }
+  position: relative;
+  padding-bottom: 10px;
+}
+body > main nav.sidebar {
+  padding-top: 10px;
+  overflow-y: auto;
+}
+body > main nav.sidebar section:not(:last-child) {
+  margin-bottom: 25px;
+}
+body > main nav.sidebar section h5 {
+  margin: 0 0 15px 0;
+}
+body > main nav.sidebar ul {
+  padding-top: 0;
+  padding-bottom: 0;
+  list-style: inside none;
+}
+body > main nav.sidebar ul:not(:last-child) {
+  margin-bottom: 20px;
+}
+
+body:not(.docs) > header {
+  /* We only want the mobile menu on the doc pages */
+}
+body:not(.docs) > header ul li#mobile-menu {
+  display: none;
+}
 
 body.docs > main article h2, body.docs > main article h3, body.docs > main article h4, body.docs > main article h5 {
-  /*padding-top: $headerHeight;
-  margin-top: -1*$headerHeight + 20;*/
   margin-bottom: 0;
-  color: #555; }
-body.docs > main article h1:first-of-type {
-  /* For the first header in the docs, we want it to appear as high up as possible */
-  margin-top: 0; }
+  color: #555;
+}
 body.docs > main article footer {
-  margin-top: 30px; }
-  body.docs > main article footer a {
-    font-size: .9em; }
+  margin-top: 30px;
+}
+body.docs > main article footer a {
+  font-size: 0.9em;
+}
 
 h2#coming-soon {
-  color: #aaa; }
+  color: #aaa;
+}
 
-pre[class*="language-"] {
+pre[class*=language-] {
   padding: 10px !important;
   background: #f9f9f9 !important;
   border: 1px solid #e9e9e9 !important;
   position: relative !important;
   overflow: auto !important;
-  font-size: 0.8rem !important; }
+  font-size: 0.8rem !important;
+}
 
 code {
-  font-family: "Source Code Pro", monospace !important; }
+  font-family: "Source Code Pro", monospace !important;
+}
 
 p code, li code {
   background: #f9f9f9;
   padding: 2px 5px;
   font-size: 13px;
   white-space: nowrap;
-  border: 1px solid #d9d9d9; }
+  border: 1px solid #d9d9d9;
+}
 
 blockquote {
   background: #eef9ff;
   border: 1px solid #ccd9dd;
   padding: 10px;
-  margin: 10px 30px; }
+  margin: 10px 30px;
+}
 
 .token.variable {
-  color: #333 !important; }
+  color: #333 !important;
+}
 .token.keyword {
-  color: #07a !important; }
+  color: #07a !important;
+}
 .token.function {
-  color: #f70 !important; }
+  color: #f70 !important;
+}
 .token.string {
-  color: #6a0 !important; }
+  color: #6a0 !important;
+}
 .token.class-name {
-  color: #e22 !important; }
+  color: #e22 !important;
+}
 .token.operator {
-  background: none !important; }
+  background: none !important;
+}
 
 /* Mobile experience site settings */
 @media screen and (max-device-width: 1023px) {
   body > header, body > main, body > footer {
     /* Take the parts to the edge of the screen to not waste space */
     margin-left: 0;
-    margin-right: 0; }
+    margin-right: 0;
+  }
+
+  body.nav-open nav.sidebar {
+    -moz-transform: translate3d(-100%, 0, 0);
+    -ms-transform: translate3d(-100%, 0, 0);
+    -webkit-transform: translate3d(-100%, 0, 0);
+    transform: translate3d(-100%, 0, 0);
+    -moz-transition: 0.3s;
+    -webkit-transition: 0.3s;
+    transition: transform 0.3s;
+  }
+  body.nav-open #gray-out {
+    visibility: visible;
+    background: rgba(0, 0, 0, 0.5);
+    transition: background 0.3s ease;
+  }
+
+  body > header {
+    /* Account for 20px of padding */
+    /*height: $headerLogoHeight + 20px;*/
+  }
+
+  body > main {
+    /* Account for both the main nav padding and search bar padding, and then pad a little extra so we're not right up against the search bar */
+    padding: 110px 10px 10px 10px;
+  }
+  body > main nav.sidebar {
+    position: fixed;
+    border-left: 1px solid #f1f1f1;
+    left: 100%;
+    /* We want this to appear just below the main nav.  The additional 20px is the padding in the nav bar. */
+    top: 60px;
+    bottom: 0;
+    min-width: 25%;
+    padding-left: 10px;
+    padding-bottom: 10px;
+    background: #f1f1f1;
+    z-index: 5;
+    -webkit-transition: -webkit-transform 0.3s;
+    -moz-transition: -moz-transform 0.3s;
+    -o-transition: -o-transform 0.3s;
+    transition: transform 0.3s;
+  }
+  body > main nav.sidebar li {
+    white-space: nowrap;
+  }
 
   body > header > nav ul.main-nav {
-    display: block; }
+    display: block;
+  }
+  body > header > nav ul.main-nav {
+    /* Keep the mobile menu in line with the other menu items */
+    position: relative;
+  }
   body > header > nav ul.main-nav li {
     /* Make the links less huge */
-    font-size: 1.4em; }
-    body > header > nav ul.main-nav li img.logo {
-      height: 40px; }
+    font-size: 1.4em;
+  }
+  body > header > nav ul.main-nav li:nth-child(1), body > header > nav ul.main-nav li:nth-child(2) {
+    /* The selector would need to be reworked if we add more links.  We don't care about padding against the mobile menu item. */
+    padding-right: 0.7em;
+  }
+  body > header > nav ul.main-nav li img.logo {
+    height: 40px;
+  }
   body > header > nav span.doc-search {
     /* Render the search bar on its own line */
     display: block;
     /* Give the results a relative parent for positioning */
     position: relative;
-    margin: 10px 20px 0; }
+    margin: 10px 20px 0;
+  }
+
+  body.docs > header ul li#mobile-menu {
+    display: inline-block;
+    position: absolute;
+    right: 10px;
+    top: -5px;
+    font-size: 3em;
+    line-height: normal;
+  }
+  body.docs > main article h1, body.docs > main article h2, body.docs > main article h3, body.docs > main article h4, body.docs > main article h5 {
+    /* Make sure that tapping a link to a doc section makes the header visible from underneath the main nav */
+    padding-top: 110px;
+    margin-top: -100px;
+    margin-bottom: 0;
+  }
 
   body > footer {
     /* Gradient looks strange on small screens */
-    background: #f7f7f7; } }
+    background: #f7f7f7;
+  }
+
+  #gray-out {
+    /*display: none;*/
+    visibility: hidden;
+    background: rgba(0, 0, 0, 0);
+    position: fixed;
+    /* We want this to appear just below the main nav.  The additional 20px is the padding in the nav bar. */
+    top: 60px;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1;
+  }
+}
 /* Full experience site settings */
 @media screen and (min-device-width: 1024px) {
   body.home > main pre {
     width: 700px;
-    margin: 0 auto; }
+    margin: 0 auto;
+  }
 
   #sidebar-main-nav {
-    display: none; }
+    display: none;
+  }
 
   /* Don't display the sidebar on non-doc pages */
   body:not(.docs) nav.sidebar {
-    display: none; }
+    display: none;
+  }
 
   body > header {
-    border-bottom: 1px solid #ddd; }
-    body > header nav ul.main-nav li img.logo {
-      height: 60px; }
-    body > header nav span.doc-search {
-      display: inline-block;
-      position: absolute;
-      right: 0;
-      bottom: 20px;
-      width: 40%; }
+    border-bottom: 1px solid #ddd;
+    height: 80px;
+  }
+  body > header nav ul.main-nav li:nth-child(1), body > header nav ul.main-nav li:nth-child(2) {
+    /* The selector would need to be reworked if we add more links.  We don't care about padding against the mobile menu item. */
+    padding-right: 1em;
+  }
+  body > header nav ul.main-nav li#mobile-menu {
+    display: none;
+  }
+  body > header nav ul.main-nav li img.logo {
+    height: 60px;
+  }
+  body > header nav span.doc-search {
+    display: inline-block;
+    position: absolute;
+    right: 0;
+    bottom: 20px;
+    width: 40%;
+  }
 
   body.docs > main article {
     margin: 0 0 0 230px;
     padding: 20px 0 10px 60px;
-    width: 750px; }
+    width: 750px;
+  }
+  body.docs > main article h1, body.docs > main article h2, body.docs > main article h3, body.docs > main article h4, body.docs > main article h5 {
+    /* Make sure that tapping a link to a doc section makes the header visible from underneath the main nav */
+    padding-top: 80px;
+    margin-top: -80px;
+  }
 
+  body > main {
+    padding-top: 80px;
+  }
   body > main nav.sidebar {
     position: absolute;
-    top: 0;
+    top: 80px;
     bottom: 0;
     padding: 20px 10px 10px 0;
     float: left;
     width: 230px;
-    border-right: 1px solid #ddd; } }
+    border-right: 1px solid #ddd;
+  }
+
+  #gray-out {
+    display: none;
+  }
+}
 @media screen and (min-device-height: 650px) {
   main {
-    min-height: 300px; } }
+    min-height: 300px;
+  }
+}
 
 /*# sourceMappingURL=style.css.map */
