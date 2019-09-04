@@ -62,15 +62,19 @@ final class DocumentationService
     /**
      * Builds our documentation, which includes cloning it, compiling the Markdown, and indexing it
      *
+     * @param bool $skipIndexing Whether or not we want to skip the indexing portion of building the docs
      * @throws FileSystemException Thrown if there was an error reading or writing to the file system
      * @throws IndexingFailedException Thrown if there was an error creating an index
      */
-    public function buildDocs(): void
+    public function buildDocs(bool $skipIndexing = false): void
     {
         $markdownFilesByBranch = $this->downloader->downloadDocs();
         $htmlFilesByBranch = $this->createHtmlDocs($markdownFilesByBranch);
-        $htmlFilesToIndex = $htmlFilesByBranch[$this->metadata->getDefaultVersion()];
-        $this->searchIndex->buildSearchIndex($htmlFilesToIndex);
+
+        if (!$skipIndexing) {
+            $htmlFilesToIndex = $htmlFilesByBranch[$this->metadata->getDefaultVersion()];
+            $this->searchIndex->buildSearchIndex($htmlFilesToIndex);
+        }
     }
 
     /**
@@ -108,6 +112,8 @@ final class DocumentationService
             foreach ($markdownFiles as $markdownFile) {
                 $htmlDocFilename = "$branchDocDir/{$this->files->getFileName($markdownFile)}.html";
                 $html = $this->markdownParser->text($this->files->read($markdownFile));
+                // Rewrite the links to point to the HTML docs on the site
+                $html = preg_replace('/<a href="([^"]+)\.md(#[^"]+)?"/', '<a href="$1.html$2"', $html);
                 $this->files->write($htmlDocFilename, $html);
                 $htmlFiles[$branch][] = $htmlDocFilename;
             }

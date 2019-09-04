@@ -41,7 +41,7 @@ final class BuildDocsCommandHandler implements ICommandHandler
     public function handle(Input $input, IOutput $output)
     {
         try {
-            $this->docs->buildDocs();
+            $this->docs->buildDocs(array_key_exists('skip-indexing', $input->options));
             $output->writeln('<success>Documentation built</success>');
         } catch (FileSystemException | IndexingFailedException $ex) {
             $output->writeln('<fatal>Failed to build docs</fatal>');

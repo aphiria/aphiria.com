@@ -17,4 +17,6 @@ To run this site locally, you must:
 * Edit your hosts file to be able to run the website and API
   * For *nix users, add `127.0.0.1 api.localhost` to _/etc/hosts_
   * For Windows users, add `127.0.0.1 api.localhost` to _C:\Windows\System32\drivers\etc\hosts_
+* Run `php aphiria docs:build` to build the documentation
+* Run `php aphiria views:build` to build the views
 * Run `php aphiria app:serve` to start the website and API

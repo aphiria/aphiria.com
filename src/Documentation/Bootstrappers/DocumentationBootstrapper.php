@@ -36,7 +36,7 @@ final class DocumentationBootstrapper extends Bootstrapper
         ]);
         $container->bindInstance(DocumentationMetadata::class, $metadata);
         $searchIndex = new PostgreSqlSearchIndex(
-            $_ENV['DOC_TOKENS_TABLE_NAME'],
+            $_ENV['DOC_LEXEMES_TABLE_NAME'],
             $container->resolve(IConnection::class),
             "/docs/{$metadata->getDefaultVersion()}/",
             __DIR__ . '/../../../.env'

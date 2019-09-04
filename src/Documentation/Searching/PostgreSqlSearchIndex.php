@@ -39,7 +39,7 @@ final class PostgreSqlSearchIndex implements ISearchIndex
         'blockquote' => 'D'
     ];
     /** @var string The name of the table to point to (MUST BE SECURE BECAUSE IT'S USED DIRECTLY IN QUERIES) */
-    private string $tokenTableName;
+    private string $lexemeTableName;
     /** @var IConnection The DB connection to use */
     private IConnection $connection;
     /** @var string The prefix to use for al links that are generated */
@@ -50,14 +50,14 @@ final class PostgreSqlSearchIndex implements ISearchIndex
     private FileSystem $files;
 
     /**
-     * @param string $tokenTableName The name of the table to point to (MUST BE SECURE BECAUSE IT'S USED DIRECTLY IN QUERIES)
+     * @param string $lexemeTableName The name of the table to point to (MUST BE SECURE BECAUSE IT'S USED DIRECTLY IN QUERIES)
      * @param IConnection $connection The DB connection to use
      * @param string $linkPrefix The prefix to use for all links that are generated
      * @param string $envPath The path to the .env file to update whenever we build the search index
      */
-    public function __construct(string $tokenTableName, IConnection $connection, string $linkPrefix, string $envPath)
+    public function __construct(string $lexemeTableName, IConnection $connection, string $linkPrefix, string $envPath)
     {
-        $this->tokenTableName = $tokenTableName;
+        $this->lexemeTableName = $lexemeTableName;
         $this->connection = $connection;
         $this->linkPrefix = $linkPrefix;
         $this->envPath = $envPath;
@@ -141,21 +141,22 @@ final class PostgreSqlSearchIndex implements ISearchIndex
         $tsHeadlineOptions = 'StartSel=<em>, StopSel=</em>';
         $statement = $this->connection->prepare(<<<EOF
 (SELECT link, html_element_type, rank, ts_headline('english', h1_inner_text, query, '{$tsHeadlineOptions}') as h1_highlights, ts_headline('english', h2_inner_text, query, '{$tsHeadlineOptions}') as h2_highlights, ts_headline('english', h3_inner_text, query, '{$tsHeadlineOptions}') as h3_highlights, ts_headline('english', h4_inner_text, query, '{$tsHeadlineOptions}') as h4_highlights, ts_headline('english', h5_inner_text, query, '{$tsHeadlineOptions}') as h5_highlights, ts_headline('english', inner_text, query, '{$tsHeadlineOptions}') as inner_text_highlights
-FROM (SELECT link, html_element_type, h1_inner_text, h2_inner_text, h3_inner_text, h4_inner_text, h5_inner_text, inner_text, ts_rank_cd(english_tokens, query) AS rank, query
-        FROM {$this->tokenTableName}, plainto_tsquery('english', :query) AS query
-        WHERE english_tokens @@ query
+FROM (SELECT link, html_element_type, h1_inner_text, h2_inner_text, h3_inner_text, h4_inner_text, h5_inner_text, inner_text, ts_rank_cd(english_lexemes, query) AS rank, query
+        FROM {$this->lexemeTableName}, plainto_tsquery('english', :query) AS query
+        WHERE english_lexemes @@ query
         ORDER BY rank DESC
         LIMIT :maxResults) AS english_matching_query)
 UNION
 (SELECT link, html_element_type, rank, ts_headline(h1_inner_text, query, '{$tsHeadlineOptions}') as h1_highlights, ts_headline(h2_inner_text, query, '{$tsHeadlineOptions}') as h2_highlights, ts_headline(h3_inner_text, query, '{$tsHeadlineOptions}') as h3_highlights, ts_headline(h4_inner_text, query, '{$tsHeadlineOptions}') as h4_highlights, ts_headline(h5_inner_text, query, '{$tsHeadlineOptions}') as h5_highlights, ts_headline(inner_text, query, '{$tsHeadlineOptions}') as inner_text_highlights
-    FROM (SELECT link, html_element_type, h1_inner_text, h2_inner_text, h3_inner_text, h4_inner_text, h5_inner_text, inner_text, ts_rank_cd(simple_tokens, query) AS rank, query
-          FROM {$this->tokenTableName}, (SELECT (SELECT (array_to_string(string_to_array(:query, ' '), ':* & ') || ':*'))::tsquery AS query) AS query
-          WHERE simple_tokens @@ query
+    FROM (SELECT link, html_element_type, h1_inner_text, h2_inner_text, h3_inner_text, h4_inner_text, h5_inner_text, inner_text, ts_rank_cd(simple_lexemes, query) AS rank, query
+          FROM {$this->lexemeTableName}, (SELECT (SELECT (array_to_string(string_to_array(:query, ' '), ':* & ') || ':*'))::tsquery AS query) AS query
+          WHERE simple_lexemes @@ query
           ORDER BY rank DESC
           LIMIT :maxResults) AS non_english_matching_query)
 ORDER BY rank DESC
 LIMIT :maxResults
-EOF);
+EOF
+        );
         // The query must be lower cased for our full text search to work appropriately
         $statement->bindValues([
             'query' => \mb_strtolower($query),
@@ -189,10 +190,10 @@ EOF);
     private function createAndSeedTable(array $indexEntries): void
     {
         /**
-         * Update the current token table name (limited to 8 chars so we don't go over PostgreSQL name length limits).
+         * Update the current lexeme table name (limited to 8 chars so we don't go over PostgreSQL name length limits).
          * This is done so that reindexing the website only impacts this instance of the site.
          */
-        $this->tokenTableName = 'tokens_' . substr(hash('sha256', \random_bytes(32)), 0, 8);
+        $this->lexemeTableName = 'lexemes_' . substr(hash('sha256', \random_bytes(32)), 0, 8);
         $this->connection->beginTransaction();
         $this->createTable();
 
@@ -200,7 +201,7 @@ EOF);
             $this->insertIndexEntry($indexEntry);
         }
 
-        $this->updateTokens();
+        $this->updateLexemes();
         $this->createTableIndices();
         $this->connection->commit();
         $this->updateEnvFile();
@@ -270,7 +271,7 @@ EOF);
     private function createTable(): void
     {
         $statement = $this->connection->prepare(<<<EOF
-CREATE TABLE {$this->tokenTableName} (
+CREATE TABLE {$this->lexemeTableName} (
     id serial primary key,
     h1_inner_text TEXT,
     h2_inner_text TEXT,
@@ -281,11 +282,11 @@ CREATE TABLE {$this->tokenTableName} (
     html_element_type TEXT NOT NULL,
     inner_text TEXT NOT NULL,
     html_element_weight CHAR NOT NULL,
-    english_tokens tsvector,
-    simple_tokens tsvector
+    english_lexemes tsvector,
+    simple_lexemes tsvector
 )
 EOF
-);
+        );
         $statement->execute();
     }
 
@@ -295,12 +296,12 @@ EOF
     private function createTableIndices(): void
     {
         $statement = $this->connection->prepare(<<<EOF
-CREATE INDEX {$this->tokenTableName}_english_token_idx ON {$this->tokenTableName} USING gin(english_tokens)
+CREATE INDEX {$this->lexemeTableName}_english_lexeme_idx ON {$this->lexemeTableName} USING gin(english_lexemes)
 EOF
-);
+        );
         $statement->execute();
         $statement = $this->connection->prepare(<<<EOF
-CREATE INDEX {$this->tokenTableName}_simple_token_idx ON {$this->tokenTableName} USING gin(simple_tokens)
+CREATE INDEX {$this->lexemeTableName}_simple_lexeme_idx ON {$this->lexemeTableName} USING gin(simple_lexemes)
 EOF
         );
         $statement->execute();
@@ -314,7 +315,7 @@ EOF
     private function insertIndexEntry(IndexEntry $indexEntry): void
     {
         $statement = $this->connection->prepare(<<<EOF
-INSERT INTO {$this->tokenTableName} (h1_inner_text, h2_inner_text, h3_inner_text, h4_inner_text, h5_inner_text, link, html_element_type, inner_text, html_element_weight) 
+INSERT INTO {$this->lexemeTableName} (h1_inner_text, h2_inner_text, h3_inner_text, h4_inner_text, h5_inner_text, link, html_element_type, inner_text, html_element_weight) 
 VALUES (:h1InnerText, :h2InnerText, :h3InnerText, :h4InnerText, :h5InnerText, :link, :htmlElementType, :innerText, :htmlElementWeight)
 EOF
         );
@@ -340,17 +341,21 @@ EOF
     private function updateEnvFile(): void
     {
         $currEnvContents = $this->files->read($this->envPath);
-        $newContents = \preg_replace('/DOC_TOKENS_TABLE_NAME=[^\r\n]+/', "DOC_TOKENS_TABLE_NAME={$this->tokenTableName}", $currEnvContents);
+        $newContents = \preg_replace(
+            '/DOC_LEXEMES_TABLE_NAME=[^\r\n]+/',
+            "DOC_LEXEMES_TABLE_NAME={$this->lexemeTableName}",
+            $currEnvContents
+        );
         $this->files->write($this->envPath, $newContents);
     }
 
     /**
-     * Updates the tokens in all our rows
+     * Updates the lexemes in all our rows
      */
-    private function updateTokens(): void
+    private function updateLexemes(): void
     {
         $statement = $this->connection->prepare(<<<EOF
-UPDATE {$this->tokenTableName} SET english_tokens = setweight(to_tsvector('english', COALESCE(inner_text, '')), html_element_weight::"char"), simple_tokens = setweight(to_tsvector(COALESCE(inner_text, '')), html_element_weight::"char")
+UPDATE {$this->lexemeTableName} SET english_lexemes = setweight(to_tsvector('english', COALESCE(inner_text, '')), html_element_weight::"char"), simple_lexemes = setweight(to_tsvector(COALESCE(inner_text, '')), html_element_weight::"char")
 EOF
         );
         $statement->execute();
