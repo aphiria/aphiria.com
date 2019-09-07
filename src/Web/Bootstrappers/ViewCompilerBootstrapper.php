@@ -30,7 +30,8 @@ final class ViewCompilerBootstrapper extends Bootstrapper
         $viewCompiler = new ViewCompiler(
             __DIR__ . '/../../../resources/views',
             __DIR__ . '/../../../public-web',
-            $container->resolve(DocumentationMetadata::class)
+            $container->resolve(DocumentationMetadata::class),
+            $_ENV['APP_API_URL']
         );
         $container->bindInstance(ViewCompiler::class, $viewCompiler);
     }

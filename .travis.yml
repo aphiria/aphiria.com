@@ -5,7 +5,7 @@ php:
 
 # Need to make sure we're using the right environment variables when compiling the views on Travis CI
 env:
-  - APP_ENV=production APP_WEB_URL=https://www.aphiria.com APP_API_URL=https://api.aphiria.com
+  - APP_WEB_URL=https://www.aphiria.com APP_API_URL=https://api.aphiria.com
 
 # Deploy the key to tmp so that it doesn't get deployed by accident
 before_install:

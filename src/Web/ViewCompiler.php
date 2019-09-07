@@ -27,22 +27,27 @@ final class ViewCompiler
     private string $compiledViewPath;
     /** @var DocumentationMetadata The doc metadata */
     private DocumentationMetadata $docMetadata;
+    /** @var string The URI to the API */
+    private string $apiUri;
     /** @var FileSystem The file helper */
     private FileSystem $files;
 
     /**
      * @param string $rawViewPath The path to our raw views
      * @param string $compiledViewPath The path to store our compiled views
+     * @param string $apiUri The URI to the API
      * @param DocumentationMetadata $docMetadata The doc metadata
      */
     public function __construct(
         string $rawViewPath,
         string $compiledViewPath,
-        DocumentationMetadata $docMetadata
+        DocumentationMetadata $docMetadata,
+        string $apiUri
     ) {
         $this->rawViewPath = $rawViewPath;
         $this->compiledViewPath = $compiledViewPath;
         $this->docMetadata = $docMetadata;
+        $this->apiUri = $apiUri;
         $this->files = new FileSystem();
     }
 
@@ -94,7 +99,7 @@ final class ViewCompiler
         $headContents = $this->files->read("{$this->rawViewPath}/partials/head.html");
         $compiledHeadContents = $this->compileTag('metadataKeywords', implode(',', $metadataKeywords), $headContents);
         $compiledHeadContents = $this->compileTag('metadataDescription', $metadataDescription, $compiledHeadContents);
-        $compiledHeadContents = $this->compileTag('apiUri', $_ENV['APP_API_URL'], $compiledHeadContents);
+        $compiledHeadContents = $this->compileTag('apiUri', $this->apiUri, $compiledHeadContents);
         $compiledPageContents = $this->compileTag('head', $compiledHeadContents, $pageContents);
 
         // Compile the main nav
