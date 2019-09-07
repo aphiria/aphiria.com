@@ -159,7 +159,7 @@ EOF
         );
         // The query must be lower cased for our full text search to work appropriately
         $statement->bindValues([
-            'query' => \mb_strtolower($query),
+            'query' => \mb_strtolower(trim($query)),
             'maxResults' => self::MAX_NUM_SEARCH_RESULTS
         ]);
         $statement->execute();
