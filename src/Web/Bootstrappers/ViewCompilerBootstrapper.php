@@ -32,7 +32,7 @@ final class ViewCompilerBootstrapper extends Bootstrapper
             __DIR__ . '/../../../public-web',
             $container->resolve(DocumentationMetadata::class),
             // $_ENV does not get populated from a CI server
-            $_ENV['APP_API_URL'] ?? $_SERVER['APP_URI_URL']
+            $_ENV['APP_API_URL'] ?? $_SERVER['APP_API_URL']
         );
         $container->bindInstance(ViewCompiler::class, $viewCompiler);
     }
