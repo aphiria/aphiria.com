@@ -20,6 +20,8 @@ use App\Databases\Bootstrappers\SqlBootstrapper;
 use App\Documentation\Bootstrappers\DocumentationBootstrapper;
 use App\Documentation\Console\Commands\BuildDocsCommand;
 use App\Documentation\Console\Commands\BuildDocsCommandHandler;
+use App\Documentation\Console\Commands\IndexDocsCommand;
+use App\Documentation\Console\Commands\IndexDocsCommandHandler;
 
 /**
  * Defines the documentation module builder
@@ -51,6 +53,10 @@ final class DocumentationModuleBuilder implements IModuleBuilder
             $commands->registerCommand(
                 new BuildDocsCommand(),
                 fn () => $this->container->resolve(BuildDocsCommandHandler::class)
+            );
+            $commands->registerCommand(
+                new IndexDocsCommand(),
+                fn () => $this->container->resolve(IndexDocsCommandHandler::class)
             );
         });
     }

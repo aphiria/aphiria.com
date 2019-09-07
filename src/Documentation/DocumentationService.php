@@ -60,21 +60,33 @@ final class DocumentationService
     }
 
     /**
-     * Builds our documentation, which includes cloning it, compiling the Markdown, and indexing it
+     * Builds our documentation, which includes cloning it and compiling the Markdown
      *
-     * @param bool $skipIndexing Whether or not we want to skip the indexing portion of building the docs
      * @throws FileSystemException Thrown if there was an error reading or writing to the file system
-     * @throws IndexingFailedException Thrown if there was an error creating an index
      */
-    public function buildDocs(bool $skipIndexing = false): void
+    public function buildDocs(): void
     {
         $markdownFilesByBranch = $this->downloader->downloadDocs();
-        $htmlFilesByBranch = $this->createHtmlDocs($markdownFilesByBranch);
+        $this->createHtmlDocs($markdownFilesByBranch);
+    }
 
-        if (!$skipIndexing) {
-            $htmlFilesToIndex = $htmlFilesByBranch[$this->metadata->getDefaultVersion()];
-            $this->searchIndex->buildSearchIndex($htmlFilesToIndex);
+    /**
+     * Indexes our docs for searching
+     *
+     * @throws IndexingFailedException Thrown if there was an error creating an index
+     * @throws FileSystemException Thrown if there was an error reading or writing to the file system
+     */
+    public function indexDocs(): void
+    {
+        // Only index the default version
+        $htmlDocPath = "{$this->htmlDocPath}/{$this->metadata->getDefaultVersion()}";
+
+        if (!$this->files->exists($htmlDocPath)) {
+            $this->buildDocs();
         }
+
+        $htmlFilesToIndex = $this->files->glob("$htmlDocPath/*.html");
+        $this->searchIndex->buildSearchIndex($htmlFilesToIndex);
     }
 
     /**

@@ -64,7 +64,7 @@ window.addEventListener('load', loadEvent => {
                                     linkInnerHtml += ` > <h3>${searchResult.highlightedH3}</h3>`
                                 }
 
-                                if (searchResult.htmlElementType !== 'h4' && searchResult.highlightedH4 !== null) {
+                                if (searchResult.htmlElementType !== 'h4' && searchResult.highlightedH4 != null) {
                                     linkInnerHtml += ` > <h4>${searchResult.highlightedH4}</h4>`
                                 }
 

@@ -6,7 +6,12 @@
 /composer.lock
 /composer.phar
 /nbproject/
+/node_modules/
+/package-lock.json
 /public-web/docs/
 /public-web/index.html
+/public-web/rev-manifest.json
 /phpunit.phar
 /vendor/
+/yarn.lock
+/yarn-error.log

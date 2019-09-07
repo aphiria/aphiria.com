@@ -17,11 +17,13 @@ git:
   depth: false
 
 before_script:
-  - composer self-update
   - composer install
   - composer dump-autoload -o
   - chmod -R 755 resources
   - chmod -R 755 tmp
+  - yarn install
+  - php aphiria docs:build
+  - gulp build
 
 script:
   - vendor/bin/phpunit --verbose

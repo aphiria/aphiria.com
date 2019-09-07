@@ -12,7 +12,6 @@ declare(strict_types=1);
 
 namespace App\Documentation\Console\Commands;
 
-use Aphiria\Console\Commands\ICommandBus;
 use Aphiria\Console\Commands\ICommandHandler;
 use Aphiria\Console\Input\Input;
 use Aphiria\Console\Output\IOutput;
@@ -21,23 +20,19 @@ use App\Documentation\DocumentationService;
 use App\Documentation\Searching\IndexingFailedException;
 
 /**
- * Defines the command handler for doc building
+ * Defines the command handler for indexing docs
  */
-final class BuildDocsCommandHandler implements ICommandHandler
+final class IndexDocsCommandHandler implements ICommandHandler
 {
     /** @var DocumentationService The doc service */
     private DocumentationService $docs;
-    /** @var ICommandBus What we can use to call other commands */
-    private ICommandBus $commands;
 
     /**
      * @param DocumentationService $docs The doc service
-     * @param ICommandBus $commands What we can use to call other commands
      */
-    public function __construct(DocumentationService $docs, ICommandBus $commands)
+    public function __construct(DocumentationService $docs)
     {
         $this->docs = $docs;
-        $this->commands = $commands;
     }
 
     /**
@@ -46,12 +41,10 @@ final class BuildDocsCommandHandler implements ICommandHandler
     public function handle(Input $input, IOutput $output)
     {
         try {
-            $this->docs->buildDocs();
-            $output->writeln('<success>Documentation built</success>');
-            // Building our docs should always result in rebuilding the views
-            $this->commands->handle('views:build', $output);
+            $this->docs->indexDocs();
+            $output->writeln('<success>Docs indexed</success>');
         } catch (FileSystemException | IndexingFailedException $ex) {
-            $output->writeln('<fatal>Failed to build docs</fatal>');
+            $output->writeln('<fatal>Failed to index docs</fatal>');
             $output->writeln("<info>{$ex->getMessage()}</info>");
         }
     }
