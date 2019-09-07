@@ -3,6 +3,7 @@
         "del": "latest",
         "gulp": "latest",
         "gulp-clean-css": "latest",
+        "gulp-cli": "latest",
         "gulp-concat": "latest",
         "gulp-rev": "latest",
         "gulp-rev-rewrite": "latest",
