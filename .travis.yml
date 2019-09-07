@@ -3,6 +3,10 @@ language: php
 php:
   - 7.4snapshot
 
+# Need to make sure we're using the right environment variables when compiling the views on Travis CI
+env:
+  - APP_ENV=production APP_WEB_URL=https://www.aphiria.com APP_API_URL=https://api.aphiria.com
+
 # Deploy the key to tmp so that it doesn't get deployed by accident
 before_install:
   - openssl aes-256-cbc -K $encrypted_7a7d370247be_key -iv $encrypted_7a7d370247be_iv -in ./bin/deploy_rsa.enc -out /tmp/deploy_rsa -d
