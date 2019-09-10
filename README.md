@@ -17,7 +17,6 @@ To run this site locally, you must:
 * [Install Yarn](https://yarnpkg.com/lang/en/docs/install)
 * Run `yarn install` to install JavaScript dependencies
 * Run `composer install` to install PHP dependencies
-* Run `php aphiria docs:build` to download and build the documentation
 * Run `gulp build` to build all of our assets and pages
   * You can also set up [file watchers](https://www.jetbrains.com/help/phpstorm/settings-tools-startup-tasks.html) to automate the running of gulp commands when assets are updated by configuring your IDE to run `gulp watch-assets` at startup
 * Run `php aphiria docs:index` to index the documentation for searchability

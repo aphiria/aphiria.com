@@ -82,8 +82,9 @@ gulp.task('rewrite-references', rewriteReferences);
 gulp.task('minify-js', gulp.series(cleanJs, minifyJs, rewriteReferences));
 gulp.task('minify-css', gulp.series(cleanCss, minifyCss, rewriteReferences));
 gulp.task('compile-scss', compileScss);
+gulp.task('download-docs', shell.task('php aphiria docs:build'));
 gulp.task('build-views', gulp.series(shell.task('php aphiria views:build'), rewriteReferences));
-gulp.task('build', gulp.series('build-views', 'compile-scss', 'minify-js', 'minify-css', 'rewrite-references'));
+gulp.task('build', gulp.series('download-docs', 'build-views', 'compile-scss', 'minify-js', 'minify-css', 'rewrite-references'));
 gulp.task('watch-assets', () => {
     gulp.watch(`${paths.resourcesCss}/*.scss`, gulp.series('compile-scss'));
     gulp.watch(`${paths.resourcesJs}/*.js`, gulp.series('minify-js'));
