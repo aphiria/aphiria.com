@@ -246,6 +246,7 @@ body > footer {
     margin: 0 5%;
     background: linear-gradient(.25turn, #fff 0%, $footerBackgroundColor 10%, $footerBackgroundColor 90%, #fff 100%);
     border-top: 1px solid #ddd;
+    color: #555;
 
     & > nav > ul li {
         display: inline-block;
@@ -526,6 +527,9 @@ blockquote {
         nav {
             ul.main-nav {
                 li {
+                    /* The text is pretty large on large screens, so reduce the weight */
+                    font-weight: 200;
+
                     &:nth-child(1), &:nth-child(2) {
                         /* The selector would need to be reworked if we add more links.  We don't care about padding against the mobile menu item. */
                         padding-right: 1em;

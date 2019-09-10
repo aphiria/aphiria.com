@@ -163,7 +163,8 @@ body > footer {
   padding: 20px;
   margin: 0 5%;
   background: linear-gradient(0.25turn, #fff 0%, #f7f7f7 10%, #f7f7f7 90%, #fff 100%);
-  border-top: 1px solid #ddd; }
+  border-top: 1px solid #ddd;
+  color: #555; }
   body > footer > nav > ul li {
     display: inline-block; }
 
@@ -345,13 +346,16 @@ blockquote {
   body > header {
     border-bottom: 1px solid #ddd;
     height: 80px; }
-    body > header nav ul.main-nav li:nth-child(1), body > header nav ul.main-nav li:nth-child(2) {
-      /* The selector would need to be reworked if we add more links.  We don't care about padding against the mobile menu item. */
-      padding-right: 1em; }
-    body > header nav ul.main-nav li#mobile-menu {
-      display: none; }
-    body > header nav ul.main-nav li img.logo {
-      height: 60px; }
+    body > header nav ul.main-nav li {
+      /* The text is pretty large on large screens, so reduce the weight */
+      font-weight: 200; }
+      body > header nav ul.main-nav li:nth-child(1), body > header nav ul.main-nav li:nth-child(2) {
+        /* The selector would need to be reworked if we add more links.  We don't care about padding against the mobile menu item. */
+        padding-right: 1em; }
+      body > header nav ul.main-nav li#mobile-menu {
+        display: none; }
+      body > header nav ul.main-nav li img.logo {
+        height: 60px; }
     body > header nav span.doc-search {
       display: inline-block;
       position: absolute;
