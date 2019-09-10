@@ -1,5 +1,5 @@
 $fullExperienceSiteWidth: 1024px;
-$baseFontColor: #111;
+$baseFontColor: #000;
 $docSidebarWidth: 230px;
 $fontSize: 16px;
 $codeBackgroundColor: #f9f9f9;
@@ -66,7 +66,7 @@ a {
     }
 
     &:hover {
-        color: #111;
+        color: $baseFontColor;
     }
 }
 

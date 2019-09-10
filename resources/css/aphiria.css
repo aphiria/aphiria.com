@@ -5,7 +5,7 @@ html {
   font-family: 'Segoe UI', arial, sans-serif;
   font-size: 16px;
   line-height: 1.7;
-  color: #111;
+  color: #000;
   text-align: left;
   font-weight: 200;
   min-height: 500px;
@@ -44,7 +44,7 @@ a, a:link, a:active, a:visited {
   transition: all .3s ease; }
 
 a:hover {
-  color: #111; }
+  color: #000; }
 
 img {
   border: none; }
@@ -151,7 +151,7 @@ body > header {
           /* Make the results take up the entire list item */
           display: block;
           padding: 10px;
-          color: #111; }
+          color: #000; }
         body > header > nav span.doc-search ul.search-results li em {
           font-weight: 500;
           font-style: normal; }
