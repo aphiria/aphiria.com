@@ -26,7 +26,6 @@ before_script:
   - chmod -R 755 resources
   - chmod -R 755 tmp
   - yarn install
-  - php aphiria docs:build
   - yarn global add gulp
   - gulp build
 

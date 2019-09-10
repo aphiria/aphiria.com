@@ -1,15 +1,16 @@
 {
     "devDependencies": {
-        "del": "latest",
-        "gulp": "latest",
-        "gulp-clean-css": "latest",
-        "gulp-concat": "latest",
-        "gulp-rev": "latest",
-        "gulp-rev-rewrite": "latest",
-        "gulp-sass": "latest",
-        "gulp-sourcemaps": "latest",
-        "gulp-terser": "latest",
-        "merge-stream": "latest",
-        "node-sass": "latest"
+        "del": "^5.1.0",
+        "gulp": "^4.0.2",
+        "gulp-clean-css": "^4.2.0",
+        "gulp-concat": "^2.6.1",
+        "gulp-rev": "^9.0.0",
+        "gulp-rev-rewrite": "^2.0.0",
+        "gulp-sass": "^4.0.2",
+        "gulp-shell": "^0.7.1",
+        "gulp-sourcemaps": "^2.6.5",
+        "gulp-terser": "^1.2.0",
+        "merge-stream": "^2.0.0",
+        "node-sass": "^4.12.0"
     }
 }

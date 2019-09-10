@@ -9,6 +9,7 @@ const revRewrite = require('gulp-rev-rewrite');
 const del = require('del');
 const sass = require('gulp-sass');
 sass.compiler = require('node-sass');
+const shell = require('gulp-shell');
 const sourcemaps = require('gulp-sourcemaps');
 
 const paths = {
@@ -18,6 +19,7 @@ const paths = {
     'publicJs': 'public-web/js',
     'resourcesCss': 'resources/css',
     'resourcesJs': 'resources/js',
+    'resourcesViews': 'resources/views',
     'tmpCss': 'tmp/css',
     'tmpJs': 'tmp/js'
 };
@@ -80,9 +82,11 @@ gulp.task('rewrite-references', rewriteReferences);
 gulp.task('minify-js', gulp.series(cleanJs, minifyJs, rewriteReferences));
 gulp.task('minify-css', gulp.series(cleanCss, minifyCss, rewriteReferences));
 gulp.task('compile-scss', compileScss);
-gulp.task('build', gulp.series('compile-scss', 'minify-js', 'minify-css', 'rewrite-references'));
+gulp.task('build-views', gulp.series(shell.task('php aphiria views:build'), rewriteReferences));
+gulp.task('build', gulp.series('build-views', 'compile-scss', 'minify-js', 'minify-css', 'rewrite-references'));
 gulp.task('watch-assets', () => {
     gulp.watch(`${paths.resourcesCss}/*.scss`, gulp.series('compile-scss'));
     gulp.watch(`${paths.resourcesJs}/*.js`, gulp.series('minify-js'));
     gulp.watch(`${paths.resourcesCss}/*.css`, gulp.series('minify-css'));
+    gulp.watch(`${paths.resourcesViews}/**/*.html`, gulp.series('build-views'));
 });

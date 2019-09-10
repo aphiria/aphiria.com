@@ -40,6 +40,8 @@ ssh $SSH_USER@$SSH_HOST /bin/bash <<EOF
 cp -vrf $html_dir/.env $target_dir/.env
 sudo chown -R 48:48 $target_dir/resources
 sudo chown -R 48:48 $target_dir/tmp
+sudo chmod -R 755 $target_dir/resources
+sudo chmod -R 755 $target_dir/tmp
 php $target_dir/aphiria docs:index
 ln -snf $(readlink $html_dir/current) $html_dir/previous
 ln -snf $target_dir $html_dir/current

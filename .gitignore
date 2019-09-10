@@ -3,7 +3,6 @@
 /.idea/
 /.php_cs.cache
 /.phpunit.result.cache
-/composer.lock
 /composer.phar
 /nbproject/
 /node_modules/
@@ -13,5 +12,4 @@
 /public-web/rev-manifest.json
 /phpunit.phar
 /vendor/
-/yarn.lock
 /yarn-error.log
