@@ -1,11 +1,12 @@
 'use strict';
 
 const gulp = require('gulp');
+const fs = require('fs');
 const rev = require('gulp-rev');
+const replace = require('gulp-replace');
 const uglifyJs = require('gulp-terser');
 const uglifyCss = require('gulp-clean-css');
 const concat = require('gulp-concat');
-const revRewrite = require('gulp-rev-rewrite');
 const del = require('del');
 const sass = require('gulp-sass');
 sass.compiler = require('node-sass');
@@ -25,11 +26,21 @@ const paths = {
 };
 
 const rewriteReferences = () => {
-    const manifest = gulp.src(paths.manifest, { allowEmpty: true });
+    // My hard-coded solution to rewriting references using a manifest file
+    if (!fs.existsSync(paths.manifest)) {
+        throw `${paths.manifest} does not exist.  Try running gulp build first.`
+    }
 
-    // Rewrite references to our scripts using the versioned paths
+    let manifest = JSON.parse(fs.readFileSync(paths.manifest, 'utf8'));
+
     return gulp.src(`${paths.public}/**/*.html`)
-        .pipe(revRewrite({ manifest }))
+        .pipe(replace(/"((\/css\/styles(-[0-9a-zA-Z]+)?\.min\.css)|(\/js\/scripts(-[0-9a-zA-Z]+)?\.min\.js))"/g, (match) => {
+            if (/^"\/css/.test(match)) {
+                return `"/css/${manifest["styles.min.css"]}"`;
+            }
+
+            return `"/js/${manifest["scripts.min.js"]}"`;
+        }))
         .pipe(gulp.dest(paths.public));
 };
 const minifyJs = () => {
@@ -50,13 +61,13 @@ const minifyJs = () => {
 };
 const minifyCss = () => {
     return gulp.src(`${paths.resourcesCss}/*.css`)
-        // Create a minified, concatenated CSS file
+        // Create a minified, concatenated JS file
         .pipe(sourcemaps.init())
         .pipe(concat('styles.min.css'))
         .pipe(gulp.dest(paths.tmpCss))
         .pipe(uglifyCss())
         .pipe(gulp.dest(paths.tmpCss))
-        // Version our styles
+        // Version our scripts
         .pipe(rev())
         .pipe(sourcemaps.write('.'))
         .pipe(gulp.dest(paths.publicCss))
@@ -79,15 +90,17 @@ const cleanJs = () => {
 };
 
 gulp.task('rewrite-references', rewriteReferences);
-gulp.task('minify-js', gulp.series(cleanJs, minifyJs, rewriteReferences));
-gulp.task('minify-css', gulp.series(cleanCss, minifyCss, rewriteReferences));
+gulp.task('minify-js', gulp.series(cleanJs, minifyJs));
+gulp.task('minify-css', gulp.series(cleanCss, minifyCss));
 gulp.task('compile-scss', compileScss);
 gulp.task('download-docs', shell.task('php aphiria docs:build'));
-gulp.task('build-views', gulp.series(shell.task('php aphiria views:build'), rewriteReferences));
-gulp.task('build', gulp.series('download-docs', 'build-views', 'compile-scss', 'minify-js', 'minify-css', 'rewrite-references'));
+gulp.task('build-views', gulp.series(shell.task('php aphiria views:build')));
+// We intentionally build our assets first so that they're ready to be inserted into the built views
+gulp.task('build', gulp.series('compile-scss', 'minify-js', 'minify-css', 'download-docs', 'build-views', 'rewrite-references'));
 gulp.task('watch-assets', () => {
     gulp.watch(`${paths.resourcesCss}/*.scss`, gulp.series('compile-scss'));
     gulp.watch(`${paths.resourcesJs}/*.js`, gulp.series('minify-js'));
     gulp.watch(`${paths.resourcesCss}/*.css`, gulp.series('minify-css'));
-    gulp.watch(`${paths.resourcesViews}/**/*.html`, gulp.series('build-views'));
+    // When our raw views change, we want to also make sure we rewrite their references
+    gulp.watch(`${paths.resourcesViews}/**/*.html`, gulp.series('build-views', rewriteReferences));
 });
