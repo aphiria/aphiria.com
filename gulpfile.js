@@ -96,7 +96,7 @@ gulp.task('compile-scss', compileScss);
 gulp.task('download-docs', shell.task('php aphiria docs:build'));
 gulp.task('build-views', shell.task('php aphiria views:build'));
 // We intentionally build our assets first so that they're ready to be inserted into the built views
-gulp.task('build', gulp.series(compileScss, gulp.parallel('minify-js', 'minify-css'), 'download-docs', 'build-views', 'rewrite-references'));
+gulp.task('build', gulp.series(compileScss, 'minify-js', 'minify-css', 'download-docs', 'build-views', 'rewrite-references'));
 gulp.task('watch-assets', () => {
     // Purposely deferring rewriting of references to the .css watcher
     gulp.watch(`${paths.resourcesCss}/*.scss`, gulp.series(compileScss));
