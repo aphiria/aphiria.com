@@ -94,12 +94,12 @@ gulp.task('minify-js', gulp.series(cleanJs, minifyJs));
 gulp.task('minify-css', gulp.series(cleanCss, minifyCss));
 gulp.task('compile-scss', compileScss);
 gulp.task('download-docs', shell.task('php aphiria docs:build'));
-gulp.task('build-views', gulp.series(shell.task('php aphiria views:build')));
+gulp.task('build-views', shell.task('php aphiria views:build'));
 // We intentionally build our assets first so that they're ready to be inserted into the built views
-gulp.task('build', gulp.series('compile-scss', 'minify-js', 'minify-css', 'download-docs', 'build-views', 'rewrite-references'));
+gulp.task('build', gulp.series(compileScss, gulp.parallel('minify-js', 'minify-css'), 'download-docs', 'build-views', 'rewrite-references'));
 gulp.task('watch-assets', () => {
     // Purposely deferring rewriting of references to the .css watcher
-    gulp.watch(`${paths.resourcesCss}/*.scss`, gulp.series('compile-scss'));
+    gulp.watch(`${paths.resourcesCss}/*.scss`, gulp.series(compileScss));
     gulp.watch(`${paths.resourcesJs}/*.js`, gulp.series('minify-js', rewriteReferences));
     gulp.watch(`${paths.resourcesCss}/*.css`, gulp.series('minify-css', rewriteReferences));
     // When our raw views change, we want to also make sure we rewrite their references

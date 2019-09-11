@@ -36,7 +36,7 @@ final class DocumentationBootstrapper extends Bootstrapper
         ]);
         $container->bindInstance(DocumentationMetadata::class, $metadata);
         $searchIndex = new PostgreSqlSearchIndex(
-            $_ENV['DOC_LEXEMES_TABLE_NAME'],
+            getenv('DOC_LEXEMES_TABLE_NAME'),
             $container->resolve(IConnection::class),
             "/docs/{$metadata->getDefaultVersion()}/",
             __DIR__ . '/../../../.env'
@@ -90,6 +90,12 @@ final class DocumentationBootstrapper extends Bootstrapper
                     ]
                 ],
                 'HTTP Applications' => [
+                    'routing' => [
+                        'title' => 'Routing',
+                        'linkText' => 'Routing',
+                        'description' => 'Learn about creating an Aphiria router',
+                        'keywords' => ['aphiria', 'routing', 'router', 'http', 'php']
+                    ],
                     'http-requests' => [
                         'title' => 'HTTP Requests',
                         'linkText' => 'Requests',
@@ -101,12 +107,6 @@ final class DocumentationBootstrapper extends Bootstrapper
                         'linkText' => 'Responses',
                         'description' => 'Learn the basics of HTTP responses in Aphiria',
                         'keywords' => ['aphiria', 'http', 'responses', 'php']
-                    ],
-                    'routing' => [
-                        'title' => 'Routing',
-                        'linkText' => 'Routing',
-                        'description' => 'Learn about creating an Aphiria router',
-                        'keywords' => ['aphiria', 'routing', 'router', 'http', 'php']
                     ],
                     'controllers' => [
                         'title' => 'Controllers',
