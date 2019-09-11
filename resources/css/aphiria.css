@@ -201,7 +201,8 @@ body.docs > main article footer {
     font-size: .9em; }
 
 h2#coming-soon {
-  color: #aaa; }
+  color: #aaa;
+  margin: 75px 0; }
 
 pre[class*="language-"] {
   padding: 10px !important;
