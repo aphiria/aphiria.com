@@ -76,7 +76,7 @@ final class DocumentationBootstrapper extends Bootstrapper
                         'description' => 'Learn how to install Aphiria',
                         'keywords' => ['aphiria', 'install', 'php']
                     ],
-                    'configuration' => [
+                    'configuring' => [
                         'title' => 'Configuring',
                         'linkText' => 'Configuring',
                         'description' => 'Learn how to configure an Aphiria application',

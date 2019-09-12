@@ -62,7 +62,7 @@ a {
     &, &:link, &:active, &:visited {
         color: #07c;
         text-decoration: none;
-        transition: all .3s ease;
+        transition: color .3s ease;
     }
 
     &:hover {
@@ -169,6 +169,7 @@ body > header {
                 background: #fff;
                 z-index: 1;
                 padding: 0;
+                box-shadow: 2px 2px 5px #ddd;
 
                 li {
                     font-size: 0.9rem;
@@ -177,6 +178,11 @@ body > header {
 
                     a:hover {
                         background: #eef7ff;
+
+                        p, blockquote {
+                            /* Make the element less washed out looking when mousing over */
+                            background-color: #e0f0ff;
+                        }
                     }
 
                     h1, h2, h3, h4, h5, h6 {
