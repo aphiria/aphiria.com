@@ -15,7 +15,7 @@ window.addEventListener('load', loadEvent => {
         return false;
     };
 
-    // Close the sidebar when clicking on gray-out
+    // Close the mobile menu when clicking on gray-out
     if (document.getElementById('gray-out')) {
         document.getElementById('gray-out').onclick = () => {
             mobileMenu.close();

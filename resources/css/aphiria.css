@@ -4,7 +4,7 @@
 html {
   font-family: 'Segoe UI', arial, sans-serif;
   font-size: 16px;
-  line-height: 1.7;
+  line-height: 1.8;
   color: #000;
   text-align: left;
   font-weight: 350;
@@ -129,7 +129,7 @@ body > header {
           background: #eef7ff; }
           body > header > nav div.doc-search ul.search-results li a:hover p, body > header > nav div.doc-search ul.search-results li a:hover blockquote {
             /* Make the element less washed out looking when mousing over */
-            background-color: #e0f0ff; }
+            background-color: #e3f3ff; }
         body > header > nav div.doc-search ul.search-results li h1, body > header > nav div.doc-search ul.search-results li h2, body > header > nav div.doc-search ul.search-results li h3, body > header > nav div.doc-search ul.search-results li h4, body > header > nav div.doc-search ul.search-results li h5, body > header > nav div.doc-search ul.search-results li h6 {
           margin: 0; }
         body > header > nav div.doc-search ul.search-results li h1.search-result-text {
@@ -209,6 +209,11 @@ body.docs > main article {
     margin-top: 30px; }
     body.docs > main article footer a {
       font-size: .9em; }
+    body.docs > main article footer .edit-icon {
+      /* Necessary so we can transform the icon */
+      display: inline-block;
+      /* Set the edit icon to point to the lower left */
+      transform: rotateY(180deg); }
 
 h2#coming-soon {
   color: #aaa;
@@ -220,20 +225,21 @@ pre[class*="language-"] {
   border: 1px solid #e9e9e9 !important;
   position: relative !important;
   overflow: auto !important;
-  font-size: 0.8rem !important; }
+  font-size: 0.8rem !important;
+  line-height: 1.9 !important; }
 
 code {
   font-family: "Source Code Pro", monospace !important; }
 
 p code, li code {
-  background: #f9f9f9;
-  padding: 2px 5px;
-  font-size: 13px;
-  white-space: nowrap;
-  border: 1px solid #d9d9d9; }
+  background: #f9f9f9 !important;
+  padding: 2px 5px !important;
+  font-size: 13px !important;
+  white-space: nowrap !important;
+  border: 1px solid #d9d9d9 !important; }
 
 blockquote {
-  background: #eef9ff;
+  background: #e7f7ff;
   border: 1px solid #ccd9dd;
   padding: 10px;
   margin: 10px 30px; }
@@ -373,27 +379,32 @@ blockquote {
       right: 0;
       bottom: 20px;
       width: 40%; }
-  body.docs > main article {
-    margin: 0 0 0 230px;
-    padding: 20px 30px;
-    /* Fill up the remaining space */
-    width: calc(100% - 460px); }
-    body.docs > main article h1, body.docs > main article h2, body.docs > main article h3, body.docs > main article h4, body.docs > main article h5 {
-      /* Make sure that tapping a link to a doc section makes the header visible from underneath the main nav */
-      padding-top: 80px;
-      margin-top: -80px; }
-    body.docs > main article nav.toc-nav {
-      position: absolute;
-      right: 0;
-      width: 230px;
-      padding: 20px 0 10px 10px;
-      top: 80px;
-      bottom: 0;
-      overflow-y: auto;
-      border-left: 1px solid #ddd;
-      /* Need to make sure we're reusing the same border color as elsewhere */ }
   body > main {
     padding-top: 80px; }
+    body > main article {
+      margin: 0 0 0 230px;
+      padding: 20px 30px;
+      /* Fill up the remaining space */
+      width: calc(100% - 460px); }
+      body > main article h1, body > main article h2, body > main article h3, body > main article h4, body > main article h5 {
+        /* Make sure that tapping a link to a doc section makes the header visible from underneath the main nav */
+        padding-top: 80px;
+        margin-top: -80px; }
+      body > main article nav.toc-nav {
+        position: absolute;
+        right: 0;
+        width: 230px;
+        padding: 20px 0 10px 20px;
+        top: 80px;
+        bottom: 0;
+        overflow-y: auto;
+        border-left: 1px solid #ddd;
+        /* Need to make sure we're reusing the same border color as elsewhere */ }
+        body > main article nav.toc-nav ol, body > main article nav.toc-nav ul {
+          list-style: none; }
+        body > main article nav.toc-nav .toc-nav-contents > ol, body > main article nav.toc-nav .toc-nav-contents > ul {
+          /* We don't want to indent the first items */
+          padding: 10px 0; }
     body > main nav.doc-nav {
       position: absolute;
       top: 80px;
