@@ -19,7 +19,7 @@ use App\Documentation\DocumentationMetadata;
 use App\Documentation\DocumentationService;
 use App\Documentation\Searching\PostgreSqlSearchIndex;
 use Opulence\Databases\IConnection;
-use Parsedown;
+use ParsedownExtra;
 
 /**
  * Defines the bootstrapper for our documentation
@@ -41,11 +41,10 @@ final class DocumentationBootstrapper extends Bootstrapper
             "/docs/{$metadata->getDefaultVersion()}/",
             __DIR__ . '/../../../.env'
         );
-        $markdownParser = new Parsedown();
         $docs = new DocumentationService(
             $metadata,
             new DocumentationDownloader($metadata->getBranches(), __DIR__ . '/../../../tmp/docs'),
-            $markdownParser,
+            new ParsedownExtra(),
             $searchIndex,
             __DIR__ . '/../../../resources/views/partials/docs'
         );

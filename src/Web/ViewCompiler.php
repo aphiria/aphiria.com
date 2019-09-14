@@ -130,7 +130,7 @@ final class ViewCompiler
             $this->files->makeDirectory("{$this->compiledViewPath}/docs/$version");
 
             // Compile the doc side nav for each version
-            $sideNavSectionContents = $this->files->read("{$this->rawViewPath}/partials/doc-side-nav-section.html");
+            $sideNavSectionContents = $this->files->read("{$this->rawViewPath}/partials/doc-nav-section.html");
             $allCompiledSectionContents = '';
 
             foreach ($this->docMetadata->getDocSections($version) as $section => $docs) {
@@ -145,7 +145,7 @@ final class ViewCompiler
                 $allCompiledSectionContents .= $compiledSectionContents;
             }
 
-            $sideNavContents = $this->files->read("{$this->rawViewPath}/partials/doc-side-nav.html");
+            $sideNavContents = $this->files->read("{$this->rawViewPath}/partials/doc-nav.html");
             $compiledSideNav = $this->compileTag('sections', $allCompiledSectionContents, $sideNavContents);
 
             // Compile the page

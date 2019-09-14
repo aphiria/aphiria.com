@@ -5,6 +5,7 @@ $fontSize: 16px;
 $codeBackgroundColor: #f9f9f9;
 $inputVerticalPadding: 0.25em;
 $footerBackgroundColor: #f7f7f7;
+$pageSideMargin: 5%;
 
 * {
     box-sizing: border-box;
@@ -113,7 +114,7 @@ input {
 }
 
 body > header {
-    margin: 0 5%;
+    margin: 0 $pageSideMargin;
     position: fixed;
     left: 0;
     right: 0;
@@ -139,7 +140,7 @@ body > header {
             }
         }
 
-        span.doc-search {
+        div.doc-search {
             img.search-icon {
                 height: 20px;
                 position: absolute;
@@ -166,6 +167,7 @@ body > header {
                 border-width: 0 1px 1px 1px;
                 border-style: solid;
                 border-color: #ccc;
+                border-radius: 0 0 5px 5px;
                 background: #fff;
                 z-index: 1;
                 padding: 0;
@@ -249,7 +251,7 @@ body > header {
 body > footer {
     text-align: center;
     padding: 20px;
-    margin: 0 5%;
+    margin: 0 $pageSideMargin;
     background: linear-gradient(.25turn, #fff 0%, $footerBackgroundColor 10%, $footerBackgroundColor 90%, #fff 100%);
     border-top: 1px solid #ddd;
     color: #555;
@@ -260,11 +262,11 @@ body > footer {
 }
 
 body > main {
-    margin: 0 5%;
+    margin: 0 $pageSideMargin;
     position: relative;
     padding-bottom: 10px;
 
-    nav.sidebar {
+    nav.doc-nav {
         padding-top: 10px;
         overflow-y: auto;
 
@@ -301,6 +303,13 @@ body.docs > main article {
     h2, h3, h4, h5 {
         margin-bottom: 0;
         color: #555;
+    }
+
+    /* Make it clear what links leave the site */
+    a[target="_blank"]::after {
+        content: " [\1F855]";
+        font-size: 0.6em;
+        vertical-align: super;
     }
 
     footer {
@@ -385,7 +394,7 @@ blockquote {
     }
 
     body.nav-open {
-        nav.sidebar {
+        nav.doc-nav {
             -moz-transform: translate3d(-100%, 0, 0);
             -ms-transform: translate3d(-100%, 0, 0);
             -webkit-transform: translate3d(-100%, 0, 0);
@@ -411,7 +420,7 @@ blockquote {
         /* Account for both the main nav padding and search bar padding, and then pad a little extra so we're not right up against the search bar */
         padding: $headerHeight + 10px 10px 10px 10px;
 
-        nav.sidebar {
+        nav.doc-nav {
             position: fixed;
             border-left: 1px solid #f1f1f1;
             left: 100%;
@@ -458,7 +467,7 @@ blockquote {
             }
         }
 
-        span.doc-search {
+        div.doc-search {
             /* Render the search bar on its own line */
             display: block;
             /* Give the results a relative parent for positioning */
@@ -512,6 +521,7 @@ blockquote {
 @media screen and (min-device-width: $fullExperienceSiteWidth) {
     $headerLogoHeight: 60px;
     $headerHeight: $headerLogoHeight + 20px;
+    $pageBorderColor: #ddd;
 
     body.home > main pre {
         width: 700px;
@@ -523,12 +533,12 @@ blockquote {
     }
 
     /* Don't display the sidebar on non-doc pages */
-    body:not(.docs) nav.sidebar {
+    body:not(.docs) nav.doc-nav {
         display: none;
     }
 
     body > header {
-        border-bottom: 1px solid #ddd;
+        border-bottom: 1px solid $pageBorderColor;
         height: $headerHeight;
 
         nav {
@@ -552,7 +562,7 @@ blockquote {
                 }
             }
 
-            span.doc-search {
+            div.doc-search {
                 display: inline-block;
                 position: absolute;
                 right: 0;
@@ -564,27 +574,39 @@ blockquote {
 
     body.docs > main article {
         margin: 0 0 0 $docSidebarWidth;
-        padding: 20px 0 10px 60px;
-        width: 875px;
+        padding: 20px 30px;
+        /* Fill up the remaining space */
+        width: calc(100% - #{2*$docSidebarWidth});
 
         h1, h2, h3, h4, h5 {
             /* Make sure that tapping a link to a doc section makes the header visible from underneath the main nav */
             padding-top: $headerHeight;
             margin-top: -1*$headerHeight;
         }
+
+        nav.toc-nav {
+            position: absolute;
+            right: 0;
+            width: $docSidebarWidth;
+            padding: 20px 0 10px 10px;
+            top: $headerHeight;
+            bottom: 0;
+            overflow-y: auto;
+            border-left: 1px solid $pageBorderColor; /* Need to make sure we're reusing the same border color as elsewhere */
+        }
     }
 
     body > main {
         padding-top: $headerHeight;
 
-        nav.sidebar {
+        nav.doc-nav {
             position: absolute;
             top: $headerHeight;
             bottom: 0;
             padding: 20px 10px 10px 0;
             float: left;
             width: $docSidebarWidth;
-            border-right: 1px solid #ddd;
+            border-right: 1px solid $pageBorderColor;
         }
     }
 

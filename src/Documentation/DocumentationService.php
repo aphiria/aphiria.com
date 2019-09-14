@@ -17,7 +17,7 @@ use Aphiria\IO\FileSystemException;
 use App\Documentation\Searching\IndexingFailedException;
 use App\Documentation\Searching\ISearchIndex;
 use App\Documentation\Searching\SearchResult;
-use Parsedown;
+use ParsedownExtra;
 
 /**
  * Defines the service that handles our documentation
@@ -28,8 +28,8 @@ final class DocumentationService
     private DocumentationMetadata $metadata;
     /** @var DocumentationDownloader The doc downloader */
     private DocumentationDownloader $downloader;
-    /** @var Parsedown The Markdown parser */
-    private Parsedown $markdownParser;
+    /** @var ParsedownExtra The Markdown parser */
+    private ParsedownExtra $markdownParser;
     /** @var ISearchIndex The doc search index */
     private ISearchIndex $searchIndex;
     /** @var string The path to store HTML docs in */
@@ -40,14 +40,14 @@ final class DocumentationService
     /**
      * @param DocumentationMetadata $metadata The doc metadata
      * @param DocumentationDownloader $downloader The doc downloader
-     * @param Parsedown $markdownParser The Markdown parser
+     * @param ParsedownExtra $markdownParser The Markdown parser
      * @param ISearchIndex $searchIndex The doc search index
      * @param string $htmlDocPath The path to store HTML docs in
      */
     public function __construct(
         DocumentationMetadata $metadata,
         DocumentationDownloader $downloader,
-        Parsedown $markdownParser,
+        ParsedownExtra $markdownParser,
         ISearchIndex $searchIndex,
         string $htmlDocPath
     ) {
