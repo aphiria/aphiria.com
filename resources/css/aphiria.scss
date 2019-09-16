@@ -12,7 +12,7 @@ $pageSideMargin: 5%;
 }
 
 html {
-    font-family: 'Segoe UI', arial, sans-serif;
+    font-family: 'Segoe UI', 'Open Sans', arial, sans-serif;
     font-size: $fontSize;
     line-height: 1.8;
     color: $baseFontColor;
@@ -37,10 +37,6 @@ h1 {
 
 h2 {
     font-size: 24px;
-
-    &.site-slogan {
-        text-align: center;
-    }
 }
 
 h3 {
@@ -68,6 +64,23 @@ a {
 
     &:hover {
         color: $baseFontColor;
+    }
+}
+
+a.button {
+    &, &:link, &:active, &:visited {
+        color: #fff;
+        background: #07c;
+        padding: 10px 20px;
+        display: inline-block;
+        /* Try to make the button widths consistent */
+        min-width: 140px;
+        text-align: center;
+        transition: color .3s ease, background-color .3s ease;
+    }
+
+    &:hover {
+        background: #06b;
     }
 }
 
@@ -264,7 +277,7 @@ body > footer {
 body > main {
     margin: 0 $pageSideMargin;
     position: relative;
-    padding-bottom: 10px;
+    padding-bottom: 20px;
 
     nav.doc-nav {
         padding-top: 10px;
@@ -328,11 +341,6 @@ body.docs > main article {
     }
 }
 
-h2#coming-soon {
-    color: #aaa;
-    margin: 75px 0;
-}
-
 pre[class*="language-"] {
     padding: 10px !important;
     background: $codeBackgroundColor !important;
@@ -354,6 +362,25 @@ p code, li code {
     font-size: $fontSize - 2*$verticalPadding + 1px !important;
     white-space: nowrap !important;
     border: 1px solid #d9d9d9 !important;
+}
+
+body.home > main {
+    h1, h2, pre, nav {
+        text-align: center;
+    }
+}
+
+hgroup#site-slogan h2 {
+    font-size: 1.2em;
+}
+
+nav.doc-short-links-nav {
+    margin-top: 30px;
+
+    /* Add spacing between the buttons */
+    a.button {
+        margin: 5px;
+    }
 }
 
 blockquote {
@@ -403,12 +430,7 @@ blockquote {
 
     body.nav-open {
         nav.doc-nav {
-            -moz-transform: translate3d(-100%, 0, 0);
-            -ms-transform: translate3d(-100%, 0, 0);
-            -webkit-transform: translate3d(-100%, 0, 0);
             transform: translate3d(-100%, 0, 0);
-            -moz-transition: .3s;
-            -webkit-transition: .3s;
             transition: transform .3s;
         }
 
@@ -440,9 +462,6 @@ blockquote {
             padding-bottom: 10px;
             background: #f1f1f1;
             z-index: 5;
-            -webkit-transition: -webkit-transform .3s;
-            -moz-transition: -moz-transform .3s;
-            -o-transition: -o-transform .3s;
             transition: transform .3s;
 
             li {
@@ -585,7 +604,7 @@ blockquote {
 
         article {
             margin: 0 0 0 $docSidebarWidth;
-            padding: 20px 30px;
+            padding: 20px 30px 0 30px;
             /* Fill up the remaining space */
             width: calc(100% - #{2*$docSidebarWidth});
 

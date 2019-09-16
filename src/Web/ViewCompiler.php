@@ -104,9 +104,7 @@ final class ViewCompiler
 
         // Compile the main nav
         $mainNavContents = $this->files->read("{$this->rawViewPath}/partials/main-nav.html");
-        $defaultDocVersion = $this->docMetadata->getDefaultVersion();
-        $compiledMainNavContents = $this->compileTag('docLink', "/docs/$defaultDocVersion/{$this->docMetadata->getDefaultDoc($defaultDocVersion)}.html", $mainNavContents);
-        $compiledPageContents = $this->compileTag('mainNav', $compiledMainNavContents, $compiledPageContents);
+        $compiledPageContents = $this->compileTag('mainNav', $mainNavContents, $compiledPageContents);
 
         // Compile the footer
         $footerContents = $this->files->read("{$this->rawViewPath}/partials/footer.html");
@@ -182,7 +180,6 @@ final class ViewCompiler
             'A simple, extensible REST API framework'
         );
         $defaultDocVersion = $this->docMetadata->getDefaultVersion();
-        $compiledHomepageContents = $this->compileTag('docLink', "/docs/$defaultDocVersion/{$this->docMetadata->getDefaultDoc($defaultDocVersion)}.html", $compiledHomepageContents);
         $this->files->write("{$this->compiledViewPath}/index.html", $compiledHomepageContents);
     }
 

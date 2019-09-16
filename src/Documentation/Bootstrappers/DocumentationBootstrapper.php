@@ -75,11 +75,11 @@ final class DocumentationBootstrapper extends Bootstrapper
                         'description' => 'Learn how to install Aphiria',
                         'keywords' => ['aphiria', 'install', 'php']
                     ],
-                    'configuring' => [
-                        'title' => 'Configuring',
-                        'linkText' => 'Configuring',
+                    'application-builders' => [
+                        'title' => 'Application Builders',
+                        'linkText' => 'Application Builders',
                         'description' => 'Learn how to configure an Aphiria application',
-                        'keywords' => ['aphiria', 'configure', 'php']
+                        'keywords' => ['aphiria', 'configure', 'php', 'application builder']
                     ],
                     'contributing' => [
                         'title' => 'Contributing',
@@ -154,7 +154,7 @@ final class DocumentationBootstrapper extends Bootstrapper
                         'keywords' => ['aphiria', 'bootstrappers', 'dependency injection', 'container', 'php']
                     ]
                 ],
-                'Framework' => [
+                'Miscellaneous' => [
                     'collections' => [
                         'title' => 'Collections',
                         'linkText' => 'Collections',

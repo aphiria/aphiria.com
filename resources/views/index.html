@@ -9,8 +9,25 @@
             {{ mainNav }}
         </header>
         <main>
-            <h2 class="site-slogan">A simple, extensible REST API framework for PHP</h2>
-            <h2 id="coming-soon" class="site-slogan"><a href="{{ docLink }}" title="Browse the docs">Browse the docs</a></h2>
+            <hgroup id="site-slogan">
+                <h1>A simple, extensible REST API framework for PHP</h1>
+                <h2>Automatic content negotiation.  No magic.  No bleeding into your code.</h2>
+            </hgroup>
+            <pre><code class="language-php">
+$routes->get('/users/:id')->toClosure(fn (int $id) => $users->getUser($id));
+                </code></pre>
+            <h1>Install Aphiria</h1>
+            <pre><code class="language-bash">
+composer create-project aphiria/app --prefer-dist
+                </code></pre>
+            <nav class="doc-short-links-nav">
+                <h1>Get started</h1>
+                <a class="button" href="/docs/master/installation.html" title="Learn how to install Aphiria">Installing</a>
+                <a class="button" href="/docs/master/application-builders.html" title="Learn how to configure your app">Configuring</a>
+                <a class="button" href="/docs/master/routing.html" title="Learn about routing">Routing</a>
+                <a class="button" href="/docs/master/controllers.html" title="Learn how to write controllers">Controllers</a>
+                <a class="button" href="/docs/master/middleware.html" title="Learn about middleware">Middleware</a>
+            </nav>
         </main>
         <footer>
             {{ footer }}

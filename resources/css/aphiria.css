@@ -2,7 +2,7 @@
   box-sizing: border-box; }
 
 html {
-  font-family: 'Segoe UI', arial, sans-serif;
+  font-family: 'Segoe UI', 'Open Sans', arial, sans-serif;
   font-size: 16px;
   line-height: 1.8;
   color: #000;
@@ -23,8 +23,6 @@ h1 {
 
 h2 {
   font-size: 24px; }
-  h2.site-slogan {
-    text-align: center; }
 
 h3 {
   font-size: 22px; }
@@ -45,6 +43,19 @@ a, a:link, a:active, a:visited {
 
 a:hover {
   color: #000; }
+
+a.button, a.button:link, a.button:active, a.button:visited {
+  color: #fff;
+  background: #07c;
+  padding: 10px 20px;
+  display: inline-block;
+  /* Try to make the button widths consistent */
+  min-width: 140px;
+  text-align: center;
+  transition: color .3s ease, background-color .3s ease; }
+
+a.button:hover {
+  background: #06b; }
 
 img {
   border: none; }
@@ -176,7 +187,7 @@ body > footer {
 body > main {
   margin: 0 5%;
   position: relative;
-  padding-bottom: 10px; }
+  padding-bottom: 20px; }
   body > main nav.doc-nav {
     padding-top: 10px;
     overflow-y: auto; }
@@ -215,10 +226,6 @@ body.docs > main article {
       /* Set the edit icon to point to the lower left */
       transform: rotateY(180deg); }
 
-h2#coming-soon {
-  color: #aaa;
-  margin: 75px 0; }
-
 pre[class*="language-"] {
   padding: 10px !important;
   background: #f9f9f9 !important;
@@ -237,6 +244,18 @@ p code, li code {
   font-size: 13px !important;
   white-space: nowrap !important;
   border: 1px solid #d9d9d9 !important; }
+
+body.home > main h1, body.home > main h2, body.home > main pre, body.home > main nav {
+  text-align: center; }
+
+hgroup#site-slogan h2 {
+  font-size: 1.2em; }
+
+nav.doc-short-links-nav {
+  margin-top: 30px;
+  /* Add spacing between the buttons */ }
+  nav.doc-short-links-nav a.button {
+    margin: 5px; }
 
 blockquote {
   background: #e7f7ff;
@@ -269,12 +288,7 @@ blockquote {
     margin-left: 0;
     margin-right: 0; }
   body.nav-open nav.doc-nav {
-    -moz-transform: translate3d(-100%, 0, 0);
-    -ms-transform: translate3d(-100%, 0, 0);
-    -webkit-transform: translate3d(-100%, 0, 0);
     transform: translate3d(-100%, 0, 0);
-    -moz-transition: .3s;
-    -webkit-transition: .3s;
     transition: transform .3s; }
   body.nav-open #gray-out {
     visibility: visible;
@@ -298,9 +312,6 @@ blockquote {
       padding-bottom: 10px;
       background: #f1f1f1;
       z-index: 5;
-      -webkit-transition: -webkit-transform .3s;
-      -moz-transition: -moz-transform .3s;
-      -o-transition: -o-transform .3s;
       transition: transform .3s; }
       body > main nav.doc-nav li {
         white-space: nowrap; }
@@ -383,7 +394,7 @@ blockquote {
     padding-top: 80px; }
     body > main article {
       margin: 0 0 0 230px;
-      padding: 20px 30px;
+      padding: 20px 30px 0 30px;
       /* Fill up the remaining space */
       width: calc(100% - 460px); }
       body > main article h1, body > main article h2, body > main article h3, body > main article h4, body > main article h5 {
