@@ -7,17 +7,20 @@ $inputVerticalPadding: 0.25em;
 $footerBackgroundColor: #f7f7f7;
 $pageSideMargin: 5%;
 
+@import url('//fonts.googleapis.com/css?family=Open+Sans:300,300i,400,400i&display=swap&subset=latin-ext');
+@import url('//fonts.googleapis.com/css?family=Source+Code+Pro&amp;display=swap');
+
 * {
     box-sizing: border-box;
 }
 
 html {
-    font-family: 'Segoe UI', 'Open Sans', arial, sans-serif;
+    font-family: 'Open Sans', arial, sans-serif;
     font-size: $fontSize;
     line-height: 1.8;
     color: $baseFontColor;
     text-align: left;
-    font-weight: 350;
+    font-weight: 300;
     min-height: 500px;
     overflow-x: hidden;
 }
@@ -73,6 +76,7 @@ a.button {
         background: #07c;
         padding: 10px 20px;
         display: inline-block;
+        font-weight: bolder;
         /* Try to make the button widths consistent */
         min-width: 140px;
         text-align: center;
@@ -347,7 +351,7 @@ pre[class*="language-"] {
     border: 1px solid #e9e9e9 !important;
     position: relative !important;
     overflow: auto !important;
-    font-size: 0.8rem !important;
+    font-size: 0.85rem !important;
     line-height: 1.9 !important;
 }
 
