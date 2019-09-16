@@ -324,8 +324,8 @@ body.docs > main article {
 
     /* Make it clear what links leave the site */
     a[target="_blank"]::after {
-        content: " [\1F855]";
-        font-size: 0.6em;
+        content: " [\2197]";
+        font-size: 0.65em;
         vertical-align: super;
     }
 

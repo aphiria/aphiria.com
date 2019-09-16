@@ -216,8 +216,8 @@ body.docs > main article {
     margin-bottom: 0;
     color: #555; }
   body.docs > main article a[target="_blank"]::after {
-    content: " [\1F855]";
-    font-size: 0.6em;
+    content: " [\2197]";
+    font-size: 0.65em;
     vertical-align: super; }
   body.docs > main article footer {
     margin-top: 30px; }
