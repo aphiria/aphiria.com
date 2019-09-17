@@ -1,6 +1,6 @@
 $fullExperienceSiteWidth: 1024px;
 $baseFontColor: #000;
-$docSidebarWidth: 230px;
+$docSidebarWidth: 240px;
 $fontSize: 16px;
 $codeBackgroundColor: #f9f9f9;
 $inputVerticalPadding: 0.25em;
@@ -39,23 +39,23 @@ h1 {
 }
 
 h2 {
-    font-size: 24px;
+    font-size: 1.65em;
 }
 
 h3 {
-    font-size: 22px;
+    font-size: 1.5em;
 }
 
 h4 {
-    font-size: 18px;
+    font-size: 1.3em;
 }
 
 h5 {
-    font-size: 16px;
+    font-size: 1em;
 }
 
 h6 {
-    font-size: 14px;
+    font-size: 0.85em;
 }
 
 a {
@@ -627,9 +627,20 @@ blockquote {
                 bottom: 0;
                 overflow-y: auto;
                 border-left: 1px solid $pageBorderColor; /* Need to make sure we're reusing the same border color as elsewhere */
+                font-size: 0.9rem;
 
                 ol, ul {
                     list-style: none;
+                }
+
+                .toc-nav-contents {
+                    position: fixed;
+                    /* Account for the top padding of .toc-nav */
+                    top: 20px + $headerHeight;
+                    overflow-y: auto;
+                    bottom: 0;
+                    /* Subtract the border and left-padding that's applied to the parent element */
+                    width: $docSidebarWidth - 1px - 20px;
                 }
 
                 .toc-nav-contents > ol, .toc-nav-contents > ul {

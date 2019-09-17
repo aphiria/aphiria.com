@@ -24,19 +24,19 @@ h1 {
   font-size: 30px; }
 
 h2 {
-  font-size: 24px; }
+  font-size: 1.65em; }
 
 h3 {
-  font-size: 22px; }
+  font-size: 1.5em; }
 
 h4 {
-  font-size: 18px; }
+  font-size: 1.3em; }
 
 h5 {
-  font-size: 16px; }
+  font-size: 1em; }
 
 h6 {
-  font-size: 14px; }
+  font-size: 0.85em; }
 
 a, a:link, a:active, a:visited {
   color: #07c;
@@ -396,10 +396,10 @@ blockquote {
   body > main {
     padding-top: 80px; }
     body > main article {
-      margin: 0 0 0 230px;
+      margin: 0 0 0 240px;
       padding: 20px 30px 0 30px;
       /* Fill up the remaining space */
-      width: calc(100% - 460px); }
+      width: calc(100% - 480px); }
       body > main article h1, body > main article h2, body > main article h3, body > main article h4, body > main article h5 {
         /* Make sure that tapping a link to a doc section makes the header visible from underneath the main nav */
         padding-top: 80px;
@@ -407,15 +407,24 @@ blockquote {
       body > main article nav.toc-nav {
         position: absolute;
         right: 0;
-        width: 230px;
+        width: 240px;
         padding: 20px 0 10px 20px;
         top: 80px;
         bottom: 0;
         overflow-y: auto;
         border-left: 1px solid #ddd;
-        /* Need to make sure we're reusing the same border color as elsewhere */ }
+        /* Need to make sure we're reusing the same border color as elsewhere */
+        font-size: 0.9rem; }
         body > main article nav.toc-nav ol, body > main article nav.toc-nav ul {
           list-style: none; }
+        body > main article nav.toc-nav .toc-nav-contents {
+          position: fixed;
+          /* Account for the top padding of .toc-nav */
+          top: 100px;
+          overflow-y: auto;
+          bottom: 0;
+          /* Subtract the border and left-padding that's applied to the parent element */
+          width: 219px; }
         body > main article nav.toc-nav .toc-nav-contents > ol, body > main article nav.toc-nav .toc-nav-contents > ul {
           /* We don't want to indent the first items */
           padding: 10px 0; }
@@ -425,7 +434,7 @@ blockquote {
       bottom: 0;
       padding: 20px 10px 10px 0;
       float: left;
-      width: 230px;
+      width: 240px;
       border-right: 1px solid #ddd; }
   #gray-out {
     display: none; } }
