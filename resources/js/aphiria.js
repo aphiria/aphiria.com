@@ -23,7 +23,7 @@ window.addEventListener('load', loadEvent => {
     }
 
     // Handle updating the bottom of the Table of Contents so that it does not overlap with the footer for non-mobile versions of the site
-    if (window.matchMedia('(min-device-width: 1024px)').matches) {
+    if (document.querySelector('body').classList.contains('docs') && window.matchMedia('(min-device-width: 1024px)').matches) {
         const tocContents = document.querySelector(".toc-nav-contents");
         const footer = document.querySelector("body > footer");
         makeTocStick(tocContents, footer);
