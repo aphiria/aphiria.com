@@ -1,12 +1,14 @@
-# Aphiria.com
+<p align="center"><a href="https://www.aphiria.com" target="_blank" title="Aphiria"><img src="https://www.aphiria.com/images/aphiria-logo.svg"></a></p>
 
-[![Build Status](https://travis-ci.com/aphiria/aphiria.com.svg)](https://travis-ci.com/aphiria/aphiria.com)
+<p align="center">
+<a href="https://travis-ci.com/aphiria/aphiria.com"><img src="https://travis-ci.com/aphiria/aphiria.com.svg"></a>
+</p>
 
-## About
+# About
 
 This repository contains the code for both https://www.aphiria.com and https://api.aphiria.com.
 
-## Running Locally
+# Running Locally
 
 To run this site locally, you must:
 
