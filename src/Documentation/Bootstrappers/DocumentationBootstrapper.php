@@ -125,6 +125,12 @@ final class DocumentationBootstrapper extends Bootstrapper
                         'description' => 'Learn about how content negotiation works in Aphiria',
                         'keywords' => ['aphiria', 'content negotiation', 'http', 'php']
                     ],
+                    'sessions' => [
+                        'title' => 'Sessions',
+                        'linkText' => 'Sessions',
+                        'description' => 'Learn about server-side sessions in Aphiria',
+                        'keywords' => ['aphiria', 'sessions', 'http', 'php']
+                    ],
                     'http-exception-handling' => [
                         'title' => 'Exception Handling',
                         'linkText' => 'Exception Handling',
