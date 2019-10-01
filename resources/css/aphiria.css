@@ -211,7 +211,7 @@ body:not(.docs) > header {
 body.docs > main article {
   /* Make it clear what links leave the site */ }
   body.docs > main article h2, body.docs > main article h3, body.docs > main article h4, body.docs > main article h5 {
-    margin-bottom: 0;
+    margin-bottom: 20px;
     color: #555; }
   body.docs > main article a[target="_blank"]::after {
     content: " [\2197]";
@@ -265,19 +265,19 @@ blockquote {
   margin: 10px 30px; }
 
 .token.variable {
-  color: #333 !important; }
+  color: #07b !important; }
 
 .token.keyword {
-  color: #07a !important; }
+  color: #065 !important; }
 
 .token.function {
-  color: #f70 !important; }
+  color: #e22 !important; }
 
 .token.string {
   color: #6a0 !important; }
 
 .token.class-name {
-  color: #e22 !important; }
+  color: #333 !important; }
 
 .token.operator {
   background: none !important; }
@@ -364,6 +364,8 @@ blockquote {
 
 /* Full experience site settings */
 @media screen and (min-device-width: 1024px) {
+  p, blockquote {
+    margin-bottom: 2em; }
   body.home > main pre {
     width: 700px;
     margin: 0 auto; }
@@ -413,6 +415,8 @@ blockquote {
         border-left: 1px solid #ddd;
         /* Need to make sure we're reusing the same border color as elsewhere */
         font-size: 0.9rem; }
+        body > main article nav.toc-nav h2, body > main article nav.toc-nav h3, body > main article nav.toc-nav h4, body > main article nav.toc-nav h5 {
+          margin-bottom: 0; }
         body > main article nav.toc-nav ol, body > main article nav.toc-nav ul {
           list-style: none; }
         body > main article nav.toc-nav .toc-nav-contents {

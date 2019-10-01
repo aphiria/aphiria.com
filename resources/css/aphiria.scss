@@ -315,7 +315,7 @@ body:not(.docs) > header {
 
 body.docs > main article {
     h2, h3, h4, h5 {
-        margin-bottom: 0;
+        margin-bottom: 20px;
         color: #555;
     }
 
@@ -393,15 +393,15 @@ blockquote {
 
 .token {
     &.variable {
-        color: #333 !important;
+        color: #07b !important;
     }
 
     &.keyword {
-        color: #07a !important;
+        color: #065 !important;
     }
 
     &.function {
-        color: #f70 !important;
+        color: #e22 !important;
     }
 
     &.string {
@@ -409,7 +409,7 @@ blockquote {
     }
 
     &.class-name {
-        color: #e22 !important;
+        color: #333 !important;
     }
 
     &.operator {
@@ -551,6 +551,10 @@ blockquote {
     $headerHeight: $headerLogoHeight + 20px;
     $pageBorderColor: #ddd;
 
+    p, blockquote {
+        margin-bottom: 2em;
+    }
+
     body.home > main pre {
         width: 700px;
         margin: 0 auto;
@@ -625,6 +629,10 @@ blockquote {
                 overflow-y: auto;
                 border-left: 1px solid $pageBorderColor; /* Need to make sure we're reusing the same border color as elsewhere */
                 font-size: 0.9rem;
+
+                h2, h3, h4, h5 {
+                    margin-bottom: 0;
+                }
 
                 ol, ul {
                     list-style: none;

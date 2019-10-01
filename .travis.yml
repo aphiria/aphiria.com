@@ -23,7 +23,6 @@ git:
 before_script:
   - composer install
   - composer dump-autoload -o
-  - yes | cp bin/doctrine-fix/DocParser.php vendor/doctrine/annotations/lib/Doctrine/Annotations/DocParser.php
   - chmod -R 755 resources
   - chmod -R 755 tmp
   - yarn install
