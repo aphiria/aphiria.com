@@ -22,13 +22,14 @@ window.addEventListener('load', loadEvent => {
         };
     }
 
-    // Handle updating the bottom of the Table of Contents so that it does not overlap with the footer for non-mobile versions of the site
+    // Handle updating the bottom of the nav sidebars so that it does not overlap with the footer for non-mobile versions of the site
     if (document.querySelector('body').classList.contains('docs') && window.matchMedia('(min-device-width: 1024px)').matches) {
+        const docNavBar = document.querySelector("nav.doc-nav");
         const tocContents = document.querySelector(".toc-nav-contents");
         const footer = document.querySelector("body > footer");
-        makeTocStick(tocContents, footer);
-        window.addEventListener('scroll', scrollEvent => makeTocStick(tocContents, footer));
-        window.addEventListener('resize', scrollEvent => makeTocStick(tocContents, footer));
+        makeSideNavStick(docNavBar, tocContents, footer);
+        window.addEventListener('scroll', scrollEvent => makeSideNavStick(docNavBar, tocContents, footer));
+        window.addEventListener('resize', scrollEvent => makeSideNavStick(docNavBar, tocContents, footer));
     }
 
     const searchInputElem = document.getElementById('search-query');
@@ -117,12 +118,12 @@ const mobileMenu = {
     }
 };
 
-const makeTocStick = (tocElem, footerElem) => {
+const makeSideNavStick = (sideNavElem, tocElem, footerElem) => {
     const rect = footerElem.getBoundingClientRect();
 
     if (rect.top <= window.innerHeight) {
-        tocElem.style.bottom = `${window.innerHeight - rect.top}px`;
+        tocElem.style.bottom = sideNavElem.style.bottom = `${window.innerHeight - rect.top}px`;
     } else {
-        tocElem.style.bottom = '0px';
+        tocElem.style.bottom = sideNavElem.style.bottom = '0px';
     }
 };

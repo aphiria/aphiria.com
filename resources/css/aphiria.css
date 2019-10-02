@@ -431,9 +431,10 @@ blockquote {
           /* We don't want to indent the first items */
           padding: 10px 0; }
     body > main nav.doc-nav {
-      position: absolute;
+      position: fixed;
       top: 80px;
       bottom: 0;
+      overflow-y: auto;
       padding: 20px 10px 10px 0;
       float: left;
       width: 240px;
