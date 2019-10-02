@@ -12,12 +12,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/aphiria/api.git",
-                "reference": "777101e2812d5ea09b28f70c2970a4f1adbcad5c"
+                "reference": "ce9857a821167eef120ada5cce1b9a30bf5b17d6"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/aphiria/api/zipball/777101e2812d5ea09b28f70c2970a4f1adbcad5c",
-                "reference": "777101e2812d5ea09b28f70c2970a4f1adbcad5c",
+                "url": "https://api.github.com/repos/aphiria/api/zipball/ce9857a821167eef120ada5cce1b9a30bf5b17d6",
+                "reference": "ce9857a821167eef120ada5cce1b9a30bf5b17d6",
                 "shasum": ""
             },
             "require": {
@@ -60,7 +60,7 @@
                 "controller",
                 "php"
             ],
-            "time": "2019-09-06T22:49:44+00:00"
+            "time": "2019-10-01T22:54:05+00:00"
         },
         {
             "name": "aphiria/collections",
@@ -122,12 +122,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/aphiria/configuration.git",
-                "reference": "3828d667a0119ce11125a227380a562bb51742e6"
+                "reference": "150963b96039bd57bffedc6e6d098ee2ad82abf5"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/aphiria/configuration/zipball/3828d667a0119ce11125a227380a562bb51742e6",
-                "reference": "3828d667a0119ce11125a227380a562bb51742e6",
+                "url": "https://api.github.com/repos/aphiria/configuration/zipball/150963b96039bd57bffedc6e6d098ee2ad82abf5",
+                "reference": "150963b96039bd57bffedc6e6d098ee2ad82abf5",
                 "shasum": ""
             },
             "require": {
@@ -170,7 +170,7 @@
                 "configuration",
                 "php"
             ],
-            "time": "2019-09-07T03:52:51+00:00"
+            "time": "2019-10-01T22:54:05+00:00"
         },
         {
             "name": "aphiria/console",
@@ -178,12 +178,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/aphiria/console.git",
-                "reference": "82b21188392ece638308483be097e97fc16b01c9"
+                "reference": "97ff1cb41753235207001e57e7e4f4ce76540bed"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/aphiria/console/zipball/82b21188392ece638308483be097e97fc16b01c9",
-                "reference": "82b21188392ece638308483be097e97fc16b01c9",
+                "url": "https://api.github.com/repos/aphiria/console/zipball/97ff1cb41753235207001e57e7e4f4ce76540bed",
+                "reference": "97ff1cb41753235207001e57e7e4f4ce76540bed",
                 "shasum": ""
             },
             "require": {
@@ -221,7 +221,7 @@
                 "console",
                 "php"
             ],
-            "time": "2019-09-06T22:49:44+00:00"
+            "time": "2019-10-01T22:54:05+00:00"
         },
         {
             "name": "aphiria/dependency-injection",
@@ -229,12 +229,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/aphiria/dependency-injection.git",
-                "reference": "b5da5a2857ba3e154645f22c9461d857dabc4c7a"
+                "reference": "5dfecd26cc2704dbfc4641897b2eac03eb940ef3"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/aphiria/dependency-injection/zipball/b5da5a2857ba3e154645f22c9461d857dabc4c7a",
-                "reference": "b5da5a2857ba3e154645f22c9461d857dabc4c7a",
+                "url": "https://api.github.com/repos/aphiria/dependency-injection/zipball/5dfecd26cc2704dbfc4641897b2eac03eb940ef3",
+                "reference": "5dfecd26cc2704dbfc4641897b2eac03eb940ef3",
                 "shasum": ""
             },
             "require": {
@@ -273,7 +273,7 @@
                 "ioc",
                 "php"
             ],
-            "time": "2019-09-06T22:49:44+00:00"
+            "time": "2019-09-30T21:55:35+00:00"
         },
         {
             "name": "aphiria/exceptions",
@@ -281,12 +281,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/aphiria/exceptions.git",
-                "reference": "afdd71b2ab6a1692d241a5c2ffb13a4f4a96bf50"
+                "reference": "28796a238fb3699319e676e2df16ae8c9431f070"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/aphiria/exceptions/zipball/afdd71b2ab6a1692d241a5c2ffb13a4f4a96bf50",
-                "reference": "afdd71b2ab6a1692d241a5c2ffb13a4f4a96bf50",
+                "url": "https://api.github.com/repos/aphiria/exceptions/zipball/28796a238fb3699319e676e2df16ae8c9431f070",
+                "reference": "28796a238fb3699319e676e2df16ae8c9431f070",
                 "shasum": ""
             },
             "require": {
@@ -327,7 +327,7 @@
                 "exceptions",
                 "php"
             ],
-            "time": "2019-09-06T22:49:44+00:00"
+            "time": "2019-10-01T22:54:05+00:00"
         },
         {
             "name": "aphiria/io",
@@ -387,12 +387,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/aphiria/middleware.git",
-                "reference": "e5e3c57dc665554cd7f63b8cb04131ecc0f95d39"
+                "reference": "484a2fcea6045521e1a1a384508f33b276a2bb46"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/aphiria/middleware/zipball/e5e3c57dc665554cd7f63b8cb04131ecc0f95d39",
-                "reference": "e5e3c57dc665554cd7f63b8cb04131ecc0f95d39",
+                "url": "https://api.github.com/repos/aphiria/middleware/zipball/484a2fcea6045521e1a1a384508f33b276a2bb46",
+                "reference": "484a2fcea6045521e1a1a384508f33b276a2bb46",
                 "shasum": ""
             },
             "require": {
@@ -421,8 +421,8 @@
             "authors": [
                 {
                     "name": "David Young",
-                    "role": "Architect",
-                    "email": "dave@aphiria.com"
+                    "email": "dave@aphiria.com",
+                    "role": "Architect"
                 }
             ],
             "description": "The Aphiria middleware library",
@@ -430,7 +430,7 @@
                 "middleware",
                 "php"
             ],
-            "time": "2019-08-25T19:07:20+00:00"
+            "time": "2019-10-01T22:54:05+00:00"
         },
         {
             "name": "aphiria/net",
@@ -438,12 +438,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/aphiria/net.git",
-                "reference": "68828a9fc77c0e2bb64686a5c39366684650c145"
+                "reference": "e9342d5e45ee83c230774e48f54d8a6f76052335"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/aphiria/net/zipball/68828a9fc77c0e2bb64686a5c39366684650c145",
-                "reference": "68828a9fc77c0e2bb64686a5c39366684650c145",
+                "url": "https://api.github.com/repos/aphiria/net/zipball/e9342d5e45ee83c230774e48f54d8a6f76052335",
+                "reference": "e9342d5e45ee83c230774e48f54d8a6f76052335",
                 "shasum": ""
             },
             "require": {
@@ -490,7 +490,7 @@
                 "request",
                 "response"
             ],
-            "time": "2019-09-06T22:49:44+00:00"
+            "time": "2019-10-01T22:54:05+00:00"
         },
         {
             "name": "aphiria/route-annotations",
@@ -498,12 +498,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/aphiria/route-annotations.git",
-                "reference": "d96c50971caa57fb3d67751d59de151dd2463426"
+                "reference": "b10ab1a9dbd2f3886b877a78bbd6afa0da66008d"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/aphiria/route-annotations/zipball/d96c50971caa57fb3d67751d59de151dd2463426",
-                "reference": "d96c50971caa57fb3d67751d59de151dd2463426",
+                "url": "https://api.github.com/repos/aphiria/route-annotations/zipball/b10ab1a9dbd2f3886b877a78bbd6afa0da66008d",
+                "reference": "b10ab1a9dbd2f3886b877a78bbd6afa0da66008d",
                 "shasum": ""
             },
             "require": {
@@ -544,7 +544,7 @@
                 "routes",
                 "routing"
             ],
-            "time": "2019-08-30T00:42:34+00:00"
+            "time": "2019-10-01T22:54:05+00:00"
         },
         {
             "name": "aphiria/router",
@@ -552,12 +552,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/aphiria/router.git",
-                "reference": "2156aba88cb7472335c801dd52ae45bed87e86a7"
+                "reference": "4900a19c08ea3c4b1d113a871e1fd91abeb183c9"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/aphiria/router/zipball/2156aba88cb7472335c801dd52ae45bed87e86a7",
-                "reference": "2156aba88cb7472335c801dd52ae45bed87e86a7",
+                "url": "https://api.github.com/repos/aphiria/router/zipball/4900a19c08ea3c4b1d113a871e1fd91abeb183c9",
+                "reference": "4900a19c08ea3c4b1d113a871e1fd91abeb183c9",
                 "shasum": ""
             },
             "require": {
@@ -601,7 +601,7 @@
                 "router",
                 "routing"
             ],
-            "time": "2019-09-10T01:16:25+00:00"
+            "time": "2019-10-01T22:54:05+00:00"
         },
         {
             "name": "aphiria/serialization",
@@ -609,12 +609,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/aphiria/serialization.git",
-                "reference": "b30af436d6308b472a2f0f213b78ad756853ce5d"
+                "reference": "5dc00146a163f51b65a1ab942b043f0a72e8cb94"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/aphiria/serialization/zipball/b30af436d6308b472a2f0f213b78ad756853ce5d",
-                "reference": "b30af436d6308b472a2f0f213b78ad756853ce5d",
+                "url": "https://api.github.com/repos/aphiria/serialization/zipball/5dc00146a163f51b65a1ab942b043f0a72e8cb94",
+                "reference": "5dc00146a163f51b65a1ab942b043f0a72e8cb94",
                 "shasum": ""
             },
             "require": {
@@ -657,7 +657,7 @@
                 "serialization",
                 "xml"
             ],
-            "time": "2019-09-06T22:49:44+00:00"
+            "time": "2019-10-01T22:54:05+00:00"
         },
         {
             "name": "doctrine/annotations",
@@ -665,12 +665,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/doctrine/annotations.git",
-                "reference": "793b91ac63464dff1fa1e949f20214b7eecf6472"
+                "reference": "53db8bf6316fe14ad7640d9ddd9c32b011b90ade"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/doctrine/annotations/zipball/793b91ac63464dff1fa1e949f20214b7eecf6472",
-                "reference": "793b91ac63464dff1fa1e949f20214b7eecf6472",
+                "url": "https://api.github.com/repos/doctrine/annotations/zipball/53db8bf6316fe14ad7640d9ddd9c32b011b90ade",
+                "reference": "53db8bf6316fe14ad7640d9ddd9c32b011b90ade",
                 "shasum": ""
             },
             "require": {
@@ -700,16 +700,16 @@
             ],
             "authors": [
                 {
+                    "name": "Guilherme Blanco",
+                    "email": "guilhermeblanco@gmail.com"
+                },
+                {
                     "name": "Roman Borschel",
                     "email": "roman@code-factory.org"
                 },
                 {
                     "name": "Benjamin Eberlei",
                     "email": "kontakt@beberlei.de"
-                },
-                {
-                    "name": "Guilherme Blanco",
-                    "email": "guilhermeblanco@gmail.com"
                 },
                 {
                     "name": "Jonathan Wage",
@@ -729,7 +729,7 @@
                 "parser",
                 "php"
             ],
-            "time": "2019-05-24T17:41:06+00:00"
+            "time": "2019-10-01T19:13:45+00:00"
         },
         {
             "name": "doctrine/lexer",
@@ -737,12 +737,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/doctrine/lexer.git",
-                "reference": "6c4b4c3432406c73a4979b7e56efbffb0462ef64"
+                "reference": "29ed26d6cae6a60a09e245d4273c6146893331d6"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/doctrine/lexer/zipball/6c4b4c3432406c73a4979b7e56efbffb0462ef64",
-                "reference": "6c4b4c3432406c73a4979b7e56efbffb0462ef64",
+                "url": "https://api.github.com/repos/doctrine/lexer/zipball/29ed26d6cae6a60a09e245d4273c6146893331d6",
+                "reference": "29ed26d6cae6a60a09e245d4273c6146893331d6",
                 "shasum": ""
             },
             "require": {
@@ -791,7 +791,7 @@
                 "parser",
                 "php"
             ],
-            "time": "2019-07-30T19:38:35+00:00"
+            "time": "2019-09-17T06:50:52+00:00"
         },
         {
             "name": "erusev/parsedown",
@@ -895,12 +895,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/Seldaek/monolog.git",
-                "reference": "a053af62ad5bfb0355dfb55d3d15126f1c836708"
+                "reference": "6d51b319796e6391139932f78fb76a144a867b57"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/Seldaek/monolog/zipball/a053af62ad5bfb0355dfb55d3d15126f1c836708",
-                "reference": "a053af62ad5bfb0355dfb55d3d15126f1c836708",
+                "url": "https://api.github.com/repos/Seldaek/monolog/zipball/6d51b319796e6391139932f78fb76a144a867b57",
+                "reference": "6d51b319796e6391139932f78fb76a144a867b57",
                 "shasum": ""
             },
             "require": {
@@ -968,7 +968,7 @@
                 "logging",
                 "psr-3"
             ],
-            "time": "2019-09-06T12:25:18+00:00"
+            "time": "2019-09-17T07:44:07+00:00"
         },
         {
             "name": "opis/closure",
@@ -1234,12 +1234,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/dotenv.git",
-                "reference": "9426b9d615729061317e0eca080ade8c76e0cd40"
+                "reference": "343a4bf016fc7c5f78d247950e6024af7cba2900"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/dotenv/zipball/9426b9d615729061317e0eca080ade8c76e0cd40",
-                "reference": "9426b9d615729061317e0eca080ade8c76e0cd40",
+                "url": "https://api.github.com/repos/symfony/dotenv/zipball/343a4bf016fc7c5f78d247950e6024af7cba2900",
+                "reference": "343a4bf016fc7c5f78d247950e6024af7cba2900",
                 "shasum": ""
             },
             "require": {
@@ -1283,7 +1283,7 @@
                 "env",
                 "environment"
             ],
-            "time": "2019-08-06T07:27:26+00:00"
+            "time": "2019-09-27T05:43:04+00:00"
         }
     ],
     "packages-dev": [
@@ -1716,12 +1716,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/sebastianbergmann/php-code-coverage.git",
-                "reference": "d0f4b079fb023c6ef969b857529188a316293911"
+                "reference": "aa0d179a13284c7420fc281fc32750e6cc7c9e2f"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/sebastianbergmann/php-code-coverage/zipball/d0f4b079fb023c6ef969b857529188a316293911",
-                "reference": "d0f4b079fb023c6ef969b857529188a316293911",
+                "url": "https://api.github.com/repos/sebastianbergmann/php-code-coverage/zipball/aa0d179a13284c7420fc281fc32750e6cc7c9e2f",
+                "reference": "aa0d179a13284c7420fc281fc32750e6cc7c9e2f",
                 "shasum": ""
             },
             "require": {
@@ -1730,7 +1730,7 @@
                 "php": "^7.2",
                 "phpunit/php-file-iterator": "^2.0.2",
                 "phpunit/php-text-template": "^1.2.1",
-                "phpunit/php-token-stream": "^3.1.0",
+                "phpunit/php-token-stream": "^3.1.1",
                 "sebastian/code-unit-reverse-lookup": "^1.0.1",
                 "sebastian/environment": "^4.2.2",
                 "sebastian/version": "^2.0.1",
@@ -1771,7 +1771,7 @@
                 "testing",
                 "xunit"
             ],
-            "time": "2019-09-06T09:19:24+00:00"
+            "time": "2019-09-17T06:24:36+00:00"
         },
         {
             "name": "phpunit/php-file-iterator",
@@ -1919,12 +1919,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/sebastianbergmann/php-token-stream.git",
-                "reference": "e899757bb3df5ff6e95089132f32cd59aac2220a"
+                "reference": "995192df77f63a59e47f025390d2d1fdf8f425ff"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/sebastianbergmann/php-token-stream/zipball/e899757bb3df5ff6e95089132f32cd59aac2220a",
-                "reference": "e899757bb3df5ff6e95089132f32cd59aac2220a",
+                "url": "https://api.github.com/repos/sebastianbergmann/php-token-stream/zipball/995192df77f63a59e47f025390d2d1fdf8f425ff",
+                "reference": "995192df77f63a59e47f025390d2d1fdf8f425ff",
                 "shasum": ""
             },
             "require": {
@@ -1960,7 +1960,7 @@
             "keywords": [
                 "tokenizer"
             ],
-            "time": "2019-07-25T05:29:42+00:00"
+            "time": "2019-09-17T06:23:10+00:00"
         },
         {
             "name": "phpunit/phpunit",
@@ -1968,12 +1968,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/sebastianbergmann/phpunit.git",
-                "reference": "e7e7525d5587783173ab050d8a64bd944028e15e"
+                "reference": "4d2e3f801b316766fbfc3431f6fda6137b63fab0"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/sebastianbergmann/phpunit/zipball/e7e7525d5587783173ab050d8a64bd944028e15e",
-                "reference": "e7e7525d5587783173ab050d8a64bd944028e15e",
+                "url": "https://api.github.com/repos/sebastianbergmann/phpunit/zipball/4d2e3f801b316766fbfc3431f6fda6137b63fab0",
+                "reference": "4d2e3f801b316766fbfc3431f6fda6137b63fab0",
                 "shasum": ""
             },
             "require": {
@@ -2043,7 +2043,7 @@
                 "testing",
                 "xunit"
             ],
-            "time": "2019-09-10T09:01:49+00:00"
+            "time": "2019-09-30T04:46:10+00:00"
         },
         {
             "name": "sebastian/code-unit-reverse-lookup",
@@ -2269,12 +2269,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/sebastianbergmann/exporter.git",
-                "reference": "05e2a220e5e41ed9e8a38d4a5a1cf9bf1fa9fded"
+                "reference": "68609e1261d215ea5b21b7987539cbfbe156ec3e"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/sebastianbergmann/exporter/zipball/05e2a220e5e41ed9e8a38d4a5a1cf9bf1fa9fded",
-                "reference": "05e2a220e5e41ed9e8a38d4a5a1cf9bf1fa9fded",
+                "url": "https://api.github.com/repos/sebastianbergmann/exporter/zipball/68609e1261d215ea5b21b7987539cbfbe156ec3e",
+                "reference": "68609e1261d215ea5b21b7987539cbfbe156ec3e",
                 "shasum": ""
             },
             "require": {
@@ -2328,7 +2328,7 @@
                 "export",
                 "exporter"
             ],
-            "time": "2019-09-10T15:13:45+00:00"
+            "time": "2019-09-14T09:02:43+00:00"
         },
         {
             "name": "sebastian/global-state",
