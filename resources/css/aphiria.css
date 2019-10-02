@@ -408,7 +408,7 @@ blockquote {
         position: absolute;
         right: 0;
         width: 240px;
-        padding: 20px 0 10px 20px;
+        padding: 0 0 10px 20px;
         top: 80px;
         bottom: 0;
         overflow-y: auto;
@@ -421,8 +421,8 @@ blockquote {
           list-style: none; }
         body > main article nav.toc-nav .toc-nav-contents {
           position: fixed;
-          /* Account for the top padding of .toc-nav */
-          top: 100px;
+          top: 80px;
+          padding-top: 20px;
           overflow-y: auto;
           bottom: 0;
           /* Subtract the border and left-padding that's applied to the parent element */

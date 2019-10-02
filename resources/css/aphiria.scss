@@ -623,7 +623,7 @@ blockquote {
                 position: absolute;
                 right: 0;
                 width: $docSidebarWidth;
-                padding: 20px 0 10px 20px;
+                padding: 0 0 10px 20px;
                 top: $headerHeight;
                 bottom: 0;
                 overflow-y: auto;
@@ -640,8 +640,8 @@ blockquote {
 
                 .toc-nav-contents {
                     position: fixed;
-                    /* Account for the top padding of .toc-nav */
-                    top: 20px + $headerHeight;
+                    top: $headerHeight;
+                    padding-top: 20px;
                     overflow-y: auto;
                     bottom: 0;
                     /* Subtract the border and left-padding that's applied to the parent element */
