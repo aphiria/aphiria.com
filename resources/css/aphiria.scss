@@ -20,6 +20,7 @@ html {
     font-weight: 300;
     min-height: 500px;
     overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
 }
 
 body {
@@ -350,6 +351,7 @@ pre[class*="language-"] {
     overflow: auto !important;
     font-size: 0.85rem !important;
     line-height: 1.9 !important;
+    text-shadow: none !important;
 }
 
 code {
@@ -551,7 +553,7 @@ blockquote {
     $headerHeight: $headerLogoHeight + 20px;
     $pageBorderColor: #ddd;
 
-    p, blockquote {
+    p, blockquote, pre[class*="language-"] {
         margin-bottom: 2em;
     }
 
