@@ -366,7 +366,7 @@ blockquote {
 /* Full experience site settings */
 @media screen and (min-device-width: 1024px) {
   p, blockquote, pre[class*="language-"] {
-    margin-bottom: 2em; }
+    margin-bottom: 2em !important; }
 
   body.home > main pre {
     width: 700px;
