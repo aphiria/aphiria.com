@@ -41,6 +41,7 @@ a, a:link, a:active, a:visited {
   color: #07c;
   text-decoration: none;
   transition: color .3s ease; }
+
 a:hover {
   color: #000; }
 
@@ -54,6 +55,7 @@ a.button, a.button:link, a.button:active, a.button:visited {
   min-width: 140px;
   text-align: center;
   transition: color .3s ease, background-color .3s ease; }
+
 a.button:hover {
   background: #06b; }
 
@@ -266,14 +268,19 @@ blockquote {
 
 .token.variable {
   color: #07b !important; }
+
 .token.keyword {
   color: #065 !important; }
+
 .token.function {
   color: #e22 !important; }
+
 .token.string {
   color: #6a0 !important; }
+
 .token.class-name {
   color: #333 !important; }
+
 .token.operator {
   background: none !important; }
 
@@ -283,7 +290,6 @@ blockquote {
     /* Take the parts to the edge of the screen to not waste space */
     margin-left: 0;
     margin-right: 0; }
-
   body.nav-open nav.doc-nav {
     transform: translate3d(-100%, 0, 0);
     transition: transform .3s; }
@@ -291,11 +297,9 @@ blockquote {
     visibility: visible;
     background: rgba(0, 0, 0, 0.5);
     transition: background .3s ease; }
-
   body > header {
     /* Account for 20px of padding */
     /*height: $headerLogoHeight + 20px;*/ }
-
   body > main {
     /* Account for both the main nav padding and search bar padding, and then pad a little extra so we're not right up against the search bar */
     padding: 110px 10px 10px 10px; }
@@ -314,7 +318,6 @@ blockquote {
       transition: transform .3s; }
       body > main nav.doc-nav li {
         white-space: nowrap; }
-
   body > header > nav ul.main-nav {
     display: block; }
   body > header > nav ul.main-nav {
@@ -334,7 +337,6 @@ blockquote {
     /* Give the results a relative parent for positioning */
     position: relative;
     margin: 10px 20px 0; }
-
   body.docs > header ul li#mobile-menu {
     display: inline-block;
     position: absolute;
@@ -347,15 +349,13 @@ blockquote {
     padding-top: 110px;
     margin-top: -100px;
     margin-bottom: 0; }
-
   body > footer {
     /* Gradient looks strange on small screens */
     background: #f7f7f7; }
-
   #gray-out {
     /*display: none;*/
     visibility: hidden;
-    background: transparent;
+    background: rgba(0, 0, 0, 0);
     position: fixed;
     /* We want this to appear just below the main nav.  The additional 20px is the padding in the nav bar. */
     top: 60px;
@@ -363,22 +363,36 @@ blockquote {
     right: 0;
     bottom: 0;
     z-index: 1; } }
+
 /* Full experience site settings */
 @media screen and (min-device-width: 1024px) {
+  * {
+    /* The background of the scrollbar except button or resizer */
+    /* The scrollbar itself */
+    /* Remove scrollbar buttons */ }
+    *::-webkit-scrollbar {
+      background-color: #fff;
+      width: 16px; }
+    *::-webkit-scrollbar-track {
+      background-color: #fff; }
+    *::-webkit-scrollbar-thumb {
+      background-color: #babac0;
+      border-radius: 16px;
+      border: 4px solid #fff; }
+      *::-webkit-scrollbar-thumb:hover {
+        background-color: #aaaab0; }
+    *::-webkit-scrollbar-button {
+      display: none; }
   p, blockquote, pre[class*="language-"] {
     margin-bottom: 2em !important; }
-
   body.home > main pre {
     width: 700px;
     margin: 0 auto; }
-
   #sidebar-main-nav {
     display: none; }
-
   /* Don't display the sidebar on non-doc pages */
   body:not(.docs) nav.doc-nav {
     display: none; }
-
   body > header {
     border-bottom: 1px solid #ddd;
     height: 80px; }
@@ -398,7 +412,6 @@ blockquote {
       right: 0;
       bottom: 20px;
       width: 40%; }
-
   body > main {
     padding-top: 80px; }
     body > main article {
@@ -445,9 +458,9 @@ blockquote {
       float: left;
       width: 240px;
       border-right: 1px solid #ddd; }
-
   #gray-out {
     display: none; } }
+
 @media screen and (min-device-height: 650px) {
   main {
     min-height: 300px; } }
