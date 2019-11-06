@@ -173,6 +173,12 @@ final class DocumentationBootstrapper extends Bootstrapper
                         'description' => 'Learn about working with IO in Aphiria',
                         'keywords' => ['aphiria', 'io', 'stream', 'file system', 'read write', 'php']
                     ],
+                    'reflection' => [
+                        'title' => 'Reflection',
+                        'linkText' => 'Reflection',
+                        'description' => 'Learn about added reflection functionality in Aphiria',
+                        'keywords' => ['aphiria', 'reflection', 'class finder', 'php']
+                    ],
                     'serialization' => [
                         'title' => 'Serialization',
                         'linkText' => 'Serialization',
