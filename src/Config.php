@@ -22,6 +22,7 @@ use App\Api\Bootstrappers\ExceptionHandlerBootstrapper;
 use App\Api\Bootstrappers\RoutingBootstrapper;
 use App\Api\Bootstrappers\SerializerBootstrapper;
 use App\Api\Middleware\Cors;
+use App\Console\Bootstrappers\CommandBootstrapper;
 use App\Documentation\DocumentationModuleBuilder;
 use App\Logging\Bootstrappers\LoggerBootstrapper;
 use App\Web\WebModuleBuilder;
@@ -58,7 +59,8 @@ final class Config
             ->withExceptionResponseFactories($this->appBuilder)
             ->withEncoderComponent($this->appBuilder)
             ->withRoutingComponent($this->appBuilder)
-            ->withRouteAnnotations($this->appBuilder);
+            ->withRouteAnnotations($this->appBuilder)
+            ->withConsoleCommandAnnotations($this->appBuilder);
 
         // Register some global bootstrappers
         $this->appBuilder->withBootstrappers(fn () => [
@@ -67,7 +69,8 @@ final class Config
             new ExceptionHandlerBootstrapper,
             new LoggerBootstrapper,
             new ContentNegotiatorBootstrapper,
-            new RoutingBootstrapper
+            new RoutingBootstrapper,
+            new CommandBootstrapper
         ]);
 
         // Register any global middleware
@@ -76,7 +79,7 @@ final class Config
         ]);
 
         // Register any modules
-        $this->appBuilder->withModule(new DocumentationModuleBuilder($this->container));
-        $this->appBuilder->withModule(new WebModuleBuilder($this->container));
+        $this->appBuilder->withModule(new DocumentationModuleBuilder());
+        $this->appBuilder->withModule(new WebModuleBuilder());
     }
 }
