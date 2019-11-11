@@ -20,6 +20,7 @@ use App\Documentation\Searching\SearchResult;
 
 /**
  * Defines the controller that handles doc searches
+ *
  * @RouteGroup("docs")
  */
 final class SearchController extends Controller
@@ -40,6 +41,7 @@ final class SearchController extends Controller
      *
      * @param string $query The search query
      * @return SearchResult[] The list of search results
+     *
      * @Get("search")
      */
     public function searchDocs(string $query): array

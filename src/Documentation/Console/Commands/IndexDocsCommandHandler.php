@@ -22,6 +22,7 @@ use App\Documentation\Searching\IndexingFailedException;
 
 /**
  * Defines the command handler for indexing docs
+ *
  * @Command("docs:index", description="Indexes our documentation for searchability")
  */
 final class IndexDocsCommandHandler implements ICommandHandler

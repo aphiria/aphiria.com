@@ -22,6 +22,7 @@ use App\Documentation\Searching\IndexingFailedException;
 
 /**
  * Defines the command handler for doc building
+ *
  * @Command("docs:build", description="Builds our documentation into HTML")
  */
 final class BuildDocsCommandHandler implements ICommandHandler

@@ -179,12 +179,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/aphiria/console.git",
-                "reference": "21408450f45fcd5aecfee0e70d594b413872fbe0"
+                "reference": "33e3776ccaa6fca58f75b1f64ba344cf530496e9"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/aphiria/console/zipball/21408450f45fcd5aecfee0e70d594b413872fbe0",
-                "reference": "21408450f45fcd5aecfee0e70d594b413872fbe0",
+                "url": "https://api.github.com/repos/aphiria/console/zipball/33e3776ccaa6fca58f75b1f64ba344cf530496e9",
+                "reference": "33e3776ccaa6fca58f75b1f64ba344cf530496e9",
                 "shasum": ""
             },
             "require": {
@@ -223,7 +223,7 @@
                 "console",
                 "php"
             ],
-            "time": "2019-11-10T00:38:26+00:00"
+            "time": "2019-11-10T16:09:43+00:00"
         },
         {
             "name": "aphiria/console-command-annotations",
@@ -231,12 +231,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/aphiria/console-command-annotations.git",
-                "reference": "37a03e827654237018e6c320e2d892b22f129d73"
+                "reference": "c0f8742af8970b3028e52e68043c9ccdfd10493c"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/aphiria/console-command-annotations/zipball/37a03e827654237018e6c320e2d892b22f129d73",
-                "reference": "37a03e827654237018e6c320e2d892b22f129d73",
+                "url": "https://api.github.com/repos/aphiria/console-command-annotations/zipball/c0f8742af8970b3028e52e68043c9ccdfd10493c",
+                "reference": "c0f8742af8970b3028e52e68043c9ccdfd10493c",
                 "shasum": ""
             },
             "require": {
@@ -278,7 +278,7 @@
                 "console",
                 "php"
             ],
-            "time": "2019-11-10T01:11:27+00:00"
+            "time": "2019-11-10T18:06:26+00:00"
         },
         {
             "name": "aphiria/dependency-injection",
@@ -286,12 +286,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/aphiria/dependency-injection.git",
-                "reference": "6ed30a15998d73ebd13b5df404f806a294c724a3"
+                "reference": "f925c89dd8dae74f1a23f1088499a4571e96a39a"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/aphiria/dependency-injection/zipball/6ed30a15998d73ebd13b5df404f806a294c724a3",
-                "reference": "6ed30a15998d73ebd13b5df404f806a294c724a3",
+                "url": "https://api.github.com/repos/aphiria/dependency-injection/zipball/f925c89dd8dae74f1a23f1088499a4571e96a39a",
+                "reference": "f925c89dd8dae74f1a23f1088499a4571e96a39a",
                 "shasum": ""
             },
             "require": {
@@ -331,7 +331,7 @@
                 "ioc",
                 "php"
             ],
-            "time": "2019-11-09T22:34:11+00:00"
+            "time": "2019-11-10T16:09:43+00:00"
         },
         {
             "name": "aphiria/exceptions",
@@ -339,12 +339,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/aphiria/exceptions.git",
-                "reference": "6771e8a822300048de1b35f19ddea92c15eda603"
+                "reference": "0b97976768c023412db0dc5f7ca4ec2a176b87b5"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/aphiria/exceptions/zipball/6771e8a822300048de1b35f19ddea92c15eda603",
-                "reference": "6771e8a822300048de1b35f19ddea92c15eda603",
+                "url": "https://api.github.com/repos/aphiria/exceptions/zipball/0b97976768c023412db0dc5f7ca4ec2a176b87b5",
+                "reference": "0b97976768c023412db0dc5f7ca4ec2a176b87b5",
                 "shasum": ""
             },
             "require": {
@@ -385,7 +385,7 @@
                 "exceptions",
                 "php"
             ],
-            "time": "2019-10-11T23:47:25+00:00"
+            "time": "2019-11-10T18:06:26+00:00"
         },
         {
             "name": "aphiria/io",
@@ -662,12 +662,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/aphiria/router.git",
-                "reference": "a3e248ed01249511241270513fa51ebbb08dd99c"
+                "reference": "438d8932babc00c3b289f98212f19de1b3992aeb"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/aphiria/router/zipball/a3e248ed01249511241270513fa51ebbb08dd99c",
-                "reference": "a3e248ed01249511241270513fa51ebbb08dd99c",
+                "url": "https://api.github.com/repos/aphiria/router/zipball/438d8932babc00c3b289f98212f19de1b3992aeb",
+                "reference": "438d8932babc00c3b289f98212f19de1b3992aeb",
                 "shasum": ""
             },
             "require": {
@@ -711,7 +711,7 @@
                 "router",
                 "routing"
             ],
-            "time": "2019-11-09T22:34:11+00:00"
+            "time": "2019-11-10T16:09:43+00:00"
         },
         {
             "name": "aphiria/serialization",
@@ -1590,18 +1590,18 @@
             "authors": [
                 {
                     "name": "Arne Blankerts",
-                    "role": "Developer",
-                    "email": "arne@blankerts.de"
+                    "email": "arne@blankerts.de",
+                    "role": "Developer"
                 },
                 {
                     "name": "Sebastian Heuer",
-                    "role": "Developer",
-                    "email": "sebastian@phpeople.de"
+                    "email": "sebastian@phpeople.de",
+                    "role": "Developer"
                 },
                 {
                     "name": "Sebastian Bergmann",
-                    "role": "Developer",
-                    "email": "sebastian@phpunit.de"
+                    "email": "sebastian@phpunit.de",
+                    "role": "Developer"
                 }
             ],
             "description": "Library for handling version information and constraints",
@@ -1958,8 +1958,8 @@
             "authors": [
                 {
                     "name": "Sebastian Bergmann",
-                    "role": "lead",
-                    "email": "sebastian@phpunit.de"
+                    "email": "sebastian@phpunit.de",
+                    "role": "lead"
                 }
             ],
             "description": "Simple template engine.",
@@ -2757,8 +2757,8 @@
             "authors": [
                 {
                     "name": "Sebastian Bergmann",
-                    "role": "lead",
-                    "email": "sebastian@phpunit.de"
+                    "email": "sebastian@phpunit.de",
+                    "role": "lead"
                 }
             ],
             "description": "Library that helps with managing the version number of Git-hosted PHP projects",
@@ -2856,8 +2856,8 @@
             "authors": [
                 {
                     "name": "Arne Blankerts",
-                    "role": "Developer",
-                    "email": "arne@blankerts.de"
+                    "email": "arne@blankerts.de",
+                    "role": "Developer"
                 }
             ],
             "description": "A small library for converting tokenized PHP source code into XML and potentially other formats",

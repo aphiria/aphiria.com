@@ -19,6 +19,7 @@ use Aphiria\ConsoleCommandAnnotations\Annotations\Command;
 
 /**
  * Defines the handler for the serve command
+ *
  * @Command("app:serve", description="Runs the site locally")
  */
 final class ServeCommandHandler implements ICommandHandler

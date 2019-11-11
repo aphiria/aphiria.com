@@ -21,6 +21,7 @@ use App\Web\ViewCompiler;
 
 /**
  * Defines the command handler for building web views
+ *
  * @Command("views:build", description="Builds our views")
  */
 final class BuildViewsCommandHandler implements ICommandHandler

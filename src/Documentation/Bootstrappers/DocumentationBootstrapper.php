@@ -75,6 +75,12 @@ final class DocumentationBootstrapper extends Bootstrapper
                         'description' => 'Learn how to install Aphiria',
                         'keywords' => ['aphiria', 'install', 'php']
                     ],
+                    'framework-comparisons' => [
+                        'title' => 'Framework Comparisons',
+                        'linkText' => 'Framework Comparisons',
+                        'description' => 'Learn Aphiria stacks up against other popular PHP frameworks',
+                        'keywords' => ['aphiria', 'frameworks', 'laravel', 'symfony']
+                    ],
                     'application-builders' => [
                         'title' => 'Application Builders',
                         'linkText' => 'Application Builders',
