@@ -122,12 +122,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/aphiria/configuration.git",
-                "reference": "33e2a89e33ba485dfc9d2dc43f154380c874d823"
+                "reference": "c9c9894cc3066d12871231452bd7de7e03f617f3"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/aphiria/configuration/zipball/33e2a89e33ba485dfc9d2dc43f154380c874d823",
-                "reference": "33e2a89e33ba485dfc9d2dc43f154380c874d823",
+                "url": "https://api.github.com/repos/aphiria/configuration/zipball/c9c9894cc3066d12871231452bd7de7e03f617f3",
+                "reference": "c9c9894cc3066d12871231452bd7de7e03f617f3",
                 "shasum": ""
             },
             "require": {
@@ -171,7 +171,7 @@
                 "configuration",
                 "php"
             ],
-            "time": "2019-11-10T00:46:44+00:00"
+            "time": "2019-11-18T02:37:46+00:00"
         },
         {
             "name": "aphiria/console",
@@ -179,12 +179,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/aphiria/console.git",
-                "reference": "33e3776ccaa6fca58f75b1f64ba344cf530496e9"
+                "reference": "125216af3c68f32eabb16d5078ba1b9ac9058212"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/aphiria/console/zipball/33e3776ccaa6fca58f75b1f64ba344cf530496e9",
-                "reference": "33e3776ccaa6fca58f75b1f64ba344cf530496e9",
+                "url": "https://api.github.com/repos/aphiria/console/zipball/125216af3c68f32eabb16d5078ba1b9ac9058212",
+                "reference": "125216af3c68f32eabb16d5078ba1b9ac9058212",
                 "shasum": ""
             },
             "require": {
@@ -223,7 +223,7 @@
                 "console",
                 "php"
             ],
-            "time": "2019-11-10T16:09:43+00:00"
+            "time": "2019-11-18T02:14:31+00:00"
         },
         {
             "name": "aphiria/console-command-annotations",
@@ -231,12 +231,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/aphiria/console-command-annotations.git",
-                "reference": "c0f8742af8970b3028e52e68043c9ccdfd10493c"
+                "reference": "7aa6266fbe4df1b0ed3618fce4ddc5906ef0efb0"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/aphiria/console-command-annotations/zipball/c0f8742af8970b3028e52e68043c9ccdfd10493c",
-                "reference": "c0f8742af8970b3028e52e68043c9ccdfd10493c",
+                "url": "https://api.github.com/repos/aphiria/console-command-annotations/zipball/7aa6266fbe4df1b0ed3618fce4ddc5906ef0efb0",
+                "reference": "7aa6266fbe4df1b0ed3618fce4ddc5906ef0efb0",
                 "shasum": ""
             },
             "require": {
@@ -278,7 +278,7 @@
                 "console",
                 "php"
             ],
-            "time": "2019-11-10T18:06:26+00:00"
+            "time": "2019-11-18T02:14:31+00:00"
         },
         {
             "name": "aphiria/dependency-injection",
@@ -607,12 +607,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/aphiria/route-annotations.git",
-                "reference": "1673b9927203f2e2911c1b697a4a45cc16690b50"
+                "reference": "3eab9c88e1017c5345c56fd3eb1f310e476694c2"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/aphiria/route-annotations/zipball/1673b9927203f2e2911c1b697a4a45cc16690b50",
-                "reference": "1673b9927203f2e2911c1b697a4a45cc16690b50",
+                "url": "https://api.github.com/repos/aphiria/route-annotations/zipball/3eab9c88e1017c5345c56fd3eb1f310e476694c2",
+                "reference": "3eab9c88e1017c5345c56fd3eb1f310e476694c2",
                 "shasum": ""
             },
             "require": {
@@ -654,7 +654,7 @@
                 "routes",
                 "routing"
             ],
-            "time": "2019-11-10T01:11:58+00:00"
+            "time": "2019-11-18T00:43:55+00:00"
         },
         {
             "name": "aphiria/router",
@@ -662,12 +662,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/aphiria/router.git",
-                "reference": "438d8932babc00c3b289f98212f19de1b3992aeb"
+                "reference": "71807848b892f26d88861cb80f1788ea58d20c55"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/aphiria/router/zipball/438d8932babc00c3b289f98212f19de1b3992aeb",
-                "reference": "438d8932babc00c3b289f98212f19de1b3992aeb",
+                "url": "https://api.github.com/repos/aphiria/router/zipball/71807848b892f26d88861cb80f1788ea58d20c55",
+                "reference": "71807848b892f26d88861cb80f1788ea58d20c55",
                 "shasum": ""
             },
             "require": {
@@ -711,7 +711,7 @@
                 "router",
                 "routing"
             ],
-            "time": "2019-11-10T16:09:43+00:00"
+            "time": "2019-11-18T02:14:31+00:00"
         },
         {
             "name": "aphiria/serialization",
@@ -775,12 +775,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/doctrine/annotations.git",
-                "reference": "53db8bf6316fe14ad7640d9ddd9c32b011b90ade"
+                "reference": "2157e348b7ecff23ec5ca50a0b7284d963d9f0e2"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/doctrine/annotations/zipball/53db8bf6316fe14ad7640d9ddd9c32b011b90ade",
-                "reference": "53db8bf6316fe14ad7640d9ddd9c32b011b90ade",
+                "url": "https://api.github.com/repos/doctrine/annotations/zipball/2157e348b7ecff23ec5ca50a0b7284d963d9f0e2",
+                "reference": "2157e348b7ecff23ec5ca50a0b7284d963d9f0e2",
                 "shasum": ""
             },
             "require": {
@@ -839,7 +839,7 @@
                 "parser",
                 "php"
             ],
-            "time": "2019-10-01T19:13:45+00:00"
+            "time": "2019-11-13T10:06:53+00:00"
         },
         {
             "name": "doctrine/lexer",
@@ -1005,12 +1005,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/Seldaek/monolog.git",
-                "reference": "f35dac526c30aeca6a0018f7b2274a7c34de7c0b"
+                "reference": "11fb4f92702f98577c95c8ea1e61b937f8f70859"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/Seldaek/monolog/zipball/f35dac526c30aeca6a0018f7b2274a7c34de7c0b",
-                "reference": "f35dac526c30aeca6a0018f7b2274a7c34de7c0b",
+                "url": "https://api.github.com/repos/Seldaek/monolog/zipball/11fb4f92702f98577c95c8ea1e61b937f8f70859",
+                "reference": "11fb4f92702f98577c95c8ea1e61b937f8f70859",
                 "shasum": ""
             },
             "require": {
@@ -1078,7 +1078,7 @@
                 "logging",
                 "psr-3"
             ],
-            "time": "2019-11-08T06:40:51+00:00"
+            "time": "2019-11-15T14:56:08+00:00"
         },
         {
             "name": "opis/closure",
@@ -1297,12 +1297,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/php-fig/log.git",
-                "reference": "446d54b4cb6bf489fc9d75f55843658e6f25d801"
+                "reference": "5628725d0e4d687e29575eb41f9d5ee7de33a84c"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/php-fig/log/zipball/446d54b4cb6bf489fc9d75f55843658e6f25d801",
-                "reference": "446d54b4cb6bf489fc9d75f55843658e6f25d801",
+                "url": "https://api.github.com/repos/php-fig/log/zipball/5628725d0e4d687e29575eb41f9d5ee7de33a84c",
+                "reference": "5628725d0e4d687e29575eb41f9d5ee7de33a84c",
                 "shasum": ""
             },
             "require": {
@@ -1336,7 +1336,7 @@
                 "psr",
                 "psr-3"
             ],
-            "time": "2019-11-01T11:05:21+00:00"
+            "time": "2019-11-12T16:45:05+00:00"
         },
         {
             "name": "symfony/dotenv",
@@ -1344,12 +1344,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/dotenv.git",
-                "reference": "fc63980d8dc4eb82e45ea68e7eca7b071b9b48be"
+                "reference": "1a9cad0daa3d0726124d7bec2419591ed0f03bc3"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/dotenv/zipball/fc63980d8dc4eb82e45ea68e7eca7b071b9b48be",
-                "reference": "fc63980d8dc4eb82e45ea68e7eca7b071b9b48be",
+                "url": "https://api.github.com/repos/symfony/dotenv/zipball/1a9cad0daa3d0726124d7bec2419591ed0f03bc3",
+                "reference": "1a9cad0daa3d0726124d7bec2419591ed0f03bc3",
                 "shasum": ""
             },
             "require": {
@@ -1393,13 +1393,13 @@
                 "env",
                 "environment"
             ],
-            "time": "2019-10-22T15:44:54+00:00"
+            "time": "2019-11-12T14:51:11+00:00"
         }
     ],
     "packages-dev": [
         {
             "name": "doctrine/instantiator",
-            "version": "dev-master",
+            "version": "1.3.x-dev",
             "source": {
                 "type": "git",
                 "url": "https://github.com/doctrine/instantiator.git",
@@ -1821,12 +1821,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/sebastianbergmann/php-code-coverage.git",
-                "reference": "b85a9205e06bead6f243af7f29812d8a62e50027"
+                "reference": "8198f748870693e87fe40e19452768cef00869ea"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/sebastianbergmann/php-code-coverage/zipball/b85a9205e06bead6f243af7f29812d8a62e50027",
-                "reference": "b85a9205e06bead6f243af7f29812d8a62e50027",
+                "url": "https://api.github.com/repos/sebastianbergmann/php-code-coverage/zipball/8198f748870693e87fe40e19452768cef00869ea",
+                "reference": "8198f748870693e87fe40e19452768cef00869ea",
                 "shasum": ""
             },
             "require": {
@@ -1876,7 +1876,7 @@
                 "testing",
                 "xunit"
             ],
-            "time": "2019-11-03T06:15:39+00:00"
+            "time": "2019-11-15T18:53:04+00:00"
         },
         {
             "name": "phpunit/php-file-iterator",
@@ -2073,12 +2073,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/sebastianbergmann/phpunit.git",
-                "reference": "a98ff6bb0060f2ae1717f8c556db3ab808558119"
+                "reference": "c27ac794f809a73bb04bcd4cdd0c33f3265921a4"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/sebastianbergmann/phpunit/zipball/a98ff6bb0060f2ae1717f8c556db3ab808558119",
-                "reference": "a98ff6bb0060f2ae1717f8c556db3ab808558119",
+                "url": "https://api.github.com/repos/sebastianbergmann/phpunit/zipball/c27ac794f809a73bb04bcd4cdd0c33f3265921a4",
+                "reference": "c27ac794f809a73bb04bcd4cdd0c33f3265921a4",
                 "shasum": ""
             },
             "require": {
@@ -2148,7 +2148,7 @@
                 "testing",
                 "xunit"
             ],
-            "time": "2019-11-08T23:58:54+00:00"
+            "time": "2019-11-17T20:11:49+00:00"
         },
         {
             "name": "sebastian/code-unit-reverse-lookup",
