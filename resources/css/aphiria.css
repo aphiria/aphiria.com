@@ -297,9 +297,6 @@ blockquote {
     visibility: visible;
     background: rgba(0, 0, 0, 0.5);
     transition: background .3s ease; }
-  body > header {
-    /* Account for 20px of padding */
-    /*height: $headerLogoHeight + 20px;*/ }
   body > main {
     /* Account for both the main nav padding and search bar padding, and then pad a little extra so we're not right up against the search bar */
     padding: 110px 10px 10px 10px; }
@@ -385,6 +382,13 @@ blockquote {
       display: none; }
   p, blockquote, pre[class*="language-"] {
     margin-bottom: 2em !important; }
+  /*
+    Make sure there's not too much of a gap between paragraphs and lists.  Since there's no easy way of
+    selecting the paragraph with a CSS combinator, we select the list and give it a negative margin equal
+    to the bottom margin of the paragraph.
+    */
+  p + ul, p + ol {
+    margin-top: -1em !important; }
   body.home > main pre {
     width: 700px;
     margin: 0 auto; }
