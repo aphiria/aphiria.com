@@ -19,11 +19,11 @@ use App\Documentation\DocumentationService;
 use App\Documentation\Searching\SearchResult;
 
 /**
- * Defines the controller that handles doc searches
+ * Defines the controller that handles documentation actions
  *
  * @RouteGroup("docs")
  */
-final class SearchController extends Controller
+final class DocumentationController extends Controller
 {
     /** @var DocumentationService What we'll use to search through documentation */
     private DocumentationService $docs;

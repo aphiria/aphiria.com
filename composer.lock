@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "118b03e2a5468b8a145295696ea11e5e",
+    "content-hash": "485297773e844850777893fe96adb5d6",
     "packages": [
         {
             "name": "aphiria/api",
@@ -1082,16 +1082,16 @@
         },
         {
             "name": "opis/closure",
-            "version": "3.4.1",
+            "version": "3.4.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/opis/closure.git",
-                "reference": "e79f851749c3caa836d7ccc01ede5828feb762c7"
+                "reference": "60a97fff133b1669a5b1776aa8ab06db3f3962b7"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/opis/closure/zipball/e79f851749c3caa836d7ccc01ede5828feb762c7",
-                "reference": "e79f851749c3caa836d7ccc01ede5828feb762c7",
+                "url": "https://api.github.com/repos/opis/closure/zipball/60a97fff133b1669a5b1776aa8ab06db3f3962b7",
+                "reference": "60a97fff133b1669a5b1776aa8ab06db3f3962b7",
                 "shasum": ""
             },
             "require": {
@@ -1139,7 +1139,7 @@
                 "serialization",
                 "serialize"
             ],
-            "time": "2019-10-19T18:38:51+00:00"
+            "time": "2019-09-02T21:07:33+00:00"
         },
         {
             "name": "opulence/databases",
@@ -2922,7 +2922,8 @@
         "aphiria/console": 20,
         "aphiria/console-command-annotations": 20,
         "aphiria/exceptions": 20,
-        "erusev/parsedown-extra": 20
+        "erusev/parsedown-extra": 20,
+        "opis/closure": 20
     },
     "prefer-stable": false,
     "prefer-lowest": false,
