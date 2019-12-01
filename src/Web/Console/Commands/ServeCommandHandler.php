@@ -15,7 +15,7 @@ namespace App\Web\Console\Commands;
 use Aphiria\Console\Commands\ICommandHandler;
 use Aphiria\Console\Input\Input;
 use Aphiria\Console\Output\IOutput;
-use Aphiria\ConsoleCommandAnnotations\Annotations\Command;
+use Aphiria\ConsoleAnnotations\Annotations\Command;
 
 /**
  * Defines the handler for the serve command
