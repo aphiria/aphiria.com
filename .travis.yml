@@ -1,7 +1,7 @@
 language: php
 
 php:
-  - 7.4snapshot
+  - 7.4
 
 # Need to make sure we're using the right environment variables when compiling the views on Travis CI
 env:
