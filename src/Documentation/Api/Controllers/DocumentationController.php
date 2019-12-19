@@ -13,8 +13,8 @@ declare(strict_types=1);
 namespace App\Documentation\Api\Controllers;
 
 use Aphiria\Api\Controllers\Controller;
-use Aphiria\RouteAnnotations\Annotations\Get;
-use Aphiria\RouteAnnotations\Annotations\RouteGroup;
+use Aphiria\Routing\Annotations\Get;
+use Aphiria\Routing\Annotations\RouteGroup;
 use App\Documentation\DocumentationService;
 use App\Documentation\Searching\SearchResult;
 

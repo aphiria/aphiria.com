@@ -12,10 +12,10 @@ declare(strict_types=1);
 
 namespace App\Documentation\Console\Commands;
 
+use Aphiria\Console\Commands\Annotations\Command;
 use Aphiria\Console\Commands\ICommandHandler;
 use Aphiria\Console\Input\Input;
 use Aphiria\Console\Output\IOutput;
-use Aphiria\ConsoleAnnotations\Annotations\Command;
 use Aphiria\IO\FileSystemException;
 use App\Documentation\DocumentationService;
 use App\Documentation\Searching\IndexingFailedException;

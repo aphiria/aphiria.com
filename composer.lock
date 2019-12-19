@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "f91e52cf7769ce9c88b344e3d371f59b",
+    "content-hash": "72ec9a82a340807a542d03bf4423cd98",
     "packages": [
         {
             "name": "aphiria/api",
@@ -12,12 +12,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/aphiria/api.git",
-                "reference": "30fda6d9096744b4081798fcaf2139a720eecc80"
+                "reference": "2f6eb3fcdea24abe4c269331ae355f0133ef1908"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/aphiria/api/zipball/30fda6d9096744b4081798fcaf2139a720eecc80",
-                "reference": "30fda6d9096744b4081798fcaf2139a720eecc80",
+                "url": "https://api.github.com/repos/aphiria/api/zipball/2f6eb3fcdea24abe4c269331ae355f0133ef1908",
+                "reference": "2f6eb3fcdea24abe4c269331ae355f0133ef1908",
                 "shasum": ""
             },
             "require": {
@@ -60,7 +60,7 @@
                 "controller",
                 "php"
             ],
-            "time": "2019-12-01T15:16:26+00:00"
+            "time": "2019-12-16T13:35:40+00:00"
         },
         {
             "name": "aphiria/collections",
@@ -68,12 +68,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/aphiria/collections.git",
-                "reference": "1a931a4ec1b5fe0874a04421e253c866139afce3"
+                "reference": "2ef8bea359af3544b96e3d7f946362dc84061d5c"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/aphiria/collections/zipball/1a931a4ec1b5fe0874a04421e253c866139afce3",
-                "reference": "1a931a4ec1b5fe0874a04421e253c866139afce3",
+                "url": "https://api.github.com/repos/aphiria/collections/zipball/2ef8bea359af3544b96e3d7f946362dc84061d5c",
+                "reference": "2ef8bea359af3544b96e3d7f946362dc84061d5c",
                 "shasum": ""
             },
             "require": {
@@ -114,7 +114,7 @@
                 "sets",
                 "stacks"
             ],
-            "time": "2019-11-01T23:25:19+00:00"
+            "time": "2019-12-16T13:35:40+00:00"
         },
         {
             "name": "aphiria/configuration",
@@ -122,21 +122,20 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/aphiria/configuration.git",
-                "reference": "7c77a6546bbe20b36471deffceda2195735e2de8"
+                "reference": "a8c04eb941e9ad01e72521e0fc6bb21a02585807"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/aphiria/configuration/zipball/7c77a6546bbe20b36471deffceda2195735e2de8",
-                "reference": "7c77a6546bbe20b36471deffceda2195735e2de8",
+                "url": "https://api.github.com/repos/aphiria/configuration/zipball/a8c04eb941e9ad01e72521e0fc6bb21a02585807",
+                "reference": "a8c04eb941e9ad01e72521e0fc6bb21a02585807",
                 "shasum": ""
             },
             "require": {
                 "aphiria/api": "1.0.*@dev",
                 "aphiria/console": "1.0.*@dev",
-                "aphiria/console-command-annotations": "1.0.*@dev",
                 "aphiria/dependency-injection": "1.0.*@dev",
                 "aphiria/exceptions": "1.0.*@dev",
-                "aphiria/route-annotations": "1.0.*@dev",
+                "aphiria/validation": "1.0.*@dev",
                 "php": "^7.4",
                 "psr/log": "~1.0"
             },
@@ -171,7 +170,7 @@
                 "configuration",
                 "php"
             ],
-            "time": "2019-12-01T16:48:56+00:00"
+            "time": "2019-12-19T00:52:35+00:00"
         },
         {
             "name": "aphiria/console",
@@ -179,20 +178,23 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/aphiria/console.git",
-                "reference": "6b5039e572b0b96b68e0f6edb7543b7a6ec1d7f5"
+                "reference": "2cb219f510814318369cd1d5b91f44205a1029f1"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/aphiria/console/zipball/6b5039e572b0b96b68e0f6edb7543b7a6ec1d7f5",
-                "reference": "6b5039e572b0b96b68e0f6edb7543b7a6ec1d7f5",
+                "url": "https://api.github.com/repos/aphiria/console/zipball/2cb219f510814318369cd1d5b91f44205a1029f1",
+                "reference": "2cb219f510814318369cd1d5b91f44205a1029f1",
                 "shasum": ""
             },
             "require": {
+                "aphiria/console": "1.0.*@dev",
+                "aphiria/dependency-injection": "1.0.*@dev",
+                "aphiria/reflection": "1.0.*@dev",
+                "doctrine/annotations": "2.0.*@dev",
                 "opis/closure": "3.5.*",
                 "php": "^7.4"
             },
             "require-dev": {
-                "friendsofphp/php-cs-fixer": "^3.0",
                 "phpunit/phpunit": "~8.0"
             },
             "type": "library",
@@ -223,117 +225,7 @@
                 "console",
                 "php"
             ],
-            "time": "2019-12-01T15:16:26+00:00"
-        },
-        {
-            "name": "aphiria/console-annotations",
-            "version": "dev-master",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/aphiria/console-annotations.git",
-                "reference": "f3e42241fa543af65b1f4fdafedae3334ee42258"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/aphiria/console-annotations/zipball/f3e42241fa543af65b1f4fdafedae3334ee42258",
-                "reference": "f3e42241fa543af65b1f4fdafedae3334ee42258",
-                "shasum": ""
-            },
-            "require": {
-                "aphiria/console": "1.0.*@dev",
-                "aphiria/dependency-injection": "1.0.*@dev",
-                "aphiria/reflection": "1.0.*@dev",
-                "doctrine/annotations": "2.0.*@dev",
-                "php": "^7.4"
-            },
-            "require-dev": {
-                "phpunit/phpunit": "~8.0"
-            },
-            "type": "library",
-            "extra": {
-                "branch-alias": {
-                    "dev-master": "1.0.x-dev"
-                }
-            },
-            "autoload": {
-                "psr-4": {
-                    "Aphiria\\ConsoleAnnotations\\": "src"
-                }
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "David Young",
-                    "email": "dave@aphiria.com",
-                    "role": "Architect"
-                }
-            ],
-            "description": "The Aphiria console annotation library",
-            "keywords": [
-                "annotations",
-                "command",
-                "console",
-                "php"
-            ],
-            "time": "2019-12-01T16:48:56+00:00"
-        },
-        {
-            "name": "aphiria/console-command-annotations",
-            "version": "dev-master",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/aphiria/console-annotations.git",
-                "reference": "f3e42241fa543af65b1f4fdafedae3334ee42258"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/aphiria/console-annotations/zipball/f3e42241fa543af65b1f4fdafedae3334ee42258",
-                "reference": "f3e42241fa543af65b1f4fdafedae3334ee42258",
-                "shasum": ""
-            },
-            "require": {
-                "aphiria/console": "1.0.*@dev",
-                "aphiria/dependency-injection": "1.0.*@dev",
-                "aphiria/reflection": "1.0.*@dev",
-                "doctrine/annotations": "2.0.*@dev",
-                "php": "^7.4"
-            },
-            "require-dev": {
-                "phpunit/phpunit": "~8.0"
-            },
-            "type": "library",
-            "extra": {
-                "branch-alias": {
-                    "dev-master": "1.0.x-dev"
-                }
-            },
-            "autoload": {
-                "psr-4": {
-                    "Aphiria\\ConsoleAnnotations\\": "src"
-                }
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "David Young",
-                    "email": "dave@aphiria.com",
-                    "role": "Architect"
-                }
-            ],
-            "description": "The Aphiria console annotation library",
-            "keywords": [
-                "annotations",
-                "command",
-                "console",
-                "php"
-            ],
-            "time": "2019-12-01T16:48:56+00:00"
+            "time": "2019-12-18T14:00:23+00:00"
         },
         {
             "name": "aphiria/dependency-injection",
@@ -341,12 +233,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/aphiria/dependency-injection.git",
-                "reference": "e12211df76221ec7d6aed5788c7257e1eb094f3c"
+                "reference": "520e5db3939e708cecc4a67eb58db36e2a53be77"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/aphiria/dependency-injection/zipball/e12211df76221ec7d6aed5788c7257e1eb094f3c",
-                "reference": "e12211df76221ec7d6aed5788c7257e1eb094f3c",
+                "url": "https://api.github.com/repos/aphiria/dependency-injection/zipball/520e5db3939e708cecc4a67eb58db36e2a53be77",
+                "reference": "520e5db3939e708cecc4a67eb58db36e2a53be77",
                 "shasum": ""
             },
             "require": {
@@ -386,7 +278,7 @@
                 "ioc",
                 "php"
             ],
-            "time": "2019-12-01T15:16:26+00:00"
+            "time": "2019-12-16T13:35:40+00:00"
         },
         {
             "name": "aphiria/exceptions",
@@ -394,12 +286,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/aphiria/exceptions.git",
-                "reference": "0b97976768c023412db0dc5f7ca4ec2a176b87b5"
+                "reference": "e3f8c544d6f4b43d33c2877f830dfa76fe425665"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/aphiria/exceptions/zipball/0b97976768c023412db0dc5f7ca4ec2a176b87b5",
-                "reference": "0b97976768c023412db0dc5f7ca4ec2a176b87b5",
+                "url": "https://api.github.com/repos/aphiria/exceptions/zipball/e3f8c544d6f4b43d33c2877f830dfa76fe425665",
+                "reference": "e3f8c544d6f4b43d33c2877f830dfa76fe425665",
                 "shasum": ""
             },
             "require": {
@@ -440,7 +332,7 @@
                 "exceptions",
                 "php"
             ],
-            "time": "2019-11-10T18:06:26+00:00"
+            "time": "2019-12-16T13:35:40+00:00"
         },
         {
             "name": "aphiria/io",
@@ -448,12 +340,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/aphiria/io.git",
-                "reference": "8cfe3ab91616905e5590f2e146a97b2ed1f8bb4d"
+                "reference": "d87a2a2bdf518232ff18830ff014105ff268a8ae"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/aphiria/io/zipball/8cfe3ab91616905e5590f2e146a97b2ed1f8bb4d",
-                "reference": "8cfe3ab91616905e5590f2e146a97b2ed1f8bb4d",
+                "url": "https://api.github.com/repos/aphiria/io/zipball/d87a2a2bdf518232ff18830ff014105ff268a8ae",
+                "reference": "d87a2a2bdf518232ff18830ff014105ff268a8ae",
                 "shasum": ""
             },
             "require": {
@@ -492,7 +384,7 @@
                 "io",
                 "php"
             ],
-            "time": "2019-10-29T00:20:55+00:00"
+            "time": "2019-12-16T13:35:40+00:00"
         },
         {
             "name": "aphiria/middleware",
@@ -500,12 +392,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/aphiria/middleware.git",
-                "reference": "39c087f437178146e3e6e80d2dddc8dd9f6848b9"
+                "reference": "12598c7e4a7e680fe22db07d22e4bfd2bb7181d5"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/aphiria/middleware/zipball/39c087f437178146e3e6e80d2dddc8dd9f6848b9",
-                "reference": "39c087f437178146e3e6e80d2dddc8dd9f6848b9",
+                "url": "https://api.github.com/repos/aphiria/middleware/zipball/12598c7e4a7e680fe22db07d22e4bfd2bb7181d5",
+                "reference": "12598c7e4a7e680fe22db07d22e4bfd2bb7181d5",
                 "shasum": ""
             },
             "require": {
@@ -543,7 +435,7 @@
                 "middleware",
                 "php"
             ],
-            "time": "2019-10-11T23:47:25+00:00"
+            "time": "2019-12-16T13:35:40+00:00"
         },
         {
             "name": "aphiria/net",
@@ -551,12 +443,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/aphiria/net.git",
-                "reference": "f9940e311db10f5888d5933e5ecd18c597db3719"
+                "reference": "115dcca3b2b5b52d3fde60e32208ef774fadbf8a"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/aphiria/net/zipball/f9940e311db10f5888d5933e5ecd18c597db3719",
-                "reference": "f9940e311db10f5888d5933e5ecd18c597db3719",
+                "url": "https://api.github.com/repos/aphiria/net/zipball/115dcca3b2b5b52d3fde60e32208ef774fadbf8a",
+                "reference": "115dcca3b2b5b52d3fde60e32208ef774fadbf8a",
                 "shasum": ""
             },
             "require": {
@@ -603,7 +495,7 @@
                 "request",
                 "response"
             ],
-            "time": "2019-11-26T13:45:54+00:00"
+            "time": "2019-12-16T13:35:40+00:00"
         },
         {
             "name": "aphiria/reflection",
@@ -611,12 +503,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/aphiria/reflection.git",
-                "reference": "f237766475b947eff716e1cd964c8869443c1663"
+                "reference": "fc66cf0f04cd2bf8343a86d592ecd28573160579"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/aphiria/reflection/zipball/f237766475b947eff716e1cd964c8869443c1663",
-                "reference": "f237766475b947eff716e1cd964c8869443c1663",
+                "url": "https://api.github.com/repos/aphiria/reflection/zipball/fc66cf0f04cd2bf8343a86d592ecd28573160579",
+                "reference": "fc66cf0f04cd2bf8343a86d592ecd28573160579",
                 "shasum": ""
             },
             "require": {
@@ -654,62 +546,7 @@
                 "php",
                 "reflection"
             ],
-            "time": "2019-11-09T22:34:11+00:00"
-        },
-        {
-            "name": "aphiria/route-annotations",
-            "version": "dev-master",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/aphiria/route-annotations.git",
-                "reference": "3eab9c88e1017c5345c56fd3eb1f310e476694c2"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/aphiria/route-annotations/zipball/3eab9c88e1017c5345c56fd3eb1f310e476694c2",
-                "reference": "3eab9c88e1017c5345c56fd3eb1f310e476694c2",
-                "shasum": ""
-            },
-            "require": {
-                "aphiria/api": "1.0.*@dev",
-                "aphiria/reflection": "1.0.*@dev",
-                "aphiria/router": "1.0.*@dev",
-                "doctrine/annotations": "2.0.*@dev",
-                "php": "^7.4"
-            },
-            "require-dev": {
-                "phpunit/phpunit": "~8.0"
-            },
-            "type": "library",
-            "extra": {
-                "branch-alias": {
-                    "dev-master": "1.0.x-dev"
-                }
-            },
-            "autoload": {
-                "psr-4": {
-                    "Aphiria\\RouteAnnotations\\": "src"
-                }
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "David Young",
-                    "email": "dave@aphiria.com",
-                    "role": "Architect"
-                }
-            ],
-            "description": "The Aphiria route annotation library",
-            "keywords": [
-                "annotations",
-                "php",
-                "routes",
-                "routing"
-            ],
-            "time": "2019-11-18T00:43:55+00:00"
+            "time": "2019-12-16T13:35:40+00:00"
         },
         {
             "name": "aphiria/router",
@@ -717,22 +554,24 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/aphiria/router.git",
-                "reference": "e29984328b19431f51b8d48af5811eb0346b291a"
+                "reference": "5a72dd5359491b1086290e7f281fc5e641af2848"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/aphiria/router/zipball/e29984328b19431f51b8d48af5811eb0346b291a",
-                "reference": "e29984328b19431f51b8d48af5811eb0346b291a",
+                "url": "https://api.github.com/repos/aphiria/router/zipball/5a72dd5359491b1086290e7f281fc5e641af2848",
+                "reference": "5a72dd5359491b1086290e7f281fc5e641af2848",
                 "shasum": ""
             },
             "require": {
+                "aphiria/reflection": "1.0.*@dev",
+                "doctrine/annotations": "2.0.*@dev",
                 "ext-ctype": "*",
                 "ext-mbstring": "*",
                 "opis/closure": "3.5.*",
                 "php": "^7.4"
             },
             "require-dev": {
-                "friendsofphp/php-cs-fixer": "^3.0",
+                "aphiria/api": "1.0.*@dev",
                 "nikic/fast-route": "1.2",
                 "phpunit/phpunit": "~8.0",
                 "symfony/routing": "4.2.*"
@@ -766,7 +605,7 @@
                 "router",
                 "routing"
             ],
-            "time": "2019-12-12T04:10:32+00:00"
+            "time": "2019-12-19T01:01:08+00:00"
         },
         {
             "name": "aphiria/serialization",
@@ -774,12 +613,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/aphiria/serialization.git",
-                "reference": "a33bdf2724006e4d1d682ca17f801f45a9410745"
+                "reference": "b1e47f24b0db7a55b00b464173a72dd32dcd8d3d"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/aphiria/serialization/zipball/a33bdf2724006e4d1d682ca17f801f45a9410745",
-                "reference": "a33bdf2724006e4d1d682ca17f801f45a9410745",
+                "url": "https://api.github.com/repos/aphiria/serialization/zipball/b1e47f24b0db7a55b00b464173a72dd32dcd8d3d",
+                "reference": "b1e47f24b0db7a55b00b464173a72dd32dcd8d3d",
                 "shasum": ""
             },
             "require": {
@@ -822,7 +661,61 @@
                 "serialization",
                 "xml"
             ],
-            "time": "2019-10-11T23:47:25+00:00"
+            "time": "2019-12-16T13:35:40+00:00"
+        },
+        {
+            "name": "aphiria/validation",
+            "version": "dev-master",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/aphiria/validation.git",
+                "reference": "7661730dcf000924d8586e436917d045effded41"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/aphiria/validation/zipball/7661730dcf000924d8586e436917d045effded41",
+                "reference": "7661730dcf000924d8586e436917d045effded41",
+                "shasum": ""
+            },
+            "require": {
+                "aphiria/reflection": "1.0.*@dev",
+                "doctrine/annotations": "2.0.*@dev",
+                "ext-intl": "*",
+                "php": "^7.4"
+            },
+            "require-dev": {
+                "phpunit/phpunit": "~8.0"
+            },
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-master": "1.0.x-dev"
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Aphiria\\Validation\\": "src"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "David Young",
+                    "email": "dave@opulencephp.com",
+                    "role": "Architect"
+                }
+            ],
+            "description": "The Aphiria validation library",
+            "keywords": [
+                "input",
+                "model state",
+                "php",
+                "validation"
+            ],
+            "time": "2019-12-19T04:42:50+00:00"
         },
         {
             "name": "doctrine/annotations",
@@ -1202,12 +1095,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/opulencephp/databases.git",
-                "reference": "9ae923cd5ef18f347b9ad8585a26633ed9557db0"
+                "reference": "8d8ca227ee84ab4ee1d446dddbb40f807b1a7e58"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/opulencephp/databases/zipball/9ae923cd5ef18f347b9ad8585a26633ed9557db0",
-                "reference": "9ae923cd5ef18f347b9ad8585a26633ed9557db0",
+                "url": "https://api.github.com/repos/opulencephp/databases/zipball/8d8ca227ee84ab4ee1d446dddbb40f807b1a7e58",
+                "reference": "8d8ca227ee84ab4ee1d446dddbb40f807b1a7e58",
                 "shasum": ""
             },
             "require": {
@@ -1248,7 +1141,7 @@
                 "php",
                 "postgresql"
             ],
-            "time": "2019-10-31T21:45:45+00:00"
+            "time": "2019-12-14T13:46:56+00:00"
         },
         {
             "name": "paquettg/php-html-parser",
@@ -1514,12 +1407,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/myclabs/DeepCopy.git",
-                "reference": "9012edbd1604a93cee7e7422d07a2c5776c56e0c"
+                "reference": "579bb7356d91f9456ccd505f24ca8b667966a0a7"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/myclabs/DeepCopy/zipball/9012edbd1604a93cee7e7422d07a2c5776c56e0c",
-                "reference": "9012edbd1604a93cee7e7422d07a2c5776c56e0c",
+                "url": "https://api.github.com/repos/myclabs/DeepCopy/zipball/579bb7356d91f9456ccd505f24ca8b667966a0a7",
+                "reference": "579bb7356d91f9456ccd505f24ca8b667966a0a7",
                 "shasum": ""
             },
             "require": {
@@ -1554,7 +1447,7 @@
                 "object",
                 "object graph"
             ],
-            "time": "2019-08-26T15:40:39+00:00"
+            "time": "2019-12-15T19:12:40+00:00"
         },
         {
             "name": "phar-io/manifest",
@@ -1664,7 +1557,7 @@
         },
         {
             "name": "phpdocumentor/reflection-common",
-            "version": "2.0.0",
+            "version": "dev-master",
             "source": {
                 "type": "git",
                 "url": "https://github.com/phpDocumentor/ReflectionCommon.git",
@@ -1720,17 +1613,19 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/phpDocumentor/ReflectionDocBlock.git",
-                "reference": "8fcadfe5f85c38705151c9ab23b4781f23e6a70e"
+                "reference": "549d235cf426209ecb6d4dac3181c4da479050b5"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/phpDocumentor/ReflectionDocBlock/zipball/8fcadfe5f85c38705151c9ab23b4781f23e6a70e",
-                "reference": "8fcadfe5f85c38705151c9ab23b4781f23e6a70e",
+                "url": "https://api.github.com/repos/phpDocumentor/ReflectionDocBlock/zipball/549d235cf426209ecb6d4dac3181c4da479050b5",
+                "reference": "549d235cf426209ecb6d4dac3181c4da479050b5",
                 "shasum": ""
             },
             "require": {
-                "php": ">=7.1",
-                "phpdocumentor/type-resolver": "^0",
+                "ext-filter": "^7.1",
+                "php": "^7.2",
+                "phpdocumentor/reflection-common": "^2.0",
+                "phpdocumentor/type-resolver": "^1.0",
                 "webmozart/assert": "^1"
             },
             "require-dev": {
@@ -1756,37 +1651,41 @@
                 {
                     "name": "Mike van Riel",
                     "email": "me@mikevanriel.com"
+                },
+                {
+                    "name": "Jaap van Otterdijk",
+                    "email": "account@ijaap.nl"
                 }
             ],
             "description": "With this component, a library can provide support for annotations via DocBlocks or otherwise retrieve information that is embedded in a DocBlock.",
-            "time": "2019-06-15T20:45:01+00:00"
+            "time": "2019-12-17T20:36:15+00:00"
         },
         {
             "name": "phpdocumentor/type-resolver",
-            "version": "0.7.x-dev",
+            "version": "dev-master",
             "source": {
                 "type": "git",
                 "url": "https://github.com/phpDocumentor/TypeResolver.git",
-                "reference": "6f6f66c1d4e14e9b0ad124cae85864dfa03104c7"
+                "reference": "d3696787901380816c8bb30293aa9860b745db45"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/phpDocumentor/TypeResolver/zipball/6f6f66c1d4e14e9b0ad124cae85864dfa03104c7",
-                "reference": "6f6f66c1d4e14e9b0ad124cae85864dfa03104c7",
+                "url": "https://api.github.com/repos/phpDocumentor/TypeResolver/zipball/d3696787901380816c8bb30293aa9860b745db45",
+                "reference": "d3696787901380816c8bb30293aa9860b745db45",
                 "shasum": ""
             },
             "require": {
-                "php": ">=7.1",
-                "phpdocumentor/reflection-common": "~2.0.0-beta1"
+                "php": "^7.2",
+                "phpdocumentor/reflection-common": "^2.0"
             },
             "require-dev": {
-                "mockery/mockery": "~1",
-                "phpunit/phpunit": "~6"
+                "ext-tokenizer": "^7.2",
+                "mockery/mockery": "~1"
             },
             "type": "library",
             "extra": {
                 "branch-alias": {
-                    "dev-master": "0.x-dev"
+                    "dev-master": "1.x-dev"
                 }
             },
             "autoload": {
@@ -1805,37 +1704,37 @@
                 }
             ],
             "description": "A PSR-5 based resolver of Class names, Types and Structural Element Names",
-            "time": "2019-08-22T17:55:41+00:00"
+            "time": "2019-12-07T08:07:29+00:00"
         },
         {
             "name": "phpspec/prophecy",
-            "version": "1.9.0",
+            "version": "dev-master",
             "source": {
                 "type": "git",
                 "url": "https://github.com/phpspec/prophecy.git",
-                "reference": "f6811d96d97bdf400077a0cc100ae56aa32b9203"
+                "reference": "d638ebbb58daba25a6a0dc7969e1358a0e3c6682"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/phpspec/prophecy/zipball/f6811d96d97bdf400077a0cc100ae56aa32b9203",
-                "reference": "f6811d96d97bdf400077a0cc100ae56aa32b9203",
+                "url": "https://api.github.com/repos/phpspec/prophecy/zipball/d638ebbb58daba25a6a0dc7969e1358a0e3c6682",
+                "reference": "d638ebbb58daba25a6a0dc7969e1358a0e3c6682",
                 "shasum": ""
             },
             "require": {
                 "doctrine/instantiator": "^1.0.2",
                 "php": "^5.3|^7.0",
                 "phpdocumentor/reflection-docblock": "^2.0|^3.0.2|^4.0|^5.0",
-                "sebastian/comparator": "^1.1|^2.0|^3.0",
+                "sebastian/comparator": "^1.2.3|^2.0|^3.0",
                 "sebastian/recursion-context": "^1.0|^2.0|^3.0"
             },
             "require-dev": {
-                "phpspec/phpspec": "^2.5|^3.2",
+                "phpspec/phpspec": "^2.5 || ^3.2",
                 "phpunit/phpunit": "^4.8.35 || ^5.7 || ^6.5 || ^7.1"
             },
             "type": "library",
             "extra": {
                 "branch-alias": {
-                    "dev-master": "1.8.x-dev"
+                    "dev-master": "1.10.x-dev"
                 }
             },
             "autoload": {
@@ -1868,7 +1767,7 @@
                 "spy",
                 "stub"
             ],
-            "time": "2019-10-03T11:07:50+00:00"
+            "time": "2019-12-17T16:54:23+00:00"
         },
         {
             "name": "phpunit/php-code-coverage",
@@ -3027,7 +2926,6 @@
         "aphiria/api": 20,
         "aphiria/configuration": 20,
         "aphiria/console": 20,
-        "aphiria/console-annotations": 20,
         "aphiria/exceptions": 20,
         "erusev/parsedown-extra": 20
     },
