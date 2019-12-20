@@ -122,12 +122,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/aphiria/configuration.git",
-                "reference": "a8c04eb941e9ad01e72521e0fc6bb21a02585807"
+                "reference": "a41518c0626a863418599e8764aaeb03c1922f59"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/aphiria/configuration/zipball/a8c04eb941e9ad01e72521e0fc6bb21a02585807",
-                "reference": "a8c04eb941e9ad01e72521e0fc6bb21a02585807",
+                "url": "https://api.github.com/repos/aphiria/configuration/zipball/a41518c0626a863418599e8764aaeb03c1922f59",
+                "reference": "a41518c0626a863418599e8764aaeb03c1922f59",
                 "shasum": ""
             },
             "require": {
@@ -170,7 +170,7 @@
                 "configuration",
                 "php"
             ],
-            "time": "2019-12-19T00:52:35+00:00"
+            "time": "2019-12-20T01:07:21+00:00"
         },
         {
             "name": "aphiria/console",
@@ -669,12 +669,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/aphiria/validation.git",
-                "reference": "7661730dcf000924d8586e436917d045effded41"
+                "reference": "03415ce5eed070cd90a9a829bfa24abff52ed51e"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/aphiria/validation/zipball/7661730dcf000924d8586e436917d045effded41",
-                "reference": "7661730dcf000924d8586e436917d045effded41",
+                "url": "https://api.github.com/repos/aphiria/validation/zipball/03415ce5eed070cd90a9a829bfa24abff52ed51e",
+                "reference": "03415ce5eed070cd90a9a829bfa24abff52ed51e",
                 "shasum": ""
             },
             "require": {
@@ -715,7 +715,7 @@
                 "php",
                 "validation"
             ],
-            "time": "2019-12-19T04:42:50+00:00"
+            "time": "2019-12-19T13:45:47+00:00"
         },
         {
             "name": "doctrine/annotations",
@@ -953,12 +953,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/Seldaek/monolog.git",
-                "reference": "38449de333489cd0498a047c27c9c6f1845f52ed"
+                "reference": "c53ab0db0b8a4325762eb0a993f7f9829ebbb385"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/Seldaek/monolog/zipball/38449de333489cd0498a047c27c9c6f1845f52ed",
-                "reference": "38449de333489cd0498a047c27c9c6f1845f52ed",
+                "url": "https://api.github.com/repos/Seldaek/monolog/zipball/c53ab0db0b8a4325762eb0a993f7f9829ebbb385",
+                "reference": "c53ab0db0b8a4325762eb0a993f7f9829ebbb385",
                 "shasum": ""
             },
             "require": {
@@ -1026,7 +1026,7 @@
                 "logging",
                 "psr-3"
             ],
-            "time": "2019-12-11T21:01:17+00:00"
+            "time": "2019-12-19T13:11:45+00:00"
         },
         {
             "name": "opis/closure",
@@ -1292,12 +1292,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/dotenv.git",
-                "reference": "bb9ee2767805806ce7d922857b2daf40271ba2c7"
+                "reference": "c387ab37887f997162a8579d335b38f328d27859"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/dotenv/zipball/bb9ee2767805806ce7d922857b2daf40271ba2c7",
-                "reference": "bb9ee2767805806ce7d922857b2daf40271ba2c7",
+                "url": "https://api.github.com/repos/symfony/dotenv/zipball/c387ab37887f997162a8579d335b38f328d27859",
+                "reference": "c387ab37887f997162a8579d335b38f328d27859",
                 "shasum": ""
             },
             "require": {
@@ -1341,7 +1341,7 @@
                 "env",
                 "environment"
             ],
-            "time": "2019-12-06T13:32:19+00:00"
+            "time": "2019-12-19T15:57:49+00:00"
         }
     ],
     "packages-dev": [
