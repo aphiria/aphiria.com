@@ -953,12 +953,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/Seldaek/monolog.git",
-                "reference": "c53ab0db0b8a4325762eb0a993f7f9829ebbb385"
+                "reference": "c861fcba2ca29404dc9e617eedd9eff4616986b8"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/Seldaek/monolog/zipball/c53ab0db0b8a4325762eb0a993f7f9829ebbb385",
-                "reference": "c53ab0db0b8a4325762eb0a993f7f9829ebbb385",
+                "url": "https://api.github.com/repos/Seldaek/monolog/zipball/c861fcba2ca29404dc9e617eedd9eff4616986b8",
+                "reference": "c861fcba2ca29404dc9e617eedd9eff4616986b8",
                 "shasum": ""
             },
             "require": {
@@ -1026,7 +1026,7 @@
                 "logging",
                 "psr-3"
             ],
-            "time": "2019-12-19T13:11:45+00:00"
+            "time": "2019-12-20T14:22:59+00:00"
         },
         {
             "name": "opis/closure",
@@ -1538,18 +1538,18 @@
             "authors": [
                 {
                     "name": "Arne Blankerts",
-                    "email": "arne@blankerts.de",
-                    "role": "Developer"
+                    "role": "Developer",
+                    "email": "arne@blankerts.de"
                 },
                 {
                     "name": "Sebastian Heuer",
-                    "email": "sebastian@phpeople.de",
-                    "role": "Developer"
+                    "role": "Developer",
+                    "email": "sebastian@phpeople.de"
                 },
                 {
                     "name": "Sebastian Bergmann",
-                    "email": "sebastian@phpunit.de",
-                    "role": "Developer"
+                    "role": "Developer",
+                    "email": "sebastian@phpunit.de"
                 }
             ],
             "description": "Library for handling version information and constraints",
@@ -1561,12 +1561,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/phpDocumentor/ReflectionCommon.git",
-                "reference": "63a995caa1ca9e5590304cd845c15ad6d482a62a"
+                "reference": "b0843c8cbcc2dc5eda5158e583c7199a5e44c86d"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/phpDocumentor/ReflectionCommon/zipball/63a995caa1ca9e5590304cd845c15ad6d482a62a",
-                "reference": "63a995caa1ca9e5590304cd845c15ad6d482a62a",
+                "url": "https://api.github.com/repos/phpDocumentor/ReflectionCommon/zipball/b0843c8cbcc2dc5eda5158e583c7199a5e44c86d",
+                "reference": "b0843c8cbcc2dc5eda5158e583c7199a5e44c86d",
                 "shasum": ""
             },
             "require": {
@@ -1605,7 +1605,7 @@
                 "reflection",
                 "static analysis"
             ],
-            "time": "2018-08-07T13:53:10+00:00"
+            "time": "2019-12-20T12:45:35+00:00"
         },
         {
             "name": "phpdocumentor/reflection-docblock",
@@ -1613,12 +1613,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/phpDocumentor/ReflectionDocBlock.git",
-                "reference": "549d235cf426209ecb6d4dac3181c4da479050b5"
+                "reference": "c19ab7ef57e75b5790aa912fd1cd14708e811970"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/phpDocumentor/ReflectionDocBlock/zipball/549d235cf426209ecb6d4dac3181c4da479050b5",
-                "reference": "549d235cf426209ecb6d4dac3181c4da479050b5",
+                "url": "https://api.github.com/repos/phpDocumentor/ReflectionDocBlock/zipball/c19ab7ef57e75b5790aa912fd1cd14708e811970",
+                "reference": "c19ab7ef57e75b5790aa912fd1cd14708e811970",
                 "shasum": ""
             },
             "require": {
@@ -1658,7 +1658,7 @@
                 }
             ],
             "description": "With this component, a library can provide support for annotations via DocBlocks or otherwise retrieve information that is embedded in a DocBlock.",
-            "time": "2019-12-17T20:36:15+00:00"
+            "time": "2019-12-20T13:36:14+00:00"
         },
         {
             "name": "phpdocumentor/type-resolver",
@@ -1965,8 +1965,8 @@
             "authors": [
                 {
                     "name": "Sebastian Bergmann",
-                    "email": "sebastian@phpunit.de",
-                    "role": "lead"
+                    "role": "lead",
+                    "email": "sebastian@phpunit.de"
                 }
             ],
             "description": "Simple template engine.",
@@ -2080,12 +2080,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/sebastianbergmann/phpunit.git",
-                "reference": "f2eeaa3cdab29a70ba900d5f1c67f841adf028ea"
+                "reference": "e0dedce2f080da690aa63135667f1d842569207b"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/sebastianbergmann/phpunit/zipball/f2eeaa3cdab29a70ba900d5f1c67f841adf028ea",
-                "reference": "f2eeaa3cdab29a70ba900d5f1c67f841adf028ea",
+                "url": "https://api.github.com/repos/sebastianbergmann/phpunit/zipball/e0dedce2f080da690aa63135667f1d842569207b",
+                "reference": "e0dedce2f080da690aa63135667f1d842569207b",
                 "shasum": ""
             },
             "require": {
@@ -2156,7 +2156,7 @@
                 "testing",
                 "xunit"
             ],
-            "time": "2019-11-21T09:37:31+00:00"
+            "time": "2019-10-24T09:26:13+00:00"
         },
         {
             "name": "sebastian/code-unit-reverse-lookup",
@@ -2765,8 +2765,8 @@
             "authors": [
                 {
                     "name": "Sebastian Bergmann",
-                    "email": "sebastian@phpunit.de",
-                    "role": "lead"
+                    "role": "lead",
+                    "email": "sebastian@phpunit.de"
                 }
             ],
             "description": "Library that helps with managing the version number of Git-hosted PHP projects",
@@ -2864,8 +2864,8 @@
             "authors": [
                 {
                     "name": "Arne Blankerts",
-                    "email": "arne@blankerts.de",
-                    "role": "Developer"
+                    "role": "Developer",
+                    "email": "arne@blankerts.de"
                 }
             ],
             "description": "A small library for converting tokenized PHP source code into XML and potentially other formats",
