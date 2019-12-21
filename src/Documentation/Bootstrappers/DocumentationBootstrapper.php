@@ -190,6 +190,12 @@ final class DocumentationBootstrapper extends Bootstrapper
                         'linkText' => 'Serialization',
                         'description' => 'Learn about to serialize and deserialize objects in Aphiria',
                         'keywords' => ['aphiria', 'serialize', 'deserialize', 'encode', 'decode', 'php']
+                    ],
+                    'validation' => [
+                        'title' => 'Validation',
+                        'linkText' => 'Validation',
+                        'description' => 'Learn about to validate data in Aphiria',
+                        'keywords' => ['aphiria', 'validation', 'constraints', 'php']
                     ]
                 ]
             ]
