@@ -45,7 +45,7 @@ final class IndexDocsCommandHandler implements ICommandHandler
     {
         try {
             $this->docs->indexDocs();
-            $output->writeln('<success>Docs indexed</success>');
+            $output->writeln('<success>Documentation indexed</success>');
         } catch (FileSystemException | IndexingFailedException $ex) {
             $output->writeln('<fatal>Failed to index docs</fatal>');
             $output->writeln("<info>{$ex->getMessage()}</info>");
