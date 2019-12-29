@@ -12,12 +12,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/aphiria/api.git",
-                "reference": "90552204566c86b703306c5e4976ed1a2636a183"
+                "reference": "9cdd25141be6743918aa2c3d5e36fd2d28a5852c"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/aphiria/api/zipball/90552204566c86b703306c5e4976ed1a2636a183",
-                "reference": "90552204566c86b703306c5e4976ed1a2636a183",
+                "url": "https://api.github.com/repos/aphiria/api/zipball/9cdd25141be6743918aa2c3d5e36fd2d28a5852c",
+                "reference": "9cdd25141be6743918aa2c3d5e36fd2d28a5852c",
                 "shasum": ""
             },
             "require": {
@@ -60,7 +60,7 @@
                 "controller",
                 "php"
             ],
-            "time": "2019-12-29T02:34:20+00:00"
+            "time": "2019-12-29T03:02:34+00:00"
         },
         {
             "name": "aphiria/collections",
@@ -669,12 +669,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/aphiria/validation.git",
-                "reference": "3ed2c68d6d194f87d92ac397d0a92f6744f32ae2"
+                "reference": "b93f50661348d382c81f389db39c5f8cc6828d5d"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/aphiria/validation/zipball/3ed2c68d6d194f87d92ac397d0a92f6744f32ae2",
-                "reference": "3ed2c68d6d194f87d92ac397d0a92f6744f32ae2",
+                "url": "https://api.github.com/repos/aphiria/validation/zipball/b93f50661348d382c81f389db39c5f8cc6828d5d",
+                "reference": "b93f50661348d382c81f389db39c5f8cc6828d5d",
                 "shasum": ""
             },
             "require": {
@@ -715,7 +715,7 @@
                 "php",
                 "validation"
             ],
-            "time": "2019-12-29T02:46:59+00:00"
+            "time": "2019-12-29T03:02:34+00:00"
         },
         {
             "name": "doctrine/annotations",
