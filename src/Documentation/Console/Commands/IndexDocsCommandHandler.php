@@ -16,6 +16,7 @@ use Aphiria\Console\Commands\Annotations\Command;
 use Aphiria\Console\Commands\ICommandHandler;
 use Aphiria\Console\Input\Input;
 use Aphiria\Console\Output\IOutput;
+use Aphiria\Console\StatusCodes;
 use Aphiria\IO\FileSystemException;
 use App\Documentation\DocumentationService;
 use App\Documentation\Searching\IndexingFailedException;
@@ -46,9 +47,13 @@ final class IndexDocsCommandHandler implements ICommandHandler
         try {
             $this->docs->indexDocs();
             $output->writeln('<success>Documentation indexed</success>');
+
+            return StatusCodes::OK;
         } catch (FileSystemException | IndexingFailedException $ex) {
             $output->writeln('<fatal>Failed to index docs</fatal>');
             $output->writeln("<info>{$ex->getMessage()}</info>");
+
+            return StatusCodes::FATAL;
         }
     }
 }

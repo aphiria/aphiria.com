@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "72ec9a82a340807a542d03bf4423cd98",
+    "content-hash": "fe6ea47a6ac68689d1fd4f3b2beceece",
     "packages": [
         {
             "name": "aphiria/api",
@@ -443,12 +443,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/aphiria/net.git",
-                "reference": "101de8db0f26ffa76f41be12729824e065191ac6"
+                "reference": "de6736c23e1f44200ed3430fa698b0006ab1eb6c"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/aphiria/net/zipball/101de8db0f26ffa76f41be12729824e065191ac6",
-                "reference": "101de8db0f26ffa76f41be12729824e065191ac6",
+                "url": "https://api.github.com/repos/aphiria/net/zipball/de6736c23e1f44200ed3430fa698b0006ab1eb6c",
+                "reference": "de6736c23e1f44200ed3430fa698b0006ab1eb6c",
                 "shasum": ""
             },
             "require": {
@@ -495,7 +495,7 @@
                 "request",
                 "response"
             ],
-            "time": "2019-12-31T22:31:27+00:00"
+            "time": "2019-12-31T22:52:53+00:00"
         },
         {
             "name": "aphiria/reflection",
@@ -2923,8 +2923,7 @@
         "aphiria/api": 20,
         "aphiria/configuration": 20,
         "aphiria/console": 20,
-        "aphiria/exceptions": 20,
-        "erusev/parsedown-extra": 20
+        "aphiria/exceptions": 20
     },
     "prefer-stable": false,
     "prefer-lowest": false,

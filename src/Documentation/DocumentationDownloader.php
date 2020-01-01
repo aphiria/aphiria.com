@@ -14,6 +14,7 @@ namespace App\Documentation;
 
 use Aphiria\IO\FileSystem;
 use Aphiria\IO\FileSystemException;
+use RuntimeException;
 
 /**
  * Defines the documentation downloader
@@ -78,6 +79,10 @@ final class DocumentationDownloader
             );
 
             $markdownFiles[$branch] = $this->files->glob("$rawDocsPath/*.md");
+
+            if (\count($markdownFiles[$branch]) === 0) {
+                throw new RuntimeException("Failed to download docs for branch $branch");
+            }
         }
 
         return $markdownFiles;

@@ -16,6 +16,7 @@ use Aphiria\Console\Commands\Annotations\Command;
 use Aphiria\Console\Commands\ICommandHandler;
 use Aphiria\Console\Input\Input;
 use Aphiria\Console\Output\IOutput;
+use Aphiria\Console\StatusCodes;
 use Aphiria\IO\FileSystemException;
 use App\Web\ViewCompiler;
 
@@ -52,6 +53,8 @@ final class BuildViewsCommandHandler implements ICommandHandler
         } catch (FileSystemException $ex) {
             $output->writeln('<fatal>Failed to build views</fatal>');
             $output->writeln("<info>{$ex->getMessage()}</info>");
+
+            return StatusCodes::FATAL;
         }
     }
 }
