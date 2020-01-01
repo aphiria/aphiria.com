@@ -4,7 +4,7 @@
  * Aphiria
  *
  * @link      https://www.aphiria.com
- * @copyright Copyright (C) 2019 David Young
+ * @copyright Copyright (C) 2020 David Young
  * @license   https://github.com/aphiria/aphiria.com/blob/master/LICENSE.md
  */
 
@@ -315,7 +315,7 @@ EOF
     private function insertIndexEntry(IndexEntry $indexEntry): void
     {
         $statement = $this->connection->prepare(<<<EOF
-INSERT INTO {$this->lexemeTableName} (h1_inner_text, h2_inner_text, h3_inner_text, h4_inner_text, h5_inner_text, link, html_element_type, inner_text, html_element_weight) 
+INSERT INTO {$this->lexemeTableName} (h1_inner_text, h2_inner_text, h3_inner_text, h4_inner_text, h5_inner_text, link, html_element_type, inner_text, html_element_weight)
 VALUES (:h1InnerText, :h2InnerText, :h3InnerText, :h4InnerText, :h5InnerText, :link, :htmlElementType, :innerText, :htmlElementWeight)
 EOF
         );
