@@ -12,12 +12,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/aphiria/api.git",
-                "reference": "9cdd25141be6743918aa2c3d5e36fd2d28a5852c"
+                "reference": "dc51ff19bed507f49aa1672309cbdbc37a20d729"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/aphiria/api/zipball/9cdd25141be6743918aa2c3d5e36fd2d28a5852c",
-                "reference": "9cdd25141be6743918aa2c3d5e36fd2d28a5852c",
+                "url": "https://api.github.com/repos/aphiria/api/zipball/dc51ff19bed507f49aa1672309cbdbc37a20d729",
+                "reference": "dc51ff19bed507f49aa1672309cbdbc37a20d729",
                 "shasum": ""
             },
             "require": {
@@ -25,6 +25,7 @@
                 "aphiria/middleware": "1.0.*@dev",
                 "aphiria/net": "1.0.*@dev",
                 "aphiria/router": "1.0.*@dev",
+                "aphiria/validation": "1.0.*@dev",
                 "monolog/monolog": "~2.0",
                 "php": "^7.4",
                 "psr/log": "~1.0"
@@ -60,7 +61,7 @@
                 "controller",
                 "php"
             ],
-            "time": "2019-12-29T03:02:34+00:00"
+            "time": "2020-01-09T00:51:32+00:00"
         },
         {
             "name": "aphiria/collections",
@@ -122,12 +123,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/aphiria/configuration.git",
-                "reference": "8eab8021aca1acc2b82fdc19db12ed9087cab0ae"
+                "reference": "dc5900d371246c644b6a0be66961c048fb1a8cc9"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/aphiria/configuration/zipball/8eab8021aca1acc2b82fdc19db12ed9087cab0ae",
-                "reference": "8eab8021aca1acc2b82fdc19db12ed9087cab0ae",
+                "url": "https://api.github.com/repos/aphiria/configuration/zipball/dc5900d371246c644b6a0be66961c048fb1a8cc9",
+                "reference": "dc5900d371246c644b6a0be66961c048fb1a8cc9",
                 "shasum": ""
             },
             "require": {
@@ -170,7 +171,7 @@
                 "configuration",
                 "php"
             ],
-            "time": "2019-12-29T20:47:15+00:00"
+            "time": "2020-01-08T13:42:04+00:00"
         },
         {
             "name": "aphiria/console",
@@ -443,12 +444,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/aphiria/net.git",
-                "reference": "de6736c23e1f44200ed3430fa698b0006ab1eb6c"
+                "reference": "98f88402744a942a5254532613e80f244d296e05"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/aphiria/net/zipball/de6736c23e1f44200ed3430fa698b0006ab1eb6c",
-                "reference": "de6736c23e1f44200ed3430fa698b0006ab1eb6c",
+                "url": "https://api.github.com/repos/aphiria/net/zipball/98f88402744a942a5254532613e80f244d296e05",
+                "reference": "98f88402744a942a5254532613e80f244d296e05",
                 "shasum": ""
             },
             "require": {
@@ -495,7 +496,7 @@
                 "request",
                 "response"
             ],
-            "time": "2019-12-31T22:52:53+00:00"
+            "time": "2020-01-06T22:46:18+00:00"
         },
         {
             "name": "aphiria/reflection",
@@ -669,12 +670,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/aphiria/validation.git",
-                "reference": "2262969d349a0599bcbd528488eefeaa42f3ca76"
+                "reference": "9114e011105fffa4005e9f952c73cf96a176f963"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/aphiria/validation/zipball/2262969d349a0599bcbd528488eefeaa42f3ca76",
-                "reference": "2262969d349a0599bcbd528488eefeaa42f3ca76",
+                "url": "https://api.github.com/repos/aphiria/validation/zipball/9114e011105fffa4005e9f952c73cf96a176f963",
+                "reference": "9114e011105fffa4005e9f952c73cf96a176f963",
                 "shasum": ""
             },
             "require": {
@@ -715,7 +716,7 @@
                 "php",
                 "validation"
             ],
-            "time": "2019-12-29T20:47:15+00:00"
+            "time": "2020-01-09T00:49:47+00:00"
         },
         {
             "name": "doctrine/annotations",
@@ -2016,16 +2017,16 @@
         },
         {
             "name": "phpunit/phpunit",
-            "version": "8.5.1",
+            "version": "8.5.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/sebastianbergmann/phpunit.git",
-                "reference": "7870c78da3c5e4883eaef36ae47853ebb3cb86f2"
+                "reference": "018b6ac3c8ab20916db85fa91bf6465acb64d1e0"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/sebastianbergmann/phpunit/zipball/7870c78da3c5e4883eaef36ae47853ebb3cb86f2",
-                "reference": "7870c78da3c5e4883eaef36ae47853ebb3cb86f2",
+                "url": "https://api.github.com/repos/sebastianbergmann/phpunit/zipball/018b6ac3c8ab20916db85fa91bf6465acb64d1e0",
+                "reference": "018b6ac3c8ab20916db85fa91bf6465acb64d1e0",
                 "shasum": ""
             },
             "require": {
@@ -2095,7 +2096,7 @@
                 "testing",
                 "xunit"
             ],
-            "time": "2019-12-25T14:49:39+00:00"
+            "time": "2020-01-08T08:49:49+00:00"
         },
         {
             "name": "sebastian/code-unit-reverse-lookup",

@@ -17,10 +17,12 @@ use Aphiria\Configuration\IApplicationBuilder;
 use Aphiria\Configuration\Middleware\MiddlewareBinding;
 use Aphiria\DependencyInjection\IContainer;
 use App\Api\Bootstrappers\ContentNegotiatorBootstrapper;
+use App\Api\Bootstrappers\ControllerBootstrapper;
 use App\Api\Bootstrappers\DependencyInjectionBootstrapper;
 use App\Api\Bootstrappers\ExceptionHandlerBootstrapper;
 use App\Api\Bootstrappers\RoutingBootstrapper;
 use App\Api\Bootstrappers\SerializerBootstrapper;
+use App\Api\Bootstrappers\ValidationBootstrapper;
 use App\Api\Middleware\Cors;
 use App\Console\Bootstrappers\CommandBootstrapper;
 use App\Documentation\DocumentationModuleBuilder;
@@ -60,7 +62,9 @@ final class Config
             ->withEncoderComponent($this->appBuilder)
             ->withRoutingComponent($this->appBuilder)
             ->withRoutingAnnotations($this->appBuilder)
-            ->withConsoleAnnotations($this->appBuilder);
+            ->withConsoleAnnotations($this->appBuilder)
+            ->withValidationComponent($this->appBuilder)
+            ->withValidationAnnotations($this->appBuilder);
 
         // Register some global bootstrappers
         $this->appBuilder->withBootstrappers(fn () => [
@@ -69,6 +73,8 @@ final class Config
             new ExceptionHandlerBootstrapper,
             new LoggerBootstrapper,
             new ContentNegotiatorBootstrapper,
+            new ControllerBootstrapper,
+            new ValidationBootstrapper,
             new RoutingBootstrapper,
             new CommandBootstrapper
         ]);

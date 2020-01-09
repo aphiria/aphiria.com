@@ -12,6 +12,9 @@ declare(strict_types=1);
 
 namespace App\Api\Bootstrappers;
 
+use Aphiria\Api\Errors\ProblemDetailsResponseMutator;
+use Aphiria\Api\Validation\InvalidRequestBodyException;
+use Aphiria\Api\Validation\ValidationProblemDetails;
 use Aphiria\DependencyInjection\Bootstrappers\Bootstrapper;
 use Aphiria\DependencyInjection\IContainer;
 use Aphiria\Exceptions\ExceptionLogger;
@@ -23,6 +26,7 @@ use Aphiria\Exceptions\IExceptionLogger;
 use Aphiria\Exceptions\IExceptionResponseFactory;
 use Aphiria\Net\Http\ContentNegotiation\INegotiatedResponseFactory;
 use Aphiria\Net\Http\HttpException;
+use Aphiria\Net\Http\HttpStatusCodes;
 use Aphiria\Net\Http\IHttpRequestMessage;
 use Aphiria\Net\Http\StreamResponseWriter;
 use Psr\Log\LoggerInterface;
@@ -48,7 +52,13 @@ final class ExceptionHandlerBootstrapper extends Bootstrapper
         $exceptionResponseFactoryRegistry = new ExceptionResponseFactoryRegistry();
         $container->bindInstance(ExceptionResponseFactoryRegistry::class, $exceptionResponseFactoryRegistry);
         $exceptionResponseFactoryRegistry->registerManyFactories([
-            HttpException::class => fn (HttpException $ex, IHttpRequestMessage $request) => $ex->getResponse()
+            HttpException::class => fn (HttpException $ex, IHttpRequestMessage $request) => $ex->getResponse(),
+            InvalidRequestBodyException::class => function (InvalidRequestBodyException $ex, IHttpRequestMessage $request, INegotiatedResponseFactory $responseFactory) {
+                $body = new ValidationProblemDetails($ex->getErrors());
+                $response = $responseFactory->createResponse($request, HttpStatusCodes::HTTP_BAD_REQUEST, null, $body);
+
+                return (new ProblemDetailsResponseMutator)->mutateResponse($response);
+            }
         ]);
         $exceptionResponseFactory = new ExceptionResponseFactory(
             $container->resolve(INegotiatedResponseFactory::class),
