@@ -123,12 +123,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/aphiria/configuration.git",
-                "reference": "dc5900d371246c644b6a0be66961c048fb1a8cc9"
+                "reference": "211f7c5a7a99172b02e03cac868dc013ba9ae285"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/aphiria/configuration/zipball/dc5900d371246c644b6a0be66961c048fb1a8cc9",
-                "reference": "dc5900d371246c644b6a0be66961c048fb1a8cc9",
+                "url": "https://api.github.com/repos/aphiria/configuration/zipball/211f7c5a7a99172b02e03cac868dc013ba9ae285",
+                "reference": "211f7c5a7a99172b02e03cac868dc013ba9ae285",
                 "shasum": ""
             },
             "require": {
@@ -171,7 +171,7 @@
                 "configuration",
                 "php"
             ],
-            "time": "2020-01-08T13:42:04+00:00"
+            "time": "2020-01-10T00:36:28+00:00"
         },
         {
             "name": "aphiria/console",
@@ -179,12 +179,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/aphiria/console.git",
-                "reference": "5d8fdd8075f5b1ecc56edd9073a5d11204b11913"
+                "reference": "4d7cc9cb0cca28f3cee15470d66cce0fc5b1b970"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/aphiria/console/zipball/5d8fdd8075f5b1ecc56edd9073a5d11204b11913",
-                "reference": "5d8fdd8075f5b1ecc56edd9073a5d11204b11913",
+                "url": "https://api.github.com/repos/aphiria/console/zipball/4d7cc9cb0cca28f3cee15470d66cce0fc5b1b970",
+                "reference": "4d7cc9cb0cca28f3cee15470d66cce0fc5b1b970",
                 "shasum": ""
             },
             "require": {
@@ -226,7 +226,7 @@
                 "console",
                 "php"
             ],
-            "time": "2019-12-29T20:47:15+00:00"
+            "time": "2020-01-10T00:36:28+00:00"
         },
         {
             "name": "aphiria/dependency-injection",
@@ -555,12 +555,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/aphiria/router.git",
-                "reference": "95188955f31f7a943c6eb53266a28ac13eae1db1"
+                "reference": "2d5d16c2a198c0fe133088775262aeaacd5ae4b2"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/aphiria/router/zipball/95188955f31f7a943c6eb53266a28ac13eae1db1",
-                "reference": "95188955f31f7a943c6eb53266a28ac13eae1db1",
+                "url": "https://api.github.com/repos/aphiria/router/zipball/2d5d16c2a198c0fe133088775262aeaacd5ae4b2",
+                "reference": "2d5d16c2a198c0fe133088775262aeaacd5ae4b2",
                 "shasum": ""
             },
             "require": {
@@ -606,7 +606,7 @@
                 "router",
                 "routing"
             ],
-            "time": "2019-12-29T20:47:15+00:00"
+            "time": "2020-01-10T00:36:28+00:00"
         },
         {
             "name": "aphiria/serialization",
@@ -670,12 +670,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/aphiria/validation.git",
-                "reference": "9114e011105fffa4005e9f952c73cf96a176f963"
+                "reference": "d66f2234f9c8382aa7d761763747f02baa9cda2b"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/aphiria/validation/zipball/9114e011105fffa4005e9f952c73cf96a176f963",
-                "reference": "9114e011105fffa4005e9f952c73cf96a176f963",
+                "url": "https://api.github.com/repos/aphiria/validation/zipball/d66f2234f9c8382aa7d761763747f02baa9cda2b",
+                "reference": "d66f2234f9c8382aa7d761763747f02baa9cda2b",
                 "shasum": ""
             },
             "require": {
@@ -716,7 +716,7 @@
                 "php",
                 "validation"
             ],
-            "time": "2020-01-09T00:49:47+00:00"
+            "time": "2020-01-10T00:36:28+00:00"
         },
         {
             "name": "doctrine/annotations",
