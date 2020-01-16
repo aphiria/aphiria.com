@@ -287,12 +287,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/aphiria/exceptions.git",
-                "reference": "e3f8c544d6f4b43d33c2877f830dfa76fe425665"
+                "reference": "6f2c959361ef71f277e7eb3807d1f49a6e47179e"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/aphiria/exceptions/zipball/e3f8c544d6f4b43d33c2877f830dfa76fe425665",
-                "reference": "e3f8c544d6f4b43d33c2877f830dfa76fe425665",
+                "url": "https://api.github.com/repos/aphiria/exceptions/zipball/6f2c959361ef71f277e7eb3807d1f49a6e47179e",
+                "reference": "6f2c959361ef71f277e7eb3807d1f49a6e47179e",
                 "shasum": ""
             },
             "require": {
@@ -333,7 +333,7 @@
                 "exceptions",
                 "php"
             ],
-            "time": "2019-12-16T13:35:40+00:00"
+            "time": "2020-01-16T13:37:28+00:00"
         },
         {
             "name": "aphiria/io",
