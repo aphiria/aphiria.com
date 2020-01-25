@@ -12,12 +12,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/aphiria/api.git",
-                "reference": "dc51ff19bed507f49aa1672309cbdbc37a20d729"
+                "reference": "7b89f59be97f997c3b6a7bf3c8398c657bca3476"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/aphiria/api/zipball/dc51ff19bed507f49aa1672309cbdbc37a20d729",
-                "reference": "dc51ff19bed507f49aa1672309cbdbc37a20d729",
+                "url": "https://api.github.com/repos/aphiria/api/zipball/7b89f59be97f997c3b6a7bf3c8398c657bca3476",
+                "reference": "7b89f59be97f997c3b6a7bf3c8398c657bca3476",
                 "shasum": ""
             },
             "require": {
@@ -61,7 +61,7 @@
                 "controller",
                 "php"
             ],
-            "time": "2020-01-09T00:51:32+00:00"
+            "time": "2020-01-25T18:38:48+00:00"
         },
         {
             "name": "aphiria/collections",
@@ -123,12 +123,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/aphiria/configuration.git",
-                "reference": "211f7c5a7a99172b02e03cac868dc013ba9ae285"
+                "reference": "efd41385ae552df790946fa6b9dd74df74786141"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/aphiria/configuration/zipball/211f7c5a7a99172b02e03cac868dc013ba9ae285",
-                "reference": "211f7c5a7a99172b02e03cac868dc013ba9ae285",
+                "url": "https://api.github.com/repos/aphiria/configuration/zipball/efd41385ae552df790946fa6b9dd74df74786141",
+                "reference": "efd41385ae552df790946fa6b9dd74df74786141",
                 "shasum": ""
             },
             "require": {
@@ -171,7 +171,7 @@
                 "configuration",
                 "php"
             ],
-            "time": "2020-01-10T00:36:28+00:00"
+            "time": "2020-01-25T18:38:48+00:00"
         },
         {
             "name": "aphiria/console",
@@ -179,12 +179,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/aphiria/console.git",
-                "reference": "4d7cc9cb0cca28f3cee15470d66cce0fc5b1b970"
+                "reference": "11c09e163add79b893fdc61b07b0377e5e71fd07"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/aphiria/console/zipball/4d7cc9cb0cca28f3cee15470d66cce0fc5b1b970",
-                "reference": "4d7cc9cb0cca28f3cee15470d66cce0fc5b1b970",
+                "url": "https://api.github.com/repos/aphiria/console/zipball/11c09e163add79b893fdc61b07b0377e5e71fd07",
+                "reference": "11c09e163add79b893fdc61b07b0377e5e71fd07",
                 "shasum": ""
             },
             "require": {
@@ -226,7 +226,7 @@
                 "console",
                 "php"
             ],
-            "time": "2020-01-10T00:36:28+00:00"
+            "time": "2020-01-25T18:38:48+00:00"
         },
         {
             "name": "aphiria/dependency-injection",
@@ -234,12 +234,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/aphiria/dependency-injection.git",
-                "reference": "520e5db3939e708cecc4a67eb58db36e2a53be77"
+                "reference": "4f9020da41d0de90b549035592e9672d00548763"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/aphiria/dependency-injection/zipball/520e5db3939e708cecc4a67eb58db36e2a53be77",
-                "reference": "520e5db3939e708cecc4a67eb58db36e2a53be77",
+                "url": "https://api.github.com/repos/aphiria/dependency-injection/zipball/4f9020da41d0de90b549035592e9672d00548763",
+                "reference": "4f9020da41d0de90b549035592e9672d00548763",
                 "shasum": ""
             },
             "require": {
@@ -279,7 +279,7 @@
                 "ioc",
                 "php"
             ],
-            "time": "2019-12-16T13:35:40+00:00"
+            "time": "2020-01-25T18:38:48+00:00"
         },
         {
             "name": "aphiria/exceptions",
@@ -444,12 +444,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/aphiria/net.git",
-                "reference": "98f88402744a942a5254532613e80f244d296e05"
+                "reference": "830e41490a9fcd2f4ff513799e8ff84ecd970345"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/aphiria/net/zipball/98f88402744a942a5254532613e80f244d296e05",
-                "reference": "98f88402744a942a5254532613e80f244d296e05",
+                "url": "https://api.github.com/repos/aphiria/net/zipball/830e41490a9fcd2f4ff513799e8ff84ecd970345",
+                "reference": "830e41490a9fcd2f4ff513799e8ff84ecd970345",
                 "shasum": ""
             },
             "require": {
@@ -496,7 +496,7 @@
                 "request",
                 "response"
             ],
-            "time": "2020-01-06T22:46:18+00:00"
+            "time": "2020-01-25T18:38:48+00:00"
         },
         {
             "name": "aphiria/reflection",
@@ -555,12 +555,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/aphiria/router.git",
-                "reference": "2d5d16c2a198c0fe133088775262aeaacd5ae4b2"
+                "reference": "890f2f698749dd457ddad16fd230382462d5a2bd"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/aphiria/router/zipball/2d5d16c2a198c0fe133088775262aeaacd5ae4b2",
-                "reference": "2d5d16c2a198c0fe133088775262aeaacd5ae4b2",
+                "url": "https://api.github.com/repos/aphiria/router/zipball/890f2f698749dd457ddad16fd230382462d5a2bd",
+                "reference": "890f2f698749dd457ddad16fd230382462d5a2bd",
                 "shasum": ""
             },
             "require": {
@@ -606,7 +606,7 @@
                 "router",
                 "routing"
             ],
-            "time": "2020-01-10T00:36:28+00:00"
+            "time": "2020-01-21T01:28:43+00:00"
         },
         {
             "name": "aphiria/serialization",
@@ -1286,16 +1286,16 @@
         },
         {
             "name": "symfony/dotenv",
-            "version": "v4.4.2",
+            "version": "v4.4.3",
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/dotenv.git",
-                "reference": "c387ab37887f997162a8579d335b38f328d27859"
+                "reference": "b74a1638f53e3c65e4bbfc2a03c23fdc400fd243"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/dotenv/zipball/c387ab37887f997162a8579d335b38f328d27859",
-                "reference": "c387ab37887f997162a8579d335b38f328d27859",
+                "url": "https://api.github.com/repos/symfony/dotenv/zipball/b74a1638f53e3c65e4bbfc2a03c23fdc400fd243",
+                "reference": "b74a1638f53e3c65e4bbfc2a03c23fdc400fd243",
                 "shasum": ""
             },
             "require": {
@@ -1339,7 +1339,7 @@
                 "env",
                 "environment"
             ],
-            "time": "2019-12-19T15:57:49+00:00"
+            "time": "2020-01-08T17:29:02+00:00"
         }
     ],
     "packages-dev": [
@@ -1401,16 +1401,16 @@
         },
         {
             "name": "myclabs/deep-copy",
-            "version": "1.9.4",
+            "version": "1.9.5",
             "source": {
                 "type": "git",
                 "url": "https://github.com/myclabs/DeepCopy.git",
-                "reference": "579bb7356d91f9456ccd505f24ca8b667966a0a7"
+                "reference": "b2c28789e80a97badd14145fda39b545d83ca3ef"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/myclabs/DeepCopy/zipball/579bb7356d91f9456ccd505f24ca8b667966a0a7",
-                "reference": "579bb7356d91f9456ccd505f24ca8b667966a0a7",
+                "url": "https://api.github.com/repos/myclabs/DeepCopy/zipball/b2c28789e80a97badd14145fda39b545d83ca3ef",
+                "reference": "b2c28789e80a97badd14145fda39b545d83ca3ef",
                 "shasum": ""
             },
             "require": {
@@ -1445,7 +1445,7 @@
                 "object",
                 "object graph"
             ],
-            "time": "2019-12-15T19:12:40+00:00"
+            "time": "2020-01-17T21:11:47+00:00"
         },
         {
             "name": "phar-io/manifest",
@@ -1702,24 +1702,24 @@
         },
         {
             "name": "phpspec/prophecy",
-            "version": "1.10.1",
+            "version": "v1.10.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/phpspec/prophecy.git",
-                "reference": "cbe1df668b3fe136bcc909126a0f529a78d4cbbc"
+                "reference": "b4400efc9d206e83138e2bb97ed7f5b14b831cd9"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/phpspec/prophecy/zipball/cbe1df668b3fe136bcc909126a0f529a78d4cbbc",
-                "reference": "cbe1df668b3fe136bcc909126a0f529a78d4cbbc",
+                "url": "https://api.github.com/repos/phpspec/prophecy/zipball/b4400efc9d206e83138e2bb97ed7f5b14b831cd9",
+                "reference": "b4400efc9d206e83138e2bb97ed7f5b14b831cd9",
                 "shasum": ""
             },
             "require": {
                 "doctrine/instantiator": "^1.0.2",
                 "php": "^5.3|^7.0",
                 "phpdocumentor/reflection-docblock": "^2.0|^3.0.2|^4.0|^5.0",
-                "sebastian/comparator": "^1.2.3|^2.0|^3.0",
-                "sebastian/recursion-context": "^1.0|^2.0|^3.0"
+                "sebastian/comparator": "^1.2.3|^2.0|^3.0|^4.0",
+                "sebastian/recursion-context": "^1.0|^2.0|^3.0|^4.0"
             },
             "require-dev": {
                 "phpspec/phpspec": "^2.5 || ^3.2",
@@ -1761,7 +1761,7 @@
                 "spy",
                 "stub"
             ],
-            "time": "2019-12-22T21:05:45+00:00"
+            "time": "2020-01-20T15:57:02+00:00"
         },
         {
             "name": "phpunit/php-code-coverage",

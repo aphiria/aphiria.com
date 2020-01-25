@@ -18,7 +18,6 @@ use Aphiria\Configuration\Middleware\MiddlewareBinding;
 use Aphiria\DependencyInjection\IContainer;
 use App\Api\Bootstrappers\ContentNegotiatorBootstrapper;
 use App\Api\Bootstrappers\ControllerBootstrapper;
-use App\Api\Bootstrappers\DependencyInjectionBootstrapper;
 use App\Api\Bootstrappers\ExceptionHandlerBootstrapper;
 use App\Api\Bootstrappers\RoutingBootstrapper;
 use App\Api\Bootstrappers\SerializerBootstrapper;
@@ -69,7 +68,6 @@ final class Config
         // Register some global bootstrappers
         $this->appBuilder->withBootstrappers(fn () => [
             new SerializerBootstrapper,
-            new DependencyInjectionBootstrapper,
             new ExceptionHandlerBootstrapper,
             new LoggerBootstrapper,
             new ContentNegotiatorBootstrapper,
