@@ -12,12 +12,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/aphiria/api.git",
-                "reference": "7b89f59be97f997c3b6a7bf3c8398c657bca3476"
+                "reference": "5a2e7bf0f45e09f9f36f5e8746ec3c0a5dc5755e"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/aphiria/api/zipball/7b89f59be97f997c3b6a7bf3c8398c657bca3476",
-                "reference": "7b89f59be97f997c3b6a7bf3c8398c657bca3476",
+                "url": "https://api.github.com/repos/aphiria/api/zipball/5a2e7bf0f45e09f9f36f5e8746ec3c0a5dc5755e",
+                "reference": "5a2e7bf0f45e09f9f36f5e8746ec3c0a5dc5755e",
                 "shasum": ""
             },
             "require": {
@@ -61,7 +61,7 @@
                 "controller",
                 "php"
             ],
-            "time": "2020-01-25T18:38:48+00:00"
+            "time": "2020-01-30T01:30:55+00:00"
         },
         {
             "name": "aphiria/collections",
@@ -123,12 +123,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/aphiria/configuration.git",
-                "reference": "efd41385ae552df790946fa6b9dd74df74786141"
+                "reference": "b9cd8e60d77ab71fc2b2afd463ba781ab92f727c"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/aphiria/configuration/zipball/efd41385ae552df790946fa6b9dd74df74786141",
-                "reference": "efd41385ae552df790946fa6b9dd74df74786141",
+                "url": "https://api.github.com/repos/aphiria/configuration/zipball/b9cd8e60d77ab71fc2b2afd463ba781ab92f727c",
+                "reference": "b9cd8e60d77ab71fc2b2afd463ba781ab92f727c",
                 "shasum": ""
             },
             "require": {
@@ -171,7 +171,7 @@
                 "configuration",
                 "php"
             ],
-            "time": "2020-01-25T18:38:48+00:00"
+            "time": "2020-01-30T01:30:55+00:00"
         },
         {
             "name": "aphiria/console",
@@ -234,12 +234,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/aphiria/dependency-injection.git",
-                "reference": "4f9020da41d0de90b549035592e9672d00548763"
+                "reference": "6a63d9b91509b1e6fb492473f2541d89c89d2aef"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/aphiria/dependency-injection/zipball/4f9020da41d0de90b549035592e9672d00548763",
-                "reference": "4f9020da41d0de90b549035592e9672d00548763",
+                "url": "https://api.github.com/repos/aphiria/dependency-injection/zipball/6a63d9b91509b1e6fb492473f2541d89c89d2aef",
+                "reference": "6a63d9b91509b1e6fb492473f2541d89c89d2aef",
                 "shasum": ""
             },
             "require": {
@@ -279,7 +279,7 @@
                 "ioc",
                 "php"
             ],
-            "time": "2020-01-25T18:38:48+00:00"
+            "time": "2020-01-30T01:30:55+00:00"
         },
         {
             "name": "aphiria/exceptions",
@@ -670,12 +670,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/aphiria/validation.git",
-                "reference": "d66f2234f9c8382aa7d761763747f02baa9cda2b"
+                "reference": "f72b8908fec98b13d40a8c059841c4b4c8c728ff"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/aphiria/validation/zipball/d66f2234f9c8382aa7d761763747f02baa9cda2b",
-                "reference": "d66f2234f9c8382aa7d761763747f02baa9cda2b",
+                "url": "https://api.github.com/repos/aphiria/validation/zipball/f72b8908fec98b13d40a8c059841c4b4c8c728ff",
+                "reference": "f72b8908fec98b13d40a8c059841c4b4c8c728ff",
                 "shasum": ""
             },
             "require": {
@@ -716,7 +716,7 @@
                 "php",
                 "validation"
             ],
-            "time": "2020-01-10T00:36:28+00:00"
+            "time": "2020-01-30T01:30:55+00:00"
         },
         {
             "name": "doctrine/annotations",
@@ -724,12 +724,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/doctrine/annotations.git",
-                "reference": "2157e348b7ecff23ec5ca50a0b7284d963d9f0e2"
+                "reference": "0f960c13d955119807c16853c6f7de80dd77a1ba"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/doctrine/annotations/zipball/2157e348b7ecff23ec5ca50a0b7284d963d9f0e2",
-                "reference": "2157e348b7ecff23ec5ca50a0b7284d963d9f0e2",
+                "url": "https://api.github.com/repos/doctrine/annotations/zipball/0f960c13d955119807c16853c6f7de80dd77a1ba",
+                "reference": "0f960c13d955119807c16853c6f7de80dd77a1ba",
                 "shasum": ""
             },
             "require": {
@@ -788,7 +788,7 @@
                 "parser",
                 "php"
             ],
-            "time": "2019-11-13T10:06:53+00:00"
+            "time": "2020-01-28T13:15:08+00:00"
         },
         {
             "name": "doctrine/lexer",
