@@ -193,7 +193,7 @@ body > header {
                     width: 100%;
                     padding: 0;
 
-                    a:hover {
+                    &.selected a, a:hover {
                         background: #eef7ff;
 
                         p, blockquote {

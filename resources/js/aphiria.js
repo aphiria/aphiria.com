@@ -35,22 +35,72 @@ window.addEventListener('load', loadEvent => {
     const searchInputElem = document.getElementById('search-query');
     const searchResultsElem = document.querySelector('.search-results');
     const detectClickOffSearch = clickEvent => {
-        if(clickEvent.target !== searchInputElem && clickEvent.target !== searchResultsElem)
-        {
+        if (clickEvent.target !== searchInputElem && clickEvent.target !== searchResultsElem) {
             searchResultsElem.style.display = 'none';
         }
     };
+
+    // Handle using arrow keys to navigate search results
+    window.addEventListener('keydown', keyDownEvent => {
+        // Don't bother if we aren't showing populated search results
+        if (searchResultsElem.style.display === 'none' || searchResultsElem.querySelector('.no-results')) {
+            return;
+        }
+
+        // This will be null if nothing was selected
+        let selectedQueryResult = searchResultsElem.querySelector('li.selected');
+
+        if (keyDownEvent.key === "ArrowUp") {
+            if (selectedQueryResult !== null) {
+                selectedQueryResult.classList.remove('selected');
+            }
+
+            // Wrap to the bottom if nothing was previously selected or we were previously selecting the first result
+            if (selectedQueryResult === null || selectedQueryResult.previousElementSibling === null) {
+                searchResultsElem.lastElementChild.classList.add('selected');
+            } else {
+                selectedQueryResult.previousElementSibling.classList.add('selected');
+            }
+        } else if (keyDownEvent.key === "ArrowDown") {
+            if (selectedQueryResult !== null) {
+                selectedQueryResult.classList.remove('selected');
+            }
+
+            // Wrap to the top if nothing was previously selected or we were previously selecting the last result
+            if (selectedQueryResult === null || selectedQueryResult.nextElementSibling === null) {
+                searchResultsElem.firstElementChild.classList.add('selected');
+            } else {
+                selectedQueryResult.nextElementSibling.classList.add('selected');
+            }
+        } else if (keyDownEvent.key === 'Enter') {
+            let selectedQueryResultHref;
+
+            // Default to the first result if none are selected
+            if (selectedQueryResult === null) {
+                selectedQueryResultHref =  searchResultsElem.querySelector('li a').href;
+            } else {
+                selectedQueryResultHref = selectedQueryResult.firstElementChild.href;
+            }
+
+            window.location = selectedQueryResultHref;
+        }
+    });
+
+    // Handle typing search queries and fetching the results from the API
+    let prevSearchQuery = null;
     let timer = null;
     searchInputElem.onkeyup = keyEvent => {
         if (timer !== null) {
             clearTimeout(timer);
         }
 
+        // Only show results if there is a search query that differs from the previous query
         if (searchInputElem.value.length === 0) {
             searchResultsElem.style.display = 'none';
             document.removeEventListener('click', detectClickOffSearch);
-        } else {
+        } else if (searchInputElem.value !== prevSearchQuery) {
             timer = setTimeout(() => {
+                prevSearchQuery = searchInputElem.value;
                 fetch(`${apiUri}/docs/search?query=${encodeURIComponent(searchInputElem.value)}`)
                     .then((response) => response.json())
                     .then(searchResults => {

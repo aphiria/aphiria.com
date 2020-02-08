@@ -138,9 +138,9 @@ body > header {
         font-size: 0.9rem;
         width: 100%;
         padding: 0; }
-        body > header > nav div.doc-search ul.search-results li a:hover {
+        body > header > nav div.doc-search ul.search-results li.selected a, body > header > nav div.doc-search ul.search-results li a:hover {
           background: #eef7ff; }
-          body > header > nav div.doc-search ul.search-results li a:hover p, body > header > nav div.doc-search ul.search-results li a:hover blockquote {
+          body > header > nav div.doc-search ul.search-results li.selected a p, body > header > nav div.doc-search ul.search-results li.selected a blockquote, body > header > nav div.doc-search ul.search-results li a:hover p, body > header > nav div.doc-search ul.search-results li a:hover blockquote {
             /* Make the element less washed out looking when mousing over */
             background-color: #e3f3ff; }
         body > header > nav div.doc-search ul.search-results li h1, body > header > nav div.doc-search ul.search-results li h2, body > header > nav div.doc-search ul.search-results li h3, body > header > nav div.doc-search ul.search-results li h4, body > header > nav div.doc-search ul.search-results li h5, body > header > nav div.doc-search ul.search-results li h6 {
