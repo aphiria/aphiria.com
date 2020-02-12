@@ -12,8 +12,8 @@ declare(strict_types=1);
 
 namespace App\Documentation;
 
-use Aphiria\Configuration\IApplicationBuilder;
-use Aphiria\Configuration\IModuleBuilder;
+use Aphiria\Configuration\Builders\IApplicationBuilder;
+use Aphiria\Configuration\Builders\IModuleBuilder;
 use App\Databases\Bootstrappers\SqlBootstrapper;
 use App\Documentation\Bootstrappers\DocumentationBootstrapper;
 

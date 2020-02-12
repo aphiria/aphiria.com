@@ -12,8 +12,8 @@ declare(strict_types=1);
 
 namespace App\Web;
 
-use Aphiria\Configuration\IApplicationBuilder;
-use Aphiria\Configuration\IModuleBuilder;
+use Aphiria\Configuration\Builders\IApplicationBuilder;
+use Aphiria\Configuration\Builders\IModuleBuilder;
 use App\Web\Bootstrappers\ViewCompilerBootstrapper;
 
 /**

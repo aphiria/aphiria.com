@@ -123,12 +123,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/aphiria/configuration.git",
-                "reference": "a16dc7a33b4de9a24d19a46612fc2e3dcf5c6104"
+                "reference": "8784a0b894ead423de97159ab73f60867ab8e028"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/aphiria/configuration/zipball/a16dc7a33b4de9a24d19a46612fc2e3dcf5c6104",
-                "reference": "a16dc7a33b4de9a24d19a46612fc2e3dcf5c6104",
+                "url": "https://api.github.com/repos/aphiria/configuration/zipball/8784a0b894ead423de97159ab73f60867ab8e028",
+                "reference": "8784a0b894ead423de97159ab73f60867ab8e028",
                 "shasum": ""
             },
             "require": {
@@ -174,7 +174,7 @@
                 "configuration",
                 "php"
             ],
-            "time": "2020-02-11T01:35:51+00:00"
+            "time": "2020-02-11T14:54:33+00:00"
         },
         {
             "name": "aphiria/console",
