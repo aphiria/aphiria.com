@@ -10,9 +10,9 @@
 
 declare(strict_types=1);
 
-namespace App\Databases\Bootstrappers;
+namespace App\Databases\Binders;
 
-use Aphiria\DependencyInjection\Bootstrappers\Bootstrapper;
+use Aphiria\DependencyInjection\Binders\Binder;
 use Aphiria\DependencyInjection\IContainer;
 use Exception;
 use Opulence\Databases\Adapters\Pdo\MySql\Driver as MySqlDriver;
@@ -25,14 +25,14 @@ use Opulence\Databases\Server;
 use RuntimeException;
 
 /**
- * Defines the SQL bootstrapper
+ * Defines the SQL binder
  */
-final class SqlBootstrapper extends Bootstrapper
+final class SqlBinder extends Binder
 {
     /**
      * @inheritdoc
      */
-    public function registerBindings(IContainer $container): void
+    public function bind(IContainer $container): void
     {
         try {
             switch (getenv('DB_DRIVER')) {

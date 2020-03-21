@@ -12,40 +12,37 @@ declare(strict_types=1);
 
 namespace App;
 
-use Aphiria\Configuration\Builders\AphiriaComponentBuilder;
-use Aphiria\Configuration\Builders\IApplicationBuilder;
-use Aphiria\Configuration\Framework\Api\Bootstrappers\ControllerBootstrapper;
-use Aphiria\Configuration\Framework\Console\Bootstrappers\CommandBootstrapper;
-use Aphiria\Configuration\Framework\Exceptions\Bootstrappers\ExceptionHandlerBootstrapper;
-use Aphiria\Configuration\Framework\Logging\Bootstrappers\LoggerBootstrapper;
-use Aphiria\Configuration\Framework\Net\Bootstrappers\ContentNegotiatorBootstrapper;
-use Aphiria\Configuration\Framework\Routing\Bootstrappers\RoutingBootstrapper;
-use Aphiria\Configuration\Framework\Serialization\Bootstrappers\SerializerBootstrapper;
-use Aphiria\Configuration\Framework\Validation\Bootstrappers\ValidationBootstrapper;
-use Aphiria\Configuration\Middleware\MiddlewareBinding;
-use Aphiria\DependencyInjection\IContainer;
+use Aphiria\Application\Builders\IApplicationBuilder;
+use Aphiria\Framework\Api\Binders\ControllerBinder;
+use Aphiria\Framework\Application\AphiriaComponents;
+use Aphiria\Framework\Console\Binders\CommandBinder;
+use Aphiria\Framework\Exceptions\Binders\ExceptionHandlerBinder;
+use Aphiria\Framework\Net\Binders\ContentNegotiationBinder;
+use Aphiria\Framework\Net\Binders\RequestBinder;
+use Aphiria\Framework\Routing\Binders\RoutingBinder;
+use Aphiria\Framework\Serialization\Binders\SerializerBinder;
+use Aphiria\Framework\Validation\Binders\ValidationBinder;
+use Aphiria\Middleware\MiddlewareBinding;
 use App\Api\Middleware\Cors;
-use App\Documentation\DocumentationModuleBuilder;
-use App\Web\WebModuleBuilder;
+use App\Documentation\DocumentationModule;
+use App\Web\WebModule;
 
 /**
  * Defines the application configuration
  */
 final class App
 {
+    use AphiriaComponents;
+
     /** @var IApplicationBuilder The app builder to use when configuring the application */
     private IApplicationBuilder $appBuilder;
-    /** @var IContainer The DI container that can resolve dependencies */
-    private IContainer $container;
 
     /**
      * @param IApplicationBuilder $appBuilder The app builder to use when configuring the application
-     * @param IContainer $container The DI container that can resolve dependencies
      */
-    public function __construct(IApplicationBuilder $appBuilder, IContainer $container)
+    public function __construct(IApplicationBuilder $appBuilder)
     {
         $this->appBuilder = $appBuilder;
-        $this->container = $container;
     }
 
     /**
@@ -54,36 +51,25 @@ final class App
     public function configure(): void
     {
         // Configure this app to use Aphiria components
-        (new AphiriaComponentBuilder($this->container))
-            ->withExceptionHandlers($this->appBuilder)
-            ->withExceptionLogLevelFactories($this->appBuilder)
-            ->withExceptionResponseFactories($this->appBuilder)
-            ->withEncoderComponent($this->appBuilder)
-            ->withRoutingComponent($this->appBuilder)
-            ->withRoutingAnnotations($this->appBuilder)
-            ->withConsoleAnnotations($this->appBuilder)
-            ->withValidationComponent($this->appBuilder)
-            ->withValidationAnnotations($this->appBuilder);
-
-        // Register some global bootstrappers
-        $this->appBuilder->withBootstrappers(fn () => [
-            new SerializerBootstrapper,
-            new ExceptionHandlerBootstrapper,
-            new LoggerBootstrapper,
-            new ContentNegotiatorBootstrapper,
-            new ControllerBootstrapper,
-            new ValidationBootstrapper,
-            new RoutingBootstrapper,
-            new CommandBootstrapper
-        ]);
+        $this->withRouteAnnotations($this->appBuilder)
+            ->withValidatorAnnotations($this->appBuilder)
+            ->withCommandAnnotations($this->appBuilder)
+            ->withBinders($this->appBuilder, [
+                new ExceptionHandlerBinder(),
+                new RequestBinder(),
+                new SerializerBinder(),
+                new ValidationBinder(),
+                new ContentNegotiationBinder(),
+                new ControllerBinder(),
+                new RoutingBinder(),
+                new CommandBinder()
+            ]);
 
         // Register any global middleware
-        $this->appBuilder->withGlobalMiddleware(fn () => [
-            new MiddlewareBinding(Cors::class)
-        ]);
+        $this->withGlobalMiddleware($this->appBuilder, new MiddlewareBinding(Cors::class));
 
         // Register any modules
-        $this->appBuilder->withModule(new DocumentationModuleBuilder());
-        $this->appBuilder->withModule(new WebModuleBuilder());
+        $this->appBuilder->withModule(new DocumentationModule());
+        $this->appBuilder->withModule(new WebModule());
     }
 }

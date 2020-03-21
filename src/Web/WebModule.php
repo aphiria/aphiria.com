@@ -12,15 +12,18 @@ declare(strict_types=1);
 
 namespace App\Web;
 
-use Aphiria\Configuration\Builders\IApplicationBuilder;
-use Aphiria\Configuration\Builders\IModuleBuilder;
-use App\Web\Bootstrappers\ViewCompilerBootstrapper;
+use Aphiria\Application\Builders\IApplicationBuilder;
+use Aphiria\Application\IModule;
+use Aphiria\Framework\Application\AphiriaComponents;
+use App\Web\Binders\ViewCompilerBinder;
 
 /**
  * Defines the module for our web code
  */
-final class WebModuleBuilder implements IModuleBuilder
+final class WebModule implements IModule
 {
+    use AphiriaComponents;
+
     /**
      * Builds the entire module into an application
      *
@@ -28,8 +31,8 @@ final class WebModuleBuilder implements IModuleBuilder
      */
     public function build(IApplicationBuilder $appBuilder): void
     {
-        $appBuilder->withBootstrappers(fn () => [
-            new ViewCompilerBootstrapper()
+        $this->withBinders($appBuilder, [
+            new ViewCompilerBinder()
         ]);
     }
 }

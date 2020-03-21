@@ -10,22 +10,22 @@
 
 declare(strict_types=1);
 
-namespace App\Web\Bootstrappers;
+namespace App\Web\Binders;
 
-use Aphiria\DependencyInjection\Bootstrappers\Bootstrapper;
+use Aphiria\DependencyInjection\Binders\Binder;
 use Aphiria\DependencyInjection\IContainer;
 use App\Documentation\DocumentationMetadata;
 use App\Web\ViewCompiler;
 
 /**
- * Defines the bootstrapper for our view compiler
+ * Defines the binder for our view compiler
  */
-final class ViewCompilerBootstrapper extends Bootstrapper
+final class ViewCompilerBinder extends Binder
 {
     /**
      * @inheritdoc
      */
-    public function registerBindings(IContainer $container): void
+    public function bind(IContainer $container): void
     {
         $viewCompiler = new ViewCompiler(
             __DIR__ . '/../../../resources/views',

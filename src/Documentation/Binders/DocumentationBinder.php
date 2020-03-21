@@ -10,9 +10,9 @@
 
 declare(strict_types=1);
 
-namespace App\Documentation\Bootstrappers;
+namespace App\Documentation\Binders;
 
-use Aphiria\DependencyInjection\Bootstrappers\Bootstrapper;
+use Aphiria\DependencyInjection\Binders\Binder;
 use Aphiria\DependencyInjection\IContainer;
 use App\Documentation\DocumentationDownloader;
 use App\Documentation\DocumentationMetadata;
@@ -22,14 +22,14 @@ use Opulence\Databases\IConnection;
 use ParsedownExtra;
 
 /**
- * Defines the bootstrapper for our documentation
+ * Defines the binder for our documentation
  */
-final class DocumentationBootstrapper extends Bootstrapper
+final class DocumentationBinder extends Binder
 {
     /**
      * @inheritdoc
      */
-    public function registerBindings(IContainer $container): void
+    public function bind(IContainer $container): void
     {
         $metadata = new DocumentationMetadata([
             'master' => $this->getMasterBranchDocConfig()
@@ -159,11 +159,11 @@ final class DocumentationBootstrapper extends Bootstrapper
                         'description' => 'Learn about configuring your dependencies in Aphiria',
                         'keywords' => ['aphiria', 'dependencies', 'dependency injection', 'container', 'php']
                     ],
-                    'bootstrappers' => [
-                        'title' => 'Bootstrappers',
-                        'linkText' => 'Bootstrappers',
-                        'description' => 'Learn about configuring your container via bootstrappers in Aphiria',
-                        'keywords' => ['aphiria', 'bootstrappers', 'dependency injection', 'container', 'php']
+                    'binders' => [
+                        'title' => 'Binders',
+                        'linkText' => 'Binders',
+                        'description' => 'Learn about configuring your container via binders in Aphiria',
+                        'keywords' => ['aphiria', 'binders', 'dependency injection', 'container', 'php']
                     ]
                 ],
                 'Miscellaneous' => [

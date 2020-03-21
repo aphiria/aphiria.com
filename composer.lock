@@ -4,634 +4,36 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "af9826aa844afaf14ea8b6ab5bf14274",
+    "content-hash": "4adc97a501cc788d94f39da90f41ee50",
     "packages": [
         {
-            "name": "aphiria/api",
+            "name": "aphiria/aphiria",
             "version": "dev-master",
             "source": {
                 "type": "git",
-                "url": "https://github.com/aphiria/api.git",
-                "reference": "b176c70381f48b0f288fa5679f8189be0888f266"
+                "url": "https://github.com/aphiria/aphiria.git",
+                "reference": "0dc2547d3da613c914799640b8ee251febed9031"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/aphiria/api/zipball/b176c70381f48b0f288fa5679f8189be0888f266",
-                "reference": "b176c70381f48b0f288fa5679f8189be0888f266",
+                "url": "https://api.github.com/repos/aphiria/aphiria/zipball/0dc2547d3da613c914799640b8ee251febed9031",
+                "reference": "0dc2547d3da613c914799640b8ee251febed9031",
                 "shasum": ""
             },
             "require": {
-                "aphiria/dependency-injection": "1.0.*@dev",
-                "aphiria/middleware": "1.0.*@dev",
-                "aphiria/net": "1.0.*@dev",
-                "aphiria/router": "1.0.*@dev",
-                "aphiria/validation": "1.0.*@dev",
-                "monolog/monolog": "~2.0",
-                "php": "^7.4",
-                "psr/log": "~1.0"
-            },
-            "require-dev": {
-                "phpunit/phpunit": "~9.0"
-            },
-            "type": "library",
-            "extra": {
-                "branch-alias": {
-                    "dev-master": "1.0.x-dev"
-                }
-            },
-            "autoload": {
-                "psr-4": {
-                    "Aphiria\\Api\\": "src"
-                }
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "David Young",
-                    "email": "dave@aphiria.com",
-                    "role": "Architect"
-                }
-            ],
-            "description": "The Aphiria API library",
-            "keywords": [
-                "api",
-                "controller",
-                "php"
-            ],
-            "time": "2020-02-08T20:34:02+00:00"
-        },
-        {
-            "name": "aphiria/collections",
-            "version": "dev-master",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/aphiria/collections.git",
-                "reference": "f12846b74655ed483d0c1a252d57c9e4fb7eeb4d"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/aphiria/collections/zipball/f12846b74655ed483d0c1a252d57c9e4fb7eeb4d",
-                "reference": "f12846b74655ed483d0c1a252d57c9e4fb7eeb4d",
-                "shasum": ""
-            },
-            "require": {
-                "php": "^7.4"
-            },
-            "require-dev": {
-                "phpunit/phpunit": "~9.0"
-            },
-            "type": "library",
-            "extra": {
-                "branch-alias": {
-                    "dev-master": "1.0.x-dev"
-                }
-            },
-            "autoload": {
-                "psr-4": {
-                    "Aphiria\\Collections\\": "src"
-                }
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "David Young",
-                    "email": "dave@aphiria.com",
-                    "role": "Architect"
-                }
-            ],
-            "description": "The Aphiria collections library",
-            "keywords": [
-                "collections",
-                "dictionaries",
-                "hash tables",
-                "php",
-                "queues",
-                "sets",
-                "stacks"
-            ],
-            "time": "2020-02-08T20:34:02+00:00"
-        },
-        {
-            "name": "aphiria/configuration",
-            "version": "dev-master",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/aphiria/configuration.git",
-                "reference": "8784a0b894ead423de97159ab73f60867ab8e028"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/aphiria/configuration/zipball/8784a0b894ead423de97159ab73f60867ab8e028",
-                "reference": "8784a0b894ead423de97159ab73f60867ab8e028",
-                "shasum": ""
-            },
-            "require": {
-                "aphiria/api": "1.0.*@dev",
-                "aphiria/console": "1.0.*@dev",
-                "aphiria/dependency-injection": "1.0.*@dev",
-                "aphiria/exceptions": "1.0.*@dev",
-                "aphiria/net": "1.0.*@dev",
-                "aphiria/router": "1.0.*@dev",
-                "aphiria/serialization": "1.0.*@dev",
-                "aphiria/validation": "1.0.*@dev",
-                "php": "^7.4",
-                "psr/log": "~1.0"
-            },
-            "require-dev": {
-                "phpunit/phpunit": "~9.0"
-            },
-            "type": "library",
-            "extra": {
-                "branch-alias": {
-                    "dev-master": "1.0.x-dev"
-                }
-            },
-            "autoload": {
-                "psr-4": {
-                    "Aphiria\\Configuration\\": "src"
-                }
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "David Young",
-                    "email": "dave@aphiria.com",
-                    "role": "Architect"
-                }
-            ],
-            "description": "The Aphiria application configuration library",
-            "keywords": [
-                "application",
-                "configuration",
-                "php"
-            ],
-            "time": "2020-02-11T14:54:33+00:00"
-        },
-        {
-            "name": "aphiria/console",
-            "version": "dev-master",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/aphiria/console.git",
-                "reference": "7a8a6e0dd2f10e93aa5c0498840804912877863a"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/aphiria/console/zipball/7a8a6e0dd2f10e93aa5c0498840804912877863a",
-                "reference": "7a8a6e0dd2f10e93aa5c0498840804912877863a",
-                "shasum": ""
-            },
-            "require": {
-                "aphiria/console": "1.0.*@dev",
-                "aphiria/dependency-injection": "1.0.*@dev",
-                "aphiria/reflection": "1.0.*@dev",
-                "doctrine/annotations": "2.0.*@dev",
-                "opis/closure": "3.5.*",
-                "php": "^7.4"
-            },
-            "require-dev": {
-                "phpunit/phpunit": "~9.0"
-            },
-            "type": "library",
-            "extra": {
-                "branch-alias": {
-                    "dev-master": "1.0.x-dev"
-                }
-            },
-            "autoload": {
-                "psr-4": {
-                    "Aphiria\\Console\\": "src"
-                }
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "David Young",
-                    "email": "dave@aphiria.com",
-                    "role": "Architect"
-                }
-            ],
-            "description": "The Aphiria console library",
-            "keywords": [
-                "cli",
-                "console",
-                "php"
-            ],
-            "time": "2020-02-08T20:34:02+00:00"
-        },
-        {
-            "name": "aphiria/dependency-injection",
-            "version": "dev-master",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/aphiria/dependency-injection.git",
-                "reference": "890ec487dc18c45a5baf3c3f15f65f3c78489a15"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/aphiria/dependency-injection/zipball/890ec487dc18c45a5baf3c3f15f65f3c78489a15",
-                "reference": "890ec487dc18c45a5baf3c3f15f65f3c78489a15",
-                "shasum": ""
-            },
-            "require": {
-                "aphiria/reflection": "1.0.*@dev",
-                "php": "^7.4"
-            },
-            "require-dev": {
-                "phpunit/phpunit": "~9.0"
-            },
-            "type": "library",
-            "extra": {
-                "branch-alias": {
-                    "dev-master": "1.0.x-dev"
-                }
-            },
-            "autoload": {
-                "psr-4": {
-                    "Aphiria\\DependencyInjection\\": "src"
-                }
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "David Young",
-                    "email": "dave@aphiria.com",
-                    "role": "Architect"
-                }
-            ],
-            "description": "The Aphiria dependency injection library",
-            "keywords": [
-                "bootstrappers",
-                "container",
-                "dependency injection",
-                "ioc",
-                "php"
-            ],
-            "time": "2020-02-08T20:34:02+00:00"
-        },
-        {
-            "name": "aphiria/exceptions",
-            "version": "dev-master",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/aphiria/exceptions.git",
-                "reference": "c2c9a25cea13e29f3e8844cc303f6d2942b1775d"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/aphiria/exceptions/zipball/c2c9a25cea13e29f3e8844cc303f6d2942b1775d",
-                "reference": "c2c9a25cea13e29f3e8844cc303f6d2942b1775d",
-                "shasum": ""
-            },
-            "require": {
-                "aphiria/middleware": "1.0.*@dev",
-                "aphiria/net": "1.0.*@dev",
-                "monolog/monolog": "~2.0",
-                "php": "^7.4",
-                "psr/log": "~1.0"
-            },
-            "require-dev": {
-                "phpunit/phpunit": "~9.0"
-            },
-            "type": "library",
-            "extra": {
-                "branch-alias": {
-                    "dev-master": "1.0.x-dev"
-                }
-            },
-            "autoload": {
-                "psr-4": {
-                    "Aphiria\\Exceptions\\": "src"
-                }
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "David Young",
-                    "email": "dave@aphiria.com",
-                    "role": "Architect"
-                }
-            ],
-            "description": "The Aphiria exception library",
-            "keywords": [
-                "exception handling",
-                "exceptions",
-                "php"
-            ],
-            "time": "2020-02-08T20:34:02+00:00"
-        },
-        {
-            "name": "aphiria/io",
-            "version": "dev-master",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/aphiria/io.git",
-                "reference": "136dc37cc40ae3aeec85028b9cc6634c4c46bf77"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/aphiria/io/zipball/136dc37cc40ae3aeec85028b9cc6634c4c46bf77",
-                "reference": "136dc37cc40ae3aeec85028b9cc6634c4c46bf77",
-                "shasum": ""
-            },
-            "require": {
-                "php": "^7.4"
-            },
-            "require-dev": {
-                "phpunit/phpunit": "~9.0"
-            },
-            "type": "library",
-            "extra": {
-                "branch-alias": {
-                    "dev-master": "1.0.x-dev"
-                }
-            },
-            "autoload": {
-                "psr-4": {
-                    "Aphiria\\IO\\": "src"
-                }
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "David Young",
-                    "email": "dave@aphiria.com",
-                    "role": "Architect"
-                }
-            ],
-            "description": "The Aphiria input/output library",
-            "keywords": [
-                "Streams",
-                "files",
-                "input output",
-                "io",
-                "php"
-            ],
-            "time": "2020-02-08T20:34:02+00:00"
-        },
-        {
-            "name": "aphiria/middleware",
-            "version": "dev-master",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/aphiria/middleware.git",
-                "reference": "d5925f1c82a0e5cd530a07780e82d0450aa46f09"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/aphiria/middleware/zipball/d5925f1c82a0e5cd530a07780e82d0450aa46f09",
-                "reference": "d5925f1c82a0e5cd530a07780e82d0450aa46f09",
-                "shasum": ""
-            },
-            "require": {
-                "aphiria/net": "1.0.*@dev",
-                "php": "^7.4"
-            },
-            "require-dev": {
-                "friendsofphp/php-cs-fixer": "^3.0",
-                "phpunit/phpunit": "~9.0"
-            },
-            "type": "library",
-            "extra": {
-                "branch-alias": {
-                    "dev-master": "1.0.x-dev"
-                }
-            },
-            "autoload": {
-                "psr-4": {
-                    "Aphiria\\Middleware\\": "src"
-                }
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "David Young",
-                    "email": "dave@aphiria.com",
-                    "role": "Architect"
-                }
-            ],
-            "description": "The Aphiria middleware library",
-            "keywords": [
-                "middleware",
-                "php"
-            ],
-            "time": "2020-02-08T20:34:02+00:00"
-        },
-        {
-            "name": "aphiria/net",
-            "version": "dev-master",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/aphiria/net.git",
-                "reference": "f21d8c5c95f44e1853711addb20127b33d7d48dc"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/aphiria/net/zipball/f21d8c5c95f44e1853711addb20127b33d7d48dc",
-                "reference": "f21d8c5c95f44e1853711addb20127b33d7d48dc",
-                "shasum": ""
-            },
-            "require": {
-                "aphiria/collections": "1.0.*@dev",
-                "aphiria/io": "1.0.*@dev",
-                "aphiria/serialization": "1.0.*@dev",
-                "ext-fileinfo": "*",
-                "ext-json": "*",
-                "ext-mbstring": "*",
-                "php": "^7.4"
-            },
-            "require-dev": {
-                "friendsofphp/php-cs-fixer": "^3.0",
-                "phpunit/phpunit": "~9.0"
-            },
-            "type": "library",
-            "extra": {
-                "branch-alias": {
-                    "dev-master": "1.0.x-dev"
-                }
-            },
-            "autoload": {
-                "psr-4": {
-                    "Aphiria\\Net\\": "src"
-                }
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "David Young",
-                    "email": "dave@aphiria.com",
-                    "role": "Architect"
-                }
-            ],
-            "description": "The Aphiria network library",
-            "keywords": [
-                "cookie",
-                "http",
-                "network",
-                "php",
-                "request",
-                "response"
-            ],
-            "time": "2020-02-08T20:34:02+00:00"
-        },
-        {
-            "name": "aphiria/reflection",
-            "version": "dev-master",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/aphiria/reflection.git",
-                "reference": "ad304a93e1c9886287640d1459b7f32fe5f9bc2e"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/aphiria/reflection/zipball/ad304a93e1c9886287640d1459b7f32fe5f9bc2e",
-                "reference": "ad304a93e1c9886287640d1459b7f32fe5f9bc2e",
-                "shasum": ""
-            },
-            "require": {
-                "php": "^7.4"
-            },
-            "require-dev": {
-                "friendsofphp/php-cs-fixer": "^3.0",
-                "phpunit/phpunit": "~9.0"
-            },
-            "type": "library",
-            "extra": {
-                "branch-alias": {
-                    "dev-master": "1.0.x-dev"
-                }
-            },
-            "autoload": {
-                "psr-4": {
-                    "Aphiria\\Reflection\\": "src"
-                }
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "David Young",
-                    "email": "dave@aphiria.com",
-                    "role": "Architect"
-                }
-            ],
-            "description": "The Aphiria reflection library",
-            "keywords": [
-                "class finder",
-                "php",
-                "reflection"
-            ],
-            "time": "2020-02-08T20:34:02+00:00"
-        },
-        {
-            "name": "aphiria/router",
-            "version": "dev-master",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/aphiria/router.git",
-                "reference": "1bb764388f6710f17f28d01a027a1044fa2b989a"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/aphiria/router/zipball/1bb764388f6710f17f28d01a027a1044fa2b989a",
-                "reference": "1bb764388f6710f17f28d01a027a1044fa2b989a",
-                "shasum": ""
-            },
-            "require": {
-                "aphiria/reflection": "1.0.*@dev",
                 "doctrine/annotations": "2.0.*@dev",
                 "ext-ctype": "*",
-                "ext-mbstring": "*",
-                "opis/closure": "3.5.*",
-                "php": "^7.4"
-            },
-            "require-dev": {
-                "aphiria/api": "1.0.*@dev",
-                "nikic/fast-route": "1.2",
-                "phpunit/phpunit": "~9.0",
-                "symfony/routing": "4.2.*"
-            },
-            "type": "library",
-            "extra": {
-                "branch-alias": {
-                    "dev-master": "1.0.x-dev"
-                }
-            },
-            "autoload": {
-                "psr-4": {
-                    "Aphiria\\Routing\\": "src/"
-                }
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "David Young",
-                    "email": "dave@aphiria.com",
-                    "role": "Architect"
-                }
-            ],
-            "description": "The Aphiria router library",
-            "keywords": [
-                "matching",
-                "php",
-                "router",
-                "routing"
-            ],
-            "time": "2020-02-08T20:34:02+00:00"
-        },
-        {
-            "name": "aphiria/serialization",
-            "version": "dev-master",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/aphiria/serialization.git",
-                "reference": "02effdd6b8e36e16982828dc0de52e93d117003e"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/aphiria/serialization/zipball/02effdd6b8e36e16982828dc0de52e93d117003e",
-                "reference": "02effdd6b8e36e16982828dc0de52e93d117003e",
-                "shasum": ""
-            },
-            "require": {
+                "ext-fileinfo": "*",
+                "ext-intl": "*",
                 "ext-json": "*",
                 "ext-mbstring": "*",
-                "php": "^7.4"
+                "monolog/monolog": "~2.0",
+                "opis/closure": "3.5.*",
+                "php": "^7.4",
+                "psr/log": "~1.0",
+                "symfony/dotenv": "~5.0"
             },
             "require-dev": {
-                "friendsofphp/php-cs-fixer": "^3.0",
                 "phpunit/phpunit": "~9.0"
             },
             "type": "library",
@@ -642,7 +44,22 @@
             },
             "autoload": {
                 "psr-4": {
-                    "Aphiria\\Serialization\\": "src"
+                    "Aphiria\\Api\\": "src/Api/src",
+                    "Aphiria\\Application\\": "src/Application/src",
+                    "Aphiria\\Collections\\": "src/Collections/src",
+                    "Aphiria\\Configuration\\": "src/Configuration/src",
+                    "Aphiria\\Console\\": "src/Console/src",
+                    "Aphiria\\DependencyInjection\\": "src/DependencyInjection/src",
+                    "Aphiria\\Exceptions\\": "src/Exceptions/src",
+                    "Aphiria\\Framework\\": "src/Framework/src",
+                    "Aphiria\\IO\\": "src/IO/src",
+                    "Aphiria\\Middleware\\": "src/Middleware/src",
+                    "Aphiria\\Net\\": "src/Net/src",
+                    "Aphiria\\Reflection\\": "src/Reflection/src",
+                    "Aphiria\\Routing\\": "src/Router/src",
+                    "Aphiria\\Serialization\\": "src/Serialization/src",
+                    "Aphiria\\Sessions\\": "src/Sessions/src",
+                    "Aphiria\\Validation\\": "src/Validation/src"
                 }
             },
             "notification-url": "https://packagist.org/downloads/",
@@ -656,70 +73,13 @@
                     "role": "Architect"
                 }
             ],
-            "description": "The Aphiria serialization library",
+            "description": "The Aphiria framework",
             "keywords": [
-                "deserialization",
-                "form url-encoded",
-                "json",
+                "api",
                 "php",
-                "serialization",
-                "xml"
+                "rest"
             ],
-            "time": "2020-02-08T20:34:02+00:00"
-        },
-        {
-            "name": "aphiria/validation",
-            "version": "dev-master",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/aphiria/validation.git",
-                "reference": "33cf1bf18dab0706809386c42bde417ba9cbfdac"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/aphiria/validation/zipball/33cf1bf18dab0706809386c42bde417ba9cbfdac",
-                "reference": "33cf1bf18dab0706809386c42bde417ba9cbfdac",
-                "shasum": ""
-            },
-            "require": {
-                "aphiria/reflection": "1.0.*@dev",
-                "doctrine/annotations": "2.0.*@dev",
-                "ext-intl": "*",
-                "php": "^7.4"
-            },
-            "require-dev": {
-                "phpunit/phpunit": "~9.0"
-            },
-            "type": "library",
-            "extra": {
-                "branch-alias": {
-                    "dev-master": "1.0.x-dev"
-                }
-            },
-            "autoload": {
-                "psr-4": {
-                    "Aphiria\\Validation\\": "src"
-                }
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "David Young",
-                    "email": "dave@opulencephp.com",
-                    "role": "Architect"
-                }
-            ],
-            "description": "The Aphiria validation library",
-            "keywords": [
-                "input",
-                "model state",
-                "php",
-                "validation"
-            ],
-            "time": "2020-02-08T20:34:02+00:00"
+            "time": "2020-03-21T22:32:49+00:00"
         },
         {
             "name": "doctrine/annotations",
@@ -1289,28 +649,28 @@
         },
         {
             "name": "symfony/dotenv",
-            "version": "v4.4.4",
+            "version": "v5.0.5",
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/dotenv.git",
-                "reference": "b74a1638f53e3c65e4bbfc2a03c23fdc400fd243"
+                "reference": "48c8fdda51e5b24d031ce8ec221caa186337e36f"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/dotenv/zipball/b74a1638f53e3c65e4bbfc2a03c23fdc400fd243",
-                "reference": "b74a1638f53e3c65e4bbfc2a03c23fdc400fd243",
+                "url": "https://api.github.com/repos/symfony/dotenv/zipball/48c8fdda51e5b24d031ce8ec221caa186337e36f",
+                "reference": "48c8fdda51e5b24d031ce8ec221caa186337e36f",
                 "shasum": ""
             },
             "require": {
-                "php": "^7.1.3"
+                "php": "^7.2.5"
             },
             "require-dev": {
-                "symfony/process": "^3.4.2|^4.0|^5.0"
+                "symfony/process": "^4.4|^5.0"
             },
             "type": "library",
             "extra": {
                 "branch-alias": {
-                    "dev-master": "4.4-dev"
+                    "dev-master": "5.0-dev"
                 }
             },
             "autoload": {
@@ -1342,7 +702,7 @@
                 "env",
                 "environment"
             ],
-            "time": "2020-01-08T17:29:02+00:00"
+            "time": "2020-02-29T10:07:09+00:00"
         }
     ],
     "packages-dev": [
@@ -1606,16 +966,16 @@
         },
         {
             "name": "phpdocumentor/reflection-docblock",
-            "version": "5.0.0",
+            "version": "5.1.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/phpDocumentor/ReflectionDocBlock.git",
-                "reference": "a48807183a4b819072f26e347bbd0b5199a9d15f"
+                "reference": "cd72d394ca794d3466a3b2fc09d5a6c1dc86b47e"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/phpDocumentor/ReflectionDocBlock/zipball/a48807183a4b819072f26e347bbd0b5199a9d15f",
-                "reference": "a48807183a4b819072f26e347bbd0b5199a9d15f",
+                "url": "https://api.github.com/repos/phpDocumentor/ReflectionDocBlock/zipball/cd72d394ca794d3466a3b2fc09d5a6c1dc86b47e",
+                "reference": "cd72d394ca794d3466a3b2fc09d5a6c1dc86b47e",
                 "shasum": ""
             },
             "require": {
@@ -1655,30 +1015,29 @@
                 }
             ],
             "description": "With this component, a library can provide support for annotations via DocBlocks or otherwise retrieve information that is embedded in a DocBlock.",
-            "time": "2020-02-09T09:16:15+00:00"
+            "time": "2020-02-22T12:28:44+00:00"
         },
         {
             "name": "phpdocumentor/type-resolver",
-            "version": "1.0.1",
+            "version": "1.1.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/phpDocumentor/TypeResolver.git",
-                "reference": "2e32a6d48972b2c1976ed5d8967145b6cec4a4a9"
+                "reference": "7462d5f123dfc080dfdf26897032a6513644fc95"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/phpDocumentor/TypeResolver/zipball/2e32a6d48972b2c1976ed5d8967145b6cec4a4a9",
-                "reference": "2e32a6d48972b2c1976ed5d8967145b6cec4a4a9",
+                "url": "https://api.github.com/repos/phpDocumentor/TypeResolver/zipball/7462d5f123dfc080dfdf26897032a6513644fc95",
+                "reference": "7462d5f123dfc080dfdf26897032a6513644fc95",
                 "shasum": ""
             },
             "require": {
-                "php": "^7.1",
+                "php": "^7.2",
                 "phpdocumentor/reflection-common": "^2.0"
             },
             "require-dev": {
-                "ext-tokenizer": "^7.1",
-                "mockery/mockery": "~1",
-                "phpunit/phpunit": "^7.0"
+                "ext-tokenizer": "^7.2",
+                "mockery/mockery": "~1"
             },
             "type": "library",
             "extra": {
@@ -1702,20 +1061,20 @@
                 }
             ],
             "description": "A PSR-5 based resolver of Class names, Types and Structural Element Names",
-            "time": "2019-08-22T18:11:29+00:00"
+            "time": "2020-02-18T18:59:58+00:00"
         },
         {
             "name": "phpspec/prophecy",
-            "version": "v1.10.2",
+            "version": "v1.10.3",
             "source": {
                 "type": "git",
                 "url": "https://github.com/phpspec/prophecy.git",
-                "reference": "b4400efc9d206e83138e2bb97ed7f5b14b831cd9"
+                "reference": "451c3cd1418cf640de218914901e51b064abb093"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/phpspec/prophecy/zipball/b4400efc9d206e83138e2bb97ed7f5b14b831cd9",
-                "reference": "b4400efc9d206e83138e2bb97ed7f5b14b831cd9",
+                "url": "https://api.github.com/repos/phpspec/prophecy/zipball/451c3cd1418cf640de218914901e51b064abb093",
+                "reference": "451c3cd1418cf640de218914901e51b064abb093",
                 "shasum": ""
             },
             "require": {
@@ -1765,20 +1124,20 @@
                 "spy",
                 "stub"
             ],
-            "time": "2020-01-20T15:57:02+00:00"
+            "time": "2020-03-05T15:02:03+00:00"
         },
         {
             "name": "phpunit/php-code-coverage",
-            "version": "8.0.0",
+            "version": "8.0.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/sebastianbergmann/php-code-coverage.git",
-                "reference": "278b6e876467da2e6b5e5390a2310391618ebc10"
+                "reference": "31e94ccc084025d6abee0585df533eb3a792b96a"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/sebastianbergmann/php-code-coverage/zipball/278b6e876467da2e6b5e5390a2310391618ebc10",
-                "reference": "278b6e876467da2e6b5e5390a2310391618ebc10",
+                "url": "https://api.github.com/repos/sebastianbergmann/php-code-coverage/zipball/31e94ccc084025d6abee0585df533eb3a792b96a",
+                "reference": "31e94ccc084025d6abee0585df533eb3a792b96a",
                 "shasum": ""
             },
             "require": {
@@ -1829,7 +1188,7 @@
                 "testing",
                 "xunit"
             ],
-            "time": "2020-02-07T06:03:55+00:00"
+            "time": "2020-02-19T13:41:19+00:00"
         },
         {
             "name": "phpunit/php-file-iterator",
@@ -2080,16 +1439,16 @@
         },
         {
             "name": "phpunit/phpunit",
-            "version": "9.0.0",
+            "version": "9.0.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/sebastianbergmann/phpunit.git",
-                "reference": "a5be9621b19ee19dca5f150a5b159f48b5389547"
+                "reference": "68d7e5b17a6b9461e17c00446caa409863154f76"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/sebastianbergmann/phpunit/zipball/a5be9621b19ee19dca5f150a5b159f48b5389547",
-                "reference": "a5be9621b19ee19dca5f150a5b159f48b5389547",
+                "url": "https://api.github.com/repos/sebastianbergmann/phpunit/zipball/68d7e5b17a6b9461e17c00446caa409863154f76",
+                "reference": "68d7e5b17a6b9461e17c00446caa409863154f76",
                 "shasum": ""
             },
             "require": {
@@ -2162,7 +1521,7 @@
                 "testing",
                 "xunit"
             ],
-            "time": "2020-02-07T06:56:17+00:00"
+            "time": "2020-02-13T07:30:12+00:00"
         },
         {
             "name": "sebastian/code-unit-reverse-lookup",
@@ -2331,16 +1690,16 @@
         },
         {
             "name": "sebastian/environment",
-            "version": "5.0.0",
+            "version": "5.0.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/sebastianbergmann/environment.git",
-                "reference": "fea125c3bf7cab63a909990133d425e5a0a61e40"
+                "reference": "9bffdefa7810031a165ddd6275da6a2c1f6f2dfb"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/sebastianbergmann/environment/zipball/fea125c3bf7cab63a909990133d425e5a0a61e40",
-                "reference": "fea125c3bf7cab63a909990133d425e5a0a61e40",
+                "url": "https://api.github.com/repos/sebastianbergmann/environment/zipball/9bffdefa7810031a165ddd6275da6a2c1f6f2dfb",
+                "reference": "9bffdefa7810031a165ddd6275da6a2c1f6f2dfb",
                 "shasum": ""
             },
             "require": {
@@ -2380,7 +1739,7 @@
                 "environment",
                 "hhvm"
             ],
-            "time": "2020-02-07T06:10:11+00:00"
+            "time": "2020-02-19T13:40:20+00:00"
         },
         {
             "name": "sebastian/exporter",
@@ -2784,16 +2143,16 @@
         },
         {
             "name": "symfony/polyfill-ctype",
-            "version": "v1.13.1",
+            "version": "v1.14.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/polyfill-ctype.git",
-                "reference": "f8f0b461be3385e56d6de3dbb5a0df24c0c275e3"
+                "reference": "fbdeaec0df06cf3d51c93de80c7eb76e271f5a38"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/polyfill-ctype/zipball/f8f0b461be3385e56d6de3dbb5a0df24c0c275e3",
-                "reference": "f8f0b461be3385e56d6de3dbb5a0df24c0c275e3",
+                "url": "https://api.github.com/repos/symfony/polyfill-ctype/zipball/fbdeaec0df06cf3d51c93de80c7eb76e271f5a38",
+                "reference": "fbdeaec0df06cf3d51c93de80c7eb76e271f5a38",
                 "shasum": ""
             },
             "require": {
@@ -2805,7 +2164,7 @@
             "type": "library",
             "extra": {
                 "branch-alias": {
-                    "dev-master": "1.13-dev"
+                    "dev-master": "1.14-dev"
                 }
             },
             "autoload": {
@@ -2838,7 +2197,7 @@
                 "polyfill",
                 "portable"
             ],
-            "time": "2019-11-27T13:56:44+00:00"
+            "time": "2020-01-13T11:15:53+00:00"
         },
         {
             "name": "theseer/tokenizer",
@@ -2882,16 +2241,16 @@
         },
         {
             "name": "webmozart/assert",
-            "version": "1.6.0",
+            "version": "1.7.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/webmozart/assert.git",
-                "reference": "573381c0a64f155a0d9a23f4b0c797194805b925"
+                "reference": "aed98a490f9a8f78468232db345ab9cf606cf598"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/webmozart/assert/zipball/573381c0a64f155a0d9a23f4b0c797194805b925",
-                "reference": "573381c0a64f155a0d9a23f4b0c797194805b925",
+                "url": "https://api.github.com/repos/webmozart/assert/zipball/aed98a490f9a8f78468232db345ab9cf606cf598",
+                "reference": "aed98a490f9a8f78468232db345ab9cf606cf598",
                 "shasum": ""
             },
             "require": {
@@ -2926,16 +2285,13 @@
                 "check",
                 "validate"
             ],
-            "time": "2019-11-24T13:36:37+00:00"
+            "time": "2020-02-14T12:15:55+00:00"
         }
     ],
     "aliases": [],
     "minimum-stability": "dev",
     "stability-flags": {
-        "aphiria/api": 20,
-        "aphiria/configuration": 20,
-        "aphiria/console": 20,
-        "aphiria/exceptions": 20
+        "aphiria/aphiria": 20
     },
     "prefer-stable": true,
     "prefer-lowest": false,
