@@ -75,12 +75,6 @@ final class DocumentationBinder extends Binder
                         'description' => 'Learn how to install Aphiria',
                         'keywords' => ['aphiria', 'install', 'php']
                     ],
-                    'application-builders' => [
-                        'title' => 'Application Builders',
-                        'linkText' => 'Application Builders',
-                        'description' => 'Learn how to configure an Aphiria application',
-                        'keywords' => ['aphiria', 'configure', 'php', 'application builder']
-                    ],
                     'contributing' => [
                         'title' => 'Contributing',
                         'linkText' => 'Contributing',
@@ -92,6 +86,38 @@ final class DocumentationBinder extends Binder
                         'linkText' => 'Framework Comparisons',
                         'description' => 'Learn Aphiria stacks up against other popular PHP frameworks',
                         'keywords' => ['aphiria', 'frameworks', 'laravel', 'symfony']
+                    ]
+                ],
+                'Configuration' => [
+                    'application-builders' => [
+                        'title' => 'Application Builders',
+                        'linkText' => 'Application Builders',
+                        'description' => 'Learn how to build an Aphiria application',
+                        'keywords' => ['aphiria', 'configure', 'php', 'application builder']
+                    ],
+                    'configuration' => [
+                        'title' => 'Configuration',
+                        'linkText' => 'Configuration',
+                        'description' => 'Learn how to configure an Aphiria application',
+                        'keywords' => ['aphiria', 'configure', 'php']
+                    ],
+                    'di-container' => [
+                        'title' => 'DI Container',
+                        'linkText' => 'DI Container',
+                        'description' => 'Learn about configuring your dependencies in Aphiria',
+                        'keywords' => ['aphiria', 'dependencies', 'dependency injection', 'container', 'php']
+                    ],
+                    'binders' => [
+                        'title' => 'Binders',
+                        'linkText' => 'Binders',
+                        'description' => 'Learn about configuring your container via binders in Aphiria',
+                        'keywords' => ['aphiria', 'binders', 'dependency injection', 'container', 'php']
+                    ],
+                    'global-exception-handler' => [
+                        'title' => 'Global Exception Handler',
+                        'linkText' => 'Global Exception Handler',
+                        'description' => 'Learn how to handle unhandled exceptions in Aphiria',
+                        'keywords' => ['aphiria', 'exceptions', 'errors', 'global exception handler']
                     ]
                 ],
                 'HTTP Applications' => [
@@ -136,12 +162,6 @@ final class DocumentationBinder extends Binder
                         'linkText' => 'Sessions',
                         'description' => 'Learn about server-side sessions in Aphiria',
                         'keywords' => ['aphiria', 'sessions', 'http', 'php']
-                    ],
-                    'http-exception-handling' => [
-                        'title' => 'Exception Handling',
-                        'linkText' => 'Exception Handling',
-                        'description' => 'Learn about rendering exceptions as HTTP responses in Aphiria',
-                        'keywords' => ['aphiria', 'exceptions', 'http', 'exception handling', 'responses', 'php']
                     ]
                 ],
                 'Console Applications' => [
@@ -150,20 +170,6 @@ final class DocumentationBinder extends Binder
                         'linkText' => 'Basics',
                         'description' => 'Learn the basics of console applications in Aphiria',
                         'keywords' => ['aphiria', 'console', 'command prompt', 'php']
-                    ]
-                ],
-                'Dependency Injection' => [
-                    'di-container' => [
-                        'title' => 'Container',
-                        'linkText' => 'Container',
-                        'description' => 'Learn about configuring your dependencies in Aphiria',
-                        'keywords' => ['aphiria', 'dependencies', 'dependency injection', 'container', 'php']
-                    ],
-                    'binders' => [
-                        'title' => 'Binders',
-                        'linkText' => 'Binders',
-                        'description' => 'Learn about configuring your container via binders in Aphiria',
-                        'keywords' => ['aphiria', 'binders', 'dependency injection', 'container', 'php']
                     ]
                 ],
                 'Miscellaneous' => [
