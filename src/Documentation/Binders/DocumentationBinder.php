@@ -179,12 +179,6 @@ final class DocumentationBinder extends Binder
                         'description' => 'Learn about collections in Aphiria',
                         'keywords' => ['aphiria', 'collections', 'hash tables', 'array lists', 'stacks', 'queues']
                     ],
-                    'configuration' => [
-                        'title' => 'Configuration',
-                        'linkText' => 'Configuration',
-                        'description' => 'Learn about reading from and using configurations in Aphiria',
-                        'keywords' => ['aphiria', 'configurations', 'config']
-                    ],
                     'io' => [
                         'title' => 'Input/Output',
                         'linkText' => 'Input/Output',
