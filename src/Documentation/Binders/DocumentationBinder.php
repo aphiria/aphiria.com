@@ -113,9 +113,9 @@ final class DocumentationBinder extends Binder
                         'description' => 'Learn about configuring your container via binders in Aphiria',
                         'keywords' => ['aphiria', 'binders', 'dependency injection', 'container', 'php']
                     ],
-                    'global-exception-handler' => [
-                        'title' => 'Global Exception Handler',
-                        'linkText' => 'Global Exception Handler',
+                    'exception-handling' => [
+                        'title' => 'Exception Handling',
+                        'linkText' => 'Exception Handling',
                         'description' => 'Learn how to handle unhandled exceptions in Aphiria',
                         'keywords' => ['aphiria', 'exceptions', 'errors', 'global exception handler']
                     ]

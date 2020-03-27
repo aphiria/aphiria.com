@@ -23,6 +23,7 @@ use Aphiria\Framework\Routing\Binders\RoutingBinder;
 use Aphiria\Framework\Serialization\Binders\SerializerBinder;
 use Aphiria\Framework\Validation\Binders\ValidationBinder;
 use Aphiria\Middleware\MiddlewareBinding;
+use Aphiria\Net\Http\HttpException;
 use App\Api\Middleware\Cors;
 use App\Documentation\DocumentationModule;
 use App\Web\WebModule;
@@ -64,6 +65,11 @@ final class App
                 new RoutingBinder(),
                 new CommandBinder()
             ]);
+
+        // Configure logging levels for exceptions
+        $this->withLogLevelFactory($this->appBuilder, HttpException::class, function (HttpException $ex) {
+            return $ex->getResponse()->getStatusCode() >= 500 ? LogLevel::ERROR : LogLevel::DEBUG;
+        });
 
         // Register any global middleware
         $this->withGlobalMiddleware($this->appBuilder, new MiddlewareBinding(Cors::class));

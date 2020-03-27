@@ -12,12 +12,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/aphiria/aphiria.git",
-                "reference": "9e17d91e43200ea34adf190956025831cc4d69bb"
+                "reference": "ac83f8f59a1f8bde0b0547972cf1351033aa93c4"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/aphiria/aphiria/zipball/9e17d91e43200ea34adf190956025831cc4d69bb",
-                "reference": "9e17d91e43200ea34adf190956025831cc4d69bb",
+                "url": "https://api.github.com/repos/aphiria/aphiria/zipball/ac83f8f59a1f8bde0b0547972cf1351033aa93c4",
+                "reference": "ac83f8f59a1f8bde0b0547972cf1351033aa93c4",
                 "shasum": ""
             },
             "require": {
@@ -79,7 +79,7 @@
                 "php",
                 "rest"
             ],
-            "time": "2020-03-27T00:30:02+00:00"
+            "time": "2020-03-27T22:25:55+00:00"
         },
         {
             "name": "doctrine/annotations",
@@ -649,7 +649,7 @@
         },
         {
             "name": "symfony/dotenv",
-            "version": "v5.0.5",
+            "version": "v5.0.6",
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/dotenv.git",
@@ -895,18 +895,18 @@
             "authors": [
                 {
                     "name": "Arne Blankerts",
-                    "email": "arne@blankerts.de",
-                    "role": "Developer"
+                    "role": "Developer",
+                    "email": "arne@blankerts.de"
                 },
                 {
                     "name": "Sebastian Heuer",
-                    "email": "sebastian@phpeople.de",
-                    "role": "Developer"
+                    "role": "Developer",
+                    "email": "sebastian@phpeople.de"
                 },
                 {
                     "name": "Sebastian Bergmann",
-                    "email": "sebastian@phpunit.de",
-                    "role": "Developer"
+                    "role": "Developer",
+                    "email": "sebastian@phpunit.de"
                 }
             ],
             "description": "Library for handling version information and constraints",
@@ -2232,8 +2232,8 @@
             "authors": [
                 {
                     "name": "Arne Blankerts",
-                    "email": "arne@blankerts.de",
-                    "role": "Developer"
+                    "role": "Developer",
+                    "email": "arne@blankerts.de"
                 }
             ],
             "description": "A small library for converting tokenized PHP source code into XML and potentially other formats",
