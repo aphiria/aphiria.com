@@ -13,6 +13,7 @@ declare(strict_types=1);
 namespace App;
 
 use Aphiria\Application\Builders\IApplicationBuilder;
+use Aphiria\Application\IModule;
 use Aphiria\Framework\Api\Binders\ControllerBinder;
 use Aphiria\Framework\Application\AphiriaComponents;
 use Aphiria\Framework\Console\Binders\CommandBinder;
@@ -27,35 +28,28 @@ use Aphiria\Net\Http\HttpException;
 use App\Api\Middleware\Cors;
 use App\Documentation\DocumentationModule;
 use App\Web\WebModule;
+use Exception;
 
 /**
  * Defines the application configuration
  */
-final class App
+final class App implements IModule
 {
     use AphiriaComponents;
 
-    /** @var IApplicationBuilder The app builder to use when configuring the application */
-    private IApplicationBuilder $appBuilder;
-
     /**
-     * @param IApplicationBuilder $appBuilder The app builder to use when configuring the application
+     * Configures the application's modules and components
+     *
+     * @param IApplicationBuilder $appBuilder The builder that will build our app
+     * @throws Exception Thrown if there was an error building the app
      */
-    public function __construct(IApplicationBuilder $appBuilder)
-    {
-        $this->appBuilder = $appBuilder;
-    }
-
-    /**
-     * Configures the application's modules
-     */
-    public function configure(): void
+    public function build(IApplicationBuilder $appBuilder): void
     {
         // Configure this app to use Aphiria components
-        $this->withRouteAnnotations($this->appBuilder)
-            ->withValidatorAnnotations($this->appBuilder)
-            ->withCommandAnnotations($this->appBuilder)
-            ->withBinders($this->appBuilder, [
+        $this->withRouteAnnotations($appBuilder)
+            ->withValidatorAnnotations($appBuilder)
+            ->withCommandAnnotations($appBuilder)
+            ->withBinders($appBuilder, [
                 new ExceptionHandlerBinder(),
                 new RequestBinder(),
                 new SerializerBinder(),
@@ -67,15 +61,15 @@ final class App
             ]);
 
         // Configure logging levels for exceptions
-        $this->withLogLevelFactory($this->appBuilder, HttpException::class, function (HttpException $ex) {
+        $this->withLogLevelFactory($appBuilder, HttpException::class, function (HttpException $ex) {
             return $ex->getResponse()->getStatusCode() >= 500 ? LogLevel::ERROR : LogLevel::DEBUG;
         });
 
         // Register any global middleware
-        $this->withGlobalMiddleware($this->appBuilder, new MiddlewareBinding(Cors::class));
+        $this->withGlobalMiddleware($appBuilder, new MiddlewareBinding(Cors::class));
 
         // Register any modules
-        $this->appBuilder->withModule(new DocumentationModule());
-        $this->appBuilder->withModule(new WebModule());
+        $appBuilder->withModule(new DocumentationModule());
+        $appBuilder->withModule(new WebModule());
     }
 }
