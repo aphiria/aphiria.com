@@ -15,8 +15,7 @@ namespace App\Databases\Binders;
 use Aphiria\DependencyInjection\Binders\Binder;
 use Aphiria\DependencyInjection\IContainer;
 use Exception;
-use Opulence\Databases\Adapters\Pdo\MySql\Driver as MySqlDriver;
-use Opulence\Databases\Adapters\Pdo\PostgreSql\Driver as PostgreSqlDriver;
+use Opulence\Databases\Adapters\Pdo\PostgreSql\Driver;
 use Opulence\Databases\ConnectionPools\ConnectionPool;
 use Opulence\Databases\ConnectionPools\SingleServerConnectionPool;
 use Opulence\Databases\IConnection;
@@ -35,23 +34,14 @@ final class SqlBinder extends Binder
     public function bind(IContainer $container): void
     {
         try {
-            switch (getenv('DB_DRIVER')) {
-                case 'postgres':
-                    $driver = new PostgreSqlDriver();
-                    break;
-                case 'mysql':
-                    $driver = new MySqlDriver();
-                    break;
-                default:
-                    throw new RuntimeException(
-                        'Invalid database driver type specified in environment var "DB_DRIVER": ' . getenv('DB_DRIVER')
-                    );
-            }
-
             $connectionPool = new SingleServerConnectionPool(
-                $driver,
+                new Driver(),
                 new Server(
-                    getenv('DB_HOST'), getenv('DB_USER'), getenv('DB_PASSWORD'), getenv('DB_NAME'), (int)getenv('DB_PORT')
+                    \getenv('DB_HOST'),
+                    \getenv('DB_USER'),
+                    \getenv('DB_PASSWORD'),
+                    \getenv('DB_NAME'),
+                    (int)\getenv('DB_PORT')
                 )
             );
             $container->bindInstance(ConnectionPool::class, $connectionPool);

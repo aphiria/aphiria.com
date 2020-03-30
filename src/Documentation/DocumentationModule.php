@@ -14,6 +14,7 @@ namespace App\Documentation;
 
 use Aphiria\Application\Builders\IApplicationBuilder;
 use Aphiria\Application\IModule;
+use Aphiria\DependencyInjection\ResolutionException;
 use Aphiria\Framework\Application\AphiriaComponents;
 use App\Databases\Binders\SqlBinder;
 use App\Documentation\Binders\DocumentationBinder;
@@ -27,6 +28,7 @@ final class DocumentationModule implements IModule
 
     /**
      * @inheritdoc
+     * @throws ResolutionException Thrown if an interface could not be resolved
      */
     public function build(IApplicationBuilder $appBuilder): void
     {

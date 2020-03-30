@@ -36,7 +36,7 @@ final class DocumentationBinder extends Binder
         ]);
         $container->bindInstance(DocumentationMetadata::class, $metadata);
         $searchIndex = new PostgreSqlSearchIndex(
-            getenv('DOC_LEXEMES_TABLE_NAME'),
+            \getenv('DOC_LEXEMES_TABLE_NAME'),
             $container->resolve(IConnection::class),
             "/docs/{$metadata->getDefaultVersion()}/",
             __DIR__ . '/../../../.env'

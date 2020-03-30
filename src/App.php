@@ -29,9 +29,10 @@ use App\Api\Middleware\Cors;
 use App\Documentation\DocumentationModule;
 use App\Web\WebModule;
 use Exception;
+use Psr\Log\LogLevel;
 
 /**
- * Defines the application configuration
+ * Defines the application
  */
 final class App implements IModule
 {
@@ -45,7 +46,7 @@ final class App implements IModule
      */
     public function build(IApplicationBuilder $appBuilder): void
     {
-        // Configure this app to use Aphiria components
+        // Configure the app
         $this->withRouteAnnotations($appBuilder)
             ->withValidatorAnnotations($appBuilder)
             ->withCommandAnnotations($appBuilder)
@@ -58,18 +59,14 @@ final class App implements IModule
                 new ControllerBinder(),
                 new RoutingBinder(),
                 new CommandBinder()
+            ])
+            ->withLogLevelFactory($appBuilder, HttpException::class, static function (HttpException $ex) {
+                return $ex->getResponse()->getStatusCode() >= 500 ? LogLevel::ERROR : LogLevel::DEBUG;
+            })
+            ->withGlobalMiddleware($appBuilder, new MiddlewareBinding(Cors::class))
+            ->withModules($appBuilder, [
+                new DocumentationModule(),
+                new WebModule()
             ]);
-
-        // Configure logging levels for exceptions
-        $this->withLogLevelFactory($appBuilder, HttpException::class, function (HttpException $ex) {
-            return $ex->getResponse()->getStatusCode() >= 500 ? LogLevel::ERROR : LogLevel::DEBUG;
-        });
-
-        // Register any global middleware
-        $this->withGlobalMiddleware($appBuilder, new MiddlewareBinding(Cors::class));
-
-        // Register any modules
-        $appBuilder->withModule(new DocumentationModule());
-        $appBuilder->withModule(new WebModule());
     }
 }

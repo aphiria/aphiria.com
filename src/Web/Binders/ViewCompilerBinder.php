@@ -31,7 +31,7 @@ final class ViewCompilerBinder extends Binder
             __DIR__ . '/../../../resources/views',
             __DIR__ . '/../../../public-web',
             $container->resolve(DocumentationMetadata::class),
-            getenv('APP_API_URL')
+            \getenv('APP_API_URL')
         );
         $container->bindInstance(ViewCompiler::class, $viewCompiler);
     }

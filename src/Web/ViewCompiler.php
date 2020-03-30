@@ -179,7 +179,6 @@ final class ViewCompiler
             ['aphiria', 'php', 'framework', 'rest', 'api'],
             'A simple, extensible REST API framework'
         );
-        $defaultDocVersion = $this->docMetadata->getDefaultVersion();
         $this->files->write("{$this->compiledViewPath}/index.html", $compiledHomepageContents);
     }
 
