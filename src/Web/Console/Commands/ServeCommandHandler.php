@@ -59,7 +59,7 @@ final class ServeCommandHandler implements ICommandHandler
         foreach ($commands as $command) {
             $output->writeln("<info>Running command:</info> $command");
 
-            if (strpos(php_uname(), 'Windows') === 0 ){
+            if (strpos(php_uname(), 'Windows') === 0) {
                 pclose(popen("start /B $command", 'r'));
             } else {
                 exec("$command> /dev/null &");

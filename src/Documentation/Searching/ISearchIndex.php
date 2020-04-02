@@ -8,8 +8,9 @@
  * @license   https://github.com/aphiria/aphiria.com/blob/master/LICENSE.md
  */
 
-namespace App\Documentation\Searching;
+declare(strict_types=1);
 
+namespace App\Documentation\Searching;
 
 /**
  * Defines the interfaces for documentation search indices to implement
