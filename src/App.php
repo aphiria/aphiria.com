@@ -14,6 +14,11 @@ namespace App;
 
 use Aphiria\Application\Builders\IApplicationBuilder;
 use Aphiria\Application\IModule;
+use Aphiria\Configuration\GlobalConfiguration;
+use Aphiria\Configuration\MissingConfigurationValueException;
+use Aphiria\DependencyInjection\Binders\IBinderDispatcher;
+use Aphiria\DependencyInjection\Binders\LazyBinderDispatcher;
+use Aphiria\DependencyInjection\Binders\Metadata\Caching\FileBinderMetadataCollectionCache;
 use Aphiria\Framework\Api\Binders\ControllerBinder;
 use Aphiria\Framework\Application\AphiriaComponents;
 use Aphiria\Framework\Console\Binders\CommandBinder;
@@ -47,7 +52,8 @@ final class App implements IModule
     public function build(IApplicationBuilder $appBuilder): void
     {
         // Configure the app
-        $this->withRouteAnnotations($appBuilder)
+        $this->withBinderDispatcher($appBuilder, $this->getBinderDispatcher())
+            ->withRouteAnnotations($appBuilder)
             ->withValidatorAnnotations($appBuilder)
             ->withCommandAnnotations($appBuilder)
             ->withBinders($appBuilder, [
@@ -68,5 +74,23 @@ final class App implements IModule
                 new DocumentationModule(),
                 new WebModule()
             ]);
+    }
+
+    /**
+     * Gets the binder dispatcher
+     *
+     * @return IBinderDispatcher The binder dispatcher to use
+     * @throws MissingConfigurationValueException Thrown if the path to the metadata cache was missing
+     */
+    private function getBinderDispatcher(): IBinderDispatcher
+    {
+        if (\getenv('APP_ENV') === 'production') {
+            $cachePath = GlobalConfiguration::getString('aphiria.binders.metadataCachePath');
+            $cache = new FileBinderMetadataCollectionCache($cachePath);
+        } else {
+            $cache = null;
+        }
+
+        return new LazyBinderDispatcher($cache);
     }
 }
