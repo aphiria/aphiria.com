@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "e7388a08a615e57864f73b483e235cd3",
+    "content-hash": "c322f3bad059085453bc36f630cca7b5",
     "packages": [
         {
             "name": "aphiria/aphiria",
@@ -12,12 +12,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/aphiria/aphiria.git",
-                "reference": "82537cdec2a7af86768ff9b18f9ba66dd04fd2b9"
+                "reference": "5cc8fbcf820eb16a8e5242a6ba6133bee222a26e"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/aphiria/aphiria/zipball/82537cdec2a7af86768ff9b18f9ba66dd04fd2b9",
-                "reference": "82537cdec2a7af86768ff9b18f9ba66dd04fd2b9",
+                "url": "https://api.github.com/repos/aphiria/aphiria/zipball/5cc8fbcf820eb16a8e5242a6ba6133bee222a26e",
+                "reference": "5cc8fbcf820eb16a8e5242a6ba6133bee222a26e",
                 "shasum": ""
             },
             "require": {
@@ -35,7 +35,7 @@
             },
             "require-dev": {
                 "friendsofphp/php-cs-fixer": "^3.0",
-                "phpunit/phpunit": "~9.0"
+                "phpunit/phpunit": "~9.1"
             },
             "type": "library",
             "extra": {
@@ -80,7 +80,7 @@
                 "php",
                 "rest"
             ],
-            "time": "2020-04-03T13:23:59+00:00"
+            "time": "2020-04-04T14:24:58+00:00"
         },
         {
             "name": "doctrine/annotations",
@@ -1133,18 +1133,18 @@
             "authors": [
                 {
                     "name": "Arne Blankerts",
-                    "email": "arne@blankerts.de",
-                    "role": "Developer"
+                    "role": "Developer",
+                    "email": "arne@blankerts.de"
                 },
                 {
                     "name": "Sebastian Heuer",
-                    "email": "sebastian@phpeople.de",
-                    "role": "Developer"
+                    "role": "Developer",
+                    "email": "sebastian@phpeople.de"
                 },
                 {
                     "name": "Sebastian Bergmann",
-                    "email": "sebastian@phpunit.de",
-                    "role": "Developer"
+                    "role": "Developer",
+                    "email": "sebastian@phpunit.de"
                 }
             ],
             "description": "Library for handling version information and constraints",
@@ -1725,16 +1725,16 @@
         },
         {
             "name": "phpunit/phpunit",
-            "version": "9.1.0",
+            "version": "9.1.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/sebastianbergmann/phpunit.git",
-                "reference": "ef2af937ce574f215afb6dca37d583cb2964bad9"
+                "reference": "848f6521c906500e66229668768576d35de0227e"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/sebastianbergmann/phpunit/zipball/ef2af937ce574f215afb6dca37d583cb2964bad9",
-                "reference": "ef2af937ce574f215afb6dca37d583cb2964bad9",
+                "url": "https://api.github.com/repos/sebastianbergmann/phpunit/zipball/848f6521c906500e66229668768576d35de0227e",
+                "reference": "848f6521c906500e66229668768576d35de0227e",
                 "shasum": ""
             },
             "require": {
@@ -1808,7 +1808,7 @@
                 "testing",
                 "xunit"
             ],
-            "time": "2020-04-03T05:23:04+00:00"
+            "time": "2020-04-03T14:40:04+00:00"
         },
         {
             "name": "psr/container",
@@ -3405,8 +3405,8 @@
             "authors": [
                 {
                     "name": "Arne Blankerts",
-                    "email": "arne@blankerts.de",
-                    "role": "Developer"
+                    "role": "Developer",
+                    "email": "arne@blankerts.de"
                 }
             ],
             "description": "A small library for converting tokenized PHP source code into XML and potentially other formats",
