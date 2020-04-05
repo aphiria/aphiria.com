@@ -711,6 +711,10 @@ blockquote {
             float: left;
             width: $docSidebarWidth;
             border-right: 1px solid $pageBorderColor;
+
+            a.selected {
+                font-weight: bold;
+            }
         }
     }
 

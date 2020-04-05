@@ -35,6 +35,8 @@ window.addEventListener('load', loadEvent => {
         // Initialize highlighting the ToC nav
         highlightToCNav(article, tocContents);
         window.addEventListener('scroll', scrollEvent => highlightToCNav(article, tocContents));
+        // Initialize highlighting the current doc in the nav bar
+        highlightDocNav(docNavBar);
     }
 
     const searchInputElem = document.getElementById('search-query');
@@ -176,13 +178,13 @@ const mobileMenu = {
     }
 };
 
-const makeSideNavStick = (sideNavElem, tocElem, footerElem) => {
+const makeSideNavStick = (docNavElem, tocElem, footerElem) => {
     const rect = footerElem.getBoundingClientRect();
 
     if (rect.top <= window.innerHeight) {
-        tocElem.style.bottom = sideNavElem.style.bottom = `${window.innerHeight - rect.top}px`;
+        tocElem.style.bottom = docNavElem.style.bottom = `${window.innerHeight - rect.top}px`;
     } else {
-        tocElem.style.bottom = sideNavElem.style.bottom = '0px';
+        tocElem.style.bottom = docNavElem.style.bottom = '0px';
     }
 };
 
@@ -212,3 +214,15 @@ const highlightToCNav = (articleElem, tocContentsElem) => {
         }
     }
 };
+
+const highlightDocNav = docNavElem => {
+    const docLinks = docNavElem.querySelectorAll('a');
+
+    docLinks.forEach(docLink => {
+        if (docLink.href === window.location.href) {
+            docLink.classList.add('selected');
+        } else {
+            docLink.classList.remove('selected');
+        }
+    })
+}

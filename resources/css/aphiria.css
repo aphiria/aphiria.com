@@ -471,6 +471,8 @@ blockquote {
       float: left;
       width: 240px;
       border-right: 1px solid #ddd; }
+      body > main nav.doc-nav a.selected {
+        font-weight: bold; }
   #gray-out {
     display: none; } }
 
