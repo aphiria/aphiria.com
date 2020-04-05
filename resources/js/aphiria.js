@@ -24,12 +24,17 @@ window.addEventListener('load', loadEvent => {
 
     // Handle updating the bottom of the nav sidebars so that it does not overlap with the footer for non-mobile versions of the site
     if (document.querySelector('body').classList.contains('docs') && window.matchMedia('(min-device-width: 1024px)').matches) {
-        const docNavBar = document.querySelector("nav.doc-nav");
-        const tocContents = document.querySelector(".toc-nav-contents");
-        const footer = document.querySelector("body > footer");
+        const article = document.querySelector('body.docs main article');
+        const docNavBar = document.querySelector('nav.doc-nav');
+        const tocContents = document.querySelector('.toc-nav-contents');
+        const footer = document.querySelector('body > footer');
+        // Initialize making the side nav sticky
         makeSideNavStick(docNavBar, tocContents, footer);
         window.addEventListener('scroll', scrollEvent => makeSideNavStick(docNavBar, tocContents, footer));
         window.addEventListener('resize', scrollEvent => makeSideNavStick(docNavBar, tocContents, footer));
+        // Initialize highlighting the ToC nav
+        highlightToCNav(article, tocContents);
+        window.addEventListener('scroll', scrollEvent => highlightToCNav(article, tocContents));
     }
 
     const searchInputElem = document.getElementById('search-query');
@@ -43,14 +48,17 @@ window.addEventListener('load', loadEvent => {
     // Handle using arrow keys to navigate search results
     window.addEventListener('keydown', keyDownEvent => {
         // Don't bother if we aren't showing populated search results
-        if (searchResultsElem.style.display === 'none' || searchResultsElem.querySelector('.no-results')) {
+        if (
+            ['', 'none'].indexOf(searchResultsElem.style.display) > -1
+            || searchResultsElem.querySelector('.no-results')
+        ) {
             return;
         }
 
         // This will be null if nothing was selected
         let selectedQueryResult = searchResultsElem.querySelector('li.selected');
 
-        if (keyDownEvent.key === "ArrowUp") {
+        if (keyDownEvent.key === 'ArrowUp') {
             if (selectedQueryResult !== null) {
                 selectedQueryResult.classList.remove('selected');
             }
@@ -61,7 +69,7 @@ window.addEventListener('load', loadEvent => {
             } else {
                 selectedQueryResult.previousElementSibling.classList.add('selected');
             }
-        } else if (keyDownEvent.key === "ArrowDown") {
+        } else if (keyDownEvent.key === 'ArrowDown') {
             if (selectedQueryResult !== null) {
                 selectedQueryResult.classList.remove('selected');
             }
@@ -175,5 +183,33 @@ const makeSideNavStick = (sideNavElem, tocElem, footerElem) => {
         tocElem.style.bottom = sideNavElem.style.bottom = `${window.innerHeight - rect.top}px`;
     } else {
         tocElem.style.bottom = sideNavElem.style.bottom = '0px';
+    }
+};
+
+const highlightToCNav = (articleElem, tocContentsElem) => {
+    // Todo: Need to account for fixed nav bar that hangs over
+    // Grab headers that come after the ToC (headers that are part of the doc body)
+    const headers = articleElem.querySelectorAll('.toc-nav ~ h2, .toc-nav ~ h3');
+    let selectedHeader = headers[0];
+
+    // Keep looping until we've found something that we haven't scrolled past
+    for (let i = 0;i < headers.length;i++) {
+        if (headers[i].getBoundingClientRect().top <= 6) {
+            selectedHeader = i === 0 ? headers[0] : headers[i];
+        } else {
+            break;
+        }
+    }
+
+    const tocLinks = tocContentsElem.querySelectorAll('a');
+
+    for (let i = 0;i < tocLinks.length;i++) {
+        let tocLink = tocLinks[i];
+
+        if (tocLink.hash === `#${selectedHeader.id}`) {
+            tocLink.classList.add('selected');
+        } else {
+            tocLink.classList.remove('selected');
+        }
     }
 };

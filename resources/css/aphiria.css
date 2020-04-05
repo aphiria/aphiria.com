@@ -457,9 +457,11 @@ blockquote {
           bottom: 0;
           /* Subtract the border and left-padding that's applied to the parent element */
           width: 219px; }
-        body > main article nav.toc-nav .toc-nav-contents > ol, body > main article nav.toc-nav .toc-nav-contents > ul {
-          /* We don't want to indent the first items */
-          padding: 10px 0; }
+          body > main article nav.toc-nav .toc-nav-contents a.selected {
+            font-weight: bold; }
+          body > main article nav.toc-nav .toc-nav-contents > ol, body > main article nav.toc-nav .toc-nav-contents > ul {
+            /* We don't want to indent the first items */
+            padding: 10px 0; }
     body > main nav.doc-nav {
       position: fixed;
       top: 80px;
