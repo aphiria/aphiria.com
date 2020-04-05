@@ -14,7 +14,7 @@
                 <h2>Automatic content negotiation.  No magic.  No bleeding into your code.</h2>
             </hgroup>
             <pre><code class="language-php">
-$routes->get('/users/:id')->toClosure(fn (int $id) => $users->getUser($id));
+$routes->get('/users/:id')->mapsToClosure(fn (int $id) => $users->getUser($id));
                 </code></pre>
             <h1>Install Aphiria</h1>
             <pre><code class="language-bash">
