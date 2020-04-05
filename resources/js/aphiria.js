@@ -187,7 +187,6 @@ const makeSideNavStick = (sideNavElem, tocElem, footerElem) => {
 };
 
 const highlightToCNav = (articleElem, tocContentsElem) => {
-    // Todo: Need to account for fixed nav bar that hangs over
     // Grab headers that come after the ToC (headers that are part of the doc body)
     const headers = articleElem.querySelectorAll('.toc-nav ~ h2, .toc-nav ~ h3');
     let selectedHeader = headers[0];
