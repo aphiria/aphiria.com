@@ -422,11 +422,18 @@ blockquote {
       margin: 0 0 0 240px;
       padding: 20px 30px 0 30px;
       /* Fill up the remaining space */
-      width: calc(100% - 480px); }
+      width: calc(100% - 480px);
+      /*
+            Make sure there's not too much of a gap between paragraphs/headers and lists.  Since there's no easy way of
+            selecting the paragraph/header with a CSS combinator, we select the list and give it a negative margin equal
+            to the bottom margin of the paragraph/header.
+            */ }
       body > main article h1, body > main article h2, body > main article h3, body > main article h4, body > main article h5 {
         /* Make sure that tapping a link to a doc section makes the header visible from underneath the main nav */
         padding-top: 80px;
         margin-top: -80px; }
+      body > main article p + ul, body > main article p + ol, body > main article h3 + ul, body > main article h3 + ol, body > main article h4 + ul, body > main article h4 + ol, body > main article h5 + ul, body > main article h5 + ol, body > main article h6 + ul, body > main article h6 + ol {
+        margin-top: -1em !important; }
       body > main article nav.toc-nav {
         position: absolute;
         right: 0;

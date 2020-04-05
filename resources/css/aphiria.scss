@@ -653,6 +653,15 @@ blockquote {
                 margin-top: -1*$headerHeight;
             }
 
+            /*
+            Make sure there's not too much of a gap between paragraphs/headers and lists.  Since there's no easy way of
+            selecting the paragraph/header with a CSS combinator, we select the list and give it a negative margin equal
+            to the bottom margin of the paragraph/header.
+            */
+            p + ul, p + ol, h3 + ul, h3 + ol, h4 + ul, h4 + ol, h5 + ul, h5 + ol, h6 + ul, h6 + ol {
+                margin-top: -1em !important;
+            }
+
             nav.toc-nav {
                 position: absolute;
                 right: 0;
