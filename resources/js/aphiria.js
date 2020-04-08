@@ -22,13 +22,13 @@ window.addEventListener('load', loadEvent => {
         };
     }
 
-    // Handle updating the bottom of the nav sidebars so that it does not overlap with the footer for non-mobile versions of the site
+    // Handle some doc page settings for non-mobile versions of the site
     if (document.querySelector('body').classList.contains('docs') && window.matchMedia('(min-device-width: 1024px)').matches) {
         const article = document.querySelector('body.docs main article');
         const docNavBar = document.querySelector('nav.doc-nav');
         const tocContents = document.querySelector('.toc-nav-contents');
         const footer = document.querySelector('body > footer');
-        // Initialize making the side nav sticky
+        // Initialize making the side navs sticky to the footer
         makeSideNavStick(docNavBar, tocContents, footer);
         window.addEventListener('scroll', scrollEvent => makeSideNavStick(docNavBar, tocContents, footer));
         window.addEventListener('resize', scrollEvent => makeSideNavStick(docNavBar, tocContents, footer));

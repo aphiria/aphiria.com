@@ -14,7 +14,6 @@ namespace App\Web;
 
 use Aphiria\Application\Builders\IApplicationBuilder;
 use Aphiria\Application\IModule;
-use Aphiria\DependencyInjection\ResolutionException;
 use Aphiria\Framework\Application\AphiriaComponents;
 use App\Web\Binders\ViewCompilerBinder;
 
@@ -29,7 +28,6 @@ final class WebModule implements IModule
      * Builds the entire module into an application
      *
      * @param IApplicationBuilder $appBuilder The app builder to use
-     * @throws ResolutionException Thrown if an interface could not be resolved
      */
     public function build(IApplicationBuilder $appBuilder): void
     {
