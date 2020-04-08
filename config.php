@@ -102,7 +102,7 @@ return [
                 [
                     'type' => StreamHandler::class,
                     'path' => __DIR__ . '/tmp/logs/errors.txt',
-                    'level' => getenv('LOG_LEVEL')
+                    'level' => \getenv('LOG_LEVEL')
                 ]
             ],
             'name' => 'app'

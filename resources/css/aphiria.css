@@ -240,6 +240,8 @@ pre[class*="language-"] {
 
 code {
   font-family: "Source Code Pro", monospace !important; }
+  code[class*=language-] {
+    text-shadow: none !important; }
 
 p code, li code {
   background: #f9f9f9 !important;
@@ -263,17 +265,22 @@ nav.doc-short-links-nav {
 blockquote {
   background: #e7f7ff;
   border: 1px solid #ccd9dd;
-  padding: 10px;
+  padding: 20px;
   margin: 10px 30px; }
+  blockquote p {
+    margin: 0 !important; }
 
 .token.variable {
-  color: #07b !important; }
+  color: #0077bb !important; }
+
+.token.property {
+  color: #005cc5 !important; }
 
 .token.keyword {
-  color: #065 !important; }
+  color: #007ce5 !important; }
 
 .token.function {
-  color: #e22 !important; }
+  color: #e63a3c !important; }
 
 .token.string {
   color: #6a0 !important; }
@@ -282,7 +289,11 @@ blockquote {
   color: #333 !important; }
 
 .token.operator {
+  color: #005cc5 !important;
   background: none !important; }
+
+.token.boolean, .token.constant {
+  color: #6b9fbf !important; }
 
 /* Mobile experience site settings */
 @media screen and (max-device-width: 1023px) {

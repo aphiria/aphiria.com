@@ -356,6 +356,10 @@ pre[class*="language-"] {
 
 code {
     font-family: "Source Code Pro", monospace !important;
+
+    &[class*=language-] {
+        text-shadow: none !important;
+    }
 }
 
 p code, li code {
@@ -389,21 +393,29 @@ nav.doc-short-links-nav {
 blockquote {
     background: #e7f7ff;
     border: 1px solid #ccd9dd;
-    padding: 10px;
+    padding: 20px;
     margin: 10px 30px;
+
+    p {
+        margin: 0 !important;
+    }
 }
 
 .token {
     &.variable {
-        color: #07b !important;
+        color: rgb(0, 119, 187) !important;
+    }
+
+    &.property {
+        color: rgb(0, 92, 197) !important;
     }
 
     &.keyword {
-        color: #065 !important;
+        color: rgb(0, 124, 229) !important;
     }
 
     &.function {
-        color: #e22 !important;
+        color: rgb(230, 58, 60) !important;
     }
 
     &.string {
@@ -415,7 +427,12 @@ blockquote {
     }
 
     &.operator {
+        color: rgb(0, 92, 197) !important;
         background: none !important;
+    }
+
+    &.boolean, &.constant {
+        color: rgb(107, 159, 191) !important;
     }
 }
 
