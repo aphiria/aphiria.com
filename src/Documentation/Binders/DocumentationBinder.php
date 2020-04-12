@@ -191,6 +191,12 @@ final class DocumentationBinder extends Binder
                         'description' => 'Learn about added reflection functionality in Aphiria',
                         'keywords' => ['aphiria', 'reflection', 'class finder', 'php']
                     ],
+                    'psr-adapters' => [
+                        'title' => 'PSR Adapters',
+                        'linkText' => 'PSR Adapters',
+                        'description' => 'Learn how to map to-and-from some PSRs',
+                        'keywords' => ['aphiria', 'psrs', 'fig', 'psr-7', 'psr-11', 'php']
+                    ],
                     'serialization' => [
                         'title' => 'Serialization',
                         'linkText' => 'Serialization',
