@@ -30,7 +30,8 @@ window.addEventListener('load', loadEvent => {
         const footer = document.querySelector('body > footer');
         // Initialize making the side navs sticky to the footer
         makeSideNavStick(docNavBar, tocContents, footer);
-        window.addEventListener('scroll', scrollEvent => makeSideNavStick(docNavBar, tocContents, footer));
+        // Since our html and body elements are height 100% (lets us make the footer sticky to the bottom of the page), we listen to scrolling on the body, not the window
+        document.querySelector('body').addEventListener('scroll', scrollEvent => makeSideNavStick(docNavBar, tocContents, footer));
         window.addEventListener('resize', scrollEvent => makeSideNavStick(docNavBar, tocContents, footer));
         // Initialize highlighting the ToC nav
         highlightToCNav(article, tocContents);

@@ -16,6 +16,9 @@ body {
   margin: 0;
   overflow-x: hidden; }
 
+html, body {
+  height: 100%; }
+
 h1, h2, h3, h4, h5, h6 {
   font-weight: 200; }
 
@@ -178,7 +181,8 @@ body > header {
 
 body > footer {
   text-align: center;
-  padding: 20px;
+  /* Using vertical padding allows us to vertically center the footer text */
+  padding: 30px 20px;
   margin: 0 5%;
   background: linear-gradient(0.25turn, #fff 0%, #f7f7f7 10%, #f7f7f7 90%, #fff 100%);
   border-top: 1px solid #ddd;
@@ -428,6 +432,8 @@ blockquote {
       bottom: 20px;
       width: 40%; }
   body > main {
+    /* Fill up all the space except for the footer (the header is taken care of by top padding) */
+    min-height: calc(100% - 88.8px);
     padding-top: 80px; }
     body > main article {
       margin: 0 0 0 240px;
