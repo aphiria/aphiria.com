@@ -12,12 +12,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/aphiria/aphiria.git",
-                "reference": "5cc8fbcf820eb16a8e5242a6ba6133bee222a26e"
+                "reference": "911ecf01bfb559c8bf21878a3b29f39fdb417648"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/aphiria/aphiria/zipball/5cc8fbcf820eb16a8e5242a6ba6133bee222a26e",
-                "reference": "5cc8fbcf820eb16a8e5242a6ba6133bee222a26e",
+                "url": "https://api.github.com/repos/aphiria/aphiria/zipball/911ecf01bfb559c8bf21878a3b29f39fdb417648",
+                "reference": "911ecf01bfb559c8bf21878a3b29f39fdb417648",
                 "shasum": ""
             },
             "require": {
@@ -30,11 +30,15 @@
                 "monolog/monolog": "~2.0",
                 "opis/closure": "3.5.*",
                 "php": "^7.4",
+                "psr/http-factory": "^1.0",
+                "psr/http-message": "^1.0",
                 "psr/log": "~1.0",
                 "symfony/dotenv": "~5.0"
             },
             "require-dev": {
                 "friendsofphp/php-cs-fixer": "^3.0",
+                "nyholm/psr7": "^1.2",
+                "php-coveralls/php-coveralls": "^2.2",
                 "phpunit/phpunit": "~9.1"
             },
             "type": "library",
@@ -56,6 +60,7 @@
                     "Aphiria\\IO\\": "src/IO/src",
                     "Aphiria\\Middleware\\": "src/Middleware/src",
                     "Aphiria\\Net\\": "src/Net/src",
+                    "Aphiria\\PsrAdapters\\": "src/PsrAdapters/src",
                     "Aphiria\\Reflection\\": "src/Reflection/src",
                     "Aphiria\\Routing\\": "src/Router/src",
                     "Aphiria\\Serialization\\": "src/Serialization/src",
@@ -80,7 +85,11 @@
                 "php",
                 "rest"
             ],
-            "time": "2020-04-04T14:24:58+00:00"
+            "support": {
+                "issues": "https://github.com/aphiria/aphiria/issues",
+                "source": "https://github.com/aphiria/aphiria/tree/master"
+            },
+            "time": "2020-04-18T01:28:12+00:00"
         },
         {
             "name": "doctrine/annotations",
@@ -598,6 +607,78 @@
             "time": "2018-12-21T02:25:09+00:00"
         },
         {
+            "name": "psr/http-factory",
+            "version": "1.0.1",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/php-fig/http-factory.git",
+                "reference": "12ac7fcd07e5b077433f5f2bee95b3a771bf61be"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/php-fig/http-factory/zipball/12ac7fcd07e5b077433f5f2bee95b3a771bf61be",
+                "reference": "12ac7fcd07e5b077433f5f2bee95b3a771bf61be",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=7.0.0",
+                "psr/http-message": "^1.0"
+            },
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-master": "1.0.x-dev"
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Psr\\Http\\Message\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "description": "Common interfaces for PSR-7 HTTP message factories",
+            "time": "2019-04-30T12:38:16+00:00"
+        },
+        {
+            "name": "psr/http-message",
+            "version": "1.0.1",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/php-fig/http-message.git",
+                "reference": "f6561bf28d520154e4b0ec72be95418abe6d9363"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/php-fig/http-message/zipball/f6561bf28d520154e4b0ec72be95418abe6d9363",
+                "reference": "f6561bf28d520154e4b0ec72be95418abe6d9363",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=5.3.0"
+            },
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-master": "1.0.x-dev"
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Psr\\Http\\Message\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "description": "Common interface for HTTP messages",
+            "homepage": "https://github.com/php-fig/http-message",
+            "time": "2016-08-06T14:39:51+00:00"
+        },
+        {
             "name": "psr/log",
             "version": "1.1.3",
             "source": {
@@ -870,12 +951,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/FriendsOfPHP/PHP-CS-Fixer.git",
-                "reference": "5fa669eb2b0084bb611685a3d3574c2cdee8b74b"
+                "reference": "32790493e7c7cd505c73074b340b891a03719366"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/FriendsOfPHP/PHP-CS-Fixer/zipball/5fa669eb2b0084bb611685a3d3574c2cdee8b74b",
-                "reference": "5fa669eb2b0084bb611685a3d3574c2cdee8b74b",
+                "url": "https://api.github.com/repos/FriendsOfPHP/PHP-CS-Fixer/zipball/32790493e7c7cd505c73074b340b891a03719366",
+                "reference": "32790493e7c7cd505c73074b340b891a03719366",
                 "shasum": ""
             },
             "require": {
@@ -953,7 +1034,7 @@
                 }
             ],
             "description": "A tool to automatically fix PHP code style",
-            "time": "2020-03-10T15:01:14+00:00"
+            "time": "2020-04-15T18:52:10+00:00"
         },
         {
             "name": "myclabs/deep-copy",
@@ -1133,18 +1214,18 @@
             "authors": [
                 {
                     "name": "Arne Blankerts",
-                    "role": "Developer",
-                    "email": "arne@blankerts.de"
+                    "email": "arne@blankerts.de",
+                    "role": "Developer"
                 },
                 {
                     "name": "Sebastian Heuer",
-                    "role": "Developer",
-                    "email": "sebastian@phpeople.de"
+                    "email": "sebastian@phpeople.de",
+                    "role": "Developer"
                 },
                 {
                     "name": "Sebastian Bergmann",
-                    "role": "Developer",
-                    "email": "sebastian@phpunit.de"
+                    "email": "sebastian@phpunit.de",
+                    "role": "Developer"
                 }
             ],
             "description": "Library for handling version information and constraints",
@@ -1478,16 +1559,16 @@
         },
         {
             "name": "phpunit/php-file-iterator",
-            "version": "3.0.0",
+            "version": "3.0.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/sebastianbergmann/php-file-iterator.git",
-                "reference": "354d4a5faa7449a377a18b94a2026ca3415e3d7a"
+                "reference": "4ac5b3e13df14829daa60a2eb4fdd2f2b7d33cf4"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/sebastianbergmann/php-file-iterator/zipball/354d4a5faa7449a377a18b94a2026ca3415e3d7a",
-                "reference": "354d4a5faa7449a377a18b94a2026ca3415e3d7a",
+                "url": "https://api.github.com/repos/sebastianbergmann/php-file-iterator/zipball/4ac5b3e13df14829daa60a2eb4fdd2f2b7d33cf4",
+                "reference": "4ac5b3e13df14829daa60a2eb4fdd2f2b7d33cf4",
                 "shasum": ""
             },
             "require": {
@@ -1524,7 +1605,7 @@
                 "filesystem",
                 "iterator"
             ],
-            "time": "2020-02-07T06:05:22+00:00"
+            "time": "2020-04-18T05:02:12+00:00"
         },
         {
             "name": "phpunit/php-invoker",
@@ -1627,16 +1708,16 @@
         },
         {
             "name": "phpunit/php-timer",
-            "version": "3.0.0",
+            "version": "3.1.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/sebastianbergmann/php-timer.git",
-                "reference": "4118013a4d0f97356eae8e7fb2f6c6472575d1df"
+                "reference": "35e732ff964693cb91ef4690f1f6016833b68f9d"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/sebastianbergmann/php-timer/zipball/4118013a4d0f97356eae8e7fb2f6c6472575d1df",
-                "reference": "4118013a4d0f97356eae8e7fb2f6c6472575d1df",
+                "url": "https://api.github.com/repos/sebastianbergmann/php-timer/zipball/35e732ff964693cb91ef4690f1f6016833b68f9d",
+                "reference": "35e732ff964693cb91ef4690f1f6016833b68f9d",
                 "shasum": ""
             },
             "require": {
@@ -1648,7 +1729,7 @@
             "type": "library",
             "extra": {
                 "branch-alias": {
-                    "dev-master": "3.0-dev"
+                    "dev-master": "3.1-dev"
                 }
             },
             "autoload": {
@@ -1672,7 +1753,7 @@
             "keywords": [
                 "timer"
             ],
-            "time": "2020-02-07T06:08:11+00:00"
+            "time": "2020-04-17T15:08:36+00:00"
         },
         {
             "name": "phpunit/php-token-stream",
@@ -2118,16 +2199,16 @@
         },
         {
             "name": "sebastian/environment",
-            "version": "5.0.2",
+            "version": "5.1.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/sebastianbergmann/environment.git",
-                "reference": "c39c1db0a5cffc98173f3de5a17d489d1043fd7b"
+                "reference": "c753f04d68cd489b6973cf9b4e505e191af3b05c"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/sebastianbergmann/environment/zipball/c39c1db0a5cffc98173f3de5a17d489d1043fd7b",
-                "reference": "c39c1db0a5cffc98173f3de5a17d489d1043fd7b",
+                "url": "https://api.github.com/repos/sebastianbergmann/environment/zipball/c753f04d68cd489b6973cf9b4e505e191af3b05c",
+                "reference": "c753f04d68cd489b6973cf9b4e505e191af3b05c",
                 "shasum": ""
             },
             "require": {
@@ -2167,7 +2248,7 @@
                 "environment",
                 "hhvm"
             ],
-            "time": "2020-03-31T12:14:15+00:00"
+            "time": "2020-04-14T13:36:52+00:00"
         },
         {
             "name": "sebastian/exporter",
@@ -3405,8 +3486,8 @@
             "authors": [
                 {
                     "name": "Arne Blankerts",
-                    "role": "Developer",
-                    "email": "arne@blankerts.de"
+                    "email": "arne@blankerts.de",
+                    "role": "Developer"
                 }
             ],
             "description": "A small library for converting tokenized PHP source code into XML and potentially other formats",
@@ -3414,16 +3495,16 @@
         },
         {
             "name": "webmozart/assert",
-            "version": "1.7.0",
+            "version": "1.8.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/webmozart/assert.git",
-                "reference": "aed98a490f9a8f78468232db345ab9cf606cf598"
+                "reference": "ab2cb0b3b559010b75981b1bdce728da3ee90ad6"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/webmozart/assert/zipball/aed98a490f9a8f78468232db345ab9cf606cf598",
-                "reference": "aed98a490f9a8f78468232db345ab9cf606cf598",
+                "url": "https://api.github.com/repos/webmozart/assert/zipball/ab2cb0b3b559010b75981b1bdce728da3ee90ad6",
+                "reference": "ab2cb0b3b559010b75981b1bdce728da3ee90ad6",
                 "shasum": ""
             },
             "require": {
@@ -3431,7 +3512,7 @@
                 "symfony/polyfill-ctype": "^1.8"
             },
             "conflict": {
-                "vimeo/psalm": "<3.6.0"
+                "vimeo/psalm": "<3.9.1"
             },
             "require-dev": {
                 "phpunit/phpunit": "^4.8.36 || ^7.5.13"
@@ -3458,7 +3539,7 @@
                 "check",
                 "validate"
             ],
-            "time": "2020-02-14T12:15:55+00:00"
+            "time": "2020-04-18T12:12:48+00:00"
         }
     ],
     "aliases": [],
@@ -3474,5 +3555,6 @@
         "ext-pdo": "*",
         "php": "^7.4"
     },
-    "platform-dev": []
+    "platform-dev": [],
+    "plugin-api-version": "1.1.0"
 }
