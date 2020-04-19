@@ -14,10 +14,18 @@
                 <h2>Automatic content negotiation.  No magic.  No bleeding into your code.</h2>
             </hgroup>
             <pre><code class="language-php">
-$routes->get('/users/:id')->mapsToClosure(fn (int $id) => $users->getUser($id));
+class UserController extends Controller
+{
+    public function getById(int $id): User
+    {
+        return (new UserService())->getById($id);
+    }
+}
+
+$routes->get('/users/:id')->mapsToMethod(UserController::class, 'getById');
                 </code></pre>
             <h1>Install Aphiria</h1>
-            <pre><code class="language-bash">
+            <pre class="center"><code class="language-bash">
 composer create-project aphiria/app --prefer-dist
                 </code></pre>
             <nav class="doc-short-links-nav">
