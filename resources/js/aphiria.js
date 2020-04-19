@@ -35,7 +35,7 @@ window.addEventListener('load', loadEvent => {
         window.addEventListener('resize', scrollEvent => makeSideNavStick(docNavBar, tocContents, footer));
         // Initialize highlighting the ToC nav
         highlightToCNav(article, tocContents);
-        window.addEventListener('scroll', scrollEvent => highlightToCNav(article, tocContents));
+        document.querySelector('body').addEventListener('scroll', scrollEvent => highlightToCNav(article, tocContents));
         // Initialize highlighting the current doc in the nav bar
         highlightDocNav(docNavBar);
     }
