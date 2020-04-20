@@ -18,8 +18,8 @@ use App\Documentation\DocumentationDownloader;
 use App\Documentation\DocumentationMetadata;
 use App\Documentation\DocumentationService;
 use App\Documentation\Searching\PostgreSqlSearchIndex;
-use Opulence\Databases\IConnection;
 use ParsedownExtra;
+use PDO;
 
 /**
  * Defines the binder for our documentation
@@ -37,7 +37,7 @@ final class DocumentationBinder extends Binder
         $container->bindInstance(DocumentationMetadata::class, $metadata);
         $searchIndex = new PostgreSqlSearchIndex(
             \getenv('DOC_LEXEMES_TABLE_NAME'),
-            $container->resolve(IConnection::class),
+            $container->resolve(PDO::class),
             "/docs/{$metadata->getDefaultVersion()}/",
             __DIR__ . '/../../../.env'
         );

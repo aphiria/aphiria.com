@@ -29,7 +29,6 @@
         "ext-dom": "*",
         "ext-mbstring": "*",
         "ext-pdo": "*",
-        "opulence/databases": "1.1.*",
         "paquettg/php-html-parser": "2.1.*",
         "php": "^7.4",
         "symfony/dotenv": "~5.0"

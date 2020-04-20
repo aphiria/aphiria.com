@@ -15,7 +15,6 @@ namespace App\Documentation\Searching;
 use Aphiria\IO\FileSystem;
 use Aphiria\IO\FileSystemException;
 use Exception;
-use Opulence\Databases\IConnection;
 use PDO;
 use PHPHtmlParser\Dom;
 use PHPHtmlParser\Dom\HtmlNode;
@@ -40,8 +39,8 @@ final class PostgreSqlSearchIndex implements ISearchIndex
     ];
     /** @var string The name of the table to point to (MUST BE SECURE BECAUSE IT'S USED DIRECTLY IN QUERIES) */
     private string $lexemeTableName;
-    /** @var IConnection The DB connection to use */
-    private IConnection $connection;
+    /** @var PDO The DB connection to use */
+    private PDO $pdo;
     /** @var string The prefix to use for al links that are generated */
     private string $linkPrefix;
     /** @var string The path to the .env file to update whenever we build the search index */
@@ -51,14 +50,14 @@ final class PostgreSqlSearchIndex implements ISearchIndex
 
     /**
      * @param string $lexemeTableName The name of the table to point to (MUST BE SECURE BECAUSE IT'S USED DIRECTLY IN QUERIES)
-     * @param IConnection $connection The DB connection to use
+     * @param PDO $pdo The DB connection to use
      * @param string $linkPrefix The prefix to use for all links that are generated
      * @param string $envPath The path to the .env file to update whenever we build the search index
      */
-    public function __construct(string $lexemeTableName, IConnection $connection, string $linkPrefix, string $envPath)
+    public function __construct(string $lexemeTableName, PDO $pdo, string $linkPrefix, string $envPath)
     {
         $this->lexemeTableName = $lexemeTableName;
-        $this->connection = $connection;
+        $this->pdo = $pdo;
         $this->linkPrefix = $linkPrefix;
         $this->envPath = $envPath;
         $this->files = new FileSystem();
@@ -139,7 +138,7 @@ final class PostgreSqlSearchIndex implements ISearchIndex
          * each term, and joining them with '&' so that it forms a valid tsquery.
          */
         $tsHeadlineOptions = 'StartSel=<em>, StopSel=</em>';
-        $statement = $this->connection->prepare(
+        $statement = $this->pdo->prepare(
             <<<EOF
 (SELECT link, html_element_type, rank, ts_headline('english', h1_inner_text, query, '{$tsHeadlineOptions}') as h1_highlights, ts_headline('english', h2_inner_text, query, '{$tsHeadlineOptions}') as h2_highlights, ts_headline('english', h3_inner_text, query, '{$tsHeadlineOptions}') as h3_highlights, ts_headline('english', h4_inner_text, query, '{$tsHeadlineOptions}') as h4_highlights, ts_headline('english', h5_inner_text, query, '{$tsHeadlineOptions}') as h5_highlights, ts_headline('english', inner_text, query, '{$tsHeadlineOptions}') as inner_text_highlights
 FROM (SELECT link, html_element_type, h1_inner_text, h2_inner_text, h3_inner_text, h4_inner_text, h5_inner_text, inner_text, ts_rank_cd(english_lexemes, query) AS rank, query
@@ -159,11 +158,10 @@ LIMIT :maxResults
 EOF
         );
         // The query must be lower cased for our full text search to work appropriately
-        $statement->bindValues([
+        $statement->execute([
             'query' => \mb_strtolower(trim($query)),
             'maxResults' => self::MAX_NUM_SEARCH_RESULTS
         ]);
-        $statement->execute();
         $searchResults = [];
 
         foreach ($statement->fetchAll(PDO::FETCH_ASSOC) as $row) {
@@ -195,7 +193,7 @@ EOF
          * This is done so that reindexing the website only impacts this instance of the site.
          */
         $this->lexemeTableName = 'lexemes_' . substr(hash('sha256', \random_bytes(32)), 0, 8);
-        $this->connection->beginTransaction();
+        $this->pdo->beginTransaction();
         $this->createTable();
 
         foreach ($indexEntries as $indexEntry) {
@@ -204,7 +202,7 @@ EOF
 
         $this->updateLexemes();
         $this->createTableIndices();
-        $this->connection->commit();
+        $this->pdo->commit();
         $this->updateEnvFile();
     }
 
@@ -271,7 +269,7 @@ EOF
      */
     private function createTable(): void
     {
-        $statement = $this->connection->prepare(
+        $statement = $this->pdo->prepare(
             <<<EOF
 CREATE TABLE {$this->lexemeTableName} (
     id serial primary key,
@@ -297,13 +295,13 @@ EOF
      */
     private function createTableIndices(): void
     {
-        $statement = $this->connection->prepare(
+        $statement = $this->pdo->prepare(
             <<<EOF
 CREATE INDEX {$this->lexemeTableName}_english_lexeme_idx ON {$this->lexemeTableName} USING gin(english_lexemes)
 EOF
         );
         $statement->execute();
-        $statement = $this->connection->prepare(
+        $statement = $this->pdo->prepare(
             <<<EOF
 CREATE INDEX {$this->lexemeTableName}_simple_lexeme_idx ON {$this->lexemeTableName} USING gin(simple_lexemes)
 EOF
@@ -318,13 +316,13 @@ EOF
      */
     private function insertIndexEntry(IndexEntry $indexEntry): void
     {
-        $statement = $this->connection->prepare(
+        $statement = $this->pdo->prepare(
             <<<EOF
 INSERT INTO {$this->lexemeTableName} (h1_inner_text, h2_inner_text, h3_inner_text, h4_inner_text, h5_inner_text, link, html_element_type, inner_text, html_element_weight)
 VALUES (:h1InnerText, :h2InnerText, :h3InnerText, :h4InnerText, :h5InnerText, :link, :htmlElementType, :innerText, :htmlElementWeight)
 EOF
         );
-        $statement->bindValues([
+        $statement->execute([
             'h1InnerText' => $indexEntry->h1InnerText,
             'h2InnerText' => $indexEntry->h2InnerText,
             'h3InnerText' => $indexEntry->h3InnerText,
@@ -335,7 +333,6 @@ EOF
             'innerText' => $indexEntry->innerText,
             'htmlElementWeight' => $indexEntry->htmlElementWeight
         ]);
-        $statement->execute();
     }
 
     /**
@@ -359,7 +356,7 @@ EOF
      */
     private function updateLexemes(): void
     {
-        $statement = $this->connection->prepare(
+        $statement = $this->pdo->prepare(
             <<<EOF
 UPDATE {$this->lexemeTableName} SET english_lexemes = setweight(to_tsvector('english', COALESCE(inner_text, '')), html_element_weight::"char"), simple_lexemes = setweight(to_tsvector(COALESCE(inner_text, '')), html_element_weight::"char")
 EOF
