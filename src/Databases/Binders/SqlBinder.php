@@ -15,8 +15,6 @@ namespace App\Databases\Binders;
 use Aphiria\DependencyInjection\Binders\Binder;
 use Aphiria\DependencyInjection\IContainer;
 use PDO;
-use PDOException;
-use RuntimeException;
 
 /**
  * Defines the SQL binder
@@ -28,17 +26,13 @@ final class SqlBinder extends Binder
      */
     public function bind(IContainer $container): void
     {
-        try {
-            $dsn = sprintf(
-                'pgsql:host=%s;dbname=%s;port=%d;options=\'--client_encoding=utf8\'',
-                \getenv('DB_HOST'),
-                \getenv('DB_NAME'),
-                (int)\getenv('DB_PORT')
-            );
-            $pdo = new PDO($dsn, \getenv('DB_USER'), \getenv('DB_PASSWORD'));
-            $container->bindInstance(PDO::class, $pdo);
-        } catch (PDOException $ex) {
-            throw new RuntimeException('Failed to connect to database', 0, $ex);
-        }
+        $dsn = sprintf(
+            'pgsql:host=%s;dbname=%s;port=%d;options=\'--client_encoding=utf8\'',
+            \getenv('DB_HOST'),
+            \getenv('DB_NAME'),
+            (int)\getenv('DB_PORT')
+        );
+        $pdo = new PDO($dsn, \getenv('DB_USER'), \getenv('DB_PASSWORD'));
+        $container->bindInstance(PDO::class, $pdo);
     }
 }
