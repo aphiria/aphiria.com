@@ -3,6 +3,9 @@ language: php
 php:
   - 7.4
 
+services:
+  - postgresql
+
 # Need to make sure we're using the right environment variables when compiling the views on Travis CI
 env:
   - APP_WEB_URL=https://www.aphiria.com APP_API_URL=https://api.aphiria.com
