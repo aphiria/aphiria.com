@@ -12,6 +12,7 @@ env:
 
 # Deploy the key to tmp so that it doesn't get deployed by accident
 before_install:
+  - psql -c "CREATE DATABASE public;" -U postgres
   - openssl aes-256-cbc -K $encrypted_7a7d370247be_key -iv $encrypted_7a7d370247be_iv -in ./bin/deploy_rsa.enc -out /tmp/deploy_rsa -d
   - eval "$(ssh-agent -s)"
   - chmod 600 /tmp/deploy_rsa
