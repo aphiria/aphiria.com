@@ -15,8 +15,8 @@ namespace App\Api\Middleware;
 use Aphiria\Collections\KeyValuePair;
 use Aphiria\Middleware\IMiddleware;
 use Aphiria\Net\Http\Handlers\IRequestHandler;
-use Aphiria\Net\Http\IHttpRequestMessage;
-use Aphiria\Net\Http\IHttpResponseMessage;
+use Aphiria\Net\Http\IRequest;
+use Aphiria\Net\Http\IResponse;
 
 /**
  * Defines the middleware that enforces CORS
@@ -36,7 +36,7 @@ final class Cors implements IMiddleware
     /**
      * @inheritdoc
      */
-    public function handle(IHttpRequestMessage $request, IRequestHandler $next): IHttpResponseMessage
+    public function handle(IRequest $request, IRequestHandler $next): IResponse
     {
         $response = $next->handle($request);
         $response->getHeaders()
