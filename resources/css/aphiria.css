@@ -174,7 +174,7 @@ body > header {
           padding: 10px;
           color: #000; }
         body > header > nav div.doc-search ul.search-results li em {
-          font-weight: 500;
+          font-weight: 600;
           font-style: normal; }
         body > header > nav div.doc-search ul.search-results li:not(:last-of-type) {
           border-bottom: 1px solid #ccc; }

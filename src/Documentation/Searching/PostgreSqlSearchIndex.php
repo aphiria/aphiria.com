@@ -140,7 +140,8 @@ final class PostgreSqlSearchIndex implements ISearchIndex
         $tsHeadlineOptions = 'StartSel=<em>, StopSel=</em>';
         $statement = $this->pdo->prepare(
             <<<EOF
-(SELECT link, html_element_type, rank, ts_headline('english', h1_inner_text, query, '{$tsHeadlineOptions}') as h1_highlights, ts_headline('english', h2_inner_text, query, '{$tsHeadlineOptions}') as h2_highlights, ts_headline('english', h3_inner_text, query, '{$tsHeadlineOptions}') as h3_highlights, ts_headline('english', h4_inner_text, query, '{$tsHeadlineOptions}') as h4_highlights, ts_headline('english', h5_inner_text, query, '{$tsHeadlineOptions}') as h5_highlights, ts_headline('english', inner_text, query, '{$tsHeadlineOptions}') as inner_text_highlights
+SELECT DISTINCT ON(rank, link, html_element_type) link, html_element_type, rank, h1_highlights, h2_highlights, h3_highlights, h4_highlights, h5_highlights, inner_text_highlights FROM
+((SELECT link, html_element_type, rank, ts_headline('english', h1_inner_text, query, '{$tsHeadlineOptions}') as h1_highlights, ts_headline('english', h2_inner_text, query, '{$tsHeadlineOptions}') as h2_highlights, ts_headline('english', h3_inner_text, query, '{$tsHeadlineOptions}') as h3_highlights, ts_headline('english', h4_inner_text, query, '{$tsHeadlineOptions}') as h4_highlights, ts_headline('english', h5_inner_text, query, '{$tsHeadlineOptions}') as h5_highlights, ts_headline('english', inner_text, query, '{$tsHeadlineOptions}') as inner_text_highlights
 FROM (SELECT link, html_element_type, h1_inner_text, h2_inner_text, h3_inner_text, h4_inner_text, h5_inner_text, inner_text, ts_rank_cd(english_lexemes, query) AS rank, query
         FROM {$this->lexemeTableName}, plainto_tsquery('english', :query) AS query
         WHERE english_lexemes @@ query
@@ -152,7 +153,7 @@ UNION
           FROM {$this->lexemeTableName}, (SELECT (SELECT (array_to_string(string_to_array(:query, ' '), ':* & ') || ':*'))::tsquery AS query) AS query
           WHERE simple_lexemes @@ query
           ORDER BY rank DESC
-          LIMIT :maxResults) AS non_english_matching_query)
+          LIMIT :maxResults) AS non_english_matching_query)) AS distinct_query
 ORDER BY rank DESC
 LIMIT :maxResults
 EOF
