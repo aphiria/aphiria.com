@@ -91,6 +91,14 @@ input[type=text] {
   input[type=text]:focus {
     border-bottom-color: #555; }
 
+table {
+  border-collapse: collapse;
+  border-spacing: 0; }
+  table td, table th {
+    border: 1px solid #ccc;
+    padding: 10px;
+    font-size: .9em; }
+
 body > header {
   margin: 0 5%;
   position: fixed;
@@ -395,7 +403,7 @@ blockquote {
         background-color: #aaaab0; }
     *::-webkit-scrollbar-button {
       display: none; }
-  p, blockquote, pre[class*="language-"] {
+  p, blockquote, pre[class*="language-"], table {
     margin-bottom: 2em !important; }
   /*
     Make sure there's not too much of a gap between paragraphs and lists.  Since there's no easy way of

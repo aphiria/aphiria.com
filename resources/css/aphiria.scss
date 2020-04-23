@@ -135,6 +135,17 @@ input {
     }
 }
 
+table {
+    border-collapse: collapse;
+    border-spacing: 0;
+
+    td, th {
+        border: 1px solid #ccc;
+        padding: 10px;
+        font-size: .9em;
+    }
+}
+
 body > header {
     margin: 0 $pageSideMargin;
     position: fixed;
@@ -601,7 +612,7 @@ blockquote {
         }
     }
 
-    p, blockquote, pre[class*="language-"] {
+    p, blockquote, pre[class*="language-"], table {
         margin-bottom: 2em !important;
     }
 
