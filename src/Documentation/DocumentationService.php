@@ -12,11 +12,12 @@ declare(strict_types=1);
 
 namespace App\Documentation;
 
-use Aphiria\IO\FileSystem;
-use Aphiria\IO\FileSystemException;
 use App\Documentation\Searching\IndexingFailedException;
 use App\Documentation\Searching\ISearchIndex;
 use App\Documentation\Searching\SearchResult;
+use League\Flysystem\FileExistsException;
+use League\Flysystem\FileNotFoundException;
+use League\Flysystem\FilesystemInterface;
 use ParsedownExtra;
 
 /**
@@ -34,8 +35,8 @@ final class DocumentationService
     private ISearchIndex $searchIndex;
     /** @var string The path to store HTML docs in */
     private string $htmlDocPath;
-    /** @var FileSystem The file helper */
-    private FileSystem $files;
+    /** @var FilesystemInterface The file system helper */
+    private FilesystemInterface $files;
 
     /**
      * @param DocumentationMetadata $metadata The doc metadata
@@ -43,49 +44,64 @@ final class DocumentationService
      * @param ParsedownExtra $markdownParser The Markdown parser
      * @param ISearchIndex $searchIndex The doc search index
      * @param string $htmlDocPath The path to store HTML docs in
+     * @param FilesystemInterface $files The file system helper
      */
     public function __construct(
         DocumentationMetadata $metadata,
         DocumentationDownloader $downloader,
         ParsedownExtra $markdownParser,
         ISearchIndex $searchIndex,
-        string $htmlDocPath
+        string $htmlDocPath,
+        FilesystemInterface $files
     ) {
         $this->metadata = $metadata;
         $this->downloader = $downloader;
         $this->markdownParser = $markdownParser;
         $this->searchIndex = $searchIndex;
         $this->htmlDocPath = $htmlDocPath;
-        $this->files = new FileSystem();
+        $this->files = $files;
     }
 
     /**
      * Builds our documentation, which includes cloning it and compiling the Markdown
      *
-     * @throws FileSystemException Thrown if there was an error reading or writing to the file system
+     * @throws DownloadFailedException Thrown if there was a problem downloading the documentation
+     * @throws HtmlCompilationException Thrown if the docs could not be built
      */
     public function buildDocs(): void
     {
-        $markdownFilesByBranch = $this->downloader->downloadDocs();
-        $this->createHtmlDocs($markdownFilesByBranch);
+        $markdownFilePathsByBranch = $this->downloader->downloadDocs();
+        $this->createHtmlDocs($markdownFilePathsByBranch);
     }
 
     /**
      * Indexes our docs for searching
      *
      * @throws IndexingFailedException Thrown if there was an error creating an index
-     * @throws FileSystemException Thrown if there was an error reading or writing to the file system
+     * @throws DownloadFailedException Thrown if the docs had not been built and failed to be downloaded
+     * @throws HtmlCompilationException Thrown if the docs had not been built and failed to be compiled
      */
     public function indexDocs(): void
     {
         // Only index the default version
         $htmlDocPath = "{$this->htmlDocPath}/{$this->metadata->getDefaultVersion()}";
 
-        if (!$this->files->exists($htmlDocPath)) {
+        if (!$this->files->has($htmlDocPath)) {
             $this->buildDocs();
         }
 
-        $htmlFilesToIndex = $this->files->glob("$htmlDocPath/*.html");
+        $htmlFilesToIndex = [];
+
+        foreach ($this->files->listContents($htmlDocPath) as $fileInfo) {
+            if (
+                isset($fileInfo['type'], $fileInfo['extension'])
+                && $fileInfo['type'] === 'file'
+                && $fileInfo['extension'] === 'html'
+            ) {
+                $htmlFilesToIndex[] = $fileInfo['path'];
+            }
+        }
+
         $this->searchIndex->buildSearchIndex($htmlFilesToIndex);
     }
 
@@ -103,31 +119,40 @@ final class DocumentationService
     /**
      * Creates HTML docs from Markdown files
      *
-     * @param string[] $markdownFilesByBranch The mapping of branches to Markdown file paths to create HTML docs from
+     * @param string[][] $markdownFilePathsByBranch The mapping of branches to Markdown file paths to create HTML docs from
      * @return string[] The list of HTML doc file paths
-     * @throws FileSystemException Thrown if there was an error reading or writing to the file system
+     * @throws HtmlCompilationException Thrown if there was an error compiling the HTML docs
      */
-    private function createHtmlDocs(array $markdownFilesByBranch): array
+    private function createHtmlDocs(array $markdownFilePathsByBranch): array
     {
         $htmlFiles = [];
 
-        foreach ($markdownFilesByBranch as $branch => $markdownFiles) {
+        foreach ($markdownFilePathsByBranch as $branch => $markdownFilePaths) {
             $htmlFiles[$branch] = [];
             $branchDocDir = "$this->htmlDocPath/$branch";
 
-            if ($this->files->exists($branchDocDir)) {
-                $this->files->deleteDirectory($branchDocDir);
+            if ($this->files->has($branchDocDir) && !$this->files->deleteDir($branchDocDir)) {
+                throw new HtmlCompilationException("Failed to delete directory $branchDocDir");
             }
 
-            $this->files->makeDirectory($branchDocDir);
+            if (!$this->files->createDir($branchDocDir)) {
+                throw new HtmlCompilationException("Failed to create directory $branchDocDir");
+            }
 
-            foreach ($markdownFiles as $markdownFile) {
-                $htmlDocFilename = "$branchDocDir/{$this->files->getFileName($markdownFile)}.html";
-                $html = $this->markdownParser->text($this->files->read($markdownFile));
-                // Rewrite the links to point to the HTML docs on the site
-                $html = preg_replace('/<a href="([^"]+)\.md(#[^"]+)?"/', '<a href="$1.html$2"', $html);
-                $this->files->write($htmlDocFilename, $html);
-                $htmlFiles[$branch][] = $htmlDocFilename;
+            foreach ($markdownFilePaths as $markdownFilePath) {
+                try {
+                    $markdownFilename = pathinfo($markdownFilePath, PATHINFO_FILENAME);
+                    $htmlDocFilename = "$branchDocDir/$markdownFilename.html";
+                    $html = $this->markdownParser->text($this->files->read($markdownFilePath));
+                    // Rewrite the links to point to the HTML docs on the site
+                    $html = preg_replace('/<a href="([^"]+)\.md(#[^"]+)?"/', '<a href="$1.html$2"', $html);
+                    $this->files->write($htmlDocFilename, $html);
+                    $htmlFiles[$branch][] = $htmlDocFilename;
+                } catch (FileNotFoundException $ex) {
+                    throw new HtmlCompilationException("File {$ex->getPath()} not found", 0, $ex);
+                } catch (FileExistsException $ex) {
+                    throw new HtmlCompilationException("File {$ex->getPath()} already exists", 0, $ex);
+                }
             }
         }
 

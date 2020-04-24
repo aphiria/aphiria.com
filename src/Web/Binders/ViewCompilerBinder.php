@@ -16,6 +16,7 @@ use Aphiria\DependencyInjection\Binders\Binder;
 use Aphiria\DependencyInjection\IContainer;
 use App\Documentation\DocumentationMetadata;
 use App\Web\ViewCompiler;
+use League\Flysystem\FilesystemInterface;
 
 /**
  * Defines the binder for our view compiler
@@ -28,10 +29,11 @@ final class ViewCompilerBinder extends Binder
     public function bind(IContainer $container): void
     {
         $viewCompiler = new ViewCompiler(
-            __DIR__ . '/../../../resources/views',
-            __DIR__ . '/../../../public-web',
+            '/resources/views',
+            '/public-web',
             $container->resolve(DocumentationMetadata::class),
-            \getenv('APP_API_URL')
+            \getenv('APP_API_URL'),
+            $container->resolve(FilesystemInterface::class)
         );
         $container->bindInstance(ViewCompiler::class, $viewCompiler);
     }

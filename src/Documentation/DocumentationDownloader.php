@@ -12,8 +12,8 @@ declare(strict_types=1);
 
 namespace App\Documentation;
 
-use Aphiria\IO\FileSystem;
-use Aphiria\IO\FileSystemException;
+use League\Flysystem\FileNotFoundException;
+use League\Flysystem\FilesystemInterface;
 use RuntimeException;
 
 /**
@@ -25,48 +25,65 @@ final class DocumentationDownloader
     private const GITHUB_REPOSITORY = 'https://github.com/aphiria/docs.git';
     /** @var array The branches to download */
     private array $branches;
-    /** @var FileSystem A file system helper */
-    private FileSystem $files;
-    /** @var string The temporary location for cloned docs */
-    private string $clonedDocPath;
+    /** @var string The temporary location for cloned docs (relative path) */
+    private string $clonedDocAbsolutePath;
+    /** @var string The temporary location for cloned docs (relative path) */
+    private string $clonedDocRelativePath;
+    /** @var FilesystemInterface A file system helper */
+    private FilesystemInterface $files;
 
     /**
      * @param array $branches The branches to download
-     * @param string $clonedDocPath
+     * @param string $clonedDocAbsolutePath The absolute path to the cloned documentation
+     * @param string $clonedDocRelativePath The relative path to the cloned documentation
+     * @param FilesystemInterface $files The file system helper
      */
-    public function __construct(array $branches, string $clonedDocPath)
-    {
+    public function __construct(
+        array $branches,
+        string $clonedDocAbsolutePath,
+        string $clonedDocRelativePath,
+        FilesystemInterface $files
+    ) {
         $this->branches = $branches;
-        $this->clonedDocPath = $clonedDocPath;
-        $this->files = new FileSystem();
+        $this->clonedDocAbsolutePath = $clonedDocAbsolutePath;
+        $this->clonedDocRelativePath = $clonedDocRelativePath;
+        $this->files = $files;
     }
 
     /**
      * Downloads all of our documentation
      *
-     * @return string[] The mapping of branch names to local file paths created by the downloads
-     * @throws FileSystemException Thrown if there was any error reading or writing to the file system
+     * @return string[][] The mapping of branch names to local file paths created by the downloads
+     * @throws DownloadFailedException Thrown if there was any error reading or writing to the file system
+     * @throws FileNotFoundException Thrown if a file was not there that we expected
      */
     public function downloadDocs(): array
     {
         $markdownFiles = [];
 
         foreach ($this->branches as $branch) {
-            $rawDocsPath = "{$this->clonedDocPath}/$branch";
+            $markdownFiles[$branch] = [];
+            $rawDocsPath = "{$this->clonedDocRelativePath}/$branch";
 
-            if ($this->files->exists($rawDocsPath)) {
+            if ($this->files->has($rawDocsPath)) {
                 /**
                  * When cloning from GitHub, some files in the .git directory are read-only, which means we cannot delete
                  * them using normal PHP commands.  So, we first chmod all the files, then delete them.
                  */
-                foreach ($this->files->getFiles($rawDocsPath, true) as $file) {
-                    chmod($file, 0777);
+                foreach ($this->files->listContents($rawDocsPath, true) as $fileInfo) {
+                    if (isset($fileInfo['type'], $fileInfo['path']) && $fileInfo['type'] === 'file') {
+                        $this->files->setVisibility($fileInfo['path'], 'rwx');
+                    }
                 }
 
-                $this->files->deleteDirectory($rawDocsPath);
+                if (!$this->files->deleteDir($rawDocsPath)) {
+                    throw new DownloadFailedException("Failed to delete directory $rawDocsPath");
+                }
             }
 
-            $this->files->makeDirectory($rawDocsPath);
+            if (!$this->files->createDir($rawDocsPath)) {
+                throw new DownloadFailedException("Failed to create directory $rawDocsPath");
+            }
 
             // Clone the branch from GitHub into our temporary directory
             shell_exec(
@@ -74,11 +91,19 @@ final class DocumentationDownloader
                     'git clone -b %s --single-branch %s %s',
                     $branch,
                     self::GITHUB_REPOSITORY,
-                    $rawDocsPath
+                    $this->clonedDocAbsolutePath . "/$branch"
                 )
             );
 
-            $markdownFiles[$branch] = $this->files->glob("$rawDocsPath/*.md");
+            foreach ($this->files->listContents($rawDocsPath) as $fileInfo) {
+                if (
+                    isset($fileInfo['type'], $fileInfo['extension'])
+                    && $fileInfo['type'] === 'file'
+                    && $fileInfo['extension'] === 'md'
+                ) {
+                    $markdownFiles[$branch][] = $fileInfo['path'];
+                }
+            }
 
             if (\count($markdownFiles[$branch]) === 0) {
                 throw new RuntimeException("Failed to download docs for branch $branch");

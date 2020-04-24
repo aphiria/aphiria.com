@@ -18,6 +18,9 @@ use App\Documentation\DocumentationDownloader;
 use App\Documentation\DocumentationMetadata;
 use App\Documentation\DocumentationService;
 use App\Documentation\Searching\PostgreSqlSearchIndex;
+use League\Flysystem\Adapter\Local;
+use League\Flysystem\Filesystem;
+use League\Flysystem\FilesystemInterface;
 use ParsedownExtra;
 use PDO;
 
@@ -35,18 +38,24 @@ final class DocumentationBinder extends Binder
             'master' => $this->getMasterBranchDocConfig()
         ]);
         $container->bindInstance(DocumentationMetadata::class, $metadata);
+        $files = new Filesystem(
+            new Local(__DIR__ . '/../../..', LOCK_EX, Local::DISALLOW_LINKS, ['file' => ['rwx' => 0777]])
+        );
+        $container->bindInstance(FilesystemInterface::class, $files);
         $searchIndex = new PostgreSqlSearchIndex(
             \getenv('DOC_LEXEMES_TABLE_NAME'),
             $container->resolve(PDO::class),
             "/docs/{$metadata->getDefaultVersion()}/",
-            __DIR__ . '/../../../.env'
+            '/.env',
+            $files
         );
         $docs = new DocumentationService(
             $metadata,
-            new DocumentationDownloader($metadata->getBranches(), __DIR__ . '/../../../tmp/docs'),
+            new DocumentationDownloader($metadata->getBranches(), __DIR__ . '/../../../tmp/docs', '/tmp/docs', $files),
             new ParsedownExtra(),
             $searchIndex,
-            __DIR__ . '/../../../resources/views/partials/docs'
+            '/resources/views/partials/docs',
+            $files
         );
         $container->bindInstance(DocumentationService::class, $docs);
     }
@@ -183,7 +192,7 @@ final class DocumentationBinder extends Binder
                         'title' => 'Input/Output',
                         'linkText' => 'Input/Output',
                         'description' => 'Learn about working with IO in Aphiria',
-                        'keywords' => ['aphiria', 'io', 'stream', 'file system', 'read write', 'php']
+                        'keywords' => ['aphiria', 'io', 'stream', 'php']
                     ],
                     'reflection' => [
                         'title' => 'Reflection',

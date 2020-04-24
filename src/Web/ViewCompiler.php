@@ -12,9 +12,10 @@ declare(strict_types=1);
 
 namespace App\Web;
 
-use Aphiria\IO\FileSystem;
-use Aphiria\IO\FileSystemException;
 use App\Documentation\DocumentationMetadata;
+use League\Flysystem\FileExistsException;
+use League\Flysystem\FileNotFoundException;
+use League\Flysystem\FilesystemInterface;
 
 /**
  * Defines the compiler for our views
@@ -29,32 +30,35 @@ final class ViewCompiler
     private DocumentationMetadata $docMetadata;
     /** @var string The URI to the API */
     private string $apiUri;
-    /** @var FileSystem The file helper */
-    private FileSystem $files;
+    /** @var FilesystemInterface The file system helper */
+    private FilesystemInterface $files;
 
     /**
      * @param string $rawViewPath The path to our raw views
      * @param string $compiledViewPath The path to store our compiled views
      * @param string $apiUri The URI to the API
      * @param DocumentationMetadata $docMetadata The doc metadata
+     * @param FilesystemInterface $files The file system helper
      */
     public function __construct(
         string $rawViewPath,
         string $compiledViewPath,
         DocumentationMetadata $docMetadata,
-        string $apiUri
+        string $apiUri,
+        FilesystemInterface $files
     ) {
         $this->rawViewPath = $rawViewPath;
         $this->compiledViewPath = $compiledViewPath;
         $this->docMetadata = $docMetadata;
         $this->apiUri = $apiUri;
-        $this->files = new FileSystem();
+        $this->files = $files;
     }
 
     /**
      * Compiles all of our views
      *
-     * @throws FileSystemException Thrown if there was an error reading or writing to the filesystem
+     * @throws FileNotFoundException Thrown if a file we expected to be there was not
+     * @throws FileExistsException Thrown if we attempted to write to a file that already existed
      */
     public function compileViews(): void
     {
@@ -66,19 +70,23 @@ final class ViewCompiler
     /**
      * Cleans up any existing compiled views
      *
-     * @throws FileSystemException Thrown if there was an error reading the files or their extensions
+     * @throws FileNotFoundException Thrown if the file we
      */
     private function cleanUpExistingCompiledViews(): void
     {
         // Delete any compiled views
-        foreach ($this->files->getFiles($this->compiledViewPath, true) as $file) {
-            if ($this->files->getExtension($file) === 'html') {
-                $this->files->deleteFile($file);
+        foreach ($this->files->listContents($this->compiledViewPath, true) as $fileInfo) {
+            if (
+                isset($fileInfo['type'], $fileInfo['extension'])
+                && $fileInfo['type'] === 'file'
+                && $fileInfo['extension'] === 'html'
+            ) {
+                $this->files->delete($fileInfo['path']);
             }
         }
 
         // Delete any compiled doc directories
-        $this->files->deleteDirectory("{$this->compiledViewPath}/docs");
+        $this->files->deleteDir("{$this->compiledViewPath}/docs");
     }
 
     /**
@@ -88,7 +96,7 @@ final class ViewCompiler
      * @param string[] $metadataKeywords The list of metadata keywords to display
      * @param string $metadataDescription The metadata description to display
      * @return string The compiled contents
-     * @throws FileSystemException Thrown if there was an error reading files
+     * @throws FileNotFoundException Thrown if a view partial did not exist
      */
     private function compileCommonPartials(
         string $pageContents,
@@ -116,16 +124,17 @@ final class ViewCompiler
     /**
      * Compiles our docs
      *
-     * @throws FileSystemException Thrown if there was an error reading or writing to the filesystem
+     * @throws FileNotFoundException Thrown if a partial file did not exist
+     * @throws FileExistsException Thrown if we attempted to write to a file that already existed
      */
     private function compileDocs(): void
     {
-        $this->files->makeDirectory("{$this->compiledViewPath}/docs");
+        $this->files->createDir("{$this->compiledViewPath}/docs");
         $docTemplatePageContents = $this->files->read("{$this->rawViewPath}/doc.html");
 
         // Compile each doc page
         foreach ($this->docMetadata->getDocVersions() as $version) {
-            $this->files->makeDirectory("{$this->compiledViewPath}/docs/$version");
+            $this->files->createDir("{$this->compiledViewPath}/docs/$version");
 
             // Compile the doc side nav for each version
             $sideNavSectionContents = $this->files->read("{$this->rawViewPath}/partials/doc-nav-section.html");
@@ -169,7 +178,8 @@ final class ViewCompiler
     /**
      * Compiles the homepage
      *
-     * @throws FileSystemException Thrown if there was an error reading or writing to the filesystem
+     * @throws FileNotFoundException Thrown if we could not read a view partial
+     * @throws FileExistsException Thrown if we attempted to write to a file that already existed
      */
     private function compileHomepage(): void
     {
