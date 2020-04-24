@@ -76,7 +76,7 @@ final class PostgreSqlSearchIndex implements ISearchIndex
             $indexEntries = [];
 
             foreach ($htmlPaths as $htmlPath) {
-                $dom = (new Dom())->loadFromFile($htmlPath);
+                $dom = (new Dom())->loadStr($this->files->read($htmlPath));
                 $h1 = $h2 = $h3 = $h4 = $h5 = null;
 
                 // Scan the documentation and index the elements as well as their nearest previous <h*> siblings
