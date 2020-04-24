@@ -53,6 +53,7 @@ final class BuildDocsCommandHandler implements ICommandHandler
         } catch (DownloadFailedException | HtmlCompilationException | IndexingFailedException $ex) {
             $output->writeln('<fatal>Failed to build docs</fatal>');
             $output->writeln("<info>{$ex->getMessage()}</info>");
+            $output->writeln("<info>{$ex->getTraceAsString()}</info>");
 
             return StatusCodes::FATAL;
         }

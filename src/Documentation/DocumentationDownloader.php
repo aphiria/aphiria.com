@@ -55,7 +55,6 @@ final class DocumentationDownloader
      *
      * @return string[][] The mapping of branch names to local file paths created by the downloads
      * @throws DownloadFailedException Thrown if there was any error reading or writing to the file system
-     * @throws FileNotFoundException Thrown if a file was not there that we expected
      */
     public function downloadDocs(): array
     {
@@ -70,10 +69,14 @@ final class DocumentationDownloader
                  * When cloning from GitHub, some files in the .git directory are read-only, which means we cannot delete
                  * them using normal PHP commands.  So, we first chmod all the files, then delete them.
                  */
-                foreach ($this->files->listContents($rawDocsPath, true) as $fileInfo) {
-                    if (isset($fileInfo['type'], $fileInfo['path']) && $fileInfo['type'] === 'file') {
-                        $this->files->setVisibility($fileInfo['path'], 'rwx');
+                try {
+                    foreach ($this->files->listContents($rawDocsPath, true) as $fileInfo) {
+                        if (isset($fileInfo['type'], $fileInfo['path']) && $fileInfo['type'] === 'file') {
+                            $this->files->setVisibility($fileInfo['path'], 'rwx');
+                        }
                     }
+                } catch (FileNotFoundException $ex) {
+                    throw new DownloadFailedException("Failed to set visibility on file {$ex->getPath()}");
                 }
 
                 if (!$this->files->deleteDir($rawDocsPath)) {

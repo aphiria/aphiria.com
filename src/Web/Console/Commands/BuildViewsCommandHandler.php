@@ -54,6 +54,7 @@ final class BuildViewsCommandHandler implements ICommandHandler
         } catch (FileExistsException | FileNotFoundException $ex) {
             $output->writeln('<fatal>Failed to build views</fatal>');
             $output->writeln("<info>{$ex->getMessage()}</info>");
+            $output->writeln("<info>{$ex->getTraceAsString()}</info>");
 
             return StatusCodes::FATAL;
         }
