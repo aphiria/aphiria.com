@@ -19,5 +19,4 @@ use Exception;
  */
 final class DownloadFailedException extends Exception
 {
-
 }
