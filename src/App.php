@@ -57,6 +57,7 @@ final class App implements IModule
         $this->withBinderDispatcher($appBuilder, $this->getBinderDispatcher())
             ->withRouteAnnotations($appBuilder)
             ->withValidatorAnnotations($appBuilder)
+            ->withFrameworkCommands($appBuilder)
             ->withCommandAnnotations($appBuilder)
             ->withBinders($appBuilder, [
                 new ExceptionHandlerBinder(),
