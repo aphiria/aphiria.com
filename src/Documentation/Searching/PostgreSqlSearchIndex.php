@@ -12,9 +12,9 @@ declare(strict_types=1);
 
 namespace App\Documentation\Searching;
 
-use Aphiria\IO\FileSystem;
-use Aphiria\IO\FileSystemException;
 use Exception;
+use League\Flysystem\FileNotFoundException;
+use League\Flysystem\FilesystemInterface;
 use PDO;
 use PHPHtmlParser\Dom;
 use PHPHtmlParser\Dom\HtmlNode;
@@ -45,22 +45,23 @@ final class PostgreSqlSearchIndex implements ISearchIndex
     private string $linkPrefix;
     /** @var string The path to the .env file to update whenever we build the search index */
     private string $envPath;
-    /** @var FileSystem The file helpers */
-    private FileSystem $files;
+    /** @var FilesystemInterface The file helpers */
+    private FilesystemInterface $files;
 
     /**
      * @param string $lexemeTableName The name of the table to point to (MUST BE SECURE BECAUSE IT'S USED DIRECTLY IN QUERIES)
      * @param PDO $pdo The DB connection to use
      * @param string $linkPrefix The prefix to use for all links that are generated
      * @param string $envPath The path to the .env file to update whenever we build the search index
+     * @param FilesystemInterface $files The file system helper
      */
-    public function __construct(string $lexemeTableName, PDO $pdo, string $linkPrefix, string $envPath)
+    public function __construct(string $lexemeTableName, PDO $pdo, string $linkPrefix, string $envPath, FilesystemInterface $files)
     {
         $this->lexemeTableName = $lexemeTableName;
         $this->pdo = $pdo;
         $this->linkPrefix = $linkPrefix;
         $this->envPath = $envPath;
-        $this->files = new FileSystem();
+        $this->files = $files;
     }
 
     /**
@@ -75,7 +76,7 @@ final class PostgreSqlSearchIndex implements ISearchIndex
             $indexEntries = [];
 
             foreach ($htmlPaths as $htmlPath) {
-                $dom = (new Dom())->loadFromFile($htmlPath);
+                $dom = (new Dom())->loadStr($this->files->read($htmlPath));
                 $h1 = $h2 = $h3 = $h4 = $h5 = null;
 
                 // Scan the documentation and index the elements as well as their nearest previous <h*> siblings
@@ -185,7 +186,7 @@ EOF
      * Creates and seeds the doc table
      *
      * @param IndexEntry[] $indexEntries The index entries to save
-     * @throws FileSystemException Thrown if there was an error updating the .env file
+     * @throws FileNotFoundException Thrown if there was an error reading the .env file
      */
     private function createAndSeedTable(array $indexEntries): void
     {
@@ -339,7 +340,7 @@ EOF
     /**
      * Updates the .env file to point to the new table
      *
-     * @throws FileSystemException Thrown if there was an error reading or writing to the file system
+     * @throws FileNotFoundException Thrown if the .env file did not exist
      */
     private function updateEnvFile(): void
     {
@@ -349,7 +350,7 @@ EOF
             "DOC_LEXEMES_TABLE_NAME={$this->lexemeTableName}",
             $currEnvContents
         );
-        $this->files->write($this->envPath, $newContents);
+        $this->files->update($this->envPath, $newContents);
     }
 
     /**
