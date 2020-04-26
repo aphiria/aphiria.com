@@ -20,7 +20,7 @@ use Aphiria\Console\Output\IOutput;
 /**
  * Defines the handler for the serve command
  *
- * @Command("app:serve", description="Runs the site locally")
+ * @Command("app:serve", description="Runs the website and API locally")
  */
 final class ServeCommandHandler implements ICommandHandler
 {

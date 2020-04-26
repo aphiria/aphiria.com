@@ -12,19 +12,25 @@ declare(strict_types=1);
 
 namespace App;
 
+use Aphiria\Application\BootstrapperCollection;
 use Aphiria\Application\Builders\IApplicationBuilder;
 use Aphiria\Application\IModule;
 use Aphiria\Configuration\GlobalConfiguration;
+use Aphiria\Configuration\GlobalConfigurationBuilder;
 use Aphiria\Configuration\MissingConfigurationValueException;
 use Aphiria\DependencyInjection\Binders\IBinderDispatcher;
 use Aphiria\DependencyInjection\Binders\LazyBinderDispatcher;
 use Aphiria\DependencyInjection\Binders\Metadata\Caching\FileBinderMetadataCollectionCache;
 use Aphiria\DependencyInjection\Binders\Metadata\Caching\IBinderMetadataCollectionCache;
 use Aphiria\DependencyInjection\Container;
+use Aphiria\DependencyInjection\IContainer;
 use Aphiria\Framework\Api\Binders\ControllerBinder;
 use Aphiria\Framework\Application\AphiriaComponents;
+use Aphiria\Framework\Configuration\Bootstrappers\ConfigurationBootstrapper;
+use Aphiria\Framework\Configuration\Bootstrappers\EnvironmentVariableBootstrapper;
 use Aphiria\Framework\Console\Binders\CommandBinder;
 use Aphiria\Framework\Exceptions\Binders\ExceptionHandlerBinder;
+use Aphiria\Framework\Exceptions\Bootstrappers\GlobalExceptionHandlerBootstrapper;
 use Aphiria\Framework\Net\Binders\ContentNegotiationBinder;
 use Aphiria\Framework\Net\Binders\RequestBinder;
 use Aphiria\Framework\Routing\Binders\RoutingBinder;
@@ -46,6 +52,21 @@ final class App implements IModule
     use AphiriaComponents;
 
     /**
+     * @param IContainer $container The application's DI container
+     */
+    public function __construct(IContainer $container)
+    {
+        // Bootstrap the application
+        $globalConfigurationBuilder = (new GlobalConfigurationBuilder())->withEnvironmentVariables()
+            ->withPhpFileConfigurationSource(__DIR__ . '/../config.php');
+        (new BootstrapperCollection())->addMany([
+            new EnvironmentVariableBootstrapper(__DIR__ . '/../.env'),
+            new ConfigurationBootstrapper($globalConfigurationBuilder),
+            new GlobalExceptionHandlerBootstrapper($container)
+        ])->bootstrapAll();
+    }
+
+    /**
      * Configures the application's modules and components
      *
      * @param IApplicationBuilder $appBuilder The builder that will build our app
@@ -55,9 +76,9 @@ final class App implements IModule
     {
         // Configure the app
         $this->withBinderDispatcher($appBuilder, $this->getBinderDispatcher())
+            ->withFrameworkCommands($appBuilder, ['app:serve'])
             ->withRouteAnnotations($appBuilder)
             ->withValidatorAnnotations($appBuilder)
-            ->withFrameworkCommands($appBuilder)
             ->withCommandAnnotations($appBuilder)
             ->withBinders($appBuilder, [
                 new ExceptionHandlerBinder(),
