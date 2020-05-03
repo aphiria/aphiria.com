@@ -13,7 +13,7 @@
                 <h1>A simple, extensible REST API framework for PHP</h1>
                 <h2>Automatic content negotiation.  No magic.  No bleeding into your code.</h2>
             </hgroup>
-            <pre><code class="language-php">
+            <pre><code class="language-php">// Define a controller endpoint
 class UserController extends Controller
 {
     public function getById(int $id): User
@@ -22,8 +22,11 @@ class UserController extends Controller
     }
 }
 
+// Create a route
 $routes->get('/users/:id')->mapsToMethod(UserController::class, 'getById');
-                </code></pre>
+
+// Run an integration test
+$this->assertParsedBodyEquals(new User(1, 'Dave'), $this->get('/users/1'));</code></pre>
             <h1>Install Aphiria</h1>
             <pre class="center"><code class="language-bash">
 composer create-project aphiria/app --prefer-dist
