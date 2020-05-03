@@ -34,7 +34,7 @@ before_script:
   - gulp build
 
 script:
-  - vendor/bin/phpunit --verbose
+  - vendor/bin/phpunit --testsuite Unit --verbose
   - composer run-script lint-check
 
 deploy:

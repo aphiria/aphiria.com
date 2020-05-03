@@ -19,7 +19,6 @@ class DocumentationTest extends IntegrationTestCase
 {
     public function testSearchingForItemWithDocumentationReturnsResults(): void
     {
-        $this->markTestSkipped('Skipping for now because the CI server does not index documentation');
         $response = $this->get('http://localhost/docs/search?query=routing');
         $this->assertParsedBodyPassesCallback(
             $response,
@@ -28,5 +27,11 @@ class DocumentationTest extends IntegrationTestCase
                 return \count($results) > 0 && strpos($results[0]->highlightedH1, 'Routing') !== false;
             }
         );
+    }
+
+    public function testSearchingForNonExistentTermReturnsEmptyResults(): void
+    {
+        $response = $this->get('http://localhost/docs/search?query=abcdefghijklmnopqrstuvwxyz');
+        $this->assertParsedBodyEquals([], $response);
     }
 }
