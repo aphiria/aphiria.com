@@ -171,6 +171,12 @@ final class DocumentationBinder extends Binder
                         'linkText' => 'Sessions',
                         'description' => 'Learn about server-side sessions in Aphiria',
                         'keywords' => ['aphiria', 'sessions', 'http', 'php']
+                    ],
+                    'testing-apis' => [
+                        'title' => 'Testing APIs',
+                        'linkText' => 'Testing APIs',
+                        'description' => 'Learn how to test your Aphiria applications',
+                        'keywords' => ['aphiria', 'integration tests', 'testing', 'php']
                     ]
                 ],
                 'Console Applications' => [
