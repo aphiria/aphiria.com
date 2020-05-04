@@ -19,7 +19,7 @@ class DocumentationTest extends IntegrationTestCase
 {
     public function testSearchingForItemWithDocumentationReturnsResults(): void
     {
-        $response = $this->get('http://localhost/docs/search?query=routing');
+        $response = $this->get('/docs/search?query=routing');
         $this->assertParsedBodyPassesCallback(
             $response,
             SearchResult::class . '[]',
@@ -31,7 +31,7 @@ class DocumentationTest extends IntegrationTestCase
 
     public function testSearchingForNonExistentTermReturnsEmptyResults(): void
     {
-        $response = $this->get('http://localhost/docs/search?query=abcdefghijklmnopqrstuvwxyz');
+        $response = $this->get('/docs/search?query=abcdefghijklmnopqrstuvwxyz');
         $this->assertParsedBodyEquals([], $response);
     }
 }

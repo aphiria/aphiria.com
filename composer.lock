@@ -12,12 +12,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/aphiria/aphiria.git",
-                "reference": "c8161db9ee5029fedda6c0b28e4b0a102c363872"
+                "reference": "461faece9974f7abfc329cf25d6a6e68f5d21f60"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/aphiria/aphiria/zipball/c8161db9ee5029fedda6c0b28e4b0a102c363872",
-                "reference": "c8161db9ee5029fedda6c0b28e4b0a102c363872",
+                "url": "https://api.github.com/repos/aphiria/aphiria/zipball/461faece9974f7abfc329cf25d6a6e68f5d21f60",
+                "reference": "461faece9974f7abfc329cf25d6a6e68f5d21f60",
                 "shasum": ""
             },
             "require": {
@@ -84,7 +84,7 @@
                 "php",
                 "rest"
             ],
-            "time": "2020-05-03T18:50:20+00:00"
+            "time": "2020-05-04T17:58:28+00:00"
         },
         {
             "name": "doctrine/annotations",
@@ -1054,6 +1054,12 @@
                 }
             ],
             "description": "A tool to automatically fix PHP code style",
+            "funding": [
+                {
+                    "url": "https://github.com/keradus",
+                    "type": "github"
+                }
+            ],
             "time": "2020-04-15T18:52:10+00:00"
         },
         {
@@ -1622,6 +1628,12 @@
                 "filesystem",
                 "iterator"
             ],
+            "funding": [
+                {
+                    "url": "https://github.com/sebastianbergmann",
+                    "type": "github"
+                }
+            ],
             "time": "2020-04-18T05:02:12+00:00"
         },
         {
@@ -1769,6 +1781,12 @@
             "homepage": "https://github.com/sebastianbergmann/php-timer/",
             "keywords": [
                 "timer"
+            ],
+            "funding": [
+                {
+                    "url": "https://github.com/sebastianbergmann",
+                    "type": "github"
+                }
             ],
             "time": "2020-04-20T06:00:37+00:00"
         },
@@ -2281,6 +2299,12 @@
                 "Xdebug",
                 "environment",
                 "hhvm"
+            ],
+            "funding": [
+                {
+                    "url": "https://github.com/sebastianbergmann",
+                    "type": "github"
+                }
             ],
             "time": "2020-04-14T13:36:52+00:00"
         },

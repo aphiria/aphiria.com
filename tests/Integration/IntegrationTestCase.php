@@ -31,4 +31,18 @@ class IntegrationTestCase extends BaseIntegrationTestCase
         return (new ApiApplicationBuilder($container))->withModule(new App($container))
             ->build();
     }
+
+    /**
+     * @inheritdoc
+     */
+    protected function getAppUri(): ?string
+    {
+        $appUrl = \getenv('APP_API_URL');
+
+        if ($appUrl === false || empty($appUrl)) {
+            return null;
+        }
+
+        return $appUrl;
+    }
 }
