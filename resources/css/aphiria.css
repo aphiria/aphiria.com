@@ -16,9 +16,6 @@ body {
   margin: 0;
   overflow-x: hidden; }
 
-html, body {
-  height: 100%; }
-
 h1, h2, h3, h4, h5, h6 {
   font-weight: 200; }
 
@@ -440,8 +437,6 @@ blockquote {
       bottom: 20px;
       width: 40%; }
   body > main {
-    /* Fill up all the space except for the footer (the header is taken care of by top padding) */
-    min-height: calc(100% - 88.8px);
     padding-top: 80px; }
     body > main article {
       margin: 0 0 0 240px;

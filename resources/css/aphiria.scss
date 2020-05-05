@@ -5,10 +5,8 @@ $fontSize: 16px;
 $codeBackgroundColor: #f9f9f9;
 $inputVerticalPadding: 0.25em;
 $footerBackgroundColor: #f7f7f7;
-$footerVerticalPadding: 30px;
 $pageSideMargin: 5%;
 $lineHeight: 1.8;
-$footerHeight: $lineHeight * $fontSize + $footerVerticalPadding + $footerVerticalPadding;
 
 * {
     box-sizing: border-box;
@@ -29,10 +27,6 @@ html {
 body {
     margin: 0;
     overflow-x: hidden;
-}
-
-html, body {
-    height: 100%;
 }
 
 h1, h2, h3, h4, h5, h6 {
@@ -284,7 +278,7 @@ body > header {
 body > footer {
     text-align: center;
     /* Using vertical padding allows us to vertically center the footer text */
-    padding: $footerVerticalPadding 20px;
+    padding: 30px 20px;
     margin: 0 $pageSideMargin;
     background: linear-gradient(.25turn, #fff 0%, $footerBackgroundColor 10%, $footerBackgroundColor 90%, #fff 100%);
     border-top: 1px solid #ddd;
@@ -675,8 +669,6 @@ blockquote {
     }
 
     body > main {
-        /* Fill up all the space except for the footer (the header is taken care of by top padding) */
-        min-height: calc(100% - #{$footerHeight});
         padding-top: $headerHeight;
 
         article {
