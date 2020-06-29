@@ -212,12 +212,6 @@ final class DocumentationBinder extends Binder
                         'description' => 'Learn how to map to-and-from some PSRs',
                         'keywords' => ['aphiria', 'psrs', 'fig', 'psr-7', 'psr-11', 'php']
                     ],
-                    'serialization' => [
-                        'title' => 'Serialization',
-                        'linkText' => 'Serialization',
-                        'description' => 'Learn about to serialize and deserialize objects in Aphiria',
-                        'keywords' => ['aphiria', 'serialize', 'deserialize', 'encode', 'decode', 'php']
-                    ],
                     'validation' => [
                         'title' => 'Validation',
                         'linkText' => 'Validation',
