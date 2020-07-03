@@ -12,12 +12,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/aphiria/aphiria.git",
-                "reference": "7dfab23506ade5458c93aeaee1449ef5f875c634"
+                "reference": "322e2bb3bac36d185b92b141da26cc430073b666"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/aphiria/aphiria/zipball/7dfab23506ade5458c93aeaee1449ef5f875c634",
-                "reference": "7dfab23506ade5458c93aeaee1449ef5f875c634",
+                "url": "https://api.github.com/repos/aphiria/aphiria/zipball/322e2bb3bac36d185b92b141da26cc430073b666",
+                "reference": "322e2bb3bac36d185b92b141da26cc430073b666",
                 "shasum": ""
             },
             "require": {
@@ -54,6 +54,7 @@
                     "Aphiria\\Application\\": "src/Application/src",
                     "Aphiria\\Collections\\": "src/Collections/src",
                     "Aphiria\\Console\\": "src/Console/src",
+                    "Aphiria\\ContentNegotiation\\": "src/ContentNegotiation/src",
                     "Aphiria\\DependencyInjection\\": "src/DependencyInjection/src",
                     "Aphiria\\Exceptions\\": "src/Exceptions/src",
                     "Aphiria\\Framework\\": "src/Framework/src",
@@ -87,7 +88,7 @@
                 "rest",
                 "router"
             ],
-            "time": "2020-07-03T18:52:50+00:00"
+            "time": "2020-07-03T21:09:39+00:00"
         },
         {
             "name": "doctrine/annotations",
