@@ -98,17 +98,11 @@ final class DocumentationBinder extends Binder
                     ]
                 ],
                 'Configuration' => [
-                    'application-builders' => [
-                        'title' => 'Application Builders',
-                        'linkText' => 'Application Builders',
-                        'description' => 'Learn how to build an Aphiria application',
-                        'keywords' => ['aphiria', 'configure', 'php', 'application builder']
-                    ],
                     'configuration' => [
                         'title' => 'Configuration',
                         'linkText' => 'Configuration',
                         'description' => 'Learn how to configure an Aphiria application',
-                        'keywords' => ['aphiria', 'configure', 'php']
+                        'keywords' => ['aphiria', 'configure', 'application builder', 'php']
                     ],
                     'di-container' => [
                         'title' => 'DI Container',

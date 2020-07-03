@@ -12,12 +12,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/aphiria/aphiria.git",
-                "reference": "1b1f84eadba3115e0a6a12c54fc0351b674626ae"
+                "reference": "7dfab23506ade5458c93aeaee1449ef5f875c634"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/aphiria/aphiria/zipball/1b1f84eadba3115e0a6a12c54fc0351b674626ae",
-                "reference": "1b1f84eadba3115e0a6a12c54fc0351b674626ae",
+                "url": "https://api.github.com/repos/aphiria/aphiria/zipball/7dfab23506ade5458c93aeaee1449ef5f875c634",
+                "reference": "7dfab23506ade5458c93aeaee1449ef5f875c634",
                 "shasum": ""
             },
             "require": {
@@ -53,7 +53,6 @@
                     "Aphiria\\Api\\": "src/Api/src",
                     "Aphiria\\Application\\": "src/Application/src",
                     "Aphiria\\Collections\\": "src/Collections/src",
-                    "Aphiria\\Configuration\\": "src/Configuration/src",
                     "Aphiria\\Console\\": "src/Console/src",
                     "Aphiria\\DependencyInjection\\": "src/DependencyInjection/src",
                     "Aphiria\\Exceptions\\": "src/Exceptions/src",
@@ -82,10 +81,13 @@
             "description": "The Aphiria framework",
             "keywords": [
                 "api",
+                "content negotiation",
+                "http",
                 "php",
-                "rest"
+                "rest",
+                "router"
             ],
-            "time": "2020-06-28T23:58:54+00:00"
+            "time": "2020-07-03T18:52:50+00:00"
         },
         {
             "name": "doctrine/annotations",
@@ -1900,12 +1902,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/FriendsOfPHP/PHP-CS-Fixer.git",
-                "reference": "9249b0c368e5d056167292293afa580d4467787a"
+                "reference": "fcf47f2f3deda26b176c5ee4e3ba17572006bd78"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/FriendsOfPHP/PHP-CS-Fixer/zipball/9249b0c368e5d056167292293afa580d4467787a",
-                "reference": "9249b0c368e5d056167292293afa580d4467787a",
+                "url": "https://api.github.com/repos/FriendsOfPHP/PHP-CS-Fixer/zipball/fcf47f2f3deda26b176c5ee4e3ba17572006bd78",
+                "reference": "fcf47f2f3deda26b176c5ee4e3ba17572006bd78",
                 "shasum": ""
             },
             "require": {
@@ -1989,20 +1991,20 @@
                     "type": "github"
                 }
             ],
-            "time": "2020-06-27T17:13:42+00:00"
+            "time": "2020-07-03T12:52:07+00:00"
         },
         {
             "name": "myclabs/deep-copy",
-            "version": "1.10.0",
+            "version": "1.10.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/myclabs/DeepCopy.git",
-                "reference": "5796d127b0c4ff505b77455148ea9d5269d99758"
+                "reference": "969b211f9a51aa1f6c01d1d2aef56d3bd91598e5"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/myclabs/DeepCopy/zipball/5796d127b0c4ff505b77455148ea9d5269d99758",
-                "reference": "5796d127b0c4ff505b77455148ea9d5269d99758",
+                "url": "https://api.github.com/repos/myclabs/DeepCopy/zipball/969b211f9a51aa1f6c01d1d2aef56d3bd91598e5",
+                "reference": "969b211f9a51aa1f6c01d1d2aef56d3bd91598e5",
                 "shasum": ""
             },
             "require": {
@@ -2043,7 +2045,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2020-06-28T07:02:41+00:00"
+            "time": "2020-06-29T13:22:24+00:00"
         },
         {
             "name": "paragonie/random_compat",
@@ -3168,20 +3170,20 @@
         },
         {
             "name": "sebastian/diff",
-            "version": "4.0.1",
+            "version": "4.0.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/sebastianbergmann/diff.git",
-                "reference": "3e523c576f29dacecff309f35e4cc5a5c168e78a"
+                "reference": "1e90b4cf905a7d06c420b1d2e9d11a4dc8a13113"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/sebastianbergmann/diff/zipball/3e523c576f29dacecff309f35e4cc5a5c168e78a",
-                "reference": "3e523c576f29dacecff309f35e4cc5a5c168e78a",
+                "url": "https://api.github.com/repos/sebastianbergmann/diff/zipball/1e90b4cf905a7d06c420b1d2e9d11a4dc8a13113",
+                "reference": "1e90b4cf905a7d06c420b1d2e9d11a4dc8a13113",
                 "shasum": ""
             },
             "require": {
-                "php": "^7.3"
+                "php": "^7.3 || ^8.0"
             },
             "require-dev": {
                 "phpunit/phpunit": "^9.0",
@@ -3226,7 +3228,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2020-05-08T05:01:12+00:00"
+            "time": "2020-06-30T04:46:02+00:00"
         },
         {
             "name": "sebastian/environment",
