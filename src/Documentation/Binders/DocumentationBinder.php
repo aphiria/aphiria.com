@@ -108,13 +108,7 @@ final class DocumentationBinder extends Binder
                         'title' => 'DI Container',
                         'linkText' => 'DI Container',
                         'description' => 'Learn about configuring your dependencies in Aphiria',
-                        'keywords' => ['aphiria', 'dependencies', 'dependency injection', 'container', 'php']
-                    ],
-                    'binders' => [
-                        'title' => 'Binders',
-                        'linkText' => 'Binders',
-                        'description' => 'Learn about configuring your container via binders in Aphiria',
-                        'keywords' => ['aphiria', 'binders', 'dependency injection', 'container', 'php']
+                        'keywords' => ['aphiria', 'dependencies', 'dependency injection', 'container', 'binders', 'php']
                     ],
                     'exception-handling' => [
                         'title' => 'Exception Handling',
