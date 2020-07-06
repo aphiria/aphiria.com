@@ -368,7 +368,8 @@ pre[class*="language-"] {
 }
 
 code {
-    font-family: "Source Code Pro", monospace !important;
+    font-family: "Roboto Mono", "Consolas", monospace !important;
+    font-size: 0.98em !important;
 
     &[class*=language-] {
         text-shadow: none !important;

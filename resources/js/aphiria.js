@@ -217,9 +217,10 @@ const highlightToCNav = (articleElem, tocContentsElem) => {
 
 const highlightDocNav = docNavElem => {
     const docLinks = docNavElem.querySelectorAll('a');
+    const currUrlWithoutHash = window.location.href.split('#')[0];
 
     docLinks.forEach(docLink => {
-        if (docLink.href === window.location.href) {
+        if (docLink.href === currUrlWithoutHash) {
             docLink.classList.add('selected');
         } else {
             docLink.classList.remove('selected');

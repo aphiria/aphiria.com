@@ -104,10 +104,10 @@ final class DocumentationBinder extends Binder
                         'description' => 'Learn how to configure an Aphiria application',
                         'keywords' => ['aphiria', 'configure', 'application builder', 'php']
                     ],
-                    'di-container' => [
-                        'title' => 'DI Container',
-                        'linkText' => 'DI Container',
-                        'description' => 'Learn about configuring your dependencies in Aphiria',
+                    'dependency-injection' => [
+                        'title' => 'Dependency Injection',
+                        'linkText' => 'Dependency Injection',
+                        'description' => 'Learn about injecting your dependencies in Aphiria',
                         'keywords' => ['aphiria', 'dependencies', 'dependency injection', 'container', 'binders', 'php']
                     ],
                     'exception-handling' => [
