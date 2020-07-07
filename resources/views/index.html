@@ -16,16 +16,14 @@
             <pre><code class="language-php">// Define a controller endpoint
 class UserController extends Controller
 {
-    public function __construct(private IUserService $userService) {}
+    public function __construct(private IUserService $users) {}
 
+    /** @Get('/users/:id') */
     public function getById(int $id): User
     {
-        return $this->userService->getById($id);
+        return $this->users->getById($id);
     }
 }
-
-// Create a route
-$routes->get('/users/:id')->mapsToMethod(UserController::class, 'getById');
 
 // Bind your dependency
 $container->bindInstance(IUserService::class, new UserService());
