@@ -16,14 +16,19 @@
             <pre><code class="language-php">// Define a controller endpoint
 class UserController extends Controller
 {
+    public function __construct(private IUserService $userService) {}
+
     public function getById(int $id): User
     {
-        return (new UserService())->getById($id);
+        return $this->userService->getById($id);
     }
 }
 
 // Create a route
 $routes->get('/users/:id')->mapsToMethod(UserController::class, 'getById');
+
+// Bind your dependency
+$container->bindInstance(IUserService::class, new UserService());
 
 // Run an integration test
 $this->assertParsedBodyEquals(new User(1, 'Dave'), $this->get('/users/1'));</code></pre>
