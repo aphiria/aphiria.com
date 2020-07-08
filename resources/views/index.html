@@ -18,7 +18,7 @@ class UserController extends Controller
 {
     public function __construct(private IUserService $users) {}
 
-    /** @Get('/users/:id') */
+    /** @Get("/users/:id") */
     public function getById(int $id): User
     {
         return $this->users->getById($id);
