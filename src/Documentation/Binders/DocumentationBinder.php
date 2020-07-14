@@ -167,20 +167,18 @@ final class DocumentationBinder extends Binder
                         'keywords' => ['aphiria', 'integration tests', 'testing', 'php']
                     ]
                 ],
-                'Console Applications' => [
-                    'console' => [
-                        'title' => 'Console Basics',
-                        'linkText' => 'Basics',
-                        'description' => 'Learn the basics of console applications in Aphiria',
-                        'keywords' => ['aphiria', 'console', 'command prompt', 'php']
-                    ]
-                ],
                 'Miscellaneous' => [
                     'collections' => [
                         'title' => 'Collections',
                         'linkText' => 'Collections',
                         'description' => 'Learn about collections in Aphiria',
                         'keywords' => ['aphiria', 'collections', 'hash tables', 'array lists', 'stacks', 'queues']
+                    ],
+                    'console' => [
+                        'title' => 'Console',
+                        'linkText' => 'Console',
+                        'description' => 'Learn how to use console commands in Aphiria',
+                        'keywords' => ['aphiria', 'console', 'command prompt', 'php']
                     ],
                     'io' => [
                         'title' => 'Input/Output',
