@@ -167,7 +167,7 @@ final class DocumentationBinder extends Binder
                         'keywords' => ['aphiria', 'integration tests', 'testing', 'php']
                     ]
                 ],
-                'Miscellaneous' => [
+                'Libraries' => [
                     'collections' => [
                         'title' => 'Collections',
                         'linkText' => 'Collections',
