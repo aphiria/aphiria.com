@@ -117,7 +117,7 @@ final class DocumentationBinder extends Binder
                         'keywords' => ['aphiria', 'exceptions', 'errors', 'global exception handler']
                     ]
                 ],
-                'HTTP Applications' => [
+                'Building Your API' => [
                     'routing' => [
                         'title' => 'Routing',
                         'linkText' => 'Routing',
