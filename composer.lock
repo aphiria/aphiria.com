@@ -4,20 +4,20 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "6c010fb091f7c7d5c9e13d5c2747e3cc",
+    "content-hash": "196949fe531cf53c5e3bcd1cb2765765",
     "packages": [
         {
             "name": "aphiria/aphiria",
-            "version": "dev-master",
+            "version": "0.x-dev",
             "source": {
                 "type": "git",
                 "url": "https://github.com/aphiria/aphiria.git",
-                "reference": "aa82f8a9cc6669ec137c7211cc0d745c8669de64"
+                "reference": "8e5ee48c9d3ffc8a479fe4fe4f0adbed9f54a398"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/aphiria/aphiria/zipball/aa82f8a9cc6669ec137c7211cc0d745c8669de64",
-                "reference": "aa82f8a9cc6669ec137c7211cc0d745c8669de64",
+                "url": "https://api.github.com/repos/aphiria/aphiria/zipball/8e5ee48c9d3ffc8a479fe4fe4f0adbed9f54a398",
+                "reference": "8e5ee48c9d3ffc8a479fe4fe4f0adbed9f54a398",
                 "shasum": ""
             },
             "require": {
@@ -44,7 +44,7 @@
             "type": "library",
             "extra": {
                 "branch-alias": {
-                    "dev-master": "1.0.x-dev"
+                    "dev-master": "0.x-dev"
                 }
             },
             "autoload": {
@@ -87,7 +87,7 @@
                 "rest",
                 "router"
             ],
-            "time": "2020-07-18T18:42:26+00:00"
+            "time": "2020-07-18T20:47:31+00:00"
         },
         {
             "name": "doctrine/annotations",

@@ -35,7 +35,7 @@ final class DocumentationBinder extends Binder
     public function bind(IContainer $container): void
     {
         $metadata = new DocumentationMetadata([
-            'master' => $this->getMasterBranchDocConfig()
+            '0.x' => $this->getMasterBranchDocConfig()
         ]);
         $container->bindInstance(DocumentationMetadata::class, $metadata);
         $files = new Filesystem(
@@ -68,7 +68,7 @@ final class DocumentationBinder extends Binder
     private function getMasterBranchDocConfig(): array
     {
         return [
-            'title' => 'Master',
+            'title' => '0.x',
             'default' => 'introduction',
             'docs' => [
                 'Getting Started' => [
