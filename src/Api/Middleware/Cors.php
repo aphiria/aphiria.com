@@ -14,8 +14,8 @@ namespace App\Api\Middleware;
 
 use Aphiria\Collections\KeyValuePair;
 use Aphiria\Middleware\IMiddleware;
-use Aphiria\Net\Http\Handlers\IRequestHandler;
 use Aphiria\Net\Http\IRequest;
+use Aphiria\Net\Http\IRequestHandler;
 use Aphiria\Net\Http\IResponse;
 
 /**
