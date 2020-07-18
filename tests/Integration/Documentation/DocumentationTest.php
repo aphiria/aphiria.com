@@ -32,6 +32,13 @@ class DocumentationTest extends IntegrationTestCase
     public function testSearchingForNonExistentTermReturnsEmptyResults(): void
     {
         $response = $this->get('/docs/search?query=abcdefghijklmnopqrstuvwxyz');
-        $this->assertParsedBodyEquals([], $response);
+        // The Symfony serializer cannot deserialize type 'array', so we cannot just check if it equals []
+        $this->assertParsedBodyPassesCallback(
+            $response,
+            SearchResult::class . '[]',
+            static function (array $results) {
+                return \count($results) === 0;
+            }
+        );
     }
 }
