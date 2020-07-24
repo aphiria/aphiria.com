@@ -37,7 +37,7 @@ class DocumentationTest extends IntegrationTestCase
             $response,
             SearchResult::class . '[]',
             static function (array $results) {
-                return \count($results) === 0;
+                return \count($results) > 0;
             }
         );
     }
