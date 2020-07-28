@@ -38,8 +38,10 @@ use Aphiria\Framework\Serialization\Binders\SymfonySerializerBinder;
 use Aphiria\Framework\Validation\Binders\ValidationBinder;
 use Aphiria\Middleware\MiddlewareBinding;
 use Aphiria\Net\Http\HttpException;
+use App\Api\Binders\ApiBinder;
 use App\Api\Middleware\Cors;
 use App\Documentation\DocumentationModule;
+use App\Users\UserModule;
 use App\Web\WebModule;
 use Exception;
 use Psr\Log\LogLevel;
@@ -88,7 +90,8 @@ final class App implements IModule
                 new ContentNegotiationBinder(),
                 new ControllerBinder(),
                 new RoutingBinder(),
-                new CommandBinder()
+                new CommandBinder(),
+                new ApiBinder()
             ])
             ->withLogLevelFactory($appBuilder, HttpException::class, static function (HttpException $ex) {
                 return $ex->getResponse()->getStatusCode() >= 500 ? LogLevel::ERROR : LogLevel::DEBUG;
@@ -96,7 +99,8 @@ final class App implements IModule
             ->withGlobalMiddleware($appBuilder, new MiddlewareBinding(Cors::class))
             ->withModules($appBuilder, [
                 new DocumentationModule(),
-                new WebModule()
+                new WebModule(),
+                new UserModule()
             ]);
     }
 
