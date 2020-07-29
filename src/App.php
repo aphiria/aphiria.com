@@ -41,6 +41,7 @@ use Aphiria\Net\Http\HttpException;
 use App\Api\Binders\ApiBinder;
 use App\Api\Middleware\Cors;
 use App\Documentation\DocumentationModule;
+use App\Posts\PostModule;
 use App\Users\UserModule;
 use App\Web\WebModule;
 use Exception;
@@ -100,7 +101,8 @@ final class App implements IModule
             ->withModules($appBuilder, [
                 new DocumentationModule(),
                 new WebModule(),
-                new UserModule()
+                new UserModule(),
+                new PostModule()
             ]);
     }
 
