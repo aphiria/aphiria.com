@@ -17,6 +17,7 @@ use Aphiria\Net\Http\HttpException;
 use Aphiria\Net\Http\HttpStatusCodes;
 use Aphiria\Routing\Annotations\Delete;
 use Aphiria\Routing\Annotations\Get;
+use Aphiria\Routing\Annotations\Post;
 use Aphiria\Routing\Annotations\Put;
 use Aphiria\Routing\Annotations\RouteGroup;
 use App\Posts\Api\CreatePostDto;
@@ -24,7 +25,6 @@ use App\Posts\Api\UpdatePostDto;
 use App\Posts\Api\ViewPostDto;
 use App\Posts\Api\ViewPostDtoFactory;
 use App\Posts\IPostService;
-use App\Posts\Post;
 use App\Posts\PostNotFoundException;
 use App\Users\UserNotFoundException;
 
