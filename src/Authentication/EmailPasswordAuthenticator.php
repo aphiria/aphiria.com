@@ -52,7 +52,7 @@ final class EmailPasswordAuthenticator implements IAuthenticator
         }
 
         $sql = <<<SQL
-SELECT user_id, hashed_password
+SELECT c.user_id, c.hashed_password
 FROM user_credentials c
 INNER JOIN users u ON u.user_id = c.user_id
 WHERE u.is_deleted = FALSE AND c.is_active = TRUE and LOWER(u.email) = :email
