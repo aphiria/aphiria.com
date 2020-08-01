@@ -16,9 +16,9 @@ use InvalidArgumentException;
 use PDO;
 
 /**
- * Defines the authenticator for email and passwords
+ * Defines the authentication service
  */
-final class EmailPasswordAuthenticator implements IAuthenticator
+final class AuthenticationService implements IAuthenticationService
 {
     /** @var PDO The DB instance */
     private PDO $pdo;
@@ -33,21 +33,10 @@ final class EmailPasswordAuthenticator implements IAuthenticator
 
     /**
      * @inheritdoc
-     * @throws InvalidArgumentException Thrown if the credential was not the correct type
      */
-    public function authenticate(Credential $credential, ?int &$userId): void
+    public function logIn(string $email, string $password): void
     {
-        // Reset the user ID, just in case
-        $userId = null;
-
-        if ($credential->getType() !== Credential::TYPE_EMAIL_PASSWORD) {
-            throw new InvalidArgumentException('Expected email/password credential');
-        }
-
-        if (
-            ($email = $credential->getValue('email')) === ''
-            || ($password = $credential->getValue('password')) === ''
-        ) {
+        if ($email === '' || $password === '') {
             throw new InvalidArgumentException('Email/password cannot be empty');
         }
 
@@ -69,6 +58,22 @@ SQL;
             throw new InvalidArgumentException('Invalid credentials');
         }
 
-        $userId = (int)$row['user_id'];
+        // TODO: What should this return?  An access token?
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function requestPasswordReset(string $email): void
+    {
+        // TODO: How would we prevent spamming of this endpoint?
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function updatePassword(int $userId, string $newPassword): void
+    {
+        // TODO: What should this return?
     }
 }
