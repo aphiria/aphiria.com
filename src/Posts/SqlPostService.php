@@ -100,16 +100,13 @@ SQL;
      */
     public function getAllPosts(bool $includeDeletedPosts = false): array
     {
+        $whereClause = $includeDeletedPosts ? 'WHERE is_deleted = FALSE' : '';
         $sql = <<<SQL
 SELECT id, author_id, title, text_summary, markdown_content, html_content, created_date, last_updated_date, publish_date, is_deleted
 FROM posts
+{$whereClause}
 ORDER BY publish_date DESC
 SQL;
-
-        if ($includeDeletedPosts === false) {
-            $sql .= ' WHERE is_deleted = false';
-        }
-
         $statement = $this->pdo->query($sql);
         $posts = [];
 
