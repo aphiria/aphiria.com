@@ -27,6 +27,7 @@
         "aphiria/aphiria": "0.*@dev",
         "erusev/parsedown-extra": "0.8.*",
         "ext-dom": "*",
+        "ext-json": "*",
         "ext-mbstring": "*",
         "ext-pdo": "*",
         "league/flysystem": "^1.0",

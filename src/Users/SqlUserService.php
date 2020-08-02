@@ -53,7 +53,7 @@ final class SqlUserService implements IUserService
      */
     public function deleteUser(int $id): void
     {
-        $statement = $this->pdo->prepare('DELETE FROM users WHERE id = :id');
+        $statement = $this->pdo->prepare('UPDATE users SET is_active = FALSE WHERE id = :id');
         $statement->execute(['id' => $id]);
 
         if ($statement->rowCount() === 0) {

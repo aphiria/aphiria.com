@@ -17,9 +17,11 @@ use Aphiria\Net\Http\HttpException;
 use Aphiria\Net\Http\HttpStatusCodes;
 use Aphiria\Routing\Annotations\Delete;
 use Aphiria\Routing\Annotations\Get;
+use Aphiria\Routing\Annotations\Middleware;
 use Aphiria\Routing\Annotations\Post;
 use Aphiria\Routing\Annotations\Put;
 use Aphiria\Routing\Annotations\RouteGroup;
+use App\Authentication\Api\Middleware\Authenticate;
 use App\Posts\Api\CreatePostDto;
 use App\Posts\Api\UpdatePostDto;
 use App\Posts\Api\ViewPostDto;
@@ -56,10 +58,10 @@ final class PostController extends Controller
      * @return ViewPostDto The created post
      * @throws UserNotFoundException Thrown if the author was not found
      * @Post("")
+     * @Middleware(Authenticate::class)
      */
     public function createPost(CreatePostDto $createPostDto): ViewPostDto
     {
-        // TODO: Add middleware
         // TODO: Add way of extracting current user's ID
         $createdPost = $this->posts->createPost(0, $createPostDto);
 
@@ -71,11 +73,11 @@ final class PostController extends Controller
      *
      * @param int $id The post to delete
      * @Delete(":id")
+     * @Middleware(Authenticate::class)
      * @throws PostNotFoundException Thrown if the post was not found
      */
     public function deletePost(int $id): void
     {
-        // TODO: Add middleware
         $this->posts->deletePost($id);
     }
 
@@ -130,10 +132,10 @@ final class PostController extends Controller
      * @throws PostNotFoundException Thrown if the post was not found
      * @throws UserNotFoundException Thrown if the author was not found
      * @Put(":id")
+     * @Middleware(Authenticate::class)
      */
     public function updatePost(int $id, UpdatePostDto $updatePostDto): ViewPostDto
     {
-        // TODO: Add middleware
         if ($id !== $updatePostDto->id) {
             throw new HttpException(HttpStatusCodes::HTTP_BAD_REQUEST, 'ID in route does not match ID in post');
         }

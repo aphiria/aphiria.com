@@ -12,21 +12,27 @@ declare(strict_types=1);
 
 namespace App\Authentication\Api\Controllers;
 
+use Aphiria\Api\Controllers\Controller;
+use Aphiria\Net\Http\Headers\Cookie;
+use Aphiria\Net\Http\HttpException;
+use Aphiria\Net\Http\HttpStatusCodes;
+use Aphiria\Net\Http\IResponse;
 use Aphiria\Routing\Annotations\Post;
 use Aphiria\Routing\Annotations\Put;
 use Aphiria\Routing\Annotations\Route;
 use App\Authentication\Api\LoginDto;
 use App\Authentication\Api\RequestPasswordResetDto;
 use App\Authentication\Api\UpdatePasswordDto;
-use App\Authentication\AuthenticationException;
+use App\Authentication\AuthenticationService;
 use App\Authentication\IAuthenticationService;
+use DateTime;
 
 /**
  * Defines the authentication controller
  *
  * @Route("authentication")
  */
-final class AuthenticationController
+final class AuthenticationController extends Controller
 {
     /** @var IAuthenticationService The authentication service */
     private IAuthenticationService $auth;
@@ -43,14 +49,37 @@ final class AuthenticationController
      * Attempts to log in a user
      *
      * @param LoginDto $login The login data
-     * @throws AuthenticationException Thrown if the credentials could not be authenticated
+     * @return IResponse The login response
      * @Post("login")
+     * @throws HttpException Thrown if there was an error creating the response
      */
-    public function logIn(LoginDto $login): void
+    public function logIn(LoginDto $login): IResponse
     {
-        $userId = null;
-        $this->auth->logIn($login->email, $login->password);
-        // TODO: Create access token, set it to response
+        $authenticationResult = $this->auth->logIn($login->email, $login->password);
+
+        if (!$authenticationResult->isAuthenticated) {
+            return $this->responseFactory->createResponse(
+                $this->request,
+                HttpStatusCodes::HTTP_UNAUTHORIZED,
+                null,
+                $authenticationResult->errorMessage
+            );
+        }
+
+        $response = $this->responseFactory->createResponse($this->request, HttpStatusCodes::HTTP_OK);
+        $this->responseFormatter->setCookie(
+            $response,
+            new Cookie(
+                AuthenticationService::ACCESS_TOKEN_COOKIE_NAME,
+                \json_encode([
+                    'userId' => $authenticationResult->userId,
+                    'accessToken' => $authenticationResult->accessToken
+                ], JSON_THROW_ON_ERROR),
+                $authenticationResult->accessTokenExpiration->diff(new DateTime())->s
+            )
+        );
+
+        return $response;
     }
 
     /**

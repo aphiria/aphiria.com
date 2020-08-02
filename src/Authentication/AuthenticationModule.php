@@ -29,8 +29,6 @@ final class AuthenticationModule implements IModule
      */
     public function build(IApplicationBuilder $appBuilder): void
     {
-        // TODO: Implement build() method.
-        // TODO: Map all the appropriate exceptions
         $this->withBinders($appBuilder, new AuthenticationBinder());
     }
 }

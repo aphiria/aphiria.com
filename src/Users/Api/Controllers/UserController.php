@@ -14,10 +14,13 @@ namespace App\Users\Api\Controllers;
 
 use Aphiria\Api\Controllers\Controller;
 use Aphiria\Net\Http\IResponse;
+use Aphiria\Routing\Annotations\Delete;
 use Aphiria\Routing\Annotations\Get;
+use Aphiria\Routing\Annotations\Middleware;
 use Aphiria\Routing\Annotations\Post;
 use Aphiria\Routing\Annotations\RouteGroup;
 use Aphiria\Routing\UriTemplates\IRouteUriFactory;
+use App\Authentication\Api\Middleware\Authenticate;
 use App\Users\IUserService;
 use App\Users\User;
 use App\Users\UserNotFoundException;
@@ -49,10 +52,10 @@ final class UserController extends Controller
      * @param User $user The user to add
      * @return IResponse The response
      * @Post("")
+     * @Middleware(Authenticate::class)
      */
     public function addUser(User $user): IResponse
     {
-        // TODO: Need middleware
         $createdUser = $this->users->addUser($user);
         $createdUserUri = $this->uriFactory->createRouteUri('GetUserById', ['id' => $user->getId()]);
 
@@ -64,6 +67,8 @@ final class UserController extends Controller
      *
      * @param int $id The ID of the user to delete
      * @throws UserNotFoundException Thrown if no user was found with the input ID
+     * @Delete(":id")
+     * @Middleware(Authenticate::class)
      */
     public function deleteUser(int $id): void
     {
@@ -78,10 +83,10 @@ final class UserController extends Controller
      * @return User The user if one was found
      * @throws UserNotFoundException Thrown if no user was found
      * @Get(":id")
+     * @Middleware(Authenticate::class)
      */
     public function getUserById(int $id): User
     {
-        // TODO: Need middleware
         return $this->users->getUserById($id);
     }
 }

@@ -18,13 +18,30 @@ namespace App\Authentication;
 interface IAuthenticationService
 {
     /**
+     * Authenticates an access token
+     *
+     * @param int $userId The user ID to authenticate
+     * @param string $accessToken The access token to authenticate
+     * @return bool True if the access token is valid, otherwise false
+     */
+    public function authenticateAccessToken(int $userId, string $accessToken): bool;
+
+    /**
      * Attempts to log in a user
      *
      * @param string $email The email address
      * @param string $password The password
-     * @throws AuthenticationException Thrown if the credentials were invalid
+     * @return AuthenticationResult The authentication result
      */
-    public function logIn(string $email, string $password): void;
+    public function logIn(string $email, string $password): AuthenticationResult;
+
+    /**
+     * Logs out a user
+     *
+     * @param int $userId The user ID to log out
+     * @param string $accessToken The access token to log out
+     */
+    public function logOut(int $userId, string $accessToken): void;
 
     /**
      * Requests a password reset
