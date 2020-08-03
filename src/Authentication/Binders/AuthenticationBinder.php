@@ -14,8 +14,8 @@ namespace App\Authentication\Binders;
 
 use Aphiria\DependencyInjection\Binders\Binder;
 use Aphiria\DependencyInjection\IContainer;
-use App\Authentication\AuthenticationService;
 use App\Authentication\IAuthenticationService;
+use App\Authentication\SqlAuthenticationService;
 use PDO;
 
 /**
@@ -30,7 +30,7 @@ final class AuthenticationBinder extends Binder
     {
         $container->bindInstance(
             IAuthenticationService::class,
-            new AuthenticationService($container->resolve(PDO::class))
+            new SqlAuthenticationService($container->resolve(PDO::class))
         );
     }
 }

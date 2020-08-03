@@ -72,7 +72,6 @@ final class UserController extends Controller
      */
     public function deleteUser(int $id): void
     {
-        // TODO: Need middleware
         $this->users->deleteUser($id);
     }
 

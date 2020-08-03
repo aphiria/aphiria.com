@@ -98,16 +98,26 @@ SQL;
     /**
      * @inheritdoc
      */
-    public function getAllPosts(bool $includeDeletedPosts = false): array
+    public function getAllPosts(int $pageNum = 1, int $pageSize = 10): array
     {
-        $whereClause = $includeDeletedPosts ? 'WHERE is_deleted = FALSE' : '';
+        if ($pageNum < 1) {
+            throw new InvalidPagingParameterException('Page number cannot be less than 1');
+        }
+
+        if ($pageSize < 1 || $pageSize > 10) {
+            throw new InvalidPagingParameterException('Page size must be between 1 and 10');
+        }
+
         $sql = <<<SQL
 SELECT id, author_id, title, text_summary, markdown_content, html_content, created_date, last_updated_date, publish_date, is_deleted
 FROM posts
-{$whereClause}
+WHERE is_deleted = FALSE
 ORDER BY publish_date DESC
+LIMIT :pageSize
+OFFSET :offset
 SQL;
-        $statement = $this->pdo->query($sql);
+        $statement = $this->pdo->prepare($sql);
+        $statement->execute(['offset' => ($pageNum - 1) * $pageSize, 'pageSize' => $pageSize]);
         $posts = [];
 
         foreach ($statement->fetchAll(PDO::FETCH_ASSOC) as $row) {
@@ -125,7 +135,7 @@ SQL;
         $sql = <<<SQL
 SELECT id, author_id, title, text_summary, markdown_content, html_content, created_date, last_updated_date, publish_date, is_deleted
 FROM posts
-WHERE id = :id
+WHERE id = :id AND is_deleted = FALSE
 SQL;
         $statement = $this->pdo->prepare($sql);
         $statement->execute(['id' => $id]);

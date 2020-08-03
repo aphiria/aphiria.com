@@ -38,6 +38,12 @@ final class PostModule implements IModule
                 PostNotFoundException::class,
                 fn (PostNotFoundException $ex, IRequest $request, IResponseFactory $responseFactory) =>
                     $responseFactory->createResponse($request, HttpStatusCodes::HTTP_NOT_FOUND)
+            )
+            ->withHttpExceptionResponseFactory(
+                $appBuilder,
+                InvalidPagingParameterException::class,
+                fn (InvalidPagingParameterException $ex, IRequest $request, IResponseFactory $responseFactory) =>
+                $responseFactory->createResponse($request, HttpStatusCodes::HTTP_BAD_REQUEST, null, $ex->getMessage())
             );
     }
 }

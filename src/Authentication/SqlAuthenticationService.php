@@ -17,15 +17,14 @@ use DateTime;
 use PDO;
 
 /**
- * Defines the authentication service
+ * Defines the authentication service backed by SQL
  */
-final class AuthenticationService implements IAuthenticationService
+final class SqlAuthenticationService implements IAuthenticationService
 {
     public const ACCESS_TOKEN_COOKIE_NAME = 'accessToken';
     private const ACCESS_TOKEN_COOKIE_TTL_SECONDS = 30 * 60;
     /** @var PDO The DB instance */
     private PDO $pdo;
-    /** @var string The  */
 
     /**
      * @param PDO $pdo The DB instance
@@ -40,16 +39,7 @@ final class AuthenticationService implements IAuthenticationService
      */
     public function authenticateAccessToken(int $userId, string $accessToken): bool
     {
-        $sql = <<<SQL
-SELECT count(id)
-FROM user_access_tokens
-WHERE user_id = :userId AND is_active = TRUE AND expiration_date > NOW() AND hashed_access_token = SHA256(CONCAT(salt, :accessToken))
-SQL;
-        $statement = $this->pdo->prepare($sql);
-        $statement->execute(['userId' => $userId, 'accessToken' => $accessToken]);
-        $row = $statement->fetchColumn();
-
-        return $row === 1;
+        return $this->getActiveAccessTokenDataForUser($userId, $accessToken) !== null;
     }
 
     /**
@@ -114,13 +104,19 @@ SQL;
      */
     public function logOut(int $userId, string $accessToken): void
     {
-        $sql = <<<SQL
+        $this->pdo->beginTransaction();
+
+        if (($row = $this->getActiveAccessTokenDataForUser($userId, $accessToken)) !== null) {
+            $sql = <<<SQL
 UPDATE user_access_tokens
 SET is_active = FALSE
-WHERE user_id = :userId AND hashed_access_token = SHA256(CONCAT(salt, :accessToken))
+WHERE id = :id
 SQL;
-        $statement = $this->pdo->prepare($sql);
-        $statement->execute(['userId' => $userId, 'accessToken' => $accessToken]);
+            $statement = $this->pdo->prepare($sql);
+            $statement->execute(['id' => $row['id']]);
+        }
+
+        $this->pdo->commit();
     }
 
     /**
@@ -137,5 +133,31 @@ SQL;
     public function updatePassword(int $userId, string $newPassword): void
     {
         // TODO: What should this return?
+    }
+
+    /**
+     * Gets data about a current access token for a user
+     *
+     * @param int $userId The ID whose access token we're trying to find
+     * @param string $accessToken The access token whose data we want
+     * @return array|null The array containing 'id', 'salt', and 'hashed_access_token' keys if a matching token was found, otherwise null
+     */
+    private function getActiveAccessTokenDataForUser(int $userId, string $accessToken): ?array
+    {
+        $sql = <<<SQL
+SELECT id, salt, hashed_access_token
+FROM user_access_tokens
+WHERE user_id = :userId AND is_active = TRUE AND expiration_date > NOW()
+SQL;
+        $statement = $this->pdo->prepare($sql);
+        $statement->execute(['userId' => $userId]);
+
+        foreach ($statement->fetchAll(PDO::FETCH_ASSOC) as $row) {
+            if (hash('sha256', $row['salt'] . $accessToken) === $row['hashed_access_token']) {
+                return $row;
+            }
+        }
+
+        return null;
     }
 }

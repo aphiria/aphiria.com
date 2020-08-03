@@ -23,9 +23,10 @@ use Aphiria\Routing\Annotations\Route;
 use App\Authentication\Api\LoginDto;
 use App\Authentication\Api\RequestPasswordResetDto;
 use App\Authentication\Api\UpdatePasswordDto;
-use App\Authentication\AuthenticationService;
 use App\Authentication\IAuthenticationService;
+use App\Authentication\SqlAuthenticationService;
 use DateTime;
+use JsonException;
 
 /**
  * Defines the authentication controller
@@ -52,6 +53,7 @@ final class AuthenticationController extends Controller
      * @return IResponse The login response
      * @Post("login")
      * @throws HttpException Thrown if there was an error creating the response
+     * @throws JsonException Thrown if there was an error encoding the access token
      */
     public function logIn(LoginDto $login): IResponse
     {
@@ -70,7 +72,7 @@ final class AuthenticationController extends Controller
         $this->responseFormatter->setCookie(
             $response,
             new Cookie(
-                AuthenticationService::ACCESS_TOKEN_COOKIE_NAME,
+                SqlAuthenticationService::ACCESS_TOKEN_COOKIE_NAME,
                 \json_encode([
                     'userId' => $authenticationResult->userId,
                     'accessToken' => $authenticationResult->accessToken

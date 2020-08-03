@@ -40,10 +40,12 @@ interface IPostService
     /**
      * Gets all the posts
      *
-     * @param bool $includeDeletedPosts Whether or not to include deleted posts
+     * @param int $pageNum The page number to use
+     * @param int $pageSize The page size to use
      * @return Post[] The list of posts
+     * @throws InvalidPagingParameterException Thrown if the paging parameters were invalid
      */
-    public function getAllPosts(bool $includeDeletedPosts = false): array;
+    public function getAllPosts(int $pageNum = 1, int $pageSize = 10): array;
 
     /**
      * Gets a post by ID

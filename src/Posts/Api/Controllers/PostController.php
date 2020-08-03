@@ -21,11 +21,13 @@ use Aphiria\Routing\Annotations\Middleware;
 use Aphiria\Routing\Annotations\Post;
 use Aphiria\Routing\Annotations\Put;
 use Aphiria\Routing\Annotations\RouteGroup;
+use App\Authentication\Api\AccessTokenParser;
 use App\Authentication\Api\Middleware\Authenticate;
 use App\Posts\Api\CreatePostDto;
 use App\Posts\Api\UpdatePostDto;
 use App\Posts\Api\ViewPostDto;
 use App\Posts\Api\ViewPostDtoFactory;
+use App\Posts\InvalidPagingParameterException;
 use App\Posts\IPostService;
 use App\Posts\PostNotFoundException;
 use App\Users\UserNotFoundException;
@@ -40,15 +42,22 @@ final class PostController extends Controller
     private IPostService $posts;
     /** @var ViewPostDtoFactory The view post DTO factory */
     private ViewPostDtoFactory $viewPostDtoFactory;
+    /** @var AccessTokenParser The access token parser */
+    private AccessTokenParser $accessTokenParser;
 
     /**
      * @param IPostService $posts The post service
      * @param ViewPostDtoFactory $viewPostDtoFactory The view post DTO factory
+     * @param AccessTokenParser $accessTokenParser The access token parser
      */
-    public function __construct(IPostService $posts, ViewPostDtoFactory $viewPostDtoFactory)
-    {
+    public function __construct(
+        IPostService $posts,
+        ViewPostDtoFactory $viewPostDtoFactory,
+        AccessTokenParser $accessTokenParser
+    ) {
         $this->posts = $posts;
         $this->viewPostDtoFactory = $viewPostDtoFactory;
+        $this->accessTokenParser = $accessTokenParser;
     }
 
     /**
@@ -57,13 +66,17 @@ final class PostController extends Controller
      * @param CreatePostDto $createPostDto the create post DTO
      * @return ViewPostDto The created post
      * @throws UserNotFoundException Thrown if the author was not found
+     * @throws HttpException Thrown if there was no valid access token set (shouldn't happen because of the middleware)
      * @Post("")
      * @Middleware(Authenticate::class)
      */
     public function createPost(CreatePostDto $createPostDto): ViewPostDto
     {
-        // TODO: Add way of extracting current user's ID
-        $createdPost = $this->posts->createPost(0, $createPostDto);
+        if (($accessToken = $this->accessTokenParser->parseAccessToken($this->request)) === null) {
+            throw new HttpException(HttpStatusCodes::HTTP_UNAUTHORIZED, 'No valid access token set');
+        }
+
+        $createdPost = $this->posts->createPost($accessToken->userId, $createPostDto);
 
         return $this->viewPostDtoFactory->createViewPostDtoFromModel($createdPost);
     }
@@ -84,27 +97,16 @@ final class PostController extends Controller
     /**
      * Gets all posts
      *
-     * @param bool $includeDeletedPosts Whether or not to include deleted posts
      * @param int $pageNum The current page number
      * @param int $pageSize The page size
      * @return ViewPostDto[] The list of posts
-     * @throws HttpException Thrown if the page params were invalid
+     * @throws InvalidPagingParameterException Thrown if the page params were invalid
      * @throws UserNotFoundException Thrown if any of the authors could not be found
      * @Get("")
      */
-    public function getAllPosts(bool $includeDeletedPosts = false, int $pageNum = 1, int $pageSize = 10): array
+    public function getAllPosts(int $pageNum = 1, int $pageSize = 10): array
     {
-        if ($pageNum < 1) {
-            throw new HttpException(HttpStatusCodes::HTTP_BAD_REQUEST, 'Page number cannot be less than 1');
-        }
-
-        if ($pageSize < 1 || $pageSize > 10) {
-            throw new HttpException(HttpStatusCodes::HTTP_BAD_REQUEST, 'Page size must be between 1 and 10');
-        }
-
-        // TODO: Only let the user get deleted posts if they're an admin
-        // TODO: Add support for paging, and thread that through to the post service
-        return $this->viewPostDtoFactory->createManyViewPostDtosFromModels($this->posts->getAllPosts($includeDeletedPosts));
+        return $this->viewPostDtoFactory->createManyViewPostDtosFromModels($this->posts->getAllPosts($pageNum, $pageSize));
     }
 
     /**
@@ -118,7 +120,6 @@ final class PostController extends Controller
      */
     public function getPostById(int $id): ViewPostDto
     {
-        // TODO: Do not return the post if it was deleted
         return $this->viewPostDtoFactory->createViewPostDtoFromModel($this->posts->getPostById($id));
     }
 
