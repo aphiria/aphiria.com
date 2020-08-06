@@ -21,7 +21,9 @@ use PDO;
  */
 final class SqlAuthenticationService implements IAuthenticationService
 {
+    /** @var string The name of the cookie that contains the access token */
     public const ACCESS_TOKEN_COOKIE_NAME = 'accessToken';
+    /** @var int The TTL for the access token cookie */
     private const ACCESS_TOKEN_COOKIE_TTL_SECONDS = 30 * 60;
     /** @var PDO The DB instance */
     private PDO $pdo;
@@ -153,7 +155,7 @@ SQL;
         $statement->execute(['userId' => $userId]);
 
         foreach ($statement->fetchAll(PDO::FETCH_ASSOC) as $row) {
-            if (hash('sha256', $row['salt'] . $accessToken) === $row['hashed_access_token']) {
+            if (\hash_equals($row['hashed_access_token'], hash('sha256', $row['salt'] . $accessToken))) {
                 return $row;
             }
         }
