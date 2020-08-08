@@ -21,7 +21,7 @@ use Aphiria\Routing\Annotations\Middleware;
 use Aphiria\Routing\Annotations\Post;
 use Aphiria\Routing\Annotations\Put;
 use Aphiria\Routing\Annotations\RouteGroup;
-use App\Authentication\Api\AccessTokenParser;
+use App\Authentication\Api\AuthContext;
 use App\Authentication\Api\Middleware\Authenticate;
 use App\Posts\Api\CreatePostDto;
 use App\Posts\Api\UpdatePostDto;
@@ -42,22 +42,22 @@ final class PostController extends Controller
     private IPostService $posts;
     /** @var ViewPostDtoFactory The view post DTO factory */
     private ViewPostDtoFactory $viewPostDtoFactory;
-    /** @var AccessTokenParser The access token parser */
-    private AccessTokenParser $accessTokenParser;
+    /** @var AuthContext The current auth context */
+    private AuthContext $authContext;
 
     /**
      * @param IPostService $posts The post service
      * @param ViewPostDtoFactory $viewPostDtoFactory The view post DTO factory
-     * @param AccessTokenParser $accessTokenParser The access token parser
+     * @param AuthContext $authContext The current auth context
      */
     public function __construct(
         IPostService $posts,
         ViewPostDtoFactory $viewPostDtoFactory,
-        AccessTokenParser $accessTokenParser
+        AuthContext $authContext
     ) {
         $this->posts = $posts;
         $this->viewPostDtoFactory = $viewPostDtoFactory;
-        $this->accessTokenParser = $accessTokenParser;
+        $this->authContext = $authContext;
     }
 
     /**
@@ -66,17 +66,12 @@ final class PostController extends Controller
      * @param CreatePostDto $createPostDto the create post DTO
      * @return ViewPostDto The created post
      * @throws UserNotFoundException Thrown if the author was not found
-     * @throws HttpException Thrown if there was no valid access token set (shouldn't happen because of the middleware)
      * @Post("")
      * @Middleware(Authenticate::class)
      */
     public function createPost(CreatePostDto $createPostDto): ViewPostDto
     {
-        if (($accessToken = $this->accessTokenParser->parseAccessToken($this->request)) === null) {
-            throw new HttpException(HttpStatusCodes::HTTP_UNAUTHORIZED, 'No valid access token set');
-        }
-
-        $createdPost = $this->posts->createPost($accessToken->userId, $createPostDto);
+        $createdPost = $this->posts->createPost($this->authContext->getUserId(), $createPostDto);
 
         return $this->viewPostDtoFactory->createViewPostDtoFromModel($createdPost);
     }

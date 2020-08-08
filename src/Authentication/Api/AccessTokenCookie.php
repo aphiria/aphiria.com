@@ -13,9 +13,9 @@ declare(strict_types=1);
 namespace App\Authentication\Api;
 
 /**
- * Defines an access token
+ * Defines an access token cookie's contents
  */
-final class AccessToken
+final class AccessTokenCookie
 {
     /** @var int The ID of the user whose access token this is */
     public int $userId;

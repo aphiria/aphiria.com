@@ -17,9 +17,9 @@ use Aphiria\Net\Http\IRequest;
 use App\Authentication\SqlAuthenticationService;
 
 /**
- * Defines the access token parser
+ * Defines the access token cookie parser
  */
-final class AccessTokenParser
+final class AccessTokenCookieParser
 {
     /** @var RequestParser The request parser */
     private RequestParser $requestParser;
@@ -36,9 +36,9 @@ final class AccessTokenParser
      * Parses a request for an access token
      *
      * @param IRequest $request The request to parse
-     * @return AccessToken|null The access token if one existed in the request, otherwise null
+     * @return AccessTokenCookie|null The access token if one existed in the request, otherwise null
      */
-    public function parseAccessToken(IRequest $request): ?AccessToken
+    public function parseAccessToken(IRequest $request): ?AccessTokenCookie
     {
         // TODO: Should I rename some of this stuff so that we can use it as an "authContext", eg $this->authContext->userId or $this->authContext->accessToken?  Where would I define the context?  And where would I populate it?  In middleware?  In request properties?
         $cookies = $this->requestParser->parseCookies($request);
@@ -58,6 +58,6 @@ final class AccessTokenParser
             return null;
         }
 
-        return new AccessToken($parsedAccessToken['userId'], $parsedAccessToken['accessToken']);
+        return new AccessTokenCookie($parsedAccessToken['userId'], $parsedAccessToken['accessToken']);
     }
 }

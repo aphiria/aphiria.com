@@ -25,6 +25,10 @@ final class SqlAuthenticationService implements IAuthenticationService
     public const ACCESS_TOKEN_COOKIE_NAME = 'accessToken';
     /** @var int The TTL for the access token cookie */
     private const ACCESS_TOKEN_COOKIE_TTL_SECONDS = 30 * 60;
+    /** @var int The length of the access token salt */
+    private const ACCESS_TOKEN_SALT_LENGTH = 32;
+    /** @var int The length of the access token */
+    private const ACCESS_TOKEN_LENGTH = 32;
     /** @var PDO The DB instance */
     private PDO $pdo;
 
@@ -42,6 +46,34 @@ final class SqlAuthenticationService implements IAuthenticationService
     public function authenticateAccessToken(int $userId, string $accessToken): bool
     {
         return $this->getActiveAccessTokenDataForUser($userId, $accessToken) !== null;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function changePassword(int $userId, string $currPassword, string $newPassword): void
+    {
+        $this->pdo->beginTransaction();
+        $sql = <<<SQL
+SELECT hashed_password
+FROM user_credentials
+WHERE user_id = :userId AND is_active = TRUE
+SQL;
+        $authenticatePasswordStatement = $this->pdo->prepare($sql);
+        $authenticatePasswordStatement->execute(['userId' => $userId]);
+        $authenticatePasswordRow = $authenticatePasswordStatement->fetchColumn();
+
+        if (
+            \count($authenticatePasswordRow) !== 1
+            || !\password_verify($currPassword, $authenticatePasswordRow[0])
+        ) {
+            $this->pdo->rollBack();
+            throw new IncorrectPasswordException('Current password was invalid');
+        }
+
+        // We know the user's password was valid, so disable all previous passwords, and add this new one
+        $this->setPassword($userId, $newPassword);
+        $this->pdo->commit();
     }
 
     /**
@@ -74,8 +106,8 @@ SQL;
             return new AuthenticationResult(false, 'Invalid credentials');
         }
 
-        $salt = \bin2hex(\random_bytes(32));
-        $accessToken = \bin2hex(\random_bytes(32));
+        $salt = \bin2hex(\random_bytes(self::ACCESS_TOKEN_SALT_LENGTH));
+        $accessToken = \bin2hex(\random_bytes(self::ACCESS_TOKEN_LENGTH));
         $expiration = (new DateTime())->add(new DateInterval('P' . self::ACCESS_TOKEN_COOKIE_TTL_SECONDS . 'S'));
         $addAccessTokenSql = <<<SQL
 INSERT INTO user_access_tokens
@@ -130,14 +162,6 @@ SQL;
     }
 
     /**
-     * @inheritdoc
-     */
-    public function updatePassword(int $userId, string $newPassword): void
-    {
-        // TODO: What should this return?
-    }
-
-    /**
      * Gets data about a current access token for a user
      *
      * @param int $userId The ID whose access token we're trying to find
@@ -161,5 +185,35 @@ SQL;
         }
 
         return null;
+    }
+
+    /**
+     * Sets a user's password
+     *
+     * @param int $userId The ID of the user
+     * @param string $newPassword The new password
+     * @throws InvalidPasswordException Thrown if the new password was invalid
+     */
+    private function setPassword(int $userId, string $newPassword): void
+    {
+        if (\mb_strlen($newPassword) < 8 || trim($newPassword) === '') {
+            throw new InvalidPasswordException('Passwords must be at least 8 characters long');
+        }
+
+        $sql = <<<SQL
+UPDATE user_credentials
+SET is_active = false
+WHERE user_id = :userId;
+SQL;
+        $deactiveOldPasswordsStatement = $this->pdo->prepare($sql);
+        $deactiveOldPasswordsStatement->execute(['userId' => $userId]);
+        $sql = <<<SQL
+INSERT INTO user_credentials
+(user_id, hashed_password)
+VALUES
+(:userId, :hashedPassword)
+SQL;
+        $addPasswordStatement = $this->pdo->prepare($sql);
+        $addPasswordStatement->execute(['userId' => $userId, \password_hash($newPassword, PASSWORD_ARGON2ID)]);
     }
 }

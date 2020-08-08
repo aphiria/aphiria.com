@@ -13,6 +13,7 @@ declare(strict_types=1);
 namespace App\Users\Api\Controllers;
 
 use Aphiria\Api\Controllers\Controller;
+use Aphiria\Net\Http\HttpException;
 use Aphiria\Net\Http\IResponse;
 use Aphiria\Routing\Annotations\Delete;
 use Aphiria\Routing\Annotations\Get;
@@ -53,6 +54,7 @@ final class UserController extends Controller
      * @return IResponse The response
      * @Post("")
      * @Middleware(Authenticate::class)
+     * @throws HttpException Thrown if the response couldn't be negotiated
      */
     public function addUser(User $user): IResponse
     {

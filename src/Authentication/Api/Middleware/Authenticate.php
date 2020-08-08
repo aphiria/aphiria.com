@@ -12,13 +12,15 @@ declare(strict_types=1);
 
 namespace App\Authentication\Api\Middleware;
 
+use Aphiria\DependencyInjection\IContainer;
 use Aphiria\Middleware\IMiddleware;
 use Aphiria\Net\Http\HttpException;
 use Aphiria\Net\Http\HttpStatusCodes;
 use Aphiria\Net\Http\IRequest;
 use Aphiria\Net\Http\IRequestHandler;
 use Aphiria\Net\Http\IResponse;
-use App\Authentication\Api\AccessTokenParser;
+use App\Authentication\Api\AccessTokenCookieParser;
+use App\Authentication\Api\AuthContext;
 use App\Authentication\IAuthenticationService;
 
 /**
@@ -28,17 +30,24 @@ final class Authenticate implements IMiddleware
 {
     /** @var IAuthenticationService The auth service */
     private IAuthenticationService $auth;
-    /** @var AccessTokenParser The access token parser */
-    private AccessTokenParser $accessTokenParser;
+    /** @var AccessTokenCookieParser The access token parser */
+    private AccessTokenCookieParser $accessTokenCookieParser;
+    /** @var IContainer The DI container */
+    private IContainer $container;
 
     /**
      * @param IAuthenticationService $auth The auth service
-     * @param AccessTokenParser $accessTokenParser The access token parser
+     * @param AccessTokenCookieParser $accessTokenCookieParser The access token parser
+     * @param IContainer $container The DI container
      */
-    public function __construct(IAuthenticationService $auth, AccessTokenParser $accessTokenParser)
-    {
+    public function __construct(
+        IAuthenticationService $auth,
+        AccessTokenCookieParser $accessTokenCookieParser,
+        IContainer $container
+    ) {
         $this->auth = $auth;
-        $this->accessTokenParser = $accessTokenParser;
+        $this->accessTokenCookieParser = $accessTokenCookieParser;
+        $this->container = $container;
     }
 
     /**
@@ -47,13 +56,19 @@ final class Authenticate implements IMiddleware
      */
     public function handle(IRequest $request, IRequestHandler $next): IResponse
     {
-        if (($accessToken = $this->accessTokenParser->parseAccessToken($request)) === null) {
-            throw new HttpException(HttpStatusCodes::HTTP_UNAUTHORIZED, 'Valid access token not set');
+        if (($accessTokenCookie = $this->accessTokenCookieParser->parseAccessToken($request)) === null) {
+            throw new HttpException(HttpStatusCodes::HTTP_UNAUTHORIZED, 'Access token not set');
         }
 
-        if (!$this->auth->authenticateAccessToken($accessToken->userId, $accessToken->accessToken)) {
+        if (!$this->auth->authenticateAccessToken($accessTokenCookie->userId, $accessTokenCookie->accessToken)) {
             throw new HttpException(HttpStatusCodes::HTTP_UNAUTHORIZED, 'Invalid access token');
         }
+
+        // Overwrite the auth context bound in the auth binder
+        $this->container->bindInstance(
+            AuthContext::class,
+            new AuthContext(true, $accessTokenCookie->userId, $accessTokenCookie->accessToken)
+        );
 
         return $next->handle($request);
     }

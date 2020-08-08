@@ -10,13 +10,13 @@
 
 declare(strict_types=1);
 
-namespace App\Authentication\Api;
+namespace App\Authentication;
+
+use Exception;
 
 /**
- * Defines the update password DTO
+ * Defines the exception that's thrown when a password is not valid, eg too short
  */
-final class UpdatePasswordDto
+final class InvalidPasswordException extends Exception
 {
-    /** @var string The new password */
-    public string $newPassword;
 }

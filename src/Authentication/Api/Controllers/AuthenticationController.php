@@ -17,12 +17,15 @@ use Aphiria\Net\Http\Headers\Cookie;
 use Aphiria\Net\Http\HttpException;
 use Aphiria\Net\Http\HttpStatusCodes;
 use Aphiria\Net\Http\IResponse;
+use Aphiria\Routing\Annotations\Middleware;
 use Aphiria\Routing\Annotations\Post;
 use Aphiria\Routing\Annotations\Put;
 use Aphiria\Routing\Annotations\Route;
+use App\Authentication\Api\AuthContext;
+use App\Authentication\Api\ChangePasswordDto;
 use App\Authentication\Api\LoginDto;
+use App\Authentication\Api\Middleware\Authenticate;
 use App\Authentication\Api\RequestPasswordResetDto;
-use App\Authentication\Api\UpdatePasswordDto;
 use App\Authentication\IAuthenticationService;
 use App\Authentication\SqlAuthenticationService;
 use DateTime;
@@ -37,13 +40,33 @@ final class AuthenticationController extends Controller
 {
     /** @var IAuthenticationService The authentication service */
     private IAuthenticationService $auth;
+    /** @var AuthContext The current auth context */
+    private AuthContext $authContext;
 
     /**
      * @param IAuthenticationService $auth The authentication service
+     * @param AuthContext $authContext The current auth context
      */
-    public function __construct(IAuthenticationService $auth)
+    public function __construct(IAuthenticationService $auth, AuthContext $authContext)
     {
         $this->auth = $auth;
+        $this->authContext = $authContext;
+    }
+
+    /**
+     * Changes a logged-in user's password
+     *
+     * @param ChangePasswordDto $changePassword The password change DTO
+     * @Put("password")
+     * @Middleware(Authenticate::class)
+     */
+    public function changePassword(ChangePasswordDto $changePassword): void
+    {
+        $this->auth->changePassword(
+            $this->authContext->getUserId(),
+            $changePassword->currPassword,
+            $changePassword->newPassword
+        );
     }
 
     /**
@@ -93,19 +116,5 @@ final class AuthenticationController extends Controller
     public function requestPasswordReset(RequestPasswordResetDto $passwordReset): void
     {
         $this->auth->requestPasswordReset($passwordReset->email);
-    }
-
-    /**
-     * Updates a user's password
-     *
-     * @param UpdatePasswordDto $updatePassword
-     * @Put("password")
-     */
-    public function updatePassword(UpdatePasswordDto $updatePassword): void
-    {
-        // Where/how do we pass in the user ID?
-        // TODO: How do we trust that the user ID that's passed in is legit?
-        // TODO: I need some way of verifying that this request is legit (probably using a nonce)
-        $this->auth->updatePassword(-1, $updatePassword->newPassword);
     }
 }
