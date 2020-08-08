@@ -44,6 +44,18 @@ final class AuthenticationModule implements IModule
                 InvalidPasswordException::class,
                 fn (InvalidPasswordException $ex, IRequest $request, IResponseFactory $responseFactory) =>
                     $responseFactory->createResponse($request, HttpStatusCodes::HTTP_BAD_REQUEST)
+            )
+            ->withHttpExceptionResponseFactory(
+                $appBuilder,
+                PasswordResetNonceExpiredException::class,
+                fn (PasswordResetNonceExpiredException $ex, IRequest $request, IResponseFactory $responseFactory) =>
+                    $responseFactory->createResponse($request, HttpStatusCodes::HTTP_BAD_REQUEST)
+            )
+            ->withHttpExceptionResponseFactory(
+                $appBuilder,
+                IncorrectPasswordResetNonceException::class,
+                fn (IncorrectPasswordResetNonceException $ex, IRequest $request, IResponseFactory $responseFactory) =>
+                    $responseFactory->createResponse($request, HttpStatusCodes::HTTP_BAD_REQUEST)
             );
     }
 }

@@ -26,7 +26,11 @@ use App\Authentication\Api\ChangePasswordDto;
 use App\Authentication\Api\LoginDto;
 use App\Authentication\Api\Middleware\Authenticate;
 use App\Authentication\Api\RequestPasswordResetDto;
+use App\Authentication\Api\ResetPasswordDto;
 use App\Authentication\IAuthenticationService;
+use App\Authentication\IncorrectPasswordException;
+use App\Authentication\InvalidPasswordException;
+use App\Authentication\PasswordResetNonceExpiredException;
 use App\Authentication\SqlAuthenticationService;
 use DateTime;
 use JsonException;
@@ -59,6 +63,7 @@ final class AuthenticationController extends Controller
      * @param ChangePasswordDto $changePassword The password change DTO
      * @Put("password")
      * @Middleware(Authenticate::class)
+     * @throws IncorrectPasswordException|InvalidPasswordException Thrown if the password was incorrect or invalid
      */
     public function changePassword(ChangePasswordDto $changePassword): void
     {
@@ -110,11 +115,23 @@ final class AuthenticationController extends Controller
     /**
      * Requests a password reset for a user
      *
-     * @param RequestPasswordResetDto $passwordReset The password reset DTO
+     * @param RequestPasswordResetDto $passwordResetRequest The password reset DTO
      * @Post("password/reset")
      */
-    public function requestPasswordReset(RequestPasswordResetDto $passwordReset): void
+    public function requestPasswordReset(RequestPasswordResetDto $passwordResetRequest): void
     {
-        $this->auth->requestPasswordReset($passwordReset->email);
+        $this->auth->requestPasswordReset($passwordResetRequest->email);
+    }
+
+    /**
+     * Resets a user's password
+     *
+     * @param ResetPasswordDto $resetPassword The reset password DTO
+     * @throws InvalidPasswordException Thrown if the new password was invalid
+     * @throws PasswordResetNonceExpiredException Thrown if the nonce expired
+     */
+    public function resetPassword(ResetPasswordDto $resetPassword): void
+    {
+        $this->auth->resetPassword($resetPassword->userId, $resetPassword->nonce, $resetPassword->newPassword);
     }
 }

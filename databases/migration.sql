@@ -3,7 +3,8 @@ CREATE TABLE IF NOT EXISTS users (
     email TEXT NOT NULL,
     first_name TEXT NOT NULL,
     last_name TEXT NOT NULL,
-    is_active BOOL DEFAULT TRUE
+    is_active BOOL DEFAULT TRUE,
+    timestamp TIMESTAMP DEFAULT NOW()
 );
 
 CREATE TABLE IF NOT EXISTS user_credentials (
@@ -11,6 +12,18 @@ CREATE TABLE IF NOT EXISTS user_credentials (
     user_id int NOT NULL,
     hashed_password TEXT NOT NULL,
     is_active BOOL DEFAULT TRUE,
+    timestamp TIMESTAMP DEFAULT NOW(),
+    CONSTRAINT fk_user_id FOREIGN KEY(user_id) REFERENCES users(id)
+);
+
+CREATE TABLE IF NOT EXISTS user_credential_resets (
+    id SERIAL PRIMARY KEY,
+    user_id int NOT NULL,
+    salt TEXT NOT NULL,
+    hashed_nonce TEXT NOT NULL,
+    is_active BOOL DEFAULT TRUE,
+    expiration TIMESTAMP NOT NULL,
+    timestamp TIMESTAMP DEFAULT NOW(),
     CONSTRAINT fk_user_id FOREIGN KEY(user_id) REFERENCES users(id)
 );
 
@@ -21,6 +34,7 @@ CREATE TABLE IF NOT EXISTS user_access_tokens (
     hashed_access_token TEXT NOT NULL,
     expiration TIMESTAMP NOT NULL,
     is_active BOOL DEFAULT TRUE,
+    timestamp TIMESTAMP DEFAULT NOW(),
     CONSTRAINT fk_user_id FOREIGN KEY(user_id) REFERENCES users(id)
 );
 
@@ -35,5 +49,6 @@ CREATE TABLE IF NOT EXISTS posts (
     last_updated_date TIMESTAMP NOT NULL,
     publish_date TIMESTAMP NOT NULL,
     is_deleted BOOL DEFAULT FALSE,
+    timestamp TIMESTAMP DEFAULT NOW(),
     CONSTRAINT fk_author_id FOREIGN KEY(author_id) REFERENCES users(id)
 );

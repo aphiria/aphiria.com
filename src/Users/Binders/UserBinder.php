@@ -14,6 +14,7 @@ namespace App\Users\Binders;
 
 use Aphiria\DependencyInjection\Binders\Binder;
 use Aphiria\DependencyInjection\IContainer;
+use App\Authentication\IAuthenticationService;
 use App\Users\IUserService;
 use App\Users\SqlUserService;
 use PDO;
@@ -28,6 +29,10 @@ final class UserBinder extends Binder
      */
     public function bind(IContainer $container): void
     {
-        $container->bindInstance(IUserService::class, new SqlUserService($container->resolve(PDO::class)));
+        $userService = new SqlUserService(
+            $container->resolve(PDO::class),
+            $container->resolve(IAuthenticationService::class)
+        );
+        $container->bindInstance(IUserService::class, $userService);
     }
 }

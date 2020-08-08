@@ -31,7 +31,7 @@ final class AuthenticationBinder extends Binder
     {
         $container->bindInstance(
             IAuthenticationService::class,
-            new SqlAuthenticationService($container->resolve(PDO::class))
+            new SqlAuthenticationService($container->resolve(PDO::class), \getenv('APP_WEB_URL'))
         );
         // Bind an unauthenticated context, and let the auth middleware overwrite it if authenticated
         $container->bindInstance(AuthContext::class, new AuthContext(false));

@@ -12,6 +12,7 @@ declare(strict_types=1);
 
 namespace App\Users;
 
+use App\Authentication\IAuthenticationService;
 use PDO;
 
 /**
@@ -21,13 +22,17 @@ final class SqlUserService implements IUserService
 {
     /** @var PDO The PDO instance that SQL queries will use */
     private PDO $pdo;
+    /** @var IAuthenticationService The auth service */
+    private IAuthenticationService $auth;
 
     /**
      * @param PDO $pdo The PDO instance that SQL queries will use
+     * @param IAuthenticationService The auth service
      */
-    public function __construct(PDO $pdo)
+    public function __construct(PDO $pdo, IAuthenticationService $auth)
     {
         $this->pdo = $pdo;
+        $this->auth = $auth;
     }
 
     /**
@@ -43,6 +48,7 @@ final class SqlUserService implements IUserService
             'lastName' => $user->getLastName()
         ]);
         $createdUser = new User((int)$this->pdo->lastInsertId(), $user->getEmail(), $user->getFirstName(), $user->getLastName());
+        $this->auth->requestPasswordReset($user->getEmail());
         $this->pdo->commit();
 
         return $createdUser;

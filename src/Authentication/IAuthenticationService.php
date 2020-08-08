@@ -17,8 +17,6 @@ namespace App\Authentication;
  */
 interface IAuthenticationService
 {
-    // TODO: I need a way of setting the initial password for a user.  How do I do that?
-
     /**
      * Authenticates an access token
      *
@@ -62,4 +60,16 @@ interface IAuthenticationService
      * @param string $email The email of the user whose password we want to reset
      */
     public function requestPasswordReset(string $email): void;
+
+    /**
+     * Resets a user's password
+     *
+     * @param int $userId The Id of the user
+     * @param string $nonce The nonce used to reset the password
+     * @param string $newPassword The new password
+     * @throws InvalidPasswordException Thrown if the password was invalid
+     * @throws PasswordResetNonceExpiredException Thrown if the nonce was expired
+     * @throws InvalidPasswordException Thrown if the new password was invalid
+     */
+    public function resetPassword(int $userId, string $nonce, string $newPassword): void;
 }

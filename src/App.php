@@ -40,6 +40,7 @@ use Aphiria\Middleware\MiddlewareBinding;
 use Aphiria\Net\Http\HttpException;
 use App\Api\Binders\ApiBinder;
 use App\Api\Middleware\Cors;
+use App\Authentication\AuthenticationModule;
 use App\Documentation\DocumentationModule;
 use App\Posts\PostModule;
 use App\Users\UserModule;
@@ -102,6 +103,7 @@ final class App implements IModule
                 new DocumentationModule(),
                 new WebModule(),
                 new UserModule(),
+                new AuthenticationModule(),
                 new PostModule()
             ]);
     }

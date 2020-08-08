@@ -29,15 +29,37 @@ final class SqlAuthenticationService implements IAuthenticationService
     private const ACCESS_TOKEN_SALT_LENGTH = 32;
     /** @var int The length of the access token */
     private const ACCESS_TOKEN_LENGTH = 32;
+    /** @var int The TTL for the password reset nonce */
+    private const PASSWORD_RESET_NONCE_TTL_SECONDS = 15 * 60;
+    /** @var int The length of the password reset nonce salt */
+    private const PASSWORD_RESET_NONCE_SALT_LENGTH = 32;
+    /** @var int The length of the password reset nonce */
+    private const PASSWORD_RESET_NONCE_LENGTH = 32;
+    /** @var string The subject of the password reset email */
+    private const PASSWORD_RESET_EMAIL_SUBJECT = 'Aphiria.com Password Reset';
+    /** @var string The body of the password reset email */
+    private const PASSWORD_RESET_EMAIL_BODY = <<<EMAIL
+<html>
+<head></head>
+<body>
+A password reset was requested for your email address.  If this was not you, please disregard this email.  Otherwise, <a href="{{ baseWebUri }}/admin/passwordReset?userId={{ userId }}&amp;nonce={{ nonce }}" title="Reset your password">click here</a>.  This link will expire soon.
+</body>
+</html>
+EMAIL;
+
     /** @var PDO The DB instance */
     private PDO $pdo;
+    /** @var string The base web URI for the website */
+    private string $baseWebUri;
 
     /**
      * @param PDO $pdo The DB instance
+     * @param string $baseWebUri The base web URI for the website
      */
-    public function __construct(PDO $pdo)
+    public function __construct(PDO $pdo, string $baseWebUri)
     {
         $this->pdo = $pdo;
+        $this->baseWebUri = $baseWebUri;
     }
 
     /**
@@ -158,7 +180,86 @@ SQL;
      */
     public function requestPasswordReset(string $email): void
     {
-        // TODO: How would we prevent spamming of this endpoint?
+        $getUserIdSql = <<<SQL
+SELECT user_id
+FROM users
+WHERE LOWER(email) = :email
+SQL;
+        $getUserIdStatement = $this->pdo->prepare($getUserIdSql);
+        $getUserIdStatement->execute(['email' => \mb_strtolower(trim($email))]);
+
+        if (($userId = $getUserIdStatement->fetchColumn()) === false) {
+            // This email didn't belong to any user
+            return;
+        }
+
+        $salt = \bin2hex(\random_bytes(self::PASSWORD_RESET_NONCE_SALT_LENGTH));
+        $nonce = \bin2hex(\random_bytes(self::PASSWORD_RESET_NONCE_LENGTH));
+        $expiration = (new DateTime())->add(new DateInterval('P' . self::PASSWORD_RESET_NONCE_TTL_SECONDS . 'S'));
+        $resetPasswordSql = <<<SQL
+INSERT INTO user_credential_resets
+(user_id, salt, hashed_nonce, expiration, is_active)
+VALUES
+(:userId, :salt, :hashedNonce, :expiration, true)
+SQL;
+        $resetPasswordStatement = $this->pdo->prepare($resetPasswordSql);
+        $resetPasswordStatement->execute([
+            'userId' => $userId,
+            'salt' => $salt,
+            'hashedNonce' => \hash('sha256', $salt . $nonce),
+            'expiration' => $expiration->format('Y-m-d H:i:s')
+        ]);
+        $emailBody = \str_replace(
+            ['{{ baseWebUri }}', '{{ userId }}', '{{ nonce }}'],
+            [$this->baseWebUri, $userId, $nonce],
+            self::PASSWORD_RESET_EMAIL_BODY
+        );
+        \mail($email, self::PASSWORD_RESET_EMAIL_SUBJECT, $emailBody);
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function resetPassword(int $userId, string $nonce, string $newPassword): void
+    {
+        $this->pdo->beginTransaction();
+        // To give better exception messages, we will verify that the nonce is not expired in code
+        $getNonceSql = <<<SQL
+SELECT id, salt, hashed_nonce, is_active, expiration
+FROM user_credential_resets
+WHERE user_id = :userId
+SQL;
+        $getNonceStatement = $this->pdo->prepare($getNonceSql);
+        $getNonceStatement->execute(['userId' => $userId]);
+        $nonceId = null;
+
+        foreach ($getNonceStatement->fetchAll(PDO::FETCH_ASSOC) as $row) {
+            if (\hash_equals($row['hashed_nonce'], hash('sha256', $row['salt'] . $nonce))) {
+                if (
+                    $row['is_active'] === false
+                    || DateTime::createFromFormat('Y-m-d H:i:s', $row['expiration']) < new DateTime()
+                ) {
+                    throw new PasswordResetNonceExpiredException('This nonce has expired');
+                }
+
+                $nonceId = (int)$row['id'];
+                break;
+            }
+        }
+
+        if ($nonceId === null) {
+            throw new InvalidPasswordException('Nonce was incorrect');
+        }
+
+        $this->setPassword($userId, $newPassword);
+        $deactiveNonceSql = <<<SQL
+UPDATE user_credential_resets
+SET is_active = FALSE
+WHERE id = :id
+SQL;
+        $deactiveNonceStatement = $this->pdo->prepare($deactiveNonceSql);
+        $deactiveNonceStatement->execute(['id' => $nonceId]);
+        $this->pdo->commit();
     }
 
     /**
