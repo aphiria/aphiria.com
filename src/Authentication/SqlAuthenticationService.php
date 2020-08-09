@@ -111,8 +111,9 @@ SQL;
         $authenticateCredentialsSql = <<<SQL
 SELECT c.user_id, c.hashed_password
 FROM user_credentials c
-INNER JOIN users u ON u.user_id = c.user_id
-WHERE u.is_deleted = FALSE AND c.is_active = TRUE and LOWER(u.email) = :email
+INNER JOIN users u ON u.id = c.user_id
+WHERE u.is_active = TRUE AND c.is_active = TRUE AND LOWER(u.email) = :email
+LIMIT 1
 SQL;
         $authenticateCredentialsStatement = $this->pdo->prepare($authenticateCredentialsSql);
         $authenticateCredentialsStatement->execute(['email' => mb_strtolower(trim($email))]);
@@ -130,10 +131,10 @@ SQL;
 
         $salt = \bin2hex(\random_bytes(self::ACCESS_TOKEN_SALT_LENGTH));
         $accessToken = \bin2hex(\random_bytes(self::ACCESS_TOKEN_LENGTH));
-        $expiration = (new DateTime())->add(new DateInterval('P' . self::ACCESS_TOKEN_COOKIE_TTL_SECONDS . 'S'));
+        $expiration = (new DateTime())->add(new DateInterval('PT' . self::ACCESS_TOKEN_COOKIE_TTL_SECONDS . 'S'));
         $addAccessTokenSql = <<<SQL
 INSERT INTO user_access_tokens
-(user_id, salt, hashed_access_token, expiration_date, is_active)
+(user_id, salt, hashed_access_token, expiration, is_active)
 VALUES
 (:userId, :salt, :hashedAccessToken, :expiration, true)
 SQL;
@@ -181,7 +182,7 @@ SQL;
     public function requestPasswordReset(string $email): void
     {
         $getUserIdSql = <<<SQL
-SELECT user_id
+SELECT id
 FROM users
 WHERE LOWER(email) = :email
 SQL;
@@ -195,7 +196,7 @@ SQL;
 
         $salt = \bin2hex(\random_bytes(self::PASSWORD_RESET_NONCE_SALT_LENGTH));
         $nonce = \bin2hex(\random_bytes(self::PASSWORD_RESET_NONCE_LENGTH));
-        $expiration = (new DateTime())->add(new DateInterval('P' . self::PASSWORD_RESET_NONCE_TTL_SECONDS . 'S'));
+        $expiration = (new DateTime())->add(new DateInterval('PT' . self::PASSWORD_RESET_NONCE_TTL_SECONDS . 'S'));
         $resetPasswordSql = <<<SQL
 INSERT INTO user_credential_resets
 (user_id, salt, hashed_nonce, expiration, is_active)
@@ -274,7 +275,7 @@ SQL;
         $sql = <<<SQL
 SELECT id, salt, hashed_access_token
 FROM user_access_tokens
-WHERE user_id = :userId AND is_active = TRUE AND expiration_date > NOW()
+WHERE user_id = :userId AND is_active = TRUE AND expiration > NOW()
 SQL;
         $statement = $this->pdo->prepare($sql);
         $statement->execute(['userId' => $userId]);
@@ -303,7 +304,7 @@ SQL;
 
         $sql = <<<SQL
 UPDATE user_credentials
-SET is_active = false
+SET is_active = FALSE
 WHERE user_id = :userId;
 SQL;
         $deactiveOldPasswordsStatement = $this->pdo->prepare($sql);
@@ -315,6 +316,6 @@ VALUES
 (:userId, :hashedPassword)
 SQL;
         $addPasswordStatement = $this->pdo->prepare($sql);
-        $addPasswordStatement->execute(['userId' => $userId, \password_hash($newPassword, PASSWORD_ARGON2ID)]);
+        $addPasswordStatement->execute(['userId' => $userId, 'hashedPassword' => \password_hash($newPassword, PASSWORD_ARGON2ID)]);
     }
 }

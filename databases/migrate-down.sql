@@ -1,0 +1,9 @@
+DROP TABLE IF EXISTS users CASCADE;
+
+DROP TABLE IF EXISTS user_credentials CASCADE;
+
+DROP TABLE IF EXISTS user_credential_resets CASCADE;
+
+DROP TABLE IF EXISTS user_access_tokens CASCADE;
+
+DROP TABLE IF EXISTS posts CASCADE;

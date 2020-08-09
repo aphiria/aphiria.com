@@ -83,7 +83,7 @@ final class UserController extends Controller
      * @param int $id The ID of the user to get
      * @return User The user if one was found
      * @throws UserNotFoundException Thrown if no user was found
-     * @Get(":id")
+     * @Get(":id", name="GetUserById")
      * @Middleware(Authenticate::class)
      */
     public function getUserById(int $id): User

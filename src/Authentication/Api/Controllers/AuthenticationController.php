@@ -20,7 +20,7 @@ use Aphiria\Net\Http\IResponse;
 use Aphiria\Routing\Annotations\Middleware;
 use Aphiria\Routing\Annotations\Post;
 use Aphiria\Routing\Annotations\Put;
-use Aphiria\Routing\Annotations\Route;
+use Aphiria\Routing\Annotations\RouteGroup;
 use App\Authentication\Api\AuthContext;
 use App\Authentication\Api\ChangePasswordDto;
 use App\Authentication\Api\LoginDto;
@@ -38,7 +38,7 @@ use JsonException;
 /**
  * Defines the authentication controller
  *
- * @Route("authentication")
+ * @RouteGroup("authentication")
  */
 final class AuthenticationController extends Controller
 {
@@ -127,6 +127,7 @@ final class AuthenticationController extends Controller
      * Resets a user's password
      *
      * @param ResetPasswordDto $resetPassword The reset password DTO
+     * @Put("password/reset")
      * @throws InvalidPasswordException Thrown if the new password was invalid
      * @throws PasswordResetNonceExpiredException Thrown if the nonce expired
      */

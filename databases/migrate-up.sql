@@ -1,6 +1,6 @@
 CREATE TABLE IF NOT EXISTS users (
     id SERIAL PRIMARY KEY,
-    email TEXT NOT NULL,
+    email TEXT NOT NULL UNIQUE,
     first_name TEXT NOT NULL,
     last_name TEXT NOT NULL,
     is_active BOOL DEFAULT TRUE,
@@ -52,3 +52,6 @@ CREATE TABLE IF NOT EXISTS posts (
     timestamp TIMESTAMP DEFAULT NOW(),
     CONSTRAINT fk_author_id FOREIGN KEY(author_id) REFERENCES users(id)
 );
+
+-- Seed the database with Dave Young's user
+INSERT INTO users (email, first_name, last_name) VALUES ('dave@aphiria.com', 'Dave', 'Young') ON CONFLICT DO NOTHING;
