@@ -18,11 +18,11 @@ namespace App\Authentication\Api;
 final class AuthContext
 {
     /** @var bool Whether or not the user was authenticated */
-    private bool $isAuthenticated;
+    public bool $isAuthenticated;
     /** @var int|null The authenticated user ID, or null if not authenticated */
-    private ?int $userId;
+    public ?int $userId;
     /** @var string|null The authenticated access token, or null if not authenticated */
-    private ?string $accessToken;
+    public ?string $accessToken;
 
     /**
      * @param bool $isAuthenticated Whether or not the user was authenticated
@@ -34,35 +34,5 @@ final class AuthContext
         $this->isAuthenticated = $isAuthenticated;
         $this->userId = $userId;
         $this->accessToken = $accessToken;
-    }
-
-    /**
-     * Gets the current user's access token
-     *
-     * @return string|null The user's access token if authenticated, otherwise null
-     */
-    public function getAccessToken(): ?string
-    {
-        return $this->accessToken;
-    }
-
-    /**
-     * Gets the current user ID
-     *
-     * @return int|null The authenticated user ID, or null if not authenticated
-     */
-    public function getUserId(): ?int
-    {
-        return $this->userId;
-    }
-
-    /**
-     * Gets whether or not the user was authenticated
-     *
-     * @return bool True if the user is authenticated, otherwise false
-     */
-    public function isAuthenticated(): bool
-    {
-        return $this->isAuthenticated;
     }
 }

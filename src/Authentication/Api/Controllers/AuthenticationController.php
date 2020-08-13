@@ -68,7 +68,7 @@ final class AuthenticationController extends Controller
     public function changePassword(ChangePasswordDto $changePassword): void
     {
         $this->auth->changePassword(
-            $this->authContext->getUserId(),
+            $this->authContext->userId,
             $changePassword->currPassword,
             $changePassword->newPassword
         );

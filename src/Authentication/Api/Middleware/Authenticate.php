@@ -12,7 +12,6 @@ declare(strict_types=1);
 
 namespace App\Authentication\Api\Middleware;
 
-use Aphiria\DependencyInjection\IContainer;
 use Aphiria\Middleware\IMiddleware;
 use Aphiria\Net\Http\HttpException;
 use Aphiria\Net\Http\HttpStatusCodes;
@@ -32,22 +31,22 @@ final class Authenticate implements IMiddleware
     private IAuthenticationService $auth;
     /** @var AccessTokenCookieParser The access token parser */
     private AccessTokenCookieParser $accessTokenCookieParser;
-    /** @var IContainer The DI container */
-    private IContainer $container;
+    /** @var AuthContext The current authentication context */
+    private AuthContext $authContext;
 
     /**
      * @param IAuthenticationService $auth The auth service
      * @param AccessTokenCookieParser $accessTokenCookieParser The access token parser
-     * @param IContainer $container The DI container
+     * @param AuthContext $authContext The current authentication context
      */
     public function __construct(
         IAuthenticationService $auth,
         AccessTokenCookieParser $accessTokenCookieParser,
-        IContainer $container
+        AuthContext $authContext
     ) {
         $this->auth = $auth;
         $this->accessTokenCookieParser = $accessTokenCookieParser;
-        $this->container = $container;
+        $this->authContext = $authContext;
     }
 
     /**
@@ -64,11 +63,10 @@ final class Authenticate implements IMiddleware
             throw new HttpException(HttpStatusCodes::HTTP_UNAUTHORIZED, 'Invalid access token');
         }
 
-        // Overwrite the auth context bound in the auth binder
-        $this->container->bindInstance(
-            AuthContext::class,
-            new AuthContext(true, $accessTokenCookie->userId, $accessTokenCookie->accessToken)
-        );
+        // Update the auth context
+        $this->authContext->isAuthenticated = true;
+        $this->authContext->userId = $accessTokenCookie->userId;
+        $this->authContext->accessToken = $accessTokenCookie->accessToken;
 
         return $next->handle($request);
     }

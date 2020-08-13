@@ -71,7 +71,7 @@ final class PostController extends Controller
      */
     public function createPost(CreatePostDto $createPostDto): ViewPostDto
     {
-        $createdPost = $this->posts->createPost($this->authContext->getUserId(), $createPostDto);
+        $createdPost = $this->posts->createPost($this->authContext->userId, $createPostDto);
 
         return $this->viewPostDtoFactory->createViewPostDtoFromModel($createdPost);
     }
