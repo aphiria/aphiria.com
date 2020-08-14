@@ -15,7 +15,7 @@ namespace App\Authentication\Api;
 /**
  * Defines the current authentication context
  */
-final class AuthContext
+final class AuthenticationContext
 {
     /** @var bool Whether or not the user was authenticated */
     public bool $isAuthenticated;

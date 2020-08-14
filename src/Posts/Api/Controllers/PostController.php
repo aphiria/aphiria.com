@@ -21,7 +21,7 @@ use Aphiria\Routing\Annotations\Middleware;
 use Aphiria\Routing\Annotations\Post;
 use Aphiria\Routing\Annotations\Put;
 use Aphiria\Routing\Annotations\RouteGroup;
-use App\Authentication\Api\AuthContext;
+use App\Authentication\Api\AuthenticationContext;
 use App\Authentication\Api\Middleware\Authenticate;
 use App\Posts\Api\CreatePostDto;
 use App\Posts\Api\UpdatePostDto;
@@ -42,18 +42,18 @@ final class PostController extends Controller
     private IPostService $posts;
     /** @var ViewPostDtoFactory The view post DTO factory */
     private ViewPostDtoFactory $viewPostDtoFactory;
-    /** @var AuthContext The current auth context */
-    private AuthContext $authContext;
+    /** @var AuthenticationContext The current auth context */
+    private AuthenticationContext $authContext;
 
     /**
      * @param IPostService $posts The post service
      * @param ViewPostDtoFactory $viewPostDtoFactory The view post DTO factory
-     * @param AuthContext $authContext The current auth context
+     * @param AuthenticationContext $authContext The current auth context
      */
     public function __construct(
         IPostService $posts,
         ViewPostDtoFactory $viewPostDtoFactory,
-        AuthContext $authContext
+        AuthenticationContext $authContext
     ) {
         $this->posts = $posts;
         $this->viewPostDtoFactory = $viewPostDtoFactory;

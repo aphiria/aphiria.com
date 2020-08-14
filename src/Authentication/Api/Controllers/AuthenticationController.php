@@ -15,18 +15,16 @@ namespace App\Authentication\Api\Controllers;
 use Aphiria\Api\Controllers\Controller;
 use Aphiria\Net\Http\Headers\Cookie;
 use Aphiria\Net\Http\HttpException;
-use Aphiria\Net\Http\HttpStatusCodes;
 use Aphiria\Net\Http\IResponse;
 use Aphiria\Routing\Annotations\Middleware;
 use Aphiria\Routing\Annotations\Post;
 use Aphiria\Routing\Annotations\Put;
 use Aphiria\Routing\Annotations\RouteGroup;
-use App\Authentication\Api\AuthContext;
+use App\Authentication\Api\AuthenticationContext;
 use App\Authentication\Api\ChangePasswordDto;
 use App\Authentication\Api\LoginDto;
 use App\Authentication\Api\Middleware\Authenticate;
 use App\Authentication\Api\RequestPasswordResetDto;
-use App\Authentication\Api\ResetPasswordDto;
 use App\Authentication\IAuthenticationService;
 use App\Authentication\IncorrectPasswordException;
 use App\Authentication\InvalidPasswordException;
@@ -44,34 +42,52 @@ final class AuthenticationController extends Controller
 {
     /** @var IAuthenticationService The authentication service */
     private IAuthenticationService $auth;
-    /** @var AuthContext The current auth context */
-    private AuthContext $authContext;
+    /** @var AuthenticationContext The current auth context */
+    private AuthenticationContext $authContext;
 
     /**
      * @param IAuthenticationService $auth The authentication service
-     * @param AuthContext $authContext The current auth context
+     * @param AuthenticationContext $authContext The current auth context
      */
-    public function __construct(IAuthenticationService $auth, AuthContext $authContext)
+    public function __construct(IAuthenticationService $auth, AuthenticationContext $authContext)
     {
         $this->auth = $auth;
         $this->authContext = $authContext;
     }
 
     /**
-     * Changes a logged-in user's password
+     * Changes a user's password
      *
+     * @param int $userId The Id of the user who's password we're changing
      * @param ChangePasswordDto $changePassword The password change DTO
-     * @Put("password")
-     * @Middleware(Authenticate::class)
-     * @throws IncorrectPasswordException|InvalidPasswordException Thrown if the password was incorrect or invalid
+     * @return IResponse The response
+     * @Put("users/:userId/password")
+     * @Middleware(Authenticate::class, attributes={"allowUnauthenticatedUsers":true})
+     * @throws IncorrectPasswordException|InvalidPasswordException Thrown if the current password was incorrect or invalid (for logged in users only)
+     * @throws PasswordResetNonceExpiredException Thrown if the password reset nonce expired
+     * @throws HttpException Thrown if the response could not be negotiated
      */
-    public function changePassword(ChangePasswordDto $changePassword): void
+    public function changePassword(int $userId, ChangePasswordDto $changePassword): IResponse
     {
-        $this->auth->changePassword(
-            $this->authContext->userId,
-            $changePassword->currPassword,
-            $changePassword->newPassword
-        );
+        if ($this->authContext->isAuthenticated) {
+            if ($this->authContext->userId !== $userId) {
+                return $this->unauthorized("User {$this->authContext->userId} is not authorized to change user $userId's password");
+            }
+
+            if (!isset($changePassword->currPassword, $changePassword->newPassword)) {
+                return $this->badRequest('Current and new passwords cannot be empty');
+            }
+
+            $this->auth->changePassword($userId, $changePassword->currPassword, $changePassword->newPassword);
+        } else {
+            if (!isset($changePassword->nonce, $changePassword->newPassword)) {
+                return $this->badRequest('Nonce and new password must be set if the user is not authenticated');
+            }
+
+            $this->auth->resetPassword($userId, $changePassword->nonce, $changePassword->newPassword);
+        }
+
+        return $this->noContent();
     }
 
     /**
@@ -88,15 +104,10 @@ final class AuthenticationController extends Controller
         $authenticationResult = $this->auth->logIn($login->email, $login->password);
 
         if (!$authenticationResult->isAuthenticated) {
-            return $this->responseFactory->createResponse(
-                $this->request,
-                HttpStatusCodes::HTTP_UNAUTHORIZED,
-                null,
-                $authenticationResult->errorMessage
-            );
+            return $this->unauthorized($authenticationResult->errorMessage);
         }
 
-        $response = $this->responseFactory->createResponse($this->request, HttpStatusCodes::HTTP_OK);
+        $response = $this->ok();
         $this->responseFormatter->setCookie(
             $response,
             new Cookie(
@@ -121,18 +132,5 @@ final class AuthenticationController extends Controller
     public function requestPasswordReset(RequestPasswordResetDto $passwordResetRequest): void
     {
         $this->auth->requestPasswordReset($passwordResetRequest->email);
-    }
-
-    /**
-     * Resets a user's password
-     *
-     * @param ResetPasswordDto $resetPassword The reset password DTO
-     * @Put("password/reset")
-     * @throws InvalidPasswordException Thrown if the new password was invalid
-     * @throws PasswordResetNonceExpiredException Thrown if the nonce expired
-     */
-    public function resetPassword(ResetPasswordDto $resetPassword): void
-    {
-        $this->auth->resetPassword($resetPassword->userId, $resetPassword->nonce, $resetPassword->newPassword);
     }
 }
