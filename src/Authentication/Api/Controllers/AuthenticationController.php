@@ -127,10 +127,13 @@ final class AuthenticationController extends Controller
      * Requests a password reset for a user
      *
      * @param RequestPasswordResetDto $passwordResetRequest The password reset DTO
+     * @return IResponse The accepted response
      * @Post("password/reset")
      */
-    public function requestPasswordReset(RequestPasswordResetDto $passwordResetRequest): void
+    public function requestPasswordReset(RequestPasswordResetDto $passwordResetRequest): IResponse
     {
         $this->auth->requestPasswordReset($passwordResetRequest->email);
+
+        return $this->accepted();
     }
 }
