@@ -128,6 +128,7 @@ final class AuthenticationController extends Controller
      *
      * @param RequestPasswordResetDto $passwordResetRequest The password reset DTO
      * @return IResponse The accepted response
+     * @throws HttpException Thrown if the response could not be negotiated
      * @Post("password/reset")
      */
     public function requestPasswordReset(RequestPasswordResetDto $passwordResetRequest): IResponse
