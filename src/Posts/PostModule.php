@@ -16,8 +16,6 @@ use Aphiria\Application\Builders\IApplicationBuilder;
 use Aphiria\Application\IModule;
 use Aphiria\Framework\Application\AphiriaComponents;
 use Aphiria\Net\Http\HttpStatusCodes;
-use Aphiria\Net\Http\IRequest;
-use Aphiria\Net\Http\IResponseFactory;
 use App\Posts\Binders\PostBinder;
 
 /**
@@ -33,17 +31,21 @@ final class PostModule implements IModule
     public function build(IApplicationBuilder $appBuilder): void
     {
         $this->withBinders($appBuilder, new PostBinder())
-            ->withHttpExceptionResponseFactory(
+            ->withProblemDetails(
                 $appBuilder,
                 PostNotFoundException::class,
-                fn (PostNotFoundException $ex, IRequest $request, IResponseFactory $responseFactory) =>
-                    $responseFactory->createResponse($request, HttpStatusCodes::HTTP_NOT_FOUND)
+                null,
+                null,
+                null,
+                HttpStatusCodes::HTTP_NOT_FOUND
             )
-            ->withHttpExceptionResponseFactory(
+            ->withProblemDetails(
                 $appBuilder,
                 InvalidPagingParameterException::class,
-                fn (InvalidPagingParameterException $ex, IRequest $request, IResponseFactory $responseFactory) =>
-                $responseFactory->createResponse($request, HttpStatusCodes::HTTP_BAD_REQUEST, null, $ex->getMessage())
+                null,
+                null,
+                null,
+                HttpStatusCodes::HTTP_BAD_REQUEST
             );
     }
 }

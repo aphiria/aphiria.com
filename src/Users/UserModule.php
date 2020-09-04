@@ -16,8 +16,6 @@ use Aphiria\Application\Builders\IApplicationBuilder;
 use Aphiria\Application\IModule;
 use Aphiria\Framework\Application\AphiriaComponents;
 use Aphiria\Net\Http\HttpStatusCodes;
-use Aphiria\Net\Http\IRequest;
-use Aphiria\Net\Http\IResponseFactory;
 use App\Users\Binders\UserBinder;
 
 /**
@@ -33,11 +31,13 @@ final class UserModule implements IModule
     public function build(IApplicationBuilder $appBuilder): void
     {
         $this->withBinders($appBuilder, new UserBinder())
-            ->withHttpExceptionResponseFactory(
+            ->withProblemDetails(
                 $appBuilder,
                 UserNotFoundException::class,
-                fn (UserNotFoundException $ex, IRequest $request, IResponseFactory $responseFactory) =>
-                    $responseFactory->createResponse($request, HttpStatusCodes::HTTP_NOT_FOUND)
+                null,
+                null,
+                null,
+                HttpStatusCodes::HTTP_NOT_FOUND
             );
     }
 }

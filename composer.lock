@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "196949fe531cf53c5e3bcd1cb2765765",
+    "content-hash": "6d9ee605d66ec9ee9240ba723b6368eb",
     "packages": [
         {
             "name": "aphiria/aphiria",
@@ -4880,6 +4880,7 @@
     "prefer-lowest": false,
     "platform": {
         "ext-dom": "*",
+        "ext-json": "*",
         "ext-mbstring": "*",
         "ext-pdo": "*",
         "php": "^7.4"

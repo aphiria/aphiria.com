@@ -16,8 +16,6 @@ use Aphiria\Application\Builders\IApplicationBuilder;
 use Aphiria\Application\IModule;
 use Aphiria\Framework\Application\AphiriaComponents;
 use Aphiria\Net\Http\HttpStatusCodes;
-use Aphiria\Net\Http\IRequest;
-use Aphiria\Net\Http\IResponseFactory;
 use App\Authentication\Binders\AuthenticationBinder;
 
 /**
@@ -33,29 +31,37 @@ final class AuthenticationModule implements IModule
     public function build(IApplicationBuilder $appBuilder): void
     {
         $this->withBinders($appBuilder, new AuthenticationBinder())
-            ->withHttpExceptionResponseFactory(
+            ->withProblemDetails(
                 $appBuilder,
                 IncorrectPasswordException::class,
-                fn (IncorrectPasswordException $ex, IRequest $request, IResponseFactory $responseFactory) =>
-                    $responseFactory->createResponse($request, HttpStatusCodes::HTTP_UNAUTHORIZED)
+                null,
+                null,
+                null,
+                HttpStatusCodes::HTTP_UNAUTHORIZED
             )
-            ->withHttpExceptionResponseFactory(
+            ->withProblemDetails(
                 $appBuilder,
                 InvalidPasswordException::class,
-                fn (InvalidPasswordException $ex, IRequest $request, IResponseFactory $responseFactory) =>
-                    $responseFactory->createResponse($request, HttpStatusCodes::HTTP_BAD_REQUEST)
+                null,
+                null,
+                null,
+                HttpStatusCodes::HTTP_BAD_REQUEST
             )
-            ->withHttpExceptionResponseFactory(
+            ->withProblemDetails(
                 $appBuilder,
                 PasswordResetNonceExpiredException::class,
-                fn (PasswordResetNonceExpiredException $ex, IRequest $request, IResponseFactory $responseFactory) =>
-                    $responseFactory->createResponse($request, HttpStatusCodes::HTTP_BAD_REQUEST)
+                null,
+                null,
+                null,
+                HttpStatusCodes::HTTP_BAD_REQUEST
             )
-            ->withHttpExceptionResponseFactory(
+            ->withProblemDetails(
                 $appBuilder,
                 IncorrectPasswordResetNonceException::class,
-                fn (IncorrectPasswordResetNonceException $ex, IRequest $request, IResponseFactory $responseFactory) =>
-                    $responseFactory->createResponse($request, HttpStatusCodes::HTTP_BAD_REQUEST)
+                null,
+                null,
+                null,
+                HttpStatusCodes::HTTP_BAD_REQUEST
             );
     }
 }
