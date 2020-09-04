@@ -16,6 +16,8 @@ use Aphiria\ContentNegotiation\MediaTypeFormatters\HtmlMediaTypeFormatter;
 use Aphiria\ContentNegotiation\MediaTypeFormatters\JsonMediaTypeFormatter;
 use Aphiria\ContentNegotiation\MediaTypeFormatters\PlainTextMediaTypeFormatter;
 use Aphiria\ContentNegotiation\MediaTypeFormatters\XmlMediaTypeFormatter;
+use Aphiria\Framework\Api\Exceptions\ProblemDetailsExceptionRenderer;
+use Aphiria\Framework\Serialization\Normalizers\ProblemDetailsNormalizer;
 use Aphiria\Validation\ErrorMessages\DefaultErrorMessageTemplateRegistry;
 use Aphiria\Validation\ErrorMessages\StringReplaceErrorMessageInterpolator;
 use Monolog\Handler\StreamHandler;
@@ -96,10 +98,10 @@ return [
          * Configure exception handling
          * ----------------------------------------------------------
          *
-         * useProblemDetails => Whether or not to use problem detail responses
+         * apiExceptionRenderer => The API exception renderer to use for API applications
          */
         'exceptions' => [
-            'useProblemDetails' => true
+            'apiExceptionRenderer' => ProblemDetailsExceptionRenderer::class
         ],
 
         /**
@@ -158,6 +160,7 @@ return [
             'normalizers' => [
                 ObjectNormalizer::class,
                 DateTimeNormalizer::class,
+                ProblemDetailsNormalizer::class,
                 ArrayDenormalizer::class
             ],
             'xml' => [

@@ -32,7 +32,7 @@ $container->bindInstance(IUserService::class, new UserService());
 $this->assertParsedBodyEquals(new User(1, 'Dave'), $this->get('/users/1'));</code></pre>
             <h1>Install Aphiria</h1>
             <pre class="center"><code class="language-bash">
-composer create-project aphiria/app --prefer-dist
+composer create-project aphiria/app --prefer-dist --stability dev
                 </code></pre>
             <nav class="doc-short-links-nav">
                 <h1>Get started</h1>
