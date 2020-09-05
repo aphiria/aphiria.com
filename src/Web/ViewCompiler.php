@@ -65,6 +65,7 @@ final class ViewCompiler
         $this->cleanUpExistingCompiledViews();
         $this->compileHomepage();
         $this->compileDocs();
+        $this->compileLoginPage();
     }
 
     /**
@@ -190,6 +191,23 @@ final class ViewCompiler
             'A simple, extensible REST API framework'
         );
         $this->files->write("{$this->compiledViewPath}/index.html", $compiledHomepageContents);
+    }
+
+    /**
+     * Compiles the login page
+     *
+     * @throws FileNotFoundException Thrown if we could not read a view partial
+     * @throws FileExistsException Thrown if we attempted to write to a file that already existed
+     */
+    private function compileLoginPage(): void
+    {
+        $loginPageContents = $this->files->read("{$this->rawViewPath}/login.html");
+        $compiledLoginContents = $this->compileCommonPartials(
+            $loginPageContents,
+            ['aphiria', 'php', 'framework', 'rest', 'api'],
+            'Log into the admin'
+        );
+        $this->files->write("{$this->compiledViewPath}/login.html", $compiledLoginContents);
     }
 
     /**

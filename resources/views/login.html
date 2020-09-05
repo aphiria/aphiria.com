@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>Login | Aphiria</title>
+        {{ head }}
+    </head>
+    <body class="login">
+        <header>
+            {{ mainNav }}
+        </header>
+        <main>
+            <form id="login-form" action="#" onsubmit="return logIn(event)">
+                <h1>Admin</h1>
+                <input id="email-input" type="text" placeholder="Email Address">
+                <br>
+                <input id="password-input" type="password" placeholder="Password">
+                <br>
+                <button id="login-btn" type="submit">Log In</button>
+                <br>
+                <div id="login-error-msg"></div>
+            </form>
+        </main>
+        <footer>
+            {{ footer }}
+        </footer>
+        <script>
+            function logIn(submitEvent) {
+                submitEvent.preventDefault();
+                const emailElem = document.getElementById('email-input');
+                const passwordElem = document.getElementById('password-input');
+                const loginErrorMsgElem = document.getElementById('login-error-msg');
+
+                fetch(`${apiUri}/authentication/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({email: emailElem.value, password: passwordElem.value})
+                })
+                .then((response) => response.json())
+                .catch(error => {
+                    loginErrorMsgElem.innerText = error;
+                });
+
+                return false;
+            }
+        </script>
+    </body>
+</html>

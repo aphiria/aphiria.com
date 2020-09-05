@@ -76,17 +76,32 @@ ul {
 ol {
   list-style-position: inside; }
 
-input[type=text] {
-  border-width: 0 0 1px 0;
-  border-style: solid;
+input[type=text], input[type=password] {
   border-color: #bbb;
+  border-style: solid;
+  border-width: 1px;
   transition: border-color .3s ease;
   font-size: 1em;
   box-shadow: none;
   outline: none;
-  padding: 0.25em 0; }
-  input[type=text]:focus {
-    border-bottom-color: #555; }
+  padding: 7px; }
+  input[type=text]:focus, input[type=password]:focus {
+    border-color: #555; }
+  input[type=text]#search-query, input[type=password]#search-query {
+    border-width: 0 0 1px 0;
+    padding: 0.25em 0; }
+    input[type=text]#search-query:focus, input[type=password]#search-query:focus {
+      border-bottom-color: #555; }
+
+button {
+  border: 1px solid #3af;
+  padding: 10px;
+  background-color: #3af;
+  color: #fff;
+  transition: background-color .3s ease; }
+  button:hover {
+    background-color: #29e;
+    cursor: pointer; }
 
 table {
   border-collapse: collapse;
@@ -271,6 +286,13 @@ nav.doc-short-links-nav {
   /* Add spacing between the buttons */ }
   nav.doc-short-links-nav a.button {
     margin: 5px; }
+
+body.login form {
+  text-align: center; }
+  body.login form input[type=text], body.login form input[type=password] {
+    margin-bottom: 10px; }
+  body.login form #login-error-msg {
+    color: #c00; }
 
 blockquote {
   background: #e7f7ff;

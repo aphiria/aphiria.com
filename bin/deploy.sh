@@ -43,6 +43,7 @@ sudo chown -R 1000:48 $target_dir/resources
 sudo chown -R 1000:48 $target_dir/tmp
 sudo chmod -R 755 $target_dir/resources
 sudo chmod -R 755 $target_dir/tmp
+php $target_dir/aphiria db:migrate-up
 php $target_dir/aphiria docs:index
 sudo chown -R 48:48 $target_dir/resources
 sudo chown -R 48:48 $target_dir/tmp
