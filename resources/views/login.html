@@ -11,7 +11,7 @@
         <main>
             <form id="login-form" action="#" onsubmit="return logIn(event)">
                 <h1>Admin</h1>
-                <input id="email-input" type="text" placeholder="Email Address">
+                <input id="email-input" type="text" placeholder="Email Address" autofocus>
                 <br>
                 <input id="password-input" type="password" placeholder="Password">
                 <br>
@@ -39,8 +39,15 @@
                     body: JSON.stringify({email: emailElem.value, password: passwordElem.value})
                 })
                 .then((response) => response.json())
+                .then(response => {
+                    if (!response.ok) {
+                        passwordElem.value = '';
+                        loginErrorMsgElem.innerText = response.title;
+                    }
+                })
                 .catch(error => {
-                    loginErrorMsgElem.innerText = error;
+                    passwordElem.value = '';
+                    loginErrorMsgElem.innerText = error.title;
                 });
 
                 return false;

@@ -104,6 +104,8 @@ final class AuthenticationController extends Controller
         $authenticationResult = $this->auth->logIn($login->email, $login->password);
 
         if (!$authenticationResult->isAuthenticated) {
+            // Todo: Perhaps document that throwing exceptions is the best bet if you want to consistently use problem details.
+            throw new IncorrectPasswordException($authenticationResult->errorMessage);
             return $this->unauthorized($authenticationResult->errorMessage);
         }
 

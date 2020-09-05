@@ -27,6 +27,7 @@ use Aphiria\DependencyInjection\Binders\Metadata\Caching\IBinderMetadataCollecti
 use Aphiria\DependencyInjection\Container;
 use Aphiria\DependencyInjection\IContainer;
 use Aphiria\Framework\Api\Binders\ControllerBinder;
+use Aphiria\Framework\Api\Exceptions\ExceptionHandler;
 use Aphiria\Framework\Application\AphiriaComponents;
 use Aphiria\Framework\Console\Binders\CommandBinder;
 use Aphiria\Framework\ContentNegotiation\Binders\ContentNegotiationBinder;
@@ -98,7 +99,10 @@ final class App implements IModule
             ->withLogLevelFactory($appBuilder, HttpException::class, static function (HttpException $ex) {
                 return $ex->getResponse()->getStatusCode() >= 500 ? LogLevel::ERROR : LogLevel::DEBUG;
             })
-            ->withGlobalMiddleware($appBuilder, new MiddlewareBinding(Cors::class))
+            ->withGlobalMiddleware($appBuilder, [
+                new MiddlewareBinding(Cors::class),
+                new MiddlewareBinding(ExceptionHandler::class)
+            ])
             ->withModules($appBuilder, [
                 new DocumentationModule(),
                 new WebModule(),
