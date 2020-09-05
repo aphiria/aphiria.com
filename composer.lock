@@ -12,12 +12,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/aphiria/aphiria.git",
-                "reference": "51a4d306b8dc0b9b01642b0ce6733b05fca1eec2"
+                "reference": "8484596a4b682e5c9dbcee2313fd63ec3265dbd4"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/aphiria/aphiria/zipball/51a4d306b8dc0b9b01642b0ce6733b05fca1eec2",
-                "reference": "51a4d306b8dc0b9b01642b0ce6733b05fca1eec2",
+                "url": "https://api.github.com/repos/aphiria/aphiria/zipball/8484596a4b682e5c9dbcee2313fd63ec3265dbd4",
+                "reference": "8484596a4b682e5c9dbcee2313fd63ec3265dbd4",
                 "shasum": ""
             },
             "require": {
@@ -87,7 +87,7 @@
                 "rest",
                 "router"
             ],
-            "time": "2020-09-04T20:27:56+00:00"
+            "time": "2020-09-05T23:06:07+00:00"
         },
         {
             "name": "doctrine/annotations",
