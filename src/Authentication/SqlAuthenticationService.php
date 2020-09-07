@@ -14,6 +14,7 @@ namespace App\Authentication;
 
 use DateInterval;
 use DateTime;
+use InvalidArgumentException;
 use PDO;
 
 /**
@@ -181,6 +182,14 @@ SQL;
      */
     public function requestPasswordReset(string $email): void
     {
+        if ($email === '' || $email === null) {
+            throw new InvalidArgumentException('Email cannot be empty');
+        }
+
+        if (!\filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            throw new InvalidArgumentException('Email is not a valid email address');
+        }
+
         $getUserIdSql = <<<SQL
 SELECT id
 FROM users

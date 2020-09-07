@@ -12,6 +12,8 @@ declare(strict_types=1);
 
 namespace App\Authentication;
 
+use InvalidArgumentException;
+
 /**
  * Defines the authentication service
  */
@@ -58,6 +60,7 @@ interface IAuthenticationService
      * Requests a password reset
      *
      * @param string $email The email of the user whose password we want to reset
+     * @throws InvalidArgumentException Thrown if the email was invalid
      */
     public function requestPasswordReset(string $email): void;
 

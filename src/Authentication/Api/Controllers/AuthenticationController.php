@@ -69,6 +69,7 @@ final class AuthenticationController extends Controller
      */
     public function changePassword(int $userId, ChangePasswordDto $changePassword): IResponse
     {
+        // TODO: Need to update other usages of $this->{failure}() to throw exceptions instead
         if ($this->authContext->isAuthenticated) {
             if ($this->authContext->userId !== $userId) {
                 return $this->unauthorized("User {$this->authContext->userId} is not authorized to change user $userId's password");

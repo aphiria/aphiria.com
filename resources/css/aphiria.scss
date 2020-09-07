@@ -424,14 +424,18 @@ nav.doc-short-links-nav {
     }
 }
 
-body.login form {
+body form {
     text-align: center;
 
     input[type=text], input[type=password] {
         margin-bottom: 10px;
     }
 
-    #login-error-msg {
+    .success-msg {
+        color: #090;
+    }
+
+    .error-msg {
         color: #c00;
     }
 }

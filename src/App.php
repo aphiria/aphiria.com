@@ -39,6 +39,7 @@ use Aphiria\Framework\Serialization\Binders\SymfonySerializerBinder;
 use Aphiria\Framework\Validation\Binders\ValidationBinder;
 use Aphiria\Middleware\MiddlewareBinding;
 use Aphiria\Net\Http\HttpException;
+use Aphiria\Net\Http\HttpStatusCodes;
 use App\Api\Binders\ApiBinder;
 use App\Api\Middleware\Cors;
 use App\Authentication\AuthenticationModule;
@@ -47,6 +48,7 @@ use App\Posts\PostModule;
 use App\Users\UserModule;
 use App\Web\WebModule;
 use Exception;
+use InvalidArgumentException;
 use Psr\Log\LogLevel;
 
 /**
@@ -103,6 +105,14 @@ final class App implements IModule
                 new MiddlewareBinding(Cors::class),
                 new MiddlewareBinding(ExceptionHandler::class)
             ])
+            ->withProblemDetails(
+                $appBuilder,
+                InvalidArgumentException::class,
+                null,
+                null,
+                null,
+                HttpStatusCodes::HTTP_BAD_REQUEST
+            )
             ->withModules($appBuilder, [
                 new DocumentationModule(),
                 new WebModule(),

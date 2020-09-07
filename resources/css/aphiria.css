@@ -287,11 +287,13 @@ nav.doc-short-links-nav {
   nav.doc-short-links-nav a.button {
     margin: 5px; }
 
-body.login form {
+body form {
   text-align: center; }
-  body.login form input[type=text], body.login form input[type=password] {
+  body form input[type=text], body form input[type=password] {
     margin-bottom: 10px; }
-  body.login form #login-error-msg {
+  body form .success-msg {
+    color: #090; }
+  body form .error-msg {
     color: #c00; }
 
 blockquote {
