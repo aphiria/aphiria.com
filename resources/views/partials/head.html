@@ -20,6 +20,8 @@
         <script async src="https://www.googletagmanager.com/gtag/js?id=UA-163496896-1"></script>
         <script>
             const apiUri = '{{ apiUri }}';
+            const loggedInCookieValue = getCookie('loggedIn');
+            const isLoggedIn = loggedInCookieValue !== null && parseInt(loggedInCookieValue) === 1;
             window.dataLayer = window.dataLayer || [];
             function gtag(){dataLayer.push(arguments);}
             gtag('js', new Date());

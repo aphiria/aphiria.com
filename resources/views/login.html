@@ -47,7 +47,11 @@
                     if (!response.ok) {
                         passwordElem.value = '';
                         errorMsgElem.innerText = response.title;
+
+                        return;
                     }
+
+                    window.location = 'posts.html';
                 });
 
                 return false;

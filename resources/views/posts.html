@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>Posts | Aphiria</title>
+        {{ head }}
+        <script>
+            if (!isLoggedIn) {
+                window.location = 'login.html';
+            }
+        </script>
+    </head>
+    <body class="posts">
+        <header>
+            {{ mainNav }}
+        </header>
+        <main>
+            <table id="posts-table">
+                <thead>
+                    <tr><th></th><th>Title</th><th>Author</th></tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </main>
+        <footer>
+            {{ footer }}
+        </footer>
+        <script>
+            // TODO: Add paging
+            window.addEventListener('load', loadEvent => {
+                const postsTableElem = document.getElementById('posts-table');
+                const postsTbodyElem = postsTableElem.querySelector('tbody');
+
+                fetch(`${apiUri}/posts`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    }
+                })
+                .then(response => response.status === 202 || response.status === 204 ? response : response.json())
+                .then(posts => {
+                    if (posts.status === 401) {
+                        window.location = 'login.html';
+
+                        return;
+                    }
+
+                    posts.forEach(post => {
+                        const rowElem = postsTbodyElem.insertRow(0);
+                        const editLinkElem = rowElem.insertCell(1);
+                        const titleElem = rowElem.insertCell(2);
+                        const authorElem = rowElem.insertCell(3);
+
+                        editLinkElem.innerHTML = `<a href="post.html?id=${post.id}" title="Edit this post">Edit</a>`;
+                        titleElem.innerHTML = post.title;
+                        authorElem.innerHTML = `${post.authorFirstName} ${post.authorLastName}`;
+                    });
+                })
+            });
+        </script>
+    </body>
+</html>

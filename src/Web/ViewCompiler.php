@@ -68,6 +68,7 @@ final class ViewCompiler
         $this->compileForgotPasswordPage();
         $this->compileResetPasswordPage();
         $this->compileLoginPage();
+        $this->compilePostsPage();
     }
 
     /**
@@ -227,6 +228,23 @@ final class ViewCompiler
             'Log into the admin'
         );
         $this->files->write("{$this->compiledViewPath}/login.html", $compilePageContents);
+    }
+
+    /**
+     * Compiles the posts page
+     *
+     * @throws FileNotFoundException Thrown if we could not read a view partial
+     * @throws FileExistsException Thrown if we attempted to write to a file that already existed
+     */
+    private function compilePostsPage(): void
+    {
+        $pageContents = $this->files->read("{$this->rawViewPath}/posts.html");
+        $compiledPageContents = $this->compileCommonPartials(
+            $pageContents,
+            ['aphiria', 'php', 'framework', 'rest', 'api'],
+            'View all posts'
+        );
+        $this->files->write("{$this->compiledViewPath}/posts.html", $compiledPageContents);
     }
 
     /**

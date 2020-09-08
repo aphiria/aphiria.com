@@ -22,6 +22,8 @@ use PDO;
  */
 final class SqlAuthenticationService implements IAuthenticationService
 {
+    /** @var string The name of the cookie that lets the browser know the user is logged in */
+    public const LOGGED_IN_COOKIE_NAME = 'loggedIn';
     /** @var string The name of the cookie that contains the access token */
     public const ACCESS_TOKEN_COOKIE_NAME = 'accessToken';
     /** @var int The TTL for the access token cookie */

@@ -110,7 +110,9 @@ final class AuthenticationController extends Controller
             return $this->unauthorized($authenticationResult->errorMessage);
         }
 
-        $response = $this->ok();
+        $response = $this->noContent();
+        $cookieMaxAge = $authenticationResult->accessTokenExpiration->getTimestamp() - (new DateTime())->getTimestamp();
+        // Set an HTTP-only cookie with the access token
         $this->responseFormatter->setCookie(
             $response,
             new Cookie(
@@ -119,8 +121,57 @@ final class AuthenticationController extends Controller
                     'userId' => $authenticationResult->userId,
                     'accessToken' => $authenticationResult->accessToken
                 ], JSON_THROW_ON_ERROR),
-                $authenticationResult->accessTokenExpiration->diff(new DateTime())->s
+                $cookieMaxAge,
+                '/',
+                getenv('APP_COOKIE_DOMAIN'),
+                (bool)getenv('APP_COOKIE_SECURE')
             )
+        );
+        // Set a browser-readable cookie letting it know the user is authenticated
+        $this->responseFormatter->setCookie(
+            $response,
+            new Cookie(
+                SqlAuthenticationService::LOGGED_IN_COOKIE_NAME,
+                '1',
+                $cookieMaxAge,
+                '/',
+                getenv('APP_COOKIE_DOMAIN'),
+                (bool)getenv('APP_COOKIE_SECURE'),
+                false
+            )
+        );
+
+        return $response;
+    }
+
+    /**
+     * Logs the user out of the current session
+     *
+     * @return IResponse The response with the deleted cookies
+     * @throws HttpException Thrown if the response could not be negotiated
+     * @Post("logout")
+     */
+    public function logOut(): IResponse
+    {
+        if ($this->authContext->isAuthenticated) {
+            $this->auth->logOut($this->authContext->userId, $this->authContext->accessToken);
+        }
+
+        $response = $this->noContent();
+        $this->responseFormatter->deleteCookie(
+            $response,
+            SqlAuthenticationService::ACCESS_TOKEN_COOKIE_NAME,
+            '/',
+            getenv('APP_COOKIE_DOMAIN'),
+            (bool)getenv('APP_COOKIE_SECURE')
+        );
+        $this->responseFormatter->deleteCookie(
+            $response,
+            SqlAuthenticationService::LOGGED_IN_COOKIE_NAME,
+            '/',
+            getenv('APP_COOKIE_DOMAIN'),
+            (bool)getenv('APP_COOKIE_SECURE'),
+            false
         );
 
         return $response;
