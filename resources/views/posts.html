@@ -35,7 +35,8 @@
                     headers: {
                         'Content-Type': 'application/json',
                         'Accept': 'application/json'
-                    }
+                    },
+                    credentials: 'include'
                 })
                 .then(response => response.status === 202 || response.status === 204 ? response : response.json())
                 .then(posts => {
