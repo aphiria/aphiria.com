@@ -72,6 +72,10 @@ final class SqlUserService implements IUserService
      */
     public function getManyUsersById(array $ids): array
     {
+        if (\count($ids) === 0) {
+            return [];
+        }
+
         $uniqueIds = \array_unique($ids);
         $in = str_repeat('?,', \count($uniqueIds) - 1) . '?';
         $statement = $this->pdo->prepare("SELECT id, email, first_name, last_name FROM users WHERE id IN ($in)");

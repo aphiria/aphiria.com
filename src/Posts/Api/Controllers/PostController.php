@@ -15,12 +15,14 @@ namespace App\Posts\Api\Controllers;
 use Aphiria\Api\Controllers\Controller;
 use Aphiria\Net\Http\HttpException;
 use Aphiria\Net\Http\HttpStatusCodes;
+use Aphiria\Net\Http\IResponse;
 use Aphiria\Routing\Annotations\Delete;
 use Aphiria\Routing\Annotations\Get;
 use Aphiria\Routing\Annotations\Middleware;
 use Aphiria\Routing\Annotations\Post;
 use Aphiria\Routing\Annotations\Put;
 use Aphiria\Routing\Annotations\RouteGroup;
+use Aphiria\Routing\UriTemplates\IRouteUriFactory;
 use App\Authentication\Api\AuthenticationContext;
 use App\Authentication\Api\Middleware\Authenticate;
 use App\Posts\Api\CreatePostDto;
@@ -44,36 +46,45 @@ final class PostController extends Controller
     private ViewPostDtoFactory $viewPostDtoFactory;
     /** @var AuthenticationContext The current auth context */
     private AuthenticationContext $authContext;
+    /** @var IRouteUriFactory The route URI factory */
+    private IRouteUriFactory $uriFactory;
 
     /**
      * @param IPostService $posts The post service
      * @param ViewPostDtoFactory $viewPostDtoFactory The view post DTO factory
      * @param AuthenticationContext $authContext The current auth context
+     * @param IRouteUriFactory $uriFactory The route URI factory
      */
     public function __construct(
         IPostService $posts,
         ViewPostDtoFactory $viewPostDtoFactory,
-        AuthenticationContext $authContext
+        AuthenticationContext $authContext,
+        IRouteUriFactory $uriFactory
     ) {
         $this->posts = $posts;
         $this->viewPostDtoFactory = $viewPostDtoFactory;
         $this->authContext = $authContext;
+        $this->uriFactory = $uriFactory;
     }
 
     /**
      * Creates a post
      *
      * @param CreatePostDto $createPostDto the create post DTO
-     * @return ViewPostDto The created post
+     * @return IResponse The response
      * @throws UserNotFoundException Thrown if the author was not found
+     * @throws HttpException Thrown if the response could not be negotiated
      * @Post("")
      * @Middleware(Authenticate::class)
      */
-    public function createPost(CreatePostDto $createPostDto): ViewPostDto
+    public function createPost(CreatePostDto $createPostDto): IResponse
     {
         $createdPost = $this->posts->createPost($this->authContext->userId, $createPostDto);
 
-        return $this->viewPostDtoFactory->createViewPostDtoFromModel($createdPost);
+        return $this->created(
+            $this->uriFactory->createRouteUri('GetPostById', ['id' => $createdPost->getId()]),
+            $this->viewPostDtoFactory->createViewPostDtoFromModel($createdPost)
+        );
     }
 
     /**
@@ -111,7 +122,7 @@ final class PostController extends Controller
      * @return ViewPostDto The post
      * @throws PostNotFoundException Thrown if the post was not found
      * @throws UserNotFoundException Thrown if the author was not found
-     * @Get(":id")
+     * @Get(":id", name="GetPostById")
      */
     public function getPostById(int $id): ViewPostDto
     {

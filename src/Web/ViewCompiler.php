@@ -69,6 +69,7 @@ final class ViewCompiler
         $this->compileResetPasswordPage();
         $this->compileLoginPage();
         $this->compilePostsPage();
+        $this->compileCreatePostPage();
     }
 
     /**
@@ -123,6 +124,23 @@ final class ViewCompiler
         $compiledPageContents = $this->compileTag('footer', $footerContents, $compiledPageContents);
 
         return $compiledPageContents;
+    }
+
+    /**
+     * Compiles the create post page
+     *
+     * @throws FileNotFoundException Thrown if we could not read a view partial
+     * @throws FileExistsException Thrown if we attempted to write to a file that already existed
+     */
+    private function compileCreatePostPage(): void
+    {
+        $pageContents = $this->files->read("{$this->rawViewPath}/create-post.html");
+        $compiledPageContents = $this->compileCommonPartials(
+            $pageContents,
+            ['aphiria', 'php', 'framework', 'rest', 'api'],
+            'Create a post'
+        );
+        $this->files->write("{$this->compiledViewPath}/create-post.html", $compiledPageContents);
     }
 
     /**

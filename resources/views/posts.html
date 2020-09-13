@@ -14,6 +14,7 @@
             {{ mainNav }}
         </header>
         <main>
+            <button id="create-post-btn">New Post</button>
             <table id="posts-table">
                 <thead>
                     <tr><th></th><th>Title</th><th>Author</th></tr>
@@ -27,8 +28,13 @@
         <script>
             // TODO: Add paging
             window.addEventListener('load', loadEvent => {
+                const createPostButtonElem = document.getElementById('create-post-btn');
                 const postsTableElem = document.getElementById('posts-table');
                 const postsTbodyElem = postsTableElem.querySelector('tbody');
+
+                createPostButtonElem.onclick = clickEvent => {
+                    window.location = 'create-post.html';
+                }
 
                 fetch(`${apiUri}/posts`, {
                     method: 'GET',
@@ -38,15 +44,16 @@
                     },
                     credentials: 'include'
                 })
-                .then(response => response.status === 202 || response.status === 204 ? response : response.json())
-                .then(posts => {
-                    if (posts.status === 401) {
+                .then(response => {
+                    const body = response.status === 202 || response.status === 204 ? null : response.json();
+
+                    if (response.status === 401) {
                         window.location = 'login.html';
 
                         return;
                     }
 
-                    posts.forEach(post => {
+                    body.forEach(post => {
                         const rowElem = postsTbodyElem.insertRow(0);
                         const editLinkElem = rowElem.insertCell(1);
                         const titleElem = rowElem.insertCell(2);
