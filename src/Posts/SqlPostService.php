@@ -190,9 +190,9 @@ SQL;
             $row['text_summary'],
             $row['markdown_content'],
             $row['html_content'],
-            DateTime::createFromFormat($row['created_date'], self::DATE_FORMAT),
-            DateTime::createFromFormat($row['last_updated_date'], self::DATE_FORMAT),
-            DateTime::createFromFormat($row['publish_date'], self::DATE_FORMAT),
+            DateTime::createFromFormat(self::DATE_FORMAT, $row['created_date'], ),
+            DateTime::createFromFormat(self::DATE_FORMAT, $row['last_updated_date']),
+            DateTime::createFromFormat(self::DATE_FORMAT, $row['publish_date']),
             (bool)$row['is_deleted']
         );
     }

@@ -63,13 +63,16 @@ final class ViewCompiler
     public function compileViews(): void
     {
         $this->cleanUpExistingCompiledViews();
-        $this->compileHomepage();
         $this->compileDocs();
-        $this->compileForgotPasswordPage();
-        $this->compileResetPasswordPage();
-        $this->compileLoginPage();
-        $this->compilePostsPage();
-        $this->compileCreatePostPage();
+        $this->compilePages([
+            ['filename' => 'create-post.html', 'description' => 'Create a post'],
+            ['filename' => 'edit-post.html', 'description' => 'Edit a post'],
+            ['filename' => 'forgot-password.html', 'description' => 'Forgot your password'],
+            ['filename' => 'index.html', 'description' => 'A simple, extensible REST API framework'],
+            ['filename' => 'login.html', 'description' => 'Log into the admin'],
+            ['filename' => 'posts.html', 'description' => 'View all posts'],
+            ['filename' => 'reset-password.html', 'description' => 'Reset your password']
+        ]);
     }
 
     /**
@@ -127,23 +130,6 @@ final class ViewCompiler
     }
 
     /**
-     * Compiles the create post page
-     *
-     * @throws FileNotFoundException Thrown if we could not read a view partial
-     * @throws FileExistsException Thrown if we attempted to write to a file that already existed
-     */
-    private function compileCreatePostPage(): void
-    {
-        $pageContents = $this->files->read("{$this->rawViewPath}/create-post.html");
-        $compiledPageContents = $this->compileCommonPartials(
-            $pageContents,
-            ['aphiria', 'php', 'framework', 'rest', 'api'],
-            'Create a post'
-        );
-        $this->files->write("{$this->compiledViewPath}/create-post.html", $compiledPageContents);
-    }
-
-    /**
      * Compiles our docs
      *
      * @throws FileNotFoundException Thrown if a partial file did not exist
@@ -198,88 +184,23 @@ final class ViewCompiler
     }
 
     /**
-     * Compiles the forgot password page
+     * Compiles a list of pages
      *
+     * @param array $configs The config containing data on the pages to compile
      * @throws FileNotFoundException Thrown if we could not read a view partial
      * @throws FileExistsException Thrown if we attempted to write to a file that already existed
      */
-    private function compileForgotPasswordPage(): void
+    private function compilePages(array $configs): void
     {
-        $pageContents = $this->files->read("{$this->rawViewPath}/forgot-password.html");
-        $compiledPageContents = $this->compileCommonPartials(
-            $pageContents,
-            ['aphiria', 'php', 'framework', 'rest', 'api'],
-            'Forgot your password'
-        );
-        $this->files->write("{$this->compiledViewPath}/forgot-password.html", $compiledPageContents);
-    }
-
-    /**
-     * Compiles the homepage
-     *
-     * @throws FileNotFoundException Thrown if we could not read a view partial
-     * @throws FileExistsException Thrown if we attempted to write to a file that already existed
-     */
-    private function compileHomepage(): void
-    {
-        $pageContents = $this->files->read("{$this->rawViewPath}/index.html");
-        $compiledPageContents = $this->compileCommonPartials(
-            $pageContents,
-            ['aphiria', 'php', 'framework', 'rest', 'api'],
-            'A simple, extensible REST API framework'
-        );
-        $this->files->write("{$this->compiledViewPath}/index.html", $compiledPageContents);
-    }
-
-    /**
-     * Compiles the login page
-     *
-     * @throws FileNotFoundException Thrown if we could not read a view partial
-     * @throws FileExistsException Thrown if we attempted to write to a file that already existed
-     */
-    private function compileLoginPage(): void
-    {
-        $pageContents = $this->files->read("{$this->rawViewPath}/login.html");
-        $compilePageContents = $this->compileCommonPartials(
-            $pageContents,
-            ['aphiria', 'php', 'framework', 'rest', 'api'],
-            'Log into the admin'
-        );
-        $this->files->write("{$this->compiledViewPath}/login.html", $compilePageContents);
-    }
-
-    /**
-     * Compiles the posts page
-     *
-     * @throws FileNotFoundException Thrown if we could not read a view partial
-     * @throws FileExistsException Thrown if we attempted to write to a file that already existed
-     */
-    private function compilePostsPage(): void
-    {
-        $pageContents = $this->files->read("{$this->rawViewPath}/posts.html");
-        $compiledPageContents = $this->compileCommonPartials(
-            $pageContents,
-            ['aphiria', 'php', 'framework', 'rest', 'api'],
-            'View all posts'
-        );
-        $this->files->write("{$this->compiledViewPath}/posts.html", $compiledPageContents);
-    }
-
-    /**
-     * Compiles the reset password page
-     *
-     * @throws FileNotFoundException Thrown if we could not read a view partial
-     * @throws FileExistsException Thrown if we attempted to write to a file that already existed
-     */
-    private function compileResetPasswordPage(): void
-    {
-        $pageContents = $this->files->read("{$this->rawViewPath}/reset-password.html");
-        $compiledPageContents = $this->compileCommonPartials(
-            $pageContents,
-            ['aphiria', 'php', 'framework', 'rest', 'api'],
-            'Reset your password'
-        );
-        $this->files->write("{$this->compiledViewPath}/reset-password.html", $compiledPageContents);
+        foreach ($configs as $config) {
+            $pageContents = $this->files->read("{$this->rawViewPath}/{$config['filename']}");
+            $compiledPageContents = $this->compileCommonPartials(
+                $pageContents,
+                ['aphiria', 'php', 'framework', 'rest', 'api'],
+                $config['description']
+            );
+            $this->files->write("{$this->compiledViewPath}/{$config['filename']}", $compiledPageContents);
+        }
     }
 
     /**

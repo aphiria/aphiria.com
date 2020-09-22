@@ -39,29 +39,28 @@
                 fetch(`${apiUri}/posts`, {
                     method: 'GET',
                     headers: {
-                        'Content-Type': 'application/json',
                         'Accept': 'application/json'
                     },
                     credentials: 'include'
                 })
                 .then(response => {
-                    const body = response.status === 202 || response.status === 204 ? null : response.json();
-
                     if (response.status === 401) {
                         window.location = 'login.html';
 
                         return;
                     }
 
-                    body.forEach(post => {
-                        const rowElem = postsTbodyElem.insertRow(0);
-                        const editLinkElem = rowElem.insertCell(1);
-                        const titleElem = rowElem.insertCell(2);
-                        const authorElem = rowElem.insertCell(3);
+                    return response.json().then(body => {
+                        body.forEach(post => {
+                            const rowElem = postsTbodyElem.insertRow(0);
+                            const editLinkElem = rowElem.insertCell(0);
+                            const titleElem = rowElem.insertCell(1);
+                            const authorElem = rowElem.insertCell(2);
 
-                        editLinkElem.innerHTML = `<a href="post.html?id=${post.id}" title="Edit this post">Edit</a>`;
-                        titleElem.innerHTML = post.title;
-                        authorElem.innerHTML = `${post.authorFirstName} ${post.authorLastName}`;
+                            editLinkElem.innerHTML = `<a href="edit-post.html?postId=${post.id}" title="Edit this post">Edit</a>`;
+                            titleElem.innerHTML = post.title;
+                            authorElem.innerHTML = `${post.authorFirstName} ${post.authorLastName}`;
+                        });
                     });
                 })
             });

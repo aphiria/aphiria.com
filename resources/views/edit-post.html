@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>Edit Post | Aphiria</title>
+        {{ head }}
+        <script>
+            if (!isLoggedIn) {
+                window.location = 'login.html';
+            }
+        </script>
+    </head>
+    <body class="edit">
+        <header>
+            {{ mainNav }}
+        </header>
+        <main>
+            <form id="edit-post-form" action="#" onsubmit="return editPost(event)">
+                <input type="text" id="title-input" placeholder="Title">
+                <br>
+                <textarea id="summary-input" placeholder="Summary"></textarea>
+                <br>
+                <textarea id="markdown-content-input" placeholder="Content"></textarea>
+                <br>
+                <input type="datetime-local" id="publish-date-input">
+                <br>
+                <button id="save-post-btn" type="submit">Save</button>
+                <br>
+                <div class="success-msg"></div>
+                <div class="error-msg"></div>
+            </form>
+        </main>
+        <footer>
+            {{ footer }}
+        </footer>
+        <script>
+            const titleElem = document.getElementById('title-input');
+            const summaryElem = document.getElementById('summary-input');
+            const markdownContentElem = document.getElementById('markdown-content-input');
+            const publishDateElem = document.getElementById('publish-date-input');
+            const successMsgElem = document.getElementsByClassName('success-msg')[0];
+            const errorMsgElem = document.getElementsByClassName('error-msg')[0];
+            const url = new URL(window.location);
+            const postId = url.searchParams.get('postId');
+
+            fetch(`${apiUri}/posts/${postId}`, {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json'
+                },
+                credentials: 'include'
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(body => {
+                        errorMsgElem.innerText = body.title;
+                    });
+                }
+
+                return response.json().then(body => {
+                    titleElem.value = body.title;
+                    summaryElem.value = body.textSummary;
+                    markdownContentElem.value = body.markdownContent;
+                    publishDateElem.value = body.publishDate;
+                });
+            });
+
+            function editPost(submitEvent) {
+                submitEvent.preventDefault();
+
+                errorMsgElem.innerText = '';
+
+                fetch(`${apiUri}/posts/${postId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({id: postId, title: titleElem.value, textSummary: summaryElem.value, markdownContent: markdownContentElem.value, publishDate: publishDateElem.value === '' ? null : publishDateElem.value}),
+                    credentials: 'include'
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        return response.json().then(body => {
+                            errorMsgElem.innerText = body.title;
+                        });
+                    }
+
+                    successMsgElem.innerText = 'Post updated';
+                });
+
+                return false;
+            }
+        </script>
+    </body>
+</html>
