@@ -21,15 +21,12 @@ final class DocumentationMetadata
 {
     /** @var string The default doc branch to display */
     private const DEFAULT_VERSION = '0.x';
-    /** @var array The associative array that contains our metadata */
-    private array $config;
 
     /**
      * @param array $config The associative array that contains our metadata
      */
-    public function __construct(array $config)
+    public function __construct(private array $config)
     {
-        $this->config = $config;
     }
 
     /**

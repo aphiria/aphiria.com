@@ -13,27 +13,22 @@ declare(strict_types=1);
 namespace App\Documentation\Api\Controllers;
 
 use Aphiria\Api\Controllers\Controller;
-use Aphiria\Routing\Annotations\Get;
-use Aphiria\Routing\Annotations\RouteGroup;
+use Aphiria\Routing\Attributes\Get;
+use Aphiria\Routing\Attributes\RouteGroup;
 use App\Documentation\DocumentationService;
 use App\Documentation\Searching\SearchResult;
 
 /**
  * Defines the controller that handles documentation actions
- *
- * @RouteGroup("docs")
  */
+#[RouteGroup('docs')]
 final class DocumentationController extends Controller
 {
-    /** @var DocumentationService What we'll use to search through documentation */
-    private DocumentationService $docs;
-
     /**
      * @param DocumentationService $docs What we'll use to search through documentation
      */
-    public function __construct(DocumentationService $docs)
+    public function __construct(private DocumentationService $docs)
     {
-        $this->docs = $docs;
     }
 
     /**
@@ -41,9 +36,8 @@ final class DocumentationController extends Controller
      *
      * @param string $query The search query
      * @return SearchResult[] The list of search results
-     *
-     * @Get("search")
      */
+    #[Get('search')]
     public function searchDocs(string $query): array
     {
         return $this->docs->searchDocs($query);

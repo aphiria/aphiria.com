@@ -37,16 +37,6 @@ final class PostgreSqlSearchIndex implements ISearchIndex
         'li' => 'D',
         'blockquote' => 'D'
     ];
-    /** @var string The name of the table to point to (MUST BE SECURE BECAUSE IT'S USED DIRECTLY IN QUERIES) */
-    private string $lexemeTableName;
-    /** @var PDO The DB connection to use */
-    private PDO $pdo;
-    /** @var string The prefix to use for al links that are generated */
-    private string $linkPrefix;
-    /** @var string The path to the .env file to update whenever we build the search index */
-    private string $envPath;
-    /** @var FilesystemInterface The file helpers */
-    private FilesystemInterface $files;
 
     /**
      * @param string $lexemeTableName The name of the table to point to (MUST BE SECURE BECAUSE IT'S USED DIRECTLY IN QUERIES)
@@ -55,13 +45,13 @@ final class PostgreSqlSearchIndex implements ISearchIndex
      * @param string $envPath The path to the .env file to update whenever we build the search index
      * @param FilesystemInterface $files The file system helper
      */
-    public function __construct(string $lexemeTableName, PDO $pdo, string $linkPrefix, string $envPath, FilesystemInterface $files)
-    {
-        $this->lexemeTableName = $lexemeTableName;
-        $this->pdo = $pdo;
-        $this->linkPrefix = $linkPrefix;
-        $this->envPath = $envPath;
-        $this->files = $files;
+    public function __construct(
+        private string $lexemeTableName,
+        private PDO $pdo,
+        private string $linkPrefix,
+        private string $envPath,
+        private FilesystemInterface $files
+    ) {
     }
 
     /**
