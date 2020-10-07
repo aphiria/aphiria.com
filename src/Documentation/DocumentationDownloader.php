@@ -23,14 +23,6 @@ final class DocumentationDownloader
 {
     /** The GitHub docs repository */
     private const GITHUB_REPOSITORY = 'https://github.com/aphiria/docs.git';
-    /** @var array The branches to download */
-    private array $branches;
-    /** @var string The temporary location for cloned docs (relative path) */
-    private string $clonedDocAbsolutePath;
-    /** @var string The temporary location for cloned docs (relative path) */
-    private string $clonedDocRelativePath;
-    /** @var FilesystemInterface A file system helper */
-    private FilesystemInterface $files;
 
     /**
      * @param array $branches The branches to download
@@ -39,15 +31,11 @@ final class DocumentationDownloader
      * @param FilesystemInterface $files The file system helper
      */
     public function __construct(
-        array $branches,
-        string $clonedDocAbsolutePath,
-        string $clonedDocRelativePath,
-        FilesystemInterface $files
+        private array $branches,
+        private string $clonedDocAbsolutePath,
+        private string $clonedDocRelativePath,
+        private FilesystemInterface $files
     ) {
-        $this->branches = $branches;
-        $this->clonedDocAbsolutePath = $clonedDocAbsolutePath;
-        $this->clonedDocRelativePath = $clonedDocRelativePath;
-        $this->files = $files;
     }
 
     /**

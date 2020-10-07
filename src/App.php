@@ -84,9 +84,9 @@ final class App implements IModule
         // Configure the app
         $this->withBinderDispatcher($appBuilder, $this->getBinderDispatcher())
             ->withFrameworkCommands($appBuilder, ['app:serve'])
-            ->withRouteAnnotations($appBuilder)
-            ->withValidatorAnnotations($appBuilder)
-            ->withCommandAnnotations($appBuilder)
+            ->withRouteAttributes($appBuilder)
+            ->withValidatorAttributes($appBuilder)
+            ->withCommandAttributes($appBuilder)
             ->withBinders($appBuilder, [
                 new ExceptionHandlerBinder(),
                 new RequestBinder(),

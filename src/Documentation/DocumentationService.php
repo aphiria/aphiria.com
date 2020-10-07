@@ -25,19 +25,6 @@ use ParsedownExtra;
  */
 final class DocumentationService
 {
-    /** @var DocumentationMetadata The metadata about our docs */
-    private DocumentationMetadata $metadata;
-    /** @var DocumentationDownloader The doc downloader */
-    private DocumentationDownloader $downloader;
-    /** @var ParsedownExtra The Markdown parser */
-    private ParsedownExtra $markdownParser;
-    /** @var ISearchIndex The doc search index */
-    private ISearchIndex $searchIndex;
-    /** @var string The path to store HTML docs in */
-    private string $htmlDocPath;
-    /** @var FilesystemInterface The file system helper */
-    private FilesystemInterface $files;
-
     /**
      * @param DocumentationMetadata $metadata The doc metadata
      * @param DocumentationDownloader $downloader The doc downloader
@@ -47,19 +34,13 @@ final class DocumentationService
      * @param FilesystemInterface $files The file system helper
      */
     public function __construct(
-        DocumentationMetadata $metadata,
-        DocumentationDownloader $downloader,
-        ParsedownExtra $markdownParser,
-        ISearchIndex $searchIndex,
-        string $htmlDocPath,
-        FilesystemInterface $files
+        private DocumentationMetadata $metadata,
+        private DocumentationDownloader $downloader,
+        private ParsedownExtra $markdownParser,
+        private ISearchIndex $searchIndex,
+        private string $htmlDocPath,
+        private FilesystemInterface $files
     ) {
-        $this->metadata = $metadata;
-        $this->downloader = $downloader;
-        $this->markdownParser = $markdownParser;
-        $this->searchIndex = $searchIndex;
-        $this->htmlDocPath = $htmlDocPath;
-        $this->files = $files;
     }
 
     /**

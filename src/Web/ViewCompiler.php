@@ -22,17 +22,6 @@ use League\Flysystem\FilesystemInterface;
  */
 final class ViewCompiler
 {
-    /** @var string The path to our raw views */
-    private string $rawViewPath;
-    /** @var string The path to store our compiled views */
-    private string $compiledViewPath;
-    /** @var DocumentationMetadata The doc metadata */
-    private DocumentationMetadata $docMetadata;
-    /** @var string The URI to the API */
-    private string $apiUri;
-    /** @var FilesystemInterface The file system helper */
-    private FilesystemInterface $files;
-
     /**
      * @param string $rawViewPath The path to our raw views
      * @param string $compiledViewPath The path to store our compiled views
@@ -41,17 +30,12 @@ final class ViewCompiler
      * @param FilesystemInterface $files The file system helper
      */
     public function __construct(
-        string $rawViewPath,
-        string $compiledViewPath,
-        DocumentationMetadata $docMetadata,
-        string $apiUri,
-        FilesystemInterface $files
+        private string $rawViewPath,
+        private string $compiledViewPath,
+        private DocumentationMetadata $docMetadata,
+        private string $apiUri,
+        private FilesystemInterface $files
     ) {
-        $this->rawViewPath = $rawViewPath;
-        $this->compiledViewPath = $compiledViewPath;
-        $this->docMetadata = $docMetadata;
-        $this->apiUri = $apiUri;
-        $this->files = $files;
     }
 
     /**

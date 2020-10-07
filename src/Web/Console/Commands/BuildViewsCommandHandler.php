@@ -12,7 +12,7 @@ declare(strict_types=1);
 
 namespace App\Web\Console\Commands;
 
-use Aphiria\Console\Commands\Annotations\Command;
+use Aphiria\Console\Commands\Attributes\Command;
 use Aphiria\Console\Commands\ICommandHandler;
 use Aphiria\Console\Input\Input;
 use Aphiria\Console\Output\IOutput;
@@ -23,20 +23,15 @@ use League\Flysystem\FileNotFoundException;
 
 /**
  * Defines the command handler for building web views
- *
- * @Command("views:build", description="Builds our views")
  */
+#[Command('views:build', description: 'Builds our views')]
 final class BuildViewsCommandHandler implements ICommandHandler
 {
-    /** @var ViewCompiler The compiler for our views */
-    private ViewCompiler $viewCompiler;
-
     /**
      * @param ViewCompiler $viewCompiler The compiler for our views
      */
-    public function __construct(ViewCompiler $viewCompiler)
+    public function __construct(private ViewCompiler $viewCompiler)
     {
-        $this->viewCompiler = $viewCompiler;
     }
 
     /**
