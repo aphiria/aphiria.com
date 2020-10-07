@@ -52,7 +52,7 @@ final class Authenticate extends AttributeMiddleware
                 return $next->handle($request);
             }
 
-            throw new HttpException(HttpStatusCodes::HTTP_UNAUTHORIZED, 'Access token not set');
+            throw new HttpException(HttpStatusCodes::UNAUTHORIZED, 'Access token not set');
         }
 
         if ($this->auth->authenticateAccessToken($accessTokenCookie->userId, $accessTokenCookie->accessToken)) {
@@ -68,6 +68,6 @@ final class Authenticate extends AttributeMiddleware
             return $next->handle($request);
         }
 
-        throw new HttpException(HttpStatusCodes::HTTP_UNAUTHORIZED, 'Invalid access token');
+        throw new HttpException(HttpStatusCodes::UNAUTHORIZED, 'Invalid access token');
     }
 }

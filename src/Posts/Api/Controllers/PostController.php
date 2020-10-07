@@ -128,7 +128,7 @@ final class PostController extends Controller
     public function updatePost(int $id, UpdatePostDto $updatePostDto): ViewPostDto
     {
         if ($id !== $updatePostDto->id) {
-            throw new HttpException(HttpStatusCodes::HTTP_BAD_REQUEST, 'ID in route does not match ID in post');
+            throw new HttpException(HttpStatusCodes::BAD_REQUEST, 'ID in route does not match ID in post');
         }
 
         return $this->viewPostDtoFactory->createViewPostDtoFromModel($this->posts->updatePost($updatePostDto));

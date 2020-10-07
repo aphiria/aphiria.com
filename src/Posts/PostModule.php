@@ -34,12 +34,12 @@ final class PostModule implements IModule
             ->withProblemDetails(
                 $appBuilder,
                 PostNotFoundException::class,
-                status: HttpStatusCodes::HTTP_NOT_FOUND
+                status: HttpStatusCodes::NOT_FOUND
             )
             ->withProblemDetails(
                 $appBuilder,
                 InvalidPagingParameterException::class,
-                status: HttpStatusCodes::HTTP_BAD_REQUEST
+                status: HttpStatusCodes::BAD_REQUEST
             );
     }
 }

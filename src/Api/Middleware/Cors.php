@@ -49,10 +49,10 @@ final class Cors implements IMiddleware
         // Check if this is a preflight request
         if ($request->getMethod() === 'OPTIONS' && $request->getHeaders()->tryGetFirst('Access-Control-Request-Method', $requestedMethod)) {
             if (!\in_array($requestedMethod, self::$allowedMethods, true)) {
-                return $this->addCorsResponseHeaders(new Response(HttpStatusCodes::HTTP_METHOD_NOT_ALLOWED));
+                return $this->addCorsResponseHeaders(new Response(HttpStatusCodes::METHOD_NOT_ALLOWED));
             }
 
-            return $this->addCorsResponseHeaders(new Response(HttpStatusCodes::HTTP_OK));
+            return $this->addCorsResponseHeaders(new Response(HttpStatusCodes::OK));
         }
 
         return $this->addCorsResponseHeaders($next->handle($request));

@@ -108,10 +108,7 @@ final class App implements IModule
             ->withProblemDetails(
                 $appBuilder,
                 InvalidArgumentException::class,
-                null,
-                null,
-                null,
-                HttpStatusCodes::HTTP_BAD_REQUEST
+                status: HttpStatusCodes::BAD_REQUEST
             )
             ->withModules($appBuilder, [
                 new DocumentationModule(),
