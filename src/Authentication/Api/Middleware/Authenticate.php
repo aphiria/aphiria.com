@@ -27,26 +27,16 @@ use App\Authentication\IAuthenticationService;
  */
 final class Authenticate extends AttributeMiddleware
 {
-    /** @var IAuthenticationService The auth service */
-    private IAuthenticationService $auth;
-    /** @var AccessTokenCookieParser The access token parser */
-    private AccessTokenCookieParser $accessTokenCookieParser;
-    /** @var AuthenticationContext The current authentication context */
-    private AuthenticationContext $authContext;
-
     /**
      * @param IAuthenticationService $auth The auth service
      * @param AccessTokenCookieParser $accessTokenCookieParser The access token parser
      * @param AuthenticationContext $authContext The current authentication context
      */
     public function __construct(
-        IAuthenticationService $auth,
-        AccessTokenCookieParser $accessTokenCookieParser,
-        AuthenticationContext $authContext
+        private IAuthenticationService $auth,
+        private AccessTokenCookieParser $accessTokenCookieParser,
+        private AuthenticationContext $authContext
     ) {
-        $this->auth = $auth;
-        $this->accessTokenCookieParser = $accessTokenCookieParser;
-        $this->authContext = $authContext;
     }
 
     /**

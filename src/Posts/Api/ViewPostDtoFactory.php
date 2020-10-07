@@ -21,15 +21,11 @@ use App\Users\UserNotFoundException;
  */
 final class ViewPostDtoFactory
 {
-    /** @var IUserService The user service */
-    private IUserService $users;
-
     /**
      * @param IUserService $users
      */
-    public function __construct(IUserService $users)
+    public function __construct(private IUserService $users)
     {
-        $this->users = $users;
     }
 
     /**

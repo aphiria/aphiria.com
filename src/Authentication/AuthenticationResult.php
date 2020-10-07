@@ -19,17 +19,6 @@ use DateTime;
  */
 final class AuthenticationResult
 {
-    /** @var bool Whether or not the user was authenticated */
-    public bool $isAuthenticated = false;
-    /** @var string|null The error message if there was one, otherwise null */
-    public ?string $errorMessage = null;
-    /** @var int|null The authenticated user ID, or null if not authenticated */
-    public ?int $userId = null;
-    /** @var string|null The authenticated access token, or null if not authenticated */
-    public ?string $accessToken = null;
-    /** @var DateTime|null The authenticated access token's expiration, or null if not authenticated */
-    public ?DateTime $accessTokenExpiration = null;
-
     /**
      * @param bool $isAuthenticated Whether or not the user was authenticated
      * @param string|null $errorMessage The error message if there was one, otherwise null
@@ -38,16 +27,11 @@ final class AuthenticationResult
      * @param DateTime|null $accessTokenExpiration The authenticated access token's expiration, or null if not authenticated
      */
     public function __construct(
-        bool $isAuthenticated,
-        string $errorMessage = null,
-        int $userId = null,
-        string $accessToken = null,
-        DateTime $accessTokenExpiration = null
+        public bool $isAuthenticated,
+        public string $errorMessage = null,
+        public ?int $userId = null,
+        public ?string $accessToken = null,
+        public ?DateTime $accessTokenExpiration = null
     ) {
-        $this->isAuthenticated = $isAuthenticated;
-        $this->errorMessage = $errorMessage;
-        $this->userId = $userId;
-        $this->accessToken = $accessToken;
-        $this->accessTokenExpiration = $accessTokenExpiration;
     }
 }

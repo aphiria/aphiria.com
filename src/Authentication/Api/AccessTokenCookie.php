@@ -17,18 +17,11 @@ namespace App\Authentication\Api;
  */
 final class AccessTokenCookie
 {
-    /** @var int The ID of the user whose access token this is */
-    public int $userId;
-    /** @var string The access token value */
-    public string $accessToken;
-
     /**
      * @param int $userId The ID of the user whose access token this is
      * @param string $accessToken The access token value
      */
-    public function __construct(int $userId, string $accessToken)
+    public function __construct(public int $userId, public string $accessToken)
     {
-        $this->userId = $userId;
-        $this->accessToken = $accessToken;
     }
 }

@@ -20,19 +20,12 @@ use PDO;
  */
 final class SqlUserService implements IUserService
 {
-    /** @var PDO The PDO instance that SQL queries will use */
-    private PDO $pdo;
-    /** @var IAuthenticationService The auth service */
-    private IAuthenticationService $auth;
-
     /**
      * @param PDO $pdo The PDO instance that SQL queries will use
-     * @param IAuthenticationService The auth service
+     * @param IAuthenticationService $auth The auth service
      */
-    public function __construct(PDO $pdo, IAuthenticationService $auth)
+    public function __construct(private PDO $pdo, private IAuthenticationService $auth)
     {
-        $this->pdo = $pdo;
-        $this->auth = $auth;
     }
 
     /**

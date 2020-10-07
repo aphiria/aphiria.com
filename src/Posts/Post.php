@@ -19,33 +19,12 @@ use DateTime;
  */
 final class Post
 {
-    /** @var int The ID of the post */
-    private int $id;
-    /** @var int The ID of the author user */
-    private int $authorId;
-    /** @var string The title of the post */
-    private string $title;
-    /** @var string The text summary */
-    private string $textSummary;
-    /** @var string The markdown content of the post */
-    private string $markdownContent;
-    /** @var string The HTML content of the post */
-    private string $htmlContent;
-    /** @var DateTime The date that the post was created */
-    private DateTime $createdDate;
-    /** @var DateTime The last updated date */
-    private DateTime $lastUpdatedDate;
-    /** @var DateTime The date the post was published */
-    private DateTime $publishDate;
-    /** @var bool Whether or not the post is deleted */
-    private bool $isDeleted;
-
     /**
      * @param int $id The Id of the post
      * @param int $authorId The ID of the author user
      * @param string $title The title of the post
      * @param string $textSummary The text summary of the post
-     * @param string $mardownContent The markdown content of the post
+     * @param string $markdownContent The markdown content of the post
      * @param string $htmlContent The HTML content of the post
      * @param DateTime $createdDate The date that the post was created
      * @param DateTime $lastUpdatedDate The last updated date
@@ -53,27 +32,17 @@ final class Post
      * @param bool $isDeleted Whether or not the post is deleted
      */
     public function __construct(
-        int $id,
-        int $authorId,
-        string $title,
-        string $textSummary,
-        string $mardownContent,
-        string $htmlContent,
-        DateTime $createdDate,
-        DateTime $lastUpdatedDate,
-        DateTime $publishDate,
-        bool $isDeleted
+        private int $id,
+        private int $authorId,
+        private string $title,
+        private string $textSummary,
+        private string $markdownContent,
+        private string $htmlContent,
+        private DateTime $createdDate,
+        private DateTime $lastUpdatedDate,
+        private DateTime $publishDate,
+        private bool $isDeleted
     ) {
-        $this->id = $id;
-        $this->authorId = $authorId;
-        $this->title = $title;
-        $this->textSummary = $textSummary;
-        $this->markdownContent = $mardownContent;
-        $this->htmlContent = $htmlContent;
-        $this->createdDate = $createdDate;
-        $this->lastUpdatedDate = $lastUpdatedDate;
-        $this->publishDate = $publishDate;
-        $this->isDeleted = $isDeleted;
     }
 
     /**

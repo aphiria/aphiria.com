@@ -17,27 +17,18 @@ namespace App\Users;
  */
 final class User
 {
-    /** @var int The user ID */
-    private int $id;
-    /** The email address of the user */
-    private string $email;
-    /** @var string The first name of the user */
-    private string $firstName;
-    /** @var string The last name of the user */
-    private string $lastName;
-
     /**
      * @param int $id The user ID
      * @param string $email The email address of the user
      * @param string $firstName The first name of the user
      * @param string $lastName The last name of the user
      */
-    public function __construct(int $id, string $email, string $firstName, string $lastName)
-    {
-        $this->id = $id;
-        $this->email = $email;
-        $this->firstName = $firstName;
-        $this->lastName = $lastName;
+    public function __construct(
+        private int $id,
+        private string $email,
+        private string $firstName,
+        private string $lastName
+    ) {
     }
 
     /**

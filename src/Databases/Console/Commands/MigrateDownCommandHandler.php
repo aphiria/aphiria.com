@@ -12,7 +12,7 @@ declare(strict_types=1);
 
 namespace App\Databases\Console\Commands;
 
-use Aphiria\Console\Commands\Annotations\Command;
+use Aphiria\Console\Commands\Attributes\Command;
 use Aphiria\Console\Commands\ICommandHandler;
 use Aphiria\Console\Input\Input;
 use Aphiria\Console\Output\IOutput;
@@ -21,20 +21,15 @@ use PDOException;
 
 /**
  * Defines the migrate-up command handler
- *
- * @Command("db:migrate-down", description="Runs the down database migration")
  */
+#[Command('db:migrate-down', description: 'Runs the down database migration')]
 final class MigrateDownCommandHandler implements ICommandHandler
 {
-    /** @var PDO The DB instance */
-    private PDO $pdo;
-
     /**
      * @param PDO $pdo The DB instance
      */
-    public function __construct(PDO $pdo)
+    public function __construct(private PDO $pdo)
     {
-        $this->pdo = $pdo;
     }
 
     /**

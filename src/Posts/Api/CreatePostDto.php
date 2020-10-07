@@ -12,7 +12,7 @@ declare(strict_types=1);
 
 namespace App\Posts\Api;
 
-use Aphiria\Validation\Constraints\Annotations\Required;
+use Aphiria\Validation\Constraints\Attributes\Required;
 use DateTime;
 
 /**
@@ -20,31 +20,15 @@ use DateTime;
  */
 final class CreatePostDto
 {
-    /**
-     *  The title of the post
-     *
-     * @Required
-     * @var string
-     */
+    /** @var string The title of the post */
+    #[Required]
     public string $title;
-    /**
-     * The text summary of the post
-     *
-     * @Required
-     * @var string
-     */
+    /** @var string The text summary of the post */
+    #[Required]
     public string $textSummary;
-    /**
-     * The markdown content of the post
-     *
-     * @Required
-     * @var string
-     */
+    /** @var string The markdown content of the post */
+    #[Required]
     public string $markdownContent;
-    /**
-     * The publish date of the post, if there is one
-     *
-     * @var DateTime|null
-     */
+    /** @var DateTime|null The publish date of the post, if there is one */
     public ?DateTime $publishDate = null;
 }

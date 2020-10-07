@@ -21,15 +21,11 @@ use App\Authentication\SqlAuthenticationService;
  */
 final class AccessTokenCookieParser
 {
-    /** @var RequestParser The request parser */
-    private RequestParser $requestParser;
-
     /**
      * @param RequestParser $requestParser The request parser
      */
-    public function __construct(RequestParser $requestParser)
+    public function __construct(private RequestParser $requestParser)
     {
-        $this->requestParser = $requestParser;
     }
 
     /**

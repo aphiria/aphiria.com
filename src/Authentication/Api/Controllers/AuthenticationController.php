@@ -16,10 +16,10 @@ use Aphiria\Api\Controllers\Controller;
 use Aphiria\Net\Http\Headers\Cookie;
 use Aphiria\Net\Http\HttpException;
 use Aphiria\Net\Http\IResponse;
-use Aphiria\Routing\Annotations\Middleware;
-use Aphiria\Routing\Annotations\Post;
-use Aphiria\Routing\Annotations\Put;
-use Aphiria\Routing\Annotations\RouteGroup;
+use Aphiria\Routing\Attributes\Middleware;
+use Aphiria\Routing\Attributes\Post;
+use Aphiria\Routing\Attributes\Put;
+use Aphiria\Routing\Attributes\RouteGroup;
 use App\Authentication\Api\AuthenticationContext;
 use App\Authentication\Api\ChangePasswordDto;
 use App\Authentication\Api\LoginDto;
@@ -35,24 +35,16 @@ use JsonException;
 
 /**
  * Defines the authentication controller
- *
- * @RouteGroup("authentication")
  */
+#[RouteGroup('authentication')]
 final class AuthenticationController extends Controller
 {
-    /** @var IAuthenticationService The authentication service */
-    private IAuthenticationService $auth;
-    /** @var AuthenticationContext The current auth context */
-    private AuthenticationContext $authContext;
-
     /**
      * @param IAuthenticationService $auth The authentication service
      * @param AuthenticationContext $authContext The current auth context
      */
-    public function __construct(IAuthenticationService $auth, AuthenticationContext $authContext)
+    public function __construct(private IAuthenticationService $auth, private AuthenticationContext $authContext)
     {
-        $this->auth = $auth;
-        $this->authContext = $authContext;
     }
 
     /**
@@ -61,12 +53,14 @@ final class AuthenticationController extends Controller
      * @param int $userId The Id of the user who's password we're changing
      * @param ChangePasswordDto $changePassword The password change DTO
      * @return IResponse The response
-     * @Put("users/:userId/password")
-     * @Middleware(Authenticate::class, attributes={"allowUnauthenticatedUsers":true})
      * @throws IncorrectPasswordException|InvalidPasswordException Thrown if the current password was incorrect or invalid (for logged in users only)
      * @throws PasswordResetNonceExpiredException Thrown if the password reset nonce expired
      * @throws HttpException Thrown if the response could not be negotiated
      */
+    #[
+        Put('users/:userId/password'),
+        Middleware(Authenticate::class, attributes: ['allowUnauthenticatedUsers' => true])
+    ]
     public function changePassword(int $userId, ChangePasswordDto $changePassword): IResponse
     {
         // TODO: Need to update other usages of $this->{failure}() to throw exceptions instead
@@ -96,10 +90,10 @@ final class AuthenticationController extends Controller
      *
      * @param LoginDto $login The login data
      * @return IResponse The login response
-     * @Post("login")
      * @throws HttpException Thrown if there was an error creating the response
      * @throws JsonException Thrown if there was an error encoding the access token
      */
+    #[Post('login')]
     public function logIn(LoginDto $login): IResponse
     {
         $authenticationResult = $this->auth->logIn($login->email, $login->password);
@@ -149,8 +143,8 @@ final class AuthenticationController extends Controller
      *
      * @return IResponse The response with the deleted cookies
      * @throws HttpException Thrown if the response could not be negotiated
-     * @Post("logout")
      */
+    #[Post('logout')]
     public function logOut(): IResponse
     {
         if ($this->authContext->isAuthenticated) {
@@ -183,8 +177,8 @@ final class AuthenticationController extends Controller
      * @param RequestPasswordResetDto $passwordResetRequest The password reset DTO
      * @return IResponse The accepted response
      * @throws HttpException Thrown if the response could not be negotiated
-     * @Post("password/reset")
      */
+    #[Post('password/reset')]
     public function requestPasswordReset(RequestPasswordResetDto $passwordResetRequest): IResponse
     {
         $this->auth->requestPasswordReset($passwordResetRequest->email);

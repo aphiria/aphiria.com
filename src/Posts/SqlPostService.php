@@ -25,17 +25,14 @@ final class SqlPostService implements IPostService
 {
     /** @var string The format to use for dates */
     private const DATE_FORMAT = 'Y-m-d H:i:s';
-    /** @var PDO The PDO instance */
-    private PDO $pdo;
     /** @var ParsedownExtra The markdown parser */
     private ParsedownExtra $markdownParser;
 
     /**
      * @param PDO $pdo The PDO instance
      */
-    public function __construct(PDO $pdo)
+    public function __construct(private PDO $pdo)
     {
-        $this->pdo = $pdo;
         $this->markdownParser = new ParsedownExtra();
     }
 

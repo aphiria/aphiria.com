@@ -50,19 +50,12 @@ A password reset was requested for your email address.  If this was not you, ple
 </html>
 EMAIL;
 
-    /** @var PDO The DB instance */
-    private PDO $pdo;
-    /** @var string The base web URI for the website */
-    private string $baseWebUri;
-
     /**
      * @param PDO $pdo The DB instance
      * @param string $baseWebUri The base web URI for the website
      */
-    public function __construct(PDO $pdo, string $baseWebUri)
+    public function __construct(private PDO $pdo, private string $baseWebUri)
     {
-        $this->pdo = $pdo;
-        $this->baseWebUri = $baseWebUri;
     }
 
     /**
