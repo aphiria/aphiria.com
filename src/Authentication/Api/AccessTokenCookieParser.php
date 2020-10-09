@@ -15,6 +15,7 @@ namespace App\Authentication\Api;
 use Aphiria\Net\Http\Formatting\RequestParser;
 use Aphiria\Net\Http\IRequest;
 use App\Authentication\SqlAuthenticationService;
+use JsonException;
 
 /**
  * Defines the access token cookie parser
@@ -36,7 +37,6 @@ final class AccessTokenCookieParser
      */
     public function parseAccessToken(IRequest $request): ?AccessTokenCookie
     {
-        // TODO: Should I rename some of this stuff so that we can use it as an "authContext", eg $this->authContext->userId or $this->authContext->accessToken?  Where would I define the context?  And where would I populate it?  In middleware?  In request properties?
         $cookies = $this->requestParser->parseCookies($request);
         $accessTokenJson = null;
 
@@ -46,7 +46,7 @@ final class AccessTokenCookieParser
 
         try {
             $parsedAccessToken = \json_decode($accessTokenJson, true, 512, JSON_THROW_ON_ERROR);
-        } catch (\JsonException $ex) {
+        } catch (JsonException $ex) {
             return null;
         }
 

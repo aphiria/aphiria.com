@@ -38,7 +38,7 @@ final class BuildDocsCommandHandler implements ICommandHandler
     /**
      * @inheritdoc
      */
-    public function handle(Input $input, IOutput $output)
+    public function handle(Input $input, IOutput $output): int
     {
         try {
             $this->docs->buildDocs();

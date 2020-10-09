@@ -22,7 +22,7 @@ use App\Users\UserNotFoundException;
 final class ViewPostDtoFactory
 {
     /**
-     * @param IUserService $users
+     * @param IUserService $users The user service to get authors from
      */
     public function __construct(private IUserService $users)
     {
