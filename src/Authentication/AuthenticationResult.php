@@ -28,7 +28,7 @@ final class AuthenticationResult
      */
     public function __construct(
         public bool $isAuthenticated,
-        public string $errorMessage = null,
+        public ?string $errorMessage = null,
         public ?int $userId = null,
         public ?string $accessToken = null,
         public ?DateTime $accessTokenExpiration = null
