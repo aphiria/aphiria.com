@@ -14,15 +14,21 @@ namespace App\Api\Middleware;
 
 use Aphiria\Collections\KeyValuePair;
 use Aphiria\Middleware\IMiddleware;
+use Aphiria\Net\Http\HttpStatusCodes;
 use Aphiria\Net\Http\IRequest;
 use Aphiria\Net\Http\IRequestHandler;
 use Aphiria\Net\Http\IResponse;
+use Aphiria\Net\Http\Response;
 
 /**
  * Defines the middleware that enforces CORS
  */
 final class Cors implements IMiddleware
 {
+    /** @var string[] The list of allowed methods */
+    private static array $allowedMethods = ['POST', 'GET', 'OPTIONS', 'PUT', 'DELETE'];
+    /** @var string[] The list of allowed headers */
+    private static array $allowedHeaders = ['Content-Type', 'Origin', 'Accept', 'Cookie'];
     /** @var string The allowed origin */
     private string $allowedOrigin;
 
@@ -38,11 +44,34 @@ final class Cors implements IMiddleware
      */
     public function handle(IRequest $request, IRequestHandler $next): IResponse
     {
-        $response = $next->handle($request);
+        $requestedMethod = null;
+
+        // Check if this is a preflight request
+        if ($request->getMethod() === 'OPTIONS' && $request->getHeaders()->tryGetFirst('Access-Control-Request-Method', $requestedMethod)) {
+            if (!\in_array($requestedMethod, self::$allowedMethods, true)) {
+                return $this->addCorsResponseHeaders(new Response(HttpStatusCodes::METHOD_NOT_ALLOWED));
+            }
+
+            return $this->addCorsResponseHeaders(new Response(HttpStatusCodes::OK));
+        }
+
+        return $this->addCorsResponseHeaders($next->handle($request));
+    }
+
+    /**
+     * Adds CORS headers to a response
+     *
+     * @param IResponse $response The response to decorate
+     * @return IResponse The response with the added headers
+     */
+    private function addCorsResponseHeaders(IResponse $response): IResponse
+    {
         $response->getHeaders()
             ->addRange([
                 new KeyValuePair('Access-Control-Allow-Origin', $this->allowedOrigin),
-                new KeyValuePair('Access-Control-Allow-Methods', 'POST, GET, OPTIONS, PUT, DELETE')
+                new KeyValuePair('Access-Control-Allow-Methods', implode(', ', self::$allowedMethods)),
+                new KeyValuePair('Access-Control-Allow-Headers', implode(', ', self::$allowedHeaders)),
+                new KeyValuePair('Access-Control-Allow-Credentials', 'true')
             ]);
 
         return $response;
