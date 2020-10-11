@@ -50,6 +50,16 @@ final class AuthenticationModule implements IModule
                 $appBuilder,
                 IncorrectPasswordResetNonceException::class,
                 status: HttpStatusCodes::BAD_REQUEST
+            )
+            ->withProblemDetails(
+                $appBuilder,
+                InvalidPasswordResetException::class,
+                status: HttpStatusCodes::BAD_REQUEST
+            )
+            ->withProblemDetails(
+                $appBuilder,
+                UnauthorizedPasswordChangeException::class,
+                status: HttpStatusCodes::UNAUTHORIZED
             );
     }
 }

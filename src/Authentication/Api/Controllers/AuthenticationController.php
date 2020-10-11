@@ -13,6 +13,7 @@ declare(strict_types=1);
 namespace App\Authentication\Api\Controllers;
 
 use Aphiria\Api\Controllers\Controller;
+use Aphiria\Api\Errors\ProblemDetails;
 use Aphiria\Net\Http\Headers\Cookie;
 use Aphiria\Net\Http\HttpException;
 use Aphiria\Net\Http\IResponse;
@@ -28,8 +29,10 @@ use App\Authentication\Api\RequestPasswordResetDto;
 use App\Authentication\IAuthenticationService;
 use App\Authentication\IncorrectPasswordException;
 use App\Authentication\InvalidPasswordException;
+use App\Authentication\InvalidPasswordResetException;
 use App\Authentication\PasswordResetNonceExpiredException;
 use App\Authentication\SqlAuthenticationService;
+use App\Authentication\UnauthorizedPasswordChangeException;
 use DateTime;
 use JsonException;
 
@@ -56,6 +59,8 @@ final class AuthenticationController extends Controller
      * @throws IncorrectPasswordException|InvalidPasswordException Thrown if the current password was incorrect or invalid (for logged in users only)
      * @throws PasswordResetNonceExpiredException Thrown if the password reset nonce expired
      * @throws HttpException Thrown if the response could not be negotiated
+     * @throws UnauthorizedPasswordChangeException Thrown if the password change was not authorized
+     * @throws InvalidPasswordResetException Thrown if the password reset was invalid
      */
     #[
         Put('users/:userId/password'),
@@ -63,20 +68,19 @@ final class AuthenticationController extends Controller
     ]
     public function changePassword(int $userId, ChangePasswordDto $changePassword): IResponse
     {
-        // TODO: Need to update other usages of $this->{failure}() to throw exceptions instead
         if ($this->authContext->isAuthenticated) {
             if ($this->authContext->userId !== $userId) {
-                return $this->unauthorized("User {$this->authContext->userId} is not authorized to change user $userId's password");
+                throw new UnauthorizedPasswordChangeException("User {$this->authContext->userId} is not authorized to change user {$userId}'s password");
             }
 
             if (!isset($changePassword->currPassword, $changePassword->newPassword)) {
-                return $this->badRequest('Current and new passwords cannot be empty');
+                throw new InvalidPasswordException('Current and new passwords cannot be empty');
             }
 
             $this->auth->changePassword($userId, $changePassword->currPassword, $changePassword->newPassword);
         } else {
             if (!isset($changePassword->nonce, $changePassword->newPassword)) {
-                return $this->badRequest('Nonce and new password must be set if the user is not authenticated');
+                throw new InvalidPasswordResetException('Nonce and new password must be set if the user is not authenticated');
             }
 
             $this->auth->resetPassword($userId, $changePassword->nonce, $changePassword->newPassword);
@@ -92,6 +96,7 @@ final class AuthenticationController extends Controller
      * @return IResponse The login response
      * @throws HttpException Thrown if there was an error creating the response
      * @throws JsonException Thrown if there was an error encoding the access token
+     * @throws IncorrectPasswordException Thrown if the password was incorrect
      */
     #[Post('login')]
     public function logIn(LoginDto $login): IResponse
@@ -99,9 +104,7 @@ final class AuthenticationController extends Controller
         $authenticationResult = $this->auth->logIn($login->email, $login->password);
 
         if (!$authenticationResult->isAuthenticated) {
-            // Todo: Perhaps document that throwing exceptions is the best bet if you want to consistently use problem details.
             throw new IncorrectPasswordException($authenticationResult->errorMessage);
-            return $this->unauthorized($authenticationResult->errorMessage);
         }
 
         $response = $this->noContent();
