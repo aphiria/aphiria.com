@@ -35,7 +35,7 @@ before_script:
 
 script:
   - vendor/bin/phpunit --testsuite Unit --verbose
-  - composer run-script lint-check
+  #- composer run-script lint-check
 
 deploy:
   - provider: script
