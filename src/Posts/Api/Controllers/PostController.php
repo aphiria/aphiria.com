@@ -14,7 +14,6 @@ namespace App\Posts\Api\Controllers;
 
 use Aphiria\Api\Controllers\Controller;
 use Aphiria\Net\Http\HttpException;
-use Aphiria\Net\Http\HttpStatusCodes;
 use Aphiria\Net\Http\IResponse;
 use Aphiria\Routing\Attributes\Delete;
 use Aphiria\Routing\Attributes\Get;
@@ -30,6 +29,7 @@ use App\Posts\Api\UpdatePostDto;
 use App\Posts\Api\ViewPostDto;
 use App\Posts\Api\ViewPostDtoFactory;
 use App\Posts\InvalidPagingParameterException;
+use App\Posts\InvalidPostUpdateException;
 use App\Posts\IPostService;
 use App\Posts\PostNotFoundException;
 use App\Users\UserNotFoundException;
@@ -37,7 +37,7 @@ use App\Users\UserNotFoundException;
 /**
  * Defines the post controller
  */
-#[RouteGroup('/posts')]
+#[RouteGroup('posts')]
 final class PostController extends Controller
 {
     /**
@@ -120,7 +120,7 @@ final class PostController extends Controller
      * @param int $id The ID of the post to update
      * @param UpdatePostDto $updatePostDto the updated post DTO
      * @return ViewPostDto The updated post
-     * @throws HttpException Thrown if the post was not valid
+     * @throws InvalidPostUpdateException Thrown if the post update was not valid
      * @throws PostNotFoundException Thrown if the post was not found
      * @throws UserNotFoundException Thrown if the author was not found
      */
@@ -128,7 +128,7 @@ final class PostController extends Controller
     public function updatePost(int $id, UpdatePostDto $updatePostDto): ViewPostDto
     {
         if ($id !== $updatePostDto->id) {
-            throw new HttpException(HttpStatusCodes::BAD_REQUEST, 'ID in route does not match ID in post');
+            throw new InvalidPostUpdateException('ID in route does not match ID in post');
         }
 
         return $this->viewPostDtoFactory->createViewPostDtoFromModel($this->posts->updatePost($updatePostDto));

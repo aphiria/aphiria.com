@@ -38,6 +38,11 @@ final class PostModule implements IModule
             )
             ->withProblemDetails(
                 $appBuilder,
+                InvalidPostUpdateException::class,
+                status: HttpStatusCodes::BAD_REQUEST
+            )
+            ->withProblemDetails(
+                $appBuilder,
                 InvalidPagingParameterException::class,
                 status: HttpStatusCodes::BAD_REQUEST
             );

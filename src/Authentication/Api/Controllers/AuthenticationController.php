@@ -13,7 +13,6 @@ declare(strict_types=1);
 namespace App\Authentication\Api\Controllers;
 
 use Aphiria\Api\Controllers\Controller;
-use Aphiria\Api\Errors\ProblemDetails;
 use Aphiria\Net\Http\Headers\Cookie;
 use Aphiria\Net\Http\HttpException;
 use Aphiria\Net\Http\IResponse;
@@ -120,8 +119,8 @@ final class AuthenticationController extends Controller
                 ], JSON_THROW_ON_ERROR),
                 $cookieMaxAge,
                 '/',
-                getenv('APP_COOKIE_DOMAIN'),
-                (bool)getenv('APP_COOKIE_SECURE')
+                \getenv('APP_COOKIE_DOMAIN'),
+                (bool)\getenv('APP_COOKIE_SECURE')
             )
         );
         // Set a browser-readable cookie letting it know the user is authenticated
@@ -132,8 +131,8 @@ final class AuthenticationController extends Controller
                 '1',
                 $cookieMaxAge,
                 '/',
-                getenv('APP_COOKIE_DOMAIN'),
-                (bool)getenv('APP_COOKIE_SECURE'),
+                \getenv('APP_COOKIE_DOMAIN'),
+                (bool)\getenv('APP_COOKIE_SECURE'),
                 false
             )
         );
@@ -159,15 +158,15 @@ final class AuthenticationController extends Controller
             $response,
             SqlAuthenticationService::ACCESS_TOKEN_COOKIE_NAME,
             '/',
-            getenv('APP_COOKIE_DOMAIN'),
-            (bool)getenv('APP_COOKIE_SECURE')
+            \getenv('APP_COOKIE_DOMAIN'),
+            (bool)\getenv('APP_COOKIE_SECURE')
         );
         $this->responseFormatter->deleteCookie(
             $response,
             SqlAuthenticationService::LOGGED_IN_COOKIE_NAME,
             '/',
-            getenv('APP_COOKIE_DOMAIN'),
-            (bool)getenv('APP_COOKIE_SECURE'),
+            \getenv('APP_COOKIE_DOMAIN'),
+            (bool)\getenv('APP_COOKIE_SECURE'),
             false
         );
 

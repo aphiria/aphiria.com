@@ -101,6 +101,7 @@ final class App implements IModule
             ->withLogLevelFactory($appBuilder, HttpException::class, static function (HttpException $ex) {
                 return $ex->getResponse()->getStatusCode() >= 500 ? LogLevel::ERROR : LogLevel::DEBUG;
             })
+            // Purposely set in this order so that even exception responses respect CORS
             ->withGlobalMiddleware($appBuilder, [
                 new MiddlewareBinding(Cors::class),
                 new MiddlewareBinding(ExceptionHandler::class)
