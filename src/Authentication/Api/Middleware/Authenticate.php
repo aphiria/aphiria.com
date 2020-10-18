@@ -12,7 +12,7 @@ declare(strict_types=1);
 
 namespace App\Authentication\Api\Middleware;
 
-use Aphiria\Middleware\AttributeMiddleware;
+use Aphiria\Middleware\ParameterizedMiddleware;
 use Aphiria\Net\Http\HttpException;
 use Aphiria\Net\Http\HttpStatusCodes;
 use Aphiria\Net\Http\IRequest;
@@ -25,7 +25,7 @@ use App\Authentication\IAuthenticationService;
 /**
  * Defines the authentication middleware
  */
-final class Authenticate extends AttributeMiddleware
+final class Authenticate extends ParameterizedMiddleware
 {
     /**
      * @param IAuthenticationService $auth The auth service

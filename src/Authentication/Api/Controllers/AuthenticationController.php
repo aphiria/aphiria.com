@@ -63,7 +63,7 @@ final class AuthenticationController extends Controller
      */
     #[
         Put('users/:userId/password'),
-        Middleware(Authenticate::class, attributes: ['allowUnauthenticatedUsers' => true])
+        Middleware(Authenticate::class, parameters: ['allowUnauthenticatedUsers' => true])
     ]
     public function changePassword(int $userId, ChangePasswordDto $changePassword): IResponse
     {

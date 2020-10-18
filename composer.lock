@@ -12,12 +12,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/aphiria/aphiria.git",
-                "reference": "d166d59e49b99b74c0895c5a9a15c56ba2af0467"
+                "reference": "f3d390cd24b9250781450f0c15bf0c30737bd4fa"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/aphiria/aphiria/zipball/d166d59e49b99b74c0895c5a9a15c56ba2af0467",
-                "reference": "d166d59e49b99b74c0895c5a9a15c56ba2af0467",
+                "url": "https://api.github.com/repos/aphiria/aphiria/zipball/f3d390cd24b9250781450f0c15bf0c30737bd4fa",
+                "reference": "f3d390cd24b9250781450f0c15bf0c30737bd4fa",
                 "shasum": ""
             },
             "require": {
@@ -86,7 +86,7 @@
                 "rest",
                 "router"
             ],
-            "time": "2020-10-11T20:11:27+00:00"
+            "time": "2020-10-18T20:59:33+00:00"
         },
         {
             "name": "erusev/parsedown",
@@ -274,16 +274,16 @@
         },
         {
             "name": "league/mime-type-detection",
-            "version": "1.5.0",
+            "version": "1.5.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/thephpleague/mime-type-detection.git",
-                "reference": "ea2fbfc988bade315acd5967e6d02274086d0f28"
+                "reference": "353f66d7555d8a90781f6f5e7091932f9a4250aa"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/thephpleague/mime-type-detection/zipball/ea2fbfc988bade315acd5967e6d02274086d0f28",
-                "reference": "ea2fbfc988bade315acd5967e6d02274086d0f28",
+                "url": "https://api.github.com/repos/thephpleague/mime-type-detection/zipball/353f66d7555d8a90781f6f5e7091932f9a4250aa",
+                "reference": "353f66d7555d8a90781f6f5e7091932f9a4250aa",
                 "shasum": ""
             },
             "require": {
@@ -321,7 +321,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2020-09-21T18:10:53+00:00"
+            "time": "2020-10-18T11:50:25+00:00"
         },
         {
             "name": "monolog/monolog",
