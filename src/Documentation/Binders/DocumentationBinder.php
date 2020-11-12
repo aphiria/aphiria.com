@@ -43,7 +43,7 @@ final class DocumentationBinder extends Binder
         );
         $container->bindInstance(FilesystemInterface::class, $files);
         $searchIndex = new PostgreSqlSearchIndex(
-            \getenv('DOC_LEXEMES_TABLE_NAME'),
+            (string)\getenv('DOC_LEXEMES_TABLE_NAME'),
             $container->resolve(PDO::class),
             "/docs/{$metadata->getDefaultVersion()}/",
             '/.env',
@@ -63,7 +63,7 @@ final class DocumentationBinder extends Binder
     /**
      * Returns an associative array that stores metadata about each page of documentation in the 0.x branch
      *
-     * @return array The master branch config
+     * @return array{title: string, default: string, docs: array<string, array<string, array{title: string, linkText: string, description: string, keywords: string[]}>>} The master branch config
      */
     private function get0xBranchDocConfig(): array
     {

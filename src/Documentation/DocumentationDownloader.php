@@ -25,7 +25,7 @@ final class DocumentationDownloader
     private const GITHUB_REPOSITORY = 'https://github.com/aphiria/docs.git';
 
     /**
-     * @param array $branches The branches to download
+     * @param string[] $branches The branches to download
      * @param string $clonedDocAbsolutePath The absolute path to the cloned documentation
      * @param string $clonedDocRelativePath The relative path to the cloned documentation
      * @param FilesystemInterface $files The file system helper
@@ -41,7 +41,7 @@ final class DocumentationDownloader
     /**
      * Downloads all of our documentation
      *
-     * @return string[][] The mapping of branch names to local file paths created by the downloads
+     * @return array<string, string[]> The mapping of branch names to local file paths created by the downloads
      * @throws DownloadFailedException Thrown if there was any error reading or writing to the file system
      */
     public function downloadDocs(): array
@@ -58,9 +58,10 @@ final class DocumentationDownloader
                  * them using normal PHP commands.  So, we first chmod all the files, then delete them.
                  */
                 try {
+                    /** @var array{type: string, path: string} $fileInfo */
                     foreach ($this->files->listContents($rawDocsPath, true) as $fileInfo) {
                         if (isset($fileInfo['type'], $fileInfo['path']) && $fileInfo['type'] === 'file') {
-                            $this->files->setVisibility($fileInfo['path'], 'rwx');
+                            $this->files->setVisibility((string)$fileInfo['path'], 'rwx');
                         }
                     }
                 } catch (FileNotFoundException $ex) {
@@ -77,7 +78,8 @@ final class DocumentationDownloader
             }
 
             // Clone the branch from GitHub into our temporary directory
-            shell_exec(
+            /** @psalm-suppress ForbiddenCode We are purposely allowing this call */
+            \shell_exec(
                 sprintf(
                     'git clone -b %s --single-branch %s %s',
                     $branch,
@@ -86,13 +88,14 @@ final class DocumentationDownloader
                 )
             );
 
+            /** @var array{type: string, extension: string, path: string} $fileInfo */
             foreach ($this->files->listContents($rawDocsPath) as $fileInfo) {
                 if (
                     isset($fileInfo['type'], $fileInfo['extension'])
                     && $fileInfo['type'] === 'file'
                     && $fileInfo['extension'] === 'md'
                 ) {
-                    $markdownFiles[$branch][] = $fileInfo['path'];
+                    $markdownFiles[$branch][] = (string)$fileInfo['path'];
                 }
             }
 

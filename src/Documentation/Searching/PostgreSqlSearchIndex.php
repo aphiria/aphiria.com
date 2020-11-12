@@ -26,7 +26,7 @@ final class PostgreSqlSearchIndex implements ISearchIndex
 {
     /** @var int The maximum number of search results we'll return */
     private const MAX_NUM_SEARCH_RESULTS = 5;
-    /** @var array The mapping of HTML elements to their weights (per PostgreSQL's setweight() function) */
+    /** @var array<string, string> The mapping of HTML elements to their weights (per PostgreSQL's setweight() function) */
     private static array $htmlElementsToWeights = [
         'h1' => 'A',
         'h2' => 'B',
@@ -66,7 +66,7 @@ final class PostgreSqlSearchIndex implements ISearchIndex
             $indexEntries = [];
 
             foreach ($htmlPaths as $htmlPath) {
-                $dom = (new Dom())->loadStr($this->files->read($htmlPath));
+                $dom = (new Dom())->loadStr((string)$this->files->read($htmlPath));
                 $h1 = $h2 = $h3 = $h4 = $h5 = null;
 
                 // Scan the documentation and index the elements as well as their nearest previous <h*> siblings
@@ -93,6 +93,10 @@ final class PostgreSqlSearchIndex implements ISearchIndex
                         case 'h5':
                             $h5 = $currNode;
                             break;
+                    }
+
+                    if ($h1 === null) {
+                        throw new IndexingFailedException('No <h1> element was set');
                     }
 
                     // Only index specific elements
@@ -156,6 +160,7 @@ EOF
         ]);
         $searchResults = [];
 
+        /** @var array{link: string, html_element_type: string, h1_highlights: string, h2_highlights: string, h3_highlights: string, h4_highlights: string, h5_highlights: string, inner_text_highlights: string} $row */
         foreach ($statement->fetchAll(PDO::FETCH_ASSOC) as $row) {
             $searchResults[] = new SearchResult(
                 $row['link'],
@@ -334,7 +339,7 @@ EOF
      */
     private function updateEnvFile(): void
     {
-        $currEnvContents = $this->files->read($this->envPath);
+        $currEnvContents = (string)$this->files->read($this->envPath);
         $newContents = \preg_replace(
             '/DOC_LEXEMES_TABLE_NAME=[^\r\n]+/',
             "DOC_LEXEMES_TABLE_NAME={$this->lexemeTableName}",

@@ -73,13 +73,14 @@ final class DocumentationService
 
         $htmlFilesToIndex = [];
 
+        /** @var array{type: string, extension: string, path: string} $fileInfo */
         foreach ($this->files->listContents($htmlDocPath) as $fileInfo) {
             if (
                 isset($fileInfo['type'], $fileInfo['extension'])
                 && $fileInfo['type'] === 'file'
                 && $fileInfo['extension'] === 'html'
             ) {
-                $htmlFilesToIndex[] = $fileInfo['path'];
+                $htmlFilesToIndex[] = (string)$fileInfo['path'];
             }
         }
 
@@ -100,8 +101,8 @@ final class DocumentationService
     /**
      * Creates HTML docs from Markdown files
      *
-     * @param string[][] $markdownFilePathsByBranch The mapping of branches to Markdown file paths to create HTML docs from
-     * @return string[] The list of HTML doc file paths
+     * @param array<string, string[]> $markdownFilePathsByBranch The mapping of branches to Markdown file paths to create HTML docs from
+     * @return array<string, string[]> The list of HTML doc file paths
      * @throws HtmlCompilationException Thrown if there was an error compiling the HTML docs
      */
     private function createHtmlDocs(array $markdownFilePathsByBranch): array
@@ -124,7 +125,7 @@ final class DocumentationService
                 try {
                     $markdownFilename = pathinfo($markdownFilePath, PATHINFO_FILENAME);
                     $htmlDocFilename = "$branchDocDir/$markdownFilename.html";
-                    $html = $this->markdownParser->text($this->files->read($markdownFilePath));
+                    $html = (string)$this->markdownParser->text($this->files->read($markdownFilePath));
                     // Rewrite the links to point to the HTML docs on the site
                     $html = preg_replace('/<a href="([^"]+)\.md(#[^"]+)?"/', '<a href="$1.html$2"', $html);
                     $this->files->write($htmlDocFilename, $html);

@@ -35,7 +35,8 @@ final class Cors implements IMiddleware
     public function __construct()
     {
         // Strip off any port numbers
-        $allowedOriginUriParts = \parse_url(\getenv('APP_WEB_URL'));
+        /** @var array{scheme: string, host: string} $allowedOriginUriParts */
+        $allowedOriginUriParts = \parse_url((string)\getenv('APP_WEB_URL'));
         $this->allowedOrigin = "{$allowedOriginUriParts['scheme']}://{$allowedOriginUriParts['host']}";
     }
 

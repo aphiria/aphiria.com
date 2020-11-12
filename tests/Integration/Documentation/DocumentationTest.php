@@ -23,7 +23,13 @@ class DocumentationTest extends IntegrationTestCase
         $this->assertParsedBodyPassesCallback(
             $response,
             SearchResult::class . '[]',
-            static fn (array $results) => \count($results) > 0 && \str_contains($results[0]->highlightedH1, 'Routing')
+            /**
+             * @param SearchResult[] $results
+             * @return bool
+             */
+            static function (array $results): bool {
+                return \count($results) > 0 && \str_contains($results[0]->highlightedH1, 'Routing');
+            }
         );
     }
 
@@ -34,7 +40,9 @@ class DocumentationTest extends IntegrationTestCase
         $this->assertParsedBodyPassesCallback(
             $response,
             SearchResult::class . '[]',
-            static fn (array $results) => \count($results) === 0
+            static function (array $results): bool {
+                return \count($results) === 0;
+            }
         );
     }
 }
