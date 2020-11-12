@@ -18,5 +18,5 @@ namespace App\Authentication\Api;
 final class RequestPasswordResetDto
 {
     /** @var string The email address of the user whose password we want to reset */
-    public string $email;
+    public string $email = '';
 }

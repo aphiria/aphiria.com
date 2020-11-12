@@ -67,6 +67,7 @@ final class ViewCompiler
     private function cleanUpExistingCompiledViews(): void
     {
         // Delete any compiled views
+        /** @var array{type: string, extensions: string, path: string} $fileInfo */
         foreach ($this->files->listContents($this->compiledViewPath, true) as $fileInfo) {
             if (
                 isset($fileInfo['type'], $fileInfo['extension'])
@@ -96,18 +97,18 @@ final class ViewCompiler
         string $metadataDescription
     ): string {
         // Compile the head
-        $headContents = $this->files->read("{$this->rawViewPath}/partials/head.html");
+        $headContents = (string)$this->files->read("{$this->rawViewPath}/partials/head.html");
         $compiledHeadContents = $this->compileTag('metadataKeywords', implode(',', $metadataKeywords), $headContents);
         $compiledHeadContents = $this->compileTag('metadataDescription', $metadataDescription, $compiledHeadContents);
         $compiledHeadContents = $this->compileTag('apiUri', $this->apiUri, $compiledHeadContents);
         $compiledPageContents = $this->compileTag('head', $compiledHeadContents, $pageContents);
 
         // Compile the main nav
-        $mainNavContents = $this->files->read("{$this->rawViewPath}/partials/main-nav.html");
+        $mainNavContents = (string)$this->files->read("{$this->rawViewPath}/partials/main-nav.html");
         $compiledPageContents = $this->compileTag('mainNav', $mainNavContents, $compiledPageContents);
 
         // Compile the footer
-        $footerContents = $this->files->read("{$this->rawViewPath}/partials/footer.html");
+        $footerContents = (string)$this->files->read("{$this->rawViewPath}/partials/footer.html");
         $compiledPageContents = $this->compileTag('footer', $footerContents, $compiledPageContents);
 
         return $compiledPageContents;
@@ -122,14 +123,14 @@ final class ViewCompiler
     private function compileDocs(): void
     {
         $this->files->createDir("{$this->compiledViewPath}/docs");
-        $docTemplatePageContents = $this->files->read("{$this->rawViewPath}/doc.html");
+        $docTemplatePageContents = (string)$this->files->read("{$this->rawViewPath}/doc.html");
 
         // Compile each doc page
         foreach ($this->docMetadata->getDocVersions() as $version) {
             $this->files->createDir("{$this->compiledViewPath}/docs/$version");
 
             // Compile the doc side nav for each version
-            $sideNavSectionContents = $this->files->read("{$this->rawViewPath}/partials/doc-nav-section.html");
+            $sideNavSectionContents = (string)$this->files->read("{$this->rawViewPath}/partials/doc-nav-section.html");
             $allCompiledSectionContents = '';
 
             foreach ($this->docMetadata->getDocSections($version) as $section => $docs) {
@@ -144,18 +145,18 @@ final class ViewCompiler
                 $allCompiledSectionContents .= $compiledSectionContents;
             }
 
-            $sideNavContents = $this->files->read("{$this->rawViewPath}/partials/doc-nav.html");
+            $sideNavContents = (string)$this->files->read("{$this->rawViewPath}/partials/doc-nav.html");
             $compiledSideNav = $this->compileTag('sections', $allCompiledSectionContents, $sideNavContents);
 
             // Compile the page
-            foreach ($this->docMetadata->getDocs($version) as $section => $docs) {
+            foreach ($this->docMetadata->getDocSections($version) as $section => $docs) {
                 foreach ($docs as $docName => $doc) {
                     $compiledDocPageContents = $this->compileCommonPartials(
                         $docTemplatePageContents,
                         $doc['keywords'],
                         $doc['description']
                     );
-                    $docContents = $this->files->read("{$this->rawViewPath}/partials/docs/$version/$docName.html");
+                    $docContents = (string)$this->files->read("{$this->rawViewPath}/partials/docs/$version/$docName.html");
                     $compiledDocPageContents = $this->compileTag('doc', $docContents, $compiledDocPageContents);
                     $compiledDocPageContents = $this->compileTag('docTitle', $doc['title'], $compiledDocPageContents);
                     $compiledDocPageContents = $this->compileTag('docVersion', $version, $compiledDocPageContents);
@@ -170,14 +171,14 @@ final class ViewCompiler
     /**
      * Compiles a list of pages
      *
-     * @param array $configs The config containing data on the pages to compile
+     * @param array<array{filename: string, description: string}> $configs The config containing data on the pages to compile
      * @throws FileNotFoundException Thrown if we could not read a view partial
      * @throws FileExistsException Thrown if we attempted to write to a file that already existed
      */
     private function compilePages(array $configs): void
     {
         foreach ($configs as $config) {
-            $pageContents = $this->files->read("{$this->rawViewPath}/{$config['filename']}");
+            $pageContents = (string)$this->files->read("{$this->rawViewPath}/{$config['filename']}");
             $compiledPageContents = $this->compileCommonPartials(
                 $pageContents,
                 ['aphiria', 'php', 'framework', 'rest', 'api'],

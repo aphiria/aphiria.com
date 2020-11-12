@@ -43,7 +43,7 @@ final class SqlPostService implements IPostService
     {
         $createdDate = $lastUpdatedDate = new DateTime();
         $publishDate = $post->publishDate ?? $createdDate;
-        $htmlContent = $this->markdownParser->parse($post->markdownContent);
+        $htmlContent = (string)$this->markdownParser->parse($post->markdownContent);
         $sql = <<<SQL
 INSERT INTO posts
 (author_id, title, text_summary, markdown_content, html_content, created_date, last_updated_date, publish_date)
@@ -117,6 +117,7 @@ SQL;
         $statement->execute(['offset' => ($pageNum - 1) * $pageSize, 'pageSize' => $pageSize]);
         $posts = [];
 
+        /** @var array{id: int, author_id: int, title: string, text_summary: string, markdown_content: string, html_content: string, created_date: string, last_updated_date: string, publish_date: string, is_deleted: bool} $row */
         foreach ($statement->fetchAll(PDO::FETCH_ASSOC) as $row) {
             $posts[] = $this->createPostFromSqlRow($row);
         }
@@ -136,6 +137,7 @@ WHERE id = :id AND is_deleted = FALSE
 SQL;
         $statement = $this->pdo->prepare($sql);
         $statement->execute(['id' => $id]);
+        /** @var array{id: int, author_id: int, title: string, text_summary: string, markdown_content: string, html_content: string, created_date: string, last_updated_date: string, publish_date: string, is_deleted: bool}|false $row */
         $row = $statement->fetch(PDO::FETCH_ASSOC);
 
         if ($row === false) {
@@ -151,7 +153,7 @@ SQL;
     public function updatePost(UpdatePostDto $post): Post
     {
         $lastUpdatedDate = new DateTime();
-        $htmlContent = $this->markdownParser->parse($post->markdownContent);
+        $htmlContent = (string)$this->markdownParser->parse($post->markdownContent);
         $sql = <<<SQL
 UPDATE posts
 SET title = :title, text_summary = :textSummary, markdown_content = :markdownContent, html_content = :htmlContent, last_updated_date = :lastUpdatedDate, publish_date = :publish_date
@@ -175,7 +177,7 @@ SQL;
     /**
      * Creates a post from a SQL row
      *
-     * @param array $row The SQL row
+     * @param array{id: int, author_id: int, title: string, text_summary: string, markdown_content: string, html_content: string, created_date: string, last_updated_date: string, publish_date: string, is_deleted: bool} $row The SQL row
      * @return Post The post
      */
     private function createPostFromSqlRow(array $row): Post

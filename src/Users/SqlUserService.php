@@ -81,6 +81,7 @@ final class SqlUserService implements IUserService
 
         $users = [];
 
+        /** @var array{id: int, email: string, first_name: string, last_name: string} $row */
         foreach ($rows as $row) {
             $users[] = $this->createUserFromRow($row);
         }
@@ -95,6 +96,7 @@ final class SqlUserService implements IUserService
     {
         $statement = $this->pdo->prepare('SELECT id, email, first_name, last_name FROM users WHERE id = :id');
         $statement->execute(['id' => $id]);
+        /** @var array{id: int, email: string, first_name: string, last_name: string}|false $row */
         $row = $statement->fetch(PDO::FETCH_ASSOC);
 
         if ($row === false) {
@@ -107,7 +109,7 @@ final class SqlUserService implements IUserService
     /**
      * Creates a user from a SQL row
      *
-     * @param array $row The SQL row
+     * @param array{id: int, email: string, first_name: string, last_name: string} $row The SQL row
      * @return User The user
      */
     private function createUserFromRow(array $row): User

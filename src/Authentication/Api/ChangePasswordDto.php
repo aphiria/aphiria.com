@@ -22,5 +22,5 @@ final class ChangePasswordDto
     /** @var string|null The user's current password if the user is logged in, otherwise null */
     public ?string $currPassword = null;
     /** @var string The new password */
-    public string $newPassword;
+    public string $newPassword = '';
 }

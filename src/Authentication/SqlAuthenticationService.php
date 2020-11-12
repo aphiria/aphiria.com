@@ -79,6 +79,7 @@ WHERE user_id = :userId AND is_active = TRUE
 SQL;
         $authenticatePasswordStatement = $this->pdo->prepare($sql);
         $authenticatePasswordStatement->execute(['userId' => $userId]);
+        /** @var string[] $authenticatePasswordRow */
         $authenticatePasswordRow = $authenticatePasswordStatement->fetchColumn();
 
         if (
@@ -113,9 +114,10 @@ LIMIT 1
 SQL;
         $authenticateCredentialsStatement = $this->pdo->prepare($authenticateCredentialsSql);
         $authenticateCredentialsStatement->execute(['email' => mb_strtolower(trim($email))]);
+        /** @var array{user_id: int, hashed_password: string}|false $authenticateCredentialsRow */
         $authenticateCredentialsRow = $authenticateCredentialsStatement->fetch(PDO::FETCH_ASSOC);
 
-        if ($authenticateCredentialsRow === false || $authenticateCredentialsRow === []) {
+        if ($authenticateCredentialsRow === false || \count($authenticateCredentialsRow) === 0) {
             return new AuthenticationResult(false, 'Invalid credentials');
         }
 
@@ -177,7 +179,7 @@ SQL;
      */
     public function requestPasswordReset(string $email): void
     {
-        if ($email === '' || $email === null) {
+        if ($email === '') {
             throw new InvalidArgumentException('Email cannot be empty');
         }
 
@@ -216,7 +218,7 @@ SQL;
         ]);
         $emailBody = \str_replace(
             ['{{ baseWebUri }}', '{{ userId }}', '{{ nonce }}'],
-            [$this->baseWebUri, $userId, $nonce],
+            [$this->baseWebUri, (string)$userId, $nonce],
             self::PASSWORD_RESET_EMAIL_BODY
         );
         \mail($email, self::PASSWORD_RESET_EMAIL_SUBJECT, $emailBody);
@@ -238,6 +240,7 @@ SQL;
         $getNonceStatement->execute(['userId' => $userId]);
         $nonceId = null;
 
+        /** @var array{id: int, hashed_nonce: string, salt: string, is_active: bool, expiration: string} $row */
         foreach ($getNonceStatement->fetchAll(PDO::FETCH_ASSOC) as $row) {
             if (\hash_equals($row['hashed_nonce'], hash('sha256', $row['salt'] . $nonce))) {
                 if (
@@ -272,7 +275,7 @@ SQL;
      *
      * @param int $userId The ID whose access token we're trying to find
      * @param string $accessToken The access token whose data we want
-     * @return array|null The array containing 'id', 'salt', and 'hashed_access_token' keys if a matching token was found, otherwise null
+     * @return ?array{id: int, hashed_access_token: string, salt: string} The array containing 'id', 'salt', and 'hashed_access_token' keys if a matching token was found, otherwise null
      */
     private function getActiveAccessTokenDataForUser(int $userId, string $accessToken): ?array
     {
@@ -284,6 +287,7 @@ SQL;
         $statement = $this->pdo->prepare($sql);
         $statement->execute(['userId' => $userId]);
 
+        /** @var array{id: int, hashed_access_token: string, salt: string} $row */
         foreach ($statement->fetchAll(PDO::FETCH_ASSOC) as $row) {
             if (\hash_equals($row['hashed_access_token'], hash('sha256', $row['salt'] . $accessToken))) {
                 return $row;

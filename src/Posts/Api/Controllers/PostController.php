@@ -65,6 +65,7 @@ final class PostController extends Controller
     #[Post(''), Middleware(Authenticate::class)]
     public function createPost(CreatePostDto $createPostDto): IResponse
     {
+        /** @psalm-suppress PossiblyNullArgument We know that the user ID will be set because the user is authenticated */
         $createdPost = $this->posts->createPost($this->authContext->userId, $createPostDto);
 
         return $this->created(

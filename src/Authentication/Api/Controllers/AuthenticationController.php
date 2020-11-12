@@ -103,13 +103,18 @@ final class AuthenticationController extends Controller
         $authenticationResult = $this->auth->logIn($login->email, $login->password);
 
         if (!$authenticationResult->isAuthenticated) {
+            /** @psalm-suppress PossiblyNullArgument We know that the error message will be set */
             throw new IncorrectPasswordException($authenticationResult->errorMessage);
         }
 
         $response = $this->noContent();
+        /**
+         * @psalm-suppress PossiblyNullArgument We know that the token expiration will be set
+         * @psalm-suppress PossiblyNullReference Ditto
+         */
         $cookieMaxAge = $authenticationResult->accessTokenExpiration->getTimestamp() - (new DateTime())->getTimestamp();
         // Set an HTTP-only cookie with the access token
-        $this->responseFormatter->setCookie(
+        $this->responseFormatter?->setCookie(
             $response,
             new Cookie(
                 SqlAuthenticationService::ACCESS_TOKEN_COOKIE_NAME,
@@ -119,19 +124,19 @@ final class AuthenticationController extends Controller
                 ], JSON_THROW_ON_ERROR),
                 $cookieMaxAge,
                 '/',
-                \getenv('APP_COOKIE_DOMAIN'),
+                (string)\getenv('APP_COOKIE_DOMAIN'),
                 (bool)\getenv('APP_COOKIE_SECURE')
             )
         );
         // Set a browser-readable cookie letting it know the user is authenticated
-        $this->responseFormatter->setCookie(
+        $this->responseFormatter?->setCookie(
             $response,
             new Cookie(
                 SqlAuthenticationService::LOGGED_IN_COOKIE_NAME,
                 '1',
                 $cookieMaxAge,
                 '/',
-                \getenv('APP_COOKIE_DOMAIN'),
+                (string)\getenv('APP_COOKIE_DOMAIN'),
                 (bool)\getenv('APP_COOKIE_SECURE'),
                 false
             )
@@ -150,22 +155,23 @@ final class AuthenticationController extends Controller
     public function logOut(): IResponse
     {
         if ($this->authContext->isAuthenticated) {
+            /** @psalm-suppress PossiblyNullArgument We know that the user ID and access token will be set */
             $this->auth->logOut($this->authContext->userId, $this->authContext->accessToken);
         }
 
         $response = $this->noContent();
-        $this->responseFormatter->deleteCookie(
+        $this->responseFormatter?->deleteCookie(
             $response,
             SqlAuthenticationService::ACCESS_TOKEN_COOKIE_NAME,
             '/',
-            \getenv('APP_COOKIE_DOMAIN'),
+            (string)\getenv('APP_COOKIE_DOMAIN'),
             (bool)\getenv('APP_COOKIE_SECURE')
         );
-        $this->responseFormatter->deleteCookie(
+        $this->responseFormatter?->deleteCookie(
             $response,
             SqlAuthenticationService::LOGGED_IN_COOKIE_NAME,
             '/',
-            \getenv('APP_COOKIE_DOMAIN'),
+            (string)\getenv('APP_COOKIE_DOMAIN'),
             (bool)\getenv('APP_COOKIE_SECURE'),
             false
         );

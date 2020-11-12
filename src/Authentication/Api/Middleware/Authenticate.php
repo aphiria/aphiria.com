@@ -45,7 +45,7 @@ final class Authenticate extends ParameterizedMiddleware
      */
     public function handle(IRequest $request, IRequestHandler $next): IResponse
     {
-        $allowUnauthenticatedUsers = (bool)$this->getAttribute('allowUnauthenticatedUsers');
+        $allowUnauthenticatedUsers = (bool)$this->getParameter('allowUnauthenticatedUsers');
 
         if (($accessTokenCookie = $this->accessTokenCookieParser->parseAccessToken($request)) === null) {
             if ($allowUnauthenticatedUsers) {

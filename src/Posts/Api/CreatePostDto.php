@@ -22,13 +22,13 @@ final class CreatePostDto
 {
     /** @var string The title of the post */
     #[Required]
-    public string $title;
+    public string $title = '';
     /** @var string The text summary of the post */
     #[Required]
-    public string $textSummary;
+    public string $textSummary = '';
     /** @var string The markdown content of the post */
     #[Required]
-    public string $markdownContent;
+    public string $markdownContent = '';
     /** @var DateTime|null The publish date of the post, if there is one */
     public ?DateTime $publishDate = null;
 }

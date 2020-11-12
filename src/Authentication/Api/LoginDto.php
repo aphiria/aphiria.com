@@ -18,7 +18,7 @@ namespace App\Authentication\Api;
 final class LoginDto
 {
     /** @var string The email address */
-    public string $email;
+    public string $email = '';
     /** @var string The password */
-    public string $password;
+    public string $password = '';
 }

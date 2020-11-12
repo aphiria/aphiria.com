@@ -45,7 +45,8 @@ final class AccessTokenCookieParser
         }
 
         try {
-            $parsedAccessToken = \json_decode($accessTokenJson, true, 512, JSON_THROW_ON_ERROR);
+            /** @var array{userId: int, accessToken: string} $parsedAccessToken */
+            $parsedAccessToken = \json_decode((string)$accessTokenJson, true, 512, JSON_THROW_ON_ERROR);
         } catch (JsonException $ex) {
             return null;
         }
