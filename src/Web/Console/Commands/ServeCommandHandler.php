@@ -31,15 +31,15 @@ final class ServeCommandHandler implements ICommandHandler
         $runApiCommand = sprintf(
             '%s -S %s -t %s %s',
             PHP_BINARY,
-            \str_replace(['http://', 'https://'], ['', ''], getenv('APP_API_URL')),
-            realpath(__DIR__ . '/../../../../public-api'),
-            realpath(__DIR__ . '/../../../../localhost_router.php')
+            \str_replace(['http://', 'https://'], ['', ''], (string)\getenv('APP_API_URL')),
+            \realpath(__DIR__ . '/../../../../public-api'),
+            \realpath(__DIR__ . '/../../../../localhost_router.php')
         );
         $runWebCommand = sprintf(
             '%s -S %s -t %s',
             PHP_BINARY,
-            \str_replace(['http://', 'https://'], ['', ''], getenv('APP_WEB_URL')),
-            realpath(__DIR__ . '/../../../../public-web')
+            \str_replace(['http://', 'https://'], ['', ''], (string)\getenv('APP_WEB_URL')),
+            \realpath(__DIR__ . '/../../../../public-web')
         );
 
         $this->runCommandsInBackground([$runApiCommand, $runWebCommand], $output);

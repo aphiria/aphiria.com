@@ -28,10 +28,10 @@ final class SqlBinder extends Binder
     {
         $dsn = sprintf(
             'pgsql:host=%s;dbname=%s;port=%d;options=\'--client_encoding=utf8\'',
-            \getenv('DB_HOST'),
-            \getenv('DB_NAME'),
+            (string)\getenv('DB_HOST'),
+            (string)\getenv('DB_NAME'),
             (int)\getenv('DB_PORT')
         );
-        $container->bindFactory(PDO::class, fn () => new PDO($dsn, \getenv('DB_USER'), \getenv('DB_PASSWORD')), true);
+        $container->bindFactory(PDO::class, fn () => new PDO($dsn, (string)\getenv('DB_USER'), (string)\getenv('DB_PASSWORD')), true);
     }
 }
