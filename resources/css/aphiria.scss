@@ -548,7 +548,7 @@ blockquote {
                 /* Make the links less huge */
                 font-size: 1.4em;
 
-                &:nth-child(1), &:nth-child(2) {
+                &:nth-child(1), &:nth-child(2), &:nth-child(3) {
                     /* The selector would need to be reworked if we add more links.  We don't care about padding against the mobile menu item. */
                     padding-right: 0.7em;
                 }
@@ -680,7 +680,7 @@ blockquote {
                     /* The text is pretty large on large screens, so reduce the weight */
                     font-weight: 200;
 
-                    &:nth-child(1), &:nth-child(2) {
+                    &:nth-child(1), &:nth-child(2), &:nth-child(3) {
                         /* The selector would need to be reworked if we add more links.  We don't care about padding against the mobile menu item. */
                         padding-right: 1em;
                     }

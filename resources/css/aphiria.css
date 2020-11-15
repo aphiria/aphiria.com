@@ -368,7 +368,7 @@ blockquote {
     body > header > nav ul.main-nav li {
       /* Make the links less huge */
       font-size: 1.4em; }
-      body > header > nav ul.main-nav li:nth-child(1), body > header > nav ul.main-nav li:nth-child(2) {
+      body > header > nav ul.main-nav li:nth-child(1), body > header > nav ul.main-nav li:nth-child(2), body > header > nav ul.main-nav li:nth-child(3) {
         /* The selector would need to be reworked if we add more links.  We don't care about padding against the mobile menu item. */
         padding-right: 0.7em; }
       body > header > nav ul.main-nav li img.logo {
@@ -448,7 +448,7 @@ blockquote {
     body > header nav ul.main-nav li {
       /* The text is pretty large on large screens, so reduce the weight */
       font-weight: 200; }
-      body > header nav ul.main-nav li:nth-child(1), body > header nav ul.main-nav li:nth-child(2) {
+      body > header nav ul.main-nav li:nth-child(1), body > header nav ul.main-nav li:nth-child(2), body > header nav ul.main-nav li:nth-child(3) {
         /* The selector would need to be reworked if we add more links.  We don't care about padding against the mobile menu item. */
         padding-right: 1em; }
       body > header nav ul.main-nav li#mobile-menu {
