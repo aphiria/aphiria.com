@@ -138,6 +138,10 @@ table {
         padding: 10px;
         font-size: .9em;
     }
+
+    tr:nth-child(even) td {
+        background-color: #f7f7f7;
+    }
 }
 
 body > header {
