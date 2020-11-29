@@ -147,6 +147,16 @@ button {
         background-color: #29e;
         cursor: pointer;
     }
+
+    &.cancel {
+        border: 1px solid #eee;
+        background-color: #eee;
+        color: #000;
+
+        &:hover {
+            background-color: #ddd;
+        }
+    }
 }
 
 table {

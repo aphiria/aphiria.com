@@ -28,6 +28,7 @@
         <script>
             function logIn(submitEvent) {
                 submitEvent.preventDefault();
+                addLoader();
                 const emailElem = document.getElementById('email-input');
                 const passwordElem = document.getElementById('password-input');
                 const errorMsgElem = document.getElementsByClassName('error-msg')[0];
@@ -45,6 +46,8 @@
                 })
                 .then(response => {
                     if (!response.ok) {
+                        removeLoader();
+
                         return response.json().then(body => {
                             passwordElem.value = '';
                             errorMsgElem.innerText = body.title;

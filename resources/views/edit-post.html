@@ -10,10 +10,14 @@
         </script>
     </head>
     <body class="edit">
+        <div class="loader">
+            <div class="spinner"></div>
+        </div>
         <header>
             {{ mainNav }}
         </header>
         <main>
+            <h1>Edit Post</h1>
             <form id="edit-post-form" action="#" onsubmit="return editPost(event)">
                 <input type="text" id="title-input" placeholder="Title">
                 <br>
@@ -21,9 +25,10 @@
                 <br>
                 <textarea id="markdown-content-input" placeholder="Content"></textarea>
                 <br>
-                <input type="datetime-local" id="publish-date-input">
+                <input type="datetime" id="publish-date-input">
                 <br>
                 <button id="save-post-btn" type="submit">Save</button>
+                <button id="cancel-btn" class="cancel" type="button">Cancel</button>
                 <br>
                 <div class="success-msg"></div>
                 <div class="error-msg"></div>
@@ -33,6 +38,7 @@
             {{ footer }}
         </footer>
         <script>
+            const cancelBtnElem = document.getElementById('cancel-btn');
             const titleElem = document.getElementById('title-input');
             const summaryElem = document.getElementById('summary-input');
             const markdownContentElem = document.getElementById('markdown-content-input');
@@ -42,6 +48,10 @@
             const url = new URL(window.location);
             const postId = url.searchParams.get('postId');
 
+            cancelBtnElem.onclick = event => {
+                window.location = 'posts.html';
+            };
+
             fetch(`${apiUri}/posts/${postId}`, {
                 method: 'GET',
                 headers: {
@@ -50,6 +60,8 @@
                 credentials: 'include'
             })
             .then(response => {
+                removeLoader();
+
                 if (!response.ok) {
                     return response.json().then(body => {
                         errorMsgElem.innerText = body.title;
@@ -66,6 +78,7 @@
 
             function editPost(submitEvent) {
                 submitEvent.preventDefault();
+                addLoader();
 
                 errorMsgElem.innerText = '';
 
@@ -79,6 +92,8 @@
                     credentials: 'include'
                 })
                 .then(response => {
+                    removeLoader();
+
                     if (!response.ok) {
                         return response.json().then(body => {
                             errorMsgElem.innerText = body.title;

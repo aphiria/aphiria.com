@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>Log Out | Aphiria</title>
+        {{ head }}
+        <script>
+            fetch(`${apiUri}/authentication/logout`, {
+                method: 'POST',
+                credentials: 'include'
+            })
+            .then(response => {
+                if (!response.ok) {
+                    document.body.innerText = 'There was a problem logging you out';
+
+                    return;
+                }
+
+                window.location = 'login.html';
+            });
+        </script>
+    </head>
+    <body></body>
+</html>

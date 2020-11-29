@@ -102,14 +102,23 @@ button {
   button:hover {
     background-color: #29e;
     cursor: pointer; }
+  button.cancel {
+    border: 1px solid #eee;
+    background-color: #eee;
+    color: #000; }
+    button.cancel:hover {
+      background-color: #ddd; }
 
 table {
   border-collapse: collapse;
-  border-spacing: 0; }
+  border-spacing: 0;
+  width: 100%; }
   table td, table th {
     border: 1px solid #ccc;
     padding: 10px;
     font-size: .9em; }
+  table tr:nth-child(even) td {
+    background-color: #f7f7f7; }
 
 body > header {
   margin: 0 5%;

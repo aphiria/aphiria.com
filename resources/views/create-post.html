@@ -14,6 +14,7 @@
             {{ mainNav }}
         </header>
         <main>
+            <h1>New Post</h1>
             <form id="create-post-form" action="#" onsubmit="return createPost(event)">
                 <input type="text" id="title-input" placeholder="Title">
                 <br>
@@ -24,6 +25,7 @@
                 <input type="datetime-local" id="publish-date-input">
                 <br>
                 <button id="save-post-btn" type="submit">Save</button>
+                <button id="cancel-btn" class="cancel" type="button">Cancel</button>
                 <br>
                 <div class="success-msg"></div>
                 <div class="error-msg"></div>
@@ -33,6 +35,12 @@
             {{ footer }}
         </footer>
         <script>
+            const cancelBtnElem = document.getElementById('cancel-btn');
+
+            cancelBtnElem.onclick = event => {
+                window.location = 'posts.html';
+            };
+
             function createPost(submitEvent) {
                 submitEvent.preventDefault();
                 const titleElem = document.getElementById('title-input');

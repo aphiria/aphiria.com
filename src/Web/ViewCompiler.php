@@ -54,6 +54,7 @@ final class ViewCompiler
             ['filename' => 'forgot-password.html', 'description' => 'Forgot your password'],
             ['filename' => 'index.html', 'description' => 'A simple, extensible REST API framework'],
             ['filename' => 'login.html', 'description' => 'Log into the admin'],
+            ['filename' => 'logout.html', 'description' => 'Log out of the admin'],
             ['filename' => 'posts.html', 'description' => 'View all posts'],
             ['filename' => 'reset-password.html', 'description' => 'Reset your password']
         ]);

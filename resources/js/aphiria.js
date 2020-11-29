@@ -4,6 +4,11 @@ window.addEventListener('load', loadEvent => {
         document.getElementById('search-query').focus();
     }
 
+    // Add a logout link if logged in
+    if (getCookie('loggedIn') === '1') {
+        document.querySelector('body > footer').innerHTML += '<br><a href="logout.html" title="Log out">Log out</a>';
+    }
+
     // Handle toggling the mobile menu
     document.querySelector('#mobile-menu a').onclick = () => {
         if (mobileMenu.isOpen()) {
