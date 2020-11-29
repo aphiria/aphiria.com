@@ -10,11 +10,14 @@
         </script>
     </head>
     <body class="posts">
+        <div class="loader">
+            <div class="spinner"></div>
+        </div>
         <header>
             {{ mainNav }}
         </header>
         <main>
-            <button id="create-post-btn">New Post</button>
+            <button id="create-post-btn">+ New Post</button>
             <table id="posts-table">
                 <thead>
                     <tr><th></th><th>Title</th><th>Author</th></tr>
@@ -44,6 +47,8 @@
                     credentials: 'include'
                 })
                 .then(response => {
+                    removeLoader();
+
                     if (response.status === 401) {
                         window.location = 'login.html';
 

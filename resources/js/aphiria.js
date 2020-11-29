@@ -228,6 +228,32 @@ const highlightDocNav = docNavElem => {
     })
 }
 
+const addLoader = () => {
+    const loader = document.createElement('div');
+    loader.classList.add('loader');
+    loader.innerHTML = '<div class="spinner"></div>';
+    let loaderExists = false;
+
+    for (let i = 0;i < document.body.children.length;i++) {
+        if (document.body.children[i].classList.contains('loader')) {
+            loaderExists = true;
+            break;
+        }
+    }
+
+    if (!loaderExists) {
+        document.body.appendChild(loader);
+    }
+}
+
+const removeLoader = () => {
+    for (let i = 0;i < document.body.children.length;i++) {
+        if (document.body.children[i].classList.contains('loader')) {
+            document.body.removeChild(document.body.children[i]);
+        }
+    }
+}
+
 function getCookie(name) {
     const value = `; ${document.cookie}`;
     const parts = value.split(`; ${name}=`);

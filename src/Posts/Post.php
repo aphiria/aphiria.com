@@ -66,26 +66,6 @@ final class Post
     }
 
     /**
-     * Gets the title
-     *
-     * @return string The title
-     */
-    public function getTitle(): string
-    {
-        return $this->title;
-    }
-
-    /**
-     * Gets the text summary
-     *
-     * @return string The text summary
-     */
-    public function getTextSummary(): string
-    {
-        return $this->textSummary;
-    }
-
-    /**
      * Gets the markdown content
      *
      * @return string The markdown content
@@ -136,6 +116,26 @@ final class Post
     }
 
     /**
+     * Gets the text summary
+     *
+     * @return string The text summary
+     */
+    public function getTextSummary(): string
+    {
+        return $this->textSummary;
+    }
+
+    /**
+     * Gets the title
+     *
+     * @return string The title
+     */
+    public function getTitle(): string
+    {
+        return $this->title;
+    }
+
+    /**
      * Gets whether or not the post is deleted
      *
      * @return bool True if the post is deleted, otherwise false
@@ -143,46 +143,6 @@ final class Post
     public function isDeleted(): bool
     {
         return $this->isDeleted;
-    }
-
-    /**
-     * Sets the title
-     *
-     * @param string $title The new title
-     */
-    public function setTitle(string $title): void
-    {
-        $this->title = $title;
-    }
-
-    /**
-     * Gets whether or not the post is deleted
-     *
-     * @param bool $isDeleted True if the post is deleted, otherwise false
-     */
-    public function setIsDeleted(bool $isDeleted): void
-    {
-        $this->isDeleted = $isDeleted;
-    }
-
-    /**
-     * Sets the text summary
-     *
-     * @param string $textSummary The new text summary
-     */
-    public function setTextSummary(string $textSummary): void
-    {
-        $this->textSummary = $textSummary;
-    }
-
-    /**
-     * Sets the markdown content
-     *
-     * @param string $markdownContent The markdown content
-     */
-    public function setMarkdownContent(string $markdownContent): void
-    {
-        $this->markdownContent = $markdownContent;
     }
 
     /**
@@ -196,6 +156,16 @@ final class Post
     }
 
     /**
+     * Gets whether or not the post is deleted
+     *
+     * @param bool $isDeleted True if the post is deleted, otherwise false
+     */
+    public function setIsDeleted(bool $isDeleted): void
+    {
+        $this->isDeleted = $isDeleted;
+    }
+
+    /**
      * Sets the last updated date
      *
      * @param DateTime $lastUpdatedDate The last updated date
@@ -206,6 +176,16 @@ final class Post
     }
 
     /**
+     * Sets the markdown content
+     *
+     * @param string $markdownContent The markdown content
+     */
+    public function setMarkdownContent(string $markdownContent): void
+    {
+        $this->markdownContent = $markdownContent;
+    }
+
+    /**
      * Sets the publish date
      *
      * @param DateTime $publishDate The new publish date
@@ -213,5 +193,25 @@ final class Post
     public function setPublishDate(DateTime $publishDate): void
     {
         $this->publishDate = $publishDate;
+    }
+
+    /**
+     * Sets the text summary
+     *
+     * @param string $textSummary The new text summary
+     */
+    public function setTextSummary(string $textSummary): void
+    {
+        $this->textSummary = $textSummary;
+    }
+
+    /**
+     * Sets the title
+     *
+     * @param string $title The new title
+     */
+    public function setTitle(string $title): void
+    {
+        $this->title = $title;
     }
 }

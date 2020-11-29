@@ -55,6 +55,6 @@ final class AccessTokenCookieParser
             return null;
         }
 
-        return new AccessTokenCookie($parsedAccessToken['userId'], $parsedAccessToken['accessToken']);
+        return new AccessTokenCookie((int)$parsedAccessToken['userId'], (string)$parsedAccessToken['accessToken']);
     }
 }

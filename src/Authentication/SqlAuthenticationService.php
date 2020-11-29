@@ -315,8 +315,8 @@ UPDATE user_credentials
 SET is_active = FALSE
 WHERE user_id = :userId;
 SQL;
-        $deactiveOldPasswordsStatement = $this->pdo->prepare($sql);
-        $deactiveOldPasswordsStatement->execute(['userId' => $userId]);
+        $deactivateOldPasswordsStatement = $this->pdo->prepare($sql);
+        $deactivateOldPasswordsStatement->execute(['userId' => $userId]);
         $sql = <<<SQL
 INSERT INTO user_credentials
 (user_id, hashed_password)
