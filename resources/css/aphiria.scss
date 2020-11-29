@@ -226,6 +226,8 @@ body > header {
                 top: 100%;
                 left: 0;
                 right: 0;
+                overflow: auto;
+                max-height: 500px;
                 border-width: 0 1px 1px 1px;
                 border-style: solid;
                 border-color: #ccc;
@@ -839,5 +841,12 @@ blockquote {
 @media screen and (min-device-height: 650px) {
     main {
         min-height: 300px;
+    }
+}
+
+@media screen and (max-device-height: 600px) {
+    /* Make the search results a little smaller so they don't overflow the bottom */
+    body > header > nav div.doc-search ul.search-results {
+        max-height: 400px;
     }
 }
