@@ -90,11 +90,14 @@ input[type=text] {
 
 table {
   border-collapse: collapse;
-  border-spacing: 0; }
+  border-spacing: 0;
+  width: 100%; }
   table td, table th {
     border: 1px solid #ccc;
     padding: 10px;
     font-size: .9em; }
+  table tr:nth-child(even) td {
+    background-color: #f7f7f7; }
 
 body > header {
   margin: 0 5%;
@@ -114,7 +117,7 @@ body > header {
         font-size: 1.9em;
         padding-bottom: 0; }
         body > header > nav > ul.main-nav li img.logo {
-          vertical-align: bottom; }
+          vertical-align: text-bottom; }
     body > header > nav div.doc-search img.search-icon {
       height: 20px;
       position: absolute;
@@ -134,6 +137,8 @@ body > header {
       top: 100%;
       left: 0;
       right: 0;
+      overflow: auto;
+      max-height: 500px;
       border-width: 0 1px 1px 1px;
       border-style: solid;
       border-color: #ccc;
@@ -320,13 +325,13 @@ blockquote {
     transition: background .3s ease; }
   body > main {
     /* Account for both the main nav padding and search bar padding, and then pad a little extra so we're not right up against the search bar */
-    padding: 110px 10px 10px 10px; }
+    padding: 100px 10px 10px 10px; }
     body > main nav.doc-nav {
       position: fixed;
       border-left: 1px solid #f1f1f1;
       left: 100%;
       /* We want this to appear just below the main nav.  The additional 20px is the padding in the nav bar. */
-      top: 60px;
+      top: 50px;
       bottom: 0;
       min-width: 25%;
       padding-left: 10px;
@@ -348,7 +353,7 @@ blockquote {
         /* The selector would need to be reworked if we add more links.  We don't care about padding against the mobile menu item. */
         padding-right: 0.7em; }
       body > header > nav ul.main-nav li img.logo {
-        height: 40px; }
+        height: 30px; }
   body > header > nav div.doc-search {
     /* Render the search bar on its own line */
     display: block;
@@ -364,8 +369,8 @@ blockquote {
     line-height: normal; }
   body.docs > main article h1, body.docs > main article h2, body.docs > main article h3, body.docs > main article h4, body.docs > main article h5 {
     /* Make sure that tapping a link to a doc section makes the header visible from underneath the main nav */
-    padding-top: 110px;
-    margin-top: -100px;
+    padding-top: 100px;
+    margin-top: -90px;
     margin-bottom: 0; }
   body > footer {
     /* Gradient looks strange on small screens */
@@ -376,7 +381,7 @@ blockquote {
     background: rgba(0, 0, 0, 0);
     position: fixed;
     /* We want this to appear just below the main nav.  The additional 20px is the padding in the nav bar. */
-    top: 60px;
+    top: 50px;
     left: 0;
     right: 0;
     bottom: 0;
@@ -420,7 +425,7 @@ blockquote {
     display: none; }
   body > header {
     border-bottom: 1px solid #ddd;
-    height: 80px; }
+    height: 60px; }
     body > header nav ul.main-nav li {
       /* The text is pretty large on large screens, so reduce the weight */
       font-weight: 200; }
@@ -430,7 +435,7 @@ blockquote {
       body > header nav ul.main-nav li#mobile-menu {
         display: none; }
       body > header nav ul.main-nav li img.logo {
-        height: 60px; }
+        height: 40px; }
     body > header nav div.doc-search {
       display: inline-block;
       position: absolute;
@@ -438,7 +443,7 @@ blockquote {
       bottom: 20px;
       width: 40%; }
   body > main {
-    padding-top: 80px; }
+    padding-top: 60px; }
     body > main article {
       margin: 0 0 0 240px;
       padding: 20px 30px 0 30px;
@@ -451,8 +456,8 @@ blockquote {
             */ }
       body > main article h1, body > main article h2, body > main article h3, body > main article h4, body > main article h5 {
         /* Make sure that tapping a link to a doc section makes the header visible from underneath the main nav */
-        padding-top: 80px;
-        margin-top: -80px; }
+        padding-top: 60px;
+        margin-top: -60px; }
       body > main article p + ul, body > main article p + ol, body > main article h3 + ul, body > main article h3 + ol, body > main article h4 + ul, body > main article h4 + ol, body > main article h5 + ul, body > main article h5 + ol, body > main article h6 + ul, body > main article h6 + ol {
         margin-top: -1em !important; }
       body > main article nav.toc-nav {
@@ -460,7 +465,7 @@ blockquote {
         right: 0;
         width: 240px;
         padding: 0 0 10px 20px;
-        top: 80px;
+        top: 60px;
         bottom: 0;
         overflow-y: auto;
         border-left: 1px solid #ddd;
@@ -472,7 +477,7 @@ blockquote {
           list-style: none; }
         body > main article nav.toc-nav .toc-nav-contents {
           position: fixed;
-          top: 80px;
+          top: 60px;
           padding-top: 20px;
           overflow-y: auto;
           bottom: 0;
@@ -485,7 +490,7 @@ blockquote {
             padding: 10px 0; }
     body > main nav.doc-nav {
       position: fixed;
-      top: 80px;
+      top: 60px;
       bottom: 0;
       overflow-y: auto;
       padding: 20px 10px 10px 0;
@@ -500,5 +505,10 @@ blockquote {
 @media screen and (min-device-height: 650px) {
   main {
     min-height: 300px; } }
+
+@media screen and (max-device-height: 600px) {
+  /* Make the search results a little smaller so they don't overflow the bottom */
+  body > header > nav div.doc-search ul.search-results {
+    max-height: 400px; } }
 
 /*# sourceMappingURL=aphiria.css.map */

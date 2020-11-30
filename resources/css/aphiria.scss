@@ -167,7 +167,7 @@ body > header {
                 padding-bottom: 0;
 
                 img.logo {
-                    vertical-align: bottom;
+                    vertical-align: text-bottom;
                 }
             }
         }
@@ -459,7 +459,7 @@ blockquote {
 
 /* Mobile experience site settings */
 @media screen and (max-device-width: $fullExperienceSiteWidth - 1px) {
-    $headerLogoHeight: 40px;
+    $headerLogoHeight: 30px;
     $searchBarHeight: 20px;
     $headerHeight: $headerLogoHeight + $searchBarHeight + 40px;
 
@@ -582,7 +582,7 @@ blockquote {
 
 /* Full experience site settings */
 @media screen and (min-device-width: $fullExperienceSiteWidth) {
-    $headerLogoHeight: 60px;
+    $headerLogoHeight: 40px;
     $headerHeight: $headerLogoHeight + 20px;
     $pageBorderColor: #ddd;
 
