@@ -53,24 +53,7 @@ final class DocumentationDownloader
             $rawDocsPath = "{$this->clonedDocRelativePath}/$branch";
 
             if ($this->files->has($rawDocsPath)) {
-                /**
-                 * When cloning from GitHub, some files in the .git directory are read-only, which means we cannot delete
-                 * them using normal PHP commands.  So, we first chmod all the files, then delete them.
-                 */
-                try {
-                    /** @var array{type: string, path: string} $fileInfo */
-                    foreach ($this->files->listContents($rawDocsPath, true) as $fileInfo) {
-                        if (isset($fileInfo['type'], $fileInfo['path']) && $fileInfo['type'] === 'file') {
-                            $this->files->setVisibility((string)$fileInfo['path'], 'rwx');
-                        }
-                    }
-                } catch (FileNotFoundException $ex) {
-                    throw new DownloadFailedException("Failed to set visibility on file {$ex->getPath()}");
-                }
-
-                if (!$this->files->deleteDir($rawDocsPath)) {
-                    throw new DownloadFailedException("Failed to delete directory $rawDocsPath");
-                }
+                $this->deleteDir($rawDocsPath);
             }
 
             if (!$this->files->createDir($rawDocsPath)) {
@@ -87,6 +70,9 @@ final class DocumentationDownloader
                     $this->clonedDocAbsolutePath . "/$branch"
                 )
             );
+
+            // Delete the .git directory so we don't get multiple VCS roots registered
+            $this->deleteDir("{$this->clonedDocRelativePath}/$branch/.git");
 
             /** @var array{type: string, extension: string, path: string} $fileInfo */
             foreach ($this->files->listContents($rawDocsPath) as $fileInfo) {
@@ -105,5 +91,29 @@ final class DocumentationDownloader
         }
 
         return $markdownFiles;
+    }
+
+    /**
+     * Deletes a directory recursively
+     *
+     * @param string $dir The path to the directory to delete
+     * @throws DownloadFailedException Thrown if the directory could not be deleted
+     */
+    private function deleteDir(string $dir): void
+    {
+        try {
+            /** @var array{type: string, path: string} $fileInfo */
+            foreach ($this->files->listContents($dir, true) as $fileInfo) {
+                if (isset($fileInfo['type'], $fileInfo['path']) && ($fileInfo['type'] === 'file' || $fileInfo['type'] === 'dir')) {
+                    $this->files->setVisibility((string)$fileInfo['path'], 'public');
+                }
+            }
+        } catch (FileNotFoundException $ex) {
+            throw new DownloadFailedException("Failed to set visibility on {$ex->getPath()}");
+        }
+
+        if (!$this->files->deleteDir($dir)) {
+            throw new DownloadFailedException("Failed to delete $dir");
+        }
     }
 }
