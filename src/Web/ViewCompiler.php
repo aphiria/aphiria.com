@@ -97,7 +97,9 @@ final class ViewCompiler
 
         // Compile the main nav
         $mainNavContents = (string)$this->files->read("{$this->rawViewPath}/partials/main-nav.html");
-        $compiledPageContents = $this->compileTag('mainNav', $mainNavContents, $compiledPageContents);
+        $mainNavLinksContents = (string)$this->files->read("{$this->rawViewPath}/partials/main-nav-links.html");
+        $compiledMainNavContents = $this->compileTag('mainNavLinks', $mainNavLinksContents, $mainNavContents);
+        $compiledPageContents = $this->compileTag('mainNav', $compiledMainNavContents, $compiledPageContents);
 
         // Compile the footer
         $footerContents = (string)$this->files->read("{$this->rawViewPath}/partials/footer.html");
@@ -122,7 +124,7 @@ final class ViewCompiler
             $this->files->createDir("{$this->compiledViewPath}/docs/$version");
 
             // Compile the doc side nav for each version
-            $sideNavSectionContents = (string)$this->files->read("{$this->rawViewPath}/partials/doc-nav-section.html");
+            $sideNavSectionContents = (string)$this->files->read("{$this->rawViewPath}/partials/doc-side-nav-contents.html");
             $allCompiledSectionContents = '';
 
             foreach ($this->docMetadata->getDocSections($version) as $section => $docs) {
@@ -137,8 +139,8 @@ final class ViewCompiler
                 $allCompiledSectionContents .= $compiledSectionContents;
             }
 
-            $sideNavContents = (string)$this->files->read("{$this->rawViewPath}/partials/doc-nav.html");
-            $compiledSideNav = $this->compileTag('sections', $allCompiledSectionContents, $sideNavContents);
+            $sideNavContents = (string)$this->files->read("{$this->rawViewPath}/partials/side-nav.html");
+            $compiledSideNav = $this->compileTag('contents', $allCompiledSectionContents, $sideNavContents);
 
             // Compile the page
             foreach ($this->docMetadata->getDocSections($version) as $section => $docs) {
@@ -153,7 +155,7 @@ final class ViewCompiler
                     $compiledDocPageContents = $this->compileTag('docTitle', $doc['title'], $compiledDocPageContents);
                     $compiledDocPageContents = $this->compileTag('docVersion', $version, $compiledDocPageContents);
                     $compiledDocPageContents = $this->compileTag('docFilename', $docName, $compiledDocPageContents);
-                    $compiledDocPageContents = $this->compileTag('docSideNav', $compiledSideNav, $compiledDocPageContents);
+                    $compiledDocPageContents = $this->compileTag('sideNav', $compiledSideNav, $compiledDocPageContents);
                     $this->files->write("{$this->compiledViewPath}/docs/$version/$docName.html", $compiledDocPageContents);
                 }
             }
@@ -174,6 +176,19 @@ final class ViewCompiler
             ['aphiria', 'php', 'framework', 'rest', 'api'],
             'A simple, extensible REST API framework'
         );
+        $sideNavContents = (string)$this->files->read("{$this->rawViewPath}/partials/side-nav.html");
+        $mainNavLinksContents = (string)$this->files->read("{$this->rawViewPath}/partials/main-nav-links.html");
+        $nonDocSideNavContents = (string)$this->files->read("{$this->rawViewPath}/partials/non-doc-side-nav-contents.html");
+        $compiledSideNav = $this->compileTag(
+            'contents',
+            $this->compileTag(
+                'mainNavLinks',
+                $mainNavLinksContents,
+                $nonDocSideNavContents
+            ),
+            $sideNavContents
+        );
+        $compiledHomepageContents = $this->compileTag('sideNav', $compiledSideNav, $compiledHomepageContents);
         $this->files->write("{$this->compiledViewPath}/index.html", $compiledHomepageContents);
     }
 

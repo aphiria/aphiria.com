@@ -204,24 +204,19 @@ body > main {
   margin: 0 5%;
   position: relative;
   padding-bottom: 20px; }
-  body > main nav.doc-nav {
+  body > main nav.side-nav {
     padding-top: 10px;
     overflow-y: auto; }
-    body > main nav.doc-nav section:not(:last-child) {
+    body > main nav.side-nav section:not(:last-child) {
       margin-bottom: 25px; }
-    body > main nav.doc-nav section h5 {
+    body > main nav.side-nav section h5 {
       margin: 0 0 15px 0; }
-    body > main nav.doc-nav ul {
+    body > main nav.side-nav ul {
       padding-top: 0;
       padding-bottom: 0;
       list-style: inside none; }
-      body > main nav.doc-nav ul:not(:last-child) {
+      body > main nav.side-nav ul:not(:last-child) {
         margin-bottom: 20px; }
-
-body:not(.docs) > header {
-  /* We only want the mobile menu on the doc pages */ }
-  body:not(.docs) > header ul li#mobile-menu {
-    display: none; }
 
 body.docs > main article {
   /* Make it clear what links leave the site */ }
@@ -265,7 +260,7 @@ p code, li code {
   white-space: nowrap !important;
   border: 1px solid #d9d9d9 !important; }
 
-body.home > main h1, body.home > main h2, body.home > main pre.center, body.home > main nav {
+body.home > main h1, body.home > main h2, body.home > main pre.center {
   text-align: center; }
 
 hgroup#site-slogan h2 {
@@ -273,6 +268,7 @@ hgroup#site-slogan h2 {
 
 nav.doc-short-links-nav {
   margin-top: 30px;
+  text-align: center;
   /* Add spacing between the buttons */ }
   nav.doc-short-links-nav a.button {
     margin: 5px; }
@@ -310,13 +306,13 @@ blockquote {
 .token.boolean, .token.constant {
   color: #6b9fbf !important; }
 
-/* Mobile experience site settings */
-@media screen and (max-device-width: 1023px) {
+/* Mobile experience site settings (retina displays can show fractions of a pixel, hence the -0.1px) */
+@media screen and (max-width: 1023.9px) {
   body > header, body > main, body > footer {
     /* Take the parts to the edge of the screen to not waste space */
     margin-left: 0;
     margin-right: 0; }
-  body.nav-open nav.doc-nav {
+  body.nav-open nav.side-nav {
     transform: translate3d(-100%, 0, 0);
     transition: transform .3s; }
   body.nav-open #gray-out {
@@ -326,9 +322,9 @@ blockquote {
   body > main {
     /* Account for both the main nav padding and search bar padding, and then pad a little extra so we're not right up against the search bar */
     padding: 100px 10px 10px 10px; }
-    body > main nav.doc-nav {
+    body > main nav.side-nav {
       position: fixed;
-      border-left: 1px solid #f1f1f1;
+      border-left: 1px solid #f6f6f6;
       left: 100%;
       /* We want this to appear just below the main nav.  The additional 20px is the padding in the nav bar. */
       top: 50px;
@@ -336,22 +332,31 @@ blockquote {
       min-width: 25%;
       padding-left: 10px;
       padding-bottom: 10px;
-      background: #f1f1f1;
+      background: #f6f6f6;
       z-index: 5;
       transition: transform .3s; }
-      body > main nav.doc-nav li {
+      body > main nav.side-nav li {
         white-space: nowrap; }
   body > header > nav ul.main-nav {
-    display: block; }
-  body > header > nav ul.main-nav {
+    display: block;
     /* Keep the mobile menu in line with the other menu items */
     position: relative; }
     body > header > nav ul.main-nav li {
       /* Make the links less huge */
       font-size: 1.4em; }
-      body > header > nav ul.main-nav li:nth-child(1), body > header > nav ul.main-nav li:nth-child(2) {
+      body > header > nav ul.main-nav li:nth-child(1), body > header > nav ul.main-nav li:nth-child(2), body > header > nav ul.main-nav li:nth-child(1), body > header > nav ul.main-nav li:nth-child(3) {
         /* The selector would need to be reworked if we add more links.  We don't care about padding against the mobile menu item. */
         padding-right: 0.7em; }
+      body > header > nav ul.main-nav li.main-nav-link {
+        /* Do not display main nav links in the main nav - they'll be shown in the side nav */
+        display: none; }
+      body > header > nav ul.main-nav li#mobile-menu {
+        display: inline-block;
+        position: absolute;
+        right: 10px;
+        top: -5px;
+        font-size: 3em;
+        line-height: normal; }
       body > header > nav ul.main-nav li img.logo {
         height: 30px; }
   body > header > nav div.doc-search {
@@ -360,13 +365,6 @@ blockquote {
     /* Give the results a relative parent for positioning */
     position: relative;
     margin: 10px 20px 0; }
-  body.docs > header ul li#mobile-menu {
-    display: inline-block;
-    position: absolute;
-    right: 10px;
-    top: -5px;
-    font-size: 3em;
-    line-height: normal; }
   body.docs > main article h1, body.docs > main article h2, body.docs > main article h3, body.docs > main article h4, body.docs > main article h5 {
     /* Make sure that tapping a link to a doc section makes the header visible from underneath the main nav */
     padding-top: 100px;
@@ -388,7 +386,7 @@ blockquote {
     z-index: 1; } }
 
 /* Full experience site settings */
-@media screen and (min-device-width: 1024px) {
+@media screen and (min-width: 1024px) {
   * {
     /* The background of the scrollbar except button or resizer */
     /* The scrollbar itself */
@@ -420,8 +418,8 @@ blockquote {
     margin: 0 auto; }
   #sidebar-main-nav {
     display: none; }
-  /* Don't display the sidebar on non-doc pages */
-  body:not(.docs) nav.doc-nav {
+  /* Don't display the sidebar except on the docs where it acts as the doc nav bar  */
+  body:not(.docs) nav.side-nav {
     display: none; }
   body > header {
     border-bottom: 1px solid #ddd;
@@ -429,7 +427,7 @@ blockquote {
     body > header nav ul.main-nav li {
       /* The text is pretty large on large screens, so reduce the weight */
       font-weight: 200; }
-      body > header nav ul.main-nav li:nth-child(1), body > header nav ul.main-nav li:nth-child(2) {
+      body > header nav ul.main-nav li:nth-child(1), body > header nav ul.main-nav li:nth-child(2), body > header nav ul.main-nav li:nth-child(3) {
         /* The selector would need to be reworked if we add more links.  We don't care about padding against the mobile menu item. */
         padding-right: 1em; }
       body > header nav ul.main-nav li#mobile-menu {
@@ -441,7 +439,7 @@ blockquote {
       position: absolute;
       right: 0;
       bottom: 20px;
-      width: 40%; }
+      width: 35%; }
   body > main {
     padding-top: 60px; }
     body > main article {
@@ -488,7 +486,7 @@ blockquote {
           body > main article nav.toc-nav .toc-nav-contents > ol, body > main article nav.toc-nav .toc-nav-contents > ul {
             /* We don't want to indent the first items */
             padding: 10px 0; }
-    body > main nav.doc-nav {
+    body > main nav.side-nav {
       position: fixed;
       top: 60px;
       bottom: 0;
@@ -497,16 +495,16 @@ blockquote {
       float: left;
       width: 240px;
       border-right: 1px solid #ddd; }
-      body > main nav.doc-nav a.selected {
+      body > main nav.side-nav a.selected {
         font-weight: bold; }
   #gray-out {
     display: none; } }
 
-@media screen and (min-device-height: 650px) {
+@media screen and (min-height: 650px) {
   main {
     min-height: 300px; } }
 
-@media screen and (max-device-height: 600px) {
+@media screen and (max-height: 600px) {
   /* Make the search results a little smaller so they don't overflow the bottom */
   body > header > nav div.doc-search ul.search-results {
     max-height: 400px; } }
