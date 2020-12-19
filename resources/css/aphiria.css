@@ -311,7 +311,7 @@ blockquote {
   color: #6b9fbf !important; }
 
 /* Mobile experience site settings */
-@media screen and (max-device-width: 1023px) {
+@media screen and (max-width: 1023px) {
   body > header, body > main, body > footer {
     /* Take the parts to the edge of the screen to not waste space */
     margin-left: 0;
@@ -349,7 +349,7 @@ blockquote {
     body > header > nav ul.main-nav li {
       /* Make the links less huge */
       font-size: 1.4em; }
-      body > header > nav ul.main-nav li:nth-child(1), body > header > nav ul.main-nav li:nth-child(2) {
+      body > header > nav ul.main-nav li:nth-child(1), body > header > nav ul.main-nav li:nth-child(2), body > header > nav ul.main-nav li:nth-child(1), body > header > nav ul.main-nav li:nth-child(3) {
         /* The selector would need to be reworked if we add more links.  We don't care about padding against the mobile menu item. */
         padding-right: 0.7em; }
       body > header > nav ul.main-nav li img.logo {
@@ -388,7 +388,7 @@ blockquote {
     z-index: 1; } }
 
 /* Full experience site settings */
-@media screen and (min-device-width: 1024px) {
+@media screen and (min-width: 1024px) {
   * {
     /* The background of the scrollbar except button or resizer */
     /* The scrollbar itself */
@@ -429,7 +429,7 @@ blockquote {
     body > header nav ul.main-nav li {
       /* The text is pretty large on large screens, so reduce the weight */
       font-weight: 200; }
-      body > header nav ul.main-nav li:nth-child(1), body > header nav ul.main-nav li:nth-child(2) {
+      body > header nav ul.main-nav li:nth-child(1), body > header nav ul.main-nav li:nth-child(2), body > header nav ul.main-nav li:nth-child(3) {
         /* The selector would need to be reworked if we add more links.  We don't care about padding against the mobile menu item. */
         padding-right: 1em; }
       body > header nav ul.main-nav li#mobile-menu {
@@ -502,11 +502,11 @@ blockquote {
   #gray-out {
     display: none; } }
 
-@media screen and (min-device-height: 650px) {
+@media screen and (min-height: 650px) {
   main {
     min-height: 300px; } }
 
-@media screen and (max-device-height: 600px) {
+@media screen and (max-height: 600px) {
   /* Make the search results a little smaller so they don't overflow the bottom */
   body > header > nav div.doc-search ul.search-results {
     max-height: 400px; } }
