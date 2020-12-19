@@ -9,6 +9,7 @@
             {{ mainNav }}
         </header>
         <main>
+            {{ sideNav }}
             <hgroup id="site-slogan">
                 <h1>A simple, extensible REST API framework for PHP</h1>
                 <h2>Automatic content negotiation.  No magic.  No bleeding into your code.</h2>
@@ -30,18 +31,19 @@ $container->bindInstance(IUserService::class, new UserService());
 
 // Run an integration test
 $this->assertParsedBodyEquals(new User(1, 'Dave'), $this->get('/users/1'));</code></pre>
-            <h1>Install Aphiria</h1>
+            <h2>Install Aphiria</h2>
             <pre class="center"><code class="language-bash">
 composer create-project aphiria/app --prefer-dist --stability dev
                 </code></pre>
             <nav class="doc-short-links-nav">
-                <h1>Get started</h1>
+                <h2>Get started</h2>
                 <a class="button" href="/docs/0.x/installation.html" title="Learn how to install Aphiria">Installing</a>
                 <a class="button" href="/docs/0.x/configuration.html" title="Learn how to configure your app">Configuring</a>
                 <a class="button" href="/docs/0.x/routing.html" title="Learn about routing">Routing</a>
                 <a class="button" href="/docs/0.x/controllers.html" title="Learn how to write controllers">Controllers</a>
                 <a class="button" href="/docs/0.x/dependency-injection.html" title="Learn about dependency injection">DI</a>
             </nav>
+            <div id="gray-out"></div>
         </main>
         <footer>
             {{ footer }}

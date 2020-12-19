@@ -301,7 +301,7 @@ body > main {
     position: relative;
     padding-bottom: 20px;
 
-    nav.doc-nav {
+    nav.side-nav {
         padding-top: 10px;
         overflow-y: auto;
 
@@ -324,13 +324,6 @@ body > main {
                 margin-bottom: 20px;
             }
         }
-    }
-}
-
-body:not(.docs) > header {
-    /* We only want the mobile menu on the doc pages */
-    ul li#mobile-menu {
-        display: none;
     }
 }
 
@@ -393,7 +386,7 @@ p code, li code {
 }
 
 body.home > main {
-    h1, h2, pre.center, nav {
+    h1, h2, pre.center {
         text-align: center;
     }
 }
@@ -404,6 +397,7 @@ hgroup#site-slogan h2 {
 
 nav.doc-short-links-nav {
     margin-top: 30px;
+    text-align: center;
 
     /* Add spacing between the buttons */
     a.button {
@@ -457,8 +451,8 @@ blockquote {
     }
 }
 
-/* Mobile experience site settings */
-@media screen and (max-width: $fullExperienceSiteWidth - 1px) {
+/* Mobile experience site settings (retina displays can show fractions of a pixel, hence the -0.1px) */
+@media screen and (max-width: $fullExperienceSiteWidth - 0.1px) {
     $headerLogoHeight: 30px;
     $searchBarHeight: 20px;
     $headerHeight: $headerLogoHeight + $searchBarHeight + 40px;
@@ -470,7 +464,7 @@ blockquote {
     }
 
     body.nav-open {
-        nav.doc-nav {
+        nav.side-nav {
             transform: translate3d(-100%, 0, 0);
             transition: transform .3s;
         }
@@ -486,9 +480,10 @@ blockquote {
         /* Account for both the main nav padding and search bar padding, and then pad a little extra so we're not right up against the search bar */
         padding: $headerHeight + 10px 10px 10px 10px;
 
-        nav.doc-nav {
+        nav.side-nav {
+            $sideNavBackgroundColor: #f6f6f6;
             position: fixed;
-            border-left: 1px solid #f1f1f1;
+            border-left: 1px solid $sideNavBackgroundColor;
             left: 100%;
             /* We want this to appear just below the main nav.  The additional 20px is the padding in the nav bar. */
             top: $headerLogoHeight + 20px;
@@ -496,7 +491,7 @@ blockquote {
             min-width: 25%;
             padding-left: 10px;
             padding-bottom: 10px;
-            background: #f1f1f1;
+            background: $sideNavBackgroundColor;
             z-index: 5;
             transition: transform .3s;
 
@@ -509,9 +504,6 @@ blockquote {
     body > header > nav {
         ul.main-nav {
             display: block;
-        }
-
-        ul.main-nav {
             /* Keep the mobile menu in line with the other menu items */
             position: relative;
 
@@ -522,6 +514,20 @@ blockquote {
                 &:nth-child(1), &:nth-child(2), &:nth-child(1), &:nth-child(3) {
                     /* The selector would need to be reworked if we add more links.  We don't care about padding against the mobile menu item. */
                     padding-right: 0.7em;
+                }
+
+                &.main-nav-link {
+                    /* Do not display main nav links in the main nav - they'll be shown in the side nav */
+                    display: none;
+                }
+
+                &#mobile-menu {
+                    display: inline-block;
+                    position: absolute;
+                    right: 10px;
+                    top: -5px;
+                    font-size: 3em;
+                    line-height: normal;
                 }
 
                 img.logo {
@@ -539,25 +545,12 @@ blockquote {
         }
     }
 
-    body.docs {
-        & > header {
-            ul li#mobile-menu {
-                display: inline-block;
-                position: absolute;
-                right: 10px;
-                top: -5px;
-                font-size: 3em;
-                line-height: normal;
-            }
-        }
-
-        & > main article {
-            h1, h2, h3, h4, h5 {
-                /* Make sure that tapping a link to a doc section makes the header visible from underneath the main nav */
-                padding-top: $headerHeight+10px;
-                margin-top: -1*$headerHeight;
-                margin-bottom: 0;
-            }
+    body.docs  > main article {
+        h1, h2, h3, h4, h5 {
+            /* Make sure that tapping a link to a doc section makes the header visible from underneath the main nav */
+            padding-top: $headerHeight+10px;
+            margin-top: -1*$headerHeight;
+            margin-bottom: 0;
         }
     }
 
@@ -636,8 +629,8 @@ blockquote {
         display: none;
     }
 
-    /* Don't display the sidebar on non-doc pages */
-    body:not(.docs) nav.doc-nav {
+    /* Don't display the sidebar except on the docs where it acts as the doc nav bar  */
+    body:not(.docs) nav.side-nav {
         display: none;
     }
 
@@ -671,7 +664,7 @@ blockquote {
                 position: absolute;
                 right: 0;
                 bottom: 20px;
-                width: 40%;
+                width: 35%;
             }
         }
     }
@@ -740,7 +733,7 @@ blockquote {
             }
         }
 
-        nav.doc-nav {
+        nav.side-nav {
             position: fixed;
             top: $headerHeight;
             bottom: 0;
