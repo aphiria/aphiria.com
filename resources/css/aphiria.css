@@ -287,7 +287,7 @@ blockquote {
 .token.property {
   color: #005cc5 !important; }
 
-.token.keyword {
+.token.keyword, .token.constant {
   color: #007ce5 !important; }
 
 .token.function {
@@ -296,14 +296,14 @@ blockquote {
 .token.string {
   color: #6a0 !important; }
 
-.token.class-name {
+.token.class-name, .token.type-hint {
   color: #333 !important; }
 
 .token.operator {
   color: #005cc5 !important;
   background: none !important; }
 
-.token.boolean, .token.constant {
+.token.boolean {
   color: #6b9fbf !important; }
 
 /* Mobile experience site settings (retina displays can show fractions of a pixel, hence the -0.1px) */

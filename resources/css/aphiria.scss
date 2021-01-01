@@ -425,7 +425,7 @@ blockquote {
         color: rgb(0, 92, 197) !important;
     }
 
-    &.keyword {
+    &.keyword, &.constant {
         color: rgb(0, 124, 229) !important;
     }
 
@@ -437,7 +437,7 @@ blockquote {
         color: #6a0 !important;
     }
 
-    &.class-name {
+    &.class-name, &.type-hint {
         color: #333 !important;
     }
 
@@ -446,7 +446,7 @@ blockquote {
         background: none !important;
     }
 
-    &.boolean, &.constant {
+    &.boolean {
         color: rgb(107, 159, 191) !important;
     }
 }
