@@ -70,8 +70,8 @@ final class Cors implements IMiddleware
         $response->getHeaders()
             ->addRange([
                 new KeyValuePair('Access-Control-Allow-Origin', $this->allowedOrigin),
-                new KeyValuePair('Access-Control-Allow-Methods', implode(', ', self::$allowedMethods)),
-                new KeyValuePair('Access-Control-Allow-Headers', implode(', ', self::$allowedHeaders)),
+                new KeyValuePair('Access-Control-Allow-Methods', \implode(', ', self::$allowedMethods)),
+                new KeyValuePair('Access-Control-Allow-Headers', \implode(', ', self::$allowedHeaders)),
                 new KeyValuePair('Access-Control-Allow-Credentials', 'true')
             ]);
 

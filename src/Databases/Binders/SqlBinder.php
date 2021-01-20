@@ -26,7 +26,7 @@ final class SqlBinder extends Binder
      */
     public function bind(IContainer $container): void
     {
-        $dsn = sprintf(
+        $dsn = \sprintf(
             'pgsql:host=%s;dbname=%s;port=%d;options=\'--client_encoding=utf8\'',
             (string)\getenv('DB_HOST'),
             (string)\getenv('DB_NAME'),

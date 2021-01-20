@@ -155,7 +155,7 @@ EOF
         );
         // The query must be lower cased for our full text search to work appropriately
         $statement->execute([
-            'query' => \mb_strtolower(trim($query)),
+            'query' => \mb_strtolower(\trim($query)),
             'maxResults' => self::MAX_NUM_SEARCH_RESULTS
         ]);
         $searchResults = [];
@@ -189,7 +189,7 @@ EOF
          * Update the current lexeme table name (limited to 8 chars so we don't go over PostgreSQL name length limits).
          * This is done so that reindexing the website only impacts this instance of the site.
          */
-        $this->lexemeTableName = 'lexemes_' . substr(hash('sha256', \random_bytes(32)), 0, 8);
+        $this->lexemeTableName = 'lexemes_' . \substr(\hash('sha256', \random_bytes(32)), 0, 8);
         $this->pdo->beginTransaction();
         $this->createTable();
 

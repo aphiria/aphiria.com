@@ -90,7 +90,7 @@ final class ViewCompiler
     ): string {
         // Compile the head
         $headContents = (string)$this->files->read("{$this->rawViewPath}/partials/head.html");
-        $compiledHeadContents = $this->compileTag('metadataKeywords', implode(',', $metadataKeywords), $headContents);
+        $compiledHeadContents = $this->compileTag('metadataKeywords', \implode(',', $metadataKeywords), $headContents);
         $compiledHeadContents = $this->compileTag('metadataDescription', $metadataDescription, $compiledHeadContents);
         $compiledHeadContents = $this->compileTag('apiUri', $this->apiUri, $compiledHeadContents);
         $compiledPageContents = $this->compileTag('head', $compiledHeadContents, $pageContents);

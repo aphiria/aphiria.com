@@ -123,11 +123,11 @@ final class DocumentationService
 
             foreach ($markdownFilePaths as $markdownFilePath) {
                 try {
-                    $markdownFilename = pathinfo($markdownFilePath, PATHINFO_FILENAME);
+                    $markdownFilename = \pathinfo($markdownFilePath, PATHINFO_FILENAME);
                     $htmlDocFilename = "$branchDocDir/$markdownFilename.html";
                     $html = (string)$this->markdownParser->text($this->files->read($markdownFilePath));
                     // Rewrite the links to point to the HTML docs on the site
-                    $html = preg_replace('/<a href="([^"]+)\.md(#[^"]+)?"/', '<a href="$1.html$2"', $html);
+                    $html = \preg_replace('/<a href="([^"]+)\.md(#[^"]+)?"/', '<a href="$1.html$2"', $html);
                     $this->files->write($htmlDocFilename, $html);
                     $htmlFiles[$branch][] = $htmlDocFilename;
                 } catch (FileNotFoundException $ex) {

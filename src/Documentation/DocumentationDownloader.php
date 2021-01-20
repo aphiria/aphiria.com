@@ -63,7 +63,7 @@ final class DocumentationDownloader
             // Clone the branch from GitHub into our temporary directory
             /** @psalm-suppress ForbiddenCode We are purposely allowing this call */
             \shell_exec(
-                sprintf(
+                \sprintf(
                     'git clone -b %s --single-branch %s %s',
                     $branch,
                     self::GITHUB_REPOSITORY,
