@@ -34,7 +34,9 @@ before_script:
   - gulp build
 
 script:
-  - composer test
+  - composer phpunit --testsuite Unit
+  - composer phpcs-test
+  - composer psalm
 
 deploy:
   - provider: script
