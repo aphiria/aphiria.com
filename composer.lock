@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "2028fc8ed02e737f933f74007733b271",
+    "content-hash": "2a69bd823717fcb635652ff85531bb89",
     "packages": [
         {
             "name": "aphiria/aphiria",
