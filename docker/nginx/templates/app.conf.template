@@ -1,0 +1,68 @@
+# Serve web
+server {
+    listen ${NGINX_WEB_PORT};
+    server_name ${NGINX_WEB_SERVER_NAME};
+    index index.php index.html;
+    error_log  /var/log/nginx/error.log;
+    access_log /var/log/nginx/access.log;
+    root /var/www/web/public-web;
+    gzip on;
+    gzip_types text/plain text/css application/json application/javascript text/xml application/xml application/xml+rss text/javascript;
+
+    location = /favicon.ico {
+        access_log off;
+        log_not_found off;
+    }
+
+    location = /robots.txt  {
+        access_log off;
+        log_not_found off;
+    }
+
+    location ~ /\.(?!well-known).* {
+        deny all;
+    }
+}
+
+# Serve API
+server {
+    listen ${NGINX_API_PORT};
+    server_name ${NGINX_API_SERVER_NAME};
+    index index.php index.html;
+    error_log  /var/log/nginx/error.log;
+    access_log /var/log/nginx/access.log;
+    root /var/www/api/public-api;
+    gzip on;
+    gzip_types text/plain text/css application/json application/javascript text/xml application/xml application/xml+rss text/javascript;
+
+    location / {
+        try_files $uri $uri/ /index.php?$query_string;
+    }
+
+    location = /favicon.ico {
+        access_log off;
+        log_not_found off;
+    }
+
+    location = /robots.txt  {
+        access_log off;
+        log_not_found off;
+    }
+
+     location ~ \.php$ {
+        fastcgi_pass php:9000;
+        fastcgi_param SCRIPT_FILENAME $realpath_root$fastcgi_script_name;
+        include fastcgi_params;
+    }
+
+    location ~ /\.(?!well-known).* {
+        deny all;
+    }
+}
+
+# Redirect http to https and aphiria.com to www.aphiria.com
+server {
+    listen 80;
+    server_name aphiria.com www.aphiria.com;
+    return 301 https://www.aphiria.com$request_uri;
+}

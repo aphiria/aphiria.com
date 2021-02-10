@@ -1,0 +1,46 @@
+version: '3'
+services:
+  nginx:
+    image: nginx:alpine
+    container_name: nginx
+    restart: unless-stopped
+    tty: true
+    env_file: # TODO: REMOVE!!!!!!!!!!
+      - ./../.env
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./..:/var/www/api
+      - ./../public-web:/var/www/web/public-web
+      - ./nginx/templates:/etc/nginx/templates
+    depends_on:
+      - php
+  php:
+    build:
+      context: .
+      dockerfile: ./php/Dockerfile
+    container_name: php
+    restart: unless-stopped
+    tty: true
+    working_dir: /var/www/api
+    volumes:
+      - ./..:/var/www/api
+      - ./php/local.ini:/usr/local/etc/php/conf.d/local.ini
+  db:
+    image: postgres:11.10-alpine
+    container_name: db
+    restart: unless-stopped
+    tty: true
+    ports:
+      - "5432:5432"
+    volumes:
+      - db:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: defaultdb
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+
+volumes:
+  db:
+    driver: local
