@@ -8,8 +8,9 @@ services:
     env_file: # TODO: REMOVE!!!!!!!!!!
       - ./../.env
     ports:
-      - "80:80"
-      - "443:443"
+      - 80:80
+      - 8080:8080 # TODO: Am I doing these port mappings correctly?  Should I be using environment vars?
+      - 443:443
     volumes:
       - ./..:/var/www/api
       - ./../public-web:/var/www/web/public-web
@@ -24,6 +25,8 @@ services:
     restart: unless-stopped
     tty: true
     working_dir: /var/www/api
+    ports:
+      - 9000:9000
     volumes:
       - ./..:/var/www/api
       - ./php/local.ini:/usr/local/etc/php/conf.d/local.ini
