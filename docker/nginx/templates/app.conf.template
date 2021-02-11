@@ -63,6 +63,6 @@ server {
 # Redirect http to https and aphiria.com to www.aphiria.com
 server {
     listen 80;
-    server_name aphiria.com www.aphiria.com;
-    return 301 https://www.aphiria.com$request_uri;
+    server_name aphiria.com www.aphiria.com api.aphiria.com;
+    return 301 https://$host$request_uri;
 }
