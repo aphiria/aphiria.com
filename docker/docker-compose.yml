@@ -8,9 +8,9 @@ services:
     env_file: # TODO: REMOVE!!!!!!!!!!
       - ./../.env
     ports:
-      - 80:80
-      - 8080:8080 # TODO: Am I doing these port mappings correctly?  Should I be using environment vars?
-      - 443:443
+      - ${NGINX_API_PORT}
+      - ${NGINX_WEB_PORT}
+      - 443
     volumes:
       - ./..:/var/www/api
       - ./../public-web:/var/www/web/public-web
@@ -36,13 +36,13 @@ services:
     restart: unless-stopped
     tty: true
     ports:
-      - "5432:5432"
+      - ${DB_PORT}
     volumes:
       - db:/var/lib/postgresql/data
     environment:
-      POSTGRES_DB: defaultdb
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: password
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
 
 volumes:
   db:

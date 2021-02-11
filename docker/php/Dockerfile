@@ -12,6 +12,7 @@ RUN apt-get update \
 RUN docker-php-ext-install opcache pdo_pgsql pgsql zip
 
 # Install Composer
+# TODO: Do I actually need Composer?
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
 # Add user and configure permissions

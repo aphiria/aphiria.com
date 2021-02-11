@@ -49,7 +49,7 @@ server {
         log_not_found off;
     }
 
-     location ~ \.php$ {
+    location ~ \.php$ {
         fastcgi_pass php:9000;
         fastcgi_param SCRIPT_FILENAME $realpath_root$fastcgi_script_name;
         include fastcgi_params;
