@@ -2,7 +2,6 @@ version: '3'
 services:
   nginx:
     image: nginx:alpine
-    container_name: nginx
     restart: unless-stopped
     tty: true
     env_file:
@@ -21,7 +20,6 @@ services:
     build:
       context: .
       dockerfile: ./php/Dockerfile
-    container_name: php
     restart: unless-stopped
     tty: true
     working_dir: /var/www/api
@@ -36,7 +34,6 @@ services:
       - db
   db:
     image: postgres:11.10-alpine
-    container_name: db
     restart: unless-stopped
     tty: true
     ports:

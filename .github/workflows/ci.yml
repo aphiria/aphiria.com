@@ -1,0 +1,49 @@
+name: ci
+on:
+  push:
+  pull_request:
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+      matrix:
+        php: ['8.0']
+        stability: [prefer-stable]
+    name: PHP ${{ matrix.php }} - ${{ matrix.stability }}
+    env:
+      # Set these so that views are compiled with correct links
+      APP_WEB_URL: https://www.aphiria.com
+      APP_API_URL: https://api.aphiria.com
+    steps:
+      - name: Check Out Code
+        uses: actions/checkout@v2
+      - name: Set Up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: curl, dom, libxml, mbstring, pcntl, zip
+          tools: composer:v2
+      - name: Install Composer Dependencies
+        run: composer update --${{ matrix.stability }} --prefer-dist --no-interaction --no-progress
+      - name: Optimize Autload
+        run: composer dump-autoload -o
+      - name: Build Gulp
+        run: yarn install && yarn global add gulp && gulp build
+      - name: Run Unit Tests
+        run: vendor/bin/phpunit --testsuite Unit --verbose
+      - name: Run Linter
+        run: composer phpcs-test
+      - name: Run Psalm Static Analysis
+        run: composer psalm
+      - name: Publish to GitHub Packages Registry
+        uses: docker/build-push-action@v1
+        with:
+          username: ${{ github.actor }}
+          file: ./../../docker/php/Dockerfile
+          password: ${{ secrets.GITHUB_TOKEN }}
+          registry: docker.pkg.github.com
+          tags: aphiria/php:latest
+      # TODO: Need to figure out how to get code onto container from host
+      # TODO: Need to get .env file copied in prior to pushing to production
+      # TODO: Need to actually get these containers to Digital Ocean
