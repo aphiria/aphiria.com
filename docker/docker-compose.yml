@@ -5,11 +5,11 @@ services:
     container_name: nginx
     restart: unless-stopped
     tty: true
-    env_file: # TODO: REMOVE!!!!!!!!!!
+    env_file:
       - ./../.env
     ports:
-      - ${NGINX_API_PORT}
-      - ${NGINX_WEB_PORT}
+      - ${NGINX_API_PORT}:${NGINX_API_PORT}
+      - ${NGINX_WEB_PORT}:${NGINX_WEB_PORT}
       - 443
     volumes:
       - ./..:/var/www/api
@@ -25,24 +25,26 @@ services:
     restart: unless-stopped
     tty: true
     working_dir: /var/www/api
+    env_file:
+      - ./../.env
     ports:
       - 9000:9000
     volumes:
       - ./..:/var/www/api
       - ./php/local.ini:/usr/local/etc/php/conf.d/local.ini
+    depends_on:
+      - db
   db:
     image: postgres:11.10-alpine
     container_name: db
     restart: unless-stopped
     tty: true
     ports:
-      - ${DB_PORT}
+      - ${DB_PORT}:${DB_PORT}
     volumes:
       - db:/var/lib/postgresql/data
-    environment:
-      POSTGRES_DB: ${DB_NAME}
-      POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    env_file:
+      - ./../.env
 
 volumes:
   db:
