@@ -3,14 +3,14 @@ on:
   push:
   pull_request:
 jobs:
-  ci:
+  build:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: true
       matrix:
         php: ['8.0']
         stability: [prefer-stable]
-    name: PHP ${{ matrix.php }} - ${{ matrix.stability }}
+    name: 'Build PHP ${{ matrix.php }} - ${{ matrix.stability }}'
     env:
       # Set these so that views are compiled with correct links
       APP_WEB_URL: https://www.aphiria.com
@@ -28,15 +28,35 @@ jobs:
         run: composer update --${{ matrix.stability }} --prefer-dist --no-interaction --no-progress
       - name: Optimize Autload
         run: composer dump-autoload -o
-      - name: Build Gulp
-        run: yarn install && yarn global add gulp && gulp build
       - name: Run Unit Tests
         run: vendor/bin/phpunit --testsuite Unit --verbose
       - name: Run Linter
         run: composer phpcs-test
       - name: Run Psalm Static Analysis
         run: composer psalm
-      - name: Publish to GitHub Packages Registry
+      - name: Build Gulp
+        run: yarn install && yarn global add gulp && gulp build
+  deploy:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+      matrix:
+        php: [ '8.0' ]
+        stability: [ prefer-stable ]
+    name: 'Deploy PHP ${{ matrix.php }} - ${{ matrix.stability }}'
+    steps:
+      # TODO: Need to figure out how to run docker-compose with prod YAML config and .env
+      # TODO: Run integration tests inside of container
+      # TODO: Do I need to seed DB here in CI to have meaningful integration tests?
+      - name: Publish Nginx Image to GitHub Packages Registry
+        uses: docker/build-push-action@v1
+        with:
+          username: ${{ github.actor }}
+          file: ./../../docker/nginx/Dockerfile
+          password: ${{ secrets.GITHUB_TOKEN }}
+          registry: docker.pkg.github.com
+          tags: aphiria/nginx:latest
+      - name: Publish PHP Image to GitHub Packages Registry
         uses: docker/build-push-action@v1
         with:
           username: ${{ github.actor }}
@@ -44,6 +64,4 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
           registry: docker.pkg.github.com
           tags: aphiria/php:latest
-      # TODO: Need to figure out how to get code onto container from host
-      # TODO: Need to get .env file copied in prior to pushing to production
       # TODO: Need to actually get these containers to Digital Ocean

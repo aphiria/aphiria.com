@@ -14,6 +14,10 @@ RUN docker-php-ext-install intl opcache pdo_pgsql pgsql zip
 # Install Composer
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
+# Copy over PHP source/config files (used for production)
+COPY . ./api
+COPY ./docker/php/local.ini /usr/local/etc/php/conf.d/local.ini
+
 # Start the php-fpm server
 EXPOSE 9000
 CMD ["php-fpm"]

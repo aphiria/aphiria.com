@@ -1,25 +1,19 @@
 version: '3'
 services:
   nginx:
-    image: nginx:alpine
+    build:
+      context: ./..
+      dockerfile: ./docker/nginx/Dockerfile
     restart: unless-stopped
     tty: true
     env_file:
       - ./../.env
-    ports:
-      - ${NGINX_API_PORT}:${NGINX_API_PORT}
-      - ${NGINX_WEB_PORT}:${NGINX_WEB_PORT}
-      - 443
-    volumes:
-      - ./..:/var/www/api
-      - ./../public-web:/var/www/web/public-web
-      - ./nginx/templates:/etc/nginx/templates
     depends_on:
       - php
   php:
     build:
-      context: .
-      dockerfile: ./php/Dockerfile
+      context: ./..
+      dockerfile: ./docker/php/Dockerfile
     restart: unless-stopped
     tty: true
     working_dir: /var/www/api
@@ -27,9 +21,6 @@ services:
       - ./../.env
     ports:
       - 9000:9000
-    volumes:
-      - ./..:/var/www/api
-      - ./php/local.ini:/usr/local/etc/php/conf.d/local.ini
     depends_on:
       - db
   db:
@@ -37,7 +28,7 @@ services:
     restart: unless-stopped
     tty: true
     ports:
-      - ${DB_PORT}:${DB_PORT}
+      - 5432:5432
     volumes:
       - db:/var/lib/postgresql/data
     env_file:
