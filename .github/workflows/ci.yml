@@ -1,5 +1,5 @@
 name: ci
-on:
+on: # TODO: How do I only run the 'deploy' job in master?
   push:
   pull_request:
 jobs:
@@ -34,9 +34,11 @@ jobs:
         run: composer phpcs-test
       - name: Run Psalm Static Analysis
         run: composer psalm
+      # TODO: This is going to result in a call to the DB when the binder metadata collector inspects the binders.  Does that mean it has to be run inside the container?  First, I should double check that there is no way to evaluate lazy factories in binders when inspecting them.  That way, I can get around actually needing to connect to the DB even when my gulp commands don't need to.
       - name: Build Gulp
         run: yarn install && yarn global add gulp && gulp build
   deploy:
+    needs: [build]
     runs-on: ubuntu-latest
     strategy:
       fail-fast: true

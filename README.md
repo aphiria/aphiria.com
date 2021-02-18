@@ -12,9 +12,6 @@ This repository contains the code for both https://www.aphiria.com and https://a
 
 To run this site locally, you must:
 
-* Edit your hosts file to be able to run the website and API
-  * For *nix users, add `127.0.0.1 api.localhost` to _/etc/hosts_
-  * For Windows users, add `127.0.0.1 api.localhost` to _C:\Windows\System32\drivers\etc\hosts_
 * [Install npm](https://www.npmjs.com/get-npm)
 * [Install Yarn](https://yarnpkg.com/lang/en/docs/install)
 * Run `yarn install` to install JavaScript dependencies
