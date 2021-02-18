@@ -1,4 +1,3 @@
-# TODO: Need to remove bin directory and .travis.yml
 name: ci
   push:
   pull_request:
@@ -10,7 +9,7 @@ jobs:
       matrix:
         php: ['8.0']
         stability: [prefer-stable]
-    name: 'Build Website'
+    name: Build Website
     env:
       # Set these so that views are compiled with correct links
       APP_WEB_URL: https://www.aphiria.com
@@ -45,7 +44,7 @@ jobs:
       matrix:
         php: [ '8.0' ]
         stability: [ prefer-stable ]
-    name: 'Deploy Website'
+    name: Deploy Website
     steps:
       - name: Copy .env File
         run: |
