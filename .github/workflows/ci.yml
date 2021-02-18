@@ -1,5 +1,5 @@
+# TODO: Need to remove bin directory and .travis.yml
 name: ci
-on: # TODO: How do I only run the 'deploy' job in master?
   push:
   pull_request:
 jobs:
@@ -10,7 +10,7 @@ jobs:
       matrix:
         php: ['8.0']
         stability: [prefer-stable]
-    name: 'Build PHP ${{ matrix.php }} - ${{ matrix.stability }}'
+    name: 'Build Website'
     env:
       # Set these so that views are compiled with correct links
       APP_WEB_URL: https://www.aphiria.com
@@ -37,6 +37,7 @@ jobs:
       - name: Build Gulp
         run: yarn install && yarn global add gulp && gulp build
   deploy:
+    #if: github.ref == 'refs/heads/master' TODO: Need to re-enable this once I merge my PR in and work out all the other issues
     needs: [build]
     runs-on: ubuntu-latest
     strategy:
@@ -44,25 +45,33 @@ jobs:
       matrix:
         php: [ '8.0' ]
         stability: [ prefer-stable ]
-    name: 'Deploy PHP ${{ matrix.php }} - ${{ matrix.stability }}'
+    name: 'Deploy Website'
     steps:
-      # TODO: Need to figure out how to run docker-compose with prod YAML config and .env
-      # TODO: Run integration tests inside of container
-      # TODO: Do I need to seed DB here in CI to have meaningful integration tests?
+      - name: Copy .env File
+        run: |
+          touch .env
+          echo ${{ secrets.APHIRIA_DOT_COM_DOT_ENV }} >> .env
+          cat .env
+      - name: Build Docker Images
+        run: docker-compose -f ./docker/docker-compose.yml -f ./docker/docker-compose.dev.yml up -d # TODO: Switch this to docker-compose.prod.yml once we've worked out kinks
+      - name: Build Documentation Search Index
+        run: docker-compose -f ./docker/docker-compose.yml -f ./docker/docker-compose.dev.yml exec php php aphiria docs:index # TODO: Switch this to docker-compose.prod.yml once we've worked out kinks
+      - name: Run integration tests
+        run: docker-compose -f ./docker/docker-compose.yml -f ./docker/docker-compose.dev.yml exec php vendor/bin/phpunit --testsuite Integration --configuration phpunit.xml.dist --verbose # TODO: Switch this to docker-compose.prod.yml once we've
       - name: Publish Nginx Image to GitHub Packages Registry
         uses: docker/build-push-action@v1
         with:
           username: ${{ github.actor }}
-          dockerfile: ./../../docker/nginx/Dockerfile
           password: ${{ secrets.GITHUB_TOKEN }}
           registry: docker.pkg.github.com
-          tags: aphiria/nginx:latest
+          repository: aphiria/aphiria.com/aphiria/nginx:latest
+          tag_with_ref: true
       - name: Publish PHP Image to GitHub Packages Registry
         uses: docker/build-push-action@v1
         with:
           username: ${{ github.actor }}
-          dockerfile: ./../../docker/php/Dockerfile
           password: ${{ secrets.GITHUB_TOKEN }}
           registry: docker.pkg.github.com
-          tags: aphiria/php:latest
+          repository: aphiria/aphiria.com/aphiria/php:latest
+          tag_with_ref: true
       # TODO: Need to actually get these containers to Digital Ocean

@@ -4,6 +4,7 @@ services:
     build:
       context: ./..
       dockerfile: ./docker/nginx/Dockerfile
+    image: aphiria/nginx:latest
     restart: unless-stopped
     tty: true
     env_file:
@@ -14,6 +15,7 @@ services:
     build:
       context: ./..
       dockerfile: ./docker/php/Dockerfile
+    image: aphiria/php:latest
     restart: unless-stopped
     tty: true
     working_dir: /var/www/api
