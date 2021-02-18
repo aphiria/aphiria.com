@@ -45,22 +45,18 @@ final class DocumentationBinder extends Binder
         $container->bindInstance(FilesystemInterface::class, $files);
         // Use factories instead so that we don't actually resolve any DB instances when we really don't want to (eg in CI)
         $container->bindFactory(
-            ISearchIndex::class,
-            fn () => new PostgreSqlSearchIndex(
-                (string)\getenv('DOC_LEXEMES_TABLE_NAME'),
-                $container->resolve(PDO::class),
-                "/docs/{$metadata->getDefaultVersion()}/",
-                '/.env',
-                $files
-            )
-        );
-        $container->bindFactory(
             DocumentationService::class,
             fn () => new DocumentationService(
                 $metadata,
                 new DocumentationDownloader($metadata->getBranches(), __DIR__ . '/../../../tmp/docs', '/tmp/docs', $files),
                 new ParsedownExtra(),
-                $container->resolve(ISearchIndex::class),
+                fn () => new PostgreSqlSearchIndex(
+                    (string)\getenv('DOC_LEXEMES_TABLE_NAME'),
+                    $container->resolve(PDO::class),
+                    "/docs/{$metadata->getDefaultVersion()}/",
+                    '/.env',
+                    $files
+                ),
                 '/resources/views/partials/docs',
                 $files
             )

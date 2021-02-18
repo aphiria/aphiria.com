@@ -32,6 +32,9 @@ final class SqlBinder extends Binder
             (string)\getenv('DB_NAME'),
             (int)\getenv('DB_PORT')
         );
-        $container->bindFactory(PDO::class, fn () => new PDO($dsn, (string)\getenv('DB_USER'), (string)\getenv('DB_PASSWORD')), true);
+        $container->bindFactory(PDO::class, function () use ($dsn) {
+            return new PDO($dsn, (string)\getenv('DB_USER'), (string)\getenv('DB_PASSWORD'));
+        });
+        //$container->bindFactory(PDO::class, fn () => new PDO($dsn, (string)\getenv('DB_USER'), (string)\getenv('DB_PASSWORD')), true);
     }
 }

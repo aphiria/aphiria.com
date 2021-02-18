@@ -15,6 +15,7 @@ namespace App\Documentation;
 use App\Documentation\Searching\IndexingFailedException;
 use App\Documentation\Searching\ISearchIndex;
 use App\Documentation\Searching\SearchResult;
+use Closure;
 use League\Flysystem\FileExistsException;
 use League\Flysystem\FileNotFoundException;
 use League\Flysystem\FilesystemInterface;
@@ -25,11 +26,14 @@ use ParsedownExtra;
  */
 final class DocumentationService
 {
+    /** @var ISearchIndex|null The resolved search index if not null */
+    private ?ISearchIndex $searchIndex = null;
+
     /**
      * @param DocumentationMetadata $metadata The doc metadata
      * @param DocumentationDownloader $downloader The doc downloader
      * @param ParsedownExtra $markdownParser The Markdown parser
-     * @param ISearchIndex $searchIndex The doc search index
+     * @param Closure(): ISearchIndex $searchIndexFactory The doc search index factory
      * @param string $htmlDocPath The path to store HTML docs in
      * @param FilesystemInterface $files The file system helper
      */
@@ -37,7 +41,7 @@ final class DocumentationService
         private DocumentationMetadata $metadata,
         private DocumentationDownloader $downloader,
         private ParsedownExtra $markdownParser,
-        private ISearchIndex $searchIndex,
+        private Closure $searchIndexFactory,
         private string $htmlDocPath,
         private FilesystemInterface $files
     ) {
@@ -64,6 +68,7 @@ final class DocumentationService
      */
     public function indexDocs(): void
     {
+        $this->resolveSearchIndex();
         // Only index the default version
         $htmlDocPath = "{$this->htmlDocPath}/{$this->metadata->getDefaultVersion()}";
 
@@ -95,6 +100,8 @@ final class DocumentationService
      */
     public function searchDocs(string $query): array
     {
+        $this->resolveSearchIndex();
+
         return $this->searchIndex->query($query);
     }
 
@@ -139,5 +146,15 @@ final class DocumentationService
         }
 
         return $htmlFiles;
+    }
+
+    /**
+     * Resolves the search index from the factory if it hasn't already been resolved
+     */
+    private function resolveSearchIndex(): void
+    {
+        if ($this->searchIndex === null) {
+            $this->searchIndex = $this->searchIndexFactory();
+        }
     }
 }
