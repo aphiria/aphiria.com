@@ -17,7 +17,6 @@ use Aphiria\DependencyInjection\IContainer;
 use App\Documentation\DocumentationDownloader;
 use App\Documentation\DocumentationMetadata;
 use App\Documentation\DocumentationService;
-use App\Documentation\Searching\ISearchIndex;
 use App\Documentation\Searching\PostgreSqlSearchIndex;
 use League\Flysystem\Adapter\Local;
 use League\Flysystem\Filesystem;

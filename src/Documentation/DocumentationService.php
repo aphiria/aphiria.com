@@ -89,6 +89,7 @@ final class DocumentationService
             }
         }
 
+        /** @psalm-suppress PossiblyNullReference This will be resolved */
         $this->searchIndex->buildSearchIndex($htmlFilesToIndex);
     }
 
@@ -102,6 +103,7 @@ final class DocumentationService
     {
         $this->resolveSearchIndex();
 
+        /** @psalm-suppress PossiblyNullReference This will be resolved */
         return $this->searchIndex->query($query);
     }
 
@@ -154,7 +156,7 @@ final class DocumentationService
     private function resolveSearchIndex(): void
     {
         if ($this->searchIndex === null) {
-            $this->searchIndex = $this->searchIndexFactory();
+            $this->searchIndex = ($this->searchIndexFactory)();
         }
     }
 }
