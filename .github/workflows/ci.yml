@@ -1,4 +1,6 @@
+# TODO: Need to remove bin directory and .travis.yml
 name: ci
+on:
   push:
   pull_request:
 jobs:
