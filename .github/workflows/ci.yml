@@ -37,8 +37,10 @@ jobs:
         run: composer psalm
       - name: Build Gulp
         run: yarn install && yarn global add gulp && gulp build
-      - name: Remove Node Modules
-        run: rm -r node_modules
+      - name: Remove Unnecessary Files
+        run: |
+          rm -r .git
+          rm -r node_modules
       - name: Upload Build Artifact
         uses: actions/upload-artifact@v2
         with:
