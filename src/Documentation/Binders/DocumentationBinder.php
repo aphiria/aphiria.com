@@ -17,6 +17,7 @@ use Aphiria\DependencyInjection\IContainer;
 use App\Documentation\DocumentationDownloader;
 use App\Documentation\DocumentationMetadata;
 use App\Documentation\DocumentationService;
+use App\Documentation\Searching\ISearchIndex;
 use App\Documentation\Searching\PostgreSqlSearchIndex;
 use League\Flysystem\Adapter\Local;
 use League\Flysystem\Filesystem;
@@ -42,22 +43,28 @@ final class DocumentationBinder extends Binder
             new Local(__DIR__ . '/../../..', LOCK_EX, Local::DISALLOW_LINKS, ['file' => ['rwx' => 0777]])
         );
         $container->bindInstance(FilesystemInterface::class, $files);
-        $searchIndex = new PostgreSqlSearchIndex(
-            (string)\getenv('DOC_LEXEMES_TABLE_NAME'),
-            $container->resolve(PDO::class),
-            "/docs/{$metadata->getDefaultVersion()}/",
-            '/.env',
-            $files
+        // Use factories instead so that we don't actually resolve any DB instances when we really don't want to (eg in CI)
+        $container->bindFactory(
+            ISearchIndex::class,
+            fn () => new PostgreSqlSearchIndex(
+                (string)\getenv('DOC_LEXEMES_TABLE_NAME'),
+                $container->resolve(PDO::class),
+                "/docs/{$metadata->getDefaultVersion()}/",
+                '/.env',
+                $files
+            )
         );
-        $docs = new DocumentationService(
-            $metadata,
-            new DocumentationDownloader($metadata->getBranches(), __DIR__ . '/../../../tmp/docs', '/tmp/docs', $files),
-            new ParsedownExtra(),
-            $searchIndex,
-            '/resources/views/partials/docs',
-            $files
+        $container->bindFactory(
+            DocumentationService::class,
+            fn () => new DocumentationService(
+                $metadata,
+                new DocumentationDownloader($metadata->getBranches(), __DIR__ . '/../../../tmp/docs', '/tmp/docs', $files),
+                new ParsedownExtra(),
+                $container->resolve(ISearchIndex::class),
+                '/resources/views/partials/docs',
+                $files
+            )
         );
-        $container->bindInstance(DocumentationService::class, $docs);
     }
 
     /**
