@@ -37,6 +37,11 @@ jobs:
         run: composer psalm
       - name: Build Gulp
         run: yarn install && yarn global add gulp && gulp build
+      - name: Upload Build Artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: build
+          path: .
   deploy:
     #if: github.ref == 'refs/heads/master' TODO: Need to re-enable this once I merge my PR in and work out all the other issues
     needs: [build]
@@ -48,6 +53,10 @@ jobs:
         stability: [ prefer-stable ]
     name: Deploy Website
     steps:
+      - name: Download Build Artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: build
       - name: Copy .env File
         run: |
           touch .env
