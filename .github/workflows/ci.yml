@@ -53,7 +53,7 @@ jobs:
         uses: docker/build-push-action@v1
         with:
           username: ${{ github.actor }}
-          file: ./../../docker/nginx/Dockerfile
+          dockerfile: ./../../docker/nginx/Dockerfile
           password: ${{ secrets.GITHUB_TOKEN }}
           registry: docker.pkg.github.com
           tags: aphiria/nginx:latest
@@ -61,7 +61,7 @@ jobs:
         uses: docker/build-push-action@v1
         with:
           username: ${{ github.actor }}
-          file: ./../../docker/php/Dockerfile
+          dockerfile: ./../../docker/php/Dockerfile
           password: ${{ secrets.GITHUB_TOKEN }}
           registry: docker.pkg.github.com
           tags: aphiria/php:latest
