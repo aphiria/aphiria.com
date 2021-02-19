@@ -69,9 +69,9 @@ jobs:
       - name: Build Docker Images
         run: docker-compose -f ./docker/docker-compose.yml -f ./docker/docker-compose.dev.yml up -d # TODO: Switch this to docker-compose.prod.yml once we've worked out kinks
       - name: Build Documentation Search Index
-        run: docker-compose -f ./docker/docker-compose.yml -f ./docker/docker-compose.dev.yml exec php php aphiria docs:index # TODO: Switch this to docker-compose.prod.yml once we've worked out kinks
+        run: docker-compose -f ./docker/docker-compose.yml -f ./docker/docker-compose.dev.yml exec -T php php aphiria docs:index # TODO: Switch this to docker-compose.prod.yml once we've worked out kinks
       - name: Run integration tests
-        run: docker-compose -f ./docker/docker-compose.yml -f ./docker/docker-compose.dev.yml exec php vendor/bin/phpunit --testsuite Integration --configuration phpunit.xml.dist --verbose # TODO: Switch this to docker-compose.prod.yml once we've
+        run: docker-compose -f ./docker/docker-compose.yml -f ./docker/docker-compose.dev.yml exec -T php vendor/bin/phpunit --testsuite Integration --configuration phpunit.xml.dist --verbose # TODO: Switch this to docker-compose.prod.yml once we've
       - name: Publish Nginx Image to GitHub Packages Registry
         uses: docker/build-push-action@v1
         with:
