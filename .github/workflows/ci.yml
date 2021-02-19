@@ -37,17 +37,17 @@ jobs:
         run: composer psalm
       - name: Build Gulp
         run: yarn install && yarn global add gulp && gulp build
-      - name: Remove Unnecessary Files
-        run: |
-          rm -r .git
-          rm -r node_modules
       - name: Upload Build Artifact
         uses: actions/upload-artifact@v2
         with:
           name: build
-          path: .
+          path: |
+            .
+            !./.git
+            !./node_modules
   deploy:
     #if: github.ref == 'refs/heads/master' TODO: Need to re-enable this once I merge my PR in and work out all the other issues
+    # TODO: See if we can use a cache so we're not having to rebuild the entire image every single run.  https://dev.to/dtinth/caching-docker-builds-in-github-actions-which-approach-is-the-fastest-a-research-18ei
     needs: [build]
     runs-on: ubuntu-latest
     strategy:

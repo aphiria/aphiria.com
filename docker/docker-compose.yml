@@ -7,6 +7,7 @@ services:
     image: aphiria/nginx:latest
     restart: unless-stopped
     tty: true
+    stdin_open: true
     env_file:
       - ./../.env
     depends_on:
@@ -18,6 +19,7 @@ services:
     image: aphiria/php:latest
     restart: unless-stopped
     tty: true
+    stdin_open: true
     working_dir: /var/www/api
     env_file:
       - ./../.env
@@ -29,6 +31,7 @@ services:
     image: postgres:11.10-alpine
     restart: unless-stopped
     tty: true
+    stdin_open: true
     ports:
       - 5432:5432
     volumes:
