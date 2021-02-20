@@ -9,6 +9,8 @@ services:
     tty: true
     env_file:
       - ./../.env
+    networks:
+      - aphiria.com
     depends_on:
       - php
   php:
@@ -23,6 +25,8 @@ services:
       - ./../.env
     ports:
       - 9000:9000
+    networks:
+      - aphiria.com
     depends_on:
       - db
   db:
@@ -35,6 +39,12 @@ services:
       - db:/var/lib/postgresql/data
     env_file:
       - ./../.env
+    networks:
+      - aphiria.com
+
+networks:
+  aphiria.com:
+    driver: bridge
 
 volumes:
   db:
