@@ -4,7 +4,7 @@ services:
     build:
       context: .
       dockerfile: docker/nginx/Dockerfile
-    image: aphiria/nginx:latest
+    image: registry.digitalocean.com/aphiria-dot-com/aphiria/nginx:latest
     restart: unless-stopped
     tty: true
     env_file:
@@ -19,7 +19,7 @@ services:
       dockerfile: docker/php/Dockerfile
       args:
         APP_ENV: ${APP_ENV}
-    image: aphiria/php:latest
+    image: registry.digitalocean.com/aphiria-dot-com/aphiria/php:latest
     restart: unless-stopped
     tty: true
     working_dir: /var/www/api
