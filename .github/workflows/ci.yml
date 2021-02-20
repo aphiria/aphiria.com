@@ -1,4 +1,3 @@
-# TODO: Need to remove bin directory and .travis.yml
 # TODO: Need to figure out a way to prevent secrets from showing up in build logs from .env
 name: ci
 on:
@@ -70,12 +69,20 @@ jobs:
           cat .env
       - name: Build Docker Images
         run: docker-compose -f ./docker-compose.yml -f ./docker-compose.dev.yml up -d # TODO: Switch this to docker-compose.prod.yml once we've worked out kinks
-      - name: Check Docker Status # TODO: Remove this step once I've figured out the networking issue
-        run: docker-compose -f ./docker-compose.yml -f ./docker-compose.dev.yml ps
-      - name: Check Docker Logs # TODO: Remove this step once I've figured out the networking issue
-        run: docker-compose -f ./docker-compose.yml -f ./docker-compose.dev.yml logs db
+      - name: Get Lexeme Table Name Before Index # TODO: Remove this once we've figured out kinks with env vars
+        run: |
+          docker-compose -f ./docker-compose.yml -f ./docker-compose.dev.yml exec -T php php -r "echo $_ENV['DOC_LEXE
+          MES_TABLE_NAME'];"
+          docker-compose -f ./docker-compose.yml -f ./docker-compose.dev.yml exec -T php php -r "echo getenv('DOC_LEX
+          EMES_TABLE_NAME');"
       - name: Build Documentation Search Index
         run: docker-compose -f ./docker-compose.yml -f ./docker-compose.dev.yml exec -T php php aphiria docs:index # TODO: Switch this to docker-compose.prod.yml once we've worked out kinks
+      - name: Get Lexeme Table Name After Index # TODO: Remove this once we've figured out kinks with env vars
+        run: |
+          docker-compose -f ./docker-compose.yml -f ./docker-compose.dev.yml exec -T php php -r "echo $_ENV['DOC_LEXE
+          MES_TABLE_NAME'];"
+          docker-compose -f ./docker-compose.yml -f ./docker-compose.dev.yml exec -T php php -r "echo getenv('DOC_LEX
+          EMES_TABLE_NAME');"
       - name: Run integration tests
         run: docker-compose -f ./docker-compose.yml -f ./docker-compose.dev.yml exec -T php vendor/bin/phpunit --testsuite Integration --configuration phpunit.xml.dist --verbose # TODO: Switch this to docker-compose.prod.yml once we've
       - name: Publish Nginx Image to GitHub Packages Registry

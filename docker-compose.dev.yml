@@ -11,4 +11,3 @@ services:
     volumes: # Set up some bind mounts to simplify local development
       - ./:/var/www/api
       - ./docker/php/local.ini:/usr/local/etc/php/conf.d/local.ini
-      - ./docker/php/xdebug.ini:/usr/local/etc/php/conf.d/xdebug.ini
