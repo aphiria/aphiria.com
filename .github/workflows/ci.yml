@@ -70,10 +70,10 @@ jobs:
           cat .env
       - name: Build Docker Images
         run: docker-compose -f ./docker/docker-compose.yml -f ./docker/docker-compose.dev.yml up -d # TODO: Switch this to docker-compose.prod.yml once we've worked out kinks
-      - name: Build Documentation Search Index
-        run: docker-compose -f ./docker/docker-compose.yml -f ./docker/docker-compose.dev.yml exec -T php php aphiria docs:index # TODO: Switch this to docker-compose.prod.yml once we've worked out kinks
       - name: Check iptables # TODO: Remove this step once I've figured out the networking issue
         run: iptables -S INPUT
+      - name: Build Documentation Search Index
+        run: docker-compose -f ./docker/docker-compose.yml -f ./docker/docker-compose.dev.yml exec -T php php aphiria docs:index # TODO: Switch this to docker-compose.prod.yml once we've worked out kinks
       - name: Run integration tests
         run: docker-compose -f ./docker/docker-compose.yml -f ./docker/docker-compose.dev.yml exec -T php vendor/bin/phpunit --testsuite Integration --configuration phpunit.xml.dist --verbose # TODO: Switch this to docker-compose.prod.yml once we've
       - name: Publish Nginx Image to GitHub Packages Registry
