@@ -39,9 +39,14 @@ services:
       - db:/var/lib/postgresql/data
     env_file:
       - ./../.env
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
     networks:
       - aphiria.com
 
+# TODO: Do I still need this?
 networks:
   aphiria.com:
     driver: bridge
