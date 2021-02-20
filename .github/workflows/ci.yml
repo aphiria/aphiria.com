@@ -1,4 +1,5 @@
 # TODO: Need to figure out a way to prevent secrets from showing up in build logs from .env
+# TODO: How will we update the docs/search index?  Those aren't changes to the this repo.  Also, how would updating the search index work if we're running it from GitHub Actions?  Is that data persisted once we push it to our server?  I wouldn't think so - I'd imagine it's a volume stored on the host machine.
 name: ci
 on:
   push:
@@ -69,36 +70,19 @@ jobs:
           cat .env
       - name: Build Docker Images
         run: docker-compose -f ./docker-compose.yml -f ./docker-compose.dev.yml up -d # TODO: Switch this to docker-compose.prod.yml once we've worked out kinks
-      - name: Get Lexeme Table Name Before Index # TODO: Remove this once we've figured out kinks with env vars
-        run: |
-          docker-compose -f ./docker-compose.yml -f ./docker-compose.dev.yml exec -T php php -r "echo $_ENV['DOC_LEXE
-          MES_TABLE_NAME'];"
-          docker-compose -f ./docker-compose.yml -f ./docker-compose.dev.yml exec -T php php -r "echo getenv('DOC_LEX
-          EMES_TABLE_NAME');"
       - name: Build Documentation Search Index
         run: docker-compose -f ./docker-compose.yml -f ./docker-compose.dev.yml exec -T php php aphiria docs:index # TODO: Switch this to docker-compose.prod.yml once we've worked out kinks
-      - name: Get Lexeme Table Name After Index # TODO: Remove this once we've figured out kinks with env vars
-        run: |
-          docker-compose -f ./docker-compose.yml -f ./docker-compose.dev.yml exec -T php php -r "echo $_ENV['DOC_LEXE
-          MES_TABLE_NAME'];"
-          docker-compose -f ./docker-compose.yml -f ./docker-compose.dev.yml exec -T php php -r "echo getenv('DOC_LEX
-          EMES_TABLE_NAME');"
       - name: Run integration tests
         run: docker-compose -f ./docker-compose.yml -f ./docker-compose.dev.yml exec -T php vendor/bin/phpunit --testsuite Integration --configuration phpunit.xml.dist --verbose # TODO: Switch this to docker-compose.prod.yml once we've
-      - name: Publish Nginx Image to GitHub Packages Registry
-        uses: docker/build-push-action@v1
+      - name: Install doctl
+        uses: digitalocean/action-doctl@v2
         with:
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-          registry: docker.pkg.github.com
-          repository: aphiria/aphiria.com/aphiria/nginx:latest
-          tag_with_ref: true
-      - name: Publish PHP Image to GitHub Packages Registry
-        uses: docker/build-push-action@v1
-        with:
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-          registry: docker.pkg.github.com
-          repository: aphiria/aphiria.com/aphiria/php:latest
-          tag_with_ref: true
-      # TODO: Need to actually get these containers to Digital Ocean
+          token: ${{ secrets.DIGITAL_OCEAN_PAT }}
+      - name: Publish Images to Digital Ocean Container Registry
+        run: |
+          doctl registry login
+          docker tag aphiria/nginx:latest registry.digitalocean.com/registry.digitalocean.com/aphiria-dot-com/aphiria/php:latest
+          docker push registry.digitalocean.com/aphiria-dot-com/aphiria/nginx:latest
+          docker tag aphiria/php:latest registry.digitalocean.com/registry.digitalocean.com/aphiria-dot-com/aphiria/php:latest
+          docker push registry.digitalocean.com/aphiria-dot-com/aphiria/php:latest
+      # TODO: Need to actually get these containers to Digital Ocean web server
