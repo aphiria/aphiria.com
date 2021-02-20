@@ -2,27 +2,29 @@ version: '3'
 services:
   nginx:
     build:
-      context: ./..
-      dockerfile: ./docker/nginx/Dockerfile
+      context: .
+      dockerfile: docker/nginx/Dockerfile
     image: aphiria/nginx:latest
     restart: unless-stopped
     tty: true
     env_file:
-      - ./../.env
+      - .env
     networks:
       - aphiria.com
     depends_on:
       - php
   php:
     build:
-      context: ./..
-      dockerfile: ./docker/php/Dockerfile
+      context: .
+      dockerfile: docker/php/Dockerfile
+      args:
+        APP_ENV: ${APP_ENV}
     image: aphiria/php:latest
     restart: unless-stopped
     tty: true
     working_dir: /var/www/api
     env_file:
-      - ./../.env
+      - .env
     ports:
       - 9000:9000
     networks:
@@ -38,7 +40,7 @@ services:
     volumes:
       - db:/var/lib/postgresql/data
     env_file:
-      - ./../.env
+      - .env
     environment:
       POSTGRES_DB: ${DB_NAME}
       POSTGRES_USER: ${DB_USER}

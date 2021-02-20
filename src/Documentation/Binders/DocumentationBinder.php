@@ -50,7 +50,8 @@ final class DocumentationBinder extends Binder
                 new DocumentationDownloader($metadata->getBranches(), __DIR__ . '/../../../tmp/docs', '/tmp/docs', $files),
                 new ParsedownExtra(),
                 fn () => new PostgreSqlSearchIndex(
-                    (string)\getenv('DOC_LEXEMES_TABLE_NAME'),
+                    // Use the locally-set value so that we always grab the latest value from the .env file (it's written dynamically when we index the docs)
+                    (string)\getenv('DOC_LEXEMES_TABLE_NAME', true),
                     $container->resolve(PDO::class),
                     "/docs/{$metadata->getDefaultVersion()}/",
                     '/.env',

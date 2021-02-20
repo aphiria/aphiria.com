@@ -68,20 +68,16 @@ jobs:
           touch .env
           echo ${{ secrets.APHIRIA_DOT_COM_DOT_ENV }} >> .env
           cat .env
-      - name: Pwd # TODO: Remove this once I've figured out PostgreSQL issue
-        run: pwd
-      - name: List all files # TODO: Remove this once I've figured out PostgreSQL issue
-        run: ls -al
       - name: Build Docker Images
-        run: docker-compose -f ./docker/docker-compose.yml -f ./docker/docker-compose.dev.yml up -d # TODO: Switch this to docker-compose.prod.yml once we've worked out kinks
+        run: docker-compose -f ./docker-compose.yml -f ./docker-compose.dev.yml up -d # TODO: Switch this to docker-compose.prod.yml once we've worked out kinks
       - name: Check Docker Status # TODO: Remove this step once I've figured out the networking issue
-        run: docker-compose -f ./docker/docker-compose.yml -f ./docker/docker-compose.dev.yml ps
+        run: docker-compose -f ./docker-compose.yml -f ./docker-compose.dev.yml ps
       - name: Check Docker Logs # TODO: Remove this step once I've figured out the networking issue
-        run: docker-compose -f ./docker/docker-compose.yml -f ./docker/docker-compose.dev.yml logs db
+        run: docker-compose -f ./docker-compose.yml -f ./docker-compose.dev.yml logs db
       - name: Build Documentation Search Index
-        run: docker-compose -f ./docker/docker-compose.yml -f ./docker/docker-compose.dev.yml exec -T php php aphiria docs:index # TODO: Switch this to docker-compose.prod.yml once we've worked out kinks
+        run: docker-compose -f ./docker-compose.yml -f ./docker-compose.dev.yml exec -T php php aphiria docs:index # TODO: Switch this to docker-compose.prod.yml once we've worked out kinks
       - name: Run integration tests
-        run: docker-compose -f ./docker/docker-compose.yml -f ./docker/docker-compose.dev.yml exec -T php vendor/bin/phpunit --testsuite Integration --configuration phpunit.xml.dist --verbose # TODO: Switch this to docker-compose.prod.yml once we've
+        run: docker-compose -f ./docker-compose.yml -f ./docker-compose.dev.yml exec -T php vendor/bin/phpunit --testsuite Integration --configuration phpunit.xml.dist --verbose # TODO: Switch this to docker-compose.prod.yml once we've
       - name: Publish Nginx Image to GitHub Packages Registry
         uses: docker/build-push-action@v1
         with:

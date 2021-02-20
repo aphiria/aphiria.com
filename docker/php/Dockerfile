@@ -1,5 +1,7 @@
 FROM php:8-fpm
 
+ARG APP_ENV
+
 MAINTAINER David Young
 
 WORKDIR /var/www
@@ -10,6 +12,12 @@ RUN apt-get update \
 
 # Install PHP extensions
 RUN docker-php-ext-install intl opcache pdo_pgsql pgsql zip
+
+# If we're running this locally, install Xdebug, too
+RUN if [ $APP_ENV = "development" ]; then \
+   pecl install xdebug; \
+   docker-php-ext-enable xdebug; \
+fi;
 
 # Install Composer
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
