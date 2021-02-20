@@ -1,4 +1,5 @@
 # TODO: Need to remove bin directory and .travis.yml
+# TODO: Need to figure out a way to prevent secrets from showing up in build logs from .env
 name: ci
 on:
   push:
@@ -37,30 +38,31 @@ jobs:
         run: composer psalm
       - name: Build Gulp
         run: yarn install && yarn global add gulp && gulp build
-      - name: Upload Build Artifact
-        uses: actions/upload-artifact@v2
-        with:
-          name: build
-          path: |
-            .
-            !./.git
-            !./node_modules
-  deploy:
+# TODO - Potentially re-add the deploy job and the steps below
+#      - name: Upload Build Artifact
+#        uses: actions/upload-artifact@v2
+#        with:
+#          name: build
+#          path: |
+#            .
+#            !./.git
+#            !./node_modules
+#  deploy:
     #if: github.ref == 'refs/heads/master' TODO: Need to re-enable this once I merge my PR in and work out all the other issues
     # TODO: See if we can use a cache so we're not having to rebuild the entire image every single run.  https://dev.to/dtinth/caching-docker-builds-in-github-actions-which-approach-is-the-fastest-a-research-18ei
-    needs: [build]
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: true
-      matrix:
-        php: [ '8.0' ]
-        stability: [ prefer-stable ]
-    name: Deploy Website
-    steps:
-      - name: Download Build Artifact
-        uses: actions/download-artifact@v2
-        with:
-          name: build
+#    needs: [build]
+#    runs-on: ubuntu-latest
+#    strategy:
+#      fail-fast: true
+#      matrix:
+#        php: [ '8.0' ]
+#        stability: [ prefer-stable ]
+#    name: Deploy Website
+#    steps:
+#      - name: Download Build Artifact
+#        uses: actions/download-artifact@v2
+#        with:
+#          name: build
       - name: Copy .env File
         run: |
           touch .env
@@ -70,6 +72,8 @@ jobs:
         run: docker-compose -f ./docker/docker-compose.yml -f ./docker/docker-compose.dev.yml up -d # TODO: Switch this to docker-compose.prod.yml once we've worked out kinks
       - name: Build Documentation Search Index
         run: docker-compose -f ./docker/docker-compose.yml -f ./docker/docker-compose.dev.yml exec -T php php aphiria docs:index # TODO: Switch this to docker-compose.prod.yml once we've worked out kinks
+      - name: Check iptables # TODO: Remove this step once I've figured out the networking issue
+        run: iptables -S INPUT
       - name: Run integration tests
         run: docker-compose -f ./docker/docker-compose.yml -f ./docker/docker-compose.dev.yml exec -T php vendor/bin/phpunit --testsuite Integration --configuration phpunit.xml.dist --verbose # TODO: Switch this to docker-compose.prod.yml once we've
       - name: Publish Nginx Image to GitHub Packages Registry
