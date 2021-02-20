@@ -72,6 +72,8 @@ jobs:
         run: docker-compose -f ./docker/docker-compose.yml -f ./docker/docker-compose.dev.yml up -d # TODO: Switch this to docker-compose.prod.yml once we've worked out kinks
       - name: Check Docker Status # TODO: Remove this step once I've figured out the networking issue
         run: docker-compose -f ./docker/docker-compose.yml -f ./docker/docker-compose.dev.yml ps
+      - name: Check Docker Logs # TODO: Remove this step once I've figured out the networking issue
+        run: docker-compose -f ./docker/docker-compose.yml -f ./docker/docker-compose.dev.yml logs db
       - name: Build Documentation Search Index
         run: docker-compose -f ./docker/docker-compose.yml -f ./docker/docker-compose.dev.yml exec -T php php aphiria docs:index # TODO: Switch this to docker-compose.prod.yml once we've worked out kinks
       - name: Run integration tests
