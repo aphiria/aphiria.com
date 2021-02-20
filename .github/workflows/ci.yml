@@ -81,8 +81,6 @@ jobs:
       - name: Publish Images to Digital Ocean Container Registry
         run: |
           doctl registry login
-          docker tag aphiria/nginx:latest registry.digitalocean.com/registry.digitalocean.com/aphiria-dot-com/aphiria/php:latest
           docker push registry.digitalocean.com/aphiria-dot-com/aphiria/nginx:latest
-          docker tag aphiria/php:latest registry.digitalocean.com/registry.digitalocean.com/aphiria-dot-com/aphiria/php:latest
           docker push registry.digitalocean.com/aphiria-dot-com/aphiria/php:latest
       # TODO: Need to actually get these containers to Digital Ocean web server
