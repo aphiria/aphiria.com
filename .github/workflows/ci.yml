@@ -68,6 +68,10 @@ jobs:
           touch .env
           echo ${{ secrets.APHIRIA_DOT_COM_DOT_ENV }} >> .env
           cat .env
+      - name: Pwd # TODO: Remove this once I've figured out PostgreSQL issue
+        run: pwd
+      - name: List all files # TODO: Remove this once I've figured out PostgreSQL issue
+        run: ls -al
       - name: Build Docker Images
         run: docker-compose -f ./docker/docker-compose.yml -f ./docker/docker-compose.dev.yml up -d # TODO: Switch this to docker-compose.prod.yml once we've worked out kinks
       - name: Check Docker Status # TODO: Remove this step once I've figured out the networking issue
