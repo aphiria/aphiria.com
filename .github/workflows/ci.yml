@@ -69,11 +69,11 @@ jobs:
           echo ${{ secrets.APHIRIA_DOT_COM_DOT_ENV }} >> .env
           cat .env
       - name: Build Docker Images
-        run: docker-compose -f ./docker-compose.yml -f ./docker-compose.dev.yml up -d # TODO: Switch this to docker-compose.prod.yml once we've worked out kinks
+        run: docker-compose -f ./docker-compose.yml -f ./docker-compose.prod.yml up -d
       - name: Build Documentation Search Index
-        run: docker-compose -f ./docker-compose.yml -f ./docker-compose.dev.yml exec -T php php aphiria docs:index # TODO: Switch this to docker-compose.prod.yml once we've worked out kinks
+        run: docker-compose -f ./docker-compose.yml -f ./docker-compose.prod.yml exec -T php php aphiria docs:index
       - name: Run integration tests
-        run: docker-compose -f ./docker-compose.yml -f ./docker-compose.dev.yml exec -T php vendor/bin/phpunit --testsuite Integration --configuration phpunit.xml.dist --verbose # TODO: Switch this to docker-compose.prod.yml once we've
+        run: docker-compose -f ./docker-compose.yml -f ./docker-compose.prod.yml exec -T php vendor/bin/phpunit --testsuite Integration --configuration phpunit.xml.dist --verbose
       - name: Install doctl
         uses: digitalocean/action-doctl@v2
         with:
