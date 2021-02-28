@@ -82,4 +82,14 @@ jobs:
         run: |
           doctl registry login
           docker-compose push
+      - name: Pull Images to Docker Host
+        uses: appleboy/ssh-action@v0.1.4
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          port: ${{ secrets.SSH_PORT }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            cd aphiria.com
+            docker-compose ps
       # TODO: Need to actually get these containers to Digital Ocean web server
