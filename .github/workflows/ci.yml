@@ -18,6 +18,17 @@ jobs:
       APP_WEB_URL: https://www.aphiria.com
       APP_API_URL: https://api.aphiria.com
     steps:
+      # TODO: Remove this test step
+      - name: Test SSH
+        uses: appleboy/ssh-action@v0.1.4
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          port: ${{ secrets.SSH_PORT }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            cd aphiria.com
+            docker-compose ps
       - name: Check Out Code
         uses: actions/checkout@v2
       - name: Set Up PHP
