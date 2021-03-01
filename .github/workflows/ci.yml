@@ -16,25 +16,9 @@ jobs:
     name: Build Website
     env:
       # Set these so that views are compiled with correct links
-      APP_WEB_URL: https://www.aphiria.com
-      APP_API_URL: https://api.aphiria.com
+      APP_WEB_URL: http://204.48.28.188:80 # TODO: Use this prod value: https://www.aphiria.com
+      APP_API_URL: http://204.48.28.188:8080 # TODO: Use this prod value: https://api.aphiria.com
     steps:
-      # TODO: Update the identical step at the end, and remove this once I'm done debugging it
-      #- name: Pull Images to Docker Host
-      #  uses: appleboy/ssh-action@v0.1.4
-      #  with:
-      #    host: ${{ secrets.SSH_HOST }}
-      #    port: ${{ secrets.SSH_PORT }}
-      #    username: ${{ secrets.SSH_USER }}
-      #    key: ${{ secrets.SSH_PRIVATE_KEY }}
-      #    passphrase: ${{ secrets.SSH_PASSPHRASE }}
-      #    script: |
-      #      cd aphiria.com
-      #      docker-compose ps
-      #      docker-compose pull
-      #      docker-compose -f ./docker-compose.yml -f ./docker-compose.prod.yml up -d
-      #      docker-compose -f ./docker-compose.yml -f ./docker-compose.prod.yml exec -T php php aphiria docs:index
-
       - name: Check Out Code
         uses: actions/checkout@v2
       - name: Set Up PHP
