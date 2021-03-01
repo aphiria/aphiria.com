@@ -1,7 +1,6 @@
-# TODO: Remove 8080 once we're done debugging on the temp docker host in DO
 services:
   nginx:
     ports:
       - 80:80
-      - 8080:8080
+      - 8080:8080 # TODO: Remove 8080 once we're done debugging on the temp docker host in DO
       - 443:443

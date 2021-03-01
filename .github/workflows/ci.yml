@@ -1,5 +1,6 @@
+# TODO: What's the best way to get the updated docker-compose.yml files onto the host?  Git clone?  rsync?
+# TODO: How can we get CORS to work both locally (uses localhost) and on the DO host (uses IP address)?  Do I just need to set the host in the .env to the IP address for now?
 # TODO: Need to figure out a way to prevent secrets from showing up in build logs from .env
-# TODO: How will we update the docs/search index?  Those aren't changes to the this repo.  Also, how would updating the search index work if we're running it from GitHub Actions?  Is that data persisted once we push it to our server?  I wouldn't think so - I'd imagine it's a volume stored on the host machine.
 # TODO: Update DB credentials to be more secure
 name: ci
 on:
