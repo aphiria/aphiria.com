@@ -3,7 +3,7 @@ server {
     listen ${NGINX_WEB_PORT};
     server_name ${NGINX_WEB_SERVER_NAME};
     index index.php index.html;
-    error_log  /var/log/nginx/error.log;
+    error_log /var/log/nginx/error.log;
     access_log /var/log/nginx/access.log;
     root /var/www/web/public-web;
     gzip on;
@@ -29,7 +29,7 @@ server {
     listen ${NGINX_API_PORT};
     server_name ${NGINX_API_SERVER_NAME};
     index index.php index.html;
-    error_log  /var/log/nginx/error.log;
+    error_log /var/log/nginx/error.log;
     access_log /var/log/nginx/access.log;
     root /var/www/api/public-api;
     gzip on;
