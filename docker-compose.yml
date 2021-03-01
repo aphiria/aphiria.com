@@ -32,7 +32,7 @@ services:
     depends_on:
       - db
   db:
-    image: postgres:11.10-alpine
+    image: postgres:13.2-alpine
     restart: unless-stopped
     tty: true
     ports:

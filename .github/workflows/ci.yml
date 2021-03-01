@@ -1,5 +1,6 @@
 # TODO: Need to figure out a way to prevent secrets from showing up in build logs from .env
 # TODO: How will we update the docs/search index?  Those aren't changes to the this repo.  Also, how would updating the search index work if we're running it from GitHub Actions?  Is that data persisted once we push it to our server?  I wouldn't think so - I'd imagine it's a volume stored on the host machine.
+# TODO: Update DB credentials to be more secure
 name: ci
 on:
   push:
@@ -18,6 +19,21 @@ jobs:
       APP_WEB_URL: https://www.aphiria.com
       APP_API_URL: https://api.aphiria.com
     steps:
+      # TODO: Update the identical step at the end, and remove this once I'm done debugging it
+      #- name: Pull Images to Docker Host
+      #  uses: appleboy/ssh-action@v0.1.4
+      #  with:
+      #    host: ${{ secrets.SSH_HOST }}
+      #    port: ${{ secrets.SSH_PORT }}
+      #    username: ${{ secrets.SSH_USER }}
+      #    key: ${{ secrets.SSH_PRIVATE_KEY }}
+      #    passphrase: ${{ secrets.SSH_PASSPHRASE }}
+      #    script: |
+      #      cd aphiria.com
+      #      docker-compose ps
+      #      docker-compose -f ./docker-compose.yml -f ./docker-compose.prod.yml up -d
+      #      docker-compose -f ./docker-compose.yml -f ./docker-compose.prod.yml exec -T php php aphiria docs:index
+
       - name: Check Out Code
         uses: actions/checkout@v2
       - name: Set Up PHP
