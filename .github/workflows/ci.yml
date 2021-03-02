@@ -71,9 +71,9 @@ jobs:
       - name: Build Docker Images
         run: docker-compose -f ./docker-compose.yml -f ./docker-compose.prod.yml up -d
       - name: Build Documentation Search Index for Integration Tests
-        run: docker-compose exec php php aphiria docs:index
+        run: docker-compose exec -T php php aphiria docs:index
       - name: Run integration tests
-        run: docker-compose exec php vendor/bin/phpunit --testsuite Integration --configuration phpunit.xml.dist --verbose
+        run: docker-compose exec -T php vendor/bin/phpunit --testsuite Integration --configuration phpunit.xml.dist --verbose
       - name: Install doctl
         uses: digitalocean/action-doctl@v2
         with:
@@ -98,4 +98,4 @@ jobs:
             docker-compose ps
             docker-compose pull
             docker-compose -f ./docker-compose.yml -f ./docker-compose.prod.yml up -d
-            docker-compose exec php php aphiria docs:index
+            docker-compose exec -T php php aphiria docs:index
