@@ -12,11 +12,12 @@ This repository contains the code for both https://www.aphiria.com and https://a
 
 To run this site locally, you must:
 
+* [Install Docker](https://docs.docker.com/get-docker/) and [Docker Compose](https://docs.docker.com/compose/install/)
 * [Install npm](https://www.npmjs.com/get-npm)
 * [Install Yarn](https://yarnpkg.com/lang/en/docs/install)
 * Run `yarn install` to install JavaScript dependencies
 * Run `composer install` to install PHP dependencies
 * Run `gulp build` to build all of our assets and pages
   * You can also set up [file watchers](https://www.jetbrains.com/help/phpstorm/settings-tools-startup-tasks.html) to automate the running of gulp commands when assets are updated by configuring your IDE to run `gulp watch-assets` at startup
-* Run `php aphiria docs:index` to index the documentation for searchability
-* Run `php aphiria app:serve` to start the website and API
+* Run `docker-compose -f ./docker-compose.yml -f ./docker-compose.dev.yml up -d` to start the website and API locally
+* Run `docker-compose exec php php aphiria docs:index` to index the documentation for searchability

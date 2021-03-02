@@ -1,5 +1,3 @@
-# TODO: What's the best way to get the updated docker-compose.yml files onto the host?  Git clone?  rsync?
-# TODO: How can we get CORS to work both locally (uses localhost) and on the DO host (uses IP address)?  Do I just need to set the host in the .env to the IP address for now?
 # TODO: Need to figure out a way to prevent secrets from showing up in build logs from .env
 # TODO: Update DB credentials to be more secure
 name: ci
@@ -38,7 +36,7 @@ jobs:
         run: composer phpcs-test
       - name: Run Psalm Static Analysis
         run: composer psalm
-      - name: Build Gulp
+      - name: Build Web Assets
         run: yarn install && yarn global add gulp && gulp build
 # TODO - Potentially re-add the deploy job and the steps below
 #      - name: Upload Build Artifact
@@ -73,9 +71,9 @@ jobs:
       - name: Build Docker Images
         run: docker-compose -f ./docker-compose.yml -f ./docker-compose.prod.yml up -d
       - name: Build Documentation Search Index for Integration Tests
-        run: docker-compose -f ./docker-compose.yml -f ./docker-compose.prod.yml exec -T php php aphiria docs:index
+        run: docker-compose exec php php aphiria docs:index
       - name: Run integration tests
-        run: docker-compose -f ./docker-compose.yml -f ./docker-compose.prod.yml exec -T php vendor/bin/phpunit --testsuite Integration --configuration phpunit.xml.dist --verbose
+        run: docker-compose exec php vendor/bin/phpunit --testsuite Integration --configuration phpunit.xml.dist --verbose
       - name: Install doctl
         uses: digitalocean/action-doctl@v2
         with:
@@ -92,9 +90,12 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           passphrase: ${{ secrets.SSH_PASSPHRASE }}
+          # TODO: Change "git checkout docker" to "git checkout master" once we've merged the PR
           script: |
             cd aphiria.com
+            git checkout docker
+            git pull origin
             docker-compose ps
             docker-compose pull
             docker-compose -f ./docker-compose.yml -f ./docker-compose.prod.yml up -d
-            docker-compose -f ./docker-compose.yml -f ./docker-compose.prod.yml exec -T php php aphiria docs:index
+            docker-compose exec php php aphiria docs:index
