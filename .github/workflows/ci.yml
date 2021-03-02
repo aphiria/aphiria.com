@@ -97,7 +97,6 @@ jobs:
             docker-compose ps
             docker-compose pull
             docker-compose -f ./docker-compose.yml -f ./docker-compose.prod.yml up -d
-            docker-compose exec -T php php aphiria docs:index
       - name: Sleep to Make Sure DB is Running Before Running Migration
         uses: jakejarvis/wait-action@master
         with:
