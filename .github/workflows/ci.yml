@@ -1,5 +1,3 @@
-# TODO: Need to figure out a way to prevent secrets from showing up in build logs from .env
-# TODO: Update DB credentials to be more secure
 name: ci
 on:
   push:
@@ -17,6 +15,7 @@ jobs:
       # Set these so that views are compiled with correct links
       APP_WEB_URL: http://204.48.28.188:80 # TODO: Use this prod value: https://www.aphiria.com
       APP_API_URL: http://204.48.28.188:8080 # TODO: Use this prod value: https://api.aphiria.com
+      APP_ENV: ci
     steps:
       - name: Check Out Code
         uses: actions/checkout@v2
@@ -82,7 +81,7 @@ jobs:
         run: |
           doctl registry login
           docker-compose push
-      - name: Pull Images to Docker Host
+      - name: Pull Images onto Docker Host
         uses: appleboy/ssh-action@v0.1.4
         with:
           host: ${{ secrets.SSH_HOST }}
@@ -98,4 +97,19 @@ jobs:
             docker-compose ps
             docker-compose pull
             docker-compose -f ./docker-compose.yml -f ./docker-compose.prod.yml up -d
+            docker-compose exec -T php php aphiria docs:index
+      - name: Sleep to Make Sure DB is Running Before Running Migration
+        uses: jakejarvis/wait-action@master
+        with:
+          time: '15s'
+      - name: Run DB Migrations
+        uses: appleboy/ssh-action@v0.1.4
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          port: ${{ secrets.SSH_PORT }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          passphrase: ${{ secrets.SSH_PASSPHRASE }}
+          script: |
+            cd aphiria.com
             docker-compose exec -T php php aphiria docs:index
