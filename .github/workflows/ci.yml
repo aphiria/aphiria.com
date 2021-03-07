@@ -66,7 +66,6 @@ jobs:
         run: |
           touch .env
           echo ${{ secrets.APHIRIA_DOT_COM_DOT_ENV }} >> .env
-          cat .env
       - name: Build Docker Images
         run: docker-compose -f ./docker-compose.yml -f ./docker-compose.prod.yml up -d
       - name: Build Documentation Search Index for Integration Tests
