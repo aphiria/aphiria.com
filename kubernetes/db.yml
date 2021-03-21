@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: db-deployment
+  namespace: aphiria.com
+  labels:
+    app: db
+spec:
+  selector:
+    matchLabels:
+      app: db
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: db
+    spec:
+      containers:
+        - name: db
+          image: postgres:13.2-alpine
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRES_DB
+              valueFrom:
+                configMapKeyRef:
+                  name: configmap
+                  key: db-name
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: secret
+                  key: db-user
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: secret
+                  key: db-password
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: db-service
+  namespace: aphiria.com
+  labels:
+    app: db
+spec:
+  selector:
+    app: db
+  ports:
+    - port: 5432
+      protocol: TCP
+      targetPort: 5432

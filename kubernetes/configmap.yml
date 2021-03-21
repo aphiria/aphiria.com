@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  namespace: aphiria.com
+  name: configmap
+data:
+  db-host: db-service
+  db-name: defaultdb
+  db-port: 5432

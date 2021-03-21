@@ -1,0 +1,63 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-deployment
+  namespace: aphiria.com
+  labels:
+    app: api
+spec:
+  selector:
+    matchLabels:
+      app: api
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: api
+    spec:
+      containers:
+        - name: api
+          image: registry.digitalocean.com/aphiria-dot-com/aphiria/php:latest
+          ports:
+            - containerPort: 27017
+          env:
+            - name: DB_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: configmap
+                  key: db-host
+            - name: DB_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: configmap
+                  key: db-name
+            - name: DB_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: configmap
+                  key: db-port
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: secret
+                  key: db-user
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: secret
+                  key: db-password
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: api-service
+  namespace: aphiria.com
+  labels:
+    app: api
+spec:
+  selector:
+    app: api
+  ports:
+    - port: 27017
+      protocol: TCP
+      targetPort: 27017
