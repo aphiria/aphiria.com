@@ -48,7 +48,7 @@ final class ServeCommandHandler implements ICommandHandler
     /**
      * Runs commands in the background, which allows blocking commands to be run in parallel
      *
-     * @param string[] $commands The commands to run
+     * @param list<string> $commands The commands to run
      * @param IOutput $output The output to write to
      */
     private function runCommandsInBackground(array $commands, IOutput $output): void

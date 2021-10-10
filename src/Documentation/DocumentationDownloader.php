@@ -25,7 +25,7 @@ final class DocumentationDownloader
     private const GITHUB_REPOSITORY = 'https://github.com/aphiria/docs.git';
 
     /**
-     * @param string[] $branches The branches to download
+     * @param list<string> $branches The branches to download
      * @param string $clonedDocAbsolutePath The absolute path to the cloned documentation
      * @param string $clonedDocRelativePath The relative path to the cloned documentation
      * @param FilesystemInterface $files The file system helper
@@ -41,7 +41,7 @@ final class DocumentationDownloader
     /**
      * Downloads all of our documentation
      *
-     * @return array<string, string[]> The mapping of branch names to local file paths created by the downloads
+     * @return array<string, list<string>> The mapping of branch names to local file paths created by the downloads
      * @throws DownloadFailedException Thrown if there was any error reading or writing to the file system
      */
     public function downloadDocs(): array
