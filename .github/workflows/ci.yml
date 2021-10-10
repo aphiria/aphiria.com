@@ -32,15 +32,6 @@ jobs:
       DB_PASSWORD: password
     name: PHP ${{ matrix.php }} - ${{ matrix.stability }}
     steps:
-      - name: Create Symlinks and Swap
-        uses: appleboy/ssh-action@v0.1.4
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_KEY }}
-          port: ${{ secrets.SSH_PORT }}
-          script: |
-            pwd
       - name: Check Out Code
         uses: actions/checkout@v2
         with:
@@ -82,20 +73,16 @@ jobs:
       - name: Generate Build ID
         id: generateBuildId
         run: echo "::set-output name=buildId::${{ github.run_number }}-${{ github.run_attempt }}"
-      #- name: Deploy to Site
+      - name: Deploy to Site
         # TODO: ADD THIS BACK.  if: github.ref == 'refs/heads/master'
-      #  run: |
-      #    rsync -aq --delete-after --rsync-path="mkdir -p /var/www/html/releases/${{ steps.generateBuildId.outputs.buildId }}/ && rsync" "./" ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/var/www/html/releases/${{ steps.generateBuildId.outputs.buildId }}/
-          # TODO: Need to actually create and swap symlinks still
-
-
-      #- name: Split Subtrees
-      #  if: matrix.php == '8.1' && (github.ref == 'refs/heads/1.x' || startswith(github.ref, 'refs/tags/'))
-      #  env:
-      #    SSH_AUTH_SOCK: /tmp/ssh_agent.sock
-      #  run: |
-      #    mkdir -p ~/.ssh
-      #    ssh-keyscan github.com >> ~/.ssh/known_hosts
-      #    ssh-agent -a $SSH_AUTH_SOCK > /dev/null
-      #    ssh-add - <<< "${{ secrets.CI_SSH_KEY }}"
-      #    bash bin/split.sh ${{ github.ref }}
+        run: |
+          rsync -aq --delete-after --rsync-path="mkdir -p /var/www/html/releases/${{ steps.generateBuildId.outputs.buildId }}/ && rsync" "./" ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/var/www/html/releases/${{ steps.generateBuildId.outputs.buildId }}/
+      - name: Create Symlinks and Swap
+        uses: appleboy/ssh-action@v0.1.4
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          port: ${{ secrets.SSH_PORT }}
+          script: |
+            pwd
