@@ -73,14 +73,12 @@ jobs:
       - name: Generate Build ID
         id: generateBuildId
         run: echo "::set-output name=buildId::${{ github.run_number }}-${{ github.run_attempt }}"
-      - name: TEST STORING SSH KEY
-        uses: appleboy/ssh-action@v0.1.4
+      - name: Install SSH Key
+        uses: shimataro/ssh-key-action@v2
         # TODO: ADD THIS BACK.  if: github.ref == 'refs/heads/master'
         with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
-          port: ${{ secrets.SSH_PORT }}
+          known_hosts: ${{ secrets.KNOWN_HOSTS }}
       - name: Deploy to Site
         # TODO: ADD THIS BACK.  if: github.ref == 'refs/heads/master'
         run: |
