@@ -73,12 +73,21 @@ jobs:
       - name: Generate Build ID
         id: generateBuildId
         run: echo "::set-output name=buildId::${{ github.run_number }}-${{ github.run_attempt }}"
+      - name: TEST STORING SSH KEY
+        uses: appleboy/ssh-action@v0.1.4
+        # TODO: ADD THIS BACK.  if: github.ref == 'refs/heads/master'
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          port: ${{ secrets.SSH_PORT }}
       - name: Deploy to Site
         # TODO: ADD THIS BACK.  if: github.ref == 'refs/heads/master'
         run: |
           rsync -aq --delete-after --rsync-path="mkdir -p /var/www/html/releases/${{ steps.generateBuildId.outputs.buildId }}/ && rsync" "./" ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/var/www/html/releases/${{ steps.generateBuildId.outputs.buildId }}/
       - name: Create Symlinks and Swap
         uses: appleboy/ssh-action@v0.1.4
+        # TODO: ADD THIS BACK.  if: github.ref == 'refs/heads/master'
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
