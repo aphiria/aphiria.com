@@ -63,7 +63,7 @@ final class DocumentationBinder extends Binder
     /**
      * Returns an associative array that stores metadata about each page of documentation in the 1.x branch
      *
-     * @return array{title: string, default: string, docs: array<string, array<string, array{title: string, linkText: string, description: string, keywords: string[]}>>} The master branch config
+     * @return array{title: string, default: string, docs: array<string, array<string, array{title: string, linkText: string, description: string, keywords: list<string>}>>} The master branch config
      */
     private function get1xBranchDocConfig(): array
     {

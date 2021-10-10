@@ -91,7 +91,7 @@ final class DocumentationService
      * Searches the documentation with a query
      *
      * @param string $query The raw search query
-     * @return SearchResult[] The list of search results
+     * @return list<SearchResult> The list of search results
      */
     public function searchDocs(string $query): array
     {
@@ -101,8 +101,8 @@ final class DocumentationService
     /**
      * Creates HTML docs from Markdown files
      *
-     * @param array<string, string[]> $markdownFilePathsByBranch The mapping of branches to Markdown file paths to create HTML docs from
-     * @return array<string, string[]> The list of HTML doc file paths
+     * @param array<string, list<string>> $markdownFilePathsByBranch The mapping of branches to Markdown file paths to create HTML docs from
+     * @return array<string, list<string>> The list of HTML doc file paths
      * @throws HtmlCompilationException Thrown if there was an error compiling the HTML docs
      */
     private function createHtmlDocs(array $markdownFilePathsByBranch): array

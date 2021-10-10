@@ -29,7 +29,7 @@ interface ISearchIndex
      * Queries the documentation and returns any matches
      *
      * @param string $query The raw search query
-     * @return SearchResult[] The list of search results
+     * @return list<SearchResult> The list of search results
      */
     public function query(string $query): array;
 }

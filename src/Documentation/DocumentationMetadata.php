@@ -23,7 +23,7 @@ final class DocumentationMetadata
     private const DEFAULT_VERSION = '1.x';
 
     /**
-     * @param array<string, array{title: string, default: string, docs: array<string, array<string, array{title: string, linkText: string, description: string, keywords: string[]}>>}> $config The associative array that contains our metadata
+     * @param array<string, array{title: string, default: string, docs: array<string, array<string, array{title: string, linkText: string, description: string, keywords: list<string>}>>}> $config The associative array that contains our metadata
      */
     public function __construct(private array $config)
     {
@@ -32,7 +32,7 @@ final class DocumentationMetadata
     /**
      * Gets the branch names that contain documentation
      *
-     * @return string[] The branch names
+     * @return list<string> The branch names
      */
     public function getBranches(): array
     {
@@ -64,7 +64,7 @@ final class DocumentationMetadata
      * Gets the docs, broken up by logical sections
      *
      * @param string $version The version whose doc sections we want
-     * @return array<string, array<string, array{title: string, linkText: string, description: string, keywords: string[]}>> The mapping of doc sections to doc metadata
+     * @return array<string, array<string, array{title: string, linkText: string, description: string, keywords: list<string>}>> The mapping of doc sections to doc metadata
      * @throws InvalidArgumentException Thrown if no doc exists with the input version
      */
     public function getDocSections(string $version): array
@@ -79,7 +79,7 @@ final class DocumentationMetadata
     /**
      * Gets the list of doc versions
      *
-     * @return string[] The list of doc versions
+     * @return list<string> The list of doc versions
      */
     public function getDocVersions(): array
     {

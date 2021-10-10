@@ -35,7 +35,7 @@ final class DocumentationController extends Controller
      * Searches our documentation with a query
      *
      * @param string $query The search query
-     * @return SearchResult[] The list of search results
+     * @return list<SearchResult> The list of search results
      */
     #[Get('search')]
     public function searchDocs(string $query): array
