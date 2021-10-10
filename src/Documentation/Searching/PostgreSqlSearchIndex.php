@@ -17,7 +17,7 @@ use League\Flysystem\FileNotFoundException;
 use League\Flysystem\FilesystemInterface;
 use PDO;
 use PHPHtmlParser\Dom;
-use PHPHtmlParser\Dom\HtmlNode;
+use PHPHtmlParser\Dom\Node\HtmlNode;
 
 /**
  * Defines the documentation search index backed by PostgreSQL
