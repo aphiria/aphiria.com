@@ -57,7 +57,7 @@ final class PostgreSqlSearchIndex implements ISearchIndex
     /**
      * Builds up a search index for a list of document paths
      *
-     * @param string[] $htmlPaths The paths to the HTML docs
+     * @param list<string> $htmlPaths The paths to the HTML docs
      * @throws IndexingFailedException Thrown when there was a failure to index the documents
      */
     public function buildSearchIndex(array $htmlPaths): void
@@ -180,7 +180,7 @@ EOF
     /**
      * Creates and seeds the doc table
      *
-     * @param IndexEntry[] $indexEntries The index entries to save
+     * @param list<IndexEntry> $indexEntries The index entries to save
      * @throws FileNotFoundException Thrown if there was an error reading the .env file
      */
     private function createAndSeedTable(array $indexEntries): void

@@ -20,7 +20,7 @@ interface ISearchIndex
     /**
      * Builds up a search index for a list of document paths
      *
-     * @param string[] $htmlPaths The paths to the HTML docs
+     * @param list<string> $htmlPaths The paths to the HTML docs
      * @throws IndexingFailedException Thrown when there was a failure to index the documents
      */
     public function buildSearchIndex(array $htmlPaths): void;

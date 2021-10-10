@@ -78,7 +78,7 @@ final class ViewCompiler
      * Compiles the partials that are common to all pages
      *
      * @param string $pageContents The contents of the page to compile
-     * @param string[] $metadataKeywords The list of metadata keywords to display
+     * @param list<string> $metadataKeywords The list of metadata keywords to display
      * @param string $metadataDescription The metadata description to display
      * @return string The compiled contents
      * @throws FileNotFoundException Thrown if a view partial did not exist
@@ -143,7 +143,7 @@ final class ViewCompiler
             $compiledSideNav = $this->compileTag('contents', $allCompiledSectionContents, $sideNavContents);
 
             // Compile the page
-            foreach ($this->docMetadata->getDocSections($version) as $section => $docs) {
+            foreach ($this->docMetadata->getDocSections($version) as $docs) {
                 foreach ($docs as $docName => $doc) {
                     $compiledDocPageContents = $this->compileCommonPartials(
                         $docTemplatePageContents,
