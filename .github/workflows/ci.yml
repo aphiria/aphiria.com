@@ -70,9 +70,9 @@ jobs:
         run: |
           composer global require php-coveralls/php-coveralls
           php-coveralls --coverage_clover=./.coverage/clover.xml --json_path=./coveralls-upload.json -v
-      - name: Generate Build ID
-        id: generateBuildId
-        run: echo "::set-output name=buildId::${{ github.run_number }}-${{ github.run_attempt }}"
+      - name: Generate Build Path
+        id: generateBuildPath
+        run: echo "::set-output name=buildPath::/var/www/html/releases/${{ github.run_number }}-${{ github.run_attempt }}"
       - name: Install SSH Key
         uses: shimataro/ssh-key-action@v2
         # TODO: ADD THIS BACK.  if: github.ref == 'refs/heads/master'
@@ -82,7 +82,7 @@ jobs:
       - name: Deploy to Site
         # TODO: ADD THIS BACK.  if: github.ref == 'refs/heads/master'
         run: |
-          rsync -aq --delete-after --rsync-path="mkdir -p /var/www/html/releases/${{ steps.generateBuildId.outputs.buildId }}/ && rsync" "./" ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/var/www/html/releases/${{ steps.generateBuildId.outputs.buildId }}/
+          rsync -aq --delete-after --rsync-path="mkdir -p ${{ steps.generateBuildPath.outputs.buildPath }}/ && rsync" "./" ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ steps.generateBuildPath.outputs.buildPath }}/
       - name: Create Symlinks and Swap
         uses: appleboy/ssh-action@v0.1.4
         # TODO: ADD THIS BACK.  if: github.ref == 'refs/heads/master'
@@ -91,5 +91,16 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
           port: ${{ secrets.SSH_PORT }}
+          script_stop: true
           script: |
-            pwd
+            cp -vrf /var/www/html/.env ${{ steps.generateBuildPath.outputs.buildPath }}/.env
+            sudo chown -R 1000:48 ${{ steps.generateBuildPath.outputs.buildPath }}/resources
+            sudo chown -R 1000:48 ${{ steps.generateBuildPath.outputs.buildPath }}/tmp
+            sudo chmod -R 755 ${{ steps.generateBuildPath.outputs.buildPath }}/resources
+            sudo chmod -R 755 ${{ steps.generateBuildPath.outputs.buildPath }}/tmp
+            php ${{ steps.generateBuildPath.outputs.buildPath }}/aphiria docs:index
+            sudo chown -R 48:48 ${{ steps.generateBuildPath.outputs.buildPath }}/resources
+            sudo chown -R 48:48 ${{ steps.generateBuildPath.outputs.buildPath }}/tmp
+            ${{ steps.generateBuildPath.outputs.buildPath }}/vendor/bin/phpunit --testsuite Integration --configuration ${{ steps.generateBuildPath.outputs.buildPath }}/phpunit.xml.dist --verbose
+            #ln -snf $(readlink /var/www/html/current) /var/www/html/previous
+            #ln -snf ${{ steps.generateBuildPath.outputs.buildPath }} /var/www/html/current
