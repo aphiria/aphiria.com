@@ -17,19 +17,18 @@ jobs:
             php-cs-fixer-ignore-php-version: 0
     services:
       postgres:
-        image: postgres:latest
+        image: postgres:11-alpine
         env:
           POSTGRES_DB: public
           # This is a temporary database used just for CI
           POSTGRES_PASSWORD: password
-          POSTGRES_PORT: 5432
         ports:
           - 5432:5432
     # # Need to make sure we're using the right environment variables when compiling the views
     env:
       APP_WEB_URL: https://www.aphiria.com
       APP_API_URL: https://api.aphiria.com
-      DB_HOST: postgres
+      DB_HOST: localhost
       DB_PASSWORD: password
     name: PHP ${{ matrix.php }} - ${{ matrix.stability }}
     steps:
