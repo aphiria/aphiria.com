@@ -1,0 +1,106 @@
+name: ci
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron: '0 0 * * *'
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - php: '8.0'
+            stability: prefer-stable
+            experimental: false
+            php-cs-fixer-ignore-php-version: 0
+    services:
+      postgres:
+        image: postgres:11-alpine
+        env:
+          POSTGRES_DB: public
+          # This is a temporary database used just for CI
+          POSTGRES_PASSWORD: password
+        ports:
+          - 5432:5432
+    # Need to make sure we're using the right environment variables when compiling the views
+    env:
+      APP_WEB_URL: https://www.aphiria.com
+      APP_API_URL: https://api.aphiria.com
+      DB_HOST: localhost
+      DB_PASSWORD: password
+    name: PHP ${{ matrix.php }} - ${{ matrix.stability }}
+    steps:
+      - name: Check Out Code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Set Up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: curl, dom, libxml, mbstring, pcntl, pgsql, xdebug, zip
+          tools: composer:v2
+          coverage: xdebug
+      - name: Install Dependencies
+        run: |
+          composer install
+          composer dump-autoload -o
+          chmod -R 755 resources
+          chmod -R 755 tmp
+          yarn install
+          yarn global add gulp
+          gulp build
+      - name: Index Documentation
+        run: php aphiria docs:index
+      - name: Run Tests
+        run: composer phpunit
+      - name: Run Linter
+        if: matrix.php-cs-fixer-ignore-php-version == 0
+        run: composer phpcs-test
+        env:
+          PHP_CS_FIXER_IGNORE_ENV: ${{ matrix.php-cs-fixer-ignore-php-version }}
+      - name: Run Psalm Static Analysis
+        run: composer psalm -- --shepherd
+      - name: Upload Coverage Results To Coveralls
+        env:
+          COVERALLS_REPO_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          composer global require php-coveralls/php-coveralls
+          php-coveralls --coverage_clover=./.coverage/clover.xml --json_path=./coveralls-upload.json -v
+      - name: Generate Build Path
+        id: generateBuildPath
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+        run: echo "::set-output name=buildPath::/var/www/html/releases/${{ github.run_number }}-${{ github.run_attempt }}"
+      - name: Install SSH Key
+        uses: shimataro/ssh-key-action@v2
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+        with:
+          key: ${{ secrets.SSH_KEY }}
+          known_hosts: ${{ secrets.SSH_KNOWN_HOSTS }}
+      - name: Deploy to Server
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+        run: |
+          rsync -aq --delete-after --rsync-path="mkdir -p ${{ steps.generateBuildPath.outputs.buildPath }}/ && rsync" "./" ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ steps.generateBuildPath.outputs.buildPath }}/
+      - name: Create Symlinks and Swap
+        uses: appleboy/ssh-action@v0.1.4
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          port: ${{ secrets.SSH_PORT }}
+          script_stop: true
+          script: |
+            cp -vrf /var/www/html/.env ${{ steps.generateBuildPath.outputs.buildPath }}/.env
+            sudo chown -R 1000:48 ${{ steps.generateBuildPath.outputs.buildPath }}/resources
+            sudo chown -R 1000:48 ${{ steps.generateBuildPath.outputs.buildPath }}/tmp
+            sudo chmod -R 755 ${{ steps.generateBuildPath.outputs.buildPath }}/resources
+            sudo chmod -R 755 ${{ steps.generateBuildPath.outputs.buildPath }}/tmp
+            php ${{ steps.generateBuildPath.outputs.buildPath }}/aphiria docs:index
+            sudo chown -R 48:48 ${{ steps.generateBuildPath.outputs.buildPath }}/resources
+            sudo chown -R 48:48 ${{ steps.generateBuildPath.outputs.buildPath }}/tmp
+            ${{ steps.generateBuildPath.outputs.buildPath }}/vendor/bin/phpunit --testsuite Integration --configuration ${{ steps.generateBuildPath.outputs.buildPath }}/phpunit.xml.dist --verbose
+            ln -snf $(readlink /var/www/html/current) /var/www/html/previous
+            ln -snf ${{ steps.generateBuildPath.outputs.buildPath }} /var/www/html/current
