@@ -29,6 +29,8 @@ jobs:
     env:
       APP_WEB_URL: https://www.aphiria.com
       APP_API_URL: https://api.aphiria.com
+      DB_HOST: postgres
+      DB_PASSWORD: password
     name: PHP ${{ matrix.php }} - ${{ matrix.stability }}
     steps:
       - name: Check Out Code
