@@ -39,7 +39,8 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
           port: ${{ secrets.SSH_PORT }}
-          script: pwd
+          script: |
+            pwd
       - name: Check Out Code
         uses: actions/checkout@v2
         with:
