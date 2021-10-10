@@ -24,7 +24,7 @@ jobs:
           POSTGRES_PASSWORD: password
         ports:
           - 5432:5432
-    # # Need to make sure we're using the right environment variables when compiling the views
+    # Need to make sure we're using the right environment variables when compiling the views
     env:
       APP_WEB_URL: https://www.aphiria.com
       APP_API_URL: https://api.aphiria.com
@@ -56,7 +56,6 @@ jobs:
         run: php aphiria docs:index
       - name: Run Tests
         run: composer phpunit
-      # For now, do not run the linter until PHP-CS-Fixer fully supports this PHP version
       - name: Run Linter
         if: matrix.php-cs-fixer-ignore-php-version == 0
         run: composer phpcs-test
@@ -72,20 +71,21 @@ jobs:
           php-coveralls --coverage_clover=./.coverage/clover.xml --json_path=./coveralls-upload.json -v
       - name: Generate Build Path
         id: generateBuildPath
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
         run: echo "::set-output name=buildPath::/var/www/html/releases/${{ github.run_number }}-${{ github.run_attempt }}"
       - name: Install SSH Key
         uses: shimataro/ssh-key-action@v2
-        # TODO: ADD THIS BACK.  if: github.ref == 'refs/heads/master'
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
         with:
           key: ${{ secrets.SSH_KEY }}
           known_hosts: ${{ secrets.SSH_KNOWN_HOSTS }}
-      - name: Deploy to Site
-        # TODO: ADD THIS BACK.  if: github.ref == 'refs/heads/master'
+      - name: Deploy to Server
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
         run: |
           rsync -aq --delete-after --rsync-path="mkdir -p ${{ steps.generateBuildPath.outputs.buildPath }}/ && rsync" "./" ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ steps.generateBuildPath.outputs.buildPath }}/
       - name: Create Symlinks and Swap
         uses: appleboy/ssh-action@v0.1.4
-        # TODO: ADD THIS BACK.  if: github.ref == 'refs/heads/master'
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
