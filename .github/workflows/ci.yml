@@ -32,6 +32,14 @@ jobs:
       DB_PASSWORD: password
     name: PHP ${{ matrix.php }} - ${{ matrix.stability }}
     steps:
+      - name: Create Symlinks and Swap
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.DEPLOY_KEY }}
+          port: ${{ secrets.SSH_PORT }}
+          script: whoami
       - name: Check Out Code
         uses: actions/checkout@v2
         with:
@@ -73,14 +81,6 @@ jobs:
       - name: Generate Build ID
         id: generateBuildId
         run: echo "::set-output name=buildId::${{ github.run_number }}-${{ github.run_attempt }}"
-      - name: Create Symlinks and Swap
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.DEPLOY_KEY }}
-          port: ${{ secrets.PORT }}
-          script: whoami
       #- name: Deploy to Site
         # TODO: ADD THIS BACK.  if: github.ref == 'refs/heads/master'
       #  run: |
