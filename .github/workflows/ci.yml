@@ -33,7 +33,7 @@ jobs:
     name: PHP ${{ matrix.php }} - ${{ matrix.stability }}
     steps:
       - name: Create Symlinks and Swap
-        uses: appleboy/ssh-action@master
+        uses: appleboy/ssh-action@v0.1.4
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
