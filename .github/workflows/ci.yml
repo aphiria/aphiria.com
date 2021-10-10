@@ -32,19 +32,6 @@ jobs:
       DB_PASSWORD: password
     name: PHP ${{ matrix.php }} - ${{ matrix.stability }}
     steps:
-      - name: TESTING SETTING UP SSH
-        run: |
-          mkdir -p ~/.ssh/
-          echo "$SSH_KEY" > ../private.key
-          sudo chmod 600 ../private.key
-          echo "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
-        shell: bash
-        env:
-          SSH_KEY: ${{secrets.SSH_KEY}}
-          SSH_KNOWN_HOSTS: ${{secrets.SSH_KNOWN_HOSTS}}
-      - name: TESTING USING SSH
-        run: |
-          ssh -i ${{ github.workspace }}/../private.key ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}
       - name: Create Symlinks and Swap
         uses: appleboy/ssh-action@master
         with:
