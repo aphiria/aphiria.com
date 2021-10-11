@@ -238,18 +238,18 @@ EOF
         if ($currNode->nodeName === 'h1') {
             $link .= $filename;
         } elseif (\in_array($currNode->nodeName, ['h2', 'h3', 'h4', 'h5'])) {
-            $link .= "$filename#{$currNode->getAttribute('id')}";
+            $link .= "$filename#{$currNode->attributes->getNamedItem('id')}";
         } elseif ($h5 !== null) {
-            $link .= "$filename#{$h5->getAttribute('id')}";
+            $link .= "$filename#{$h5->attributes->getNamedItem('id')}";
         } elseif ($h4 !== null) {
-            $link .= "$filename#{$h4->getAttribute('id')}";
+            $link .= "$filename#{$h4->attributes->getNamedItem('id')}";
         } elseif ($h3 !== null) {
-            $link .= "$filename#{$h3->getAttribute('id')}";
+            $link .= "$filename#{$h3->attributes->getNamedItem('id')}";
         } elseif ($h2 !== null) {
-            $link .= "$filename#{$h2->getAttribute('id')}";
+            $link .= "$filename#{$h2->attributes->getNamedItem('id')}";
         } else {
             // h1 will never be null
-            $link .= "$filename#{$h1->getAttribute('id')}";
+            $link .= "$filename#{$h1->attributes->getNamedItem('id')}";
         }
 
         return new IndexEntry(
