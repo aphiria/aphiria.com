@@ -232,7 +232,6 @@ EOF
         ?DOMNode $h5
     ): IndexEntry {
         $link = $this->linkPrefix;
-
         /**
          * If the current node is the h1 tag, then just link to the doc itself, not a section
          * If the current node is a h2, h3, h4, or h5 tag, then link to the tag's ID
@@ -241,18 +240,18 @@ EOF
         if ($currNode->nodeName === 'h1') {
             $link .= $filename;
         } elseif (\in_array($currNode->nodeName, ['h2', 'h3', 'h4', 'h5'])) {
-            $link .= "$filename#{$currNode->attributes->getNamedItem('id')}";
+            $link .= "$filename#{$currNode->attributes->getNamedItem('id')->nodeValue}";
         } elseif ($h5 !== null) {
-            $link .= "$filename#{$h5->attributes->getNamedItem('id')}";
+            $link .= "$filename#{$h5->attributes->getNamedItem('id')->nodeValue}";
         } elseif ($h4 !== null) {
-            $link .= "$filename#{$h4->attributes->getNamedItem('id')}";
+            $link .= "$filename#{$h4->attributes->getNamedItem('id')->nodeValue}";
         } elseif ($h3 !== null) {
-            $link .= "$filename#{$h3->attributes->getNamedItem('id')}";
+            $link .= "$filename#{$h3->attributes->getNamedItem('id')->nodeValue}";
         } elseif ($h2 !== null) {
-            $link .= "$filename#{$h2->attributes->getNamedItem('id')}";
+            $link .= "$filename#{$h2->attributes->getNamedItem('id')->nodeValue}";
         } else {
             // h1 will never be null
-            $link .= "$filename#{$h1->attributes->getNamedItem('id')}";
+            $link .= "$filename#{$h1->attributes->getNamedItem('id')->nodeValue}";
         }
 
         return new IndexEntry(
