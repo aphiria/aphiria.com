@@ -67,10 +67,12 @@ final class PostgreSqlSearchIndex implements ISearchIndex
 
             foreach ($htmlPaths as $htmlPath) {
                 /** @var DOMDocument|false $dom */
+                \libxml_use_internal_errors(true);
                 if (!($dom = (new DOMDocument())->loadHTML((string)$this->files->read($htmlPath))) instanceof DOMDocument) {
                     throw new Exception('Failed to read DOM');
                 }
 
+                \libxml_clear_errors();
                 $h1 = $h2 = $h3 = $h4 = $h5 = null;
 
                 // Scan the documentation and index the elements as well as their nearest previous <h*> siblings
@@ -113,7 +115,7 @@ final class PostgreSqlSearchIndex implements ISearchIndex
 
             $this->createAndSeedTable($indexEntries);
         } catch (Exception $ex) {
-            throw new IndexingFailedException('Failed to index document: ' . $ex->getMessage(), 0, $ex);
+            throw new IndexingFailedException('Failed to index document', 0, $ex);
         }
     }
 
