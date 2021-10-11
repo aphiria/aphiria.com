@@ -77,7 +77,7 @@ final class PostgreSqlSearchIndex implements ISearchIndex
                 /** @var DOMNode $currNode */
                 foreach ($dom->documentElement->childNodes as $currNode) {
                     // Check if we need to reset the nearest headers
-                    switch ($currNode->nodeType) {
+                    switch ($currNode->nodeName) {
                         case 'h1':
                             $h1 = $currNode;
                             $h2 = $h3 = $h4 = $h5 = null;
@@ -104,7 +104,7 @@ final class PostgreSqlSearchIndex implements ISearchIndex
                     }
 
                     // Only index specific elements
-                    if (isset(self::$htmlElementsToWeights[$currNode->getTag()->name()])) {
+                    if (isset(self::$htmlElementsToWeights[$currNode->nodeName])) {
                         $filename = \basename($htmlPath);
                         $indexEntries[] = $this->createIndexEntry($filename, $currNode, $h1, $h2, $h3, $h4, $h5);
                     }
@@ -211,22 +211,22 @@ EOF
      * Creates an index entry
      *
      * @param string $filename The filename of the doc being indexed
-     * @param HtmlNode $currNode The current node
-     * @param HtmlNode $h1 The current H1 node
-     * @param HtmlNode|null $h2 The current H2 node
-     * @param HtmlNode|null $h3 The current H3 node
-     * @param HtmlNode|null $h4 The current H4 node
-     * @param HtmlNode|null $h5 The current H5 node
+     * @param DOMNode $currNode The current node
+     * @param DOMNode $h1 The current H1 node
+     * @param DOMNode|null $h2 The current H2 node
+     * @param DOMNode|null $h3 The current H3 node
+     * @param DOMNode|null $h4 The current H4 node
+     * @param DOMNode|null $h5 The current H5 node
      * @return IndexEntry The index entry
      */
     private function createIndexEntry(
         string $filename,
-        HtmlNode $currNode,
-        HtmlNode $h1,
-        ?HtmlNode $h2,
-        ?HtmlNode $h3,
-        ?HtmlNode $h4,
-        ?HtmlNode $h5
+        DOMNode $currNode,
+        DOMNode $h1,
+        ?DOMNode $h2,
+        ?DOMNode $h3,
+        ?DOMNode $h4,
+        ?DOMNode $h5
     ): IndexEntry {
         $link = $this->linkPrefix;
 
@@ -235,9 +235,9 @@ EOF
          * If the current node is a h2, h3, h4, or h5 tag, then link to the tag's ID
          * Otherwise, find the nearest non-null header tag and link to its ID
          */
-        if ($currNode->getTag()->name() === 'h1') {
+        if ($currNode->nodeName === 'h1') {
             $link .= $filename;
-        } elseif (\in_array($currNode->getTag()->name(), ['h2', 'h3', 'h4', 'h5'])) {
+        } elseif (\in_array($currNode->nodeName, ['h2', 'h3', 'h4', 'h5'])) {
             $link .= "$filename#{$currNode->getAttribute('id')}";
         } elseif ($h5 !== null) {
             $link .= "$filename#{$h5->getAttribute('id')}";
@@ -253,15 +253,15 @@ EOF
         }
 
         return new IndexEntry(
-            $currNode->getTag()->name(),
-            $currNode->text(true),
+            $currNode->nodeName,
+            $this->getAllChildNodeTexts($currNode),
             $link,
-            self::$htmlElementsToWeights[$currNode->getTag()->name()],
-            $h1->text(true),
-            $h2 === null ? null : $h2->text(true),
-            $h3 === null ? null : $h3->text(true),
-            $h4 === null ? null : $h4->text(true),
-            $h5 === null ? null : $h5->text(true)
+            self::$htmlElementsToWeights[$currNode->nodeName],
+            $this->getAllChildNodeTexts($h1),
+            $h2 === null ? null : $this->getAllChildNodeTexts($h2),
+            $h3 === null ? null : $this->getAllChildNodeTexts($h3),
+            $h4 === null ? null : $this->getAllChildNodeTexts($h4),
+            $h5 === null ? null : $this->getAllChildNodeTexts($h5)
         );
     }
 
@@ -308,6 +308,25 @@ CREATE INDEX {$this->lexemeTableName}_simple_lexeme_idx ON {$this->lexemeTableNa
 EOF
         );
         $statement->execute();
+    }
+
+    /**
+     * Recursively searches a node for all of its children's texts
+     *
+     * @param DOMNode $node The node to search
+     * @return string The children nodes' texts
+     */
+    private function getAllChildNodeTexts(DOMNode $node): string
+    {
+        $text = '';
+
+        /** @var DOMNode $childNode */
+        foreach ($node->childNodes as $childNode) {
+            $text .= $childNode->textContent;
+            $text .= $this->getAllChildNodeTexts($childNode);
+        }
+
+        return $text;
     }
 
     /**
