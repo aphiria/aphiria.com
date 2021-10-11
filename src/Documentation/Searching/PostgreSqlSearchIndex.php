@@ -67,12 +67,10 @@ final class PostgreSqlSearchIndex implements ISearchIndex
 
             foreach ($htmlPaths as $htmlPath) {
                 /** @var DOMDocument|false $dom */
-                \libxml_use_internal_errors(true);
-                if (!($dom = (new DOMDocument())->loadHTML((string)$this->files->read($htmlPath))) instanceof DOMDocument) {
+                if (!($dom = @(new DOMDocument())->loadHTML((string)$this->files->read($htmlPath))) instanceof DOMDocument) {
                     throw new Exception('Failed to read DOM: ' . \libxml_get_last_error()->message);
                 }
 
-                \libxml_clear_errors();
                 $h1 = $h2 = $h3 = $h4 = $h5 = null;
 
                 // Scan the documentation and index the elements as well as their nearest previous <h*> siblings
