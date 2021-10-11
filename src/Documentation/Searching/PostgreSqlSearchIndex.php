@@ -113,7 +113,7 @@ final class PostgreSqlSearchIndex implements ISearchIndex
 
             $this->createAndSeedTable($indexEntries);
         } catch (Exception $ex) {
-            throw new IndexingFailedException('Failed to index document', 0, $ex);
+            throw new IndexingFailedException('Failed to index document: ' . $ex->getMessage(), 0, $ex);
         }
     }
 
