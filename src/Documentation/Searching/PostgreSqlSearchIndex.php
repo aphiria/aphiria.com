@@ -78,7 +78,7 @@ final class PostgreSqlSearchIndex implements ISearchIndex
 
                 // Scan the documentation and index the elements as well as their nearest previous <h*> siblings
                 /** @var DOMNode $currNode */
-                foreach ($dom->childNodes as $currNode) {
+                foreach ($dom->getElementsByTagName('body')->item(0)->childNodes as $currNode) {
                     // Check if we need to reset the nearest headers
                     switch ($currNode->nodeName) {
                         case 'h1':
