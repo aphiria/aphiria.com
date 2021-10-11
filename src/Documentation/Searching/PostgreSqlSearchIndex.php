@@ -68,7 +68,9 @@ final class PostgreSqlSearchIndex implements ISearchIndex
 
             foreach ($htmlPaths as $htmlPath) {
                 /** @var DOMDocument|false $dom */
+                \libxml_use_internal_errors(true);
                 $dom = @$domDocument->loadHTML((string)$this->files->read($htmlPath));
+                \libxml_clear_errors();
 
                 if (!$dom instanceof DOMDocument) {
                     throw new Exception('Failed to read DOM: ' . \libxml_get_last_error()->message);
