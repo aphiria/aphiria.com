@@ -12,12 +12,12 @@ declare(strict_types=1);
 
 namespace App\Documentation\Searching;
 
+use DOMDocument;
+use DOMNode;
 use Exception;
 use League\Flysystem\FileNotFoundException;
 use League\Flysystem\FilesystemInterface;
 use PDO;
-use PHPHtmlParser\Dom;
-use PHPHtmlParser\Dom\Node\HtmlNode;
 
 /**
  * Defines the documentation search index backed by PostgreSQL
@@ -66,14 +66,18 @@ final class PostgreSqlSearchIndex implements ISearchIndex
             $indexEntries = [];
 
             foreach ($htmlPaths as $htmlPath) {
-                $dom = (new Dom())->loadStr((string)$this->files->read($htmlPath));
+                /** @var DOMDocument|false $dom */
+                if (!($dom = (new DOMDocument())->loadHTML((string)$this->files->read($htmlPath))) instanceof DOMDocument) {
+                    throw new Exception('Failed to read DOM');
+                }
+
                 $h1 = $h2 = $h3 = $h4 = $h5 = null;
 
                 // Scan the documentation and index the elements as well as their nearest previous <h*> siblings
-                /** @var HtmlNode $currNode */
-                foreach ($dom->root->getChildren() as $currNode) {
+                /** @var DOMNode $currNode */
+                foreach ($dom->documentElement->childNodes as $currNode) {
                     // Check if we need to reset the nearest headers
-                    switch ($currNode->getTag()->name()) {
+                    switch ($currNode->nodeType) {
                         case 'h1':
                             $h1 = $currNode;
                             $h2 = $h3 = $h4 = $h5 = null;

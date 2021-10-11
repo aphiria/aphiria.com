@@ -30,14 +30,13 @@
         "ext-mbstring": "*",
         "ext-pdo": "*",
         "league/flysystem": "^1.1",
-        "paquettg/php-html-parser": "3.1.*",
         "php": ">=8.0",
         "symfony/dotenv": "~5.3"
     },
     "require-dev": {
         "friendsofphp/php-cs-fixer": "^2.18",
         "phpunit/phpunit": "~9.5",
-        "vimeo/psalm": "^4.4"
+        "vimeo/psalm": "^4.10"
     },
     "scripts": {
         "phpcs-test": "@phpcs-fix --dry-run",
