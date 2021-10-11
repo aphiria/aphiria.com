@@ -70,7 +70,7 @@ final class PostgreSqlSearchIndex implements ISearchIndex
                 \libxml_use_internal_errors(true);
 
                 if ($dom->loadHTML((string)$this->files->read($htmlPath)) === false) {
-                    throw new Exception("Failed to load HTML for $htmlPath");
+                    throw new Exception("Failed to load HTML for $htmlPath: " . \strip_tags(\libxml_get_last_error()->message));
                 }
 
                 \libxml_clear_errors();
@@ -116,7 +116,7 @@ final class PostgreSqlSearchIndex implements ISearchIndex
 
             $this->createAndSeedTable($indexEntries);
         } catch (Exception $ex) {
-            throw new IndexingFailedException('Failed to index document: ' . $ex->getMessage(), 0, $ex);
+            throw new IndexingFailedException('Failed to index document: ' . \strip_tags($ex->getMessage()), 0, $ex);
         }
     }
 
