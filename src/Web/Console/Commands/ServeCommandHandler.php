@@ -29,14 +29,14 @@ final class ServeCommandHandler implements ICommandHandler
     public function handle(Input $input, IOutput $output)
     {
         $runApiCommand = \sprintf(
-            '%s -S %s -t %s %s',
+            '%s -S %s -t "%s" "%s"',
             PHP_BINARY,
             \str_replace(['http://', 'https://'], ['', ''], (string)\getenv('APP_API_URL')),
             \realpath(__DIR__ . '/../../../../public-api'),
             \realpath(__DIR__ . '/../../../../localhost_router.php')
         );
         $runWebCommand = \sprintf(
-            '%s -S %s -t %s',
+            '%s -S %s -t "%s"',
             PHP_BINARY,
             \str_replace(['http://', 'https://'], ['', ''], (string)\getenv('APP_WEB_URL')),
             \realpath(__DIR__ . '/../../../../public-web')

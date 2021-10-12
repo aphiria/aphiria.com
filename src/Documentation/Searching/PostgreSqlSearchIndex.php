@@ -116,7 +116,7 @@ final class PostgreSqlSearchIndex implements ISearchIndex
 
             $this->createAndSeedTable($indexEntries);
         } catch (Exception $ex) {
-            throw new IndexingFailedException('Failed to index document: ' . \strip_tags($ex->getMessage()), 0, $ex);
+            throw new IndexingFailedException('Failed to index document', 0, $ex);
         }
     }
 
@@ -221,6 +221,7 @@ EOF
      * @param DOMNode|null $h4 The current H4 node
      * @param DOMNode|null $h5 The current H5 node
      * @return IndexEntry The index entry
+     * @psalm-suppress NullReference This is due to the DOM stub issues - https://github.com/vimeo/psalm/issues/5665
      */
     private function createIndexEntry(
         string $filename,
@@ -232,6 +233,7 @@ EOF
         ?DOMNode $h5
     ): IndexEntry {
         $link = $this->linkPrefix;
+
         /**
          * If the current node is the h1 tag, then just link to the doc itself, not a section
          * If the current node is a h2, h3, h4, or h5 tag, then link to the tag's ID
@@ -324,8 +326,11 @@ EOF
 
         /** @var DOMNode $childNode */
         foreach ($node->childNodes as $childNode) {
-            $text .= $childNode->textContent;
-            $text .= $this->getAllChildNodeTexts($childNode);
+            if ($childNode->nodeType === \XML_TEXT_NODE) {
+                $text .= $childNode->textContent;
+            } else {
+                $text .= $this->getAllChildNodeTexts($childNode);
+            }
         }
 
         return $text;
