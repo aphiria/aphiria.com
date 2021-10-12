@@ -64,7 +64,7 @@ final class DocumentationDownloader
             /** @psalm-suppress ForbiddenCode We are purposely allowing this call */
             \shell_exec(
                 \sprintf(
-                    'git clone -b %s --single-branch %s %s',
+                    'git clone -b %s --single-branch %s "%s"',
                     $branch,
                     self::GITHUB_REPOSITORY,
                     $this->clonedDocAbsolutePath . "/$branch"

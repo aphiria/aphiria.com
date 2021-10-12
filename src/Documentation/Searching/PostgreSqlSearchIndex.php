@@ -12,12 +12,12 @@ declare(strict_types=1);
 
 namespace App\Documentation\Searching;
 
+use DOMDocument;
+use DOMNode;
 use Exception;
 use League\Flysystem\FileNotFoundException;
 use League\Flysystem\FilesystemInterface;
 use PDO;
-use PHPHtmlParser\Dom;
-use PHPHtmlParser\Dom\Node\HtmlNode;
 
 /**
  * Defines the documentation search index backed by PostgreSQL
@@ -64,16 +64,23 @@ final class PostgreSqlSearchIndex implements ISearchIndex
     {
         try {
             $indexEntries = [];
+            $dom = new DOMDocument();
 
             foreach ($htmlPaths as $htmlPath) {
-                $dom = (new Dom())->loadStr((string)$this->files->read($htmlPath));
+                \libxml_use_internal_errors(true);
+
+                if ($dom->loadHTML((string)$this->files->read($htmlPath)) === false) {
+                    throw new Exception("Failed to load HTML for $htmlPath: " . \strip_tags(\libxml_get_last_error()->message));
+                }
+
+                \libxml_clear_errors();
                 $h1 = $h2 = $h3 = $h4 = $h5 = null;
 
                 // Scan the documentation and index the elements as well as their nearest previous <h*> siblings
-                /** @var HtmlNode $currNode */
-                foreach ($dom->root->getChildren() as $currNode) {
+                /** @var DOMNode $currNode */
+                foreach ($dom->getElementsByTagName('body')->item(0)->childNodes as $currNode) {
                     // Check if we need to reset the nearest headers
-                    switch ($currNode->getTag()->name()) {
+                    switch ($currNode->nodeName) {
                         case 'h1':
                             $h1 = $currNode;
                             $h2 = $h3 = $h4 = $h5 = null;
@@ -100,7 +107,7 @@ final class PostgreSqlSearchIndex implements ISearchIndex
                     }
 
                     // Only index specific elements
-                    if (isset(self::$htmlElementsToWeights[$currNode->getTag()->name()])) {
+                    if (isset(self::$htmlElementsToWeights[$currNode->nodeName])) {
                         $filename = \basename($htmlPath);
                         $indexEntries[] = $this->createIndexEntry($filename, $currNode, $h1, $h2, $h3, $h4, $h5);
                     }
@@ -207,22 +214,23 @@ EOF
      * Creates an index entry
      *
      * @param string $filename The filename of the doc being indexed
-     * @param HtmlNode $currNode The current node
-     * @param HtmlNode $h1 The current H1 node
-     * @param HtmlNode|null $h2 The current H2 node
-     * @param HtmlNode|null $h3 The current H3 node
-     * @param HtmlNode|null $h4 The current H4 node
-     * @param HtmlNode|null $h5 The current H5 node
+     * @param DOMNode $currNode The current node
+     * @param DOMNode $h1 The current H1 node
+     * @param DOMNode|null $h2 The current H2 node
+     * @param DOMNode|null $h3 The current H3 node
+     * @param DOMNode|null $h4 The current H4 node
+     * @param DOMNode|null $h5 The current H5 node
      * @return IndexEntry The index entry
+     * @psalm-suppress NullReference This is due to the DOM stub issues - https://github.com/vimeo/psalm/issues/5665
      */
     private function createIndexEntry(
         string $filename,
-        HtmlNode $currNode,
-        HtmlNode $h1,
-        ?HtmlNode $h2,
-        ?HtmlNode $h3,
-        ?HtmlNode $h4,
-        ?HtmlNode $h5
+        DOMNode $currNode,
+        DOMNode $h1,
+        ?DOMNode $h2,
+        ?DOMNode $h3,
+        ?DOMNode $h4,
+        ?DOMNode $h5
     ): IndexEntry {
         $link = $this->linkPrefix;
 
@@ -231,33 +239,33 @@ EOF
          * If the current node is a h2, h3, h4, or h5 tag, then link to the tag's ID
          * Otherwise, find the nearest non-null header tag and link to its ID
          */
-        if ($currNode->getTag()->name() === 'h1') {
+        if ($currNode->nodeName === 'h1') {
             $link .= $filename;
-        } elseif (\in_array($currNode->getTag()->name(), ['h2', 'h3', 'h4', 'h5'])) {
-            $link .= "$filename#{$currNode->getAttribute('id')}";
+        } elseif (\in_array($currNode->nodeName, ['h2', 'h3', 'h4', 'h5'])) {
+            $link .= "$filename#{$currNode->attributes->getNamedItem('id')->nodeValue}";
         } elseif ($h5 !== null) {
-            $link .= "$filename#{$h5->getAttribute('id')}";
+            $link .= "$filename#{$h5->attributes->getNamedItem('id')->nodeValue}";
         } elseif ($h4 !== null) {
-            $link .= "$filename#{$h4->getAttribute('id')}";
+            $link .= "$filename#{$h4->attributes->getNamedItem('id')->nodeValue}";
         } elseif ($h3 !== null) {
-            $link .= "$filename#{$h3->getAttribute('id')}";
+            $link .= "$filename#{$h3->attributes->getNamedItem('id')->nodeValue}";
         } elseif ($h2 !== null) {
-            $link .= "$filename#{$h2->getAttribute('id')}";
+            $link .= "$filename#{$h2->attributes->getNamedItem('id')->nodeValue}";
         } else {
             // h1 will never be null
-            $link .= "$filename#{$h1->getAttribute('id')}";
+            $link .= "$filename#{$h1->attributes->getNamedItem('id')->nodeValue}";
         }
 
         return new IndexEntry(
-            $currNode->getTag()->name(),
-            $currNode->text(true),
+            $currNode->nodeName,
+            $this->getAllChildNodeTexts($currNode),
             $link,
-            self::$htmlElementsToWeights[$currNode->getTag()->name()],
-            $h1->text(true),
-            $h2 === null ? null : $h2->text(true),
-            $h3 === null ? null : $h3->text(true),
-            $h4 === null ? null : $h4->text(true),
-            $h5 === null ? null : $h5->text(true)
+            self::$htmlElementsToWeights[$currNode->nodeName],
+            $this->getAllChildNodeTexts($h1),
+            $h2 === null ? null : $this->getAllChildNodeTexts($h2),
+            $h3 === null ? null : $this->getAllChildNodeTexts($h3),
+            $h4 === null ? null : $this->getAllChildNodeTexts($h4),
+            $h5 === null ? null : $this->getAllChildNodeTexts($h5)
         );
     }
 
@@ -304,6 +312,28 @@ CREATE INDEX {$this->lexemeTableName}_simple_lexeme_idx ON {$this->lexemeTableNa
 EOF
         );
         $statement->execute();
+    }
+
+    /**
+     * Recursively searches a node for all of its children's texts
+     *
+     * @param DOMNode $node The node to search
+     * @return string The children nodes' texts
+     */
+    private function getAllChildNodeTexts(DOMNode $node): string
+    {
+        $text = '';
+
+        /** @var DOMNode $childNode */
+        foreach ($node->childNodes as $childNode) {
+            if ($childNode->nodeType === \XML_TEXT_NODE) {
+                $text .= $childNode->textContent;
+            } else {
+                $text .= $this->getAllChildNodeTexts($childNode);
+            }
+        }
+
+        return $text;
     }
 
     /**
