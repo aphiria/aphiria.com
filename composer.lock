@@ -4,20 +4,20 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "75b20997f5a37d7c29d78d7d64518655",
+    "content-hash": "3e0b82a24bef0d5d22237c11fc69840f",
     "packages": [
         {
             "name": "aphiria/aphiria",
-            "version": "v1.0.0-alpha4",
+            "version": "1.x-dev",
             "source": {
                 "type": "git",
                 "url": "https://github.com/aphiria/aphiria.git",
-                "reference": "58c6493e3652ee6a53d9cbb818ee41e9ae1e6efb"
+                "reference": "15e21970027ce70ca8cc4799c5f4faf1b82b54d4"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/aphiria/aphiria/zipball/58c6493e3652ee6a53d9cbb818ee41e9ae1e6efb",
-                "reference": "58c6493e3652ee6a53d9cbb818ee41e9ae1e6efb",
+                "url": "https://api.github.com/repos/aphiria/aphiria/zipball/15e21970027ce70ca8cc4799c5f4faf1b82b54d4",
+                "reference": "15e21970027ce70ca8cc4799c5f4faf1b82b54d4",
                 "shasum": ""
             },
             "require": {
@@ -37,11 +37,12 @@
                 "symfony/serializer": "^5.2"
             },
             "require-dev": {
-                "friendsofphp/php-cs-fixer": "^2.18",
+                "friendsofphp/php-cs-fixer": "^3.2",
                 "nyholm/psr7": "^1.4",
                 "phpunit/phpunit": "~9.5",
-                "vimeo/psalm": "^4.7"
+                "vimeo/psalm": "^4.10"
             },
+            "default-branch": true,
             "type": "library",
             "extra": {
                 "branch-alias": {
@@ -101,7 +102,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2021-08-08T20:27:02+00:00"
+            "time": "2021-10-17T23:56:03+00:00"
         },
         {
             "name": "erusev/parsedown",
@@ -4374,6 +4375,7 @@
                     "type": "github"
                 }
             ],
+            "abandoned": true,
             "time": "2020-09-28T06:45:17+00:00"
         },
         {

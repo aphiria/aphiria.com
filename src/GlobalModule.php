@@ -55,7 +55,7 @@ final class GlobalModule implements IBootstrapper, IModule
     /**
      * @param IContainer $container The application's DI container
      */
-    public function __construct(private IContainer $container)
+    public function __construct(private readonly IContainer $container)
     {
     }
 
