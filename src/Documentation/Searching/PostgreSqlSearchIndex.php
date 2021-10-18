@@ -47,10 +47,10 @@ final class PostgreSqlSearchIndex implements ISearchIndex
      */
     public function __construct(
         private string $lexemeTableName,
-        private PDO $pdo,
-        private string $linkPrefix,
-        private string $envPath,
-        private FilesystemInterface $files
+        private readonly PDO $pdo,
+        private readonly string $linkPrefix,
+        private readonly string $envPath,
+        private readonly FilesystemInterface $files
     ) {
     }
 

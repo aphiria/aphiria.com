@@ -31,10 +31,10 @@ final class DocumentationDownloader
      * @param FilesystemInterface $files The file system helper
      */
     public function __construct(
-        private array $branches,
-        private string $clonedDocAbsolutePath,
-        private string $clonedDocRelativePath,
-        private FilesystemInterface $files
+        private readonly array $branches,
+        private readonly string $clonedDocAbsolutePath,
+        private readonly string $clonedDocRelativePath,
+        private readonly FilesystemInterface $files
     ) {
     }
 

@@ -31,7 +31,7 @@ final class IndexDocsCommandHandler implements ICommandHandler
     /**
      * @param DocumentationService $docs The doc service
      */
-    public function __construct(private DocumentationService $docs)
+    public function __construct(private readonly DocumentationService $docs)
     {
     }
 

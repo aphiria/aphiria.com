@@ -34,12 +34,12 @@ final class DocumentationService
      * @param FilesystemInterface $files The file system helper
      */
     public function __construct(
-        private DocumentationMetadata $metadata,
-        private DocumentationDownloader $downloader,
-        private ParsedownExtra $markdownParser,
-        private ISearchIndex $searchIndex,
-        private string $htmlDocPath,
-        private FilesystemInterface $files
+        private readonly DocumentationMetadata $metadata,
+        private readonly DocumentationDownloader $downloader,
+        private readonly ParsedownExtra $markdownParser,
+        private readonly ISearchIndex $searchIndex,
+        private readonly string $htmlDocPath,
+        private readonly FilesystemInterface $files
     ) {
     }
 
