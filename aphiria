@@ -15,7 +15,7 @@ use Aphiria\DependencyInjection\Container;
 use Aphiria\DependencyInjection\IContainer;
 use Aphiria\DependencyInjection\IServiceResolver;
 use Aphiria\Framework\Console\Builders\ConsoleApplicationBuilder;
-use App\App;
+use App\GlobalModule;
 
 require __DIR__ . '/vendor/autoload.php';
 
@@ -25,7 +25,9 @@ Container::$globalInstance = $container;
 $container->bindInstance([IServiceResolver::class, IContainer::class, Container::class], $container);
 
 // Build and run our application
-$app = (new ConsoleApplicationBuilder($container))->withModule(new App($container))
+$globalModule = new GlobalModule($container);
+$globalModule->bootstrap();
+$app = (new ConsoleApplicationBuilder($container))->withModule($globalModule)
     ->build();
 global $argv;
 exit($app->handle($argv));

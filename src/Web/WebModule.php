@@ -25,11 +25,9 @@ final class WebModule implements IModule
     use AphiriaComponents;
 
     /**
-     * Builds the entire module into an application
-     *
-     * @param IApplicationBuilder $appBuilder The app builder to use
+     * @inheritdoc
      */
-    public function build(IApplicationBuilder $appBuilder): void
+    public function configure(IApplicationBuilder $appBuilder): void
     {
         $this->withBinders($appBuilder, [
             new ViewCompilerBinder()
