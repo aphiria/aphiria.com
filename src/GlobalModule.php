@@ -19,6 +19,7 @@ use Aphiria\Application\Configuration\Bootstrappers\DotEnvBootstrapper;
 use Aphiria\Application\Configuration\GlobalConfiguration;
 use Aphiria\Application\Configuration\GlobalConfigurationBuilder;
 use Aphiria\Application\Configuration\MissingConfigurationValueException;
+use Aphiria\Application\IBootstrapper;
 use Aphiria\Application\IModule;
 use Aphiria\DependencyInjection\Binders\IBinderDispatcher;
 use Aphiria\DependencyInjection\Binders\LazyBinderDispatcher;
@@ -45,24 +46,30 @@ use Exception;
 use Psr\Log\LogLevel;
 
 /**
- * Defines the application
+ * Defines the global module
  */
-final class App implements IModule
+final class GlobalModule implements IBootstrapper, IModule
 {
     use AphiriaComponents;
 
     /**
      * @param IContainer $container The application's DI container
      */
-    public function __construct(IContainer $container)
+    public function __construct(private IContainer $container)
     {
-        // Bootstrap the application
+    }
+
+    /**
+     * Bootstraps our application, which is the first thing done when starting an application
+     */
+    public function bootstrap(): void
+    {
         $globalConfigurationBuilder = (new GlobalConfigurationBuilder())->withEnvironmentVariables()
             ->withPhpFileConfigurationSource(__DIR__ . '/../config.php');
         (new BootstrapperCollection())->addMany([
             new DotEnvBootstrapper(__DIR__ . '/../.env'),
             new ConfigurationBootstrapper($globalConfigurationBuilder),
-            new GlobalExceptionHandlerBootstrapper($container)
+            new GlobalExceptionHandlerBootstrapper($this->container)
         ])->bootstrapAll();
     }
 
@@ -72,11 +79,10 @@ final class App implements IModule
      * @param IApplicationBuilder $appBuilder The builder that will build our app
      * @throws Exception Thrown if there was an error building the app
      */
-    public function build(IApplicationBuilder $appBuilder): void
+    public function configure(IApplicationBuilder $appBuilder): void
     {
-        // Configure the app
         $this->withBinderDispatcher($appBuilder, $this->getBinderDispatcher())
-            ->withFrameworkCommands($appBuilder, ['app:serve'])
+            ->withFrameworkCommands($appBuilder, commandNamesToExclude: ['app:serve'])
             ->withRouteAttributes($appBuilder)
             ->withValidatorAttributes($appBuilder)
             ->withCommandAttributes($appBuilder)
