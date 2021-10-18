@@ -28,7 +28,7 @@ final class DocumentationModule implements IModule
     /**
      * @inheritdoc
      */
-    public function build(IApplicationBuilder $appBuilder): void
+    public function configure(IApplicationBuilder $appBuilder): void
     {
         $this->withBinders($appBuilder, [
             new SqlBinder(),
