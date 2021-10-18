@@ -28,7 +28,10 @@ class IntegrationTestCase extends BaseIntegrationTestCase
      */
     protected function createApplication(IContainer $container): IRequestHandler
     {
-        return (new ApiApplicationBuilder($container))->withModule(new GlobalModule($container))
+        $globalModule = new GlobalModule($container);
+        $globalModule->bootstrap();
+
+        return (new ApiApplicationBuilder($container))->withModule($globalModule)
             ->build();
     }
 
@@ -39,7 +42,7 @@ class IntegrationTestCase extends BaseIntegrationTestCase
     {
         $appUrl = \getenv('APP_API_URL');
 
-        if ($appUrl === false || empty($appUrl)) {
+        if (empty($appUrl)) {
             return null;
         }
 
