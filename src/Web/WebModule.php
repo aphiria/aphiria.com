@@ -13,17 +13,14 @@ declare(strict_types=1);
 namespace App\Web;
 
 use Aphiria\Application\Builders\IApplicationBuilder;
-use Aphiria\Application\IModule;
-use Aphiria\Framework\Application\AphiriaComponents;
+use Aphiria\Framework\Application\AphiriaModule;
 use App\Web\Binders\ViewCompilerBinder;
 
 /**
  * Defines the module for our web code
  */
-final class WebModule implements IModule
+final class WebModule extends AphiriaModule
 {
-    use AphiriaComponents;
-
     /**
      * @inheritdoc
      */

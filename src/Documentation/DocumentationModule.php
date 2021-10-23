@@ -13,18 +13,15 @@ declare(strict_types=1);
 namespace App\Documentation;
 
 use Aphiria\Application\Builders\IApplicationBuilder;
-use Aphiria\Application\IModule;
-use Aphiria\Framework\Application\AphiriaComponents;
+use Aphiria\Framework\Application\AphiriaModule;
 use App\Databases\Binders\SqlBinder;
 use App\Documentation\Binders\DocumentationBinder;
 
 /**
  * Defines the documentation module
  */
-final class DocumentationModule implements IModule
+final class DocumentationModule extends AphiriaModule
 {
-    use AphiriaComponents;
-
     /**
      * @inheritdoc
      */
