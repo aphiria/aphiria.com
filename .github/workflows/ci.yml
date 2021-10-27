@@ -13,7 +13,7 @@ jobs:
         include:
           - php: '8.1'
             stability: prefer-stable
-            experimental: true
+            experimental: false
             php-cs-fixer-ignore-php-version: 1
     services:
       postgres:
@@ -31,6 +31,7 @@ jobs:
       DB_HOST: localhost
       DB_PASSWORD: password
     name: PHP ${{ matrix.php }} - ${{ matrix.stability }}
+    continue-on-error: ${{ matrix.experimental }}
     steps:
       - name: Check Out Code
         uses: actions/checkout@v2
