@@ -16,7 +16,7 @@ use Aphiria\Console\Commands\Attributes\Command;
 use Aphiria\Console\Commands\ICommandHandler;
 use Aphiria\Console\Input\Input;
 use Aphiria\Console\Output\IOutput;
-use Aphiria\Console\StatusCodes;
+use Aphiria\Console\StatusCode;
 use App\Web\ViewCompiler;
 use League\Flysystem\FileExistsException;
 use League\Flysystem\FileNotFoundException;
@@ -30,7 +30,7 @@ final class BuildViewsCommandHandler implements ICommandHandler
     /**
      * @param ViewCompiler $viewCompiler The compiler for our views
      */
-    public function __construct(private ViewCompiler $viewCompiler)
+    public function __construct(private readonly ViewCompiler $viewCompiler)
     {
     }
 
@@ -51,7 +51,7 @@ final class BuildViewsCommandHandler implements ICommandHandler
             $output->writeln("<info>{$ex->getMessage()}</info>");
             $output->writeln("<info>{$ex->getTraceAsString()}</info>");
 
-            return StatusCodes::FATAL;
+            return StatusCode::Fatal;
         }
     }
 }

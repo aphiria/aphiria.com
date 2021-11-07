@@ -11,6 +11,7 @@
 
 declare(strict_types=1);
 
+use Aphiria\Console\StatusCode;
 use Aphiria\DependencyInjection\Container;
 use Aphiria\DependencyInjection\IContainer;
 use Aphiria\DependencyInjection\IServiceResolver;
@@ -25,9 +26,10 @@ Container::$globalInstance = $container;
 $container->bindInstance([IServiceResolver::class, IContainer::class, Container::class], $container);
 
 // Build and run our application
+global $argv;
 $globalModule = new GlobalModule($container);
 $globalModule->bootstrap();
-$app = (new ConsoleApplicationBuilder($container))->withModule($globalModule)
-    ->build();
-global $argv;
-exit($app->handle($argv));
+$statusCode = (new ConsoleApplicationBuilder($container))->withModule($globalModule)
+    ->build()
+    ->handle($argv);
+exit($statusCode instanceof StatusCode ? $statusCode->value : $statusCode);

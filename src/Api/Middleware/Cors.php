@@ -14,7 +14,7 @@ namespace App\Api\Middleware;
 
 use Aphiria\Collections\KeyValuePair;
 use Aphiria\Middleware\IMiddleware;
-use Aphiria\Net\Http\HttpStatusCodes;
+use Aphiria\Net\Http\HttpStatusCode;
 use Aphiria\Net\Http\IRequest;
 use Aphiria\Net\Http\IRequestHandler;
 use Aphiria\Net\Http\IResponse;
@@ -50,10 +50,10 @@ final class Cors implements IMiddleware
         // Check if this is a preflight request
         if ($request->getMethod() === 'OPTIONS' && $request->getHeaders()->tryGetFirst('Access-Control-Request-Method', $requestedMethod)) {
             if (!\in_array($requestedMethod, self::$allowedMethods, true)) {
-                return $this->addCorsResponseHeaders(new Response(HttpStatusCodes::METHOD_NOT_ALLOWED));
+                return $this->addCorsResponseHeaders(new Response(HttpStatusCode::MethodNotAllowed));
             }
 
-            return $this->addCorsResponseHeaders(new Response(HttpStatusCodes::OK));
+            return $this->addCorsResponseHeaders(new Response(HttpStatusCode::Ok));
         }
 
         return $this->addCorsResponseHeaders($next->handle($request));

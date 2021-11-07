@@ -27,7 +27,7 @@ final class DocumentationController extends Controller
     /**
      * @param DocumentationService $docs What we'll use to search through documentation
      */
-    public function __construct(private DocumentationService $docs)
+    public function __construct(private readonly DocumentationService $docs)
     {
     }
 

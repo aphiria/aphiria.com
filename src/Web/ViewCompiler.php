@@ -30,11 +30,11 @@ final class ViewCompiler
      * @param FilesystemInterface $files The file system helper
      */
     public function __construct(
-        private string $rawViewPath,
-        private string $compiledViewPath,
-        private DocumentationMetadata $docMetadata,
-        private string $apiUri,
-        private FilesystemInterface $files
+        private readonly string $rawViewPath,
+        private readonly string $compiledViewPath,
+        private readonly DocumentationMetadata $docMetadata,
+        private readonly string $apiUri,
+        private readonly FilesystemInterface $files
     ) {
     }
 

@@ -24,7 +24,6 @@ use Aphiria\DependencyInjection\Binders\IBinderDispatcher;
 use Aphiria\DependencyInjection\Binders\LazyBinderDispatcher;
 use Aphiria\DependencyInjection\Binders\Metadata\Caching\FileBinderMetadataCollectionCache;
 use Aphiria\DependencyInjection\Binders\Metadata\Caching\IBinderMetadataCollectionCache;
-use Aphiria\DependencyInjection\Container;
 use Aphiria\DependencyInjection\IContainer;
 use Aphiria\Framework\Api\Binders\ControllerBinder;
 use Aphiria\Framework\Application\AphiriaModule;
@@ -52,7 +51,7 @@ final class GlobalModule extends AphiriaModule implements IBootstrapper
     /**
      * @param IContainer $container The application's DI container
      */
-    public function __construct(private IContainer $container)
+    public function __construct(private readonly IContainer $container)
     {
     }
 
@@ -94,7 +93,7 @@ final class GlobalModule extends AphiriaModule implements IBootstrapper
                 new CommandBinder()
             ])
             ->withLogLevelFactory($appBuilder, HttpException::class, static function (HttpException $ex) {
-                return $ex->getResponse()->getStatusCode() >= 500 ? LogLevel::ERROR : LogLevel::DEBUG;
+                return $ex->getResponse()->getStatusCode()->value >= 500 ? LogLevel::ERROR : LogLevel::DEBUG;
             })
             ->withGlobalMiddleware($appBuilder, new MiddlewareBinding(Cors::class))
             ->withModules($appBuilder, [
@@ -114,7 +113,7 @@ final class GlobalModule extends AphiriaModule implements IBootstrapper
         // Always bind the cache so that we have the option to clear it in any environment
         $cachePath = GlobalConfiguration::getString('aphiria.binders.metadataCachePath');
         $cache = new FileBinderMetadataCollectionCache($cachePath);
-        Container::$globalInstance?->bindInstance(IBinderMetadataCollectionCache::class, $cache);
+        $this->container->bindInstance(IBinderMetadataCollectionCache::class, $cache);
 
         if (\getenv('APP_ENV') === 'production') {
             return new LazyBinderDispatcher($cache);

@@ -29,15 +29,15 @@ final class IndexEntry
      * @param string|null $h5InnerText The previous h5 sibling's inner text
      */
     public function __construct(
-        public string $htmlElementType,
-        public string $innerText,
-        public string $link,
-        public string $htmlElementWeight,
-        public string $h1InnerText,
-        public ?string $h2InnerText = null,
-        public ?string $h3InnerText = null,
-        public ?string $h4InnerText = null,
-        public ?string $h5InnerText = null
+        public readonly string $htmlElementType,
+        public readonly string $innerText,
+        public readonly string $link,
+        public readonly string $htmlElementWeight,
+        public readonly string $h1InnerText,
+        public readonly ?string $h2InnerText = null,
+        public readonly ?string $h3InnerText = null,
+        public readonly ?string $h4InnerText = null,
+        public readonly ?string $h5InnerText = null
     ) {
     }
 }
