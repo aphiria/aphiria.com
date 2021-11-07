@@ -16,7 +16,7 @@ use Aphiria\Console\Commands\Attributes\Command;
 use Aphiria\Console\Commands\ICommandHandler;
 use Aphiria\Console\Input\Input;
 use Aphiria\Console\Output\IOutput;
-use Aphiria\Console\StatusCodes;
+use Aphiria\Console\StatusCode;
 use App\Documentation\DocumentationService;
 use App\Documentation\DownloadFailedException;
 use App\Documentation\HtmlCompilationException;
@@ -44,13 +44,13 @@ final class IndexDocsCommandHandler implements ICommandHandler
             $this->docs->indexDocs();
             $output->writeln('<success>Documentation indexed</success>');
 
-            return StatusCodes::OK;
+            return StatusCode::Ok;
         } catch (DownloadFailedException | HtmlCompilationException | IndexingFailedException $ex) {
             $output->writeln('<fatal>Failed to index docs</fatal>');
             $output->writeln("<info>{$ex->getMessage()}</info>");
             $output->writeln("<info>{$ex->getTraceAsString()}</info>");
 
-            return StatusCodes::FATAL;
+            return StatusCode::Fatal;
         }
     }
 }
