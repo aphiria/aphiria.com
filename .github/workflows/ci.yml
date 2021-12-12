@@ -48,7 +48,6 @@ jobs:
           chmod -R 755 resources
           chmod -R 755 tmp
           yarn install
-          yarn global add node-sass
           yarn global add gulp
           gulp build
       - name: Index Documentation
