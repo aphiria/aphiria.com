@@ -93,7 +93,7 @@ final class GlobalModule extends AphiriaModule implements IBootstrapper
                 new CommandBinder()
             ])
             ->withLogLevelFactory($appBuilder, HttpException::class, static function (HttpException $ex) {
-                return $ex->getResponse()->getStatusCode()->value >= 500 ? LogLevel::ERROR : LogLevel::DEBUG;
+                return $ex->response->getStatusCode()->value >= 500 ? LogLevel::ERROR : LogLevel::DEBUG;
             })
             ->withGlobalMiddleware($appBuilder, new MiddlewareBinding(Cors::class))
             ->withModules($appBuilder, [
