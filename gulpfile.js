@@ -8,8 +8,7 @@ const uglifyJs = require('gulp-terser');
 const uglifyCss = require('gulp-clean-css');
 const concat = require('gulp-concat');
 const del = require('del');
-const sass = require('gulp-sass');
-sass.compiler = require('node-sass');
+const sass = require('gulp-sass')(require('node-sass'));
 const shell = require('gulp-shell');
 const sourcemaps = require('gulp-sourcemaps');
 
