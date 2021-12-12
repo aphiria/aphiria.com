@@ -35,11 +35,7 @@ final class BuildViewsCommandHandler implements ICommandHandler
     }
 
     /**
-     * Handles a command
-     *
-     * @param Input $input The input to handle
-     * @param IOutput $output The output to write to
-     * @return int|void The status code if there was one, or void, which assumes an status code of 0
+     * @inheritdoc
      */
     public function handle(Input $input, IOutput $output)
     {
