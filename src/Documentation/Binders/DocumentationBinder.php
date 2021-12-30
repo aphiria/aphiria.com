@@ -167,6 +167,26 @@ final class DocumentationBinder extends Binder
                         'keywords' => ['aphiria', 'integration tests', 'testing', 'php']
                     ]
                 ],
+                'Auth' => [
+                    'authentication' => [
+                        'title' => 'Authentication',
+                        'linkText' => 'Authentication',
+                        'description' => 'Learn about authentication in Aphiria',
+                        'keywords' => ['aphiria', 'authentication']
+                    ],
+                    'authorization' => [
+                        'title' => 'Authorization',
+                        'linkText' => 'Authorization',
+                        'description' => 'Learn about authorization in Aphiria',
+                        'keywords' => ['aphiria', 'authorization', 'pbac']
+                    ],
+                    'security' => [
+                        'title' => 'Security',
+                        'linkText' => 'Security',
+                        'description' => 'Learn about security in Aphiria',
+                        'keywords' => ['aphiria', 'security']
+                    ]
+                ],
                 'Libraries' => [
                     'collections' => [
                         'title' => 'Collections',
