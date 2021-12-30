@@ -20,6 +20,7 @@ class UserController extends Controller
     public function __construct(private IUserService $users) {}
 
     #[Get('/users/:id')]
+    #[AuthorizeRoles('admin')]
     public function getById(int $id): User
     {
         return $this->users->getById($id);
@@ -42,6 +43,8 @@ composer create-project aphiria/app --prefer-dist --stability dev
                 <a class="button" href="/docs/1.x/routing.html" title="Learn about routing">Routing</a>
                 <a class="button" href="/docs/1.x/controllers.html" title="Learn how to write controllers">Controllers</a>
                 <a class="button" href="/docs/1.x/dependency-injection.html" title="Learn about dependency injection">DI</a>
+                <a class="button" href="/docs/1.x/authentication.html" title="Learn about authentication">Authentication</a>
+                <a class="button" href="/docs/1.x/authorization.html" title="Learn about authorization">Authorization</a>
             </nav>
             <div id="gray-out"></div>
         </main>
