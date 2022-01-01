@@ -179,12 +179,6 @@ final class DocumentationBinder extends Binder
                         'linkText' => 'Authorization',
                         'description' => 'Learn about authorization in Aphiria',
                         'keywords' => ['aphiria', 'authorization', 'pbac']
-                    ],
-                    'security' => [
-                        'title' => 'Security',
-                        'linkText' => 'Security',
-                        'description' => 'Learn about security in Aphiria',
-                        'keywords' => ['aphiria', 'security']
                     ]
                 ],
                 'Libraries' => [
