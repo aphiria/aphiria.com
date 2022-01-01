@@ -256,9 +256,11 @@ code {
 p code, li code {
   background: #f9f9f9 !important;
   padding: 2px 5px !important;
-  font-size: 13px !important;
-  white-space: nowrap !important;
-  border: 1px solid #d9d9d9 !important; }
+  font-size: 13px !important; }
+
+p code {
+  border: 1px solid #e9e9e9 !important;
+  white-space: pre !important; }
 
 body.home > main h1, body.home > main h2, body.home > main pre.center {
   text-align: center; }
