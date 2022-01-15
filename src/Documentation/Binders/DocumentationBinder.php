@@ -45,6 +45,9 @@ final class DocumentationBinder extends Binder
                 PortableVisibilityConverter::fromArray([
                     'file' => [
                         'public' => 0777
+                    ],
+                    'dir' => [
+                        'public' => 0755
                     ]
                 ]),
                 LOCK_EX,
