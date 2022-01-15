@@ -15,9 +15,9 @@ namespace App\Documentation;
 use App\Documentation\Searching\IndexingFailedException;
 use App\Documentation\Searching\ISearchIndex;
 use App\Documentation\Searching\SearchResult;
-use League\Flysystem\FileExistsException;
-use League\Flysystem\FileNotFoundException;
-use League\Flysystem\FilesystemInterface;
+use League\Flysystem\FilesystemException;
+use League\Flysystem\FilesystemOperator;
+use League\Flysystem\StorageAttributes;
 use ParsedownExtra;
 
 /**
@@ -31,7 +31,7 @@ final class DocumentationService
      * @param ParsedownExtra $markdownParser The Markdown parser
      * @param ISearchIndex $searchIndex The doc search index
      * @param string $htmlDocPath The path to store HTML docs in
-     * @param FilesystemInterface $files The file system helper
+     * @param FilesystemOperator $files The file system helper
      */
     public function __construct(
         private readonly DocumentationMetadata $metadata,
@@ -39,7 +39,7 @@ final class DocumentationService
         private readonly ParsedownExtra $markdownParser,
         private readonly ISearchIndex $searchIndex,
         private readonly string $htmlDocPath,
-        private readonly FilesystemInterface $files
+        private readonly FilesystemOperator $files
     ) {
     }
 
@@ -64,27 +64,29 @@ final class DocumentationService
      */
     public function indexDocs(): void
     {
-        // Only index the default version
-        $htmlDocPath = "{$this->htmlDocPath}/{$this->metadata->getDefaultVersion()}";
+        try {
+            // Only index the default version
+            $htmlDocsPath = "$this->htmlDocPath/{$this->metadata->getDefaultVersion()}";
 
-        if (!$this->files->has($htmlDocPath)) {
-            $this->buildDocs();
-        }
-
-        $htmlFilesToIndex = [];
-
-        /** @var array{type: string, extension: string, path: string} $fileInfo */
-        foreach ($this->files->listContents($htmlDocPath) as $fileInfo) {
-            if (
-                isset($fileInfo['type'], $fileInfo['extension'])
-                && $fileInfo['type'] === 'file'
-                && $fileInfo['extension'] === 'html'
-            ) {
-                $htmlFilesToIndex[] = (string)$fileInfo['path'];
+            if (!$this->files->has($htmlDocsPath)) {
+                $this->buildDocs();
             }
-        }
 
-        $this->searchIndex->buildSearchIndex($htmlFilesToIndex);
+            $htmlFilesToIndex = [];
+            /** @var list<string> $htmlDocPaths */
+            $htmlDocPaths = $this->files->listContents($htmlDocsPath)
+                ->filter(fn (StorageAttributes $attributes) => $attributes->isFile() && \str_ends_with($attributes->path(), '.html'))
+                ->map(fn (StorageAttributes $attributes) => $attributes->path())
+                ->toArray();
+
+            foreach ($htmlDocPaths as $htmlDocPath) {
+                $htmlFilesToIndex[] = $htmlDocPath;
+            }
+
+            $this->searchIndex->buildSearchIndex($htmlFilesToIndex);
+        } catch (FilesystemException $ex) {
+            throw new IndexingFailedException('Failed to index documents', 0, $ex);
+        }
     }
 
     /**
@@ -102,42 +104,31 @@ final class DocumentationService
      * Creates HTML docs from Markdown files
      *
      * @param array<string, list<string>> $markdownFilePathsByBranch The mapping of branches to Markdown file paths to create HTML docs from
-     * @return array<string, list<string>> The list of HTML doc file paths
      * @throws HtmlCompilationException Thrown if there was an error compiling the HTML docs
      */
-    private function createHtmlDocs(array $markdownFilePathsByBranch): array
+    private function createHtmlDocs(array $markdownFilePathsByBranch): void
     {
-        $htmlFiles = [];
+        try {
+            foreach ($markdownFilePathsByBranch as $branch => $markdownFilePaths) {
+                $branchDocDir = "$this->htmlDocPath/$branch";
 
-        foreach ($markdownFilePathsByBranch as $branch => $markdownFilePaths) {
-            $htmlFiles[$branch] = [];
-            $branchDocDir = "$this->htmlDocPath/$branch";
+                if ($this->files->has($branchDocDir)) {
+                    $this->files->deleteDirectory($branchDocDir);
+                }
 
-            if ($this->files->has($branchDocDir) && !$this->files->deleteDir($branchDocDir)) {
-                throw new HtmlCompilationException("Failed to delete directory $branchDocDir");
-            }
+                $this->files->createDirectory($branchDocDir);
 
-            if (!$this->files->createDir($branchDocDir)) {
-                throw new HtmlCompilationException("Failed to create directory $branchDocDir");
-            }
-
-            foreach ($markdownFilePaths as $markdownFilePath) {
-                try {
+                foreach ($markdownFilePaths as $markdownFilePath) {
                     $markdownFilename = \pathinfo($markdownFilePath, PATHINFO_FILENAME);
                     $htmlDocFilename = "$branchDocDir/$markdownFilename.html";
                     $html = (string)$this->markdownParser->text($this->files->read($markdownFilePath));
                     // Rewrite the links to point to the HTML docs on the site
                     $html = \preg_replace('/<a href="([^"]+)\.md(#[^"]+)?"/', '<a href="$1.html$2"', $html);
                     $this->files->write($htmlDocFilename, $html);
-                    $htmlFiles[$branch][] = $htmlDocFilename;
-                } catch (FileNotFoundException $ex) {
-                    throw new HtmlCompilationException("File {$ex->getPath()} not found", 0, $ex);
-                } catch (FileExistsException $ex) {
-                    throw new HtmlCompilationException("File {$ex->getPath()} already exists", 0, $ex);
                 }
             }
+        } catch (FilesystemException $ex) {
+            throw new HtmlCompilationException('Failed to write HTML to file', 0, $ex);
         }
-
-        return $htmlFiles;
     }
 }

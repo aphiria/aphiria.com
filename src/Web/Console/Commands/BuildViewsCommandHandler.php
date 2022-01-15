@@ -18,8 +18,7 @@ use Aphiria\Console\Input\Input;
 use Aphiria\Console\Output\IOutput;
 use Aphiria\Console\StatusCode;
 use App\Web\ViewCompiler;
-use League\Flysystem\FileExistsException;
-use League\Flysystem\FileNotFoundException;
+use League\Flysystem\FilesystemException;
 
 /**
  * Defines the command handler for building web views
@@ -42,7 +41,9 @@ final class BuildViewsCommandHandler implements ICommandHandler
         try {
             $this->viewCompiler->compileViews();
             $output->writeln('<success>Views built</success>');
-        } catch (FileExistsException | FileNotFoundException $ex) {
+
+            return StatusCode::Ok;
+        } catch (FilesystemException $ex) {
             $output->writeln('<fatal>Failed to build views</fatal>');
             $output->writeln("<info>{$ex->getMessage()}</info>");
             $output->writeln("<info>{$ex->getTraceAsString()}</info>");

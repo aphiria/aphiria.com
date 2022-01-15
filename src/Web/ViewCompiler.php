@@ -13,9 +13,9 @@ declare(strict_types=1);
 namespace App\Web;
 
 use App\Documentation\DocumentationMetadata;
-use League\Flysystem\FileExistsException;
-use League\Flysystem\FileNotFoundException;
-use League\Flysystem\FilesystemInterface;
+use League\Flysystem\FilesystemException;
+use League\Flysystem\FilesystemOperator;
+use League\Flysystem\StorageAttributes;
 
 /**
  * Defines the compiler for our views
@@ -27,22 +27,21 @@ final class ViewCompiler
      * @param string $compiledViewPath The path to store our compiled views
      * @param string $apiUri The URI to the API
      * @param DocumentationMetadata $docMetadata The doc metadata
-     * @param FilesystemInterface $files The file system helper
+     * @param FilesystemOperator $files The file system helper
      */
     public function __construct(
         private readonly string $rawViewPath,
         private readonly string $compiledViewPath,
         private readonly DocumentationMetadata $docMetadata,
         private readonly string $apiUri,
-        private readonly FilesystemInterface $files
+        private readonly FilesystemOperator $files
     ) {
     }
 
     /**
      * Compiles all of our views
      *
-     * @throws FileNotFoundException Thrown if a file we expected to be there was not
-     * @throws FileExistsException Thrown if we attempted to write to a file that already existed
+     * @throws FilesystemException Thrown if a file we expected to be there was not or if we attempted to write to a file that already existed
      */
     public function compileViews(): void
     {
@@ -54,24 +53,23 @@ final class ViewCompiler
     /**
      * Cleans up any existing compiled views
      *
-     * @throws FileNotFoundException Thrown if the file we
+     * @throws FilesystemException Thrown if we could not delete the compiled views
      */
     private function cleanUpExistingCompiledViews(): void
     {
+        /** @var list<string> $compiledHtmlDocPaths */
+        $compiledHtmlDocPaths = $this->files->listContents($this->compiledViewPath, true)
+            ->filter(fn (StorageAttributes $attributes) => $attributes->isFile() && \str_ends_with($attributes->path(), '.html'))
+            ->map(fn (StorageAttributes $attributes) => $attributes->path())
+            ->toArray();
+
         // Delete any compiled views
-        /** @var array{type: string, extension: string, path: string} $fileInfo */
-        foreach ($this->files->listContents($this->compiledViewPath, true) as $fileInfo) {
-            if (
-                isset($fileInfo['type'], $fileInfo['extension'])
-                && $fileInfo['type'] === 'file'
-                && $fileInfo['extension'] === 'html'
-            ) {
-                $this->files->delete($fileInfo['path']);
-            }
+        foreach ($compiledHtmlDocPaths as $compiledHtmlDocPath) {
+            $this->files->delete($compiledHtmlDocPath);
         }
 
         // Delete any compiled doc directories
-        $this->files->deleteDir("{$this->compiledViewPath}/docs");
+        $this->files->deleteDirectory("$this->compiledViewPath/docs");
     }
 
     /**
@@ -81,7 +79,7 @@ final class ViewCompiler
      * @param list<string> $metadataKeywords The list of metadata keywords to display
      * @param string $metadataDescription The metadata description to display
      * @return string The compiled contents
-     * @throws FileNotFoundException Thrown if a view partial did not exist
+     * @throws FilesystemException Thrown if a view partial did not exist
      */
     private function compileCommonPartials(
         string $pageContents,
@@ -89,20 +87,20 @@ final class ViewCompiler
         string $metadataDescription
     ): string {
         // Compile the head
-        $headContents = (string)$this->files->read("{$this->rawViewPath}/partials/head.html");
+        $headContents = $this->files->read("$this->rawViewPath/partials/head.html");
         $compiledHeadContents = $this->compileTag('metadataKeywords', \implode(',', $metadataKeywords), $headContents);
         $compiledHeadContents = $this->compileTag('metadataDescription', $metadataDescription, $compiledHeadContents);
         $compiledHeadContents = $this->compileTag('apiUri', $this->apiUri, $compiledHeadContents);
         $compiledPageContents = $this->compileTag('head', $compiledHeadContents, $pageContents);
 
         // Compile the main nav
-        $mainNavContents = (string)$this->files->read("{$this->rawViewPath}/partials/main-nav.html");
-        $mainNavLinksContents = (string)$this->files->read("{$this->rawViewPath}/partials/main-nav-links.html");
+        $mainNavContents = $this->files->read("$this->rawViewPath/partials/main-nav.html");
+        $mainNavLinksContents = $this->files->read("$this->rawViewPath/partials/main-nav-links.html");
         $compiledMainNavContents = $this->compileTag('mainNavLinks', $mainNavLinksContents, $mainNavContents);
         $compiledPageContents = $this->compileTag('mainNav', $compiledMainNavContents, $compiledPageContents);
 
         // Compile the footer
-        $footerContents = (string)$this->files->read("{$this->rawViewPath}/partials/footer.html");
+        $footerContents = $this->files->read("$this->rawViewPath/partials/footer.html");
         $compiledPageContents = $this->compileTag('footer', $footerContents, $compiledPageContents);
 
         return $compiledPageContents;
@@ -111,20 +109,19 @@ final class ViewCompiler
     /**
      * Compiles our docs
      *
-     * @throws FileNotFoundException Thrown if a partial file did not exist
-     * @throws FileExistsException Thrown if we attempted to write to a file that already existed
+     * @throws FilesystemException Thrown if a partial file did not exist or if we attempted to write to a file that already existed
      */
     private function compileDocs(): void
     {
-        $this->files->createDir("{$this->compiledViewPath}/docs");
-        $docTemplatePageContents = (string)$this->files->read("{$this->rawViewPath}/doc.html");
+        $this->files->createDirectory("$this->compiledViewPath/docs");
+        $docTemplatePageContents = $this->files->read("$this->rawViewPath/doc.html");
 
         // Compile each doc page
         foreach ($this->docMetadata->getDocVersions() as $version) {
-            $this->files->createDir("{$this->compiledViewPath}/docs/$version");
+            $this->files->createDirectory("$this->compiledViewPath/docs/$version");
 
             // Compile the doc side nav for each version
-            $sideNavSectionContents = (string)$this->files->read("{$this->rawViewPath}/partials/doc-side-nav-contents.html");
+            $sideNavSectionContents = $this->files->read("$this->rawViewPath/partials/doc-side-nav-contents.html");
             $allCompiledSectionContents = '';
 
             foreach ($this->docMetadata->getDocSections($version) as $section => $docs) {
@@ -139,7 +136,7 @@ final class ViewCompiler
                 $allCompiledSectionContents .= $compiledSectionContents;
             }
 
-            $sideNavContents = (string)$this->files->read("{$this->rawViewPath}/partials/side-nav.html");
+            $sideNavContents = $this->files->read("$this->rawViewPath/partials/side-nav.html");
             $compiledSideNav = $this->compileTag('contents', $allCompiledSectionContents, $sideNavContents);
 
             // Compile the page
@@ -150,13 +147,13 @@ final class ViewCompiler
                         $doc['keywords'],
                         $doc['description']
                     );
-                    $docContents = (string)$this->files->read("{$this->rawViewPath}/partials/docs/$version/$docName.html");
+                    $docContents = $this->files->read("$this->rawViewPath/partials/docs/$version/$docName.html");
                     $compiledDocPageContents = $this->compileTag('doc', $docContents, $compiledDocPageContents);
                     $compiledDocPageContents = $this->compileTag('docTitle', $doc['title'], $compiledDocPageContents);
                     $compiledDocPageContents = $this->compileTag('docVersion', $version, $compiledDocPageContents);
                     $compiledDocPageContents = $this->compileTag('docFilename', $docName, $compiledDocPageContents);
                     $compiledDocPageContents = $this->compileTag('sideNav', $compiledSideNav, $compiledDocPageContents);
-                    $this->files->write("{$this->compiledViewPath}/docs/$version/$docName.html", $compiledDocPageContents);
+                    $this->files->write("$this->compiledViewPath/docs/$version/$docName.html", $compiledDocPageContents);
                 }
             }
         }
@@ -165,20 +162,19 @@ final class ViewCompiler
     /**
      * Compiles the homepage
      *
-     * @throws FileNotFoundException Thrown if we could not read a view partial
-     * @throws FileExistsException Thrown if we attempted to write to a file that already existed
+     * @throws FilesystemException Thrown if we could not read a view partial or if we attempted to write to a file that already existed
      */
     private function compileHomepage(): void
     {
-        $homepageContents = (string)$this->files->read("{$this->rawViewPath}/index.html");
+        $homepageContents = $this->files->read("$this->rawViewPath/index.html");
         $compiledHomepageContents = $this->compileCommonPartials(
             $homepageContents,
             ['aphiria', 'php', 'framework', 'rest', 'api'],
             'A simple, extensible REST API framework'
         );
-        $sideNavContents = (string)$this->files->read("{$this->rawViewPath}/partials/side-nav.html");
-        $mainNavLinksContents = (string)$this->files->read("{$this->rawViewPath}/partials/main-nav-links.html");
-        $nonDocSideNavContents = (string)$this->files->read("{$this->rawViewPath}/partials/non-doc-side-nav-contents.html");
+        $sideNavContents = $this->files->read("$this->rawViewPath/partials/side-nav.html");
+        $mainNavLinksContents = $this->files->read("$this->rawViewPath/partials/main-nav-links.html");
+        $nonDocSideNavContents = $this->files->read("$this->rawViewPath/partials/non-doc-side-nav-contents.html");
         $compiledSideNav = $this->compileTag(
             'contents',
             $this->compileTag(
@@ -189,7 +185,7 @@ final class ViewCompiler
             $sideNavContents
         );
         $compiledHomepageContents = $this->compileTag('sideNav', $compiledSideNav, $compiledHomepageContents);
-        $this->files->write("{$this->compiledViewPath}/index.html", $compiledHomepageContents);
+        $this->files->write("$this->compiledViewPath/index.html", $compiledHomepageContents);
     }
 
     /**
