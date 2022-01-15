@@ -18,9 +18,10 @@ use App\Documentation\DocumentationDownloader;
 use App\Documentation\DocumentationMetadata;
 use App\Documentation\DocumentationService;
 use App\Documentation\Searching\PostgreSqlSearchIndex;
-use League\Flysystem\Adapter\Local;
 use League\Flysystem\Filesystem;
-use League\Flysystem\FilesystemInterface;
+use League\Flysystem\FilesystemOperator;
+use League\Flysystem\Local\LocalFilesystemAdapter;
+use League\Flysystem\UnixVisibility\PortableVisibilityConverter;
 use ParsedownExtra;
 use PDO;
 
@@ -39,9 +40,18 @@ final class DocumentationBinder extends Binder
         ]);
         $container->bindInstance(DocumentationMetadata::class, $metadata);
         $files = new Filesystem(
-            new Local(__DIR__ . '/../../..', LOCK_EX, Local::DISALLOW_LINKS, ['file' => ['rwx' => 0777]])
+            new LocalFilesystemAdapter(
+                __DIR__ . '/../../..',
+                PortableVisibilityConverter::fromArray([
+                    'file' => [
+                        'public' => 0777
+                    ]
+                ]),
+                LOCK_EX,
+                LocalFilesystemAdapter::DISALLOW_LINKS
+            )
         );
-        $container->bindInstance(FilesystemInterface::class, $files);
+        $container->bindInstance(FilesystemOperator::class, $files);
         $searchIndex = new PostgreSqlSearchIndex(
             (string)\getenv('DOC_LEXEMES_TABLE_NAME'),
             $container->resolve(PDO::class),

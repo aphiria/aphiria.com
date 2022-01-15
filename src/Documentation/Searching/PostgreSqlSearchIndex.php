@@ -15,9 +15,10 @@ namespace App\Documentation\Searching;
 use DOMDocument;
 use DOMNode;
 use Exception;
-use League\Flysystem\FileNotFoundException;
-use League\Flysystem\FilesystemInterface;
+use League\Flysystem\FilesystemException;
+use League\Flysystem\FilesystemOperator;
 use PDO;
+use Throwable;
 
 /**
  * Defines the documentation search index backed by PostgreSQL
@@ -43,14 +44,14 @@ final class PostgreSqlSearchIndex implements ISearchIndex
      * @param PDO $pdo The DB connection to use
      * @param string $linkPrefix The prefix to use for all links that are generated
      * @param string $envPath The path to the .env file to update whenever we build the search index
-     * @param FilesystemInterface $files The file system helper
+     * @param FilesystemOperator $files The file system helper
      */
     public function __construct(
         private string $lexemeTableName,
         private readonly PDO $pdo,
         private readonly string $linkPrefix,
         private readonly string $envPath,
-        private readonly FilesystemInterface $files
+        private readonly FilesystemOperator $files
     ) {
     }
 
@@ -69,7 +70,7 @@ final class PostgreSqlSearchIndex implements ISearchIndex
             foreach ($htmlPaths as $htmlPath) {
                 \libxml_use_internal_errors(true);
 
-                if ($dom->loadHTML((string)$this->files->read($htmlPath)) === false) {
+                if ($dom->loadHTML($this->files->read($htmlPath)) === false) {
                     throw new Exception("Failed to load HTML for $htmlPath: " . \strip_tags(\libxml_get_last_error()->message));
                 }
 
@@ -115,7 +116,7 @@ final class PostgreSqlSearchIndex implements ISearchIndex
             }
 
             $this->createAndSeedTable($indexEntries);
-        } catch (Exception $ex) {
+        } catch (Throwable $ex) {
             throw new IndexingFailedException('Failed to index document', 0, $ex);
         }
     }
@@ -188,7 +189,7 @@ EOF
      * Creates and seeds the doc table
      *
      * @param list<IndexEntry> $indexEntries The index entries to save
-     * @throws FileNotFoundException Thrown if there was an error reading the .env file
+     * @throws FilesystemException Thrown if there was an error reading the .env file
      */
     private function createAndSeedTable(array $indexEntries): void
     {
@@ -365,7 +366,7 @@ EOF
     /**
      * Updates the .env file to point to the new table
      *
-     * @throws FileNotFoundException Thrown if the .env file did not exist
+     * @throws FilesystemException Thrown if the .env file did not exist
      */
     private function updateEnvFile(): void
     {
@@ -375,7 +376,7 @@ EOF
             "DOC_LEXEMES_TABLE_NAME={$this->lexemeTableName}",
             $currEnvContents
         );
-        $this->files->update($this->envPath, $newContents);
+        $this->files->write($this->envPath, $newContents);
     }
 
     /**

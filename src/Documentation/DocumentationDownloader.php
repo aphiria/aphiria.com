@@ -12,9 +12,9 @@ declare(strict_types=1);
 
 namespace App\Documentation;
 
-use League\Flysystem\FileNotFoundException;
-use League\Flysystem\FilesystemInterface;
-use RuntimeException;
+use League\Flysystem\FilesystemException;
+use League\Flysystem\FilesystemOperator;
+use League\Flysystem\StorageAttributes;
 
 /**
  * Defines the documentation downloader
@@ -28,13 +28,13 @@ final class DocumentationDownloader
      * @param list<string> $branches The branches to download
      * @param string $clonedDocAbsolutePath The absolute path to the cloned documentation
      * @param string $clonedDocRelativePath The relative path to the cloned documentation
-     * @param FilesystemInterface $files The file system helper
+     * @param FilesystemOperator $files The file system helper
      */
     public function __construct(
         private readonly array $branches,
         private readonly string $clonedDocAbsolutePath,
         private readonly string $clonedDocRelativePath,
-        private readonly FilesystemInterface $files
+        private readonly FilesystemOperator $files
     ) {
     }
 
@@ -46,51 +46,50 @@ final class DocumentationDownloader
      */
     public function downloadDocs(): array
     {
-        $markdownFiles = [];
+        try {
+            $markdownFiles = [];
 
-        foreach ($this->branches as $branch) {
-            $markdownFiles[$branch] = [];
-            $rawDocsPath = "{$this->clonedDocRelativePath}/$branch";
+            foreach ($this->branches as $branch) {
+                $markdownFiles[$branch] = [];
+                $rawDocsPath = "$this->clonedDocRelativePath/$branch";
 
-            if ($this->files->has($rawDocsPath)) {
-                $this->deleteDir($rawDocsPath);
-            }
+                if ($this->files->has($rawDocsPath)) {
+                    $this->deleteDir($rawDocsPath);
+                }
 
-            if (!$this->files->createDir($rawDocsPath)) {
-                throw new DownloadFailedException("Failed to create directory $rawDocsPath");
-            }
+                $this->files->createDirectory($rawDocsPath);
 
-            // Clone the branch from GitHub into our temporary directory
-            /** @psalm-suppress ForbiddenCode We are purposely allowing this call */
-            \shell_exec(
-                \sprintf(
-                    'git clone -b %s --single-branch %s "%s"',
-                    $branch,
-                    self::GITHUB_REPOSITORY,
-                    $this->clonedDocAbsolutePath . "/$branch"
-                )
-            );
+                // Clone the branch from GitHub into our temporary directory
+                /** @psalm-suppress ForbiddenCode We are purposely allowing this call */
+                \shell_exec(
+                    \sprintf(
+                        'git clone -b %s --single-branch %s "%s"',
+                        $branch,
+                        self::GITHUB_REPOSITORY,
+                        $this->clonedDocAbsolutePath . "/$branch"
+                    )
+                );
 
-            // Delete the .git directory so we don't get multiple VCS roots registered
-            $this->deleteDir("{$this->clonedDocRelativePath}/$branch/.git");
+                // Delete the .git directory so we don't get multiple VCS roots registered
+                $this->deleteDir("$this->clonedDocRelativePath/$branch/.git");
+                $markdownFilePaths = $this->files->listContents($rawDocsPath)
+                    ->filter(fn (StorageAttributes $attributes) => $attributes->isFile() && \str_ends_with($attributes->path(), '.md'))
+                    ->map(fn (StorageAttributes $attributes) => $attributes->path())
+                    ->toArray();
 
-            /** @var array{type: string, extension: string, path: string} $fileInfo */
-            foreach ($this->files->listContents($rawDocsPath) as $fileInfo) {
-                if (
-                    isset($fileInfo['type'], $fileInfo['extension'])
-                    && $fileInfo['type'] === 'file'
-                    && $fileInfo['extension'] === 'md'
-                ) {
-                    $markdownFiles[$branch][] = (string)$fileInfo['path'];
+                foreach ($markdownFilePaths as $markdownFilePath) {
+                    $markdownFiles[$branch][] = $markdownFilePath;
+                }
+
+                if (\count($markdownFiles[$branch]) === 0) {
+                    throw new DownloadFailedException("Failed to download docs for branch $branch");
                 }
             }
 
-            if (\count($markdownFiles[$branch]) === 0) {
-                throw new RuntimeException("Failed to download docs for branch $branch");
-            }
+            return $markdownFiles;
+        } catch (FilesystemException $ex) {
+            throw new DownloadFailedException('Failed to download docs', 0, $ex);
         }
-
-        return $markdownFiles;
     }
 
     /**
@@ -102,18 +101,18 @@ final class DocumentationDownloader
     private function deleteDir(string $dir): void
     {
         try {
-            /** @var array{type: string, path: string} $fileInfo */
-            foreach ($this->files->listContents($dir, true) as $fileInfo) {
-                if (isset($fileInfo['type'], $fileInfo['path']) && ($fileInfo['type'] === 'file' || $fileInfo['type'] === 'dir')) {
-                    $this->files->setVisibility((string)$fileInfo['path'], 'public');
-                }
-            }
-        } catch (FileNotFoundException $ex) {
-            throw new DownloadFailedException("Failed to set visibility on {$ex->getPath()}");
-        }
+            $contentPaths = $this->files->listContents($dir, true)
+                ->filter(fn (StorageAttributes $attributes) => $attributes->isFile() || $attributes->isDir())
+                ->map(fn (StorageAttributes $attributes) => $attributes->path())
+                ->toArray();
 
-        if (!$this->files->deleteDir($dir)) {
-            throw new DownloadFailedException("Failed to delete $dir");
+            foreach ($contentPaths as $contentPath) {
+                $this->files->setVisibility($contentPath, 'public');
+            }
+
+            $this->files->deleteDirectory($dir);
+        } catch (FilesystemException $ex) {
+            throw new DownloadFailedException('Failed to set visibility', 0, $ex);
         }
     }
 }
