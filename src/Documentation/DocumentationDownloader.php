@@ -72,6 +72,7 @@ final class DocumentationDownloader
 
                 // Delete the .git directory so we don't get multiple VCS roots registered
                 $this->deleteDir("$this->clonedDocRelativePath/$branch/.git");
+                /** @var list<string> $markdownFilePaths */
                 $markdownFilePaths = $this->files->listContents($rawDocsPath)
                     ->filter(fn (StorageAttributes $attributes) => $attributes->isFile() && \str_ends_with($attributes->path(), '.md'))
                     ->map(fn (StorageAttributes $attributes) => $attributes->path())
@@ -101,6 +102,7 @@ final class DocumentationDownloader
     private function deleteDir(string $dir): void
     {
         try {
+            /** @var list<string> $contentPaths */
             $contentPaths = $this->files->listContents($dir, true)
                 ->filter(fn (StorageAttributes $attributes) => $attributes->isFile() || $attributes->isDir())
                 ->map(fn (StorageAttributes $attributes) => $attributes->path())

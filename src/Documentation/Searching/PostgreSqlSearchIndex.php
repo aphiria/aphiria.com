@@ -370,7 +370,7 @@ EOF
      */
     private function updateEnvFile(): void
     {
-        $currEnvContents = (string)$this->files->read($this->envPath);
+        $currEnvContents = $this->files->read($this->envPath);
         $newContents = \preg_replace(
             '/DOC_LEXEMES_TABLE_NAME=[^\r\n]+/',
             "DOC_LEXEMES_TABLE_NAME={$this->lexemeTableName}",

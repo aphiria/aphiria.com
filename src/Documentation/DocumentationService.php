@@ -73,6 +73,7 @@ final class DocumentationService
             }
 
             $htmlFilesToIndex = [];
+            /** @var list<string> $htmlDocPaths */
             $htmlDocPaths = $this->files->listContents($htmlDocsPath)
                 ->filter(fn (StorageAttributes $attributes) => $attributes->isFile() && \str_ends_with($attributes->path(), '.html'))
                 ->map(fn (StorageAttributes $attributes) => $attributes->path())
