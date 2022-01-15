@@ -113,12 +113,12 @@ final class ViewCompiler
      */
     private function compileDocs(): void
     {
-        $this->files->createDirectory("$this->compiledViewPath/docs");
+        $this->files->createDirectory("$this->compiledViewPath/docs", ['visibility' => 'public']);
         $docTemplatePageContents = $this->files->read("$this->rawViewPath/doc.html");
 
         // Compile each doc page
         foreach ($this->docMetadata->getDocVersions() as $version) {
-            $this->files->createDirectory("$this->compiledViewPath/docs/$version");
+            $this->files->createDirectory("$this->compiledViewPath/docs/$version", ['visibility' => 'public']);
 
             // Compile the doc side nav for each version
             $sideNavSectionContents = $this->files->read("$this->rawViewPath/partials/doc-side-nav-contents.html");
