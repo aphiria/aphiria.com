@@ -69,8 +69,9 @@ final class PostgreSqlSearchIndex implements ISearchIndex
 
             foreach ($htmlPaths as $htmlPath) {
                 \libxml_use_internal_errors(true);
+                $html = $this->files->read($htmlPath);
 
-                if ($dom->loadHTML($this->files->read($htmlPath)) === false) {
+                if (empty($html) || $dom->loadHTML($html) === false) {
                     throw new Exception("Failed to load HTML for $htmlPath: " . \strip_tags(\libxml_get_last_error()->message));
                 }
 
