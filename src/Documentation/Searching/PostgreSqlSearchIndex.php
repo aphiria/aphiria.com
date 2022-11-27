@@ -79,7 +79,6 @@ final class PostgreSqlSearchIndex implements ISearchIndex
                 $h1 = $h2 = $h3 = $h4 = $h5 = null;
 
                 // Scan the documentation and index the elements as well as their nearest previous <h*> siblings
-                /** @var DOMNode $currNode */
                 foreach ($dom->getElementsByTagName('body')->item(0)->childNodes as $currNode) {
                     // Check if we need to reset the nearest headers
                     switch ($currNode->nodeName) {
@@ -244,18 +243,18 @@ EOF
         if ($currNode->nodeName === 'h1') {
             $link .= $filename;
         } elseif (\in_array($currNode->nodeName, ['h2', 'h3', 'h4', 'h5'])) {
-            $link .= "$filename#{$currNode->attributes->getNamedItem('id')->nodeValue}";
+            $link .= "$filename#{$currNode->attributes->getNamedItem('id')?->nodeValue}";
         } elseif ($h5 !== null) {
-            $link .= "$filename#{$h5->attributes->getNamedItem('id')->nodeValue}";
+            $link .= "$filename#{$h5->attributes->getNamedItem('id')?->nodeValue}";
         } elseif ($h4 !== null) {
-            $link .= "$filename#{$h4->attributes->getNamedItem('id')->nodeValue}";
+            $link .= "$filename#{$h4->attributes->getNamedItem('id')?->nodeValue}";
         } elseif ($h3 !== null) {
-            $link .= "$filename#{$h3->attributes->getNamedItem('id')->nodeValue}";
+            $link .= "$filename#{$h3->attributes->getNamedItem('id')?->nodeValue}";
         } elseif ($h2 !== null) {
-            $link .= "$filename#{$h2->attributes->getNamedItem('id')->nodeValue}";
+            $link .= "$filename#{$h2->attributes->getNamedItem('id')?->nodeValue}";
         } else {
             // h1 will never be null
-            $link .= "$filename#{$h1->attributes->getNamedItem('id')->nodeValue}";
+            $link .= "$filename#{$h1->attributes->getNamedItem('id')?->nodeValue}";
         }
 
         return new IndexEntry(
@@ -326,7 +325,6 @@ EOF
     {
         $text = '';
 
-        /** @var DOMNode $childNode */
         foreach ($node->childNodes as $childNode) {
             if ($childNode->nodeType === \XML_TEXT_NODE) {
                 $text .= $childNode->textContent;

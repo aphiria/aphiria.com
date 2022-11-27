@@ -16,6 +16,7 @@ use Aphiria\Console\Commands\Attributes\Command;
 use Aphiria\Console\Commands\ICommandHandler;
 use Aphiria\Console\Input\Input;
 use Aphiria\Console\Output\IOutput;
+use Aphiria\Console\StatusCode;
 
 /**
  * Defines the handler for the serve command
@@ -43,6 +44,8 @@ final class ServeCommandHandler implements ICommandHandler
         );
 
         $this->runCommandsInBackground([$runApiCommand, $runWebCommand], $output);
+
+        return StatusCode::Ok;
     }
 
     /**

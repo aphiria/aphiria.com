@@ -26,12 +26,15 @@ use Aphiria\DependencyInjection\Binders\Metadata\Caching\FileBinderMetadataColle
 use Aphiria\DependencyInjection\Binders\Metadata\Caching\IBinderMetadataCollectionCache;
 use Aphiria\DependencyInjection\IContainer;
 use Aphiria\Framework\Api\Binders\ControllerBinder;
+use Aphiria\Framework\Api\Binders\RequestHandlerBinder;
 use Aphiria\Framework\Application\AphiriaModule;
 use Aphiria\Framework\Console\Binders\CommandBinder;
+use Aphiria\Framework\Console\Binders\CommandHandlerBinder;
 use Aphiria\Framework\ContentNegotiation\Binders\ContentNegotiationBinder;
 use Aphiria\Framework\Exceptions\Binders\ExceptionHandlerBinder;
 use Aphiria\Framework\Exceptions\Bootstrappers\GlobalExceptionHandlerBootstrapper;
 use Aphiria\Framework\Net\Binders\RequestBinder;
+use Aphiria\Framework\Net\Binders\ResponseWriterBinder;
 use Aphiria\Framework\Routing\Binders\RoutingBinder;
 use Aphiria\Framework\Serialization\Binders\SymfonySerializerBinder;
 use Aphiria\Framework\Validation\Binders\ValidationBinder;
@@ -85,12 +88,15 @@ final class GlobalModule extends AphiriaModule implements IBootstrapper
             ->withBinders($appBuilder, [
                 new ExceptionHandlerBinder(),
                 new RequestBinder(),
+                new RequestHandlerBinder(),
                 new SymfonySerializerBinder(),
                 new ValidationBinder(),
                 new ContentNegotiationBinder(),
                 new ControllerBinder(),
+                new ResponseWriterBinder(),
                 new RoutingBinder(),
-                new CommandBinder()
+                new CommandBinder(),
+                new CommandHandlerBinder()
             ])
             ->withLogLevelFactory($appBuilder, HttpException::class, static function (HttpException $ex) {
                 return $ex->response->getStatusCode()->value >= 500 ? LogLevel::ERROR : LogLevel::DEBUG;
