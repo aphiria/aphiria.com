@@ -67,7 +67,7 @@ jobs:
       - name: Generate Build Path
         id: generateBuildPath
         if: github.event_name == 'push' && github.ref == 'refs/heads/master'
-        run: echo "::set-output name=buildPath::/var/www/html/releases/${{ github.run_number }}-${{ github.run_attempt }}"
+        run: echo "buildPath=/var/www/html/releases/${{ github.run_number }}-${{ github.run_attempt }}" >> $GITHUB_OUTPUT
       - name: Install SSH Key
         uses: shimataro/ssh-key-action@v2
         if: github.event_name == 'push' && github.ref == 'refs/heads/master'
