@@ -18,11 +18,12 @@ use App\Documentation\DocumentationDownloader;
 use App\Documentation\DocumentationMetadata;
 use App\Documentation\DocumentationService;
 use App\Documentation\Searching\PostgreSqlSearchIndex;
+use Erusev\Parsedown\Parsedown;
+use Erusev\ParsedownExtra\ParsedownExtra;
 use League\Flysystem\Filesystem;
 use League\Flysystem\FilesystemOperator;
 use League\Flysystem\Local\LocalFilesystemAdapter;
 use League\Flysystem\UnixVisibility\PortableVisibilityConverter;
-use ParsedownExtra;
 use PDO;
 
 /**
@@ -65,7 +66,7 @@ final class DocumentationBinder extends Binder
         $docs = new DocumentationService(
             $metadata,
             new DocumentationDownloader($metadata->getBranches(), __DIR__ . '/../../../tmp/docs', '/tmp/docs', $files),
-            new ParsedownExtra(),
+            new Parsedown(new ParsedownExtra()),
             $searchIndex,
             '/resources/views/partials/docs',
             $files
