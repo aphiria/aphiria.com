@@ -28,14 +28,14 @@ final readonly class SearchResult
      * @param string $highlightedInnerText The highlighted inner text
      */
     public function __construct(
-        public string  $link,
-        public string  $htmlElementType,
-        public string  $highlightedH1,
+        public string $link,
+        public string $htmlElementType,
+        public string $highlightedH1,
         public ?string $highlightedH2,
         public ?string $highlightedH3,
         public ?string $highlightedH4,
         public ?string $highlightedH5,
-        public string  $highlightedInnerText
+        public string $highlightedInnerText
     ) {
     }
 }

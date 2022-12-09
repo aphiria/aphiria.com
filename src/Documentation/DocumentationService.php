@@ -16,7 +16,6 @@ use App\Documentation\Searching\IndexingFailedException;
 use App\Documentation\Searching\ISearchIndex;
 use App\Documentation\Searching\SearchResult;
 use Erusev\Parsedown\Parsedown;
-use Erusev\ParsedownExtra\ParsedownExtra;
 use League\Flysystem\FilesystemException;
 use League\Flysystem\FilesystemOperator;
 use League\Flysystem\StorageAttributes;
