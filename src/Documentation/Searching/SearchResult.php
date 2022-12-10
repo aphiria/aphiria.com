@@ -15,7 +15,7 @@ namespace App\Documentation\Searching;
 /**
  * Defines a search result
  */
-final class SearchResult
+final readonly class SearchResult
 {
     /**
      * @param string $link The link that the results point to
@@ -28,14 +28,14 @@ final class SearchResult
      * @param string $highlightedInnerText The highlighted inner text
      */
     public function __construct(
-        public readonly string $link,
-        public readonly string $htmlElementType,
-        public readonly string $highlightedH1,
-        public readonly ?string $highlightedH2,
-        public readonly ?string $highlightedH3,
-        public readonly ?string $highlightedH4,
-        public readonly ?string $highlightedH5,
-        public readonly string $highlightedInnerText
+        public string $link,
+        public string $htmlElementType,
+        public string $highlightedH1,
+        public ?string $highlightedH2,
+        public ?string $highlightedH3,
+        public ?string $highlightedH4,
+        public ?string $highlightedH5,
+        public string $highlightedInnerText
     ) {
     }
 }

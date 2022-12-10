@@ -15,10 +15,10 @@ namespace App\Documentation;
 use App\Documentation\Searching\IndexingFailedException;
 use App\Documentation\Searching\ISearchIndex;
 use App\Documentation\Searching\SearchResult;
+use Erusev\Parsedown\Parsedown;
 use League\Flysystem\FilesystemException;
 use League\Flysystem\FilesystemOperator;
 use League\Flysystem\StorageAttributes;
-use ParsedownExtra;
 
 /**
  * Defines the service that handles our documentation
@@ -28,7 +28,7 @@ final class DocumentationService
     /**
      * @param DocumentationMetadata $metadata The doc metadata
      * @param DocumentationDownloader $downloader The doc downloader
-     * @param ParsedownExtra $markdownParser The Markdown parser
+     * @param Parsedown $markdownParser The Markdown parser
      * @param ISearchIndex $searchIndex The doc search index
      * @param string $htmlDocPath The path to store HTML docs in
      * @param FilesystemOperator $files The file system helper
@@ -36,7 +36,7 @@ final class DocumentationService
     public function __construct(
         private readonly DocumentationMetadata $metadata,
         private readonly DocumentationDownloader $downloader,
-        private readonly ParsedownExtra $markdownParser,
+        private readonly Parsedown $markdownParser,
         private readonly ISearchIndex $searchIndex,
         private readonly string $htmlDocPath,
         private readonly FilesystemOperator $files
@@ -121,7 +121,7 @@ final class DocumentationService
                 foreach ($markdownFilePaths as $markdownFilePath) {
                     $markdownFilename = \pathinfo($markdownFilePath, PATHINFO_FILENAME);
                     $htmlDocFilename = "$branchDocDir/$markdownFilename.html";
-                    $html = (string)$this->markdownParser->text($this->files->read($markdownFilePath));
+                    $html = $this->markdownParser->toHtml($this->files->read($markdownFilePath));
                     // Rewrite the links to point to the HTML docs on the site
                     $html = \preg_replace('/<a href="([^"]+)\.md(#[^"]+)?"/', '<a href="$1.html$2"', $html);
                     $this->files->write($htmlDocFilename, $html);
