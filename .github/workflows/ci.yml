@@ -96,6 +96,6 @@ jobs:
             php ${{ steps.generateBuildPath.outputs.buildPath }}/aphiria docs:index
             sudo chown -R 48:48 ${{ steps.generateBuildPath.outputs.buildPath }}/resources
             sudo chown -R 48:48 ${{ steps.generateBuildPath.outputs.buildPath }}/tmp
-            ${{ steps.generateBuildPath.outputs.buildPath }}/vendor/bin/phpunit --testsuite Integration --configuration ${{ steps.generateBuildPath.outputs.buildPath }}/phpunit.xml.dist
+            XDEBUG_MODE=coverage ${{ steps.generateBuildPath.outputs.buildPath }}/vendor/bin/phpunit --testsuite Integration --configuration ${{ steps.generateBuildPath.outputs.buildPath }}/phpunit.xml.dist
             ln -snf $(readlink /var/www/html/current) /var/www/html/previous
             ln -snf ${{ steps.generateBuildPath.outputs.buildPath }} /var/www/html/current
