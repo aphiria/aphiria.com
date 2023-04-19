@@ -25,10 +25,10 @@ use Aphiria\Net\Http\Response;
  */
 final class Cors implements IMiddleware
 {
-    /** @var list<string> The list of allowed methods */
-    private static array $allowedMethods = ['POST', 'GET', 'OPTIONS', 'PUT', 'DELETE'];
     /** @var list<string> The list of allowed headers */
     private static array $allowedHeaders = ['Content-Type', 'Origin', 'Accept', 'Cookie'];
+    /** @var list<string> The list of allowed methods */
+    private static array $allowedMethods = ['POST', 'GET', 'OPTIONS', 'PUT', 'DELETE'];
     /** @var string The allowed origin */
     private string $allowedOrigin;
 
