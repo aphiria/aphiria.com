@@ -12,7 +12,7 @@ declare(strict_types=1);
 
 namespace App\Web;
 
-use Aphiria\Application\Builders\IApplicationBuilder;
+use Aphiria\Application\IApplicationBuilder;
 use Aphiria\Framework\Application\AphiriaModule;
 use App\Web\Binders\ViewCompilerBinder;
 
