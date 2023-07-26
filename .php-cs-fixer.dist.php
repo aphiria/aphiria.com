@@ -13,12 +13,10 @@ return (new PhpCsFixer\Config())
         '@PSR12' => true,
         'array_syntax' => ['syntax' => 'short'],
         'blank_line_after_opening_tag' => true,
-        'braces' => ['allow_single_line_closure' => true],
         'compact_nullable_typehint' => true,
         'concat_space' => ['spacing' => 'one'],
         'declare_equal_normalize' => ['space' => 'none'],
         'declare_strict_types' => true,
-        'function_typehint_space' => true,
         'header_comment' => [
             'header' => $header,
             'comment_type' => 'PHPDoc',
@@ -78,6 +76,7 @@ return (new PhpCsFixer\Config())
         'single_quote' => true,
         'single_trait_insert_per_statement' => true,
         'standardize_not_equals' => true,
+        'type_declaration_spaces' => true
     ])
     ->setRiskyAllowed(true)
     ->setFinder(
