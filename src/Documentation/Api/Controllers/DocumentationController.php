@@ -12,17 +12,17 @@ declare(strict_types=1);
 
 namespace App\Documentation\Api\Controllers;
 
-use Aphiria\Api\Controllers\Controller;
+use Aphiria\Api\Controllers\Controller as BaseController;
+use Aphiria\Routing\Attributes\Controller;
 use Aphiria\Routing\Attributes\Get;
-use Aphiria\Routing\Attributes\RouteGroup;
 use App\Documentation\DocumentationService;
 use App\Documentation\Searching\SearchResult;
 
 /**
  * Defines the controller that handles documentation actions
  */
-#[RouteGroup('docs')]
-final class DocumentationController extends Controller
+#[Controller('docs')]
+final class DocumentationController extends BaseController
 {
     /**
      * @param DocumentationService $docs What we'll use to search through documentation
