@@ -19,6 +19,14 @@ class UserController extends Controller
 {
     public function __construct(private IUserService $users) {}
 
+    #[Post('/users')]
+    public function createUser(User $user): IResponse
+    {
+        $this->users->create($user);
+        
+        return $this->created("/users/{$user->id}", $user);
+    }
+
     #[Get('/users/:id')]
     #[AuthorizeRoles('admin')]
     public function getUserById(int $id): User
@@ -31,7 +39,11 @@ class UserController extends Controller
 $container->bindInstance(IUserService::class, new UserService());
 
 // Run an integration test
-$this->assertParsedBodyEquals(new User(1, 'Dave'), $this->get('/users/1'));</code></pre>
+$user = $this->readResponseBodyAs(User::class, $this->post('/users', new User('Dave')));
+$admin = (new PrincipalBuilder('example.com'))->withRoles('admin')
+    ->build();
+$response = $this->actingAs($admin, fn () => $this->get("/users/$user->id"));
+$this->assertParsedBodyEquals($user, $response);</code></pre>
             <h2>Install Aphiria</h2>
             <pre class="center"><code class="language-bash">
 composer create-project aphiria/app --prefer-dist --stability dev
