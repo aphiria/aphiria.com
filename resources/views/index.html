@@ -15,19 +15,20 @@
                 <h2>Automatic content negotiation.  No magic.  No bleeding into your code.</h2>
             </hgroup>
             <pre><code class="language-php">// Define a controller endpoint
+#[RouteGroup('/users')]
 class UserController extends Controller
 {
     public function __construct(private IUserService $users) {}
 
-    #[Post('/users')]
+    #[Post('')]
     public function createUser(User $user): IResponse
     {
         $this->users->create($user);
-        
+
         return $this->created("/users/{$user->id}", $user);
     }
 
-    #[Get('/users/:id')]
+    #[Get('/:id')]
     #[AuthorizeRoles('admin')]
     public function getUserById(int $id): User
     {
@@ -39,11 +40,12 @@ class UserController extends Controller
 $container->bindInstance(IUserService::class, new UserService());
 
 // Run an integration test
-$user = $this->readResponseBodyAs(User::class, $this->post('/users', new User('Dave')));
+$createResponse = $this->post('/users', new User('Dave'));
+$user = $this->readResponseBodyAs(User::class, $createResponse);
 $admin = (new PrincipalBuilder('example.com'))->withRoles('admin')
     ->build();
-$response = $this->actingAs($admin, fn () => $this->get("/users/$user->id"));
-$this->assertParsedBodyEquals($user, $response);</code></pre>
+$getResponse = $this->actingAs($admin, fn () => $this->get("/users/$user->id"));
+$this->assertParsedBodyEquals($user, $getResponse);</code></pre>
             <h2>Install Aphiria</h2>
             <pre class="center"><code class="language-bash">
 composer create-project aphiria/app --prefer-dist --stability dev
