@@ -15,12 +15,11 @@
                 <h2>Automatic content negotiation.  No magic.  No bleeding into your code.</h2>
             </hgroup>
             <pre><code class="language-php">// Define a controller endpoint
-#[RouteGroup('/users')]
 class UserController extends Controller
 {
     public function __construct(private IUserService $users) {}
 
-    #[Post('')]
+    #[Post('/users')]
     public function createUser(User $user): IResponse
     {
         $this->users->create($user);
@@ -28,7 +27,7 @@ class UserController extends Controller
         return $this->created("/users/{$user->id}", $user);
     }
 
-    #[Get('/:id')]
+    #[Get('/users/:id')]
     #[AuthorizeRoles('admin')]
     public function getUserById(int $id): User
     {
