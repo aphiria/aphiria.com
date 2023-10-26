@@ -8,7 +8,6 @@ const uglifyJs = require('gulp-terser');
 const uglifyCss = require('gulp-clean-css');
 const concat = require('gulp-concat');
 const del = require('del');
-const sass = require('gulp-sass')(require('node-sass'));
 const shell = require('gulp-shell');
 const sourcemaps = require('gulp-sourcemaps');
 
@@ -77,7 +76,6 @@ const minifyCss = () => {
 const compileScss = () => {
     return gulp.src(`${paths.resourcesCss}/*.scss`)
         .pipe(sourcemaps.init())
-        .pipe(sass().on('error', sass.logError))
         .pipe(sourcemaps.write('.'))
         .pipe(gulp.dest(paths.resourcesCss));
 };

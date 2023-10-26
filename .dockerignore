@@ -1,0 +1,8 @@
+/.coverage/
+/.git/
+/vendor/
+/node_modules/
+/public-web/js/
+/public-web/css/
+/public-web/docs/
+/yarn-error.log
