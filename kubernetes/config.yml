@@ -1,0 +1,171 @@
+# Secrets
+apiVersion: v1
+kind: Secret
+metadata:
+  name: secrets
+  labels:
+    app: secrets
+data:
+  DB_HOST: "test-host" # TODO:  Store this as a secret in GitHub
+  DB_USER: "test-user" # TODO:  Store this as a secret in GitHub
+  DB_PASSWORD: "test-password" # TODO:  Store this as a secret in GitHub
+  DB_PORT: 5432 # TODO:  Store this as a secret in GitHub
+  DB_NAME: "defaultdb" # TODO:  Store this as a secret in GitHub
+
+---
+# API deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: api
+  template:
+    metadata:
+      labels:
+        app: api
+    spec:
+      containers:
+        - name: aphiria.com-api
+          image: aphiria.com-api:latest
+          ports:
+            - containerPort: 8000
+          envFrom:
+            - secretRef:
+                name: secrets
+
+---
+# API service
+apiVersion: v1
+kind: Service
+metadata:
+  name: api
+spec:
+  selector:
+    app: api
+  ports:
+    - protocol: TCP
+      port: 8000
+      targetPort: 8000
+
+---
+# Web deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: web
+  template:
+    metadata:
+      labels:
+        app: web
+    spec:
+      containers:
+        - name: aphiria.com-web
+          image: aphiria.com-web:latest
+          ports:
+            - containerPort: 80
+
+---
+# Web service
+apiVersion: v1
+kind: Service
+metadata:
+  name: web
+spec:
+  type: LoadBalancer
+  selector:
+    app: web
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+
+---
+# DB service
+apiVersion: v1
+kind: Service
+metadata:
+  name: db
+  labels:
+    app: db
+spec:
+  type: NodePort
+  ports:
+    - port: 5432
+  selector:
+    app: db
+
+---
+# DB deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: db
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: db
+  template:
+    metadata:
+      labels:
+        app: db
+    spec:
+      containers:
+        - name: db
+          image: postgres:16.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 5432
+          envFrom:
+            - secretRef:
+                name: secrets
+          volumeMounts:
+            - mountPath: /var/lib/postgresql/data
+              name: postgredb # TODO
+      volumes:
+        - name: postgredb # TODO
+          persistentVolumeClaim:
+            claimName: db-pv-claim
+
+---
+# DB persistent volume
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: db-pv-volume
+  labels:
+    type: local
+    app: db
+spec:
+  storageClassName: manual
+  capacity:
+    storage: 5Gi
+  accessModes:
+    - ReadWriteMany
+  hostPath:
+    path: "/mnt/data"
+
+---
+# DB persistent volume claim
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: db-pv-claim
+  labels:
+    app: db
+spec:
+  storageClassName: manual
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 5Gi
