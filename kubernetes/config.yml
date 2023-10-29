@@ -6,11 +6,11 @@ metadata:
   labels:
     app: secrets
 data:
-  DB_HOST: "test-host" # TODO:  Store this as a secret in GitHub
-  DB_USER: "test-user" # TODO:  Store this as a secret in GitHub
-  DB_PASSWORD: "test-password" # TODO:  Store this as a secret in GitHub
-  DB_PORT: 5432 # TODO:  Store this as a secret in GitHub
-  DB_NAME: "defaultdb" # TODO:  Store this as a secret in GitHub
+  DB_HOST: "dGVzdC1ob3N0Cg==" # TODO:  Store this as a secret in GitHub
+  DB_USER: "dGVzdC11c2VyCg==" # TODO:  Store this as a secret in GitHub
+  DB_PASSWORD: "dGVzdC1wYXNzd29yZAo=" # TODO:  Store this as a secret in GitHub
+  DB_PORT: "NTQzMgo=" # TODO:  Store this as a secret in GitHub
+  DB_NAME: "ZGVmYXVsdGRiCg==" # TODO:  Store this as a secret in GitHub
 
 ---
 # API deployment
@@ -29,8 +29,9 @@ spec:
         app: api
     spec:
       containers:
-        - name: aphiria.com-api
+        - name: aphiria-com-api
           image: aphiria.com-api:latest
+          imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8000
           envFrom:
@@ -68,8 +69,9 @@ spec:
         app: web
     spec:
       containers:
-        - name: aphiria.com-web
+        - name: aphiria-com-web
           image: aphiria.com-web:latest
+          imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 80
 
@@ -188,7 +190,7 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: aphiria.com-api
+                name: aphiria-com-api
                 port:
                   number: 8080
     - host: aphiria.com
@@ -198,6 +200,6 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: aphiria.com-web
+                name: aphiria-com-web
                 port:
                   number: 8000
