@@ -130,9 +130,9 @@ spec:
                 name: secrets
           volumeMounts:
             - mountPath: /var/lib/postgresql/data
-              name: postgredb # TODO
+              name: db # TODO
       volumes:
-        - name: postgredb # TODO
+        - name: db # TODO
           persistentVolumeClaim:
             claimName: db-pv-claim
 
@@ -169,3 +169,35 @@ spec:
   resources:
     requests:
       storage: 5Gi
+
+---
+# Ingress controller
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: nginx-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  ingressClassName: nginx-ingress
+  rules:
+    - host: api.aphiria.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: aphiria.com-api
+                port:
+                  number: 8080
+    - host: aphiria.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: aphiria.com-web
+                port:
+                  number: 8000
