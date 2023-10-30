@@ -106,44 +106,11 @@ spec:
     app: db
 
 ---
-# DB deployment
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: db
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: db
-  template:
-    metadata:
-      labels:
-        app: db
-    spec:
-      containers:
-        - name: db
-          image: postgres:16.0
-          imagePullPolicy: IfNotPresent
-          ports:
-            - containerPort: 5432
-          envFrom:
-            - secretRef:
-                name: secrets
-          volumeMounts:
-            - mountPath: /var/lib/postgresql/data
-              name: db # TODO
-      volumes:
-        - name: db # TODO
-          persistentVolumeClaim:
-            claimName: db-pv-claim
-
----
 # DB persistent volume
 apiVersion: v1
 kind: PersistentVolume
 metadata:
-  name: db-pv-volume
+  name: db-pv
   labels:
     type: local
     app: db
@@ -154,7 +121,7 @@ spec:
   accessModes:
     - ReadWriteMany
   hostPath:
-    path: "/mnt/data"
+    path: /mnt/data
 
 ---
 # DB persistent volume claim
@@ -171,6 +138,50 @@ spec:
   resources:
     requests:
       storage: 5Gi
+
+---
+# DB deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: db
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: db
+  template:
+    metadata:
+      labels:
+        app: db
+    spec:
+      containers:
+        - name: db
+          image: postgres:16
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 5432
+          envFrom:
+            - secretRef:
+                name: secrets
+          volumeMounts:
+            - mountPath: /var/lib/postgresql/data
+              name: db-data
+          env:
+          - name: POSTGRES_USER
+            valueFrom:
+              secretKeyRef:
+                name: secrets
+                key: DB_USER
+          - name: POSTGRES_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: secrets
+                key: DB_PASSWORD
+      volumes:
+        - name: db-data
+          persistentVolumeClaim:
+            claimName: db-pv-claim
 
 ---
 # Ingress controller
