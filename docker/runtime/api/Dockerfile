@@ -1,13 +1,13 @@
 FROM aphiria.com-build
 
-WORKDIR /var/www
+WORKDIR /app/api
 
-COPY ./public-api ./html
-COPY ./src ./src
-COPY ./tests ./tests
-COPY ./tmp ./tmp
-COPY ./vendor ./vendor
-COPY ./.env ./.env
-COPY ./aphiria ./aphiria
-COPY ./composer.json ./composer.json
-COPY ./phpunit.xml.dist ./phpunit.xml.dist
+COPY --from=aphiria.com-build ./app/public-api ./public
+COPY --from=aphiria.com-build ./app/src ./src
+COPY --from=aphiria.com-build ./app/tests ./tests
+COPY --from=aphiria.com-build ./app/tmp ./tmp
+COPY --from=aphiria.com-build ./app/vendor ./vendor
+COPY --from=aphiria.com-build ./app/.env ./.env
+COPY --from=aphiria.com-build ./app/aphiria ./aphiria
+COPY --from=aphiria.com-build ./app/composer.json ./composer.json
+COPY --from=aphiria.com-build ./app/phpunit.xml.dist ./phpunit.xml.dist

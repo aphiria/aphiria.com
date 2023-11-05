@@ -1,3 +1,9 @@
+# TODOS
+# - Can/should I set the domains to something like api.aphiria.local and aphiria.local, and swap in the prod values when deploying?  What's SOP?
+# - Am I actually hitting my local k8s cluster when currently hitting aphiria.com?
+# - Update README.md
+
+
 # Secrets
 apiVersion: v1
 kind: Secret
@@ -11,46 +17,6 @@ data:
   DB_PASSWORD: "dGVzdC1wYXNzd29yZAo=" # TODO:  Store this as a secret in GitHub
   DB_PORT: "NTQzMgo=" # TODO:  Store this as a secret in GitHub
   DB_NAME: "ZGVmYXVsdGRiCg==" # TODO:  Store this as a secret in GitHub
-
----
-# API deployment
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: api
-spec:
-  replicas: 2
-  selector:
-    matchLabels:
-      app: api
-  template:
-    metadata:
-      labels:
-        app: api
-    spec:
-      containers:
-        - name: aphiria-com-api
-          image: aphiria.com-api:latest
-          imagePullPolicy: IfNotPresent
-          ports:
-            - containerPort: 8000
-          envFrom:
-            - secretRef:
-                name: secrets
-
----
-# API service
-apiVersion: v1
-kind: Service
-metadata:
-  name: api
-spec:
-  selector:
-    app: api
-  ports:
-    - protocol: TCP
-      port: 8000
-      targetPort: 8000
 
 ---
 # Web deployment
@@ -203,7 +169,7 @@ spec:
               service:
                 name: aphiria-com-api
                 port:
-                  number: 8080
+                  number: 8000
     - host: aphiria.com
       http:
         paths:
@@ -213,25 +179,103 @@ spec:
               service:
                 name: aphiria-com-web
                 port:
-                  number: 8000
+                  number: 80
 
-# TODO:
-# TODO: nginx is failing to deploy, look more closely into it
 ---
+# API service
+apiVersion: v1
+kind: Service
+metadata:
+  name: aphiria-com-api
+spec:
+  selector:
+    app: aphiria-com-api
+  ports:
+    - protocol: TCP
+      port: 8000
+      targetPort: 8000
+
+---
+# API code volume claim
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: api-code-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+
+---
+# API deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: aphiria-com-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: aphiria-com-api
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: aphiria-com-api
+    spec:
+      containers:
+        - name: nginx
+          image: nginx:alpine
+          ports:
+            - containerPort: 80
+          volumeMounts:
+            - name: shared-code
+              mountPath: /usr/share/nginx/html
+            - name: nginx-config
+              mountPath: /etc/nginx/conf.d/default.conf
+              subPath: default.conf
+        - name: php
+          image: aphiria.com-api:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 9000
+          envFrom:
+            - secretRef:
+                name: secrets
+          volumeMounts:
+            - name: shared-code
+              mountPath: /var/www/html
+      volumes:
+        - name: shared-code
+          persistentVolumeClaim:
+            claimName: api-code-pvc
+        - name: nginx-config
+          configMap:
+            name: nginx-config
+            items:
+              - key: default.conf
+                path: default.conf
+
+---
+# nginx config to serve PHP files
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: nginx-config
 data:
-  config : |
+  default.conf: |
     server {
       index index.php index.html;
       error_log  /var/log/nginx/error.log;
       access_log /var/log/nginx/access.log;
-      root /code/public;
+      root /usr/share/nginx/html;
       add_header X-Frame-Options "SAMEORIGIN";
       add_header X-XSS-Protection "1; mode=block";
       add_header X-Content-Type-Options "nosniff";
+
       location / {
           try_files $uri $uri/ /index.php?$query_string;
       }
@@ -246,46 +290,3 @@ data:
           fastcgi_param PATH_INFO $fastcgi_path_info;
         }
     }
-
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: nginx
-spec:
-  selector:
-    app: nginx
-  ports:
-    - protocol: TCP
-      port: 9000
-
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: nginx
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: nginx
-  template:
-    metadata:
-      labels:
-        app: nginx
-    spec:
-      volumes:
-        - name: config
-          configMap:
-            name: nginx-config
-            items:
-              - key: config
-                path: site.conf
-      containers:
-        - name: nginx
-          image: nginx:1.7
-          ports:
-            - containerPort: 80
-          volumeMounts:
-            - name: config
-              mountPath: /etc/nginx/conf.d
