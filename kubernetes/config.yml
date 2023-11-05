@@ -1,4 +1,5 @@
 # TODOS
+# - Add a "Job" to run DB migrations with
 # - Can/should I set the domains to something like api.aphiria.local and aphiria.local, and swap in the prod values when deploying?  What's SOP?
 # - Am I actually hitting my local k8s cluster when currently hitting aphiria.com?
 # - Update README.md
@@ -35,7 +36,7 @@ spec:
         app: web
     spec:
       containers:
-        - name: aphiria-com-web
+        - name: web
           image: aphiria.com-web:latest
           imagePullPolicy: IfNotPresent
           ports:
@@ -48,13 +49,12 @@ kind: Service
 metadata:
   name: web
 spec:
-  type: LoadBalancer
   selector:
     app: web
   ports:
-    - protocol: TCP
-      port: 80
-      targetPort: 80
+    - name: web
+      protocol: TCP
+      port: 8000
 
 ---
 # DB service
@@ -65,7 +65,6 @@ metadata:
   labels:
     app: db
 spec:
-  type: NodePort
   ports:
     - port: 5432
   selector:
@@ -112,7 +111,7 @@ kind: Deployment
 metadata:
   name: db
 spec:
-  replicas: 2
+  replicas: 2 # TODO: What does having multiple replicas of the DB actually do for us?
   selector:
     matchLabels:
       app: db
@@ -167,9 +166,9 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: aphiria-com-api
+                name: api
                 port:
-                  number: 8000
+                  name: api
     - host: aphiria.com
       http:
         paths:
@@ -177,23 +176,24 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: aphiria-com-web
+                name: web
                 port:
-                  number: 80
+                  name: web
 
 ---
 # API service
 apiVersion: v1
 kind: Service
 metadata:
-  name: aphiria-com-api
+  name: api
 spec:
   selector:
-    app: aphiria-com-api
+    app: api
   ports:
-    - protocol: TCP
-      port: 8000
-      targetPort: 8000
+    - name: api
+      protocol: TCP
+      port: 8080
+      # TODO: Remove? targetPort: 8080
 
 ---
 # API code volume claim
@@ -213,18 +213,18 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: aphiria-com-api
+  name: api
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: aphiria-com-api
+      app: api
   strategy:
     type: Recreate
   template:
     metadata:
       labels:
-        app: aphiria-com-api
+        app: api
     spec:
       containers:
         - name: nginx
