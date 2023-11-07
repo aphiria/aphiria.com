@@ -1,10 +1,17 @@
 # TODOS
-# - I believe my issue is with Windows running localhost on port 80 via the ingress controller.  Running  kubectl port-forward ingress-nginx-controller-7799c6795f-xgbbd 8080:80 -n ingress-nginx (grab the actual pod name via kubectl get pods -n ingress-nginx) allows me to hit www.aphiria.com:8080.
+# - Need to fix where I'm copying my API code to.  Currently, it's in /app/api, but I don't see anywhere where we're then getting that code into the correct place in the mounted volume.  Also, make sure we're only exposing on the internet what is in the public directory.
+# - The API URL is currently set from the .env file, whose values are used to compile resources/views/partials/head.html.  I need to be able to set this to the appropriate environment URL.  What's the best way to do this if my views are compiled when building the Docker image, which is before I introduce the idea of environments via k8s.
 # - Add a "Job" to run DB migrations with
 # - Can/should I set the domains to something like api.aphiria.local and aphiria.local, and swap in the prod values when deploying?  What's SOP?
-# - Add readiness probes to web and API
+# - Add readiness probes to API
 # - Should I add namespaces?
-# - Update README.md, possibly including the .wslconfig I need to add per https://superuser.com/questions/1594420/cant-access-127-0-0-180-outside-of-wsl2-ubuntu-20-04 to allow accessing localhost on port 80 in WSL2 from Windows
+# - Update README.md
+
+# README Updates
+# Install kubectl, minikube, "minikube addons enable ingress", add "127.0.0.1 aphiria.com" "127.0.0.1 www.aphiria.com" and "127.0.0.1 api.aphiria.com" to C:\Windows\System32\drivers\etc\hosts.
+# kubectl apply -f kubernetes/config.yml
+# Run "minikube dashboard" to pull up a GUI for minikube resources
+# If running in WSL2, run "minikube tunnel" because Windows is considered external to WSL2, which is hosting minikube
 
 
 # Secrets
@@ -163,7 +170,7 @@ metadata:
   name: nginx-ingress
   annotations:
     nginx.ingress.kubernetes.io/rewrite-target: /
-    nginx.ingress.kubernetes.io/from-to-www-redirect: "true" # TODO: See if this actually works as expected and doesn't interfere with api.aphiria.com
+    nginx.ingress.kubernetes.io/from-to-www-redirect: "true"
 spec:
   ingressClassName: nginx
   rules:
@@ -284,7 +291,7 @@ data:
       add_header X-Content-Type-Options "nosniff";
 
       location / {
-          try_files $uri $uri/ /index.php?$query_string;
+          try_files $uri $uri/ /index.php$is_args$args
       }
 
       location ~ \.php$ {
