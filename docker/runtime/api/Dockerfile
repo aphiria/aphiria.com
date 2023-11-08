@@ -1,4 +1,5 @@
-FROM aphiria.com-build
+#FROM aphiria.com-build
+FROM php:8.2-fpm
 
 WORKDIR /app/api
 

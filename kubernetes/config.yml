@@ -9,6 +9,7 @@
 
 # README Updates
 # Install kubectl, minikube, "minikube addons enable ingress", add "127.0.0.1 aphiria.com" "127.0.0.1 www.aphiria.com" and "127.0.0.1 api.aphiria.com" to C:\Windows\System32\drivers\etc\hosts.
+# Build docker files, but first run "eval $(minikube -p minikube docker-env)" so that they're put in minikube's Docker repository
 # kubectl apply -f kubernetes/config.yml
 # Run "minikube dashboard" to pull up a GUI for minikube resources
 # If running in WSL2, run "minikube tunnel" because Windows is considered external to WSL2, which is hosting minikube
@@ -210,19 +211,6 @@ spec:
       port: 80
 
 ---
-# API code volume claim
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: api-code-pvc
-spec:
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 1Gi
-
----
 # API deployment
 apiVersion: apps/v1
 kind: Deployment
@@ -240,13 +228,22 @@ spec:
       labels:
         app: api
     spec:
+      # Copy the PHP source code into a shared volume that is mounted to PHP-FPM and nginx
+      initContainers:
+        - name: copy-api-code
+          image: aphiria.com-api:latest
+          imagePullPolicy: IfNotPresent
+          command: [ 'sh', '-c', 'cp -R /app/api/* /usr/share/nginx/html' ]
+          volumeMounts:
+            - name: api-code
+              mountPath: /usr/share/nginx/html
       containers:
         - name: nginx
           image: nginx:alpine
           ports:
             - containerPort: 80
           volumeMounts:
-            - name: shared-code
+            - name: api-code
               mountPath: /usr/share/nginx/html
             - name: nginx-config
               mountPath: /etc/nginx/conf.d/default.conf
@@ -260,12 +257,11 @@ spec:
             - secretRef:
                 name: secrets
           volumeMounts:
-            - name: shared-code
+            - name: api-code
               mountPath: /var/www/html
       volumes:
-        - name: shared-code
-          persistentVolumeClaim:
-            claimName: api-code-pvc
+        - name: api-code
+          emptyDir: {}
         - name: nginx-config
           configMap:
             name: nginx-config
@@ -282,25 +278,25 @@ metadata:
 data:
   default.conf: |
     server {
-      index index.php index.html;
-      error_log  /var/log/nginx/error.log;
-      access_log /var/log/nginx/access.log;
-      root /usr/share/nginx/html;
-      add_header X-Frame-Options "SAMEORIGIN";
-      add_header X-XSS-Protection "1; mode=block";
-      add_header X-Content-Type-Options "nosniff";
+        index index.php index.html;
+        error_log  /var/log/nginx/error.log;
+        access_log /var/log/nginx/access.log;
+        root /usr/share/nginx/html/public;
+        add_header X-Frame-Options "SAMEORIGIN";
+        add_header X-XSS-Protection "1; mode=block";
+        add_header X-Content-Type-Options "nosniff";
 
-      location / {
-          try_files $uri $uri/ /index.php$is_args$args
-      }
+        location / {
+            try_files $uri $uri/ /index.php$is_args$args;
+        }
 
-      location ~ \.php$ {
-          try_files $uri =404;
-          fastcgi_split_path_info ^(.+\.php)(/.+)$;
-          fastcgi_pass php:9000;
-          fastcgi_index index.php;
-          include fastcgi_params;
-          fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
-          fastcgi_param PATH_INFO $fastcgi_path_info;
+        location ~ \.php$ {
+            try_files $uri =404;
+            fastcgi_split_path_info ^(.+\.php)(/.+)$;
+            fastcgi_pass php:9000;
+            fastcgi_index index.php;
+            include fastcgi_params;
+            fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+            fastcgi_param PATH_INFO $fastcgi_path_info;
         }
     }
