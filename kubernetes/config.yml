@@ -209,6 +209,10 @@ spec:
     - name: api
       protocol: TCP
       port: 80
+    - name: fastcgi
+      protocol: TCP
+      port: 9000
+      targetPort: 9000
 
 ---
 # API deployment
@@ -258,7 +262,7 @@ spec:
                 name: secrets
           volumeMounts:
             - name: api-code
-              mountPath: /var/www/html
+              mountPath: /app/api
       volumes:
         - name: api-code
           emptyDir: {}
@@ -291,9 +295,10 @@ data:
         }
 
         location ~ \.php$ {
-            try_files $uri =404;
+            #try_files $uri =404;
             fastcgi_split_path_info ^(.+\.php)(/.+)$;
-            fastcgi_pass php:9000;
+            # Pass this through to the PHP image running in this pod on port 9000
+            fastcgi_pass 127.0.0.1:9000;
             fastcgi_index index.php;
             include fastcgi_params;
             fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;

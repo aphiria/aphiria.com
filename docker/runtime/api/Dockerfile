@@ -13,3 +13,5 @@ COPY --from=aphiria.com-build ./app/.env ./.env
 COPY --from=aphiria.com-build ./app/aphiria ./aphiria
 COPY --from=aphiria.com-build ./app/composer.json ./composer.json
 COPY --from=aphiria.com-build ./app/phpunit.xml.dist ./phpunit.xml.dist
+
+EXPOSE 9000
