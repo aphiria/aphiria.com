@@ -237,7 +237,7 @@ spec:
         - name: copy-api-code
           image: aphiria.com-api:latest
           imagePullPolicy: IfNotPresent
-          command: [ 'sh', '-c', 'cp -R /app/api/* /usr/share/nginx/html' ]
+          command: [ 'sh', '-c', 'cp -R /app/api/. /usr/share/nginx/html' ]
           volumeMounts:
             - name: api-code
               mountPath: /usr/share/nginx/html
