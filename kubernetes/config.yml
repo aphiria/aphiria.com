@@ -21,11 +21,9 @@ apiVersion: v1
 kind: Secret
 metadata:
   name: env-var-secrets
-  labels:
-    app: env-var-secrets
-data:
-  DB_USER: "dGVzdC11c2VyCg==" # TODO:  Store this as a secret in GitHub
-  DB_PASSWORD: "dGVzdC1wYXNzd29yZAo=" # TODO:  Store this as a secret in GitHub
+stringData:
+  DB_USER: testuser # TODO:  Store this as a secret in GitHub
+  DB_PASSWORD: testpassword # TODO:  Store this as a secret in GitHub
 
 ---
 # Environment vars
