@@ -42,7 +42,7 @@ data:
   APP_COOKIE_DOMAIN: .aphiria.com
   APP_COOKIE_SECURE: "0"
   DB_HOST: db
-  DB_NAME: defaultdb
+  DB_NAME: postgres
   DB_PORT: "5432" # Make sure this matches the database service port
   DOC_LEXEMES_TABLE_NAME: ""
   LOG_LEVEL: debug
@@ -171,6 +171,8 @@ spec:
               secretKeyRef:
                 name: env-var-secrets
                 key: DB_PASSWORD
+          - name: PGDATA
+            value: /var/lib/postgresql/data/pgdata
           readinessProbe:
             exec:
               command:
