@@ -27,6 +27,7 @@ use Aphiria\DependencyInjection\Binders\Metadata\Caching\IBinderMetadataCollecti
 use Aphiria\DependencyInjection\IContainer;
 use Aphiria\Framework\Api\Binders\ControllerBinder;
 use Aphiria\Framework\Api\Binders\RequestHandlerBinder;
+use Aphiria\Framework\Api\Exceptions\ExceptionHandler;
 use Aphiria\Framework\Application\AphiriaModule;
 use Aphiria\Framework\Console\Binders\CommandBinder;
 use Aphiria\Framework\Console\Binders\CommandHandlerBinder;
@@ -85,6 +86,9 @@ final class GlobalModule extends AphiriaModule implements IBootstrapper
             ->withRouteAttributes($appBuilder)
             ->withValidatorAttributes($appBuilder)
             ->withCommandAttributes($appBuilder)
+            ->withGlobalMiddleware($appBuilder, [
+                new MiddlewareBinding(ExceptionHandler::class)
+            ])
             ->withBinders($appBuilder, [
                 new ExceptionHandlerBinder(),
                 new RequestBinder(),

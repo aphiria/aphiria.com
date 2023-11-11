@@ -323,7 +323,6 @@ data:
         }
 
         location ~ \.php$ {
-            #try_files $uri =404;
             fastcgi_split_path_info ^(.+\.php)(/.+)$;
             # Pass this through to the PHP image running in this pod on port 9000
             fastcgi_pass 127.0.0.1:9000;

@@ -10,15 +10,19 @@
 
 declare(strict_types=1);
 
-namespace App\Tests\Integration\Health;
+namespace App\Tests\Integration;
 
 use Aphiria\Net\Http\HttpStatusCode;
-use App\Tests\Integration\IntegrationTestCase;
 
-class HealthTest extends IntegrationTestCase
+class ApiTest extends IntegrationTestCase
 {
     public function testCheckingHealthReturns200(): void
     {
         $this->assertStatusCodeEquals(HttpStatusCode::Ok, $this->get('/health'));
+    }
+
+    public function testNonExistentRouteReturns404(): void
+    {
+        $this->assertStatusCodeEquals(HttpStatusCode::NotFound, $this->get('/does-not-exist'));
     }
 }
