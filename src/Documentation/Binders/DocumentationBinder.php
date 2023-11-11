@@ -57,10 +57,8 @@ final class DocumentationBinder extends Binder
         );
         $container->bindInstance(FilesystemOperator::class, $files);
         $searchIndex = new PostgreSqlSearchIndex(
-            (string)\getenv('DOC_LEXEMES_TABLE_NAME'),
             $container->resolve(PDO::class),
             "/docs/{$metadata->getDefaultVersion()}/",
-            '/.env',
             $files
         );
         $docs = new DocumentationService(

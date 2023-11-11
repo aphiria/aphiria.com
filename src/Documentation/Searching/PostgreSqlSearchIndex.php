@@ -15,7 +15,6 @@ namespace App\Documentation\Searching;
 use DOMDocument;
 use DOMNode;
 use Exception;
-use League\Flysystem\FilesystemException;
 use League\Flysystem\FilesystemOperator;
 use PDO;
 use Throwable;
@@ -27,6 +26,8 @@ final class PostgreSqlSearchIndex implements ISearchIndex
 {
     /** @var int The maximum number of search results we'll return */
     private const MAX_NUM_SEARCH_RESULTS = 5;
+    /** @var string The name of the table */
+    private const TABLE_NAME = 'lexemes';
     /** @var array<string, string> The mapping of HTML elements to their weights (per PostgreSQL's setweight() function) */
     private static array $htmlElementsToWeights = [
         'h1' => 'A',
@@ -40,17 +41,13 @@ final class PostgreSqlSearchIndex implements ISearchIndex
     ];
 
     /**
-     * @param string $lexemeTableName The name of the table to point to (MUST BE SECURE BECAUSE IT'S USED DIRECTLY IN QUERIES)
      * @param PDO $pdo The DB connection to use
      * @param string $linkPrefix The prefix to use for all links that are generated
-     * @param string $envPath The path to the .env file to update whenever we build the search index
      * @param FilesystemOperator $files The file system helper
      */
     public function __construct(
-        private string $lexemeTableName,
         private readonly PDO $pdo,
         private readonly string $linkPrefix,
-        private readonly string $envPath,
         private readonly FilesystemOperator $files
     ) {
     }
@@ -140,20 +137,21 @@ final class PostgreSqlSearchIndex implements ISearchIndex
          * The goofy array_to_string(string_to_array(...)) stuff is splitting a query by spaces, adding ':*' after
          * each term, and joining them with '&' so that it forms a valid tsquery.
          */
+        $tableName = self::TABLE_NAME;
         $tsHeadlineOptions = 'StartSel=<em>, StopSel=</em>';
         $statement = $this->pdo->prepare(
             <<<EOF
 SELECT DISTINCT ON(rank, link, html_element_type) link, html_element_type, rank, h1_highlights, h2_highlights, h3_highlights, h4_highlights, h5_highlights, inner_text_highlights FROM
 ((SELECT link, html_element_type, rank, ts_headline('english', h1_inner_text, query, '{$tsHeadlineOptions}') as h1_highlights, ts_headline('english', h2_inner_text, query, '{$tsHeadlineOptions}') as h2_highlights, ts_headline('english', h3_inner_text, query, '{$tsHeadlineOptions}') as h3_highlights, ts_headline('english', h4_inner_text, query, '{$tsHeadlineOptions}') as h4_highlights, ts_headline('english', h5_inner_text, query, '{$tsHeadlineOptions}') as h5_highlights, ts_headline('english', inner_text, query, '{$tsHeadlineOptions}') as inner_text_highlights
 FROM (SELECT link, html_element_type, h1_inner_text, h2_inner_text, h3_inner_text, h4_inner_text, h5_inner_text, inner_text, ts_rank_cd(english_lexemes, query) AS rank, query
-        FROM {$this->lexemeTableName}, plainto_tsquery('english', :query) AS query
+        FROM {$tableName}, plainto_tsquery('english', :query) AS query
         WHERE english_lexemes @@ query
         ORDER BY rank DESC
         LIMIT :maxResults) AS english_matching_query)
 UNION
 (SELECT link, html_element_type, rank, ts_headline(h1_inner_text, query, '{$tsHeadlineOptions}') as h1_highlights, ts_headline(h2_inner_text, query, '{$tsHeadlineOptions}') as h2_highlights, ts_headline(h3_inner_text, query, '{$tsHeadlineOptions}') as h3_highlights, ts_headline(h4_inner_text, query, '{$tsHeadlineOptions}') as h4_highlights, ts_headline(h5_inner_text, query, '{$tsHeadlineOptions}') as h5_highlights, ts_headline(inner_text, query, '{$tsHeadlineOptions}') as inner_text_highlights
     FROM (SELECT link, html_element_type, h1_inner_text, h2_inner_text, h3_inner_text, h4_inner_text, h5_inner_text, inner_text, ts_rank_cd(simple_lexemes, query) AS rank, query
-          FROM {$this->lexemeTableName}, (SELECT (SELECT (array_to_string(string_to_array(:query, ' '), ':* & ') || ':*'))::tsquery AS query) AS query
+          FROM {$tableName}, (SELECT (SELECT (array_to_string(string_to_array(:query, ' '), ':* & ') || ':*'))::tsquery AS query) AS query
           WHERE simple_lexemes @@ query
           ORDER BY rank DESC
           LIMIT :maxResults) AS non_english_matching_query)) AS distinct_query
@@ -189,7 +187,6 @@ EOF
      * Creates and seeds the doc table
      *
      * @param list<IndexEntry> $indexEntries The index entries to save
-     * @throws FilesystemException Thrown if there was an error reading the .env file
      */
     private function createAndSeedTable(array $indexEntries): void
     {
@@ -197,8 +194,8 @@ EOF
          * Update the current lexeme table name (limited to 8 chars so we don't go over PostgreSQL name length limits).
          * This is done so that reindexing the website only impacts this instance of the site.
          */
-        $this->lexemeTableName = 'lexemes_' . \substr(\hash('sha256', \random_bytes(32)), 0, 8);
         $this->pdo->beginTransaction();
+        $this->dropTable();
         $this->createTable();
 
         foreach ($indexEntries as $indexEntry) {
@@ -208,7 +205,6 @@ EOF
         $this->updateLexemes();
         $this->createTableIndices();
         $this->pdo->commit();
-        $this->updateEnvFile();
     }
 
     /**
@@ -275,9 +271,10 @@ EOF
      */
     private function createTable(): void
     {
+        $tableName = self::TABLE_NAME;
         $statement = $this->pdo->prepare(
             <<<EOF
-CREATE TABLE {$this->lexemeTableName} (
+CREATE TABLE IF NOT EXISTS {$tableName} (
     id serial primary key,
     h1_inner_text TEXT,
     h2_inner_text TEXT,
@@ -301,15 +298,30 @@ EOF
      */
     private function createTableIndices(): void
     {
+        $tableName = self::TABLE_NAME;
         $statement = $this->pdo->prepare(
             <<<EOF
-CREATE INDEX {$this->lexemeTableName}_english_lexeme_idx ON {$this->lexemeTableName} USING gin(english_lexemes)
+CREATE INDEX {$tableName}_english_lexeme_idx ON {$tableName} USING gin(english_lexemes)
 EOF
         );
         $statement->execute();
         $statement = $this->pdo->prepare(
             <<<EOF
-CREATE INDEX {$this->lexemeTableName}_simple_lexeme_idx ON {$this->lexemeTableName} USING gin(simple_lexemes)
+CREATE INDEX {$tableName}_simple_lexeme_idx ON {$tableName} USING gin(simple_lexemes)
+EOF
+        );
+        $statement->execute();
+    }
+
+    /**
+     * Drops the table that hold our docs
+     */
+    private function dropTable(): void
+    {
+        $tableName = self::TABLE_NAME;
+        $statement = $this->pdo->prepare(
+            <<<EOF
+DROP TABLE IF EXISTS {$tableName}
 EOF
         );
         $statement->execute();
@@ -343,9 +355,10 @@ EOF
      */
     private function insertIndexEntry(IndexEntry $indexEntry): void
     {
+        $tableName = self::TABLE_NAME;
         $statement = $this->pdo->prepare(
             <<<EOF
-INSERT INTO {$this->lexemeTableName} (h1_inner_text, h2_inner_text, h3_inner_text, h4_inner_text, h5_inner_text, link, html_element_type, inner_text, html_element_weight)
+INSERT INTO {$tableName} (h1_inner_text, h2_inner_text, h3_inner_text, h4_inner_text, h5_inner_text, link, html_element_type, inner_text, html_element_weight)
 VALUES (:h1InnerText, :h2InnerText, :h3InnerText, :h4InnerText, :h5InnerText, :link, :htmlElementType, :innerText, :htmlElementWeight)
 EOF
         );
@@ -363,29 +376,14 @@ EOF
     }
 
     /**
-     * Updates the .env file to point to the new table
-     *
-     * @throws FilesystemException Thrown if the .env file did not exist
-     */
-    private function updateEnvFile(): void
-    {
-        $currEnvContents = $this->files->read($this->envPath);
-        $newContents = \preg_replace(
-            '/DOC_LEXEMES_TABLE_NAME=[^\r\n]+/',
-            "DOC_LEXEMES_TABLE_NAME={$this->lexemeTableName}",
-            $currEnvContents
-        );
-        $this->files->write($this->envPath, $newContents);
-    }
-
-    /**
      * Updates the lexemes in all our rows
      */
     private function updateLexemes(): void
     {
+        $tableName = self::TABLE_NAME;
         $statement = $this->pdo->prepare(
             <<<EOF
-UPDATE {$this->lexemeTableName} SET english_lexemes = setweight(to_tsvector('english', COALESCE(inner_text, '')), html_element_weight::"char"), simple_lexemes = setweight(to_tsvector(COALESCE(inner_text, '')), html_element_weight::"char")
+UPDATE {$tableName} SET english_lexemes = setweight(to_tsvector('english', COALESCE(inner_text, '')), html_element_weight::"char"), simple_lexemes = setweight(to_tsvector(COALESCE(inner_text, '')), html_element_weight::"char")
 EOF
         );
         $statement->execute();
