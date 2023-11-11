@@ -1,4 +1,4 @@
-import config from '/js/config.js';
+import config from '/js/config/config.js';
 
 window.addEventListener('load', loadEvent => {
     // Add focus to the search bar as long as there's no hash (autofocus attribute prevents scrolling to the ID held in the hash)

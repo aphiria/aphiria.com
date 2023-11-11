@@ -83,6 +83,10 @@ final class DocumentationService
                 $htmlFilesToIndex[] = $htmlDocPath;
             }
 
+            if (empty($htmlFilesToIndex)) {
+                throw new IndexingFailedException('There are no documents to index');
+            }
+
             $this->searchIndex->buildSearchIndex($htmlFilesToIndex);
         } catch (FilesystemException $ex) {
             throw new IndexingFailedException('Failed to index documents', 0, $ex);

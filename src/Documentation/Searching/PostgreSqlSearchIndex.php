@@ -60,6 +60,10 @@ final class PostgreSqlSearchIndex implements ISearchIndex
      */
     public function buildSearchIndex(array $htmlPaths): void
     {
+        if (empty($htmlPaths)) {
+            throw new IndexingFailedException('There are no documents to index');
+        }
+
         try {
             $indexEntries = [];
             $dom = new DOMDocument();
