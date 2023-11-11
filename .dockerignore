@@ -2,4 +2,5 @@
 /.env.dist
 /.git/
 /.idea/
+/tmp/framework/**/*.txt
 /tmp/logs/errors.txt

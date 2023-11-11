@@ -16,3 +16,4 @@ COPY . .
 # Install dependencies and build the app
 RUN composer install --no-interaction && composer dump-autoload -o
 RUN yarn install && yarn global add gulp && gulp build
+

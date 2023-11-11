@@ -55,7 +55,7 @@ kind: Deployment
 metadata:
   name: web
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: web
@@ -176,16 +176,8 @@ spec:
             value: /var/lib/postgresql/data/pgdata
           readinessProbe:
             exec:
-              command:
-                - pg_isready
-                - -U
-                - $(POSTGRES_USER)
-                - -d
-                - $(POSTGRES_DB)
-                - -h
-                - 127.0.0.1
-                - -p
-                - "5432" # Make sure this matches the DB_PORT environment var
+              # Make sure the port matches the DB_PORT environment var
+              command: [ 'pg_isready', '-U', '$(POSTGRES_USER)', '-d', '$(POSTGRES_DB)', '-h', '127.0.0.1', '-p', '5432']
             initialDelaySeconds: 5
             periodSeconds: 10
             timeoutSeconds: 5
@@ -270,7 +262,8 @@ spec:
         - name: copy-api-code
           image: aphiria.com-api:latest
           imagePullPolicy: IfNotPresent # TODO: This should be "Always" so I am getting the latest image, but manually loading the image into minikube via "minikube image load aphiria.com-api:latest" is not working
-          command: [ 'sh', '-c', 'cp -R /app/api/. /usr/share/nginx/html' ]
+          # We copy and preserve the permissions so that nginx has access to things like the tmp directory
+          command: [ 'sh', '-c', 'cp -Rp /app/api/. /usr/share/nginx/html' ]
           volumeMounts:
             - name: api-code
               mountPath: /usr/share/nginx/html
@@ -338,5 +331,6 @@ data:
             include fastcgi_params;
             fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
             fastcgi_param PATH_INFO $fastcgi_path_info;
+            fastcgi_hide_header X-Powered-By;
         }
     }

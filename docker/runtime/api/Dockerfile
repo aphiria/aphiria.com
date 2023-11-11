@@ -19,4 +19,7 @@ COPY --from=aphiria.com-build ./app/composer.json ./composer.json
 COPY --from=aphiria.com-build ./app/config.php ./config.php
 COPY --from=aphiria.com-build ./app/phpunit.xml.dist ./phpunit.xml.dist
 
+# Allow nginx to write to tmp
+RUN chown -R www-data:www-data .
+
 EXPOSE 9000
