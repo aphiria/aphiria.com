@@ -25,7 +25,6 @@ final class ViewCompiler
     /**
      * @param string $rawViewPath The path to our raw views
      * @param string $compiledViewPath The path to store our compiled views
-     * @param string $apiUri The URI to the API
      * @param DocumentationMetadata $docMetadata The doc metadata
      * @param FilesystemOperator $files The file system helper
      */
@@ -33,7 +32,6 @@ final class ViewCompiler
         private readonly string $rawViewPath,
         private readonly string $compiledViewPath,
         private readonly DocumentationMetadata $docMetadata,
-        private readonly string $apiUri,
         private readonly FilesystemOperator $files
     ) {
     }
@@ -90,7 +88,6 @@ final class ViewCompiler
         $headContents = $this->files->read("$this->rawViewPath/partials/head.html");
         $compiledHeadContents = $this->compileTag('metadataKeywords', \implode(',', $metadataKeywords), $headContents);
         $compiledHeadContents = $this->compileTag('metadataDescription', $metadataDescription, $compiledHeadContents);
-        $compiledHeadContents = $this->compileTag('apiUri', $this->apiUri, $compiledHeadContents);
         $compiledPageContents = $this->compileTag('head', $compiledHeadContents, $pageContents);
 
         // Compile the main nav

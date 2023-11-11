@@ -1,3 +1,5 @@
+import config from '/js/config.js';
+
 window.addEventListener('load', loadEvent => {
     // Add focus to the search bar as long as there's no hash (autofocus attribute prevents scrolling to the ID held in the hash)
     if (!window.location.hash) {
@@ -111,7 +113,7 @@ window.addEventListener('load', loadEvent => {
         } else if (searchInputElem.value !== prevSearchQuery) {
             timer = setTimeout(() => {
                 prevSearchQuery = searchInputElem.value;
-                fetch(`${apiUri}/docs/search?query=${encodeURIComponent(searchInputElem.value)}`)
+                fetch(`${config.apiUri}/docs/search?query=${encodeURIComponent(searchInputElem.value)}`)
                     .then((response) => response.json())
                     .then(searchResults => {
                         let searchResultItems = '';

@@ -83,7 +83,8 @@ const cleanCss = () => {
     return del([`${paths.tmpCss}/*.css`, `${paths.publicCss}/*.css`, `${paths.publicCss}/*.css.map`]);
 };
 const cleanJs = () => {
-    return del([`${paths.tmpJs}/*.js`, `${paths.publicJs}/*.js`, `${paths.publicJs}/*.js.map`]);
+    // Delete everything but the config.js
+    return del([`${paths.tmpJs}/*.js`, `${paths.publicJs}/*.js`, `${paths.publicJs}/*.js.map`, `!${paths.publicJs}/config.js`]);
 };
 
 gulp.task('rewrite-references', rewriteReferences);

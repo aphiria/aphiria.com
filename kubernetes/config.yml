@@ -1,5 +1,4 @@
 # TODOS
-# - Determine how to actually hit the database from the API because things seem broken
 # - The API URL is currently set from the .env file, whose values are used to compile resources/views/partials/head.html.  I need to be able to set this to the appropriate environment URL.  What's the best way to do this if my views are compiled when building the Docker image, which is before I introduce the idea of environments via k8s.
 # - Add a "Job" to run DB migrations with
 # - Need to totally overhaul how I am currently creating new lexeme tables and storing them in the .env file
@@ -9,7 +8,7 @@
 # - Update README.md
 
 # README Updates
-# Install kubectl, minikube, "minikube addons enable ingress", add "127.0.0.1 aphiria.com" "127.0.0.1 www.aphiria.com" and "127.0.0.1 api.aphiria.com" to C:\Windows\System32\drivers\etc\hosts.
+# Install kubectl, minikube, "minikube addons enable ingress" (needed every time minikube starts), add "127.0.0.1 aphiria.com" "127.0.0.1 www.aphiria.com" and "127.0.0.1 api.aphiria.com" to C:\Windows\System32\drivers\etc\hosts.
 # Build docker files, but first run "eval $(minikube -p minikube docker-env)" so that they're put in minikube's Docker repository
 # kubectl apply -f kubernetes/config.yml
 # Run "minikube dashboard" to pull up a GUI for minikube resources
@@ -66,7 +65,7 @@ spec:
       containers:
         - name: web
           image: aphiria.com-web:latest
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: IfNotPresent # TODO: This should be "Always" so I am getting the latest image, but manually loading the image into minikube via "minikube image load aphiria.com-web:latest" is not working
           livenessProbe:
             httpGet:
               path: /
@@ -268,7 +267,7 @@ spec:
       initContainers:
         - name: copy-api-code
           image: aphiria.com-api:latest
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: IfNotPresent # TODO: This should be "Always" so I am getting the latest image, but manually loading the image into minikube via "minikube image load aphiria.com-api:latest" is not working
           command: [ 'sh', '-c', 'cp -R /app/api/. /usr/share/nginx/html' ]
           volumeMounts:
             - name: api-code
@@ -286,7 +285,7 @@ spec:
               subPath: default.conf
         - name: php
           image: aphiria.com-api:latest
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: IfNotPresent # TODO: This should be "Always" so I am getting the latest image, but manually loading the image into minikube via "minikube image load aphiria.com-api:latest" is not working
           ports:
             - containerPort: 9000
           envFrom:
