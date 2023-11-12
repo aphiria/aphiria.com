@@ -1,18 +1,26 @@
 # TODOS
-# - Add SSL certs, ideally something that can work locally, too
+# - Delete all TLS resources, make sure that re-applying the manifest below actually gets me back to a good state.  Not sure what's actually deployed right now.
 # - In CI, we need to delete and re-apply the migration job
+# - In CI, need to determine how I can install charts
+# - Helm commands to get the cert manager set up:
+#     helm repo add jetstack https://charts.jetstack.io
+#     helm repo update
+#     helm install cert-manager jetstack/cert-manager --namespace cert-manager --create-namespace --version v1.13.2 --set installCRDs=true
 # - Can/should I set the domains to something like api.aphiria.local and aphiria.local, and swap in the prod values when deploying?  What's SOP?
 # - Add liveness probes to API.  I already have a /health endpoint to ping, but even though it's returning a 500, the probe is passing.  I should make sure that hitting /health on the nginx server is, in fact, returning the value from HealthController.
 # - Should I add namespaces?
+# - Use the following guide on using LetsEncrypt for real-world TLS certs. Note that it kind of mixes self-signed and real certs, so just pay attention.  https://someweb.github.io/devops/cert-manager-kubernetes/
 # - Update README.md
 
 # README Updates
 # Install kubectl, minikube, "minikube addons enable ingress" (needed every time minikube starts), add "127.0.0.1 aphiria.com" "127.0.0.1 www.aphiria.com" and "127.0.0.1 api.aphiria.com" to C:\Windows\System32\drivers\etc\hosts.
+# Install Helm (https://helm.sh/docs/intro/install/)
 # Build docker files, but first run "eval $(minikube -p minikube docker-env)" so that they're put in minikube's Docker repository
 # kubectl apply -f kubernetes/config.yml
 # Run "minikube dashboard" to pull up a GUI for minikube resources
 # If running in WSL2, run "minikube tunnel" because Windows is considered external to WSL2, which is hosting minikube
 # ConfigMaps and Secrets getting updated doesn't automatically trigger dependent deployments getting re-deployed.  You'd need something like https://github.com/stakater/Reloader/ to do this.  Beyond that, you just have to delete the deployment and redeploy to get changes to take.
+# To get Chrome to accept self-signed cert for local test, type "thisisunsafe" on the page with the TLS warning
 
 
 # Secret environment vars
@@ -34,8 +42,8 @@ data:
   APP_BUILDER_API: "\\Aphiria\\Framework\\Api\\SynchronousApiApplicationBuilder"
   APP_BUILDER_CONSOLE: "\\Aphiria\\Framework\\Console\\ConsoleApplicationBuilder"
   APP_ENV: production
-  APP_WEB_URL: http://www.aphiria.com # TODO: Should be https
-  APP_API_URL: http://api.aphiria.com # TODO: Should be https
+  APP_WEB_URL: https://www.aphiria.com
+  APP_API_URL: https://api.aphiria.com
   APP_COOKIE_DOMAIN: .aphiria.com
   APP_COOKIE_SECURE: "0"
   DB_HOST: db
@@ -51,10 +59,9 @@ kind: ConfigMap
 metadata:
   name: js-config
 data:
-  # TODO: Should be https
   config.js: |
     export default {
-        apiUri: "http://api.aphiria.com"
+        apiUri: "https://api.aphiria.com"
     }
 
 ---
@@ -213,6 +220,7 @@ metadata:
   annotations:
     nginx.ingress.kubernetes.io/rewrite-target: /
     nginx.ingress.kubernetes.io/from-to-www-redirect: "true"
+    cert-manager.io/cluster-issuer: "selfsigned-issuer"
 spec:
   ingressClassName: nginx
   rules:
@@ -236,6 +244,11 @@ spec:
                 name: web
                 port:
                   name: web
+  tls:
+    - hosts:
+        - www.aphiria.com
+        - api.aphiria.com
+      secretName: tls-secret
 
 ---
 # API service
@@ -370,3 +383,32 @@ data:
             fastcgi_hide_header X-Powered-By;
         }
     }
+
+
+---
+# Self-signed certificate cluster issuer
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: selfsigned-issuer
+spec:
+  selfSigned: {}
+
+---
+# Self-signed certificate
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: selfsigned-crt
+spec:
+  secretName: tls-secret
+  duration: 170000h
+  renewBefore: 72h
+  issuerRef:
+    kind: Issuer
+    name: selfsigned-issuer
+  commonName: "*.aphiria.com"
+  isCA: true
+  dnsNames:
+    - www.aphiria.com
+    - api.aphiria.com

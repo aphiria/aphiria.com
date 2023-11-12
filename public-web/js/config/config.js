@@ -1,3 +1,3 @@
 export default {
-    apiUri: "http://api.aphiria.com"
+    apiUri: "https://api.aphiria.com"
 }
