@@ -1,12 +1,11 @@
 # TODOS
-# - Delete all TLS resources, make sure that re-applying the manifest below actually gets me back to a good state.  Not sure what's actually deployed right now.
+# - Need to figure out how I'll get wildcard TLS certs, which do not use the http method to check for the existence of a file
 # - In CI, we need to delete and re-apply the migration job
 # - In CI, need to determine how I can install charts
 # - Helm commands to get the cert manager set up:
 #     helm repo add jetstack https://charts.jetstack.io
 #     helm repo update
 #     helm install cert-manager jetstack/cert-manager --namespace cert-manager --create-namespace --version v1.13.2 --set installCRDs=true
-# - Can/should I set the domains to something like api.aphiria.local and aphiria.local, and swap in the prod values when deploying?  What's SOP?
 # - Add liveness probes to API.  I already have a /health endpoint to ping, but even though it's returning a 500, the probe is passing.  I should make sure that hitting /health on the nginx server is, in fact, returning the value from HealthController.
 # - Should I add namespaces?
 # - Use the following guide on using LetsEncrypt for real-world TLS certs. Note that it kind of mixes self-signed and real certs, so just pay attention.  https://someweb.github.io/devops/cert-manager-kubernetes/
@@ -220,7 +219,8 @@ metadata:
   annotations:
     nginx.ingress.kubernetes.io/rewrite-target: /
     nginx.ingress.kubernetes.io/from-to-www-redirect: "true"
-    cert-manager.io/cluster-issuer: "selfsigned-issuer"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    cert-manager.io/cluster-issuer: selfsigned-issuer
 spec:
   ingressClassName: nginx
   rules:
