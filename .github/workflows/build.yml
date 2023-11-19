@@ -24,7 +24,7 @@ jobs:
         with:
           fetch-depth: 0
       - name: Log into DigitalOcean Container Registry
-        uses: docker/login-action@v1
+        uses: docker/login-action@v3
         with:
           registry: registry.digitalocean.com
           username: _  # DigitalOcean uses '_' as the username
