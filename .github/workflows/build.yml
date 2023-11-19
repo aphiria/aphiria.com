@@ -18,6 +18,7 @@ jobs:
             image: registry.digitalocean.com/aphiria.com/api:latest
           - dockerfile: ./docker/runtime/web/Dockerfile
             image: registry.digitalocean.com/aphiria.com/web:latest
+      max-parallel: 1 # We want the matrix to run in sequence, not parallel
     steps:
       - name: Check Out Code
         uses: actions/checkout@v4
