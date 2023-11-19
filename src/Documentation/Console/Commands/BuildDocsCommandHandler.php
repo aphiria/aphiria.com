@@ -18,10 +18,8 @@ use Aphiria\Console\Input\Input;
 use Aphiria\Console\Output\IOutput;
 use Aphiria\Console\StatusCode;
 use App\Documentation\DocumentationBuilder;
-use App\Documentation\DocumentationIndexer;
 use App\Documentation\DownloadFailedException;
 use App\Documentation\HtmlCompilationException;
-use App\Documentation\Searching\IndexingFailedException;
 
 /**
  * Defines the command handler for doc building

@@ -74,8 +74,8 @@ spec:
     spec:
       containers:
         - name: web
-          image: aphiria.com-web:latest
-          imagePullPolicy: IfNotPresent # TODO: This should be "Always" so I am getting the latest image, but manually loading the image into minikube via "minikube image load aphiria.com-web:latest" is not working
+          image: davidbyoung/aphiria.com-web:latest
+          imagePullPolicy: IfNotPresent # TODO: This should be "Always" so I am getting the latest image, but manually loading the image into minikube via "minikube image load davidbyoung/aphiria.com-web:latest" is not working
           volumeMounts:
             - name: js-config
               mountPath: /usr/share/nginx/html/js/config
@@ -281,8 +281,8 @@ spec:
       # Copy the PHP source code into a shared volume that is mounted to PHP-FPM and nginx
       initContainers:
         - name: copy-api-code
-          image: aphiria.com-api:latest
-          imagePullPolicy: IfNotPresent # TODO: This should be "Always" so I am getting the latest image, but manually loading the image into minikube via "minikube image load aphiria.com-api:latest" is not working
+          image: davidbyoung/aphiria.com-api:latest
+          imagePullPolicy: IfNotPresent # TODO: This should be "Always" so I am getting the latest image, but manually loading the image into minikube via "minikube image load davidbyoung/aphiria.com-api:latest" is not working
           # We copy and preserve the permissions so that nginx has access to things like the tmp directory
           command: [ 'sh', '-c', 'cp -Rp /app/api/. /usr/share/nginx/html' ]
           volumeMounts:
@@ -300,8 +300,8 @@ spec:
               mountPath: /etc/nginx/conf.d/default.conf
               subPath: default.conf
         - name: php
-          image: aphiria.com-api:latest
-          imagePullPolicy: IfNotPresent # TODO: This should be "Always" so I am getting the latest image, but manually loading the image into minikube via "minikube image load aphiria.com-api:latest" is not working
+          image: davidbyoung/aphiria.com-api:latest
+          imagePullPolicy: IfNotPresent # TODO: This should be "Always" so I am getting the latest image, but manually loading the image into minikube via "minikube image load davidbyoung/aphiria.com-api:latest" is not working
           ports:
             - containerPort: 9000
           envFrom:
@@ -333,7 +333,7 @@ spec:
     spec:
       containers:
         - name: db-migration
-          image: aphiria.com-api:latest
+          image: davidbyoung/aphiria.com-api:latest
           imagePullPolicy: IfNotPresent
           command: ['php', '/app/api/aphiria', 'docs:index']
           envFrom:
