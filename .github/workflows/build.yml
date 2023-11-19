@@ -37,5 +37,7 @@ jobs:
           file: ${{ matrix.dockerfile }}
           push: true
           tags: ${{ matrix.image }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
       - name: Log out from DigitalOcean Container Registry
         run: docker logout registry.digitalocean.com

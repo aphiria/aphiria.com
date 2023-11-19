@@ -12,6 +12,7 @@ RUN npm install --global yarn
 
 # Copy over source files
 COPY . .
+COPY ./.env.dist ./.env
 
 # Install dependencies and build the app
 RUN composer install --no-interaction && composer dump-autoload -o
