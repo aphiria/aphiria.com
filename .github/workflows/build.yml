@@ -1,5 +1,6 @@
 name: build
 on:
+  pull_request: # TODO: Only run this on master, not PRs
   push:
     branches:
       - master
