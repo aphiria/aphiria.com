@@ -13,23 +13,22 @@ jobs:
       matrix:
         include:
           - dockerfile: ./docker/build/Dockerfile
-            image: registry.digitalocean.com/aphiria-dot-com/aphiria.com-build
+            image: davidbyoung/aphiria/aphiria.com-build
           - dockerfile: ./docker/runtime/api/Dockerfile
-            image: registry.digitalocean.com/aphiria-dot-com/aphiria.com-api
+            image: davidbyoung/aphiria/aphiria.com-api
           - dockerfile: ./docker/runtime/web/Dockerfile
-            image: registry.digitalocean.com/aphiria-dot-com/aphiria.com-web
+            image: davidbyoung/aphiria/aphiria.com-web
       max-parallel: 1 # We want the matrix to run in sequence, not parallel
     steps:
       - name: Check Out Code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Install doctl
-        uses: digitalocean/action-doctl@v2
+      - name: Log Into Docker Hub
+        uses: docker/login-action@v3
         with:
-          token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
-      - name: Log Into DigitalOcean Container Registry
-        run: doctl registry login --expiry-seconds 600
+          username: davidbyoung
+          password: ${{ secrets.DOCKER_ACCESS_TOKEN }}
       - name: Set Up Docker buildx
         uses: docker/setup-buildx-action@v3
       - name: Build and Push Docker Image
