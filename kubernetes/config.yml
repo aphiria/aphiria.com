@@ -1,6 +1,9 @@
 # TODOS
+# - Need to figure out how I'd manage secrets in the real world
+# - How should I set up workflows for testing code coverage, building Docker image, and deploying a k8s cluster?
 # - Need to figure out how I'll get wildcard TLS certs, which do not use the http method to check for the existence of a file
 # - In CI, we need to delete and re-apply the migration job
+# - In CI, need to enable nginx ingress addon
 # - In CI, need to determine how I can install charts
 # - Helm commands to get the cert manager set up:
 #     helm repo add jetstack https://charts.jetstack.io
@@ -15,23 +18,13 @@
 # Install kubectl, minikube, "minikube addons enable ingress" (needed every time minikube starts), add "127.0.0.1 aphiria.com" "127.0.0.1 www.aphiria.com" and "127.0.0.1 api.aphiria.com" to C:\Windows\System32\drivers\etc\hosts.
 # Install Helm (https://helm.sh/docs/intro/install/)
 # Build docker files, but first run "eval $(minikube -p minikube docker-env)" so that they're put in minikube's Docker repository
-# kubectl apply -f kubernetes/config.yml
+# "kubectl apply -f kubernetes/config.yml -f kubernetes/secrets-dev.yml"
 # Run "minikube dashboard" to pull up a GUI for minikube resources
 # If running in WSL2, run "minikube tunnel" because Windows is considered external to WSL2, which is hosting minikube
 # ConfigMaps and Secrets getting updated doesn't automatically trigger dependent deployments getting re-deployed.  You'd need something like https://github.com/stakater/Reloader/ to do this.  Beyond that, you just have to delete the deployment and redeploy to get changes to take.
 # To get Chrome to accept self-signed cert for local test, type "thisisunsafe" on the page with the TLS warning
 
 
-# Secret environment vars
-apiVersion: v1
-kind: Secret
-metadata:
-  name: env-var-secrets
-stringData:
-  DB_USER: testuser # TODO:  Store this as a secret in GitHub
-  DB_PASSWORD: testpassword # TODO:  Store this as a secret in GitHub
-
----
 # Environment vars
 apiVersion: v1
 kind: ConfigMap
@@ -130,7 +123,6 @@ kind: PersistentVolume
 metadata:
   name: db-pv
   labels:
-    type: local
     app: db
 spec:
   storageClassName: manual

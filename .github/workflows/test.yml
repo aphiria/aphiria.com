@@ -1,0 +1,68 @@
+name: test
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+  schedule:
+    - cron: '0 0 * * *'
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - php: '8.2'
+            stability: prefer-stable
+    services:
+      postgres:
+        image: postgres:11-alpine
+        env:
+          POSTGRES_DB: public
+          # This is a temporary database used just for CI
+          POSTGRES_PASSWORD: password
+        ports:
+          - 5432:5432
+    # Need to make sure we're using the right environment variables when compiling the views
+    env:
+      APP_WEB_URL: https://www.aphiria.com
+      APP_API_URL: https://api.aphiria.com
+      DB_HOST: localhost
+      DB_PASSWORD: password
+    name: Test PHP ${{ matrix.php }} - ${{ matrix.stability }}
+    steps:
+      - name: Check Out Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set Up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: curl, dom, libxml, mbstring, pcntl, pgsql, xdebug, zip
+          tools: composer:v2
+          coverage: xdebug
+      - name: Install Dependencies
+        run: |
+          composer install
+          composer dump-autoload -o
+          chmod -R 755 resources
+          chmod -R 755 tmp
+          yarn install
+          yarn global add gulp
+          gulp build
+      - name: Index Documentation
+        run: php aphiria docs:index
+      - name: Run Tests
+        run: composer phpunit
+      - name: Run Linter
+        run: composer phpcs-test
+      - name: Run Psalm Static Analysis
+        run: composer psalm -- --shepherd
+      - name: Upload Coverage Results To Coveralls
+        env:
+          COVERALLS_REPO_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          composer global require php-coveralls/php-coveralls
+          php-coveralls --coverage_clover=./.coverage/clover.xml --json_path=./coveralls-upload.json -v

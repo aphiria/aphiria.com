@@ -1,0 +1,39 @@
+name: build
+on:
+  push:
+    branches:
+      - master
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    name: Build
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - dockerfile: ./docker/build/Dockerfile
+            image: registry.digitalocean.com/aphiria.com/build:latest
+          - dockerfile: ./docker/runtime/api/Dockerfile
+            image: registry.digitalocean.com/aphiria.com/api:latest
+          - dockerfile: ./docker/runtime/web/Dockerfile
+            image: registry.digitalocean.com/aphiria.com/web:latest
+    steps:
+      - name: Check Out Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Log into DigitalOcean Container Registry
+        uses: docker/login-action@v1
+        with:
+          registry: registry.digitalocean.com
+          username: _  # DigitalOcean uses '_' as the username
+          password: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+      - name: Build and Push Docker Image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ${{ matrix.dockerfile }}
+          push: true
+          tags: ${{ matrix.image }}
+      - name: Log out from DigitalOcean Container Registry
+        run: docker logout registry.digitalocean.com

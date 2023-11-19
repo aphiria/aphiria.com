@@ -1,0 +1,18 @@
+name: deploy
+on:
+  push:
+    branches:
+      - master
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    name: Deploy
+    needs: build
+    steps:
+      - name: Check Out Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      # TODO: Need to plan and apply TF
+      # TODO: Need to download KUBERNETES_SECRETS k8s manifest to file
+      # TODO: Need to deploy to my k8s cluster
