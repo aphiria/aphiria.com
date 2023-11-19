@@ -13,11 +13,11 @@ jobs:
       matrix:
         include:
           - dockerfile: ./docker/build/Dockerfile
-            image: davidbyoung/aphiria/aphiria.com-build
+            image: davidbyoung/aphiria.com-build
           - dockerfile: ./docker/runtime/api/Dockerfile
-            image: davidbyoung/aphiria/aphiria.com-api
+            image: davidbyoung/aphiria.com-api
           - dockerfile: ./docker/runtime/web/Dockerfile
-            image: davidbyoung/aphiria/aphiria.com-web
+            image: davidbyoung/aphiria.com-web
       max-parallel: 1 # We want the matrix to run in sequence, not parallel
     steps:
       - name: Check Out Code

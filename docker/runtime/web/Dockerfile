@@ -6,4 +6,4 @@ WORKDIR /usr/share/nginx/html
 RUN rm -rf /usr/share/nginx/html/*
 
 # Copy of the web source files
-COPY --from=aphiria.com-build /app/public-web .
+COPY --from=davidbyoung/aphiria.com-build /app/public-web .
