@@ -13,11 +13,11 @@ jobs:
       matrix:
         include:
           - dockerfile: ./docker/build/Dockerfile
-            image: registry.digitalocean.com/aphiria.com/build:latest
+            image: registry.digitalocean.com/aphiria.com/aphiria.com-build
           - dockerfile: ./docker/runtime/api/Dockerfile
-            image: registry.digitalocean.com/aphiria.com/api:latest
+            image: registry.digitalocean.com/aphiria.com/aphiria.com-api
           - dockerfile: ./docker/runtime/web/Dockerfile
-            image: registry.digitalocean.com/aphiria.com/web:latest
+            image: registry.digitalocean.com/aphiria.com/aphiria.com-web
       max-parallel: 1 # We want the matrix to run in sequence, not parallel
     steps:
       - name: Check Out Code
@@ -26,20 +26,21 @@ jobs:
           fetch-depth: 0
       - name: Set Up Docker buildx
         uses: docker/setup-buildx-action@v3
-      - name: Log into DigitalOcean Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: registry.digitalocean.com
-          username: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
-          password: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
       - name: Build and Push Docker Image
         uses: docker/build-push-action@v5
         with:
           context: .
           file: ${{ matrix.dockerfile }}
           push: true
-          tags: ${{ matrix.image }}
+          tags: ${{ matrix.image }}:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
-      - name: Log out from DigitalOcean Container Registry
-        run: docker logout registry.digitalocean.com
+      - name: Install doctl
+        uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+      - name: Log Into DigitalOcean Container Registry
+        run: doctl registry login --expiry-seconds 600
+      - name: Tag Image
+        run:
+          docker push ${{ matrix.image }}:latest
