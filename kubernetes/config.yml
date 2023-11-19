@@ -1,6 +1,6 @@
 # TODOS
 # - Need to figure out how I'd manage secrets in the real world
-# - How should I set up workflows for testing code coverage, building Docker image, and deploying a k8s cluster?
+# - Should I use Helm values to swap in local image names when testing k8s locally?
 # - Need to figure out how I'll get wildcard TLS certs, which do not use the http method to check for the existence of a file
 # - In CI, we need to delete and re-apply the migration job
 # - In CI, need to enable nginx ingress addon
@@ -17,6 +17,12 @@
 # README Updates
 # Install kubectl, minikube, "minikube addons enable ingress" (needed every time minikube starts), add "127.0.0.1 aphiria.com" "127.0.0.1 www.aphiria.com" and "127.0.0.1 api.aphiria.com" to C:\Windows\System32\drivers\etc\hosts.
 # Install Helm (https://helm.sh/docs/intro/install/)
+# Install Terraform
+  # - "cd /tmp"
+  # - "wget https://releases.hashicorp.com/terraform/1.6.4/terraform_1.6.4_linux_a
+#md64.zip" (make sure it's the latest version)
+  # - "sudo unzip terraform_1.6.4_linux_amd64.zip -d /usr/local/bin"
+  # - "terraform -v"
 # Build docker files, but first run "eval $(minikube -p minikube docker-env)" so that they're put in minikube's Docker repository
 # "kubectl apply -f kubernetes/config.yml -f kubernetes/secrets-dev.yml"
 # Run "minikube dashboard" to pull up a GUI for minikube resources
