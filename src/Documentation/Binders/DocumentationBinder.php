@@ -14,9 +14,9 @@ namespace App\Documentation\Binders;
 
 use Aphiria\DependencyInjection\Binders\Binder;
 use Aphiria\DependencyInjection\IContainer;
-use App\Documentation\DocumentationDownloader;
+use App\Documentation\DocumentationBuilder;
+use App\Documentation\DocumentationIndexer;
 use App\Documentation\DocumentationMetadata;
-use App\Documentation\DocumentationService;
 use App\Documentation\Searching\PostgreSqlSearchIndex;
 use Erusev\Parsedown\Parsedown;
 use Erusev\ParsedownExtra\ParsedownExtra;
@@ -31,6 +31,9 @@ use PDO;
  */
 final class DocumentationBinder extends Binder
 {
+    /** @var string The path to the HTML docs */
+    private const HTML_DOC_PATH = '/resources/views/partials/docs';
+
     /**
      * @inheritdoc
      */
@@ -56,20 +59,32 @@ final class DocumentationBinder extends Binder
             )
         );
         $container->bindInstance(FilesystemOperator::class, $files);
-        $searchIndex = new PostgreSqlSearchIndex(
-            $container->resolve(PDO::class),
-            "/docs/{$metadata->getDefaultVersion()}/",
-            $files
-        );
-        $docs = new DocumentationService(
-            $metadata,
-            new DocumentationDownloader($metadata->getBranches(), __DIR__ . '/../../../tmp/docs', '/tmp/docs', $files),
+        $docBuilder = new DocumentationBuilder(
             new Parsedown(new ParsedownExtra()),
-            $searchIndex,
-            '/resources/views/partials/docs',
+            $metadata->getBranches(),
+            __DIR__ . '/../../../tmp/docs',
+            '/tmp/docs',
+            self::HTML_DOC_PATH,
             $files
         );
-        $container->bindInstance(DocumentationService::class, $docs);
+        $container->bindInstance(DocumentationBuilder::class, $docBuilder);
+
+        // Bind using a factory to defer resolving the database connection
+        $container->bindFactory(DocumentationIndexer::class, function () use ($container, $metadata, $files, $docBuilder) {
+            $searchIndex = new PostgreSqlSearchIndex(
+                $container->resolve(PDO::class),
+                "/docs/{$metadata->getDefaultVersion()}/",
+                $files
+            );
+
+            return new DocumentationIndexer(
+                $metadata,
+                $docBuilder,
+                $searchIndex,
+                self::HTML_DOC_PATH,
+                $files
+            );
+        }, true);
     }
 
     /**

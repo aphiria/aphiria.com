@@ -15,7 +15,7 @@ namespace App\Documentation\Api\Controllers;
 use Aphiria\Api\Controllers\Controller as BaseController;
 use Aphiria\Routing\Attributes\Controller;
 use Aphiria\Routing\Attributes\Get;
-use App\Documentation\DocumentationService;
+use App\Documentation\DocumentationIndexer;
 use App\Documentation\Searching\SearchResult;
 
 /**
@@ -25,9 +25,9 @@ use App\Documentation\Searching\SearchResult;
 final class DocumentationController extends BaseController
 {
     /**
-     * @param DocumentationService $docs What we'll use to search through documentation
+     * @param DocumentationIndexer $docs What we'll use to search through documentation
      */
-    public function __construct(private readonly DocumentationService $docs)
+    public function __construct(private readonly DocumentationIndexer $docs)
     {
     }
 

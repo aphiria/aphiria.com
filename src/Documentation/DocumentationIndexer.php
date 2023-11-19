@@ -15,44 +15,28 @@ namespace App\Documentation;
 use App\Documentation\Searching\IndexingFailedException;
 use App\Documentation\Searching\ISearchIndex;
 use App\Documentation\Searching\SearchResult;
-use Erusev\Parsedown\Parsedown;
 use League\Flysystem\FilesystemException;
 use League\Flysystem\FilesystemOperator;
 use League\Flysystem\StorageAttributes;
 
 /**
- * Defines the service that handles our documentation
+ * Defines the documentation indexer
  */
-final class DocumentationService
+final class DocumentationIndexer
 {
     /**
      * @param DocumentationMetadata $metadata The doc metadata
-     * @param DocumentationDownloader $downloader The doc downloader
-     * @param Parsedown $markdownParser The Markdown parser
      * @param ISearchIndex $searchIndex The doc search index
      * @param string $htmlDocPath The path to store HTML docs in
      * @param FilesystemOperator $files The file system helper
      */
     public function __construct(
         private readonly DocumentationMetadata $metadata,
-        private readonly DocumentationDownloader $downloader,
-        private readonly Parsedown $markdownParser,
+        private readonly DocumentationBuilder $builder,
         private readonly ISearchIndex $searchIndex,
         private readonly string $htmlDocPath,
         private readonly FilesystemOperator $files
     ) {
-    }
-
-    /**
-     * Builds our documentation, which includes cloning it and compiling the Markdown
-     *
-     * @throws DownloadFailedException Thrown if there was a problem downloading the documentation
-     * @throws HtmlCompilationException Thrown if the docs could not be built
-     */
-    public function buildDocs(): void
-    {
-        $markdownFilePathsByBranch = $this->downloader->downloadDocs();
-        $this->createHtmlDocs($markdownFilePathsByBranch);
     }
 
     /**
@@ -69,7 +53,7 @@ final class DocumentationService
             $htmlDocsPath = "$this->htmlDocPath/{$this->metadata->getDefaultVersion()}";
 
             if (!$this->files->has($htmlDocsPath)) {
-                $this->buildDocs();
+                $this->builder->buildDocs();
             }
 
             $htmlFilesToIndex = [];
@@ -102,37 +86,5 @@ final class DocumentationService
     public function searchDocs(string $query): array
     {
         return $this->searchIndex->query($query);
-    }
-
-    /**
-     * Creates HTML docs from Markdown files
-     *
-     * @param array<string, list<string>> $markdownFilePathsByBranch The mapping of branches to Markdown file paths to create HTML docs from
-     * @throws HtmlCompilationException Thrown if there was an error compiling the HTML docs
-     */
-    private function createHtmlDocs(array $markdownFilePathsByBranch): void
-    {
-        try {
-            foreach ($markdownFilePathsByBranch as $branch => $markdownFilePaths) {
-                $branchDocDir = "$this->htmlDocPath/$branch";
-
-                if ($this->files->has($branchDocDir)) {
-                    $this->files->deleteDirectory($branchDocDir);
-                }
-
-                $this->files->createDirectory($branchDocDir);
-
-                foreach ($markdownFilePaths as $markdownFilePath) {
-                    $markdownFilename = \pathinfo($markdownFilePath, PATHINFO_FILENAME);
-                    $htmlDocFilename = "$branchDocDir/$markdownFilename.html";
-                    $html = $this->markdownParser->toHtml($this->files->read($markdownFilePath));
-                    // Rewrite the links to point to the HTML docs on the site
-                    $html = \preg_replace('/<a href="([^"]+)\.md(#[^"]+)?"/', '<a href="$1.html$2"', $html);
-                    $this->files->write($htmlDocFilename, $html);
-                }
-            }
-        } catch (FilesystemException $ex) {
-            throw new HtmlCompilationException('Failed to write HTML to file', 0, $ex);
-        }
     }
 }

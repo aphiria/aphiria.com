@@ -17,7 +17,8 @@ use Aphiria\Console\Commands\ICommandHandler;
 use Aphiria\Console\Input\Input;
 use Aphiria\Console\Output\IOutput;
 use Aphiria\Console\StatusCode;
-use App\Documentation\DocumentationService;
+use App\Documentation\DocumentationBuilder;
+use App\Documentation\DocumentationIndexer;
 use App\Documentation\DownloadFailedException;
 use App\Documentation\HtmlCompilationException;
 use App\Documentation\Searching\IndexingFailedException;
@@ -29,9 +30,9 @@ use App\Documentation\Searching\IndexingFailedException;
 final class BuildDocsCommandHandler implements ICommandHandler
 {
     /**
-     * @param DocumentationService $docs The doc service
+     * @param DocumentationBuilder $docBuilder The documentation builder
      */
-    public function __construct(private readonly DocumentationService $docs)
+    public function __construct(private readonly DocumentationBuilder $docBuilder)
     {
     }
 
@@ -41,11 +42,11 @@ final class BuildDocsCommandHandler implements ICommandHandler
     public function handle(Input $input, IOutput $output)
     {
         try {
-            $this->docs->buildDocs();
+            $this->docBuilder->buildDocs();
             $output->writeln('<success>Documentation built</success>');
 
             return StatusCode::Ok;
-        } catch (DownloadFailedException | HtmlCompilationException | IndexingFailedException $ex) {
+        } catch (DownloadFailedException | HtmlCompilationException $ex) {
             $output->writeln('<fatal>Failed to build docs</fatal>');
             $output->writeln("<info>{$ex->getMessage()}</info>");
             $output->writeln("<info>{$ex->getTraceAsString()}</info>");

@@ -17,7 +17,7 @@ use Aphiria\Console\Commands\ICommandHandler;
 use Aphiria\Console\Input\Input;
 use Aphiria\Console\Output\IOutput;
 use Aphiria\Console\StatusCode;
-use App\Documentation\DocumentationService;
+use App\Documentation\DocumentationIndexer;
 use App\Documentation\DownloadFailedException;
 use App\Documentation\HtmlCompilationException;
 use App\Documentation\Searching\IndexingFailedException;
@@ -29,9 +29,9 @@ use App\Documentation\Searching\IndexingFailedException;
 final class IndexDocsCommandHandler implements ICommandHandler
 {
     /**
-     * @param DocumentationService $docs The doc service
+     * @param DocumentationIndexer $docIndexer The documentation indexer
      */
-    public function __construct(private readonly DocumentationService $docs)
+    public function __construct(private readonly DocumentationIndexer $docIndexer)
     {
     }
 
@@ -41,7 +41,7 @@ final class IndexDocsCommandHandler implements ICommandHandler
     public function handle(Input $input, IOutput $output)
     {
         try {
-            $this->docs->indexDocs();
+            $this->docIndexer->indexDocs();
             $output->writeln('<success>Documentation indexed</success>');
 
             return StatusCode::Ok;
