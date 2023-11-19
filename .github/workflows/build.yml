@@ -24,6 +24,8 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      - name: Set Up Docker buildx
+        uses: docker/setup-buildx-action@v3
       - name: Log into DigitalOcean Container Registry
         uses: docker/login-action@v3
         with:
