@@ -8,7 +8,7 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     name: Deploy
-    needs: build
+    needs: Build
     steps:
       - name: Check Out Code
         uses: actions/checkout@v4
