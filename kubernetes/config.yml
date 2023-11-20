@@ -1,4 +1,5 @@
 # TODOS
+# - Figure out why Docker caching is not working.  Ideally, it's working even for JS and PHP package installation.
 # - Deploy to k8s cluster
 # - What should the directory structure be for k8s, docker, and terraform?  What's standard?
 # - Need to figure out how I'd manage secrets in the real world
