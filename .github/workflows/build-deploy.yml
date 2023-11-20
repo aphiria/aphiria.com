@@ -61,6 +61,13 @@ jobs:
         run: terraform -chdir=./infrastructure/terraform plan -var="do_access_token=${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}" -no-color -input=false
       - name: Terraform Apply
         run: terraform -chdir=./infrastructure/terraform apply -var="do_access_token=${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}" -no-color -input=false
-      # TODO: Need to download kubeconfig from my cluster via doctl and apply it to set the kubectl context
+      - name: Install doctl
+        uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+      - name: Save DigitalOcean kubeconfig
+        run: doctl kubernetes cluster kubeconfig save ${{ steps.vars.output.cluster_id }}
+
+      # TODO: Need to enable the ingress nginx addon, install helm
       # TODO: Need to download KUBERNETES_SECRETS k8s manifest to file
       # TODO: Need to deploy to my k8s cluster
