@@ -12,5 +12,9 @@
 /public-web/index.html
 /public-web/rev-manifest.json
 /phpunit.phar
+/terraform/.terraform/
+/terraform/.terraform.lock.hcl
+/terraform/errored.tfstate
+/terraform/terraform.tfvars
 /vendor/
 /yarn-error.log

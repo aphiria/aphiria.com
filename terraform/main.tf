@@ -5,7 +5,7 @@ provider "digitalocean" {
 resource "digitalocean_kubernetes_cluster" "aphiria_com_cluster" {
   name = "aphiria-com-cluster"
   region = "nyc3"
-  version = "latest"
+  version = "1.28.2-do.0"
 
   node_pool {
     name = "worker-pool"

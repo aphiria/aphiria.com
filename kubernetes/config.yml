@@ -1,4 +1,5 @@
 # TODOS
+# - What should the directory structure be for k8s, docker, and terraform?  What's standard?
 # - Need to figure out how I'd manage secrets in the real world
 # - Should I use Helm values to swap in local image names when testing k8s locally?
 # - Need to figure out how I'll get wildcard TLS certs, which do not use the http method to check for the existence of a file
@@ -23,6 +24,10 @@
 #md64.zip" (make sure it's the latest version)
   # - "sudo unzip terraform_1.6.4_linux_amd64.zip -d /usr/local/bin"
   # - "terraform -v"
+# Add a "terraform.tfvars" with variable values (see work Laptop for structure).  Note that these vars are configured via CLI args during CI/CD.
+# Generate a Spaces token (not the same thing as an API token).  Be sure to copy the access token and the secret key to run the below commands.
+# Run "terraform init -backend-config="access_key=THE_SPACES_ACCESS_KEY" -backend-config="secret_key=THE_DO_SECRET_KEY"
+# Run "terraform plan", followed by "terraform apply"
 # Build docker files, but first run "eval $(minikube -p minikube docker-env)" so that they're put in minikube's Docker repository
 # "kubectl apply -f kubernetes/config.yml -f kubernetes/secrets-dev.yml"
 # Run "minikube dashboard" to pull up a GUI for minikube resources
