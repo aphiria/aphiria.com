@@ -72,7 +72,7 @@ jobs:
         with:
           token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
       - name: Save DigitalOcean kubeconfig
-        run: doctl kubernetes cluster kubeconfig save ${{ steps['terraform-apply'].output.cluster_id }}
+        run: doctl kubernetes cluster kubeconfig save ${{ steps['terraform-apply'].outputs.cluster_id }}
 
       # TODO: Need to enable the ingress nginx addon, install helm
       # TODO: Need to download KUBERNETES_SECRETS k8s manifest to file
