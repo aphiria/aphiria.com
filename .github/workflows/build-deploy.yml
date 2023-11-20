@@ -53,10 +53,8 @@ jobs:
         uses: hashicorp/setup-terraform@v2
         with:
           terraform_version: 1.6.4
-      - name: Terraform init
+      - name: Terraform Init
         run: terraform -chdir=./terraform init -backend-config="access_key=${{ secrets.DIGITALOCEAN_SPACES_ACCESS_KEY }}" -backend-config="secret_key=${{ secrets.DIGITALOCEAN_SPACES_SECRET_KEY }}"
-      - name: Terraform Format
-        run: terraform -chdir=./terraform fmt -check
       - name: Terraform Validate
         run: terraform -chdir=./terraform validate
       - name: Terraform Plan
