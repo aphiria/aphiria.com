@@ -12,11 +12,11 @@ jobs:
       fail-fast: true
       matrix:
         include:
-          - dockerfile: ./docker/build/Dockerfile
+          - dockerfile: ./infrastructure/docker/build/Dockerfile
             image: davidbyoung/aphiria.com-build
-          - dockerfile: ./docker/runtime/api/Dockerfile
+          - dockerfile: ./infrastructure/docker/runtime/api/Dockerfile
             image: davidbyoung/aphiria.com-api
-          - dockerfile: ./docker/runtime/web/Dockerfile
+          - dockerfile: ./infrastructure/docker/runtime/web/Dockerfile
             image: davidbyoung/aphiria.com-web
       max-parallel: 1 # We want the matrix to run in sequence, not parallel
     steps:
@@ -54,12 +54,13 @@ jobs:
         with:
           terraform_version: 1.6.4
       - name: Terraform Init
-        run: terraform -chdir=./terraform init -backend-config="access_key=${{ secrets.DIGITALOCEAN_SPACES_ACCESS_KEY }}" -backend-config="secret_key=${{ secrets.DIGITALOCEAN_SPACES_SECRET_KEY }}"
+        run: terraform -chdir=./infrastructure/terraform init -backend-config="access_key=${{ secrets.DIGITALOCEAN_SPACES_ACCESS_KEY }}" -backend-config="secret_key=${{ secrets.DIGITALOCEAN_SPACES_SECRET_KEY }}"
       - name: Terraform Validate
-        run: terraform -chdir=./terraform validate
+        run: terraform -chdir=./infrastructure/terraform validate
       - name: Terraform Plan
-        run: terraform -chdir=./terraform plan -var="do_access_token=${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}" -no-color -input=false
+        run: terraform -chdir=./infrastructure/terraform plan -var="do_access_token=${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}" -no-color -input=false
       - name: Terraform Apply
-        run: terraform -chdir=./terraform apply -var="do_access_token=${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}" -no-color -input=false
+        run: terraform -chdir=./infrastructure/terraform apply -var="do_access_token=${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}" -no-color -input=false
+      # TODO: Need to download kubeconfig from my cluster via doctl and apply it to set the kubectl context
       # TODO: Need to download KUBERNETES_SECRETS k8s manifest to file
       # TODO: Need to deploy to my k8s cluster
