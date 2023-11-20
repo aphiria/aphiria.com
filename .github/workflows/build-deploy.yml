@@ -54,14 +54,14 @@ jobs:
         with:
           terraform_version: 1.6.4
       - name: Terraform init
-        run: terraform init -backend-config="access_key=${{ secrets.DIGITALOCEAN_SPACES_ACCESS_KEY }}" -backend-config="secret_key=${{ secrets.DIGITALOCEAN_SPACES_SECRET_KEY }}"
+        run: terraform -chdir=./terraform init -backend-config="access_key=${{ secrets.DIGITALOCEAN_SPACES_ACCESS_KEY }}" -backend-config="secret_key=${{ secrets.DIGITALOCEAN_SPACES_SECRET_KEY }}"
       - name: Terraform Format
-        run: terraform fmt -check
+        run: terraform -chdir=./terraform fmt -check
       - name: Terraform Validate
-        run: terraform validate
+        run: terraform -chdir=./terraform validate
       - name: Terraform Plan
-        run: terraform plan -var="do_access_token=${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}" -no-color -input=false
+        run: terraform -chdir=./terraform plan -var="do_access_token=${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}" -no-color -input=false
       - name: Terraform Apply
-        run: terraform apply -var="do_access_token=${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}" -no-color -input=false
+        run: terraform -chdir=./terraform apply -var="do_access_token=${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}" -no-color -input=false
       # TODO: Need to download KUBERNETES_SECRETS k8s manifest to file
       # TODO: Need to deploy to my k8s cluster
