@@ -71,7 +71,7 @@ jobs:
       - name: Print compiletime var # TODO: REMOVE
         run: echo "${{ env.TF_OUTPUT }}"
       - name: Save DigitalOcean kubeconfig
-        run: doctl kubernetes cluster kubeconfig save $(terraform-bin -chdir=./infrastructure/terraform output cluster_id)
+        run: doctl kubernetes cluster kubeconfig save $(terraform-bin -chdir=./infrastructure/terraform output -raw cluster_id)
 
       # TODO: Need to enable the ingress nginx addon, install helm
       # TODO: Need to download KUBERNETES_SECRETS k8s manifest to file
