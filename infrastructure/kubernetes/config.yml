@@ -1,16 +1,16 @@
 # TODOS
+# - Should automatically grab IP of load balancer (or the LB service??) and create an A record in TF (https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/data-sources/service.html)
+# - TLS cert doesn't look quite right - make sure it is.  Also, should I apply the TLS cert to the ingress or LB?  If the former, how would certs apply to the LB?
 # - Need to encrypt my state file in S3
 # - Figure out why Docker caching is not working.  Ideally, it's working even for JS and PHP package installation.
 # - Deploy to k8s cluster
 # - Provision my DO S3 instance via TF
 # - Should I use Helm values to swap in local image names when testing k8s locally?
 # - Need to figure out how I'll get wildcard TLS certs, which do not use the http method to check for the existence of a file
-# - In CI, we need to delete and re-apply the migration job
-# - In CI, need to determine how I can install charts
 # - Helm commands to get the cert manager set up:
 #     helm repo add jetstack https://charts.jetstack.io
 #     helm repo update
-#     helm install cert-manager jetstack/cert-manager --namespace cert-manager --create-namespace --version v1.13.2 --set installCRDs=true
+#     helm upgrade --install cert-manager jetstack/cert-manager --namespace cert-manager --create-namespace --version v1.13.2 --set installCRDs=true
 # - Add liveness probes to API.  I already have a /health endpoint to ping, but even though it's returning a 500, the probe is passing.  I should make sure that hitting /health on the nginx server is, in fact, returning the value from HealthController.
 # - Should I add namespaces?
 # - Use the following guide on using LetsEncrypt for real-world TLS certs. Note that it kind of mixes self-signed and real certs, so just pay attention.  https://someweb.github.io/devops/cert-manager-kubernetes/
