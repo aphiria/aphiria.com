@@ -1,6 +1,7 @@
 # TODOS
 # - Figure out why Docker caching is not working.  Ideally, it's working even for JS and PHP package installation.
 # - Deploy to k8s cluster
+# - Provision my DO S3 instance via TF
 # - Need to figure out how I'd manage secrets in the real world
 # - Should I use Helm values to swap in local image names when testing k8s locally?
 # - Need to figure out how I'll get wildcard TLS certs, which do not use the http method to check for the existence of a file
