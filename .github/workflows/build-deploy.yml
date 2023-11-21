@@ -8,7 +8,6 @@ jobs:
   build:
     runs-on: ubuntu-latest
     name: Build
-    environment: production
     strategy:
       fail-fast: true
       matrix:
@@ -44,6 +43,7 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     name: Deploy
+    environment: production
     # TODO: RE-ENABLE ONCE I AM DONE DEBUGGING! needs: build
     steps:
       - name: Check Out Code
