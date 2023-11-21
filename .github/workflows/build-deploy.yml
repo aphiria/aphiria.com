@@ -66,13 +66,24 @@ jobs:
         uses: digitalocean/action-doctl@v2
         with:
           token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
-      - name: Print runtime var # TODO: REMOVE
-        run: echo $(terraform output cluster_id)
-      - name: Print compiletime var # TODO: REMOVE
-        run: echo "${{ env.TF_OUTPUT }}"
       - name: Save DigitalOcean kubeconfig
         run: doctl kubernetes cluster kubeconfig save $(terraform-bin -chdir=./infrastructure/terraform output -raw cluster_id)
+      - name: Install Helm
+        uses: azure/setup-helm@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Install Cert Manager
+        run: |
+          helm repo add jetstack https://charts.jetstack.io
+          helm repo update
+          helm install cert-manager jetstack/cert-manager --namespace cert-manager --create-namespace --version v1.13.2 --set installCRDs=true
+      - name: Enable nginx Ingress
+        run: kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.9.4/deploy/static/provider/cloud/deploy.yaml
+      - name: Delete DB Migration Job
+        run: kubectl delete jobs db-migration --ignore-not-found=true
+      - name: Copy Kubernetes Secrets
+        run: echo "${{ secrets.KUBERNETES_SECRETS }}" > secrets.yml
+      - name: Apply Kubernetes Manifests
+        run: kubectl apply -f infrastructure/kubernetes/config.yml -f secrets.yml
 
-      # TODO: Need to enable the ingress nginx addon, install helm
-      # TODO: Need to download KUBERNETES_SECRETS k8s manifest to file
-      # TODO: Need to deploy to my k8s cluster
+      # TODO: Need to figure out how I'm going to set up TLS certs in prod

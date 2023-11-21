@@ -1,12 +1,11 @@
 # TODOS
+# - Need to encrypt my state file in S3
 # - Figure out why Docker caching is not working.  Ideally, it's working even for JS and PHP package installation.
 # - Deploy to k8s cluster
 # - Provision my DO S3 instance via TF
-# - Need to figure out how I'd manage secrets in the real world
 # - Should I use Helm values to swap in local image names when testing k8s locally?
 # - Need to figure out how I'll get wildcard TLS certs, which do not use the http method to check for the existence of a file
 # - In CI, we need to delete and re-apply the migration job
-# - In CI, need to enable nginx ingress addon
 # - In CI, need to determine how I can install charts
 # - Helm commands to get the cert manager set up:
 #     helm repo add jetstack https://charts.jetstack.io
@@ -28,10 +27,10 @@
   # - "terraform -v"
 # Add a "terraform.tfvars" with variable values (see work Laptop for structure).  Note that these vars are configured via CLI args during CI/CD.
 # Generate a Spaces token (not the same thing as an API token).  Be sure to copy the access token and the secret key to run the below commands.
-# Run "terraform init -backend-config="access_key=THE_SPACES_ACCESS_KEY" -backend-config="secret_key=THE_DO_SECRET_KEY"
-# Run "terraform plan", followed by "terraform apply"
+# Run "terraform -chdir=./infrastructure/terraform init -backend-config="access_key=THE_SPACES_ACCESS_KEY" -backend-config="secret_key=THE_DO_SECRET_KEY"
+# Run "terraform -chdir=./infrastructure/terraform plan", followed by "terraform -chdir=./infrastructure/terraform apply"
 # Build docker files, but first run "eval $(minikube -p minikube docker-env)" so that they're put in minikube's Docker repository
-# "kubectl apply -f kubernetes/config.yml -f kubernetes/secrets-dev.yml"
+# "kubectl apply -f infrastructure/kubernetes/config.yml -f infrastructure/kubernetes/secrets-dev.yml"
 # Run "minikube dashboard" to pull up a GUI for minikube resources
 # If running in WSL2, run "minikube tunnel" because Windows is considered external to WSL2, which is hosting minikube
 # ConfigMaps and Secrets getting updated doesn't automatically trigger dependent deployments getting re-deployed.  You'd need something like https://github.com/stakater/Reloader/ to do this.  Beyond that, you just have to delete the deployment and redeploy to get changes to take.
