@@ -77,7 +77,7 @@ jobs:
         run: |
           helm repo add jetstack https://charts.jetstack.io
           helm repo update
-          helm install cert-manager jetstack/cert-manager --namespace cert-manager --create-namespace --version v1.13.2 --set installCRDs=true
+          helm upgrade --install cert-manager jetstack/cert-manager --namespace cert-manager --create-namespace --version v1.13.2 --set installCRDs=true
       - name: Enable nginx Ingress
         run: kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.9.4/deploy/static/provider/cloud/deploy.yaml
       - name: Delete DB Migration Job
