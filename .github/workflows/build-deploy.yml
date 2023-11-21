@@ -74,7 +74,7 @@ jobs:
       - name: Print runtime var # TODO: REMOVE
         run: echo $(terraform output cluster_id)
       - name: Print compiletime var # TODO: REMOVE
-        run: echo "${{ toJson(steps.terraform-apply.outputs) }}"
+        run: echo "${{ toJson(steps.terraform-apply) }}"
       - name: Save DigitalOcean kubeconfig
         run: doctl kubernetes cluster kubeconfig save ${{ steps.terraform-apply.outputs.cluster_id }}
 
