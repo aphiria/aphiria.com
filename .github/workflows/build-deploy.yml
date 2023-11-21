@@ -62,9 +62,7 @@ jobs:
         run: terraform -chdir=./infrastructure/terraform plan -var="do_access_token=${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}" -no-color -input=false
       - name: Terraform Apply
         id: terraform-apply
-        run: |
-          terraform -chdir=./infrastructure/terraform apply -var="do_access_token=${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}" -no-color -input=false
-          echo $(terraform output cluster_id)
+        run: terraform -chdir=./infrastructure/terraform apply -var="do_access_token=${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}" -no-color -input=false
       - name: Install doctl
         uses: digitalocean/action-doctl@v2
         with:
@@ -76,7 +74,7 @@ jobs:
       - name: Print runtime var # TODO: REMOVE
         run: echo $(terraform output cluster_id)
       - name: Print compiletime var # TODO: REMOVE
-        run: echo "${{ steps.terraform-apply.outputs.cluster_id }}"
+        run: echo "${{ steps.terraform-apply.outputs.stdout }}"
       - name: Save DigitalOcean kubeconfig
         run: doctl kubernetes cluster kubeconfig save ${{ steps.terraform-apply.outputs.cluster_id }}
 
