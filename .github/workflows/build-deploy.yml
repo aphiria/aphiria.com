@@ -8,6 +8,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     name: Build
+    environment: production
     strategy:
       fail-fast: true
       matrix:
