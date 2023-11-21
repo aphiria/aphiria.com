@@ -63,7 +63,7 @@ jobs:
         id: terraform-apply
         run: |
           terraform -chdir=./infrastructure/terraform apply -var="do_access_token=${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}" -no-color -input=false
-          echo "TF_OUTPUT=$(terraform output -raw cluster_id)" >> $GITHUB_ENV
+          echo "TF_OUTPUT=$(terraform-bin output cluster_id)" >> $GITHUB_ENV
       - name: Install doctl
         uses: digitalocean/action-doctl@v2
         with:
