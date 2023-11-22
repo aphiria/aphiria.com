@@ -73,9 +73,10 @@ jobs:
           kubectl delete jobs db-migration --ignore-not-found=true
           # Write the Kubernetes secrets to a file so we can apply them
           echo "${{ secrets.KUBERNETES_SECRETS }}" > secrets.yml
-          # Enable cert manager and nginx ingress, and apply configs
+          # Enable cert manager and gateway API, and apply configs
           kubectl apply \
             -f https://github.com/cert-manager/cert-manager/releases/download/v1.13.2/cert-manager.yaml \
+            -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.0.0/standard-install.yaml \
             -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.9.4/deploy/static/provider/cloud/deploy.yaml \
             -f infrastructure/kubernetes/config.yml \
             -f secrets.yml

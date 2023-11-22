@@ -2,7 +2,6 @@
 # - Need to figure out how I can rerun pipelines and grab the latest documentation (that is currently happening in the Docker image)
 # - Should automatically grab IP of load balancer (or the LB service??) and create an A record in TF (https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/data-sources/service.html)
 # - Use checksum/config annotation with Helm to auto-deploy pods on config map and secret updates
-# - TLS cert doesn't look quite right - make sure it is.  Also, should I apply the TLS cert to the ingress or LB?  If the former, how would certs apply to the LB?
 # - Need to encrypt my state file in S3
 # - Figure out why Docker caching is not working.  Ideally, it's working even for JS and PHP package installation.
 # - Provision my DO S3 instance via TF
@@ -14,23 +13,29 @@
 # - Update README.md
 
 # README Updates
+# Log into Docker (docker login -u <username) and use an access token generated from docker.com
 # Install kubectl, minikube, "minikube addons enable ingress" (needed every time minikube starts), add "127.0.0.1 aphiria.com" "127.0.0.1 www.aphiria.com" and "127.0.0.1 api.aphiria.com" to C:\Windows\System32\drivers\etc\hosts.
 # Install Helm (https://helm.sh/docs/intro/install/)
 # Install Terraform
   # - "cd /tmp"
-  # - "wget https://releases.hashicorp.com/terraform/1.6.4/terraform_1.6.4_linux_a
-#md64.zip" (make sure it's the latest version)
+  # - "wget https://releases.hashicorp.com/terraform/1.6.4/terraform_1.6.4_linux_amd64.zip" (make sure it's the latest version)
   # - "sudo unzip terraform_1.6.4_linux_amd64.zip -d /usr/local/bin"
   # - "terraform -v"
-# Add a "terraform.tfvars" with variable values (see work Laptop for structure).  Note that these vars are configured via CLI args during CI/CD.
 # Generate a Spaces token (not the same thing as an API token).  Be sure to copy the access token and the secret key to run the below commands.
 # Run "terraform -chdir=./infrastructure/terraform init -backend-config="access_key=THE_SPACES_ACCESS_KEY" -backend-config="secret_key=THE_DO_SECRET_KEY"
 # Run "terraform -chdir=./infrastructure/terraform plan", followed by "terraform -chdir=./infrastructure/terraform apply"
+# - Start Minikube with "minikube start --force" (if using root user, otherwise `--force` is unnecessary), then grab its dashboard via "minikube dashboard", which needs to be run in a separate window because it's blocking.
 # Build docker files, but first run "eval $(minikube -p minikube docker-env)" so that they're put in minikube's Docker repository
-# "kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.13.2/cert-manager.yaml -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.9.4/deploy/static/provider/cloud/deploy.yaml -f infrastructure/kubernetes/config.yml -f infrastructure/kubernetes/secrets-dev.yml"
+# "kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.13.2/cert-manager.yaml -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.0.0/standard-install.yaml -f infrastructure/kubernetes/config.yml -f infrastructure/kubernetes/secrets-dev.yml"
 # Run "minikube dashboard" to pull up a GUI for minikube resources
 # If running in WSL2, run "minikube tunnel" because Windows is considered external to WSL2, which is hosting minikube
 # To get Chrome to accept self-signed cert for local test, type "thisisunsafe" on the page with the TLS warning
+
+# Things I may need to do: delete cluster, re-install cert-manager using Helm (see old commit for instructions), run following:
+# - "kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.0.0/standard-install.yaml"
+# - "helm upgrade --install nginx-gateway oci://ghcr.io/nginxinc/charts/nginx-gateway-fabric  --create-namespace --wait -n nginx-gateway"
+# - "helm upgrade --install cert-manager jetstack/cert-manager --namespace cert-manager --create-namespace --version v1.13.2 --set installCRDs=true"
+
 
 
 # Environment vars
@@ -211,46 +216,6 @@ spec:
             claimName: db-pv-claim
 
 ---
-# Ingress controller
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: nginx-ingress
-  annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: /
-    nginx.ingress.kubernetes.io/from-to-www-redirect: "true"
-    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
-    cert-manager.io/cluster-issuer: selfsigned-issuer
-spec:
-  ingressClassName: nginx
-  rules:
-    - host: api.aphiria.com
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: api
-                port:
-                  name: api
-    - host: www.aphiria.com
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: web
-                port:
-                  name: web
-  tls:
-    - hosts:
-        - www.aphiria.com
-        - api.aphiria.com
-      secretName: tls-secret
-
----
 # API service
 apiVersion: v1
 kind: Service
@@ -391,6 +356,7 @@ apiVersion: cert-manager.io/v1
 kind: ClusterIssuer
 metadata:
   name: selfsigned-issuer
+  namespace: nginx-gateway
 spec:
   selfSigned: {}
 
@@ -400,15 +366,166 @@ apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
   name: selfsigned-crt
+  namespace: nginx-gateway
 spec:
   secretName: tls-secret
   duration: 170000h
   renewBefore: 72h
   issuerRef:
-    kind: Issuer
+    kind: ClusterIssuer
     name: selfsigned-issuer
   commonName: "*.aphiria.com"
   isCA: true
   dnsNames:
     - www.aphiria.com
     - api.aphiria.com
+---
+# Gateway API service
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-gateway
+  namespace: nginx-gateway
+  labels:
+    app.kubernetes.io/name: nginx-gateway
+    app.kubernetes.io/instance: nginx-gateway
+    app.kubernetes.io/version: "1.0.0"
+spec:
+  type: NodePort
+  selector:
+    app.kubernetes.io/name: nginx-gateway
+    app.kubernetes.io/instance: nginx-gateway
+  ports:
+    - name: http
+      port: 80
+      protocol: TCP
+      targetPort: 80
+    - name: https
+      port: 443
+      protocol: TCP
+      targetPort: 443
+
+---
+# Gateway API
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: nginx-gateway
+  namespace: nginx-gateway
+spec:
+  gatewayClassName: nginx
+  listeners:
+    - name: http
+      port: 80
+      protocol: HTTP
+      hostname: "*.aphiria.com"
+      allowedRoutes:
+        namespaces:
+          from: All
+    - name: https
+      port: 443
+      protocol: HTTPS
+      hostname: "*.aphiria.com"
+      allowedRoutes:
+        namespaces:
+          from: All
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - kind: Secret
+            name: tls-secret
+    - name: https-without-www
+      port: 443
+      protocol: HTTPS
+      hostname: aphiria.com
+      allowedRoutes:
+        namespaces:
+          from: All
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - kind: Secret
+            name: tls-secret
+
+---
+# Route api to API
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: api
+spec:
+  hostnames:
+    - api.aphiria.com
+  parentRefs:
+    - name: nginx-gateway
+      namespace: nginx-gateway
+  rules:
+    - backendRefs:
+        - name: api
+          port: 80
+      matches:
+        - path:
+            type: PathPrefix
+            value: /
+
+---
+# Route www to web
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: web
+spec:
+  hostnames:
+    - www.aphiria.com
+  parentRefs:
+    - name: nginx-gateway
+      namespace: nginx-gateway
+  rules:
+    - backendRefs:
+        - name: web
+          port: 80
+      matches:
+        - path:
+            type: PathPrefix
+            value: /
+
+---
+# Redirect http to https
+apiVersion: gateway.networking.k8s.io/v1beta1
+kind: HTTPRoute
+metadata:
+  name: https-redirect
+spec:
+  parentRefs:
+    - name: nginx-gateway
+      namespace: nginx-gateway
+      sectionName: http
+  hostnames:
+    - "*.aphiria.com"
+  rules:
+    - filters:
+        - type: RequestRedirect
+          requestRedirect:
+            scheme: https
+            port: 443
+
+---
+# Redirect aphiria.com to www.aphiria.com
+apiVersion: gateway.networking.k8s.io/v1beta1
+kind: HTTPRoute
+metadata:
+  name: www-redirect
+spec:
+  parentRefs:
+    - name: nginx-gateway
+      namespace: nginx-gateway
+      sectionName: https-without-www
+  hostnames:
+    - aphiria.com
+  rules:
+    - filters:
+        - type: RequestRedirect
+          requestRedirect:
+            scheme: https
+            hostname: www.aphiria.com
+            port: 443
