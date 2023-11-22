@@ -54,14 +54,12 @@ jobs:
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: 1.6.4
-      - name: Terraform Init
-        run: terraform -chdir=./infrastructure/terraform init -backend-config="access_key=${{ secrets.DIGITALOCEAN_SPACES_ACCESS_KEY }}" -backend-config="secret_key=${{ secrets.DIGITALOCEAN_SPACES_SECRET_KEY }}"
-      - name: Terraform Validate
-        run: terraform -chdir=./infrastructure/terraform validate
       - name: Terraform Plan
-        run: terraform -chdir=./infrastructure/terraform plan -var="do_access_token=${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}" -no-color -input=false
+        run: |
+          terraform -chdir=./infrastructure/terraform init -backend-config="access_key=${{ secrets.DIGITALOCEAN_SPACES_ACCESS_KEY }}" -backend-config="secret_key=${{ secrets.DIGITALOCEAN_SPACES_SECRET_KEY }}"
+          terraform -chdir=./infrastructure/terraform validate
+          terraform -chdir=./infrastructure/terraform plan -var="do_access_token=${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}" -no-color -input=false
       - name: Terraform Apply
-        id: terraform-apply
         run: terraform -chdir=./infrastructure/terraform apply -var="do_access_token=${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}" -no-color -input=false
       - name: Install doctl
         uses: digitalocean/action-doctl@v2
@@ -69,22 +67,17 @@ jobs:
           token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
       - name: Save DigitalOcean kubeconfig
         run: doctl kubernetes cluster kubeconfig save $(terraform-bin -chdir=./infrastructure/terraform output -raw cluster_id)
-      - name: Install Helm
-        uses: azure/setup-helm@v3
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-      - name: Install Cert Manager
+      - name: Apply Kubernetes Config
         run: |
-          helm repo add jetstack https://charts.jetstack.io
-          helm repo update
-          helm upgrade --install cert-manager jetstack/cert-manager --namespace cert-manager --create-namespace --version v1.13.2 --set installCRDs=true
-      - name: Enable nginx Ingress
-        run: kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.9.4/deploy/static/provider/cloud/deploy.yaml
-      - name: Delete DB Migration Job
-        run: kubectl delete jobs db-migration --ignore-not-found=true
-      - name: Copy Kubernetes Secrets
-        run: echo "${{ secrets.KUBERNETES_SECRETS }}" > secrets.yml
-      - name: Apply Kubernetes Manifests
-        run: kubectl apply -f infrastructure/kubernetes/config.yml -f secrets.yml
+          # Delete the database migration if it existed so we can run it on every deployment
+          kubectl delete jobs db-migration --ignore-not-found=true
+          # Write the Kubernetes secrets to a file so we can apply them
+          echo "${{ secrets.KUBERNETES_SECRETS }}" > secrets.yml
+          # Enable cert manager and nginx ingress, and apply configs
+          kubectl apply \
+            -f https://github.com/cert-manager/cert-manager/releases/download/v1.13.2/cert-manager.yaml \
+            -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.9.4/deploy/static/provider/cloud/deploy.yaml \
+            -f infrastructure/kubernetes/config.yml \
+            -f secrets.yml
 
       # TODO: Need to figure out how I'm going to set up TLS certs in prod
