@@ -1,16 +1,13 @@
 # TODOS
+# - Need to figure out how I can rerun pipelines and grab the latest documentation (that is currently happening in the Docker image)
 # - Should automatically grab IP of load balancer (or the LB service??) and create an A record in TF (https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/data-sources/service.html)
+# - Use checksum/config annotation with Helm to auto-deploy pods on config map and secret updates
 # - TLS cert doesn't look quite right - make sure it is.  Also, should I apply the TLS cert to the ingress or LB?  If the former, how would certs apply to the LB?
 # - Need to encrypt my state file in S3
 # - Figure out why Docker caching is not working.  Ideally, it's working even for JS and PHP package installation.
-# - Deploy to k8s cluster
 # - Provision my DO S3 instance via TF
 # - Should I use Helm values to swap in local image names when testing k8s locally?
 # - Need to figure out how I'll get wildcard TLS certs, which do not use the http method to check for the existence of a file
-# - Helm commands to get the cert manager set up:
-#     helm repo add jetstack https://charts.jetstack.io
-#     helm repo update
-#     helm upgrade --install cert-manager jetstack/cert-manager --namespace cert-manager --create-namespace --version v1.13.2 --set installCRDs=true
 # - Add liveness probes to API.  I already have a /health endpoint to ping, but even though it's returning a 500, the probe is passing.  I should make sure that hitting /health on the nginx server is, in fact, returning the value from HealthController.
 # - Should I add namespaces?
 # - Use the following guide on using LetsEncrypt for real-world TLS certs. Note that it kind of mixes self-signed and real certs, so just pay attention.  https://someweb.github.io/devops/cert-manager-kubernetes/
@@ -30,10 +27,9 @@
 # Run "terraform -chdir=./infrastructure/terraform init -backend-config="access_key=THE_SPACES_ACCESS_KEY" -backend-config="secret_key=THE_DO_SECRET_KEY"
 # Run "terraform -chdir=./infrastructure/terraform plan", followed by "terraform -chdir=./infrastructure/terraform apply"
 # Build docker files, but first run "eval $(minikube -p minikube docker-env)" so that they're put in minikube's Docker repository
-# "kubectl apply -f infrastructure/kubernetes/config.yml -f infrastructure/kubernetes/secrets-dev.yml"
+# "kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.13.2/cert-manager.yaml -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.9.4/deploy/static/provider/cloud/deploy.yaml -f infrastructure/kubernetes/config.yml -f infrastructure/kubernetes/secrets-dev.yml"
 # Run "minikube dashboard" to pull up a GUI for minikube resources
 # If running in WSL2, run "minikube tunnel" because Windows is considered external to WSL2, which is hosting minikube
-# ConfigMaps and Secrets getting updated doesn't automatically trigger dependent deployments getting re-deployed.  You'd need something like https://github.com/stakater/Reloader/ to do this.  Beyond that, you just have to delete the deployment and redeploy to get changes to take.
 # To get Chrome to accept self-signed cert for local test, type "thisisunsafe" on the page with the TLS warning
 
 
