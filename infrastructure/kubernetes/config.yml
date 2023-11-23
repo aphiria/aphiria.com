@@ -354,6 +354,7 @@ spec:
   dnsNames:
     - www.aphiria.com
     - api.aphiria.com
+
 ---
 # Gateway API service
 apiVersion: v1
@@ -390,13 +391,6 @@ metadata:
 spec:
   gatewayClassName: nginx
   listeners:
-    - name: http
-      port: 80
-      protocol: HTTP
-      hostname: "*.aphiria.com"
-      allowedRoutes:
-        namespaces:
-          from: All
     - name: https
       port: 443
       protocol: HTTPS
@@ -409,7 +403,7 @@ spec:
         certificateRefs:
           - kind: Secret
             name: tls-secret
-    - name: https-without-www
+    - name: https-without-www # TODO: Do I need this?
       port: 443
       protocol: HTTPS
       hostname: aphiria.com
@@ -466,7 +460,7 @@ spec:
 
 ---
 # Redirect http to https
-apiVersion: gateway.networking.k8s.io/v1beta1
+apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
   name: https-redirect
@@ -476,7 +470,9 @@ spec:
       namespace: nginx-gateway
       sectionName: http
   hostnames:
-    - "*.aphiria.com"
+    - api.aphiria.com
+    - www.aphiria.com
+    - aphiria.com
   rules:
     - filters:
         - type: RequestRedirect
@@ -486,7 +482,7 @@ spec:
 
 ---
 # Redirect aphiria.com to www.aphiria.com
-apiVersion: gateway.networking.k8s.io/v1beta1
+apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
   name: www-redirect
