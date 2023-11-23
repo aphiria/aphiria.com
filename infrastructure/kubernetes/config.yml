@@ -329,7 +329,7 @@ metadata:
   name: nginx-gateway
   namespace: nginx-gateway
   annotations:
-    cert-manager.io/cluster-issuer: my-issuer
+    cert-manager.io/cluster-issuer: cert-issuer
 spec:
   gatewayClassName: nginx
   listeners:
