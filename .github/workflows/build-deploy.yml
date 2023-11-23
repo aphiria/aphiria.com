@@ -88,6 +88,6 @@ jobs:
           echo "${{ secrets.KUBERNETES_SECRETS }}" > secrets.yml
           # Enable cert manager and gateway API, and apply configs
           kubectl apply -f secrets.yml
-          kubectl apply infrastructure/kubernetes/config.yml
+          kubectl apply -f infrastructure/kubernetes/config.yml
 
       # TODO: Need to figure out how I'm going to set up TLS certs in prod

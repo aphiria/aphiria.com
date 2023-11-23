@@ -17,7 +17,3 @@ resource "digitalocean_kubernetes_cluster" "aphiria_com_cluster" {
 output "cluster_id" {
   value = digitalocean_kubernetes_cluster.aphiria_com_cluster.id
 }
-
-output "cluster_endpoint" {
-  value = digitalocean_kubernetes_cluster.aphiria_com_cluster.endpoint
-}
