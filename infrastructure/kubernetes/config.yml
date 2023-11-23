@@ -391,18 +391,13 @@ metadata:
 spec:
   gatewayClassName: nginx
   listeners:
-    - name: https
-      port: 443
-      protocol: HTTPS
+    - name: http
+      port: 80
+      protocol: HTTP
       hostname: "*.aphiria.com"
       allowedRoutes:
         namespaces:
           from: All
-      tls:
-        mode: Terminate
-        certificateRefs:
-          - kind: Secret
-            name: tls-secret
     - name: https-without-www # TODO: Do I need this?
       port: 443
       protocol: HTTPS
