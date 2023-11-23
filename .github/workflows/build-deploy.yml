@@ -60,7 +60,7 @@ jobs:
           terraform -chdir=./infrastructure/terraform validate
           terraform -chdir=./infrastructure/terraform plan -var="do_access_token=${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}" -no-color -input=false
       - name: Terraform Apply
-        run: terraform -chdir=./infrastructure/terraform apply -var="do_access_token=${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}" -no-color -input=false
+        run: terraform -chdir=./infrastructure/terraform apply -var="do_access_token=${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}" -no-color -input=false -auto-approve
       - name: Install doctl
         uses: digitalocean/action-doctl@v2
         with:
