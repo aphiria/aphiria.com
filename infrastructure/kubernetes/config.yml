@@ -6,11 +6,8 @@
 # - Figure out why Docker caching is not working.  Ideally, it's working even for JS and PHP package installation.
 # - Provision my DO S3 instance via TF
 # - Should I use Helm values to swap in local image names when testing k8s locally?
-# - Need to figure out how I'll get wildcard TLS certs, which do not use the http method to check for the existence of a file
 # - Add liveness probes to API.  I already have a /health endpoint to ping, but even though it's returning a 500, the probe is passing.  I should make sure that hitting /health on the nginx server is, in fact, returning the value from HealthController.
 # - Should I add namespaces?
-# - Use the following guide on using LetsEncrypt for real-world TLS certs. Note that it kind of mixes self-signed and real certs, so just pay attention.  https://someweb.github.io/devops/cert-manager-kubernetes/
-# - Update README.md
 
 
 # Environment vars
@@ -324,37 +321,6 @@ data:
         }
     }
 
-
----
-# Self-signed certificate cluster issuer
-apiVersion: cert-manager.io/v1
-kind: ClusterIssuer
-metadata:
-  name: selfsigned-issuer
-  namespace: nginx-gateway
-spec:
-  selfSigned: {}
-
----
-# Self-signed certificate
-apiVersion: cert-manager.io/v1
-kind: Certificate
-metadata:
-  name: selfsigned-crt
-  namespace: nginx-gateway
-spec:
-  secretName: tls-secret
-  duration: 170000h
-  renewBefore: 72h
-  issuerRef:
-    kind: ClusterIssuer
-    name: selfsigned-issuer
-  commonName: "*.aphiria.com"
-  isCA: true
-  dnsNames:
-    - www.aphiria.com
-    - api.aphiria.com
-
 ---
 # Gateway API
 apiVersion: gateway.networking.k8s.io/v1
@@ -362,6 +328,8 @@ kind: Gateway
 metadata:
   name: nginx-gateway
   namespace: nginx-gateway
+  annotations:
+    cert-manager.io/cluster-issuer: my-issuer
 spec:
   gatewayClassName: nginx
   listeners:

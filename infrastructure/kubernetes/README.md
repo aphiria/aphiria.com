@@ -86,7 +86,8 @@ helm upgrade --install nginx-gateway oci://ghcr.io/nginxinc/charts/nginx-gateway
 Finally, apply the Kubernetes manifests:
 
 ```
-kubectl apply -f infrastructure/kubernetes/secrets-dev.yml
+kubectl apply -f infrastructure/kubernetes/env-var-secrets-dev.yml -f infrastructure/kubernetes/digitalocean-secrets-dev.yml
+kubectl apply -f infrastructure/kubernetes/cert-manager-dev.yml
 kubectl apply -f infrastructure/kubernetes/config.yml
 ```
 
