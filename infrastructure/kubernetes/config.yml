@@ -1,4 +1,5 @@
 # TODOS
+# - Figure out http -> https rewrite
 # - Need to figure out how I can rerun pipelines and grab the latest documentation (that is currently happening in the Docker image)
 # - Should automatically grab IP of load balancer (or the LB service??) and create an A record in TF (https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/data-sources/service.html)
 # - Use checksum/config annotation with Helm to auto-deploy pods on config map and secret updates
@@ -394,14 +395,12 @@ spec:
     - name: http
       port: 80
       protocol: HTTP
-      hostname: "*.aphiria.com"
       allowedRoutes:
         namespaces:
           from: All
-    - name: https-without-www # TODO: Do I need this?
+    - name: https
       port: 443
       protocol: HTTPS
-      hostname: aphiria.com
       allowedRoutes:
         namespaces:
           from: All
@@ -464,10 +463,6 @@ spec:
     - name: nginx-gateway
       namespace: nginx-gateway
       sectionName: http
-  hostnames:
-    - api.aphiria.com
-    - www.aphiria.com
-    - aphiria.com
   rules:
     - filters:
         - type: RequestRedirect
@@ -485,7 +480,6 @@ spec:
   parentRefs:
     - name: nginx-gateway
       namespace: nginx-gateway
-      sectionName: https-without-www
   hostnames:
     - aphiria.com
   rules:
