@@ -12,31 +12,6 @@
 # - Use the following guide on using LetsEncrypt for real-world TLS certs. Note that it kind of mixes self-signed and real certs, so just pay attention.  https://someweb.github.io/devops/cert-manager-kubernetes/
 # - Update README.md
 
-# README Updates
-# Log into Docker (docker login -u <username) and use an access token generated from docker.com
-# Install kubectl, minikube, "minikube addons enable ingress" (needed every time minikube starts), add "127.0.0.1 aphiria.com" "127.0.0.1 www.aphiria.com" and "127.0.0.1 api.aphiria.com" to C:\Windows\System32\drivers\etc\hosts.
-# Install Helm (https://helm.sh/docs/intro/install/)
-# Install Terraform
-  # - "cd /tmp"
-  # - "wget https://releases.hashicorp.com/terraform/1.6.4/terraform_1.6.4_linux_amd64.zip" (make sure it's the latest version)
-  # - "sudo unzip terraform_1.6.4_linux_amd64.zip -d /usr/local/bin"
-  # - "terraform -v"
-# Generate a Spaces token (not the same thing as an API token).  Be sure to copy the access token and the secret key to run the below commands.
-# Run "terraform -chdir=./infrastructure/terraform init -backend-config="access_key=THE_SPACES_ACCESS_KEY" -backend-config="secret_key=THE_DO_SECRET_KEY"
-# Run "terraform -chdir=./infrastructure/terraform plan", followed by "terraform -chdir=./infrastructure/terraform apply"
-# - Start Minikube with "minikube start --force" (if using root user, otherwise `--force` is unnecessary), then grab its dashboard via "minikube dashboard", which needs to be run in a separate window because it's blocking.
-# Build docker files, but first run "eval $(minikube -p minikube docker-env)" so that they're put in minikube's Docker repository
-# "kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.13.2/cert-manager.yaml -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.0.0/standard-install.yaml -f infrastructure/kubernetes/config.yml -f infrastructure/kubernetes/secrets-dev.yml"
-# Run "minikube dashboard" to pull up a GUI for minikube resources
-# If running in WSL2, run "minikube tunnel" because Windows is considered external to WSL2, which is hosting minikube
-# To get Chrome to accept self-signed cert for local test, type "thisisunsafe" on the page with the TLS warning
-
-# Things I may need to do: delete cluster, re-install cert-manager using Helm (see old commit for instructions), run following:
-# - "kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.0.0/standard-install.yaml"
-# - "helm upgrade --install nginx-gateway oci://ghcr.io/nginxinc/charts/nginx-gateway-fabric  --create-namespace --wait -n nginx-gateway"
-# - "helm upgrade --install cert-manager jetstack/cert-manager --namespace cert-manager --create-namespace --version v1.13.2 --set installCRDs=true"
-
-
 
 # Environment vars
 apiVersion: v1

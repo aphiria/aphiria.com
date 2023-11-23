@@ -67,6 +67,19 @@ jobs:
           token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
       - name: Save DigitalOcean kubeconfig
         run: doctl kubernetes cluster kubeconfig save $(terraform-bin -chdir=./infrastructure/terraform output -raw cluster_id)
+      - name: Download Kubernetes CRDs
+        run: |
+          kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.0.0/standard-install.yaml
+      - name: Install Helm
+        uses: azure/setup-helm@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Install Helm Charts
+        run: |
+          helm repo add jetstack https://charts.jetstack.io
+          helm repo update
+          helm upgrade --install cert-manager jetstack/cert-manager --namespace cert-manager --create-namespace --version v1.13.2 --set installCRDs=true
+          helm upgrade --install nginx-gateway oci://ghcr.io/nginxinc/charts/nginx-gateway-fabric  --create-namespace --wait -n nginx-gateway
       - name: Apply Kubernetes Config
         run: |
           # Delete the database migration if it existed so we can run it on every deployment
@@ -74,11 +87,7 @@ jobs:
           # Write the Kubernetes secrets to a file so we can apply them
           echo "${{ secrets.KUBERNETES_SECRETS }}" > secrets.yml
           # Enable cert manager and gateway API, and apply configs
-          kubectl apply \
-            -f https://github.com/cert-manager/cert-manager/releases/download/v1.13.2/cert-manager.yaml \
-            -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.0.0/standard-install.yaml \
-            -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.9.4/deploy/static/provider/cloud/deploy.yaml \
-            -f infrastructure/kubernetes/config.yml \
-            -f secrets.yml
+          kubectl apply -f secrets.yml
+          kubectl apply infrastructure/kubernetes/config.yml
 
       # TODO: Need to figure out how I'm going to set up TLS certs in prod
