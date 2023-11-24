@@ -333,13 +333,35 @@ metadata:
 spec:
   gatewayClassName: nginx
   listeners:
-    - name: http
+    # Note that wildcards only match subdomains, not the root domain, which is why we have different listeners for each
+    - name: http-root
+      hostname: aphiria.com
       port: 80
       protocol: HTTP
       allowedRoutes:
         namespaces:
           from: All
-    - name: https
+    - name: http-subdomains
+      hostname: "*.aphiria.com"
+      port: 80
+      protocol: HTTP
+      allowedRoutes:
+        namespaces:
+          from: All
+    - name: https-root
+      hostname: aphiria.com
+      port: 443
+      protocol: HTTPS
+      allowedRoutes:
+        namespaces:
+          from: All
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - kind: Secret
+            name: tls-secret
+    - name: https-subdomains
+      hostname: "*.aphiria.com"
       port: 443
       protocol: HTTPS
       allowedRoutes:
@@ -363,7 +385,7 @@ spec:
   parentRefs:
     - name: nginx-gateway
       namespace: nginx-gateway
-      sectionName: https
+      sectionName: https-subdomains
   rules:
     - backendRefs:
         - name: api
@@ -385,7 +407,7 @@ spec:
   parentRefs:
     - name: nginx-gateway
       namespace: nginx-gateway
-      sectionName: https
+      sectionName: https-subdomains
   rules:
     - backendRefs:
         - name: web
@@ -396,7 +418,7 @@ spec:
             value: /
 
 ---
-# Redirect http to https
+# Redirect http to https for subdomains
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
@@ -405,7 +427,7 @@ spec:
   parentRefs:
     - name: nginx-gateway
       namespace: nginx-gateway
-      sectionName: http
+      sectionName: http-subdomains
   rules:
     - filters:
         - type: RequestRedirect
@@ -421,7 +443,12 @@ metadata:
   name: www-redirect
 spec:
   parentRefs:
+    # Do this for both http and https
     - name: nginx-gateway
+      sectionName: https-root
+      namespace: nginx-gateway
+    - name: nginx-gateway
+      sectionName: http-root
       namespace: nginx-gateway
   hostnames:
     - aphiria.com
