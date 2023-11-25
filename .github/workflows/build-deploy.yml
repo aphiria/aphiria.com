@@ -54,13 +54,12 @@ jobs:
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: 1.6.4
-      - name: Terraform Plan
+      - name: Terraform Kubernetes
         run: |
           terraform -chdir=./infrastructure/terraform init -backend-config="access_key=${{ secrets.DIGITALOCEAN_SPACES_ACCESS_KEY }}" -backend-config="secret_key=${{ secrets.DIGITALOCEAN_SPACES_SECRET_KEY }}"
           terraform -chdir=./infrastructure/terraform validate
-          terraform -chdir=./infrastructure/terraform plan -var="do_access_token=${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}" -no-color -input=false
-      - name: Terraform Apply
-        run: terraform -chdir=./infrastructure/terraform apply -var="do_access_token=${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}" -no-color -input=false -auto-approve
+          terraform -chdir=./infrastructure/terraform plan -target="module.kubernetes" -var="do_access_token=${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}" -no-color -input=false
+          terraform -chdir=./infrastructure/terraform apply -target="module.kubernetes" -var="do_access_token=${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}" -no-color -input=false -auto-approve
       - name: Install doctl
         uses: digitalocean/action-doctl@v2
         with:
@@ -92,5 +91,8 @@ jobs:
           kubectl apply -f env-var-secrets.yml -f digitalocean-secrets.yml
           kubectl apply -f infrastructure/kubernetes/cert-prod.yml
           kubectl apply -f infrastructure/kubernetes/config.yml
+      - name: Terraform DigitalOcean Networking
+        run: |
+          terraform -chdir=./infrastructure/terraform plan -target="module.networking" -var="do_access_token=${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}" -no-color -input=false
+          terraform -chdir=./infrastructure/terraform apply -target="module.networking" -var="do_access_token=${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}" -no-color -input=false -auto-approve
 
-      # TODO: Need to figure out how I'm going to set up TLS certs in prod
