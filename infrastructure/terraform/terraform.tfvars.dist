@@ -1,2 +1,6 @@
 # The DigitalOcean API  access token
 do_access_token = "<DigitalOcean API access token>"
+# The DigitalOcean Spaces access key
+do_spaces_access_key = "<DigitalOcean Spaces access key>"
+# The DigitalOcean Spaces secret key
+do_spaces_secret_key = "<DigitalOcean Spaces secret key>"
