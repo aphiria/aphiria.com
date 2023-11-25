@@ -30,7 +30,7 @@ resource "digitalocean_record" "a" {
     type = "A"
     name = "@"
     # value = "159.89.187.188"
-    value = data.kubernetes_service.load_balancer.spec.load_balancer_ip
+    value = data.kubernetes_service.load_balancer.status[0].load_balancer[0].ingress[0].ip
     ttl = 3600
 }
 
@@ -39,7 +39,7 @@ resource "digitalocean_record" "api_a" {
     type = "A"
     name = "api"
     # value = "159.89.187.188"
-    value = data.kubernetes_service.load_balancer.spec.load_balancer_ip
+    value = data.kubernetes_service.load_balancer.status[0].load_balancer[0].ingress[0].ip
     ttl = 3600
 }
 
