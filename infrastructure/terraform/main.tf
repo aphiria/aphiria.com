@@ -14,6 +14,11 @@ resource "digitalocean_kubernetes_cluster" "aphiria_com_cluster" {
   }
 }
 
+data "external" "k8s_load_balancer_ip" {
+    # Note: This will only work after the Kubernetes cluster has been provisioned and the load balancer automatically created by our Gateway API
+    program = ["bash", "-c", "kubectl get service nginx-gateway-nginx-gateway-fabric -n nginx-gateway -o jsonpath='{.status.loadBalancer.ingress[0].ip}'"]
+}
+
 resource "digitalocean_domain" "default" {
     name = "aphiria.com"
 }
@@ -22,7 +27,8 @@ resource "digitalocean_record" "a" {
     domain = digitalocean_domain.default.id
     type = "A"
     name = "@"
-    value = "159.89.187.188"
+    # value = "159.89.187.188"
+    value = data.external.k8s_load_balancer_ip
     ttl = 3600
 }
 
@@ -30,7 +36,8 @@ resource "digitalocean_record" "api_a" {
     domain = digitalocean_domain.default.id
     type = "A"
     name = "api"
-    value = "159.89.187.188"
+    # value = "159.89.187.188"
+    value = data.external.k8s_load_balancer_ip
     ttl = 3600
 }
 
