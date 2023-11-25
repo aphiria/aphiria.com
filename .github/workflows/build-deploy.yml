@@ -90,7 +90,7 @@ jobs:
           echo "${{ secrets.DIGITALOCEAN_SECRETS }}" > digitalocean-secrets.yml
           # Apply configs
           kubectl apply -f env-var-secrets.yml -f digitalocean-secrets.yml
-          kubectl apply -f infrastructure/kubernetes/cert-manager-prod.yml
+          kubectl apply -f infrastructure/kubernetes/cert-prod.yml
           kubectl apply -f infrastructure/kubernetes/config.yml
 
       # TODO: Need to figure out how I'm going to set up TLS certs in prod
