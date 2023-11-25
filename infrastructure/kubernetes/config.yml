@@ -1,5 +1,4 @@
 # TODOS
-# - Should automatically grab IP of load balancer and create an A record in TF
 # - Need to figure out how I can rerun pipelines and grab the latest documentation (that is currently happening in the Docker image)
 # - Use checksum/config annotation with Helm to auto-deploy pods on config map and secret updates
 # - Need to encrypt my state file in S3
