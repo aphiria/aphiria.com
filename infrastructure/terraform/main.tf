@@ -37,8 +37,8 @@ resource "digitalocean_record" "a" {
     domain = digitalocean_domain.default.id
     type = "A"
     name = "@"
-    # value = "159.89.187.188"
-    value = data.kubernetes_service.load_balancer.status[0].load_balancer[0].ingress[0].ip
+    value = "159.89.187.188"
+    # TODO: Re-Enable this when I'm done setting up:  value = data.kubernetes_service.load_balancer.status[0].load_balancer[0].ingress[0].ip
     ttl = 3600
 }
 
@@ -46,8 +46,8 @@ resource "digitalocean_record" "api_a" {
     domain = digitalocean_domain.default.id
     type = "A"
     name = "api"
-    # value = "159.89.187.188"
-    value = data.kubernetes_service.load_balancer.status[0].load_balancer[0].ingress[0].ip
+    value = "159.89.187.188"
+    # TODO: Re-Enable this when I'm done setting up:  value = data.kubernetes_service.load_balancer.status[0].load_balancer[0].ingress[0].ip
     ttl = 3600
 }
 
