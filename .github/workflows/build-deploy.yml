@@ -58,8 +58,8 @@ jobs:
         run: |
           terraform -chdir=./infrastructure/terraform init -backend-config="access_key=${{ secrets.DIGITALOCEAN_SPACES_ACCESS_KEY }}" -backend-config="secret_key=${{ secrets.DIGITALOCEAN_SPACES_SECRET_KEY }}"
           terraform -chdir=./infrastructure/terraform validate
-          terraform -chdir=./infrastructure/terraform plan -target="module.kubernetes" -var="do_access_token=${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}" -no-color -input=false
-          terraform -chdir=./infrastructure/terraform apply -target="module.kubernetes" -var="do_access_token=${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}" -no-color -input=false -auto-approve
+          terraform -chdir=./infrastructure/terraform plan -var="do_access_token=${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}" -no-color -input=false
+          terraform -chdir=./infrastructure/terraform apply  -var="do_access_token=${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}" -no-color -input=false -auto-approve
       - name: Install doctl
         uses: digitalocean/action-doctl@v2
         with:
