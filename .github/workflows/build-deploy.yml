@@ -94,17 +94,17 @@ jobs:
       - name: Terraform DigitalOcean Networking
         run: |
           terraform -chdir=./infrastructure/terraform state mv digitalocean_domain.default module.networking.digitalocean_domain.default
-          terraform -chdir=./infrastructure/terraform state mv digitalocean_domain.a module.networking.digitalocean_domain.a
-          terraform -chdir=./infrastructure/terraform state mv digitalocean_domain.api_a module.networking.digitalocean_domain.api_a
-          terraform -chdir=./infrastructure/terraform state mv digitalocean_domain.www_cname module.networking.digitalocean_domain.www_cname
-          terraform -chdir=./infrastructure/terraform state mv digitalocean_domain.mx_default module.networking.digitalocean_domain.mx_default
-          terraform -chdir=./infrastructure/terraform state mv digitalocean_domain.mx_1 module.networking.digitalocean_domain.mx_1
-          terraform -chdir=./infrastructure/terraform state mv digitalocean_domain.mx_2 module.networking.digitalocean_domain.mx_2
-          terraform -chdir=./infrastructure/terraform state mv digitalocean_domain.mx_3 module.networking.digitalocean_domain.mx_3
-          terraform -chdir=./infrastructure/terraform state mv digitalocean_domain.mx_4 module.networking.digitalocean_domain.mx_4
-          terraform -chdir=./infrastructure/terraform state mv digitalocean_domain.ns_1 module.networking.digitalocean_domain.ns_1
-          terraform -chdir=./infrastructure/terraform state mv digitalocean_domain.ns_2 module.networking.digitalocean_domain.ns_2
-          terraform -chdir=./infrastructure/terraform state mv digitalocean_domain.ns_3 module.networking.digitalocean_domain.ns_3
+          terraform -chdir=./infrastructure/terraform state mv digitalocean_record.a module.networking.digitalocean_record.a
+          terraform -chdir=./infrastructure/terraform state mv digitalocean_record.api_a module.networking.digitalocean_record.api_a
+          terraform -chdir=./infrastructure/terraform state mv digitalocean_record.www_cname module.networking.digitalocean_record.www_cname
+          terraform -chdir=./infrastructure/terraform state mv digitalocean_record.mx_default module.networking.digitalocean_record.mx_default
+          terraform -chdir=./infrastructure/terraform state mv digitalocean_record.mx_1 module.networking.digitalocean_record.mx_1
+          terraform -chdir=./infrastructure/terraform state mv digitalocean_record.mx_2 module.networking.digitalocean_record.mx_2
+          terraform -chdir=./infrastructure/terraform state mv digitalocean_record.mx_3 module.networking.digitalocean_record.mx_3
+          terraform -chdir=./infrastructure/terraform state mv digitalocean_record.mx_4 module.networking.digitalocean_record.mx_4
+          terraform -chdir=./infrastructure/terraform state mv digitalocean_record.ns_1 module.networking.digitalocean_record.ns_1
+          terraform -chdir=./infrastructure/terraform state mv digitalocean_record.ns_2 module.networking.digitalocean_record.ns_2
+          terraform -chdir=./infrastructure/terraform state mv digitalocean_record.ns_3 module.networking.digitalocean_record.ns_3
 
 
           terraform -chdir=./infrastructure/terraform plan -target="module.networking" -var="do_access_token=${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}" -no-color -input=false
