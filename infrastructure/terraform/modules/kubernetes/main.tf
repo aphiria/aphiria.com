@@ -1,9 +1,10 @@
-provider "kubernetes" {
-    host  = digitalocean_kubernetes_cluster.aphiria_com_cluster.endpoint
-    token = digitalocean_kubernetes_cluster.aphiria_com_cluster.kube_config[0].token
-    cluster_ca_certificate = base64decode(
-        digitalocean_kubernetes_cluster.aphiria_com_cluster.kube_config[0].cluster_ca_certificate
-    )
+terraform {
+    required_providers {
+        digitalocean = {
+            source  = "digitalocean/digitalocean"
+            version = "~> 2.0"
+        }
+    }
 }
 
 resource "digitalocean_kubernetes_cluster" "aphiria_com_cluster" {
