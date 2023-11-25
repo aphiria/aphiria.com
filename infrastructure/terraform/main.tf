@@ -87,7 +87,7 @@ resource "digitalocean_record" "mx_4" {
     ttl = 1800
 }
 
-/*resource "digitalocean_record" "ns_1" {
+resource "digitalocean_record" "ns_1" {
     domain = digitalocean_domain.default.id
     type = "NS"
     name = "@"
@@ -109,7 +109,7 @@ resource "digitalocean_record" "ns_3" {
     name = "@"
     value = "ns3.digitalocean.com."
     ttl = 1800
-}*/
+}
 
 output "cluster_id" {
   value = digitalocean_kubernetes_cluster.aphiria_com_cluster.id
