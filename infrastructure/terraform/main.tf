@@ -15,8 +15,6 @@ resource "digitalocean_kubernetes_cluster" "aphiria_com_cluster" {
 }
 
 data "kubernetes_service" "load_balancer" {
-    depends_on = [digitalocean_kubernetes_cluster.aphiria_com_cluster]
-
     metadata {
         name = "nginx-gateway-nginx-gateway-fabric"
         namespace = "nginx-gateway"
