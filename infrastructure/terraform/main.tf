@@ -13,9 +13,7 @@ provider "digitalocean" {
 }
 
 provider "kubernetes" {
-    host  = digitalocean_kubernetes_cluster.aphiria_com_cluster.endpoint
-    token = digitalocean_kubernetes_cluster.aphiria_com_cluster.kube_config[0].token
-    cluster_ca_certificate = base64decode(
-        digitalocean_kubernetes_cluster.aphiria_com_cluster.kube_config[0].cluster_ca_certificate
-    )
+    host = module.kubernetes.cluster_endpoint
+    token = module.kubernetes.cluster_kube_config_token
+    cluster_ca_certificate = base64decode(module.kubernetes.cluster_ca_certificate)
 }

@@ -22,3 +22,15 @@ resource "digitalocean_kubernetes_cluster" "aphiria_com_cluster" {
 output "cluster_id" {
     value = digitalocean_kubernetes_cluster.aphiria_com_cluster.id
 }
+
+output "cluster_endpoint" {
+    value = digitalocean_kubernetes_cluster.aphiria_com_cluster.endpoint
+}
+
+output "cluster_kube_config_token" {
+    value = digitalocean_kubernetes_cluster.aphiria_com_cluster.kube_config[0].token
+}
+
+output "cluster_ca_certificate" {
+    value = digitalocean_kubernetes_cluster.aphiria_com_cluster.kube_config[0].cluster_ca_certificate
+}
