@@ -7,7 +7,7 @@
 # - Provision my DO S3 instance via TF
 # - Should I use Helm values to swap in local image names when testing k8s locally?
 # - Add liveness probes to API.  I already have a /health endpoint to ping, but even though it's returning a 500, the probe is passing.  I should make sure that hitting /health on the nginx server is, in fact, returning the value from HealthController.
-# - Should I add namespaces?
+# - Review all "TODO" items
 
 
 # Environment vars
