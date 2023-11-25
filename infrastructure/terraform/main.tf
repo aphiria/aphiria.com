@@ -1,17 +1,18 @@
 provider "digitalocean" {
-  token = var.do_access_token
+    token = var.do_access_token
+    load_config_file = false
 }
 
 resource "digitalocean_kubernetes_cluster" "aphiria_com_cluster" {
-  name = "aphiria-com-cluster"
-  region = "nyc3"
-  version = "1.28.2-do.0"
+    name = "aphiria-com-cluster"
+    region = "nyc3"
+    version = "1.28.2-do.0"
 
-  node_pool {
-    name = "worker-pool"
-    size = "s-2vcpu-2gb"
-    node_count = 1
-  }
+    node_pool {
+        name = "worker-pool"
+        size = "s-2vcpu-2gb"
+        node_count = 1
+    }
 }
 
 data "kubernetes_service" "load_balancer" {

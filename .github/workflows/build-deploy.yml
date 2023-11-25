@@ -54,14 +54,6 @@ jobs:
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: 1.6.4
-      # TODO: REMOVE
-      - name: Install doctl
-        uses: digitalocean/action-doctl@v2
-        with:
-          token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
-      # TODO: REMOVE
-      - name: Save DigitalOcean kubeconfig
-        run: doctl kubernetes cluster kubeconfig save $(terraform-bin -chdir=./infrastructure/terraform output -raw cluster_id)
       - name: Terraform Plan
         run: |
           terraform -chdir=./infrastructure/terraform init -backend-config="access_key=${{ secrets.DIGITALOCEAN_SPACES_ACCESS_KEY }}" -backend-config="secret_key=${{ secrets.DIGITALOCEAN_SPACES_SECRET_KEY }}"
