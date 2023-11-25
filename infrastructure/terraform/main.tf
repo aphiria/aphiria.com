@@ -38,7 +38,7 @@ resource "digitalocean_record" "www_cname" {
     domain = digitalocean_domain.default.id
     type = "CNAME"
     name = "www"
-    value = "aphiria.com"
+    value = "aphiria.com."
     ttl = 43200
 }
 
@@ -47,7 +47,7 @@ resource "digitalocean_record" "mx_default" {
     type = "MX"
     name = "@"
     priority = 1
-    value = "aspmx.l.google.com"
+    value = "aspmx.l.google.com."
     ttl = 1800
 }
 
@@ -56,7 +56,7 @@ resource "digitalocean_record" "mx_1" {
     type = "MX"
     name = "@"
     priority = 5
-    value = "alt1.aspmx.l.google.com"
+    value = "alt1.aspmx.l.google.com."
     ttl = 1800
 }
 
@@ -65,7 +65,7 @@ resource "digitalocean_record" "mx_2" {
     type = "MX"
     name = "@"
     priority = 5
-    value = "alt2.aspmx.l.google.com"
+    value = "alt2.aspmx.l.google.com."
     ttl = 1800
 }
 
@@ -74,7 +74,7 @@ resource "digitalocean_record" "mx_3" {
     type = "MX"
     name = "@"
     priority = 10
-    value = "alt3.aspmx.l.google.com"
+    value = "alt3.aspmx.l.google.com."
     ttl = 1800
 }
 
@@ -83,7 +83,7 @@ resource "digitalocean_record" "mx_4" {
     type = "MX"
     name = "@"
     priority = 10
-    value = "alt4.aspmx.l.google.com"
+    value = "alt4.aspmx.l.google.com."
     ttl = 1800
 }
 
@@ -91,7 +91,7 @@ resource "digitalocean_record" "ns_1" {
     domain = digitalocean_domain.default.id
     type = "NS"
     name = "@"
-    value = "ns1.digitalocean.com"
+    value = "ns1.digitalocean.com."
     ttl = 1800
 }
 
@@ -99,7 +99,7 @@ resource "digitalocean_record" "ns_2" {
     domain = digitalocean_domain.default.id
     type = "NS"
     name = "@"
-    value = "ns2.digitalocean.com"
+    value = "ns2.digitalocean.com."
     ttl = 1800
 }
 
@@ -107,7 +107,7 @@ resource "digitalocean_record" "ns_3" {
     domain = digitalocean_domain.default.id
     type = "NS"
     name = "@"
-    value = "ns3.digitalocean.com"
+    value = "ns3.digitalocean.com."
     ttl = 1800
 }
 
