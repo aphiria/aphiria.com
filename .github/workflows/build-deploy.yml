@@ -93,7 +93,6 @@ jobs:
           kubectl apply -f infrastructure/kubernetes/config.yml
       - name: Terraform DigitalOcean Networking
         run: |
-          terraform -chdir=./infrastructure/terraform state mv digitalocean_domain.default module.networking.digitalocean_domain.default
           terraform -chdir=./infrastructure/terraform state mv digitalocean_record.a module.networking.digitalocean_record.a
           terraform -chdir=./infrastructure/terraform state mv digitalocean_record.api_a module.networking.digitalocean_record.api_a
           terraform -chdir=./infrastructure/terraform state mv digitalocean_record.www_cname module.networking.digitalocean_record.www_cname
