@@ -42,6 +42,30 @@ sudo unzip terraform_1.6.4_linux_amd64.zip -d /usr/local/bin
 
 Verify that Terraform installed successfully with `terraform -v`.
 
+### Configuring Multiple Clusters in kubectl
+
+Kubectl lets you configure multiple clusters (eg your DigitalOcean and minikube clusters).  To do so, download the kubeconfig file from the DigitalOcean cluster.
+
+> **Note:** If using WSL2, copy it to your _~/_ directory and call it _digitalocean.yml_.
+
+```
+export KUBECONFIG=~/.kube/config:~/digitalocean.yml
+kubectl config view --flatten > ~/combined.yml
+cp ~/combined.yml ~/.kube/config
+```
+
+Verify that you see multiple context by running
+
+```
+kubectl config get-contexts
+```
+
+To switch contexts, simply run
+
+```
+kubectl config use-context DESIRED_CONTEXT_NAME
+```
+
 ## Run The Application
 
 ### Start Minikube
@@ -79,7 +103,7 @@ Install the required Helm charts:
 ```
 helm repo add jetstack https://charts.jetstack.io
 helm repo update
-helm upgrade --install cert-manager jetstack/cert-manager --namespace cert-manager --create-namespace --version v1.13.2 --set installCRDs=true
+helm upgrade --install cert-manager jetstack/cert-manager --namespace cert-manager --create-namespace --version v1.13.2 --set installCRDs=true --set "extraArgs={--feature-gates=ExperimentalGatewayAPISupport=true}"
 helm upgrade --install nginx-gateway oci://ghcr.io/nginxinc/charts/nginx-gateway-fabric  --create-namespace --wait -n nginx-gateway
 ```
 
