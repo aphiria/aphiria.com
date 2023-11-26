@@ -1,46 +1,16 @@
 # TODOS
+# - Convert this to a Helm chart that can swap out values as necessary
 # - Need to figure out how I can rerun pipelines and grab the latest documentation (that is currently happening in the Docker image)
 # - Use checksum/config annotation with Helm to auto-deploy pods on config map and secret updates
-# - Need to encrypt my state file in S3
+  # - As part of this, we should have a deterministic naming scheme for secrets that we pull from GitHub, eg "env-var-secrets-prod.yml" so that we can use Helm to determine which environment's config we're using for the checksum
 # - Figure out why Docker caching is not working.  Ideally, it's working even for JS and PHP package installation.
-# - Provision my DO S3 instance via TF
 # - Should I use Helm values to swap in local image names when testing k8s locally?
+  # - Things that should be templatized: image names (so we can do local testing), names of configs (eg cert-dev.yml) to use, imagePullPolicy, domain names (so we can have a test environment, eg api-dev.aphiria.com)
 # - Add liveness probes to API.  I already have a /health endpoint to ping, but even though it's returning a 500, the probe is passing.  I should make sure that hitting /health on the nginx server is, in fact, returning the value from HealthController.
 # - Review all "TODO" items
 
 
-# Environment vars
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: env-vars
-data:
-  APP_BUILDER_API: "\\Aphiria\\Framework\\Api\\SynchronousApiApplicationBuilder"
-  APP_BUILDER_CONSOLE: "\\Aphiria\\Framework\\Console\\ConsoleApplicationBuilder"
-  APP_ENV: "production"
-  APP_WEB_URL: "https://www.aphiria.com"
-  APP_API_URL: "https://api.aphiria.com"
-  APP_COOKIE_DOMAIN: ".aphiria.com"
-  APP_COOKIE_SECURE: "0"
-  DB_HOST: "db"
-  DB_NAME: "postgres"
-  DB_PORT: "5432" # Make sure this matches the database service port
-  DOC_LEXEMES_TABLE_NAME: ""
-  LOG_LEVEL: "debug"
 
----
-# JavaScript config
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: js-config
-data:
-  config.js: |
-    export default {
-        apiUri: "https://api.aphiria.com"
-    }
-
----
 # Web deployment
 apiVersion: apps/v1
 kind: Deployment
@@ -59,7 +29,7 @@ spec:
       containers:
         - name: web
           image: davidbyoung/aphiria.com-web:latest
-          imagePullPolicy: IfNotPresent # TODO: This should be "Always" so I am getting the latest image, but manually loading the image into minikube via "minikube image load davidbyoung/aphiria.com-web:latest" is not working
+          imagePullPolicy: IfNotPresent
           volumeMounts:
             - name: js-config
               mountPath: /usr/share/nginx/html/js/config
@@ -226,7 +196,7 @@ spec:
       initContainers:
         - name: copy-api-code
           image: davidbyoung/aphiria.com-api:latest
-          imagePullPolicy: IfNotPresent # TODO: This should be "Always" so I am getting the latest image, but manually loading the image into minikube via "minikube image load davidbyoung/aphiria.com-api:latest" is not working
+          imagePullPolicy: IfNotPresent
           # We copy and preserve the permissions so that nginx has access to things like the tmp directory
           command: [ 'sh', '-c', 'cp -Rp /app/api/. /usr/share/nginx/html' ]
           volumeMounts:
@@ -245,7 +215,7 @@ spec:
               subPath: default.conf
         - name: php
           image: davidbyoung/aphiria.com-api:latest
-          imagePullPolicy: IfNotPresent # TODO: This should be "Always" so I am getting the latest image, but manually loading the image into minikube via "minikube image load davidbyoung/aphiria.com-api:latest" is not working
+          imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 9000
           envFrom:
@@ -274,6 +244,7 @@ metadata:
   name: db-migration
 spec:
   template:
+    metadata: {}
     spec:
       containers:
         - name: db-migration

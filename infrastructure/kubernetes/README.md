@@ -112,6 +112,8 @@ Finally, apply the Kubernetes manifests:
 ```
 kubectl apply -f infrastructure/kubernetes/env-var-secrets-dev.yml -f infrastructure/kubernetes/digitalocean-secrets-dev.yml
 kubectl apply -f infrastructure/kubernetes/cert-manager-dev.yml
+kubectl apply -f infrastructure/kubernetes/env-vars.yml
+kubectl apply -f infrastructure/kubernetes/js-config.yml
 kubectl apply -f infrastructure/kubernetes/config.yml
 ```
 

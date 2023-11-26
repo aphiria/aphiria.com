@@ -90,6 +90,8 @@ jobs:
           # Apply configs
           kubectl apply -f env-var-secrets.yml -f digitalocean-secrets.yml
           kubectl apply -f infrastructure/kubernetes/cert-prod.yml
+          kubectl apply -f infrastructure/kubernetes/env-vars.yml
+          kubectl apply -f infrastructure/kubernetes/js-config.yml
           kubectl apply -f infrastructure/kubernetes/config.yml
       - name: Terraform DigitalOcean Networking
         run: |

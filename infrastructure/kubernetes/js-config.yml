@@ -1,0 +1,10 @@
+# JavaScript config
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: js-config
+data:
+  config.js: |
+    export default {
+      apiUri: "https://api.aphiria.com"
+    }
