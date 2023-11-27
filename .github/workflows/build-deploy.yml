@@ -82,11 +82,10 @@ jobs:
           helm upgrade --install nginx-gateway oci://ghcr.io/nginxinc/charts/nginx-gateway-fabric  --create-namespace --wait -n nginx-gateway
       - name: Apply Kubernetes Config
         run: |
-          # Delete the database migration if it existed so we can run it on every deployment
-          kubectl delete jobs db-migration --ignore-not-found=true
           # Write secrets to files so we can apply them
           echo "${{ secrets.KUBERNETES_SECRETS }}" > ./infrastructure/kubernetes/environments/prod/core/secrets.yml
           echo "${{ secrets.DIGITALOCEAN_SECRETS }}" > ./infrastructure/kubernetes/environments/prod/gateway-api/secrets.yml
+
           # Apply configs
           kubectl apply -k ./infrastructure/kubernetes/environments/prod
       - name: Terraform DigitalOcean Networking
