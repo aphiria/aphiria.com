@@ -1,3 +1,4 @@
+# Use a LetsEncrypt TLS certificate
 apiVersion: cert-manager.io/v1
 kind: ClusterIssuer
 metadata:
@@ -5,7 +6,7 @@ metadata:
   namespace: nginx-gateway
 spec:
   acme:
-    server: https://acme-staging-v02.api.letsencrypt.org/directory
+    server: https://acme-staging-v02.api.letsencrypt.org/directory # TODO: Need to update this to use the prod URL once I'm done testing everything
     email: admin@aphiria.com
     privateKeySecretRef:
       name: letsencrypt-secret

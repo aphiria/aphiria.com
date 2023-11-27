@@ -91,13 +91,6 @@ eval $(minikube -p minikube docker-env)
 
 ### Set Up Your Kubernetes Cluster
 
-Install the custom resource definitions (CRDs) your cluster will need:
-
-```
-kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.0.0/standard-install.yaml
-```
-
-
 Install the required Helm charts:
 
 ```
@@ -107,14 +100,10 @@ helm upgrade --install cert-manager jetstack/cert-manager --namespace cert-manag
 helm upgrade --install nginx-gateway oci://ghcr.io/nginxinc/charts/nginx-gateway-fabric  --create-namespace --wait -n nginx-gateway
 ```
 
-Finally, apply the Kubernetes manifests:
+Finally, apply the Kubernetes manifests using Kustomize:
 
 ```
-kubectl apply -f infrastructure/kubernetes/env-var-secrets-dev.yml -f infrastructure/kubernetes/digitalocean-secrets-dev.yml
-kubectl apply -f infrastructure/kubernetes/cert-manager-dev.yml
-kubectl apply -f infrastructure/kubernetes/env-vars.yml
-kubectl apply -f infrastructure/kubernetes/js-config.yml
-kubectl apply -f infrastructure/kubernetes/config.yml
+kubectl apply -k ./infrastructure/kubernetes/environments/dev
 ```
 
 You should now be able to hit https://www.aphiria.com in your browser.  You will get a TLS certificate error since we're using a self-signed certificate locally.  If using Chrome, type in `thisisunsafe` to accept the self-signed certificate.  Likewise, you'll likely have to do the same for the API, which you can do by visiting https://api.aphiria.com/docs/search?query=foo and typing `thisisunsafe`.

@@ -1,0 +1,47 @@
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: nginx-gateway
+  namespace: nginx-gateway
+  annotations:
+    cert-manager.io/cluster-issuer: cert-issuer
+spec:
+  gatewayClassName: nginx
+  listeners:
+    # Note that wildcards only match subdomains, not the root domain, which is why we have different listeners for each
+    - name: http-root
+      hostname: aphiria.com
+      port: 80
+      protocol: HTTP
+      allowedRoutes:
+        namespaces:
+          from: All
+    - name: http-subdomains
+      hostname: "*.aphiria.com"
+      port: 80
+      protocol: HTTP
+      allowedRoutes:
+        namespaces:
+          from: All
+    - name: https-root
+      hostname: aphiria.com
+      port: 443
+      protocol: HTTPS
+      allowedRoutes:
+        namespaces:
+          from: All
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - name: tls-cert
+    - name: https-subdomains
+      hostname: "*.aphiria.com"
+      port: 443
+      protocol: HTTPS
+      allowedRoutes:
+        namespaces:
+          from: All
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - name: tls-cert
