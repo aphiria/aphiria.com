@@ -68,7 +68,7 @@ kubectl config use-context DESIRED_CONTEXT_NAME
 
 ## Build The Application
 
-You must build your Docker images before you can run the application.  If using Minikube, first it up to use the Docker registry contained within it:
+You must build your Docker images before you can run the application.  If using Minikube, first configure it to use the Docker registry contained within:
 
 ```
 eval $(minikube -p minikube docker-env)
@@ -86,6 +86,8 @@ docker build -t aphiria.com-web -f ./infrastructure/docker/runtime/web/Dockerfil
 
 ### Start Minikube
 
+Get Minukube running:
+
 ```
 minikube start
 minikube dashboard
@@ -93,7 +95,7 @@ minikube dashboard
 
 > **Note:** If you're running as the root user, run `minikube start --force` instead.
 
-In another console terminal, create a tunnel to be able to connect to Minikube with:
+In another console terminal, create a tunnel to be able to connect to Minikube:
 
 ```
 minikube tunnel
@@ -110,10 +112,12 @@ helm upgrade --install cert-manager jetstack/cert-manager --namespace cert-manag
 helm upgrade --install nginx-gateway oci://ghcr.io/nginxinc/charts/nginx-gateway-fabric  --create-namespace --wait -n nginx-gateway
 ```
 
-Finally, apply the Kubernetes manifests using Kustomize:
+Apply the Kubernetes manifests using Kustomize:
 
 ```
 kubectl apply -k ./infrastructure/kubernetes/environments/dev
 ```
 
-You should now be able to hit https://www.aphiria.com in your browser.  You will get a TLS certificate error since we're using a self-signed certificate locally.  If using Chrome, type in `thisisunsafe` to accept the self-signed certificate.  Likewise, you'll likely have to do the same for the API, which you can do by visiting https://api.aphiria.com/docs/search?query=foo and typing `thisisunsafe`.
+You should now be able to hit https://www.aphiria.com in your browser.  You will get a TLS certificate error since we're using a self-signed certificate locally.
+
+ > **Note:** If using Chrome, type `thisisunsafe` to accept the self-signed certificate.  Likewise, you'll have to do the same for the API, which you can do by visiting https://api.aphiria.com/docs/search?query=foo and typing `thisisunsafe`.
