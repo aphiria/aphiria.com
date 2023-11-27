@@ -1,6 +1,7 @@
-- Need to pull in prod secrets/configs that we currently pull in during CI
+- See if I can move environments/dev/core/secrets.yml back into base/core/secrets.yml, and simply overwrite it in prod with the secrets from GitHub Actions
 - Can I remove the CI/CD step to delete the db migration job now that it has a TTL?
 - Need to figure out how I can rerun pipelines and grab the latest documentation (that is currently happening in the Docker image)
+  - Should this instead be part of some GitHub actions workflow that deploys with latest documentation on a cron schedule? 
 - Use checksum/config annotation with Helm to auto-deploy pods on config map and secret updates
 - As part of this, we should have a deterministic naming scheme for secrets that we pull from GitHub, eg "env-var-secrets-prod.yml" so that we can use Helm to determine which environment's config we're using for the checksum
 - Figure out why Docker caching is not working.  Ideally, it's working even for JS and PHP package installation.

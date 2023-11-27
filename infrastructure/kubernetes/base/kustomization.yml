@@ -6,7 +6,6 @@ resources:
   - ./api/deployments.yml
   - ./api/services.yml
   - ./core/config-maps.yml
-  - ./core/secrets.yml
   - ./database/deployments.yml
   - ./database/jobs.yml
   - ./database/persistent-volumes.yml

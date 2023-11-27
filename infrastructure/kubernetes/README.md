@@ -66,6 +66,22 @@ To switch contexts, simply run
 kubectl config use-context DESIRED_CONTEXT_NAME
 ```
 
+## Build The Application
+
+You must build your Docker images before you can run the application.  If using Minikube, first it up to use the Docker registry contained within it:
+
+```
+eval $(minikube -p minikube docker-env)
+```
+
+Then, build the images:
+
+```
+docker build -t aphiria.com-build -f ./infrastructure/docker/build/Dockerfile .
+docker build -t aphiria.com-api -f ./infrastructure/docker/runtime/api/Dockerfile .
+docker build -t aphiria.com-web -f ./infrastructure/docker/runtime/web/Dockerfile .
+```
+
 ## Run The Application
 
 ### Start Minikube
@@ -81,12 +97,6 @@ In another console terminal, create a tunnel to be able to connect to Minikube w
 
 ```
 minikube tunnel
-```
-
-If you want to test out local Docker images in your Kubernetes cluster, run the following so that Docker images are pulled into Minikube's registry:
-
-```
-eval $(minikube -p minikube docker-env)
 ```
 
 ### Set Up Your Kubernetes Cluster
