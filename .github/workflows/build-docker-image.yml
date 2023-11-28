@@ -36,7 +36,6 @@ jobs:
           context: .
           file: ${{ inputs.dockerfile }}
           push: true
-          #tags: ${{ inputs.image }}:${{ github.sha }} # TODO: Should I add this back?
           tags: ${{ inputs.image }}:latest
           cache-from: type=registry,ref=${{ inputs.image }}:buildcache
           cache-to: type=registry,ref=${{ inputs.image }}:buildcache,mode=max
