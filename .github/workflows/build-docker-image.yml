@@ -17,7 +17,7 @@ on:
 jobs:
   build-image:
     runs-on: ubuntu-latest
-    name: Build ${{ inputs.image }} Docker Image
+    name: ${{ inputs.image }}
     steps:
       - name: Check Out Code
         uses: actions/checkout@v4
