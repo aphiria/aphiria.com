@@ -8,6 +8,8 @@
 docker login -u <username>
 ```
 
+> **Note:** If you get an error trying to save your credentials, run `rm ~/.docker/config.json`.
+
 ### Install Kubectl
 
 Follow the [instructions](https://kubernetes.io/docs/tasks/tools).
@@ -86,7 +88,7 @@ docker build -t aphiria.com-web -f ./infrastructure/docker/runtime/web/Dockerfil
 
 ### Start Minikube
 
-Get Minukube running:
+Get Minikube running:
 
 ```
 minikube start
@@ -103,7 +105,13 @@ minikube tunnel
 
 ### Set Up Your Kubernetes Cluster
 
-Install the required Helm charts:
+First, install some required custom resource definitions (CRDs):
+
+```
+kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.0.0/standard-install.yaml
+```
+
+Then, install the required Helm charts:
 
 ```
 helm repo add jetstack https://charts.jetstack.io
