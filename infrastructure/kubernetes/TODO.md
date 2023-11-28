@@ -1,4 +1,0 @@
-- Need to figure out how I can rerun pipelines and grab the latest documentation (that is currently happening in the Docker image)
-  - Should this instead be part of some GitHub actions workflow that deploys with latest documentation on a cron schedule?
-- Add liveness probes to API.  I already have a /health endpoint to ping, but even though it's returning a 500, the probe is passing.  I should make sure that hitting /health on the nginx server is, in fact, returning the value from HealthController.
-- Review all "TODO" items

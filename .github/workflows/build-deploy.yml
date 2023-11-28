@@ -1,9 +1,10 @@
 name: build-deploy
 on:
-  pull_request: # TODO: Only run this on master, not PRs!
   push:
     branches:
       - master
+  schedule:
+    - cron: '0 */6 * * *' # Deploy the website every 6 hours
 jobs:
   build-base-image:
     name: Build Base Image
