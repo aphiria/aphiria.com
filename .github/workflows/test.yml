@@ -14,9 +14,7 @@ jobs:
       matrix:
         include:
           - php: '8.2'
-            stability: prefer-stable
           - php: '8.3'
-            stability: prefer-stable
     services:
       postgres:
         image: postgres:16-alpine
@@ -32,7 +30,7 @@ jobs:
       APP_API_URL: https://api.aphiria.com
       DB_HOST: localhost
       DB_PASSWORD: password
-    name: Test PHP ${{ matrix.php }} - ${{ matrix.stability }}
+    name: Test PHP ${{ matrix.php }}
     steps:
       - name: Check Out Code
         uses: actions/checkout@v4
@@ -59,7 +57,7 @@ jobs:
       - name: Run Tests
         run: composer phpunit
       - name: Run Linter
-        run: composer phpcs-test
+        run: PHP_CS_FIXER_IGNORE_ENV=1 composer phpcs-test
       - name: Run Psalm Static Analysis
         run: composer psalm -- --shepherd
       - name: Upload Coverage Results To Coveralls
