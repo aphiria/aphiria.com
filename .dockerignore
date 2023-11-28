@@ -1,6 +1,7 @@
 /.coverage/
 /.git/
+/.github/
 /.idea/
-/infrastructure/terraform/
+/infrastructure/
 /tmp/framework/**/*.txt
 /tmp/logs/errors.txt
