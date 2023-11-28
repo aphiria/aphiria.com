@@ -16,10 +16,9 @@
         <meta name="keywords" content="{{ metadataKeywords }}">
         <meta name="description" content="{{ metadataDescription }}">
         <!-- Scripts -->
-        <script src="/js/scripts.min.js"></script>
+        <script src="/js/scripts.min.js" type="module"></script>
         <script async src="https://www.googletagmanager.com/gtag/js?id=UA-163496896-1"></script>
         <script>
-            const apiUri = '{{ apiUri }}';
             window.dataLayer = window.dataLayer || [];
             function gtag(){dataLayer.push(arguments);}
             gtag('js', new Date());

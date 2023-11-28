@@ -8,7 +8,6 @@ const uglifyJs = require('gulp-terser');
 const uglifyCss = require('gulp-clean-css');
 const concat = require('gulp-concat');
 const del = require('del');
-const sass = require('gulp-sass')(require('node-sass'));
 const shell = require('gulp-shell');
 const sourcemaps = require('gulp-sourcemaps');
 
@@ -77,7 +76,6 @@ const minifyCss = () => {
 const compileScss = () => {
     return gulp.src(`${paths.resourcesCss}/*.scss`)
         .pipe(sourcemaps.init())
-        .pipe(sass().on('error', sass.logError))
         .pipe(sourcemaps.write('.'))
         .pipe(gulp.dest(paths.resourcesCss));
 };
@@ -85,7 +83,8 @@ const cleanCss = () => {
     return del([`${paths.tmpCss}/*.css`, `${paths.publicCss}/*.css`, `${paths.publicCss}/*.css.map`]);
 };
 const cleanJs = () => {
-    return del([`${paths.tmpJs}/*.js`, `${paths.publicJs}/*.js`, `${paths.publicJs}/*.js.map`]);
+    // Delete everything but the config.js
+    return del([`${paths.tmpJs}/*.js`, `${paths.publicJs}/*.js`, `${paths.publicJs}/*.js.map`, `!${paths.publicJs}/config.js`]);
 };
 
 gulp.task('rewrite-references', rewriteReferences);

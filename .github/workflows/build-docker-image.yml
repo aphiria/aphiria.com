@@ -1,0 +1,41 @@
+name: build-docker-image
+on:
+  workflow_call:
+    inputs:
+      dockerfile:
+        description: The path to the Dockerfile
+        required: true
+        type: string
+      image:
+        description: The name of the image
+        required: true
+        type: string
+    secrets:
+      DOCKER_ACCESS_TOKEN:
+        description: The Docker access token
+        required: true
+jobs:
+  build-image:
+    runs-on: ubuntu-latest
+    name: ${{ inputs.image }}
+    steps:
+      - name: Check Out Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Log Into Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: davidbyoung
+          password: ${{ secrets.DOCKER_ACCESS_TOKEN }}
+      - name: Set Up Docker buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Build and Push Docker Image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ${{ inputs.dockerfile }}
+          push: true
+          tags: ${{ inputs.image }}:latest
+          cache-from: type=registry,ref=${{ inputs.image }}:buildcache
+          cache-to: type=registry,ref=${{ inputs.image }}:buildcache,mode=max

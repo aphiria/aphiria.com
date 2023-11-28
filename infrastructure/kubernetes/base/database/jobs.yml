@@ -1,0 +1,19 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: db-migration
+spec:
+  ttlSecondsAfterFinished: 0 # Clean up the job after it runs
+  template:
+    spec:
+      containers:
+        - name: db-migration
+          image: davidbyoung/aphiria.com-api:latest
+          imagePullPolicy: Always
+          command: ['php', '/app/api/aphiria', 'docs:index']
+          envFrom:
+            - secretRef:
+                name: env-var-secrets
+            - configMapRef:
+                name: env-vars
+      restartPolicy: Never

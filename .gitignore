@@ -5,9 +5,12 @@
 /.php-cs-fixer.cache
 /.phpunit.result.cache
 /composer.phar
+/infrastructure/terraform/**/.terraform/
+/infrastructure/terraform/**/.terraform.lock.hcl
+/infrastructure/terraform/**/errored.tfstate
+/infrastructure/terraform/**/terraform.tfvars
 /nbproject/
 /node_modules/
-/package-lock.json
 /public-web/docs/
 /public-web/index.html
 /public-web/rev-manifest.json

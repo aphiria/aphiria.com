@@ -32,7 +32,6 @@ final class ViewCompilerBinder extends Binder
             '/resources/views',
             '/public-web',
             $container->resolve(DocumentationMetadata::class),
-            (string)\getenv('APP_API_URL'),
             $container->resolve(FilesystemOperator::class)
         );
         $container->bindInstance(ViewCompiler::class, $viewCompiler);

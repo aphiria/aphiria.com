@@ -1,0 +1,86 @@
+name: build-deploy
+on:
+  push:
+    branches:
+      - master
+  schedule:
+    - cron: '0 */6 * * *' # Deploy the website every 6 hours
+jobs:
+  build-base-image:
+    name: Build Base Image
+    uses: ./.github/workflows/build-docker-image.yml
+    with:
+      dockerfile: ./infrastructure/docker/build/Dockerfile
+      image: davidbyoung/aphiria.com-build
+    secrets:
+      DOCKER_ACCESS_TOKEN: ${{ secrets.DOCKER_ACCESS_TOKEN }}
+  build-runtime-images:
+    name: Build Runtime Images
+    needs: build-base-image
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - dockerfile: ./infrastructure/docker/runtime/api/Dockerfile
+            image: davidbyoung/aphiria.com-api
+          - dockerfile: ./infrastructure/docker/runtime/web/Dockerfile
+            image: davidbyoung/aphiria.com-web
+    uses: ./.github/workflows/build-docker-image.yml
+    with:
+      dockerfile: ${{ matrix.dockerfile }}
+      image: ${{ matrix.image }}
+    secrets:
+      DOCKER_ACCESS_TOKEN: ${{ secrets.DOCKER_ACCESS_TOKEN }}
+  deploy:
+    runs-on: ubuntu-latest
+    name: Deploy
+    needs: build-runtime-images
+    environment: production
+    steps:
+      - name: Check Out Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set Up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.6.4
+      - name: Terraform Kubernetes
+        run: |
+          terraform -chdir=./infrastructure/terraform init -backend-config="access_key=${{ secrets.DIGITALOCEAN_SPACES_ACCESS_KEY }}" -backend-config="secret_key=${{ secrets.DIGITALOCEAN_SPACES_SECRET_KEY }}"
+          terraform -chdir=./infrastructure/terraform validate
+          terraform -chdir=./infrastructure/terraform plan -target="module.kubernetes" -var="do_access_token=${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}" -var="do_spaces_access_key=${{ secrets.DIGITALOCEAN_SPACES_ACCESS_KEY }}" -var="do_spaces_secret_key=${{ secrets.DIGITALOCEAN_SPACES_SECRET_KEY }}" -no-color -input=false
+          terraform -chdir=./infrastructure/terraform apply -target="module.kubernetes" -var="do_access_token=${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}" -var="do_spaces_access_key=${{ secrets.DIGITALOCEAN_SPACES_ACCESS_KEY }}" -var="do_spaces_secret_key=${{ secrets.DIGITALOCEAN_SPACES_SECRET_KEY }}" -no-color -input=false -auto-approve
+      - name: Install doctl
+        uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+      - name: Save DigitalOcean kubeconfig
+        run: doctl kubernetes cluster kubeconfig save $(terraform-bin -chdir=./infrastructure/terraform output -raw cluster_id)
+      - name: Install Helm
+        uses: azure/setup-helm@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Install Helm Charts
+        run: |
+          # Install some needed CRDs
+          kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.0.0/standard-install.yaml
+
+          # Install Helm charts
+          helm repo add jetstack https://charts.jetstack.io
+          helm repo update
+          helm upgrade --install cert-manager jetstack/cert-manager --namespace cert-manager --create-namespace --version v1.13.2 --set installCRDs=true --set "extraArgs={--feature-gates=ExperimentalGatewayAPISupport=true}"
+          helm upgrade --install nginx-gateway oci://ghcr.io/nginxinc/charts/nginx-gateway-fabric --create-namespace --wait -n nginx-gateway
+      - name: Apply Kubernetes Config
+        run: |
+          # Write secrets to files so we can apply them
+          echo "${{ secrets.KUBERNETES_SECRETS }}" > ./infrastructure/kubernetes/environments/prod/core/secrets.yml
+          echo "${{ secrets.DIGITALOCEAN_SECRETS }}" > ./infrastructure/kubernetes/environments/prod/gateway-api/secrets.yml
+
+          # Apply configs
+          kubectl apply -k ./infrastructure/kubernetes/environments/prod
+      - name: Terraform DigitalOcean Networking
+        run: |
+          terraform -chdir=./infrastructure/terraform plan -target="module.networking" -var="do_access_token=${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}" -var="do_spaces_access_key=${{ secrets.DIGITALOCEAN_SPACES_ACCESS_KEY }}" -var="do_spaces_secret_key=${{ secrets.DIGITALOCEAN_SPACES_SECRET_KEY }}"  -no-color -input=false
+          terraform -chdir=./infrastructure/terraform apply -target="module.networking" -var="do_access_token=${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}" -var="do_spaces_access_key=${{ secrets.DIGITALOCEAN_SPACES_ACCESS_KEY }}" -var="do_spaces_secret_key=${{ secrets.DIGITALOCEAN_SPACES_SECRET_KEY }}"  -no-color -input=false -auto-approve
+

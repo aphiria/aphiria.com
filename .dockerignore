@@ -1,0 +1,9 @@
+/.coverage/
+/.git/
+/.github/
+/.idea/
+/infrastructure/
+/node_modules/
+/tmp/framework/**/*.txt
+/tmp/logs/errors.txt
+/vendor/
