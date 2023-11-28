@@ -11,7 +11,7 @@ jobs:
       dockerfile: ./infrastructure/docker/build/Dockerfile
       image: davidbyoung/aphiria.com-build
     secrets:
-      DOCKER_ACCESS_TOKEN: ${{ secrets.CI_SSH_KEY }}
+      DOCKER_ACCESS_TOKEN: ${{ secrets.DOCKER_ACCESS_TOKEN }}
   build-runtime-images:
     name: Build Runtime Images
     needs: build-base-image
@@ -28,7 +28,7 @@ jobs:
       dockerfile: ${{ matrix.dockerfile }}
       image: ${{ matrix.image }}
     secrets:
-      DOCKER_ACCESS_TOKEN: ${{ secrets.CI_SSH_KEY }}
+      DOCKER_ACCESS_TOKEN: ${{ secrets.DOCKER_ACCESS_TOKEN }}
   deploy:
     runs-on: ubuntu-latest
     name: Deploy
