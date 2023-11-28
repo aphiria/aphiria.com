@@ -15,7 +15,7 @@ on:
         description: The Docker access token
         required: true
 jobs:
-  build-base-image:
+  build-image:
     runs-on: ubuntu-latest
     name: Build ${{ inputs.image }} Docker Image
     steps:
