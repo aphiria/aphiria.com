@@ -79,8 +79,8 @@ jobs:
 
           # Apply configs
           kubectl apply -k ./infrastructure/kubernetes/environments/prod
-      - name: Terraform DigitalOcean Networking
+      - name: Terraform DigitalOcean Networking and Monitoring
         run: |
-          terraform -chdir=./infrastructure/terraform plan -target="module.networking" -var="do_access_token=${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}" -var="do_spaces_access_key=${{ secrets.DIGITALOCEAN_SPACES_ACCESS_KEY }}" -var="do_spaces_secret_key=${{ secrets.DIGITALOCEAN_SPACES_SECRET_KEY }}"  -no-color -input=false
-          terraform -chdir=./infrastructure/terraform apply -target="module.networking" -var="do_access_token=${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}" -var="do_spaces_access_key=${{ secrets.DIGITALOCEAN_SPACES_ACCESS_KEY }}" -var="do_spaces_secret_key=${{ secrets.DIGITALOCEAN_SPACES_SECRET_KEY }}"  -no-color -input=false -auto-approve
+          terraform -chdir=./infrastructure/terraform plan -target="module.networking" -target="module.monitoring" -var="do_access_token=${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}" -var="do_spaces_access_key=${{ secrets.DIGITALOCEAN_SPACES_ACCESS_KEY }}" -var="do_spaces_secret_key=${{ secrets.DIGITALOCEAN_SPACES_SECRET_KEY }}"  -no-color -input=false
+          terraform -chdir=./infrastructure/terraform apply -target="module.networking" -target="module.monitoring" -var="do_access_token=${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}" -var="do_spaces_access_key=${{ secrets.DIGITALOCEAN_SPACES_ACCESS_KEY }}" -var="do_spaces_secret_key=${{ secrets.DIGITALOCEAN_SPACES_SECRET_KEY }}"  -no-color -input=false -auto-approve
 

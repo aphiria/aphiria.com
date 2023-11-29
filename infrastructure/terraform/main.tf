@@ -3,6 +3,11 @@ module "kubernetes" {
     do_access_token = var.do_access_token
 }
 
+module "monitoring" {
+    source = "./modules/monitoring"
+    do_access_token = var.do_access_token
+}
+
 module "networking" {
     source = "./modules/networking"
     do_access_token = var.do_access_token
