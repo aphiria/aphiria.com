@@ -16,6 +16,7 @@ terraform {
         }
         bucket = "aphiria-com-infrastructure"
         key = "infrastructure/terraform.tfstate"
+        acl = "private"
         region = "us-east-1" # Dummy value since it's typically only required for AWS S3, not DO S3
         skip_requesting_account_id = true
         skip_credentials_validation = true
