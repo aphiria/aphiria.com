@@ -65,6 +65,10 @@ jobs:
         run: |
           composer global require php-coveralls/php-coveralls
           php-coveralls --coverage_clover=./.coverage/clover.xml --json_path=./coveralls-upload.json -v
+      - name: Set Up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.6.4
       - name: Terraform Plan
         id: terraform-plan
         run: |
