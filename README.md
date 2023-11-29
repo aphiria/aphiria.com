@@ -12,13 +12,9 @@ This repository contains the code for both https://www.aphiria.com and https://a
 
 ## Configuring Your Environment
 
-### Log Into Docker
+### Install Docker
 
-```
-docker login -u <username>
-```
-
-> **Note:** If you get an error trying to save your credentials, run `rm ~/.docker/config.json`.
+Follow the [instructions](https://docs.docker.com/engine/install/).
 
 ### Install Kubectl
 
@@ -38,13 +34,21 @@ Add the following to your host file:
 127.0.0.1 www.aphiria.com
 ```
 
+### Log Into Docker
+
+```
+docker login -u <username>
+```
+
+> **Note:** If you get an error trying to save your credentials, run `rm ~/.docker/config.json`.
+
 ### Install Helm
 
 Follow the [instructions](https://helm.sh/docs/intro/install/).
 
 ### Install Terraform
 
-Do the following:
+Run the following:
 
 ```
 cd /tmp

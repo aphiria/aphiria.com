@@ -13,7 +13,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - php: '8.2'
           - php: '8.3'
     services:
       postgres:
@@ -57,7 +56,7 @@ jobs:
       - name: Run Tests
         run: composer phpunit
       - name: Run Linter
-        run: PHP_CS_FIXER_IGNORE_ENV=1 composer phpcs-test
+        run: composer phpcs-test
       - name: Run Psalm Static Analysis
         run: composer psalm -- --shepherd
       - name: Upload Coverage Results To Coveralls

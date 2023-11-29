@@ -25,9 +25,9 @@ use Throwable;
 final class PostgreSqlSearchIndex implements ISearchIndex
 {
     /** @var int The maximum number of search results we'll return */
-    private const MAX_NUM_SEARCH_RESULTS = 5;
+    private const int MAX_NUM_SEARCH_RESULTS = 5;
     /** @var string The name of the table */
-    private const TABLE_NAME = 'lexemes';
+    private const string TABLE_NAME = 'lexemes';
     /** @var array<string, string> The mapping of HTML elements to their weights (per PostgreSQL's setweight() function) */
     private static array $htmlElementsToWeights = [
         'h1' => 'A',

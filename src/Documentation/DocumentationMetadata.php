@@ -20,7 +20,7 @@ use InvalidArgumentException;
 final class DocumentationMetadata
 {
     /** @var string The default doc branch to display */
-    private const DEFAULT_VERSION = '1.x';
+    private const string DEFAULT_VERSION = '1.x';
 
     /**
      * @param array<string, array{title: string, default: string, docs: array<string, array<string, array{title: string, linkText: string, description: string, keywords: list<string>}>>}> $config The associative array that contains our metadata
