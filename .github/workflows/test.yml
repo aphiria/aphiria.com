@@ -81,10 +81,10 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const output = `## Terraform Plan Output\n\`\`\`\n${{ steps.terraform-plan.outputs.stdout }}\n\`\`\``;
+            const output = `## Terraform Plan Output\n\`\`\`\n\n\`\`\``;
             github.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: `## Terraform Plan Output\n\`\`\`\nfoo\n\`\`\``
+              body: output
             })
