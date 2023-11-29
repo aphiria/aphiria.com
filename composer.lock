@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "4e8544e5e81bcb0a0a3be627793f1196",
+    "content-hash": "765ff164391053e4e119f6240807718a",
     "packages": [
         {
             "name": "aphiria/aphiria",
@@ -12,12 +12,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/aphiria/aphiria.git",
-                "reference": "7a58989cc86b6c4912398ceda94caca5f28b7eae"
+                "reference": "4ff62f0b3d0bcb45195f13aba9ccecb3f5b06390"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/aphiria/aphiria/zipball/7a58989cc86b6c4912398ceda94caca5f28b7eae",
-                "reference": "7a58989cc86b6c4912398ceda94caca5f28b7eae",
+                "url": "https://api.github.com/repos/aphiria/aphiria/zipball/4ff62f0b3d0bcb45195f13aba9ccecb3f5b06390",
+                "reference": "4ff62f0b3d0bcb45195f13aba9ccecb3f5b06390",
                 "shasum": ""
             },
             "require": {
@@ -27,7 +27,7 @@
                 "ext-json": "*",
                 "ext-mbstring": "*",
                 "monolog/monolog": "~2.6",
-                "php": "^8.2",
+                "php": "^8.3",
                 "psr/container": "^2.0",
                 "psr/http-factory": "^1.0",
                 "psr/http-message": "^2.0",
@@ -111,7 +111,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2023-11-28T00:57:56+00:00"
+            "time": "2023-11-29T01:35:49+00:00"
         },
         {
             "name": "erusev/parsedown",
@@ -5332,7 +5332,7 @@
         "ext-mbstring": "*",
         "ext-pdo": "*",
         "ext-pgsql": "*",
-        "php": ">=8.2"
+        "php": ">=8.3"
     },
     "platform-dev": [],
     "plugin-api-version": "2.3.0"

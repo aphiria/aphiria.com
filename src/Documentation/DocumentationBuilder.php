@@ -23,7 +23,7 @@ use League\Flysystem\StorageAttributes;
 final class DocumentationBuilder
 {
     /** The GitHub docs repository */
-    private const GITHUB_REPOSITORY = 'https://github.com/aphiria/docs.git';
+    private const string GITHUB_REPOSITORY = 'https://github.com/aphiria/docs.git';
 
     /**
      * @param Parsedown $markdownParser The Markdown parser
