@@ -18,11 +18,19 @@ Follow the [instructions](https://docs.docker.com/engine/install/).
 
 ### Install Kubectl
 
-Follow the [instructions](https://kubernetes.io/docs/tasks/tools).
+```
+cd /tmp
+curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+```
 
 ### Install Minikube
 
-Follow the [instructions](https://minikube.sigs.k8s.io/docs/start/).
+```
+cd /tmp
+curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
+sudo install minikube-linux-amd64 /usr/local/bin/minikube
+```
 
 ### Update Your Host File
 
@@ -44,11 +52,14 @@ docker login -u <username>
 
 ### Install Helm
 
-Follow the [instructions](https://helm.sh/docs/intro/install/).
+```
+cd /tmp
+curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
+chmod 700 get_helm.sh
+./get_helm.sh
+```
 
 ### Install Terraform
-
-Run the following:
 
 ```
 cd /tmp
@@ -82,22 +93,6 @@ To switch contexts, simply run
 kubectl config use-context DESIRED_CONTEXT_NAME
 ```
 
-## Build The Application
-
-You must build your Docker images before you can run the application.  If using Minikube, first configure it to use the Docker registry contained within:
-
-```
-eval $(minikube -p minikube docker-env)
-```
-
-Then, build the images:
-
-```
-docker build -t aphiria.com-build -f ./infrastructure/docker/build/Dockerfile .
-docker build -t aphiria.com-api -f ./infrastructure/docker/runtime/api/Dockerfile .
-docker build -t aphiria.com-web -f ./infrastructure/docker/runtime/web/Dockerfile .
-```
-
 ## Run The Application
 
 ### Start Minikube
@@ -115,6 +110,22 @@ In another console terminal, create a tunnel to be able to connect to Minikube:
 
 ```
 minikube tunnel
+```
+
+### Build The Application
+
+You must build your Docker images before you can run the application.  If using Minikube, first configure it to use the Docker registry contained within:
+
+```
+eval $(minikube -p minikube docker-env)
+```
+
+Then, build the images:
+
+```
+docker build -t aphiria.com-build -f ./infrastructure/docker/build/Dockerfile .
+docker build -t aphiria.com-api -f ./infrastructure/docker/runtime/api/Dockerfile .
+docker build -t aphiria.com-web -f ./infrastructure/docker/runtime/web/Dockerfile .
 ```
 
 ### Set Up Your Kubernetes Cluster
