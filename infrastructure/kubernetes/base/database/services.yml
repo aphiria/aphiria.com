@@ -3,6 +3,7 @@ kind: Service
 metadata:
   name: db
 spec:
+  type: ClusterIP
   selector:
     app: db
   ports:

@@ -12,6 +12,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Integration\Documentation;
 
+use Aphiria\Net\Http\HttpStatusCode;
 use App\Documentation\Searching\SearchResult;
 use App\Tests\Integration\IntegrationTestCase;
 
@@ -20,6 +21,7 @@ class DocumentationTest extends IntegrationTestCase
     public function testSearchingForItemWithDocumentationReturnsResults(): void
     {
         $response = $this->get('/docs/search?query=routing');
+        $this->assertStatusCodeEquals(HttpStatusCode::Ok, $response);
         $this->assertParsedBodyPassesCallback(
             $response,
             SearchResult::class . '[]',
@@ -36,6 +38,7 @@ class DocumentationTest extends IntegrationTestCase
     public function testSearchingForNonExistentTermReturnsEmptyResults(): void
     {
         $response = $this->get('/docs/search?query=abcdefghijklmnopqrstuvwxyz');
+        $this->assertStatusCodeEquals(HttpStatusCode::Ok, $response);
         // The Symfony serializer cannot deserialize type 'array', so we cannot just check if it equals []
         $this->assertParsedBodyPassesCallback(
             $response,

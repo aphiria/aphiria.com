@@ -42,3 +42,14 @@ patches:
       - op: replace
         path: /spec/template/spec/containers/0/imagePullPolicy
         value: IfNotPresent
+  # Update the database to be accessible from outside the cluster for integration tests run from the IDE
+  - target:
+      name: db
+      kind: Service
+    patch: |-
+      - op: replace
+        path: /spec/type
+        value: NodePort
+      - op: replace
+        path: /spec/ports/0/nodePort
+        value: 30001
