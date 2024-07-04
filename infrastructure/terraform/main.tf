@@ -35,3 +35,20 @@ resource "digitalocean_spaces_bucket" "aphiria_com_infrastructure" {
     name = "aphiria-com-infrastructure"
     region = "nyc3"
 }
+
+# These outputs need to mirror the outputs from the modules so that they're accessible from the root module
+output "cluster_id" {
+    value = module.kubernetes.cluster_id
+}
+
+output "cluster_endpoint" {
+    value = module.kubernetes.cluster_endpoint
+}
+
+output "cluster_kube_config_token" {
+    value = module.kubernetes.cluster_kube_config_token
+}
+
+output "cluster_ca_certificate" {
+    value = module.kubernetes.cluster_ca_certificate
+}
