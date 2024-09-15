@@ -61,7 +61,7 @@ final class DocumentationBinder extends Binder
         $container->bindInstance(FilesystemOperator::class, $files);
         $docBuilder = new DocumentationBuilder(
             new Parsedown(new ParsedownExtra()),
-            $metadata->getBranches(),
+            $metadata->branches,
             __DIR__ . '/../../../tmp/docs',
             '/tmp/docs',
             self::HTML_DOC_PATH,
@@ -73,7 +73,7 @@ final class DocumentationBinder extends Binder
         $container->bindFactory(DocumentationIndexer::class, function () use ($container, $metadata, $files, $docBuilder) {
             $searchIndex = new PostgreSqlSearchIndex(
                 $container->resolve(PDO::class),
-                "/docs/{$metadata->getDefaultVersion()}/",
+                "/docs/$metadata->defaultVersion/",
                 $files
             );
 

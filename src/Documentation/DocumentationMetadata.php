@@ -19,6 +19,18 @@ use InvalidArgumentException;
  */
 final class DocumentationMetadata
 {
+    /** @var list<string> The list of branch names */
+    public array $branches {
+        get => \array_keys($this->config);
+    }
+    /** @var string The default version */
+    public string $defaultVersion {
+        get => self::DEFAULT_VERSION;
+    }
+    /** @var list<string> The list of doc versions */
+    public array $docVersions {
+        get => \array_keys($this->config);
+    }
     /** @var string The default doc branch to display */
     private const string DEFAULT_VERSION = '1.x';
 
@@ -30,16 +42,6 @@ final class DocumentationMetadata
     }
 
     /**
-     * Gets the branch names that contain documentation
-     *
-     * @return list<string> The branch names
-     */
-    public function getBranches(): array
-    {
-        return \array_keys($this->config);
-    }
-
-    /**
      * Gets the name of the default doc for a version
      *
      * @param string $version The version to get
@@ -48,16 +50,6 @@ final class DocumentationMetadata
     public function getDefaultDoc(string $version): string
     {
         return $this->config[$version]['default'];
-    }
-
-    /**
-     * Gets the default branch to display
-     *
-     * @return string The default version
-     */
-    public function getDefaultVersion(): string
-    {
-        return self::DEFAULT_VERSION;
     }
 
     /**
@@ -77,20 +69,10 @@ final class DocumentationMetadata
     }
 
     /**
-     * Gets the list of doc versions
-     *
-     * @return list<string> The list of doc versions
-     */
-    public function getDocVersions(): array
-    {
-        return \array_keys($this->config);
-    }
-
-    /**
-     * Gets whether or not a version has docs
+     * Whether or not a version has docs
      *
      * @param string $version The name of the version to get
-     * @return bool True if the version exists, otherwise false
+     * @return bool True if the version has docs, otherwise false
      */
     public function hasVersion(string $version): bool
     {

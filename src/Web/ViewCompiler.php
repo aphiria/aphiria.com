@@ -114,7 +114,7 @@ final class ViewCompiler
         $docTemplatePageContents = $this->files->read("$this->rawViewPath/doc.html");
 
         // Compile each doc page
-        foreach ($this->docMetadata->getDocVersions() as $version) {
+        foreach ($this->docMetadata->docVersions as $version) {
             $this->files->createDirectory("$this->compiledViewPath/docs/$version", ['visibility' => 'public']);
 
             // Compile the doc side nav for each version

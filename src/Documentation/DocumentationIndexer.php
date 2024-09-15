@@ -50,7 +50,7 @@ final class DocumentationIndexer
     {
         try {
             // Only index the default version
-            $htmlDocsPath = "$this->htmlDocPath/{$this->metadata->getDefaultVersion()}";
+            $htmlDocsPath = "$this->htmlDocPath/$this->metadata->defaultVersion";
 
             if (!$this->files->has($htmlDocsPath)) {
                 $this->builder->buildDocs();
