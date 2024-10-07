@@ -1,4 +1,4 @@
-FROM php:8.4-fpm
+FROM php:8.4.0RC1-fpm
 
 MAINTAINER David Young
 
@@ -15,6 +15,6 @@ COPY . .
 COPY ./.env.dist ./.env
 
 # Install dependencies and build the app
-RUN composer install --no-interaction && composer dump-autoload -o
+RUN composer install --no-interaction --ignore-platform-reqs && composer dump-autoload -o
 RUN yarn install && yarn global add gulp && gulp build
 
