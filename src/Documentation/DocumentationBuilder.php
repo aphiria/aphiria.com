@@ -12,10 +12,10 @@ declare(strict_types=1);
 
 namespace App\Documentation;
 
-use Erusev\Parsedown\Parsedown;
 use League\Flysystem\FilesystemException;
 use League\Flysystem\FilesystemOperator;
 use League\Flysystem\StorageAttributes;
+use Parsedown;
 
 /**
  * Defines the documentation builder
@@ -76,7 +76,7 @@ final class DocumentationBuilder
                 foreach ($markdownFilePaths as $markdownFilePath) {
                     $markdownFilename = \pathinfo($markdownFilePath, PATHINFO_FILENAME);
                     $htmlDocFilename = "$branchDocDir/$markdownFilename.html";
-                    $html = $this->markdownParser->toHtml($this->files->read($markdownFilePath));
+                    $html = $this->markdownParser->parse($this->files->read($markdownFilePath));
                     // Rewrite the links to point to the HTML docs on the site
                     $html = \preg_replace('/<a href="([^"]+)\.md(#[^"]+)?"/', '<a href="$1.html$2"', $html);
                     $this->files->write($htmlDocFilename, $html);

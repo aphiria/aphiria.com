@@ -18,12 +18,12 @@ use App\Documentation\DocumentationBuilder;
 use App\Documentation\DocumentationIndexer;
 use App\Documentation\DocumentationMetadata;
 use App\Documentation\Searching\PostgreSqlSearchIndex;
-use Erusev\Parsedown\Parsedown;
-use Erusev\ParsedownExtra\ParsedownExtra;
 use League\Flysystem\Filesystem;
 use League\Flysystem\FilesystemOperator;
 use League\Flysystem\Local\LocalFilesystemAdapter;
 use League\Flysystem\UnixVisibility\PortableVisibilityConverter;
+use Parsedown;
+use ParsedownExtra;
 use PDO;
 
 /**
