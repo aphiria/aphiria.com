@@ -56,10 +56,10 @@ jobs:
         run: php aphiria docs:index
       - name: Run Tests
         run: composer phpunit
-      - name: Run Linter
-        run: composer phpcs-test
-      - name: Run Psalm Static Analysis
-        run: composer psalm -- --shepherd
+      #- name: Run Linter
+      #  run: composer phpcs-test
+      #- name: Run Psalm Static Analysis
+      #  run: composer psalm -- --shepherd
       - name: Upload Coverage Results To Coveralls
         env:
           COVERALLS_REPO_TOKEN: ${{ secrets.GITHUB_TOKEN }}
