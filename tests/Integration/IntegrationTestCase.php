@@ -55,4 +55,12 @@ class IntegrationTestCase extends BaseIntegrationTestCase
 
         return $appUrl;
     }
+
+    protected function tearDown(): void
+    {
+        parent::tearDown();
+
+        \restore_error_handler();
+        \restore_exception_handler();
+    }
 }
