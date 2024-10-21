@@ -18,12 +18,12 @@ use App\Documentation\DocumentationBuilder;
 use App\Documentation\DocumentationIndexer;
 use App\Documentation\DocumentationMetadata;
 use App\Documentation\Searching\PostgreSqlSearchIndex;
-use Erusev\Parsedown\Parsedown;
-use Erusev\ParsedownExtra\ParsedownExtra;
 use League\Flysystem\Filesystem;
 use League\Flysystem\FilesystemOperator;
 use League\Flysystem\Local\LocalFilesystemAdapter;
 use League\Flysystem\UnixVisibility\PortableVisibilityConverter;
+use Parsedown;
+use ParsedownExtra;
 use PDO;
 
 /**
@@ -61,7 +61,7 @@ final class DocumentationBinder extends Binder
         $container->bindInstance(FilesystemOperator::class, $files);
         $docBuilder = new DocumentationBuilder(
             new Parsedown(new ParsedownExtra()),
-            $metadata->getBranches(),
+            $metadata->branches,
             __DIR__ . '/../../../tmp/docs',
             '/tmp/docs',
             self::HTML_DOC_PATH,
@@ -73,7 +73,7 @@ final class DocumentationBinder extends Binder
         $container->bindFactory(DocumentationIndexer::class, function () use ($container, $metadata, $files, $docBuilder) {
             $searchIndex = new PostgreSqlSearchIndex(
                 $container->resolve(PDO::class),
-                "/docs/{$metadata->getDefaultVersion()}/",
+                "/docs/$metadata->defaultVersion/",
                 $files
             );
 

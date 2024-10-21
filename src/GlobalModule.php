@@ -64,13 +64,16 @@ final class GlobalModule extends AphiriaModule implements IBootstrapper
      */
     public function bootstrap(): void
     {
-        $globalConfigurationBuilder = (new GlobalConfigurationBuilder())->withEnvironmentVariables()
+        $globalConfigurationBuilder = new GlobalConfigurationBuilder()->withEnvironmentVariables()
             ->withPhpFileConfigurationSource(__DIR__ . '/../config.php');
-        (new BootstrapperCollection())->addMany([
+        new BootstrapperCollection()->addMany([
             new DotEnvBootstrapper(__DIR__ . '/../.env'),
             new ConfigurationBootstrapper($globalConfigurationBuilder),
             new GlobalExceptionHandlerBootstrapper($this->container)
         ])->bootstrapAll();
+
+        // Temporarily allow deprecation errors until Parsedown is updated to work with PHP 8.4
+        \error_reporting(E_ALL & ~E_DEPRECATED);
     }
 
     /**
@@ -103,7 +106,7 @@ final class GlobalModule extends AphiriaModule implements IBootstrapper
                 new CommandHandlerBinder()
             ])
             ->withLogLevelFactory($appBuilder, HttpException::class, static function (HttpException $ex) {
-                return $ex->response->getStatusCode()->value >= 500 ? LogLevel::ERROR : LogLevel::DEBUG;
+                return $ex->response->statusCode->value >= 500 ? LogLevel::ERROR : LogLevel::DEBUG;
             })
             ->withGlobalMiddleware($appBuilder, new MiddlewareBinding(Cors::class))
             ->withModules($appBuilder, [

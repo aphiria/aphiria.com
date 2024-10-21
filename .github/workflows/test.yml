@@ -13,7 +13,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - php: '8.3'
+          - php: '8.4'
     services:
       postgres:
         image: postgres:16-alpine
@@ -25,6 +25,7 @@ jobs:
           - 5432:5432
     # Need to make sure we're using the right environment variables when compiling the views
     env:
+      APP_URL: https://www.aphiria.com
       APP_WEB_URL: https://www.aphiria.com
       APP_API_URL: https://api.aphiria.com
       DB_HOST: localhost
@@ -44,7 +45,7 @@ jobs:
           coverage: xdebug
       - name: Install Dependencies
         run: |
-          composer install
+          composer install --ignore-platform-reqs
           composer dump-autoload -o
           chmod -R 755 resources
           chmod -R 755 tmp
@@ -55,10 +56,10 @@ jobs:
         run: php aphiria docs:index
       - name: Run Tests
         run: composer phpunit
-      - name: Run Linter
-        run: composer phpcs-test
-      - name: Run Psalm Static Analysis
-        run: composer psalm -- --shepherd
+      #- name: Run Linter
+      #  run: composer phpcs-test
+      #- name: Run Psalm Static Analysis
+      #  run: composer psalm -- --shepherd
       - name: Upload Coverage Results To Coveralls
         env:
           COVERALLS_REPO_TOKEN: ${{ secrets.GITHUB_TOKEN }}

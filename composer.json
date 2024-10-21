@@ -25,20 +25,20 @@
     },
     "require": {
         "aphiria/aphiria": "1.x-dev",
-        "erusev/parsedown-extra": "^2.0",
+        "erusev/parsedown-extra": "^0.8",
         "ext-dom": "*",
         "ext-libxml": "*",
         "ext-mbstring": "*",
         "ext-pdo": "*",
         "ext-pgsql": "*",
         "league/flysystem": "^3.0",
-        "php": ">=8.3",
+        "php": ">=8.4",
         "symfony/dotenv": "^7.0"
     },
     "require-dev": {
         "friendsofphp/php-cs-fixer": "^3.5",
-        "phpunit/phpunit": "^10.1",
-        "vimeo/psalm": "^5.1"
+        "phpunit/phpunit": "^11.5-dev",
+        "vimeo/psalm": "dev-master"
     },
     "scripts": {
         "phpcs-test": "@phpcs-fix --dry-run",

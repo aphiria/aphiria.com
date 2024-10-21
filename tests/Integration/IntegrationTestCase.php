@@ -24,6 +24,14 @@ use TypeError;
  */
 class IntegrationTestCase extends BaseIntegrationTestCase
 {
+    protected function tearDown(): void
+    {
+        parent::tearDown();
+
+        \restore_error_handler();
+        \restore_exception_handler();
+    }
+
     /**
      * @inheritdoc
      */
