@@ -37,5 +37,5 @@ jobs:
           file: ${{ inputs.dockerfile }}
           push: true
           tags: ${{ inputs.image }}:latest
-          #cache-from: type=registry,ref=${{ inputs.image }}:buildcache
-          #cache-to: type=registry,ref=${{ inputs.image }}:buildcache,mode=max
+          cache-from: type=registry,ref=${{ inputs.image }}:buildcache
+          cache-to: type=registry,ref=${{ inputs.image }}:buildcache,mode=max
