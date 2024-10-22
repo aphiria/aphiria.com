@@ -16,5 +16,9 @@ COPY ./.env.dist ./.env
 
 # Install dependencies and build the app
 RUN composer install --no-interaction --ignore-platform-reqs && composer dump-autoload -o
-RUN yarn install && yarn global add gulp && gulp build
+RUN yarn install && yarn global add gulp
+
+# Bust the cache and force gulp build to always run
+ARG CACHE_BUST=1
+RUN gulp build
 
