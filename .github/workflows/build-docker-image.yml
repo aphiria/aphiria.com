@@ -40,6 +40,7 @@ jobs:
           cd docs
           docs_sha=$(git rev-parse HEAD)
           echo "Latest docs SHA: $docs_sha"
+          cd ..
 
           image_sha="${code_sha}-${docs_sha}"
 
