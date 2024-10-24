@@ -1,11 +1,14 @@
+# Stage 1: Build image
+ARG TAG=latest
+FROM davidbyoung/aphiria.com-build:${TAG} as build
+
+# Stage 2: Nginx image for serving content
 FROM nginx:alpine
 
 WORKDIR /usr/share/nginx/html
 
-# Remove the default content
+# Remove the default content from the Nginx default web root
 RUN rm -rf /usr/share/nginx/html/*
 
-# Copy of the web source files
-ARG TAG=latest
-FROM davidbyoung/aphiria.com-build:${TAG} as build
+# Copy the web source files from the build image
 COPY --from=build /app/public-web .
