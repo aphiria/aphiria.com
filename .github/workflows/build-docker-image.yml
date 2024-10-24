@@ -51,7 +51,7 @@ jobs:
           # Store the SHA so that we can retrieve it from other workflows (GitHub Actions does not support outputs from templated workflows into other jobs)
           echo $image_sha > image_sha.txt
       - name: Upload SHA Artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: image-sha-artifact
           path: image_sha.txt
