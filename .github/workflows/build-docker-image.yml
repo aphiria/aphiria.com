@@ -18,11 +18,32 @@ jobs:
   build-image:
     runs-on: ubuntu-latest
     name: ${{ inputs.image }}
+    outputs:
+      code_sha: ${{ steps.get-code-sha.outputs.sha }}
+      docs_sha: ${{ steps.get-docs-sha.outputs.sha }}
     steps:
       - name: Check Out Code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      - name: Get Code SHA
+        id: get-code-sha
+        run: |
+          sha=$(git rev-parse HEAD)
+          echo "Latest commit SHA: $sha"
+          echo "::set-output name=sha::$sha"
+      - name: Check Out Docs
+        uses: actions/checkout@v4
+        with:
+          repository: aphiria/docs
+          path: docs
+      - name: Get Docs SHA
+        id: get-docs-sha
+        run: |
+          cd docs
+          sha=$(git rev-parse HEAD)
+          echo "Latest commit SHA: $sha"
+          echo "::set-output name=sha::$sha"
       - name: Log Into Docker Hub
         uses: docker/login-action@v3
         with:
@@ -36,7 +57,7 @@ jobs:
           context: .
           file: ${{ inputs.dockerfile }}
           push: true
-          tags: ${{ inputs.image }}:latest
+          tags: ${{ inputs.image }}:${{ steps.get-code-sha.outputs.sha }}-${{ steps.get-docs-sha.outputs.sha }}
           cache-from: type=registry,ref=${{ inputs.image }}:buildcache
           cache-to: type=registry,ref=${{ inputs.image }}:buildcache,mode=max
           build-args: |
