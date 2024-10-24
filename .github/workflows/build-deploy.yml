@@ -12,6 +12,7 @@ jobs:
     with:
       dockerfile: ./infrastructure/docker/build/Dockerfile
       image: davidbyoung/aphiria.com-build
+      image-sha-artifact-name: build-image-sha
     secrets:
       DOCKER_ACCESS_TOKEN: ${{ secrets.DOCKER_ACCESS_TOKEN }}
   build-runtime-images:
