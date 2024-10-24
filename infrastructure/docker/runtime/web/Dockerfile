@@ -6,4 +6,5 @@ WORKDIR /usr/share/nginx/html
 RUN rm -rf /usr/share/nginx/html/*
 
 # Copy of the web source files
-COPY --from=davidbyoung/aphiria.com-build /app/public-web .
+ARG TAG=latest
+COPY --from=davidbyoung/aphiria.com-build:$TAG /app/public-web .

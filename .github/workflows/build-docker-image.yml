@@ -73,4 +73,5 @@ jobs:
           cache-to: type=registry,ref=${{ inputs.image }}:buildcache,mode=max
           build-args: |
             # Force the documentation to get rebuilt if it has changed since the image was built
+            TAG=${{ steps.get-sha.outputs.image_sha }}
             CACHE_BUST=${{ steps.get-sha.outputs.docs_sha }}
