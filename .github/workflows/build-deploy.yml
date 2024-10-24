@@ -46,7 +46,7 @@ jobs:
         with:
           fetch-depth: 0
       - name: Download SHA Artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           # Technically, an artifact for each image will be uploaded.  We just choose one here, but all should have the same content.
           name: api-image-sha
