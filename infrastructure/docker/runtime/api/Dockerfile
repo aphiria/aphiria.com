@@ -8,7 +8,7 @@ RUN docker-php-ext-install dom intl opcache pdo_pgsql pgsql zip
 
 # Copy the API source files
 ARG TAG=latest
-FROM build as build
+FROM davidbyoung/aphiria.com-build:${TAG} as build
 COPY --from=build ./app/public-api ./public
 COPY --from=build ./app/src ./src
 COPY --from=build ./app/tests ./tests

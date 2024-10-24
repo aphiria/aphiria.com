@@ -7,5 +7,5 @@ RUN rm -rf /usr/share/nginx/html/*
 
 # Copy of the web source files
 ARG TAG=latest
-FROM build as build
+FROM davidbyoung/aphiria.com-build:${TAG} as build
 COPY --from=build /app/public-web .
