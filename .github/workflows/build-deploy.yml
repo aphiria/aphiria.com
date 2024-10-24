@@ -95,9 +95,6 @@ jobs:
           kubectl set image deployment/api php=davidbyoung/aphiria.com-api:${image_sha}
           kubectl set image deployment/api copy-api-code=davidbyoung/aphiria.com-api:${image_sha}
           kubectl set image deployment/web web=davidbyoung/aphiria.com-web:${image_sha}
-
-          kubectl rollout restart deployment api
-          kubectl rollout restart deployment web
       - name: Terraform DigitalOcean Networking and Monitoring
         run: |
           terraform -chdir=./infrastructure/terraform plan -target="module.networking" -target="module.monitoring" -var="do_access_token=${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}" -var="do_spaces_access_key=${{ secrets.DIGITALOCEAN_SPACES_ACCESS_KEY }}" -var="do_spaces_secret_key=${{ secrets.DIGITALOCEAN_SPACES_SECRET_KEY }}"  -no-color -input=false
