@@ -40,9 +40,8 @@ jobs:
           docs_sha=$(git rev-parse HEAD)
           echo "Latest docs SHA: $docs_sha"
 
-          image_sha="${code_sha}-${docs_sha}"
-
-          echo "image_sha=$image_sha" >> $GITHUB_OUTPUT
+          echo "docs_sha=$docs_sha" >> $GITHUB_OUTPUT
+          echo "image_sha=${code_sha}-${docs_sha}" >> $GITHUB_OUTPUT
       - name: Log Into Docker Hub
         uses: docker/login-action@v3
         with:
@@ -60,4 +59,5 @@ jobs:
           cache-from: type=registry,ref=${{ inputs.image }}:buildcache
           cache-to: type=registry,ref=${{ inputs.image }}:buildcache,mode=max
           build-args: |
-            CACHE_BUST=${{ github.run_number }}
+            # Force the documentation to get rebuilt if it has changed since the image was built
+            CACHE_BUST=${{ steps.get-sha.outputs.docs_sha }}
