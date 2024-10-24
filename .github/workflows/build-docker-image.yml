@@ -18,8 +18,6 @@ jobs:
   build-image:
     runs-on: ubuntu-latest
     name: ${{ inputs.image }}
-    outputs:
-      image_sha: ${{ steps.get-sha.outputs.image_sha }}
     steps:
       - name: Check Out Code
         uses: actions/checkout@v4
@@ -42,6 +40,14 @@ jobs:
 
           echo "docs_sha=$docs_sha" >> $GITHUB_OUTPUT
           echo "image_sha=${code_sha}-${docs_sha}" >> $GITHUB_OUTPUT
+
+          # Store the SHA so that we can retrieve it from other workflows (GitHub Actions does not support outputs from templated workflows into other jobs)
+          echo $image_sha > image_sha.txt
+      - name: Upload SHA Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: image-sha-artifact
+          path: image_sha.txt
       - name: Log Into Docker Hub
         uses: docker/login-action@v3
         with:
