@@ -41,7 +41,8 @@ jobs:
           echo "Latest docs SHA: $docs_sha"
 
           image_sha="${code_sha}-${docs_sha}"
-          echo "::set-output name=image_sha::$image_sha"
+
+          echo "image_sha=$image_sha" >> $GITHUB_OUTPUT
       - name: Log Into Docker Hub
         uses: docker/login-action@v3
         with:

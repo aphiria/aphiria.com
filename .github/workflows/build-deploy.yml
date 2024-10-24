@@ -81,8 +81,9 @@ jobs:
           kubectl apply -k ./infrastructure/kubernetes/environments/prod
 
           # Use the latest Docker images
+          kubectl set image deployment/api php=davidbyoung/aphiria.com-api:${{ needs.build-runtime-images.outputs['image_sha'] }}
+          kubectl set image deployment/api copy-api-code=davidbyoung/aphiria.com-api:${{ needs.build-runtime-images.outputs['image_sha'] }}
           kubectl set image deployment/web web=davidbyoung/aphiria.com-web:${{ needs.build-runtime-images.outputs['image_sha'] }}
-          kubectl set image deployment/api api=davidbyoung/aphiria.com-api:${{ needs.build-runtime-images.outputs['image_sha'] }}
 
           kubectl rollout restart deployment api
           kubectl rollout restart deployment web
