@@ -81,7 +81,7 @@ jobs:
           kubectl apply -k ./infrastructure/kubernetes/environments/prod
 
           # TODO: REMOVE!!!
-          echo "${{ needs.build-runtime-images.outputs['image_sha'] }}"
+          echo "${{ needs.build-runtime-images.outputs.image_sha }}"
 
           # Use the latest Docker images
           kubectl set image deployment/api php=davidbyoung/aphiria.com-api:${{ needs.build-runtime-images.outputs['image_sha'] }}
