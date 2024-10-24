@@ -44,7 +44,8 @@ jobs:
       - name: Download SHA Artifact
         uses: actions/download-artifact@v3
         with:
-          name: image-sha-artifact
+          # Technically, an artifact for each image will be uploaded.  We just choose one here, but all should have the same content.
+          name: image-sha-artifact-davidbyoung/aphiria.com-api
       - name: Set Up Terraform
         uses: hashicorp/setup-terraform@v3
         with:

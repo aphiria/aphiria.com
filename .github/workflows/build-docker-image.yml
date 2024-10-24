@@ -53,7 +53,7 @@ jobs:
       - name: Upload SHA Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: image-sha-artifact
+          name: image-sha-artifact-${{ inputs.name }}
           path: image_sha.txt
       - name: Log Into Docker Hub
         uses: docker/login-action@v3
