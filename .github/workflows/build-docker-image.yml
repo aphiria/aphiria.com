@@ -18,6 +18,9 @@ jobs:
   build-image:
     runs-on: ubuntu-latest
     name: ${{ inputs.image }}
+    outputs:
+      image_sha: ${{ steps.get-sha.outputs.image_sha }}
+      docs_sha: ${{ steps.get-sha.outputs.docs_sha }}
     steps:
       - name: Check Out Code
         uses: actions/checkout@v4
@@ -38,8 +41,11 @@ jobs:
           docs_sha=$(git rev-parse HEAD)
           echo "Latest docs SHA: $docs_sha"
 
+          image_sha="${code_sha}-${docs_sha}"
+
+          # Store the SHAs for use in other steps in this job
           echo "docs_sha=$docs_sha" >> $GITHUB_OUTPUT
-          echo "image_sha=${code_sha}-${docs_sha}" >> $GITHUB_OUTPUT
+          echo "image_sha=$image_sha" >> $GITHUB_OUTPUT
 
           # Store the SHA so that we can retrieve it from other workflows (GitHub Actions does not support outputs from templated workflows into other jobs)
           echo $image_sha > image_sha.txt
