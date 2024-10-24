@@ -23,8 +23,10 @@ jobs:
         include:
           - dockerfile: ./infrastructure/docker/runtime/api/Dockerfile
             image: davidbyoung/aphiria.com-api
+            image-sha-artifact-name: api-image-sha
           - dockerfile: ./infrastructure/docker/runtime/web/Dockerfile
             image: davidbyoung/aphiria.com-web
+            image-sha-artifact-name: web-image-sha
     uses: ./.github/workflows/build-docker-image.yml
     with:
       dockerfile: ${{ matrix.dockerfile }}
@@ -45,7 +47,7 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           # Technically, an artifact for each image will be uploaded.  We just choose one here, but all should have the same content.
-          name: image-sha-artifact-davidbyoung/aphiria.com-api
+          name: api-image-sha
       - name: Set Up Terraform
         uses: hashicorp/setup-terraform@v3
         with:
