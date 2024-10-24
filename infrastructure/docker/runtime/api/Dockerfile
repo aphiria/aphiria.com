@@ -1,4 +1,8 @@
-# First stage: Base PHP image
+# Stage 1: Use the build image to copy necessary files
+ARG TAG=latest
+FROM davidbyoung/aphiria.com-build:${TAG} as build
+
+# Stage 2: Base PHP image for the final container
 FROM php:8.4.0RC2-fpm as base
 
 WORKDIR /app/api
@@ -7,11 +11,10 @@ WORKDIR /app/api
 RUN apt-get update && apt-get install -y git libxml2-dev libpq-dev libzip-dev
 RUN docker-php-ext-install dom intl opcache pdo_pgsql pgsql zip
 
-# Second stage: Use TAG to dynamically choose the build image
-ARG TAG=latest
-FROM davidbyoung/aphiria.com-build:${TAG} as build
+# Stage 3: Copy the files from the build stage
+FROM base
 
-# Copy the API source files from the build image
+# Copy the API source files from the build image (from the first stage)
 COPY --from=build /app/public-api ./public
 COPY --from=build /app/src ./src
 COPY --from=build /app/tests ./tests
@@ -22,12 +25,6 @@ COPY --from=build /app/aphiria ./aphiria
 COPY --from=build /app/composer.json ./composer.json
 COPY --from=build /app/config.php ./config.php
 COPY --from=build /app/phpunit.xml.dist ./phpunit.xml.dist
-
-# Third stage: Final image with the copied files
-FROM base
-
-# Copy the files from the second stage (build)
-COPY --from=build /app/api /app/api
 
 # Allow nginx to write to tmp
 RUN chown -R www-data:www-data .
