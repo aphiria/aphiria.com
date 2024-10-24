@@ -1,6 +1,6 @@
 # Stage 1: Build image
-ARG TAG=latest
-FROM davidbyoung/aphiria.com-build:${TAG} as build
+ARG IMAGE_SHA=latest
+FROM davidbyoung/aphiria.com-build:${IMAGE_SHA} as build
 
 # Stage 2: Nginx image for serving content
 FROM nginx:alpine

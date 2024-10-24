@@ -1,6 +1,6 @@
 # Stage 1: Use the build image to copy necessary files
-ARG TAG=latest
-FROM davidbyoung/aphiria.com-build:${TAG} as build
+ARG IMAGE_SHA=latest
+FROM davidbyoung/aphiria.com-build:${IMAGE_SHA} as build
 
 # Stage 2: Base PHP image for the final container
 FROM php:8.4.0RC2-fpm as base

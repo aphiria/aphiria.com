@@ -18,7 +18,7 @@ COPY ./.env.dist ./.env
 RUN composer install --no-interaction --ignore-platform-reqs && composer dump-autoload -o
 RUN yarn install && yarn global add gulp
 
-# Bust the cache and force gulp build to always run
-ARG CACHE_BUST=1
+# Use the docs' git SHA to bust the cache and force gulp build to run when it has changed
+ARG DOCS_SHA=latest
 RUN gulp build
 
