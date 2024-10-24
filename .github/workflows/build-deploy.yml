@@ -31,6 +31,7 @@ jobs:
     with:
       dockerfile: ${{ matrix.dockerfile }}
       image: ${{ matrix.image }}
+      image-sha-artifact-name: ${{ matrix.image-sha-artifact-name }}
     secrets:
       DOCKER_ACCESS_TOKEN: ${{ secrets.DOCKER_ACCESS_TOKEN }}
   deploy:
