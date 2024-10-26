@@ -52,8 +52,8 @@ Run the following:
 
 ```
 cd /tmp
-curl -lO https://releases.hashicorp.com/terraform/1.6.4/terraform_1.6.4_linux_amd64.zip
-sudo unzip terraform_1.6.4_linux_amd64.zip -d /usr/local/bin
+curl -lO https://releases.hashicorp.com/terraform/1.9.8/terraform_1.9.8_linux_amd64.zip
+sudo unzip terraform_1.9.8_linux_amd64.zip -d /usr/local/bin
 ```
 
 Verify that Terraform installed successfully with `terraform -v`.

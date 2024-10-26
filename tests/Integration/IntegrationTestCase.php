@@ -24,6 +24,11 @@ use TypeError;
  */
 class IntegrationTestCase extends BaseIntegrationTestCase
 {
+    /** @inheritdoc */
+    protected ?string $appUri {
+        get => empty($appUrl = (string)getenv('APP_WEB_URL')) ? null : $appUrl;
+    }
+
     protected function tearDown(): void
     {
         parent::tearDown();
