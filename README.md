@@ -131,7 +131,7 @@ Then, install the required Helm charts:
 helm repo add jetstack https://charts.jetstack.io
 helm repo update
 helm upgrade --install cert-manager jetstack/cert-manager --namespace cert-manager --create-namespace --version v1.16.1 --set crds.enabled=true --set "extraArgs={--feature-gates=ExperimentalGatewayAPISupport=true}"
-helm upgrade --install nginx-gateway oci://ghcr.io/nginxinc/charts/nginx-gateway-fabric --create-namespace --version 1.2.0 --wait -n nginx-gateway
+helm upgrade --install nginx-gateway oci://ghcr.io/nginxinc/charts/nginx-gateway-fabric --create-namespace --version 1.2.0 --set crds.enabled=true --wait -n nginx-gateway
 ```
 
 Apply the Kubernetes manifests using Kustomize:

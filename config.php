@@ -128,7 +128,7 @@ return [
             'handlers' => [
                 [
                     'type' => StreamHandler::class,
-                    'path' => __DIR__ . '/tmp/logs/errors.txt',
+                    'path' => 'php://stdout',
                     'level' => \getenv('LOG_LEVEL')
                 ]
             ],
