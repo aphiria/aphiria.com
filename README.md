@@ -16,11 +16,12 @@ This repository contains the code for both https://www.aphiria.com and https://a
 
 First, [install Docker](https://docs.docker.com/engine/install/).  Then, run `./install.sh` to install the other dependencies:
 
-* Kubectl
+* kubectl
 * Minikube
 * Helm
 * Helmfile
 * Terraform
+* doctl
 
 > **Note:** You may have to run `chmod +x ./install.sh` to make the script executable.
 
@@ -44,7 +45,7 @@ docker login -u <username>
 
 ### Configuring Multiple Clusters in kubectl
 
-Kubectl lets you configure multiple clusters (eg your DigitalOcean and minikube clusters).  To do so, download the kubeconfig file from the DigitalOcean cluster.
+kubectl lets you configure multiple clusters (eg your DigitalOcean and minikube clusters).  To do so, download the kubeconfig file from the DigitalOcean cluster.
 
 > **Note:** If using WSL2, copy it to your _~/_ directory and name it _digitalocean.yml_.
 

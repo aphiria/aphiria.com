@@ -53,21 +53,26 @@ jobs:
       - name: Install Dependencies
         run: |
           chmod +x ./install.sh
-          ./install.sh --install-terraform --install-helm --install-helmfile
+          ./install.sh --install-terraform --install-helm --install-helmfile --install-doctl
       - name: Terraform Kubernetes
         run: |
+          # Configure and validate Terraform
           terraform -chdir=./infrastructure/terraform init -backend-config="access_key=${{ secrets.DIGITALOCEAN_SPACES_ACCESS_KEY }}" -backend-config="secret_key=${{ secrets.DIGITALOCEAN_SPACES_SECRET_KEY }}"
           terraform -chdir=./infrastructure/terraform validate
+
+          # Plan and apply the Kubernetes infrastructure
           terraform -chdir=./infrastructure/terraform plan -target="module.kubernetes" -var="do_access_token=${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}" -var="do_spaces_access_key=${{ secrets.DIGITALOCEAN_SPACES_ACCESS_KEY }}" -var="do_spaces_secret_key=${{ secrets.DIGITALOCEAN_SPACES_SECRET_KEY }}" -no-color -input=false
           terraform -chdir=./infrastructure/terraform apply -target="module.kubernetes" -var="do_access_token=${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}" -var="do_spaces_access_key=${{ secrets.DIGITALOCEAN_SPACES_ACCESS_KEY }}" -var="do_spaces_secret_key=${{ secrets.DIGITALOCEAN_SPACES_SECRET_KEY }}" -no-color -input=false -auto-approve
-      - name: Install doctl
-        uses: digitalocean/action-doctl@v2
-        with:
-          token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
-      - name: Save DigitalOcean kubeconfig
-        run: doctl kubernetes cluster kubeconfig save $(terraform -chdir=./infrastructure/terraform output -raw cluster_id)
+
+          # Plan and apply the monitoring and networking infrastructure
+          terraform -chdir=./infrastructure/terraform plan -target="module.networking" -target="module.monitoring" -var="do_access_token=${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}" -var="do_spaces_access_key=${{ secrets.DIGITALOCEAN_SPACES_ACCESS_KEY }}" -var="do_spaces_secret_key=${{ secrets.DIGITALOCEAN_SPACES_SECRET_KEY }}"  -no-color -input=false
+          terraform -chdir=./infrastructure/terraform apply -target="module.networking" -target="module.monitoring" -var="do_access_token=${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}" -var="do_spaces_access_key=${{ secrets.DIGITALOCEAN_SPACES_ACCESS_KEY }}" -var="do_spaces_secret_key=${{ secrets.DIGITALOCEAN_SPACES_SECRET_KEY }}"  -no-color -input=false -auto-approve
       - name: Configure Kubernetes Cluster
         run: |
+          # Save the kubeconfig so that kubectl commands apply to the DigitalOcean cluster
+          doctl auth init --access-token ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+          doctl kubernetes cluster kubeconfig save $(terraform -chdir=./infrastructure/terraform output -raw cluster_id)
+
           # Install Helmfiles
           helmfile -f ./infrastructure/kubernetes/base/helmfile.yml repos
           helmfile -f ./infrastructure/kubernetes/base/helmfile.yml sync
@@ -85,7 +90,3 @@ jobs:
           kubectl set image deployment/api php=davidbyoung/aphiria.com-api:${image_sha}
           kubectl set image deployment/api copy-api-code=davidbyoung/aphiria.com-api:${image_sha}
           kubectl set image deployment/web web=davidbyoung/aphiria.com-web:${image_sha}
-      - name: Terraform DigitalOcean Networking and Monitoring
-        run: |
-          terraform -chdir=./infrastructure/terraform plan -target="module.networking" -target="module.monitoring" -var="do_access_token=${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}" -var="do_spaces_access_key=${{ secrets.DIGITALOCEAN_SPACES_ACCESS_KEY }}" -var="do_spaces_secret_key=${{ secrets.DIGITALOCEAN_SPACES_SECRET_KEY }}"  -no-color -input=false
-          terraform -chdir=./infrastructure/terraform apply -target="module.networking" -target="module.monitoring" -var="do_access_token=${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}" -var="do_spaces_access_key=${{ secrets.DIGITALOCEAN_SPACES_ACCESS_KEY }}" -var="do_spaces_secret_key=${{ secrets.DIGITALOCEAN_SPACES_SECRET_KEY }}"  -no-color -input=false -auto-approve

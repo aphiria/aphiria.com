@@ -6,6 +6,7 @@ install_minikube=false
 install_helm=false
 install_helmfile=false
 install_terraform=false
+install_doctl=false
 
 # Parse arguments
 for arg in "$@"; do
@@ -25,6 +26,9 @@ for arg in "$@"; do
         --install-terraform)
             install_terraform=true
             ;;
+        --install-doctl)
+            install_doctl=true
+            ;;
         *)
             # If any other argument is passed, do nothing
             ;;
@@ -38,13 +42,14 @@ if [ $# -eq 0 ]; then
     install_helm=true
     install_helmfile=true
     install_terraform=true
+    install_doctl=true
 fi
 
 original_dir=$(pwd)
 cd /tmp
 
 if [ "$install_kubectl" = true ]; then
-    echo "Installing Kubectl (https://kubernetes.io/docs/tasks/tools)"
+    echo "Installing kubectl (https://kubernetes.io/docs/tasks/tools)"
     curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
     sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
     kubectl version
@@ -78,6 +83,14 @@ if [ "$install_terraform" = true ]; then
     curl -lO https://releases.hashicorp.com/terraform/1.9.8/terraform_1.9.8_linux_amd64.zip
     sudo unzip -o terraform_1.9.8_linux_amd64.zip -d /usr/local/bin
     terraform --version
+fi
+
+if [ "$install_doctl" = true ]; then
+    echo "Installing doctl (https://docs.digitalocean.com/reference/doctl/how-to/install/)"
+    curl -L https://github.com/digitalocean/doctl/releases/download/v1.117.0/doctl-1.117.0-linux-amd64.tar.gz -o doctl.tar.gz
+    tar -xzf doctl.tar.gz
+    sudo mv doctl /usr/local/bin
+    doctl version
 fi
 
 cd "$original_dir"
