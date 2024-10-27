@@ -76,7 +76,7 @@ fi
 if [ "$install_terraform" = true ]; then
     echo "Installing Terraform (https://developer.hashicorp.com/terraform/install)"
     curl -lO https://releases.hashicorp.com/terraform/1.9.8/terraform_1.9.8_linux_amd64.zip
-    sudo unzip terraform_1.9.8_linux_amd64.zip -d /usr/local/bin
+    sudo unzip -o terraform_1.9.8_linux_amd64.zip -d /usr/local/bin
     terraform --version
 fi
 

@@ -66,20 +66,20 @@ jobs:
           token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
       - name: Save DigitalOcean kubeconfig
         run: doctl kubernetes cluster kubeconfig save $(terraform -chdir=./infrastructure/terraform output -raw cluster_id)
-      - name: Install Helm Charts
-        run: |
-          helmfile -f ./infrastructure/kubernetes/base/helmfile.yml repos
-          helmfile -f ./infrastructure/kubernetes/base/helmfile.yml sync
       - name: Configure Kubernetes Cluster
         run: |
+          # Install Helmfiles
+          helmfile -f ./infrastructure/kubernetes/base/helmfile.yml repos
+          helmfile -f ./infrastructure/kubernetes/base/helmfile.yml sync
+
           # Write secrets to files so we can apply them
           echo "${{ secrets.KUBERNETES_SECRETS }}" > ./infrastructure/kubernetes/environments/prod/core/secrets.yml
           echo "${{ secrets.DIGITALOCEAN_SECRETS }}" > ./infrastructure/kubernetes/environments/prod/gateway-api/secrets.yml
 
-          # Apply configs
+          # Apply prod kustomization
           kubectl apply -k ./infrastructure/kubernetes/environments/prod
 
-          # Use the latest Docker images
+          # Use the latest Docker images in our pods
           image_sha=$(cat image_sha.txt)
           echo "Image SHA: $image_sha"
           kubectl set image deployment/api php=davidbyoung/aphiria.com-api:${image_sha}
