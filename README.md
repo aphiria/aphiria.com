@@ -12,17 +12,17 @@ This repository contains the code for both https://www.aphiria.com and https://a
 
 ## Configuring Your Environment
 
-### Install Docker
+### Install Dependencies
 
-Follow the [instructions](https://docs.docker.com/engine/install/).
+First, [install Docker](https://docs.docker.com/engine/install/).  Then, run `./install.sh` to install the other dependencies:
 
-### Install Kubectl
+* Kubectl
+* Minikube
+* Helm
+* Helmfile
+* Terraform
 
-Follow the [instructions](https://kubernetes.io/docs/tasks/tools).
-
-### Install Minikube
-
-Follow the [instructions](https://minikube.sigs.k8s.io/docs/start/).
+> **Note:** You may have to run `chmod +x ./install.sh` to make the script executable.
 
 ### Update Your Host File
 
@@ -42,27 +42,11 @@ docker login -u <username>
 
 > **Note:** If you get an error trying to save your credentials, run `rm ~/.docker/config.json`.
 
-### Install Helm
-
-Follow the [instructions](https://helm.sh/docs/intro/install/).
-
-### Install Terraform
-
-Run the following:
-
-```
-cd /tmp
-curl -lO https://releases.hashicorp.com/terraform/1.9.8/terraform_1.9.8_linux_amd64.zip
-sudo unzip terraform_1.9.8_linux_amd64.zip -d /usr/local/bin
-```
-
-Verify that Terraform installed successfully with `terraform -v`.
-
 ### Configuring Multiple Clusters in kubectl
 
 Kubectl lets you configure multiple clusters (eg your DigitalOcean and minikube clusters).  To do so, download the kubeconfig file from the DigitalOcean cluster.
 
-> **Note:** If using WSL2, copy it to your _~/_ directory and call it _digitalocean.yml_.
+> **Note:** If using WSL2, copy it to your _~/_ directory and name it _digitalocean.yml_.
 
 ```
 export KUBECONFIG=~/.kube/config:~/digitalocean.yml
@@ -119,22 +103,14 @@ minikube tunnel
 
 ### Set Up Your Kubernetes Cluster
 
-First, install some required custom resource definitions (CRDs):
+Use Helmfile to install our required Helm charts:
 
 ```
-kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.0.0/standard-install.yaml
+helmfile -f ./infrastructure/kubernetes/base/helmfile.yml repos
+helmfile -f ./infrastructure/kubernetes/base/helmfile.yml sync
 ```
 
-Then, install the required Helm charts:
-
-```
-helm repo add jetstack https://charts.jetstack.io
-helm repo update
-helm upgrade --install cert-manager jetstack/cert-manager --namespace cert-manager --create-namespace --version v1.13.2 --set installCRDs=true --set "extraArgs={--feature-gates=ExperimentalGatewayAPISupport=true}"
-helm upgrade --install nginx-gateway oci://ghcr.io/nginxinc/charts/nginx-gateway-fabric  --create-namespace --version 1.2.0 --wait -n nginx-gateway
-```
-
-Apply the Kubernetes manifests using Kustomize:
+Apply the Kubernetes dev manifest using Kustomize:
 
 ```
 kubectl apply -k ./infrastructure/kubernetes/environments/dev

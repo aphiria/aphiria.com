@@ -1,0 +1,28 @@
+repositories:
+  - name: jetstack
+    url: https://charts.jetstack.io
+releases:
+  - name: cert-manager
+    namespace: cert-manager
+    chart: jetstack/cert-manager
+    version: v1.16.1
+    createNamespace: true
+    set:
+      - name: extraArgs[0]
+        value: "--feature-gates=ExperimentalGatewayAPISupport=true"
+      - name: crds.enabled
+        value: "true"
+  - name: nginx-gateway
+    namespace: nginx-gateway
+    chart: oci://ghcr.io/nginxinc/charts/nginx-gateway-fabric
+    version: 1.2.0
+    createNamespace: true
+    hooks:
+      # Install the necessary CRDs
+      - events: [ "prepare" ]
+        command: "kubectl"
+        args: [ "apply", "-f", "https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.2.0/standard-install.yaml" ]
+    set:
+      - name: crds.enabled
+        value: "true"
+    wait: true
