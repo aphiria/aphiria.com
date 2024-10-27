@@ -22,7 +22,4 @@ releases:
       - events: [ "prepare" ]
         command: "kubectl"
         args: [ "apply", "-f", "https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.2.0/standard-install.yaml" ]
-    set:
-      - name: crds.enabled
-        value: "true"
     wait: true

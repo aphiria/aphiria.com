@@ -104,7 +104,7 @@ minikube tunnel
 
 ### Set Up Your Kubernetes Cluster
 
-Use Helmfile to install our required Helm charts:
+Use Helmfile to install the required Helm charts:
 
 ```
 helmfile -f ./infrastructure/kubernetes/base/helmfile.yml repos
