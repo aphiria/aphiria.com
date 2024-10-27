@@ -5,11 +5,13 @@ module "kubernetes" {
 
 module "monitoring" {
     source = "./modules/monitoring"
+    depends_on = [module.kubernetes]
     do_access_token = var.do_access_token
 }
 
 module "networking" {
     source = "./modules/networking"
+    depends_on = [module.kubernetes]
     do_access_token = var.do_access_token
 }
 
