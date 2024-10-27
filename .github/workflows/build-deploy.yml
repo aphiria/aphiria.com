@@ -65,7 +65,7 @@ jobs:
         with:
           token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
       - name: Save DigitalOcean kubeconfig
-        run: doctl kubernetes cluster kubeconfig save $(terraform-bin -chdir=./infrastructure/terraform output -raw cluster_id)
+        run: doctl kubernetes cluster kubeconfig save $(terraform -chdir=./infrastructure/terraform output -raw cluster_id)
       - name: Install Helm Charts
         run: |
           helmfile -f ./infrastructure/kubernetes/base/helmfile.yml repos
