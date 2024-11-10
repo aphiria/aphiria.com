@@ -3,7 +3,7 @@ ARG IMAGE_SHA=latest
 FROM davidbyoung/aphiria.com-build:${IMAGE_SHA} as build
 
 # Stage 2: Base PHP image for the final container
-FROM php:8.4.0RC3-fpm as base
+FROM php:8.4.0RC4-fpm as base
 
 WORKDIR /app/api
 
