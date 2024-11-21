@@ -1,4 +1,4 @@
-FROM php:8.4.0RC4-fpm
+FROM php:8.4.1-fpm
 
 MAINTAINER David Young
 
