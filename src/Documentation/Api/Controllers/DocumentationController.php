@@ -15,6 +15,7 @@ namespace App\Documentation\Api\Controllers;
 use Aphiria\Api\Controllers\Controller as BaseController;
 use Aphiria\Routing\Attributes\Controller;
 use Aphiria\Routing\Attributes\Get;
+use Aphiria\Routing\Attributes\QueryString;
 use App\Documentation\DocumentationIndexer;
 use App\Documentation\Searching\SearchResult;
 
@@ -38,7 +39,7 @@ final class DocumentationController extends BaseController
      * @return list<SearchResult> The list of search results
      */
     #[Get('search')]
-    public function searchDocs(string $query): array
+    public function searchDocs(#[QueryString] string $query): array
     {
         return $this->docs->searchDocs($query);
     }
