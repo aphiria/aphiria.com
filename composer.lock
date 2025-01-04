@@ -12,12 +12,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/aphiria/aphiria.git",
-                "reference": "32b4fcd9b09f9727bbf0db46f999d4db2cf7984b"
+                "reference": "da69c4e49eab46e1ff3d468e61367a0e1a0c8323"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/aphiria/aphiria/zipball/32b4fcd9b09f9727bbf0db46f999d4db2cf7984b",
-                "reference": "32b4fcd9b09f9727bbf0db46f999d4db2cf7984b",
+                "url": "https://api.github.com/repos/aphiria/aphiria/zipball/da69c4e49eab46e1ff3d468e61367a0e1a0c8323",
+                "reference": "da69c4e49eab46e1ff3d468e61367a0e1a0c8323",
                 "shasum": ""
             },
             "require": {
@@ -112,7 +112,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2025-01-04T01:40:14+00:00"
+            "time": "2025-01-04T16:29:38+00:00"
         },
         {
             "name": "erusev/parsedown",

@@ -45,7 +45,7 @@ return [
          * localhostRouterPath => The path to the localhost router file
          */
         'api' => [
-            'localhostRouterPath' => __DIR__ . '/localhost_router.php'
+            'localhostRouterPath' => __DIR__ . '/localhost-router.php'
         ],
 
         /**

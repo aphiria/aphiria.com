@@ -34,7 +34,7 @@ final class ServeCommandHandler implements ICommandHandler
             PHP_BINARY,
             \str_replace(['http://', 'https://'], ['', ''], (string)\getenv('APP_API_URL')),
             \realpath(__DIR__ . '/../../../../public-api'),
-            \realpath(__DIR__ . '/../../../../localhost_router.php')
+            \realpath(__DIR__ . '/../../../../localhost-router.php')
         );
         $runWebCommand = \sprintf(
             '%s -S %s -t "%s"',
