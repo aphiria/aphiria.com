@@ -33,8 +33,7 @@ final class ViewCompiler
         private readonly string $compiledViewPath,
         private readonly DocumentationMetadata $docMetadata,
         private readonly FilesystemOperator $files
-    ) {
-    }
+    ) {}
 
     /**
      * Compiles all of our views
@@ -56,9 +55,10 @@ final class ViewCompiler
     private function cleanUpExistingCompiledViews(): void
     {
         /** @var list<string> $compiledHtmlDocPaths */
-        $compiledHtmlDocPaths = $this->files->listContents($this->compiledViewPath, true)
-            ->filter(fn (StorageAttributes $attributes) => $attributes->isFile() && \str_ends_with($attributes->path(), '.html'))
-            ->map(fn (StorageAttributes $attributes) => $attributes->path())
+        $compiledHtmlDocPaths = $this->files
+            ->listContents($this->compiledViewPath, true)
+            ->filter(fn(StorageAttributes $attributes) => $attributes->isFile() && \str_ends_with($attributes->path(), '.html'))
+            ->map(fn(StorageAttributes $attributes) => $attributes->path())
             ->toArray();
 
         // Delete any compiled views

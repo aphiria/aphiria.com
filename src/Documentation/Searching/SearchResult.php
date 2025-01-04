@@ -36,6 +36,5 @@ final readonly class SearchResult
         public ?string $highlightedH4,
         public ?string $highlightedH5,
         public string $highlightedInnerText
-    ) {
-    }
+    ) {}
 }

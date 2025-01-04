@@ -40,8 +40,7 @@ final class DocumentationBuilder
         private readonly string $clonedDocRelativePath,
         private readonly string $htmlDocPath,
         private readonly FilesystemOperator $files
-    ) {
-    }
+    ) {}
 
     /**
      * Builds our documentation, which includes cloning it and compiling the Markdown
@@ -97,9 +96,10 @@ final class DocumentationBuilder
     {
         try {
             /** @var list<string> $contentPaths */
-            $contentPaths = $this->files->listContents($dir, true)
-                ->filter(fn (StorageAttributes $attributes) => $attributes->isFile() || $attributes->isDir())
-                ->map(fn (StorageAttributes $attributes) => $attributes->path())
+            $contentPaths = $this->files
+                ->listContents($dir, true)
+                ->filter(fn(StorageAttributes $attributes) => $attributes->isFile() || $attributes->isDir())
+                ->map(fn(StorageAttributes $attributes) => $attributes->path())
                 ->toArray();
 
             foreach ($contentPaths as $contentPath) {
@@ -147,9 +147,10 @@ final class DocumentationBuilder
                 // Delete the .git directory so we don't get multiple VCS roots registered
                 $this->deleteDir("$this->clonedDocRelativePath/$branch/.git");
                 /** @var list<string> $markdownFilePaths */
-                $markdownFilePaths = $this->files->listContents($rawDocsPath)
-                    ->filter(fn (StorageAttributes $attributes) => $attributes->isFile() && \str_ends_with($attributes->path(), '.md'))
-                    ->map(fn (StorageAttributes $attributes) => $attributes->path())
+                $markdownFilePaths = $this->files
+                    ->listContents($rawDocsPath)
+                    ->filter(fn(StorageAttributes $attributes) => $attributes->isFile() && \str_ends_with($attributes->path(), '.md'))
+                    ->map(fn(StorageAttributes $attributes) => $attributes->path())
                     ->toArray();
 
                 foreach ($markdownFilePaths as $markdownFilePath) {

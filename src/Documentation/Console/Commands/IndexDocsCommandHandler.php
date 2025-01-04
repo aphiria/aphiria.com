@@ -31,9 +31,7 @@ final class IndexDocsCommandHandler implements ICommandHandler
     /**
      * @param DocumentationIndexer $docIndexer The documentation indexer
      */
-    public function __construct(private readonly DocumentationIndexer $docIndexer)
-    {
-    }
+    public function __construct(private readonly DocumentationIndexer $docIndexer) {}
 
     /**
      * @inheritdoc

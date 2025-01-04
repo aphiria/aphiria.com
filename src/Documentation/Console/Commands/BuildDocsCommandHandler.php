@@ -30,9 +30,7 @@ final class BuildDocsCommandHandler implements ICommandHandler
     /**
      * @param DocumentationBuilder $docBuilder The documentation builder
      */
-    public function __construct(private readonly DocumentationBuilder $docBuilder)
-    {
-    }
+    public function __construct(private readonly DocumentationBuilder $docBuilder) {}
 
     /**
      * @inheritdoc

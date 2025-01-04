@@ -36,8 +36,7 @@ final class DocumentationIndexer
         private readonly ISearchIndex $searchIndex,
         private readonly string $htmlDocPath,
         private readonly FilesystemOperator $files
-    ) {
-    }
+    ) {}
 
     /**
      * Indexes our docs for searching
@@ -58,9 +57,10 @@ final class DocumentationIndexer
 
             $htmlFilesToIndex = [];
             /** @var list<string> $htmlDocPaths */
-            $htmlDocPaths = $this->files->listContents($htmlDocsPath)
-                ->filter(fn (StorageAttributes $attributes) => $attributes->isFile() && \str_ends_with($attributes->path(), '.html'))
-                ->map(fn (StorageAttributes $attributes) => $attributes->path())
+            $htmlDocPaths = $this->files
+                ->listContents($htmlDocsPath)
+                ->filter(fn(StorageAttributes $attributes) => $attributes->isFile() && \str_ends_with($attributes->path(), '.html'))
+                ->map(fn(StorageAttributes $attributes) => $attributes->path())
                 ->toArray();
 
             foreach ($htmlDocPaths as $htmlDocPath) {
