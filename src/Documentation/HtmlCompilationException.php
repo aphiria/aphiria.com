@@ -17,6 +17,4 @@ use Exception;
 /**
  * Defines the exception that's thrown if there was an error compiling the docs to HTML
  */
-final class HtmlCompilationException extends Exception
-{
-}
+final class HtmlCompilationException extends Exception {}

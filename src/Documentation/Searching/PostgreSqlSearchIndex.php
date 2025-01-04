@@ -49,8 +49,7 @@ final class PostgreSqlSearchIndex implements ISearchIndex
         private readonly PDO $pdo,
         private readonly string $linkPrefix,
         private readonly FilesystemOperator $files
-    ) {
-    }
+    ) {}
 
     /**
      * Builds up a search index for a list of document paths

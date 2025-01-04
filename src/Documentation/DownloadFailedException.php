@@ -17,6 +17,4 @@ use Exception;
 /**
  * Defines the exception that's thrown when a download fails
  */
-final class DownloadFailedException extends Exception
-{
-}
+final class DownloadFailedException extends Exception {}

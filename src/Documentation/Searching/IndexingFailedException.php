@@ -17,7 +17,4 @@ use RuntimeException;
 /**
  * Defines an exception that's thrown when indexing fails
  */
-final class IndexingFailedException extends RuntimeException
-{
-    // Don't do anything
-}
+final class IndexingFailedException extends RuntimeException {}

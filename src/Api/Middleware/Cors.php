@@ -74,8 +74,7 @@ final class Cors implements IMiddleware
             new KeyValuePair('Access-Control-Allow-Headers', \implode(', ', self::$allowedHeaders)),
             new KeyValuePair('Access-Control-Allow-Credentials', 'true')
         ];
-        $response->headers
-            ->addRange($headers);
+        $response->headers->addRange($headers);
 
         return $response;
     }

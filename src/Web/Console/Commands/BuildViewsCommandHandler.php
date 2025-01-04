@@ -29,9 +29,7 @@ final class BuildViewsCommandHandler implements ICommandHandler
     /**
      * @param ViewCompiler $viewCompiler The compiler for our views
      */
-    public function __construct(private readonly ViewCompiler $viewCompiler)
-    {
-    }
+    public function __construct(private readonly ViewCompiler $viewCompiler) {}
 
     /**
      * @inheritdoc

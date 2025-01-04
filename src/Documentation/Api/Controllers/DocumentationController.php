@@ -28,9 +28,7 @@ final class DocumentationController extends BaseController
     /**
      * @param DocumentationIndexer $docs What we'll use to search through documentation
      */
-    public function __construct(private readonly DocumentationIndexer $docs)
-    {
-    }
+    public function __construct(private readonly DocumentationIndexer $docs) {}
 
     /**
      * Searches our documentation with a query
