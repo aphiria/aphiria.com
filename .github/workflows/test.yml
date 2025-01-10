@@ -73,7 +73,7 @@ jobs:
         run: |
           terraform -chdir=./infrastructure/terraform init -backend-config="access_key=${{ secrets.DIGITALOCEAN_SPACES_ACCESS_KEY }}" -backend-config="secret_key=${{ secrets.DIGITALOCEAN_SPACES_SECRET_KEY }}"
           terraform -chdir=./infrastructure/terraform validate
-          output = terraform -chdir=./infrastructure/terraform plan -var="do_access_token=${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}" -var="do_spaces_access_key=${{ secrets.DIGITALOCEAN_SPACES_ACCESS_KEY }}" -var="do_spaces_secret_key=${{ secrets.DIGITALOCEAN_SPACES_SECRET_KEY }}" -no-color -input=false
+          output=$(terraform -chdir=./infrastructure/terraform plan -var="do_access_token=${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}" -var="do_spaces_access_key=${{ secrets.DIGITALOCEAN_SPACES_ACCESS_KEY }}" -var="do_spaces_secret_key=${{ secrets.DIGITALOCEAN_SPACES_SECRET_KEY }}" -no-color -input=false)
           echo "output=$output" >> $GITHUB_OUTPUT
         continue-on-error: true # We want the output even if this fails
       - name: Comment Terraform Plan
