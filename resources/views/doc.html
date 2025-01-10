@@ -3,9 +3,67 @@
     <head>
         <title>{{ docTitle }} | Aphiria</title>
         {{ head }}
+        <style>
+            .context-framework, .context-library {
+                display: none;
+            }
+        </style>
+        <script>
+            function setCookie(name, value, days) {
+                const date = new Date();
+                date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+                document.cookie = `${name}=${value};expires=${date.toUTCString()};path=/`;
+            }
+
+            function getCookie(name) {
+                const cookies = document.cookie.split(';');
+
+                for (const cookie of cookies) {
+                    const [key, value] = cookie.trim().split('=');
+                    if (key === name) return value;
+                }
+
+                return null;
+            }
+
+            function toggleContext(view) {
+                const frameworkDivs = document.querySelectorAll('.context-framework');
+                const libraryDivs = document.querySelectorAll('.context-library');
+
+                if (view === 'framework') {
+                    frameworkDivs.forEach(div => div.style.display = 'block');
+                    libraryDivs.forEach(div => div.style.display = 'none');
+                } else if (view === 'library') {
+                    frameworkDivs.forEach(div => div.style.display = 'none');
+                    libraryDivs.forEach(div => div.style.display = 'block');
+                }
+            }
+
+            document.addEventListener('DOMContentLoaded', () => {
+                const contextSelector = document.getElementById('context-selector');
+                const savedContext = getCookie('context') || 'framework';
+
+                contextSelector.value = savedContext;
+                toggleContext(savedContext);
+
+                // Add event listener to update the view and cookie on selection
+                contextSelector.addEventListener('change', (event) => {
+                    const selectedContext = event.target.value;
+                    setCookie('context', selectedContext, 365);
+                    toggleContext(selectedContext);
+                });
+            });
+        </script>
     </head>
     <body class="docs language-php">
         <header>
+            <label title="Choose the context to view the documentation with">
+                Context:
+                <select id="context-selector">
+                    <option value="framework">Framework</option>
+                    <option value="library">Library</option>
+                </select>
+            </label>
             {{ mainNav }}
         </header>
         <main>
