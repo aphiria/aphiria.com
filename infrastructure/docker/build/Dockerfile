@@ -1,7 +1,5 @@
 FROM php:8.4.1-fpm
 
-MAINTAINER David Young
-
 WORKDIR /app
 
 # Install dependencies and extensions
