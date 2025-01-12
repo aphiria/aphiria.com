@@ -19,4 +19,3 @@ RUN yarn install && yarn global add gulp
 # Use the docs' git SHA to bust the cache and force gulp build to run when it has changed
 ARG DOCS_SHA=latest
 RUN gulp build
-

@@ -75,12 +75,12 @@ You must build your Docker images before you can run the application.  If using 
 eval $(minikube -p minikube docker-env)
 ```
 
-Then, build the images:
+Then, build the images using your local Docker images:
 
 ```
 docker build -t aphiria.com-build -f ./infrastructure/docker/build/Dockerfile .
-docker build -t aphiria.com-api -f ./infrastructure/docker/runtime/api/Dockerfile .
-docker build -t aphiria.com-web -f ./infrastructure/docker/runtime/web/Dockerfile .
+docker build -t aphiria.com-api -f ./infrastructure/docker/runtime/api/Dockerfile . --build-arg BUILD_IMAGE=aphiria.com-build
+docker build -t aphiria.com-web -f ./infrastructure/docker/runtime/web/Dockerfile . --build-arg BUILD_IMAGE=aphiria.com-build
 ```
 
 ## Run The Application
@@ -120,3 +120,12 @@ kubectl apply -k ./infrastructure/kubernetes/environments/dev
 You should now be able to hit https://www.aphiria.com in your browser.  You will get a TLS certificate error since we're using a self-signed certificate locally.
 
 > **Note:** If using Chrome, type `thisisunsafe` to accept the self-signed certificate.  Likewise, you'll have to do the same for the API, which you can do by visiting https://api.aphiria.com/docs/search?query=foo and typing `thisisunsafe`.
+
+## Updating The Kubernetes Cluster
+
+To get your Minikube cluster to pick up changes you've made locally (after re-building the Docker images), run the following commands:
+
+```
+kubectl rollout restart deployment api
+kubectl rollout restart deployment web
+```

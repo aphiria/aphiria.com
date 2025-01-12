@@ -57,6 +57,9 @@
     </head>
     <body class="docs language-php">
         <header>
+            {{ mainNav }}
+        </header>
+        <main>
             <label title="Choose the context to view the documentation with">
                 Context:
                 <select id="context-selector">
@@ -64,9 +67,6 @@
                     <option value="library">Library</option>
                 </select>
             </label>
-            {{ mainNav }}
-        </header>
-        <main>
             {{ sideNav }}
             <article>
                 {{ doc }}
