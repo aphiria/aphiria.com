@@ -75,13 +75,15 @@ You must build your Docker images before you can run the application.  If using 
 eval $(minikube -p minikube docker-env)
 ```
 
-Then, build the images using your local Docker images:
+Build the Docker images:
 
 ```
 docker build -t aphiria.com-build -f ./infrastructure/docker/build/Dockerfile .
 docker build -t aphiria.com-api -f ./infrastructure/docker/runtime/api/Dockerfile . --build-arg BUILD_IMAGE=aphiria.com-build
 docker build -t aphiria.com-web -f ./infrastructure/docker/runtime/web/Dockerfile . --build-arg BUILD_IMAGE=aphiria.com-build
 ```
+
+> **Note:** To bust the Docker's cache, you should run `gulp build` locally prior to building the images to ensure you're building with the latest compiled documentation.
 
 ## Run The Application
 

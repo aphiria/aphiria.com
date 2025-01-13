@@ -15,7 +15,7 @@ namespace App\Documentation;
 use League\Flysystem\FilesystemException;
 use League\Flysystem\FilesystemOperator;
 use League\Flysystem\StorageAttributes;
-use Parsedown;
+use ParsedownExtra;
 
 /**
  * Defines the documentation builder
@@ -26,7 +26,7 @@ final class DocumentationBuilder
     private const string GITHUB_REPOSITORY = 'https://github.com/aphiria/docs.git';
 
     /**
-     * @param Parsedown $markdownParser The Markdown parser
+     * @param ParsedownExtra $markdownParser The Markdown parser
      * @param list<string> $branches The branches to download
      * @param string $clonedDocAbsolutePath The absolute path to the cloned documentation
      * @param string $clonedDocRelativePath The relative path to the cloned documentation
@@ -34,7 +34,7 @@ final class DocumentationBuilder
      * @param FilesystemOperator $files The file system helper
      */
     public function __construct(
-        private readonly Parsedown $markdownParser,
+        private readonly ParsedownExtra $markdownParser,
         private readonly array $branches,
         private readonly string $clonedDocAbsolutePath,
         private readonly string $clonedDocRelativePath,
@@ -138,7 +138,7 @@ final class DocumentationBuilder
                 \shell_exec(
                     \sprintf(
                         'git clone -b %s --single-branch %s "%s"',
-                        $branch,
+                        'context', // TODO: CHANGE THIS BACK TO $branch BEFORE MERGING PR
                         self::GITHUB_REPOSITORY,
                         $this->clonedDocAbsolutePath . "/$branch"
                     )

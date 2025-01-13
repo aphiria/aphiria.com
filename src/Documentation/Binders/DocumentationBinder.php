@@ -22,7 +22,6 @@ use League\Flysystem\Filesystem;
 use League\Flysystem\FilesystemOperator;
 use League\Flysystem\Local\LocalFilesystemAdapter;
 use League\Flysystem\UnixVisibility\PortableVisibilityConverter;
-use Parsedown;
 use ParsedownExtra;
 use PDO;
 
@@ -60,7 +59,7 @@ final class DocumentationBinder extends Binder
         );
         $container->bindInstance(FilesystemOperator::class, $files);
         $docBuilder = new DocumentationBuilder(
-            new Parsedown(new ParsedownExtra()),
+            new ParsedownExtra(),
             $metadata->branches,
             __DIR__ . '/../../../tmp/docs',
             '/tmp/docs',
