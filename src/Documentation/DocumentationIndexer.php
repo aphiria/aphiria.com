@@ -12,6 +12,7 @@ declare(strict_types=1);
 
 namespace App\Documentation;
 
+use App\Documentation\Searching\Context;
 use App\Documentation\Searching\IndexingFailedException;
 use App\Documentation\Searching\ISearchIndex;
 use App\Documentation\Searching\SearchResult;
@@ -81,10 +82,11 @@ final class DocumentationIndexer
      * Searches the documentation with a query
      *
      * @param string $query The raw search query
+     * @param Context $context The context to search under
      * @return list<SearchResult> The list of search results
      */
-    public function searchDocs(string $query): array
+    public function searchDocs(string $query, Context $context): array
     {
-        return $this->searchIndex->query($query);
+        return $this->searchIndex->query($query, $context);
     }
 }

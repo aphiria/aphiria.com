@@ -18,10 +18,11 @@ namespace App\Documentation\Searching;
 final readonly class IndexEntry
 {
     /**
-     * @param string $htmlElementType The type of HTML element being index
-     * @param string $innerText The inner text of the HTML element being index
+     * @param string $htmlElementType The type of HTML element being indexed
+     * @param string $innerText The inner text of the HTML element being indexed
      * @param string $link The link that will take a user to this part of the documentation
      * @param string $htmlElementWeight The weight (eg 'A', 'B', 'C', or 'D') of the tag so we know how relevant it is
+     * @param Context $context The context that the entry applies to
      * @param string $h1InnerText The previous h1 sibling's inner text
      * @param string|null $h2InnerText The previous h2 sibling's inner text
      * @param string|null $h3InnerText The previous h3 sibling's inner text
@@ -33,6 +34,7 @@ final readonly class IndexEntry
         public string $innerText,
         public string $link,
         public string $htmlElementWeight,
+        public Context $context,
         public string $h1InnerText,
         public ?string $h2InnerText = null,
         public ?string $h3InnerText = null,

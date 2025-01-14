@@ -21,6 +21,8 @@ use App\Documentation\Searching\PostgreSqlSearchIndex;
 use League\CommonMark\Environment\Environment;
 use League\CommonMark\Extension\CommonMark\CommonMarkCoreExtension;
 use League\CommonMark\Extension\DisallowedRawHtml\DisallowedRawHtmlExtension;
+use League\CommonMark\Extension\HeadingPermalink\HeadingPermalinkExtension;
+use League\CommonMark\Extension\TableOfContents\TableOfContentsExtension;
 use League\CommonMark\MarkdownConverter;
 use League\Flysystem\Filesystem;
 use League\Flysystem\FilesystemOperator;
@@ -61,6 +63,7 @@ final class DocumentationBinder extends Binder
             )
         );
         $container->bindInstance(FilesystemOperator::class, $files);
+
         $environment = new Environment();
         $environment->addExtension(new CommonMarkCoreExtension());
         $environment->addExtension(new DisallowedRawHtmlExtension());

@@ -113,7 +113,10 @@ window.addEventListener('load', loadEvent => {
         } else if (searchInputElem.value !== prevSearchQuery) {
             timer = setTimeout(() => {
                 prevSearchQuery = searchInputElem.value;
-                fetch(`${config.apiUri}/docs/search?query=${encodeURIComponent(searchInputElem.value)}`)
+                fetch(
+                    `${config.apiUri}/docs/search?query=${encodeURIComponent(searchInputElem.value)}`,
+                    { credentials: 'include' }
+                )
                     .then((response) => response.json())
                     .then(searchResults => {
                         let searchResultItems = '';

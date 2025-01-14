@@ -29,7 +29,8 @@ interface ISearchIndex
      * Queries the documentation and returns any matches
      *
      * @param string $query The raw search query
+     * @param Context $context The context to search under
      * @return list<SearchResult> The list of search results
      */
-    public function query(string $query): array;
+    public function query(string $query, Context $context): array;
 }
