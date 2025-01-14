@@ -25,12 +25,12 @@
     },
     "require": {
         "aphiria/aphiria": "1.x-dev",
-        "erusev/parsedown-extra": "dev-master as 0.8.2",
         "ext-dom": "*",
         "ext-libxml": "*",
         "ext-mbstring": "*",
         "ext-pdo": "*",
         "ext-pgsql": "*",
+        "league/commonmark": "^2.6",
         "league/flysystem": "^3.0",
         "php": ">=8.4",
         "symfony/dotenv": "^7.0"

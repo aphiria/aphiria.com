@@ -12,10 +12,12 @@ declare(strict_types=1);
 
 namespace App\Documentation;
 
+use League\CommonMark\ConverterInterface;
+use League\CommonMark\Exception\CommonMarkException;
+use League\Config\Exception\ConfigurationExceptionInterface;
 use League\Flysystem\FilesystemException;
 use League\Flysystem\FilesystemOperator;
 use League\Flysystem\StorageAttributes;
-use ParsedownExtra;
 
 /**
  * Defines the documentation builder
@@ -26,7 +28,7 @@ final class DocumentationBuilder
     private const string GITHUB_REPOSITORY = 'https://github.com/aphiria/docs.git';
 
     /**
-     * @param ParsedownExtra $markdownParser The Markdown parser
+     * @param ConverterInterface $markdownConverter The Markdown parser
      * @param list<string> $branches The branches to download
      * @param string $clonedDocAbsolutePath The absolute path to the cloned documentation
      * @param string $clonedDocRelativePath The relative path to the cloned documentation
@@ -34,7 +36,7 @@ final class DocumentationBuilder
      * @param FilesystemOperator $files The file system helper
      */
     public function __construct(
-        private readonly ParsedownExtra $markdownParser,
+        private readonly ConverterInterface $markdownConverter,
         private readonly array $branches,
         private readonly string $clonedDocAbsolutePath,
         private readonly string $clonedDocRelativePath,
@@ -75,13 +77,13 @@ final class DocumentationBuilder
                 foreach ($markdownFilePaths as $markdownFilePath) {
                     $markdownFilename = \pathinfo($markdownFilePath, PATHINFO_FILENAME);
                     $htmlDocFilename = "$branchDocDir/$markdownFilename.html";
-                    $html = $this->markdownParser->parse($this->files->read($markdownFilePath));
+                    $html = $this->markdownConverter->convert($this->files->read($markdownFilePath))->getContent();
                     // Rewrite the links to point to the HTML docs on the site
                     $html = \preg_replace('/<a href="([^"]+)\.md(#[^"]+)?"/', '<a href="$1.html$2"', $html);
                     $this->files->write($htmlDocFilename, $html);
                 }
             }
-        } catch (FilesystemException $ex) {
+        } catch (FilesystemException|CommonMarkException|ConfigurationExceptionInterface $ex) {
             throw new HtmlCompilationException('Failed to write HTML to file', 0, $ex);
         }
     }

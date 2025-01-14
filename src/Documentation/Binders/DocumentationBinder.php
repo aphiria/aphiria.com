@@ -18,11 +18,14 @@ use App\Documentation\DocumentationBuilder;
 use App\Documentation\DocumentationIndexer;
 use App\Documentation\DocumentationMetadata;
 use App\Documentation\Searching\PostgreSqlSearchIndex;
+use League\CommonMark\Environment\Environment;
+use League\CommonMark\Extension\CommonMark\CommonMarkCoreExtension;
+use League\CommonMark\Extension\DisallowedRawHtml\DisallowedRawHtmlExtension;
+use League\CommonMark\MarkdownConverter;
 use League\Flysystem\Filesystem;
 use League\Flysystem\FilesystemOperator;
 use League\Flysystem\Local\LocalFilesystemAdapter;
 use League\Flysystem\UnixVisibility\PortableVisibilityConverter;
-use ParsedownExtra;
 use PDO;
 
 /**
@@ -58,8 +61,12 @@ final class DocumentationBinder extends Binder
             )
         );
         $container->bindInstance(FilesystemOperator::class, $files);
+        $environment = new Environment();
+        $environment->addExtension(new CommonMarkCoreExtension());
+        $environment->addExtension(new DisallowedRawHtmlExtension());
+        $converter = new MarkdownConverter($environment);
         $docBuilder = new DocumentationBuilder(
-            new ParsedownExtra(),
+            $converter,
             $metadata->branches,
             __DIR__ . '/../../../tmp/docs',
             '/tmp/docs',
