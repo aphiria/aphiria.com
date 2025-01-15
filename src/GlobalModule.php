@@ -74,9 +74,6 @@ final class GlobalModule extends AphiriaModule implements IBootstrapper
                 new GlobalExceptionHandlerBootstrapper($this->container)
             ])
             ->bootstrapAll();
-
-        // Temporarily allow deprecation errors until Parsedown is updated to work with PHP 8.4
-        \error_reporting(E_ALL & ~E_DEPRECATED);
     }
 
     /**
