@@ -37,7 +37,6 @@ final class PostgreSqlSearchIndex implements ISearchIndex
         'h4' => 'D',
         'h5' => 'D',
         'p' => 'D',
-        'div' => 'D',
         'li' => 'D',
         'blockquote' => 'D'
     ];
@@ -80,40 +79,11 @@ final class PostgreSqlSearchIndex implements ISearchIndex
                 \libxml_clear_errors();
                 $h1 = $h2 = $h3 = $h4 = $h5 = null;
 
-                // Scan the documentation and index the elements as well as their nearest previous <h*> siblings
-                foreach ($dom->getElementsByTagName('body')->item(0)->childNodes as $currNode) {
-                    // Check if we need to reset the nearest headers
-                    switch ($currNode->nodeName) {
-                        case 'h1':
-                            $h1 = $currNode;
-                            $h2 = $h3 = $h4 = $h5 = null;
-                            break;
-                        case 'h2':
-                            $h2 = $currNode;
-                            $h3 = $h4 = $h5 = null;
-                            break;
-                        case 'h3':
-                            $h3 = $currNode;
-                            $h4 = $h5 = null;
-                            break;
-                        case 'h4':
-                            $h4 = $currNode;
-                            $h5 = null;
-                            break;
-                        case 'h5':
-                            $h5 = $currNode;
-                            break;
-                    }
+                // Scan the documentation and index the elements
+                $body = $dom->getElementsByTagName('body')->item(0);
 
-                    if ($h1 === null) {
-                        throw new IndexingFailedException('No <h1> element was set');
-                    }
-
-                    // Only index specific elements
-                    if (isset(self::$htmlElementsToWeights[$currNode->nodeName])) {
-                        $filename = \basename($htmlPath);
-                        $indexEntries[] = $this->createIndexEntry($filename, $currNode, $this->getContext($currNode), $h1, $h2, $h3, $h4, $h5);
-                    }
+                if ($body !== null) {
+                    $this->processNode($body, $indexEntries, $htmlPath, $h1, $h2, $h3, $h4, $h5);
                 }
             }
 
@@ -414,6 +384,90 @@ EOF
             'htmlElementWeight' => $indexEntry->htmlElementWeight,
             'context' => $indexEntry->context->value
         ]);
+    }
+
+    /**
+     * Processes a node and its children recursively, creating index entries for valid elements
+     *
+     * @param DOMNode $node The node to process
+     * @param list<IndexEntry> $indexEntries The list of index entries to update
+     * @param string $htmlPath The path to the current HTML file
+     * @param DOMNode|null $h1 The current H1 node
+     * @param DOMNode|null $h2 The current H2 node
+     * @param DOMNode|null $h3 The current H3 node
+     * @param DOMNode|null $h4 The current H4 node
+     * @param DOMNode|null $h5 The current H5 node
+     */
+    private function processNode(
+        DOMNode $node,
+        array &$indexEntries,
+        string $htmlPath,
+        ?DOMNode &$h1,
+        ?DOMNode &$h2,
+        ?DOMNode &$h3,
+        ?DOMNode &$h4,
+        ?DOMNode &$h5
+    ): void {
+        if ($this->shouldSkipProcessingNode($node)) {
+            return;
+        }
+
+        // Update headers based on the node type
+        switch ($node->nodeName) {
+            case 'h1':
+                $h1 = $node;
+                $h2 = $h3 = $h4 = $h5 = null;
+                break;
+            case 'h2':
+                $h2 = $node;
+                $h3 = $h4 = $h5 = null;
+                break;
+            case 'h3':
+                $h3 = $node;
+                $h4 = $h5 = null;
+                break;
+            case 'h4':
+                $h4 = $node;
+                $h5 = null;
+                break;
+            case 'h5':
+                $h5 = $node;
+                break;
+        }
+
+        // Only create an index entry for valid elements
+        if (isset(self::$htmlElementsToWeights[$node->nodeName])) {
+            $filename = \basename($htmlPath);
+            $indexEntries[] = $this->createIndexEntry(
+                $filename,
+                $node,
+                $this->getContext($node),
+                $h1,
+                $h2,
+                $h3,
+                $h4,
+                $h5
+            );
+        }
+
+        // Recursively process child nodes
+        foreach ($node->childNodes as $childNode) {
+            $this->processNode($childNode, $indexEntries, $htmlPath, $h1, $h2, $h3, $h4, $h5);
+        }
+    }
+
+    /**
+     * Returns whether or not we should skip processing a node and its children for lexemes
+     *
+     * @param DOMNode $node The node to check
+     * @return bool True if we should skip processing the node for lexemes, otherwise false
+     */
+    private function shouldSkipProcessingNode(DOMNode $node): bool
+    {
+        // We do not want to index the table-of-contents nav because its contents simply reflect those in the <h*> tags
+        return $node instanceof DOMElement
+            && $node->nodeName === 'nav'
+            && \str_contains($node->getAttribute('class'), 'toc-nav');
     }
 
     /**
