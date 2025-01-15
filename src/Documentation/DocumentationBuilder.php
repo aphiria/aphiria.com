@@ -140,7 +140,7 @@ final class DocumentationBuilder
                 \shell_exec(
                     \sprintf(
                         'git clone -b %s --single-branch %s "%s"',
-                        'context', // TODO: CHANGE THIS BACK TO $branch BEFORE MERGING PR
+                        $branch,
                         self::GITHUB_REPOSITORY,
                         $this->clonedDocAbsolutePath . "/$branch"
                     )
