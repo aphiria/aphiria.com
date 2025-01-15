@@ -36,6 +36,8 @@ class DocumentationTest extends IntegrationTestCase
              * @return bool
              */
             static function (array $results): bool {
+                echo \var_export($results, true);ob_flush();
+
                 return \count($results) > 0 && \str_contains($results[0]->highlightedH1, 'Routing');
             }
         );
