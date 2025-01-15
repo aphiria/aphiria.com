@@ -42,3 +42,15 @@ patches:
       - op: replace
         path: /spec/template/spec/containers/0/imagePullPolicy
         value: IfNotPresent
+  # Update dev to use local TLS secrets
+  - target:
+      name: nginx-gateway
+      namespace: nginx-gateway
+      kind: Gateway
+    patch: |-
+      - op: replace
+        path: /spec/listeners/2/tls/certificateRefs/name
+        value: tls-secret
+      - op: replace
+        path: /spec/listeners/4/tls/certificateRefs/name
+        value: tls-secret

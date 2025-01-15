@@ -3,7 +3,7 @@ kind: Job
 metadata:
   name: db-migration
 spec:
-  ttlSecondsAfterFinished: 0 # Clean up the job after it runs
+  ttlSecondsAfterFinished: 3600 # Clean up the job after it runs
   template:
     spec:
       containers:
