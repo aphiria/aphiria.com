@@ -1,6 +1,7 @@
-# Stage 1: Build image
+# Stage 1: Use the build image to copy necessary files
+ARG BUILD_IMAGE=davidbyoung/aphiria.com-build
 ARG IMAGE_SHA=latest
-FROM davidbyoung/aphiria.com-build:${IMAGE_SHA} AS build
+FROM ${BUILD_IMAGE}:${IMAGE_SHA} AS build
 
 # Stage 2: Nginx image for serving content
 FROM nginx:alpine

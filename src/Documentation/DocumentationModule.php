@@ -14,8 +14,10 @@ namespace App\Documentation;
 
 use Aphiria\Application\IApplicationBuilder;
 use Aphiria\Framework\Application\AphiriaModule;
+use Aphiria\Net\Http\HttpStatusCode;
 use App\Databases\Binders\SqlBinder;
 use App\Documentation\Binders\DocumentationBinder;
+use App\Documentation\Searching\InvalidContextException;
 
 /**
  * Defines the documentation module
@@ -27,9 +29,15 @@ final class DocumentationModule extends AphiriaModule
      */
     public function configure(IApplicationBuilder $appBuilder): void
     {
-        $this->withBinders($appBuilder, [
-            new SqlBinder(),
-            new DocumentationBinder()
-        ]);
+        $this
+            ->withBinders($appBuilder, [
+                new SqlBinder(),
+                new DocumentationBinder()
+            ])
+            ->withProblemDetails(
+                $appBuilder,
+                InvalidContextException::class,
+                status: HttpStatusCode::BadRequest
+            );
     }
 }

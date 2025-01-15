@@ -17,6 +17,8 @@ use Aphiria\Routing\Attributes\Controller;
 use Aphiria\Routing\Attributes\Get;
 use Aphiria\Routing\Attributes\QueryString;
 use App\Documentation\DocumentationIndexer;
+use App\Documentation\Searching\Context;
+use App\Documentation\Searching\InvalidContextException;
 use App\Documentation\Searching\SearchResult;
 
 /**
@@ -35,10 +37,25 @@ final class DocumentationController extends BaseController
      *
      * @param string $query The search query
      * @return list<SearchResult> The list of search results
+     * @throws InvalidContextException Thrown if the context was invalid
      */
     #[Get('search')]
     public function searchDocs(#[QueryString] string $query): array
     {
-        return $this->docs->searchDocs($query);
+        $cookies = $this->requestParser->parseCookies($this->request);
+
+        if ($cookies->containsKey('context')) {
+            $rawContext = $cookies->get('context');
+        } else {
+            $rawContext = null;
+        }
+
+        $context = match ($rawContext) {
+            null, 'framework' => Context::Framework,
+            'library' => Context::Library,
+            default => throw new InvalidContextException('Context must be either "framework" or "library"')
+        };
+
+        return $this->docs->searchDocs($query, $context);
     }
 }

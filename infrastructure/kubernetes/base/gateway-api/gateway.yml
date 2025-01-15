@@ -33,7 +33,7 @@ spec:
       tls:
         mode: Terminate
         certificateRefs:
-          - name: tls-cert
+          - name: tls-secret
     - name: https-subdomains
       hostname: "*.aphiria.com"
       port: 443
@@ -44,4 +44,4 @@ spec:
       tls:
         mode: Terminate
         certificateRefs:
-          - name: tls-cert
+          - name: tls-secret
