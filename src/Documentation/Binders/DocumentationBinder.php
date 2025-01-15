@@ -21,8 +21,7 @@ use App\Documentation\Searching\PostgreSqlSearchIndex;
 use League\CommonMark\Environment\Environment;
 use League\CommonMark\Extension\CommonMark\CommonMarkCoreExtension;
 use League\CommonMark\Extension\DisallowedRawHtml\DisallowedRawHtmlExtension;
-use League\CommonMark\Extension\HeadingPermalink\HeadingPermalinkExtension;
-use League\CommonMark\Extension\TableOfContents\TableOfContentsExtension;
+use League\CommonMark\Extension\Table\TableExtension;
 use League\CommonMark\MarkdownConverter;
 use League\Flysystem\Filesystem;
 use League\Flysystem\FilesystemOperator;
@@ -64,9 +63,24 @@ final class DocumentationBinder extends Binder
         );
         $container->bindInstance(FilesystemOperator::class, $files);
 
-        $environment = new Environment();
+        $config = [
+            'table' => [
+                'wrap' => [
+                    'enabled' => false,
+                    'tag' => 'div',
+                    'attributes' => [],
+                ],
+                'alignment_attributes' => [
+                    'left'   => ['align' => 'left'],
+                    'center' => ['align' => 'center'],
+                    'right'  => ['align' => 'right'],
+                ]
+            ]
+        ];
+        $environment = new Environment($config);
         $environment->addExtension(new CommonMarkCoreExtension());
         $environment->addExtension(new DisallowedRawHtmlExtension());
+        $environment->addExtension(new TableExtension());
         $converter = new MarkdownConverter($environment);
         $docBuilder = new DocumentationBuilder(
             $converter,

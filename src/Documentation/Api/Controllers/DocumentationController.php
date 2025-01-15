@@ -51,8 +51,7 @@ final class DocumentationController extends BaseController
         }
 
         $context = match ($rawContext) {
-            null => Context::Global,
-            'framework' => Context::Framework,
+            null, 'framework' => Context::Framework,
             'library' => Context::Library,
             default => throw new InvalidContextException('Context must be either "framework" or "library"')
         };

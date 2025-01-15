@@ -37,6 +37,7 @@ final class PostgreSqlSearchIndex implements ISearchIndex
         'h4' => 'D',
         'h5' => 'D',
         'p' => 'D',
+        'div' => 'D',
         'li' => 'D',
         'blockquote' => 'D'
     ];
@@ -381,7 +382,7 @@ EOF
                 }
             }
 
-            $node = $node->parentNode;
+            $node = $node->parentElement;
         }
 
         return Context::Global;

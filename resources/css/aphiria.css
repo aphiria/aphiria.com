@@ -260,7 +260,7 @@ p code, li code {
 
 p code {
   border: 1px solid #e9e9e9 !important;
-  white-space: pre !important; }
+  white-space: pre-wrap !important; }
 
 body.home > main h1, body.home > main h2, body.home > main pre.center {
   text-align: center; }
