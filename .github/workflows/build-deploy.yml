@@ -81,6 +81,7 @@ jobs:
           image_sha=$(cat image_sha.txt)
           echo "Image SHA: $image_sha"
           sed -i "s|davidbyoung/aphiria.com-api:latest|davidbyoung/aphiria.com-api:${image_sha}|g" ./infrastructure/kubernetes/base/database/jobs.yml
+          kubectl delete job db-migration --ignore-not-found
 
           # Apply prod kustomization
           kubectl apply -k ./infrastructure/kubernetes/environments/prod
