@@ -171,6 +171,22 @@ window.addEventListener('load', loadEvent => {
     };
 });
 
+document.addEventListener('DOMContentLoaded', () => {
+    // If there are code blocks, then there are PrismJS elements
+    if (document.querySelectorAll('pre code').length > 0) {
+        // Wait for PrismJS to complete rendering
+        Prism.highlightAll();
+
+        // Once rendering is done, remove the overlay
+        Prism.hooks.add('complete', () => {
+            document.body.classList.remove('loading');
+        });
+    } else {
+        // No code blocks, so remove it right away
+        document.body.classList.remove('loading');
+    }
+});
+
 const mobileMenu = {
     isOpen: () => {
         return document.body.classList.contains('nav-open');

@@ -77,12 +77,15 @@ jobs:
           echo "${{ secrets.KUBERNETES_SECRETS }}" > ./infrastructure/kubernetes/environments/prod/core/secrets.yml
           echo "${{ secrets.DIGITALOCEAN_SECRETS }}" > ./infrastructure/kubernetes/environments/prod/gateway-api/secrets.yml
 
+          # Update the DB migration job to use the latest Docker image
+          image_sha=$(cat image_sha.txt)
+          echo "Image SHA: $image_sha"
+          sed -i "s|davidbyoung/aphiria.com-api:latest|davidbyoung/aphiria.com-api:${image_sha}|g" ./infrastructure/kubernetes/base/database/jobs.yml
+
           # Apply prod kustomization
           kubectl apply -k ./infrastructure/kubernetes/environments/prod
 
           # Use the latest Docker images in our pods
-          image_sha=$(cat image_sha.txt)
-          echo "Image SHA: $image_sha"
           kubectl set image deployment/api php=davidbyoung/aphiria.com-api:${image_sha}
           kubectl set image deployment/api copy-api-code=davidbyoung/aphiria.com-api:${image_sha}
           kubectl set image deployment/web web=davidbyoung/aphiria.com-web:${image_sha}

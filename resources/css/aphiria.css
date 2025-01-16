@@ -16,6 +16,14 @@ body {
   margin: 0;
   overflow-x: hidden; }
 
+body.docs.loading > main article #article-loading {
+    display: flex;
+    opacity: 1;
+    visibility: visible;}
+
+body.loading {
+    overflow: hidden }
+
 h1, h2, h3, h4, h5, h6 {
   font-weight: 200; }
 
@@ -219,7 +227,23 @@ body > main {
         margin-bottom: 20px; }
 
 body.docs > main article {
+  position: relative;
   /* Make it clear what links leave the site */ }
+
+body.docs > main article #article-loading {
+    transition: opacity 0.5s ease, visibility 0.5s ease;
+    visibility: hidden;
+    opacity: 0;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.9);
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5em;
+    z-index: 9999; }
   body.docs > main article h2, body.docs > main article h3, body.docs > main article h4, body.docs > main article h5 {
     margin-bottom: 20px;
     color: #555; }
@@ -462,7 +486,7 @@ blockquote {
         margin-top: -1em !important; }
       body > main article nav.toc-nav {
         position: absolute;
-        right: 0;
+        right: -240px;
         width: 240px;
         padding: 0 0 10px 20px;
         top: 60px;

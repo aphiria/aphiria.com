@@ -49,8 +49,8 @@ patches:
       kind: Gateway
     patch: |-
       - op: replace
-        path: /spec/listeners/2/tls/certificateRefs/name
+        path: /spec/listeners/2/tls/certificateRefs/0/name
         value: tls-secret
       - op: replace
-        path: /spec/listeners/4/tls/certificateRefs/name
+        path: /spec/listeners/3/tls/certificateRefs/0/name
         value: tls-secret
