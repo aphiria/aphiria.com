@@ -490,7 +490,8 @@ blockquote {
         width: 240px;
         padding: 0 0 10px 20px;
         top: 60px;
-        bottom: 0;
+        /* This needs to match the bottom padding of <article> so the left border goes all the way down to the footer */
+        bottom: -20px;
         overflow-y: auto;
         border-left: 1px solid #ddd;
         /* Need to make sure we're reusing the same border color as elsewhere */
