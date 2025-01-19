@@ -31,11 +31,11 @@
                 const libraryDivs = document.querySelectorAll('.context-library');
 
                 if (view === 'framework') {
-                    frameworkDivs.forEach(div => div.style.display = 'block');
+                    frameworkDivs.forEach(div => div.style.display = 'revert');
                     libraryDivs.forEach(div => div.style.display = 'none');
                 } else if (view === 'library') {
                     frameworkDivs.forEach(div => div.style.display = 'none');
-                    libraryDivs.forEach(div => div.style.display = 'block');
+                    libraryDivs.forEach(div => div.style.display = 'revert');
                 }
             }
 
