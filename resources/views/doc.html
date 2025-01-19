@@ -29,6 +29,9 @@
             function toggleContext(view) {
                 const frameworkDivs = document.querySelectorAll('.context-framework');
                 const libraryDivs = document.querySelectorAll('.context-library');
+                const docSideNav = document.querySelector('nav.side-nav');
+                const tocContents = document.querySelector('.toc-nav-contents');
+                const footer = document.querySelector('body > footer');
 
                 if (view === 'framework') {
                     frameworkDivs.forEach(div => div.style.display = 'revert');
@@ -37,6 +40,9 @@
                     frameworkDivs.forEach(div => div.style.display = 'none');
                     libraryDivs.forEach(div => div.style.display = 'revert');
                 }
+
+                // Changing visibility of elements requires re-sticking the side nav as it may have changed its height
+                makeSideNavStick(docSideNav, tocContents, footer)
             }
 
             document.addEventListener('DOMContentLoaded', () => {
