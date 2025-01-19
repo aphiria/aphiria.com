@@ -32,11 +32,12 @@ window.addEventListener('load', loadEvent => {
         const footer = document.querySelector('body > footer');
         // Initialize making the side navs sticky to the footer
         makeSideNavStick(docSideNav, tocContents, footer);
-        window.addEventListener('scroll', scrollEvent => makeSideNavStick(docSideNav, tocContents, footer));
-        window.addEventListener('resize', scrollEvent => makeSideNavStick(docSideNav, tocContents, footer));
+        window.addEventListener('scroll', () => makeSideNavStick(docSideNav, tocContents, footer));
+        window.addEventListener('resize', () => makeSideNavStick(docSideNav, tocContents, footer));
+        window.addEventListener('context-toggled', () => makeSideNavStick(docSideNav, tocContents, footer));
         // Initialize highlighting the ToC nav
         highlightToCNav(article, tocContents);
-        window.addEventListener('scroll', scrollEvent => highlightToCNav(article, tocContents));
+        window.addEventListener('scroll', () => highlightToCNav(article, tocContents));
         // Initialize highlighting the current doc in the nav bar
         highlightDocNav(docSideNav);
     }
