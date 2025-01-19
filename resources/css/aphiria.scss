@@ -728,7 +728,7 @@ blockquote {
                 right: -$docSidebarWidth;
                 width: $docSidebarWidth;
                 padding: 0 0 10px 20px;
-                top: $headerHeight;
+                top: 0;
                 /* This needs to match the bottom padding of <article> so the left border goes all the way down to the footer */
                 bottom: -20px;
                 overflow-y: auto;
