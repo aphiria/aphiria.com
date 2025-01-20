@@ -3,14 +3,14 @@ kind: Job
 metadata:
   name: db-migration
 spec:
-  ttlSecondsAfterFinished: 0 # Clean up the job after it runs
+  ttlSecondsAfterFinished: 3600 # Clean up the job after it runs
   template:
     spec:
       containers:
         - name: db-migration
           image: davidbyoung/aphiria.com-api:latest
           imagePullPolicy: Always
-          command: ['php', '/app/api/aphiria', 'docs:index']
+          command: ['sh', '-c', '/app/api/vendor/bin/phinx migrate && /app/api/vendor/bin/phinx seed:run']
           envFrom:
             - secretRef:
                 name: env-var-secrets

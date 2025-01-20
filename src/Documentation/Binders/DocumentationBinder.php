@@ -94,11 +94,7 @@ final class DocumentationBinder extends Binder
 
         // Bind using a factory to defer resolving the database connection
         $container->bindFactory(DocumentationIndexer::class, function () use ($container, $metadata, $files, $docBuilder) {
-            $searchIndex = new PostgreSqlSearchIndex(
-                $container->resolve(PDO::class),
-                "/docs/$metadata->defaultVersion/",
-                $files
-            );
+            $searchIndex = new PostgreSqlSearchIndex($container->resolve(PDO::class));
 
             return new DocumentationIndexer(
                 $metadata,
