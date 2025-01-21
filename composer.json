@@ -33,6 +33,7 @@
         "league/commonmark": "^2.6",
         "league/flysystem": "^3.0",
         "php": ">=8.4",
+        "robmorgan/phinx": "0.x-dev",
         "symfony/dotenv": "^7.0"
     },
     "require-dev": {

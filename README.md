@@ -131,3 +131,11 @@ To get your Minikube cluster to pick up changes you've made locally (after re-bu
 kubectl rollout restart deployment api
 kubectl rollout restart deployment web
 ```
+
+## Connecting to the Database
+
+To connect locally to the PostgreSQL database in Minikube, you'll need to configure port forwarding on your machine:
+
+```
+kubectl port-forward service/db 5432:5432
+```

@@ -15,8 +15,8 @@ namespace App\Documentation\Binders;
 use Aphiria\DependencyInjection\Binders\Binder;
 use Aphiria\DependencyInjection\IContainer;
 use App\Documentation\DocumentationBuilder;
-use App\Documentation\DocumentationIndexer;
 use App\Documentation\DocumentationMetadata;
+use App\Documentation\Searching\ISearchIndex;
 use App\Documentation\Searching\PostgreSqlSearchIndex;
 use League\CommonMark\Environment\Environment;
 use League\CommonMark\Extension\CommonMark\CommonMarkCoreExtension;
@@ -93,21 +93,11 @@ final class DocumentationBinder extends Binder
         $container->bindInstance(DocumentationBuilder::class, $docBuilder);
 
         // Bind using a factory to defer resolving the database connection
-        $container->bindFactory(DocumentationIndexer::class, function () use ($container, $metadata, $files, $docBuilder) {
-            $searchIndex = new PostgreSqlSearchIndex(
-                $container->resolve(PDO::class),
-                "/docs/$metadata->defaultVersion/",
-                $files
-            );
-
-            return new DocumentationIndexer(
-                $metadata,
-                $docBuilder,
-                $searchIndex,
-                self::HTML_DOC_PATH,
-                $files
-            );
-        }, true);
+        $container->bindFactory(
+            ISearchIndex::class,
+            fn() => new PostgreSqlSearchIndex($container->resolve(PDO::class)),
+            true
+        );
     }
 
     /**

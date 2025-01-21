@@ -54,7 +54,9 @@ jobs:
           yarn global add gulp
           gulp build
       - name: Index Documentation
-        run: php aphiria docs:index
+        run: |
+          vendor/bin/phinx migrate
+          vendor/bin/phinx seed:run
       - name: Run Tests
         run: composer phpunit
       #- name: Run Linter

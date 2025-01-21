@@ -18,14 +18,6 @@ namespace App\Documentation\Searching;
 interface ISearchIndex
 {
     /**
-     * Builds up a search index for a list of document paths
-     *
-     * @param list<string> $htmlPaths The paths to the HTML docs
-     * @throws IndexingFailedException Thrown when there was a failure to index the documents
-     */
-    public function buildSearchIndex(array $htmlPaths): void;
-
-    /**
      * Queries the documentation and returns any matches
      *
      * @param string $query The raw search query
