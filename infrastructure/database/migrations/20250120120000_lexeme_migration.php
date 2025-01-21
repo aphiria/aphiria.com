@@ -22,6 +22,7 @@ class LexemeMigration extends AbstractMigration
      */
     public function change(): void
     {
+        $this->execute('DROP TABLE IF EXISTS lexemes');
         $this
             ->table('lexemes', ['id' => false, 'primary_key' => ['id']])
             ->addColumn('id', 'integer', ['identity' => true, 'null' => false])
