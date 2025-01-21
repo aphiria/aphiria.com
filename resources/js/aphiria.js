@@ -34,7 +34,7 @@ window.addEventListener('load', loadEvent => {
         makeSideNavStick(docSideNav, tocContents, footer);
         window.addEventListener('scroll', () => makeSideNavStick(docSideNav, tocContents, footer));
         window.addEventListener('resize', () => makeSideNavStick(docSideNav, tocContents, footer));
-        window.addEventListener('context-toggled', () => makeSideNavStick(docSideNav, tocContents, footer));
+        document.addEventListener('context-toggled', () => makeSideNavStick(docSideNav, tocContents, footer));
         // Initialize highlighting the ToC nav
         highlightToCNav(article, tocContents);
         window.addEventListener('scroll', () => highlightToCNav(article, tocContents));
