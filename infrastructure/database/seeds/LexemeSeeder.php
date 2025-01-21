@@ -47,22 +47,17 @@ class LexemeSeeder extends AbstractSeed
         $this->output->writeln('Truncating lexemes');
         $this->execute('TRUNCATE TABLE lexemes');
 
-        $fileSystem = Container::$globalInstance->resolve(FilesystemOperator::class);
-        $htmlPaths = $fileSystem
-            ->listContents('/public-web/docs/1.x')
-            ->filter(fn(StorageAttributes $attributes) => $attributes->isFile() && \str_ends_with($attributes->path(), '.html'))
-            ->map(fn(StorageAttributes $attributes) => $attributes->path())
-            ->toArray();
-
-        if (empty($htmlPaths)) {
-            throw new IndexingFailedException('Indexing failed - no HTML files were found');
-        }
-
         try {
             $indexEntries = [];
             $dom = new DOMDocument();
 
-            foreach ($htmlPaths as $htmlPath) {
+            if (($container = Container::$globalInstance) === null) {
+                throw new IndexingFailedException('Global instance of the DI container is not set');
+            }
+
+            $fileSystem = $container->resolve(FilesystemOperator::class);
+
+            foreach ($this->getHtmlDocPaths($fileSystem) as $htmlPath) {
                 $this->output->writeln("<info>Lexing $htmlPath</info>");
                 \libxml_use_internal_errors(true);
                 $html = $fileSystem->read($htmlPath);
@@ -178,6 +173,29 @@ class LexemeSeeder extends AbstractSeed
         }
 
         return $text;
+    }
+
+    /**
+     * Gets the paths to the built HTML documentation
+     *
+     * @param FilesystemOperator $fileSystem The file system to use to read files
+     * @return list<string> The list of HTML file paths that contain built documentation
+     * @throws IndexingFailedException Thrown if there were no HTML files
+     * @throws FilesystemException Thrown if the documentation could not be read
+     */
+    private function getHtmlDocPaths(FilesystemOperator $fileSystem): array
+    {
+        $htmlPaths = $fileSystem
+            ->listContents('/public-web/docs/1.x')
+            ->filter(fn(StorageAttributes $attributes) => $attributes->isFile() && \str_ends_with($attributes->path(), '.html'))
+            ->map(fn(StorageAttributes $attributes) => $attributes->path())
+            ->toArray();
+
+        if (empty($htmlPaths)) {
+            throw new IndexingFailedException('Indexing failed - no HTML files were found');
+        }
+
+        return $htmlPaths;
     }
 
     /**

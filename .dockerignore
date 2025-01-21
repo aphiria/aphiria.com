@@ -2,6 +2,7 @@
 /.git/
 /.github/
 /.idea/
+# Note: We keep the database infrastructure directory so it can be copied to run migrations against
 /infrastructure/docker
 /infrastructure/kubernetes
 /infrastructure/terraform

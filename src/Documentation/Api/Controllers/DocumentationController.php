@@ -19,6 +19,7 @@ use Aphiria\Routing\Attributes\QueryString;
 use App\Documentation\DocumentationIndexer;
 use App\Documentation\Searching\Context;
 use App\Documentation\Searching\InvalidContextException;
+use App\Documentation\Searching\ISearchIndex;
 use App\Documentation\Searching\SearchResult;
 
 /**
@@ -28,9 +29,9 @@ use App\Documentation\Searching\SearchResult;
 final class DocumentationController extends BaseController
 {
     /**
-     * @param DocumentationIndexer $docs What we'll use to search through documentation
+     * @param ISearchIndex $docSearchIndex What we'll use to search through documentation
      */
-    public function __construct(private readonly DocumentationIndexer $docs) {}
+    public function __construct(private readonly ISearchIndex $docSearchIndex) {}
 
     /**
      * Searches our documentation with a query
@@ -56,6 +57,6 @@ final class DocumentationController extends BaseController
             default => throw new InvalidContextException('Context must be either "framework" or "library"')
         };
 
-        return $this->docs->searchDocs($query, $context);
+        return $this->docSearchIndex->query($query, $context);
     }
 }
