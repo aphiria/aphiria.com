@@ -36,17 +36,27 @@ class LexemeSeeder extends AbstractSeed
 
     /**
      * @inheritdoc
+     * @throws IndexingFailedException Thrown if indexing failed
      * @throws FilesystemException Thrown if the documentation could not be read
      * @throws ResolutionException Thrown if a dependency could not be resolved
      */
     public function run(): void
     {
+        // First, remove all existing data within the table to start over fresh
+        $this->execute('BEGIN');
+        $this->output->writeln('Truncating lexemes');
+        $this->execute('TRUNCATE TABLE lexemes');
+
         $fileSystem = Container::$globalInstance->resolve(FilesystemOperator::class);
         $htmlPaths = $fileSystem
-            ->listContents(__DIR__ . '/../../../public-web/docs/1.x')
+            ->listContents('/public-web/docs/1.x')
             ->filter(fn(StorageAttributes $attributes) => $attributes->isFile() && \str_ends_with($attributes->path(), '.html'))
             ->map(fn(StorageAttributes $attributes) => $attributes->path())
             ->toArray();
+
+        if (empty($htmlPaths)) {
+            throw new IndexingFailedException('Indexing failed - no HTML files were found');
+        }
 
         try {
             $indexEntries = [];
@@ -65,11 +75,13 @@ class LexemeSeeder extends AbstractSeed
                 $h1 = $h2 = $h3 = $h4 = $h5 = null;
 
                 // Scan the documentation and index the elements
-                $body = $dom->getElementsByTagName('body')->item(0);
+                $article = new DOMXPath($dom)->query('//body/main/article[1]')->item(0);
 
-                if ($body !== null) {
-                    $this->processNode($body, $indexEntries, $htmlPath, $h1, $h2, $h3, $h4, $h5);
+                if ($article === null) {
+                    throw new IndexingFailedException('Indexing failed - no article found');
                 }
+
+                $this->processNode($article, $indexEntries, $htmlPath, $h1, $h2, $h3, $h4, $h5);
             }
 
             foreach ($indexEntries as $indexEntry) {
@@ -77,7 +89,10 @@ class LexemeSeeder extends AbstractSeed
             }
 
             $this->updateLexemes();
+            $this->execute('COMMIT');
         } catch (Throwable $ex) {
+            $this->execute('ROLLBACK');
+
             throw new IndexingFailedException('Failed to index document: ' . $ex->getMessage(), 0, $ex);
         }
     }

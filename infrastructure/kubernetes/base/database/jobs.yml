@@ -3,9 +3,14 @@ kind: Job
 metadata:
   name: db-migration
 spec:
-  ttlSecondsAfterFinished: 3600 # Clean up the job after it runs
+  ttlSecondsAfterFinished: 0 # Clean up the job after it runs
   template:
     spec:
+      initContainers:
+        # Need to wait until the database is up before running migrations and seeders
+        - name: wait-for-db
+          image: busybox
+          command: ['sh', '-c', 'until nc -z db 5432; do echo "Waiting for db..."; sleep 2; done']
       containers:
         - name: db-migration
           image: davidbyoung/aphiria.com-api:latest

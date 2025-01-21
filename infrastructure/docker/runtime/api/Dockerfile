@@ -25,6 +25,7 @@ COPY --from=build /app/.env ./.env
 COPY --from=build /app/aphiria ./aphiria
 COPY --from=build /app/composer.json ./composer.json
 COPY --from=build /app/config.php ./config.php
+COPY --from=build /app/phinx.php ./phinx.php
 COPY --from=build /app/phpunit.xml.dist ./phpunit.xml.dist
 
 # Allow nginx to write to tmp
