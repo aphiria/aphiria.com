@@ -4,7 +4,7 @@ ARG IMAGE_SHA=latest
 FROM ${BUILD_IMAGE}:${IMAGE_SHA} AS build
 
 # Stage 2: Base PHP image for the final container
-FROM php:8.4.1-fpm AS base
+FROM php:8.4.3-fpm AS base
 
 WORKDIR /app/api
 
