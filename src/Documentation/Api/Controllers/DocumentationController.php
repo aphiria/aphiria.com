@@ -16,7 +16,6 @@ use Aphiria\Api\Controllers\Controller as BaseController;
 use Aphiria\Routing\Attributes\Controller;
 use Aphiria\Routing\Attributes\Get;
 use Aphiria\Routing\Attributes\QueryString;
-use App\Documentation\DocumentationIndexer;
 use App\Documentation\Searching\Context;
 use App\Documentation\Searching\InvalidContextException;
 use App\Documentation\Searching\ISearchIndex;
