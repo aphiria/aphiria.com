@@ -16,7 +16,10 @@ RUN docker-php-ext-install dom intl opcache pdo_pgsql pgsql zip
 FROM base
 
 # Copy the API source files from the build image (from the first stage)
+COPY --from=build /app/infrastructure/database ./infrastructure/database
 COPY --from=build /app/public-api ./public
+# We need the web files to be able to index their contents
+COPY --from=build /app/public-web ./public-web
 COPY --from=build /app/src ./src
 COPY --from=build /app/tests ./tests
 COPY --from=build /app/tmp ./tmp

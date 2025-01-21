@@ -2,7 +2,9 @@
 /.git/
 /.github/
 /.idea/
-/infrastructure/
+/infrastructure/docker
+/infrastructure/kubernetes
+/infrastructure/terraform
 /node_modules/
 /tmp/framework/**/*.txt
 /tmp/logs/errors.txt

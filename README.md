@@ -134,7 +134,7 @@ kubectl rollout restart deployment web
 
 ## Connecting to the Database
 
-To connect to the PostgreSQL database in Minikube, you'll need to configure port forwarding:
+To connect locally to the PostgreSQL database in Minikube, you'll need to configure port forwarding on your machine:
 
 ```
 kubectl port-forward service/db 5432:5432
