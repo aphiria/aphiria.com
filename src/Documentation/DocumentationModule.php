@@ -18,6 +18,7 @@ use Aphiria\Net\Http\HttpStatusCode;
 use App\Databases\Binders\SqlBinder;
 use App\Documentation\Binders\DocumentationBinder;
 use App\Documentation\Searching\InvalidContextException;
+use App\Documentation\Searching\InvalidDocumentationVersionException;
 
 /**
  * Defines the documentation module
@@ -37,6 +38,11 @@ final class DocumentationModule extends AphiriaModule
             ->withProblemDetails(
                 $appBuilder,
                 InvalidContextException::class,
+                status: HttpStatusCode::BadRequest
+            )
+            ->withProblemDetails(
+                $appBuilder,
+                InvalidDocumentationVersionException::class,
                 status: HttpStatusCode::BadRequest
             );
     }

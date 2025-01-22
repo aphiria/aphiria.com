@@ -9,6 +9,7 @@ const uglifyCss = require('gulp-clean-css');
 const concat = require('gulp-concat');
 const del = require('del');
 const shell = require('gulp-shell');
+const sass = require('gulp-sass')(require('sass'));
 const sourcemaps = require('gulp-sourcemaps');
 
 const paths = {
@@ -76,6 +77,7 @@ const minifyCss = () => {
 const compileScss = () => {
     return gulp.src(`${paths.resourcesCss}/*.scss`)
         .pipe(sourcemaps.init())
+        .pipe(sass().on('error', sass.logError))
         .pipe(sourcemaps.write('.'))
         .pipe(gulp.dest(paths.resourcesCss));
 };

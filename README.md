@@ -69,18 +69,13 @@ kubectl config use-context DESIRED_CONTEXT_NAME
 
 ## Build The Application
 
-You must build your Docker images before you can run the application.  If using Minikube, first configure it to use the Docker registry contained within:
+You must build your Docker images before you can run the application.  The following will configure Minikube to use its own Docker registry and build the images:
 
 ```
-eval $(minikube -p minikube docker-env)
-```
-
-Build the Docker images:
-
-```
-docker build -t aphiria.com-build -f ./infrastructure/docker/build/Dockerfile .
-docker build -t aphiria.com-api -f ./infrastructure/docker/runtime/api/Dockerfile . --build-arg BUILD_IMAGE=aphiria.com-build
-docker build -t aphiria.com-web -f ./infrastructure/docker/runtime/web/Dockerfile . --build-arg BUILD_IMAGE=aphiria.com-build
+eval $(minikube -p minikube docker-env) \
+&& docker build -t aphiria.com-build -f ./infrastructure/docker/build/Dockerfile . \
+&& docker build -t aphiria.com-api -f ./infrastructure/docker/runtime/api/Dockerfile . --build-arg BUILD_IMAGE=aphiria.com-build \
+&& docker build -t aphiria.com-web -f ./infrastructure/docker/runtime/web/Dockerfile . --build-arg BUILD_IMAGE=aphiria.com-build
 ```
 
 > **Note:** To bust the Docker's cache, you should run `gulp build` locally prior to building the images to ensure you're building with the latest compiled documentation.
@@ -92,8 +87,8 @@ docker build -t aphiria.com-web -f ./infrastructure/docker/runtime/web/Dockerfil
 Get Minikube running:
 
 ```
-minikube start
-minikube dashboard
+minikube start \
+&& minikube dashboard
 ```
 
 > **Note:** If you're running as the root user, run `minikube start --force` instead.
@@ -106,35 +101,30 @@ minikube tunnel
 
 ### Set Up Your Kubernetes Cluster
 
-Use Helmfile to install the required Helm charts:
+Use Helmfile to install the required Helm charts and apply the dev Kubernetes manifest:
 
 ```
-helmfile -f ./infrastructure/kubernetes/base/helmfile.yml repos
-helmfile -f ./infrastructure/kubernetes/base/helmfile.yml sync
-```
-
-Apply the Kubernetes dev manifest using Kustomize:
-
-```
-kubectl apply -k ./infrastructure/kubernetes/environments/dev
+helmfile -f ./infrastructure/kubernetes/base/helmfile.yml repos \
+&& helmfile -f ./infrastructure/kubernetes/base/helmfile.yml sync \
+&& kubectl apply -k ./infrastructure/kubernetes/environments/dev
 ```
 
 You should now be able to hit https://www.aphiria.com in your browser.  You will get a TLS certificate error since we're using a self-signed certificate locally.
 
-> **Note:** If using Chrome, type `thisisunsafe` to accept the self-signed certificate.  Likewise, you'll have to do the same for the API, which you can do by visiting https://api.aphiria.com/docs/search?query=foo and typing `thisisunsafe`.
+> **Note:** If using Chrome, type `thisisunsafe` to accept the self-signed certificate.  Likewise, you'll have to do the same for the API, which you can do by visiting https://api.aphiria.com/docs/search?query=routing and typing `thisisunsafe`.
 
 ## Updating The Kubernetes Cluster
 
 To get your Minikube cluster to pick up changes you've made locally (after re-building the Docker images), run the following commands:
 
 ```
-kubectl rollout restart deployment api
-kubectl rollout restart deployment web
+kubectl rollout restart deployment api \
+&& kubectl rollout restart deployment web
 ```
 
 ## Connecting to the Database
 
-To connect locally to the PostgreSQL database in Minikube, you'll need to configure port forwarding on your machine:
+To connect locally to the PostgreSQL database in Minikube, you'll need to configure port forwarding on your machine in a separate console:
 
 ```
 kubectl port-forward service/db 5432:5432
