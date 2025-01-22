@@ -47,7 +47,7 @@ $admin = new PrincipalBuilder('example.com')
 $getResponse = $this->actingAs($admin, fn () => $this->get("/users/$user->id"));
 $this->assertParsedBodyEquals($user, $getResponse);</code></pre>
             <h2>Install Aphiria</h2>
-            <pre class="center"><code class="language-bash">
+            <pre class="center no-copy"><code class="language-bash">
 composer create-project aphiria/app --prefer-dist --stability dev
                 </code></pre>
             <nav class="doc-short-links-nav">
