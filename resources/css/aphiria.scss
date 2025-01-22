@@ -401,6 +401,7 @@ pre.no-copy + div.toolbar > .toolbar-item > button.copy-to-clipboard-button {
 
 /* Update the style of the copy button */
 div.code-toolbar > .toolbar {
+    z-index: auto !important;
     opacity: 1 !important;
     transition: none !important;
 
