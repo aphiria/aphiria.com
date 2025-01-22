@@ -114,8 +114,9 @@ window.addEventListener('load', loadEvent => {
         } else if (searchInputElem.value !== prevSearchQuery) {
             timer = setTimeout(() => {
                 prevSearchQuery = searchInputElem.value;
+                // When we add multiple versions of the documentation, update the following to grab the version from an input
                 fetch(
-                    `${config.apiUri}/docs/search?query=${encodeURIComponent(searchInputElem.value)}`,
+                    `${config.apiUri}/docs/search?query=${encodeURIComponent(searchInputElem.value)}&version=1.x`,
                     { credentials: 'include' }
                 )
                     .then((response) => response.json())

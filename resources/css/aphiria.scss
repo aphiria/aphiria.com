@@ -394,6 +394,28 @@ pre[class*="language-"] {
     text-shadow: none !important;
 }
 
+/* Don't show the copy button for code samples that explicitly opt out */
+pre.no-copy + div.toolbar > .toolbar-item > button.copy-to-clipboard-button {
+    display: none !important;
+}
+
+/* Update the style of the copy button */
+div.code-toolbar > .toolbar {
+    opacity: 1 !important;
+    transition: none !important;
+
+    & > .toolbar-item > button {
+        padding: 0.5em !important;
+        box-shadow: none !important;
+        background: #eee !important;
+
+        &:hover {
+            background: #e6e6e6 !important;
+            cursor: pointer !important;
+        }
+    }
+}
+
 code {
     font-family: "Roboto Mono", "Consolas", monospace !important;
     font-size: 0.98em !important;

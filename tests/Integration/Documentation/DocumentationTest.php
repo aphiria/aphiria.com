@@ -24,6 +24,12 @@ class DocumentationTest extends IntegrationTestCase
         $this->assertStatusCodeEquals(HttpStatusCode::BadRequest, $response);
     }
 
+    public function testSearchingForItemWithBadVersionReturns400(): void
+    {
+        $response = $this->get('/docs/search?query=routing&version=bad');
+        $this->assertStatusCodeEquals(HttpStatusCode::BadRequest, $response);
+    }
+
     public function testSearchingForItemWithDocumentationReturnsResults(): void
     {
         $response = $this->get('/docs/search?query=routing');

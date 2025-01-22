@@ -18,6 +18,7 @@ namespace App\Documentation\Searching;
 final readonly class IndexEntry
 {
     /**
+     * @param string $version The version of the documentation
      * @param string $htmlElementType The type of HTML element being indexed
      * @param string $innerText The inner text of the HTML element being indexed
      * @param string $link The link that will take a user to this part of the documentation
@@ -30,6 +31,7 @@ final readonly class IndexEntry
      * @param string|null $h5InnerText The previous h5 sibling's inner text
      */
     public function __construct(
+        public string $version,
         public string $htmlElementType,
         public string $innerText,
         public string $link,

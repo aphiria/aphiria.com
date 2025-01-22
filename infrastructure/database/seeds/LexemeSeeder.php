@@ -37,8 +37,6 @@ class LexemeSeeder extends AbstractSeed
     /**
      * @inheritdoc
      * @throws IndexingFailedException Thrown if indexing failed
-     * @throws FilesystemException Thrown if the documentation could not be read
-     * @throws ResolutionException Thrown if a dependency could not be resolved
      */
     public function run(): void
     {
@@ -57,26 +55,28 @@ class LexemeSeeder extends AbstractSeed
 
             $fileSystem = $container->resolve(FilesystemOperator::class);
 
-            foreach ($this->getHtmlDocPaths($fileSystem) as $htmlPath) {
-                $this->output->writeln("<info>Lexing $htmlPath</info>");
-                \libxml_use_internal_errors(true);
-                $html = $fileSystem->read($htmlPath);
+            foreach ($this->getHtmlDocPaths($fileSystem) as $version => $htmlPaths) {
+                foreach ($htmlPaths as $htmlPath) {
+                    $this->output->writeln("<info>Lexing $htmlPath for version $version</info>");
+                    \libxml_use_internal_errors(true);
+                    $html = $fileSystem->read($htmlPath);
 
-                if (empty($html) || $dom->loadHTML($html) === false) {
-                    throw new Exception("Failed to load HTML for $htmlPath: " . \strip_tags(\libxml_get_last_error()->message));
+                    if (empty($html) || $dom->loadHTML($html) === false) {
+                        throw new Exception("Failed to load HTML for $htmlPath: " . \strip_tags(\libxml_get_last_error()->message));
+                    }
+
+                    \libxml_clear_errors();
+                    $h1 = $h2 = $h3 = $h4 = $h5 = null;
+
+                    // Scan the documentation and index the elements
+                    $article = new DOMXPath($dom)->query('//body/main/article[1]')->item(0);
+
+                    if ($article === null) {
+                        throw new IndexingFailedException('Indexing failed - no article found');
+                    }
+
+                    $this->processNode($version, $article, $indexEntries, $htmlPath, $h1, $h2, $h3, $h4, $h5);
                 }
-
-                \libxml_clear_errors();
-                $h1 = $h2 = $h3 = $h4 = $h5 = null;
-
-                // Scan the documentation and index the elements
-                $article = new DOMXPath($dom)->query('//body/main/article[1]')->item(0);
-
-                if ($article === null) {
-                    throw new IndexingFailedException('Indexing failed - no article found');
-                }
-
-                $this->processNode($article, $indexEntries, $htmlPath, $h1, $h2, $h3, $h4, $h5);
             }
 
             foreach ($indexEntries as $indexEntry) {
@@ -95,6 +95,7 @@ class LexemeSeeder extends AbstractSeed
     /**
      * Creates an index entry
      *
+     * @param string $version The version of the documentation
      * @param string $filename The filename of the doc being indexed
      * @param DOMNode $currNode The current node
      * @param Context $context The context the entry is in
@@ -107,6 +108,7 @@ class LexemeSeeder extends AbstractSeed
      * @psalm-suppress NullReference This is due to the DOM stub issues - https://github.com/vimeo/psalm/issues/5665
      */
     private function createIndexEntry(
+        string $version,
         string $filename,
         DOMNode $currNode,
         Context $context,
@@ -116,7 +118,7 @@ class LexemeSeeder extends AbstractSeed
         ?DOMNode $h4,
         ?DOMNode $h5
     ): IndexEntry {
-        $link = '/docs/1.x/';
+        $link = "/docs/$version/";
 
         /**
          * If the current node is the h1 tag, then just link to the doc itself, not a section
@@ -141,6 +143,7 @@ class LexemeSeeder extends AbstractSeed
         }
 
         return new IndexEntry(
+            $version,
             $currNode->nodeName,
             $this->getAllChildNodeTexts($currNode),
             $link,
@@ -179,14 +182,15 @@ class LexemeSeeder extends AbstractSeed
      * Gets the paths to the built HTML documentation
      *
      * @param FilesystemOperator $fileSystem The file system to use to read files
-     * @return list<string> The list of HTML file paths that contain built documentation
+     * @return array<string, list<string>> The map of documentation versions to HTML file paths that contain built documentation
      * @throws IndexingFailedException Thrown if there were no HTML files
      * @throws FilesystemException Thrown if the documentation could not be read
      */
     private function getHtmlDocPaths(FilesystemOperator $fileSystem): array
     {
+        // Recursively search all subdirectories (which are split by documentation version) for HTML files
         $htmlPaths = $fileSystem
-            ->listContents('/public-web/docs/1.x')
+            ->listContents('/public-web/docs', true)
             ->filter(fn(StorageAttributes $attributes) => $attributes->isFile() && \str_ends_with($attributes->path(), '.html'))
             ->map(fn(StorageAttributes $attributes) => $attributes->path())
             ->toArray();
@@ -195,7 +199,19 @@ class LexemeSeeder extends AbstractSeed
             throw new IndexingFailedException('Indexing failed - no HTML files were found');
         }
 
-        return $htmlPaths;
+        $htmlFilesByVersion = [];
+
+        foreach ($htmlPaths as $htmlPath) {
+            $pathParts = \explode(DIRECTORY_SEPARATOR, $htmlPath);
+            $version = $pathParts[2];
+
+            if (!isset($htmlFilesByVersion[$version])) {
+                $htmlFilesByVersion[$version] = [];
+            }
+            $htmlFilesByVersion[$version][] = $htmlPath;
+        }
+
+        return $htmlFilesByVersion;
     }
 
     /**
@@ -206,10 +222,11 @@ class LexemeSeeder extends AbstractSeed
     private function insertIndexEntry(IndexEntry $indexEntry): void
     {
         $this->execute(<<<EOF
-INSERT INTO lexemes (h1_inner_text, h2_inner_text, h3_inner_text, h4_inner_text, h5_inner_text, link, html_element_type, inner_text, html_element_weight, context)
-VALUES (:h1InnerText, :h2InnerText, :h3InnerText, :h4InnerText, :h5InnerText, :link, :htmlElementType, :innerText, :htmlElementWeight, :context)
+INSERT INTO lexemes (version, h1_inner_text, h2_inner_text, h3_inner_text, h4_inner_text, h5_inner_text, link, html_element_type, inner_text, html_element_weight, context)
+VALUES (:version, :h1InnerText, :h2InnerText, :h3InnerText, :h4InnerText, :h5InnerText, :link, :htmlElementType, :innerText, :htmlElementWeight, :context)
 EOF,
             [
+                'version' => $indexEntry->version,
                 'h1InnerText' => $indexEntry->h1InnerText,
                 'h2InnerText' => $indexEntry->h2InnerText,
                 'h3InnerText' => $indexEntry->h3InnerText,
@@ -227,6 +244,7 @@ EOF,
     /**
      * Processes a node and its children recursively, creating index entries for valid elements
      *
+     * @param string $version The documentation version
      * @param DOMNode $node The node to process
      * @param list<IndexEntry> $indexEntries The list of index entries to update
      * @param string $htmlPath The path to the current HTML file
@@ -237,6 +255,7 @@ EOF,
      * @param DOMNode|null $h5 The current H5 node
      */
     private function processNode(
+        string $version,
         DOMNode $node,
         array &$indexEntries,
         string $htmlPath,
@@ -277,6 +296,7 @@ EOF,
         if (isset(self::$htmlElementsToWeights[$node->nodeName])) {
             $filename = \basename($htmlPath);
             $indexEntries[] = $this->createIndexEntry(
+                $version,
                 $filename,
                 $node,
                 $this->getContext($node),
@@ -290,7 +310,7 @@ EOF,
 
         // Recursively process child nodes
         foreach ($node->childNodes as $childNode) {
-            $this->processNode($childNode, $indexEntries, $htmlPath, $h1, $h2, $h3, $h4, $h5);
+            $this->processNode($version, $childNode, $indexEntries, $htmlPath, $h1, $h2, $h3, $h4, $h5);
         }
     }
 

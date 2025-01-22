@@ -17,7 +17,9 @@ use Aphiria\Routing\Attributes\Controller;
 use Aphiria\Routing\Attributes\Get;
 use Aphiria\Routing\Attributes\QueryString;
 use App\Documentation\Searching\Context;
+use App\Documentation\Searching\DocumentationVersion;
 use App\Documentation\Searching\InvalidContextException;
+use App\Documentation\Searching\InvalidDocumentationVersionException;
 use App\Documentation\Searching\ISearchIndex;
 use App\Documentation\Searching\SearchResult;
 
@@ -36,11 +38,13 @@ final class DocumentationController extends BaseController
      * Searches our documentation with a query
      *
      * @param string $query The search query
+     * @param string $version The documentation version to query
      * @return list<SearchResult> The list of search results
+     * @throws InvalidDocumentationVersionException Thrown if the documentation version was invalid
      * @throws InvalidContextException Thrown if the context was invalid
      */
     #[Get('search')]
-    public function searchDocs(#[QueryString] string $query): array
+    public function searchDocs(#[QueryString] string $query, #[QueryString] string $version = '1.x'): array
     {
         $cookies = $this->requestParser->parseCookies($this->request);
 
@@ -56,6 +60,12 @@ final class DocumentationController extends BaseController
             default => throw new InvalidContextException('Context must be either "framework" or "library"')
         };
 
-        return $this->docSearchIndex->query($query, $context);
+        $rawVersion = $version;
+
+        if (($version = DocumentationVersion::tryFrom($rawVersion)) === null) {
+            throw new InvalidDocumentationVersionException("Invalid documentation version \"$rawVersion\"");
+        }
+
+        return $this->docSearchIndex->query($query, $version, $context);
     }
 }
