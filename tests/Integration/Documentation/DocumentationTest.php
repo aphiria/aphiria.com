@@ -15,12 +15,21 @@ namespace App\Tests\Integration\Documentation;
 use Aphiria\Net\Http\HttpStatusCode;
 use App\Documentation\Searching\SearchResult;
 use App\Tests\Integration\IntegrationTestCase;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 class DocumentationTest extends IntegrationTestCase
 {
-    public function testSearchingForItemWithBadContextReturns400(): void
+    public static function versionProvider(): array
     {
-        $response = $this->get('/docs/search?query=routing', ['Cookie' => 'context=invalid']);
+        // Null means 'no version specified'
+        return [[null, '1.x']];
+    }
+
+    #[DataProvider('versionProvider')]
+    public function testSearchingForItemWithBadContextReturns400(?string $version): void
+    {
+        $versionQueryString = $version === null ? '' : "&version=$version";
+        $response = $this->get("/docs/search?query=routing$versionQueryString", ['Cookie' => 'context=invalid']);
         $this->assertStatusCodeEquals(HttpStatusCode::BadRequest, $response);
     }
 
@@ -30,9 +39,11 @@ class DocumentationTest extends IntegrationTestCase
         $this->assertStatusCodeEquals(HttpStatusCode::BadRequest, $response);
     }
 
-    public function testSearchingForItemWithDocumentationReturnsResults(): void
+    #[DataProvider('versionProvider')]
+    public function testSearchingForItemWithDocumentationReturnsResults(?string $version): void
     {
-        $response = $this->get('/docs/search?query=routing');
+        $versionQueryString = $version === null ? '' : "&version=$version";
+        $response = $this->get("/docs/search?query=routing$versionQueryString");
         $this->assertStatusCodeEquals(HttpStatusCode::Ok, $response);
         $this->assertParsedBodyPassesCallback(
             $response,
@@ -47,9 +58,11 @@ class DocumentationTest extends IntegrationTestCase
         );
     }
 
-    public function testSearchingForNonExistentTermReturnsEmptyResults(): void
+    #[DataProvider('versionProvider')]
+    public function testSearchingForNonExistentTermReturnsEmptyResults(?string $version): void
     {
-        $response = $this->get('/docs/search?query=abcdefghijklmnopqrstuvwxyz');
+        $versionQueryString = $version === null ? '' : "&version=$version";
+        $response = $this->get("/docs/search?query=abcdefghijklmnopqrstuvwxyz$versionQueryString");
         $this->assertStatusCodeEquals(HttpStatusCode::Ok, $response);
         // The Symfony serializer cannot deserialize type 'array', so we cannot just check if it equals []
         $this->assertParsedBodyPassesCallback(

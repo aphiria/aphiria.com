@@ -55,18 +55,4 @@ class IntegrationTestCase extends BaseIntegrationTestCase
             ->withModule($globalModule)
             ->build();
     }
-
-    /**
-     * @inheritdoc
-     */
-    protected function getAppUri(): ?string
-    {
-        $appUrl = \getenv('APP_API_URL');
-
-        if (empty($appUrl)) {
-            return null;
-        }
-
-        return $appUrl;
-    }
 }

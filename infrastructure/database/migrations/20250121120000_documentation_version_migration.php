@@ -18,6 +18,16 @@ use Phinx\Migration\AbstractMigration;
 class DocumentationVersionMigration extends AbstractMigration
 {
     /**
+     * Removes the "version" column
+     */
+    public function down(): void
+    {
+        $this->table('lexemes')
+            ->removeColumn('version')
+            ->update();
+    }
+
+    /**
      * Adds the "version" column
      */
     public function up(): void
@@ -25,16 +35,6 @@ class DocumentationVersionMigration extends AbstractMigration
         $this->table('lexemes')
             ->addColumn('version', 'text')
             ->addIndex('version')
-            ->update();
-    }
-
-    /**
-     * Removes the "version" column
-     */
-    public function down(): void
-    {
-        $this->table('lexemes')
-            ->removeColumn('version')
             ->update();
     }
 }
