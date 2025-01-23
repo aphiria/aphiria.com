@@ -10,7 +10,7 @@ terraform {
 resource "digitalocean_kubernetes_cluster" "aphiria_com_cluster" {
     name = "aphiria-com-cluster"
     region = "nyc3"
-    version = "1.31.1-do.3"
+    version = "1.31.1-do.5"
 
     node_pool {
         name = "worker-pool"
