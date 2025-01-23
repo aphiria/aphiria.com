@@ -20,8 +20,7 @@ const paths = {
     'resourcesCss': 'resources/css',
     'resourcesJs': 'resources/js',
     'resourcesViews': 'resources/views',
-    'tmpCss': 'tmp/css',
-    'tmpJs': 'tmp/js'
+    'tmpCss': 'tmp/css'
 };
 
 const rewriteReferences = () => {
@@ -47,9 +46,7 @@ const minifyJs = () => {
         // Create a minified, concatenated JS file
         .pipe(sourcemaps.init())
         .pipe(concat('scripts.min.js'))
-        .pipe(gulp.dest(paths.tmpJs))
         .pipe(uglifyJs())
-        .pipe(gulp.dest(paths.tmpJs))
         // Version our scripts
         .pipe(rev())
         .pipe(sourcemaps.write('.'))
@@ -65,7 +62,7 @@ const minifyCss = () => {
         .pipe(sourcemaps.init())
         .pipe(concat('styles.min.css'))
         .pipe(uglifyCss())
-        // Version our scripts
+        // Version our CSS
         .pipe(rev())
         .pipe(sourcemaps.write('.'))
         .pipe(gulp.dest(paths.publicCss))
@@ -84,7 +81,7 @@ const cleanCss = () => {
 };
 const cleanJs = () => {
     // Delete everything but the config.js
-    return del([`${paths.tmpJs}/*.js`, `${paths.publicJs}/*.js`, `${paths.publicJs}/*.js.map`, `!${paths.publicJs}/config.js`]);
+    return del([`${paths.publicJs}/*.js`, `${paths.publicJs}/*.js.map`, `!${paths.publicJs}/config.js`]);
 };
 
 gulp.task('clean-css', cleanCss);
