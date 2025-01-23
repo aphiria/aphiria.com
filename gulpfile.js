@@ -59,13 +59,12 @@ const minifyJs = () => {
         .pipe(gulp.dest(paths.public));
 };
 const minifyCss = () => {
-    return gulp.src(`${paths.resourcesCss}/*.css`)
-        // Create a minified, concatenated JS file
+    // Combine any compiled SCSS files in tmp as well as any other CSS files in resources
+    return gulp.src([`${paths.resourcesCss}/*.css`, `${paths.tmpCss}/*.css`])
+        // Create a minified, concatenated CSS file
         .pipe(sourcemaps.init())
         .pipe(concat('styles.min.css'))
-        .pipe(gulp.dest(paths.tmpCss))
         .pipe(uglifyCss())
-        .pipe(gulp.dest(paths.tmpCss))
         // Version our scripts
         .pipe(rev())
         .pipe(sourcemaps.write('.'))
@@ -78,8 +77,7 @@ const compileScss = () => {
     return gulp.src(`${paths.resourcesCss}/*.scss`)
         .pipe(sourcemaps.init())
         .pipe(sass().on('error', sass.logError))
-        .pipe(sourcemaps.write('.'))
-        .pipe(gulp.dest(paths.resourcesCss));
+        .pipe(gulp.dest(paths.tmpCss));
 };
 const cleanCss = () => {
     return del([`${paths.tmpCss}/*.css`, `${paths.publicCss}/*.css`, `${paths.publicCss}/*.css.map`]);
@@ -89,14 +87,16 @@ const cleanJs = () => {
     return del([`${paths.tmpJs}/*.js`, `${paths.publicJs}/*.js`, `${paths.publicJs}/*.js.map`, `!${paths.publicJs}/config.js`]);
 };
 
+gulp.task('clean-css', cleanCss);
+gulp.task('clean-js', cleanJs);
 gulp.task('rewrite-references', rewriteReferences);
-gulp.task('minify-js', gulp.series(cleanJs, minifyJs));
-gulp.task('minify-css', gulp.series(cleanCss, minifyCss));
+gulp.task('minify-js', minifyJs);
+gulp.task('minify-css', minifyCss);
 gulp.task('compile-scss', compileScss);
 gulp.task('download-docs', shell.task('php aphiria docs:build'));
 gulp.task('build-views', shell.task('php aphiria views:build'));
 // We intentionally build our assets first so that they're ready to be inserted into the built views
-gulp.task('build', gulp.series(compileScss, 'minify-js', 'minify-css', 'download-docs', 'build-views', 'rewrite-references'));
+gulp.task('build', gulp.series('clean-css', 'clean-js', 'compile-scss', 'minify-js', 'minify-css', 'download-docs', 'build-views', 'rewrite-references'));
 gulp.task('watch-assets', () => {
     // Purposely deferring rewriting of references to the .css watcher
     gulp.watch(`${paths.resourcesCss}/*.scss`, gulp.series(compileScss));
