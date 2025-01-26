@@ -1,0 +1,26 @@
+alert: NodeUnreachable
+expr: up{job="kubelet",kubernetes_io_hostname=~".*"} == 0
+for: 5m
+labels:
+  severity: critical
+annotations:
+  summary: "Node {{ $labels.kubernetes_io_hostname }} is unreachable"
+  description: "The node has not been responding for more than 5 minutes."
+
+---
+alert: PodCrashLoopBackOff
+expr: kube_pod_container_status_restarts_total{container!="",pod!="",namespace!="kube-system"} > 3
+for: 5m
+labels:
+  severity: critical
+annotations:
+  summary: "Pod {{ $labels.pod }} in namespace {{ $labels.namespace }} is restarting"
+  description: "The pod is restarting due to an error, possibly due to configuration or resource limitations."
+---
+alert: HighMemoryUsage
+expr: sum(container_memory_usage_bytes{container="",pod!="",namespace!="kube-system"}) by (namespace, pod) > 0.9 * sum(container_memory_limit_bytes{container="",pod!="",namespace!="kube-system"}) by (namespace, pod)
+for: 2m
+labels:
+  severity: critical
+annotations:
+  summary: "High memory usage detected in pod {{ $labels.pod }} in namespace {{ $labels.namespace }}"
