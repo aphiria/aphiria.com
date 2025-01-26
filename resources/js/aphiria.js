@@ -174,15 +174,18 @@ window.addEventListener('load', loadEvent => {
 });
 
 document.addEventListener('DOMContentLoaded', () => {
-    // If there are code blocks, then there are PrismJS elements
-    if (document.querySelectorAll('pre code').length > 0) {
-        // Wait for PrismJS to complete rendering
-        Prism.highlightAll();
+    let numCodeBlocks = document.querySelectorAll('pre code').length;
 
-        // Once rendering is done, remove the overlay
+    // If there are code blocks, then there are PrismJS elements
+    if (numCodeBlocks > 0) {
+        // Once rendering is done for all code blocks, remove the loading overlay
         Prism.hooks.add('complete', () => {
-            document.body.classList.remove('loading');
+            if (--numCodeBlocks === 0) {
+                document.body.classList.remove('loading');
+            }
         });
+
+        Prism.highlightAll();
     } else {
         // No code blocks, so remove it right away
         document.body.classList.remove('loading');
@@ -240,11 +243,11 @@ const highlightToCNav = (articleElem, tocContentsElem) => {
 };
 
 const highlightDocNav = docNavElem => {
-    const docLinks = docNavElem.querySelectorAll('a');
-    const currUrlWithoutHash = window.location.href.split('#')[0];
+    // We specifically do not want to consider the query string nor fragment
+    const currUrl = window.location.origin + window.location.pathname;
 
-    docLinks.forEach(docLink => {
-        if (docLink.href === currUrlWithoutHash) {
+    docNavElem.querySelectorAll('a').forEach(docLink => {
+        if (docLink.href === currUrl) {
             docLink.classList.add('selected');
         } else {
             docLink.classList.remove('selected');
