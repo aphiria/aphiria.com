@@ -8,11 +8,17 @@
                 display: none;
             }
         </style>
-        <script>
+        <script type="module">
+            import config from '/js/config/config.js';
+
+            function getQueryParam(name) {
+                return new URLSearchParams(window.location.search).get(name);
+            }
+
             function setCookie(name, value, days) {
                 const date = new Date();
                 date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
-                document.cookie = `${name}=${value};expires=${date.toUTCString()};path=/;domain=.aphiria.com;Secure;SameSite=Lax`;
+                document.cookie = `${name}=${value};expires=${date.toUTCString()};path=/;domain=${config.cookieDomain};Secure;SameSite=Lax`;
             }
 
             function getCookie(name) {
@@ -42,18 +48,25 @@
                 document.dispatchEvent(new CustomEvent('context-toggled'));
             }
 
+            function saveContext(context) {
+                setCookie('context', context, 365);
+                toggleContext(context);
+                // Update the URL to contain the context without reloading the page
+                const url = new URL(window.location);
+                url.searchParams.set('context', context);
+                window.history.pushState({}, '', url);
+            }
+
             document.addEventListener('DOMContentLoaded', () => {
                 const contextSelector = document.getElementById('context-selector');
-                const savedContext = getCookie('context') || 'framework';
-
+                // Query string takes precedence in the case that a URL with it was opened
+                const savedContext = getQueryParam('context') || getCookie('context') || 'framework';
                 contextSelector.value = savedContext;
-                toggleContext(savedContext);
+                saveContext(savedContext);
 
                 // Add event listener to update the view and cookie on selection
                 contextSelector.addEventListener('change', (event) => {
-                    const selectedContext = event.target.value;
-                    setCookie('context', selectedContext, 365);
-                    toggleContext(selectedContext);
+                    saveContext(event.target.value);
                 });
             });
         </script>
