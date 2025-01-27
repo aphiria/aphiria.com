@@ -215,9 +215,9 @@ const makeSideNavStick = (docNavElem, tocElem, footerElem) => {
 };
 
 const highlightToCNav = (articleElem, tocContentsElem) => {
-    // Grab headers that come after the ToC (headers that are part of the doc body)
+    // Grab headers that come after the ToC (headers that are part of the doc body) that are visible
     // Note: Some headers may be inside context divs, which is why we have the extra selectors
-    const headers = articleElem.querySelectorAll('.toc-nav ~ h2, .toc-nav ~ h3, .toc-nav ~ div h2, .toc-nav ~ div h3');
+    const headers = articleElem.querySelectorAll('.toc-nav ~ h2, .toc-nav ~ h3, .toc-nav ~ div:not([style*="display: none"]):not([style*="display:none"]) h2, .toc-nav ~ div:not([style*="display: none"]):not([style*="display:none"]) h3');
     let selectedHeader = headers[0];
 
     // Keep looping until we've found something that we haven't scrolled past
