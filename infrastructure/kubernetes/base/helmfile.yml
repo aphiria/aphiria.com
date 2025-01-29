@@ -45,10 +45,6 @@ releases:
                   - source_labels: [ __meta_kubernetes_service_name ]
                     action: keep
                     regex: kube-state-metrics
-                  - source_labels: [__meta_kubernetes_pod_name] # TODO: Do I need this to populate labels?
-                    target_label: pod
-                  - source_labels: [__meta_kubernetes_namespace] # TODO: Do I need this to populate labels?
-                    target_label: namespace
           alerts:
             groups:
               - name: Node Unreachable
