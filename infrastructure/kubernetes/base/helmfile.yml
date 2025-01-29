@@ -38,20 +38,24 @@ releases:
       - serverFiles:
           prometheus.yml:
             scrape_configs:
-              - job_name: 'kubernetes-pods'
+              - job_name: kube-state-metrics
                 kubernetes_sd_configs:
-                  - role: pod
+                  - role: service
                 relabel_configs:
-                  - source_labels: [__meta_kubernetes_pod_label_app]
+                  - source_labels: [ __meta_kubernetes_service_name ]
                     action: keep
-                    regex: api|db|web
+                    regex: kube-state-metrics
+                  - source_labels: [__meta_kubernetes_pod_name] # TODO: Do I need this to populate labels?
+                    target_label: pod
+                  - source_labels: [__meta_kubernetes_namespace] # TODO: Do I need this to populate labels?
+                    target_label: namespace
           alerts:
             groups:
               - name: Node Unreachable
                 rules:
                   - alert: NodeUnreachable
                     expr: up{job="kubelet",kubernetes_io_hostname=~".*"} == 0
-                    for: 5m
+                    for: 2m
                     labels:
                       severity: critical
                     annotations:
@@ -61,7 +65,7 @@ releases:
                 rules:
                   - alert: PodCrashLoopBackOff
                     expr: kube_pod_container_status_restarts_total{container!="",pod!="",namespace!="kube-system"} > 3
-                    for: 5m
+                    for: 2m
                     labels:
                       severity: critical
                     annotations:

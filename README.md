@@ -67,19 +67,6 @@ To switch contexts, simply run
 kubectl config use-context DESIRED_CONTEXT_NAME
 ```
 
-## Build The Application
-
-You must build your Docker images before you can run the application.  The following will configure Minikube to use its own Docker registry and build the images:
-
-```
-eval $(minikube -p minikube docker-env) \
-&& docker build -t aphiria.com-build -f ./infrastructure/docker/build/Dockerfile . \
-&& docker build -t aphiria.com-api -f ./infrastructure/docker/runtime/api/Dockerfile . --build-arg BUILD_IMAGE=aphiria.com-build \
-&& docker build -t aphiria.com-web -f ./infrastructure/docker/runtime/web/Dockerfile . --build-arg BUILD_IMAGE=aphiria.com-build
-```
-
-> **Note:** To bust the Docker's cache, you should run `gulp build` locally prior to building the images to ensure you're building with the latest compiled documentation.
-
 ## Run The Application
 
 ### Start Minikube
@@ -93,11 +80,26 @@ minikube start \
 
 > **Note:** If you're running as the root user, run `minikube start --force` instead.
 
-In another console terminal, create a tunnel to be able to connect to Minikube:
+> **Note:** If you're having issues with starting the Minikube cluster, run `minikube delete` and then retry the commands.
+
+In another console, create a tunnel to be able to connect to Minikube:
 
 ```
 minikube tunnel
 ```
+
+### Build The Application
+
+You must build your Docker images before you can run the application.  The following will configure Minikube to use its own Docker registry and build the images:
+
+```
+eval $(minikube -p minikube docker-env) \
+&& docker build -t aphiria.com-build -f ./infrastructure/docker/build/Dockerfile . \
+&& docker build -t aphiria.com-api -f ./infrastructure/docker/runtime/api/Dockerfile . --build-arg BUILD_IMAGE=aphiria.com-build \
+&& docker build -t aphiria.com-web -f ./infrastructure/docker/runtime/web/Dockerfile . --build-arg BUILD_IMAGE=aphiria.com-build
+```
+
+> **Note:** To bust the Docker's cache, you should run `gulp build` locally prior to building the images to ensure you're building with the latest compiled documentation.
 
 ### Set Up Your Kubernetes Cluster
 
