@@ -79,7 +79,8 @@ final class DocumentationBuilder
                     $htmlDocFilename = "$branchDocDir/$markdownFilename.html";
                     $html = $this->markdownConverter->convert($this->files->read($markdownFilePath))->getContent();
                     // Rewrite the links to point to the HTML docs on the site
-                    $html = \preg_replace('/<a href="([^"]+)\.md(#[^"]+)?"/', '<a href="$1.html$2"', $html);
+                    // Note that we explicitly match <a> tags without a target (eg target="_blank") to avoid rewriting links that may be pointing externally, eg to the documentation repo in GitHub
+                    $html = \preg_replace('/<a href="([^"]+)\.md(#[^"]+)?">/', '<a href="$1.html$2">', $html);
                     $this->files->write($htmlDocFilename, $html);
                 }
             }
