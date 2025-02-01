@@ -173,23 +173,27 @@ window.addEventListener('load', loadEvent => {
     };
 });
 
+// Remove the loading screen
 document.addEventListener('DOMContentLoaded', () => {
-    let numCodeBlocks = document.querySelectorAll('pre code').length;
+    document.body.classList.remove('loading');
+});
 
-    // If there are code blocks, then there are PrismJS elements
-    if (numCodeBlocks > 0) {
-        // Once rendering is done for all code blocks, remove the loading overlay
-        Prism.hooks.add('complete', () => {
-            if (--numCodeBlocks === 0) {
-                document.body.classList.remove('loading');
-            }
+// Add "copy" buttons to code samples
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.copy-button').forEach(button => {
+        const preElement = button.closest('pre');              // Find the closest <pre> element
+        const codeElement = preElement.querySelector('code');
+
+        button.addEventListener('click', () => {
+            const code = codeElement.textContent;
+            navigator.clipboard.writeText(code)
+                .then(() => {
+                    button.textContent = 'Copied!';
+                    setTimeout(() => button.textContent = 'Copy', 3000);
+                })
+                .catch(err => console.error('Failed to copy text: ', err));
         });
-
-        Prism.highlightAll();
-    } else {
-        // No code blocks, so remove it right away
-        document.body.classList.remove('loading');
-    }
+    });
 });
 
 const mobileMenu = {
