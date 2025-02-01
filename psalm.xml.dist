@@ -14,7 +14,7 @@
         <directory name="tests" />
         <file name="aphiria" />
         <file name="config.php" />
-        <file name="localhost_router.php" />
+        <file name="localhost-router.php" />
         <file name="public-api/index.php" />
         <ignoreFiles>
             <directory name="vendor" />
