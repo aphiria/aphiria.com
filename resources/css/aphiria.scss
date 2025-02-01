@@ -395,24 +395,29 @@ pre[class*="language-"] {
 }
 
 /* Don't show the copy button for code samples that explicitly opt out */
-pre.no-copy + div.toolbar > .toolbar-item > button.copy-to-clipboard-button {
-    display: none !important;
+pre.no-copy div.button-wrapper {
+    display: none;
 }
 
-/* Update the style of the copy button */
-div.code-toolbar > .toolbar {
-    z-index: auto !important;
-    opacity: 1 !important;
-    transition: none !important;
+pre div.button-wrapper {
+    position: sticky;
+    right: 0;
+    top: 0;
+    left: 0;
+    text-align: right;
+    /* By making it zero height, text can flow behind it */
+    height: 0;
+    width: 100%;
 
-    & > .toolbar-item > button {
-        padding: 0.5em !important;
-        box-shadow: none !important;
-        background: #eee !important;
+    button.copy-button {
+        padding: 5px;
+        background: #eee;
+        color: #444;
+        border: 1px solid #ccc;
 
         &:hover {
-            background: #e6e6e6 !important;
-            cursor: pointer !important;
+            background: #e6e6e6;
+            cursor: pointer;
         }
     }
 }

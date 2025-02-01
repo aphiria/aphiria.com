@@ -42,7 +42,7 @@ const rewriteReferences = () => {
         .pipe(gulp.dest(paths.public));
 };
 const minifyJs = () => {
-    return gulp.src(`${paths.resourcesJs}/*.js`)
+    return gulp.src(`${paths.resourcesJs}/client-side/*.js`)
         // Create a minified, concatenated JS file
         .pipe(sourcemaps.init())
         .pipe(concat('scripts.min.js'))
@@ -97,7 +97,7 @@ gulp.task('build', gulp.series('clean-css', 'clean-js', 'compile-scss', 'minify-
 gulp.task('watch-assets', () => {
     // Purposely deferring rewriting of references to the .css watcher
     gulp.watch(`${paths.resourcesCss}/*.scss`, gulp.series(compileScss));
-    gulp.watch(`${paths.resourcesJs}/*.js`, gulp.series('minify-js', rewriteReferences));
+    gulp.watch(`${paths.resourcesJs}/client-size/*.js`, gulp.series('minify-js', rewriteReferences));
     gulp.watch(`${paths.resourcesCss}/*.css`, gulp.series('minify-css', rewriteReferences));
     // When our raw views change, we want to also make sure we rewrite their references
     gulp.watch(`${paths.resourcesViews}/**/*.html`, gulp.series('build-views', rewriteReferences));
