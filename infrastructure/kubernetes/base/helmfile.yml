@@ -3,6 +3,8 @@ repositories:
     url: https://charts.jetstack.io
   - name: prometheus-community
     url: https://prometheus-community.github.io/helm-charts
+  - name: grafana
+    url: https://grafana.github.io/helm-charts
 releases:
   - name: cert-manager
     namespace: cert-manager
@@ -87,3 +89,34 @@ releases:
           create: true
       - serviceMonitor:
           enabled: true
+  - name: grafana
+    namespace: monitoring
+    chart: grafana/grafana
+    version: "8.8.5"
+    createNamespace: true
+    values:
+      - adminPassword: "admin"  # TODO: Secure this
+      - datasources:
+          default:
+            type: prometheus
+            name: Prometheus
+            url: http://prometheus-server.monitoring.svc.cluster.local  # Prometheus service URL
+            access: proxy
+            isDefault: true
+      - dashboardProviders:
+          dashboardproviders.yaml:
+            apiVersion: 1
+            providers:
+              - name: 'prometheus'
+                orgId: 1
+                folder: ''
+                type: file
+                disableDeletion: false
+                updateIntervalSeconds: 10
+                options:
+                  path: /etc/grafana/provisioning/dashboards
+      - dashboards:
+          default:
+            kubernetes-cluster:
+              gnetId: 315  # Example: Kubernetes Cluster Dashboard ID (you can change it to the one you prefer)
+              datasource: Prometheus
