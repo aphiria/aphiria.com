@@ -126,7 +126,7 @@ final class ViewCompiler
                 $docSectionListItems = '';
 
                 foreach ($docs as $docName => $doc) {
-                    $docSectionListItems .= '<li><a href="/docs/' . $version . '/' . $docName . '.html" title="View documentation for ' . $doc['title'] . '">' . $doc['linkText'] . '</a></li>';
+                    $docSectionListItems .= '<li><a href="/docs/' . $version . '/' . $docName . '.html" title="View documentation for ' . \strtolower($doc['title']) . '">' . $doc['linkText'] . '</a></li>';
                 }
 
                 $compiledSectionContents = $this->compileTag('docSectionListItems', $docSectionListItems, $compiledSectionContents);
