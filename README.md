@@ -99,6 +99,8 @@ In another console terminal, create a tunnel to be able to connect to Minikube:
 minikube tunnel
 ```
 
+> **Note:** Be sure to enter your `sudo` password when prompted.
+
 ### Set Up Your Kubernetes Cluster
 
 Use Helmfile to install the required Helm charts and apply the dev Kubernetes manifest:
