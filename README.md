@@ -88,6 +88,8 @@ In another console, create a tunnel to be able to connect to Minikube:
 minikube tunnel
 ```
 
+> **Note:** Be sure to enter your `sudo` password when prompted.
+
 ### Build The Application
 
 You must build your Docker images before you can run the application.  The following will configure Minikube to use its own Docker registry and build the images:
