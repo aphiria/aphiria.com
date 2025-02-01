@@ -138,11 +138,17 @@ final class DocumentationBinder extends Binder
                     ]
                 ],
                 'Configuration' => [
-                    'configuration' => [
-                        'title' => 'Configuration',
-                        'linkText' => 'Configuration',
-                        'description' => 'Learn how to configure an Aphiria application',
-                        'keywords' => ['aphiria', 'configure', 'application builder', 'php']
+                    'application-builders' => [
+                        'title' => 'Application Builders',
+                        'linkText' => 'Application Builders',
+                        'description' => 'Learn how to build an Aphiria application',
+                        'keywords' => ['aphiria', 'application builder', 'modules', 'components', 'php']
+                    ],
+                    'config-files' => [
+                        'title' => 'Config Files',
+                        'linkText' => 'Config Files',
+                        'description' => 'Learn how to read configuration settings',
+                        'keywords' => ['aphiria', 'configure', 'config', 'json', 'yaml', 'php']
                     ],
                     'dependency-injection' => [
                         'title' => 'Dependency Injection',
