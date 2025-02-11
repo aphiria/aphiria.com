@@ -252,6 +252,5 @@ const highlightToCNav = (articleElem, tocContentsElem) => {
 
 const highlightDocNav = docNavElem => {
     // We specifically do not want to consider the query string nor fragment
-    const currUrl = window.location.origin + window.location.pathname;
-    docNavElem.querySelector('a[href="' + currUrl + '"]')?.classList.add('selected');
+    docNavElem.querySelector('a[href="' + window.location.pathname + '"]')?.classList.add('selected');
 }
