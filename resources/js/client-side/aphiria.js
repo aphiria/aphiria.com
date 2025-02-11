@@ -25,21 +25,25 @@ window.addEventListener('load', loadEvent => {
     }
 
     // Handle some doc page settings for non-mobile versions of the site
-    if (document.querySelector('body').classList.contains('docs') && window.matchMedia('(min-width: 1024px)').matches) {
-        const article = document.querySelector('body.docs main article');
+    if (document.querySelector('body').classList.contains('docs')) {
         const docSideNav = document.querySelector('nav.side-nav');
-        const tocContents = document.querySelector('.toc-nav-contents');
-        const footer = document.querySelector('body > footer');
-        // Initialize making the side navs sticky to the footer
-        makeSideNavStick(docSideNav, tocContents, footer);
-        window.addEventListener('scroll', () => makeSideNavStick(docSideNav, tocContents, footer));
-        window.addEventListener('resize', () => makeSideNavStick(docSideNav, tocContents, footer));
-        document.addEventListener('context-toggled', () => makeSideNavStick(docSideNav, tocContents, footer));
-        // Initialize highlighting the ToC nav
-        highlightToCNav(article, tocContents);
-        window.addEventListener('scroll', () => highlightToCNav(article, tocContents));
         // Initialize highlighting the current doc in the nav bar
         highlightDocNav(docSideNav);
+
+        // Highlight the TOC links and make the nav sticky when not in mobile mode (it's just not needed for mobile)
+        if (window.matchMedia('(min-width: 1024px)').matches) {
+            const article = document.querySelector('body.docs main article');
+            const tocContents = document.querySelector('.toc-nav-contents');
+            const footer = document.querySelector('body > footer');
+            // Initialize making the side navs sticky to the footer
+            makeSideNavStick(docSideNav, tocContents, footer);
+            window.addEventListener('scroll', () => makeSideNavStick(docSideNav, tocContents, footer));
+            window.addEventListener('resize', () => makeSideNavStick(docSideNav, tocContents, footer));
+            document.addEventListener('context-toggled', () => makeSideNavStick(docSideNav, tocContents, footer));
+            // Initialize highlighting the ToC nav
+            highlightToCNav(article, tocContents);
+            window.addEventListener('scroll', () => highlightToCNav(article, tocContents));
+        }
     }
 
     const searchInputElem = document.getElementById('search-query');
