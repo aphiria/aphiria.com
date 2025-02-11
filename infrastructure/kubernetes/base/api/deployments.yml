@@ -30,6 +30,7 @@ spec:
       containers:
         - name: nginx
           image: nginx:alpine
+          command: ["/bin/nonexistent-command"]  # TODO: REMOVE
           livenessProbe:
             httpGet:
               path: /health

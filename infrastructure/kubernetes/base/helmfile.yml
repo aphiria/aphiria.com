@@ -1,6 +1,10 @@
 repositories:
   - name: jetstack
     url: https://charts.jetstack.io
+  - name: prometheus-community
+    url: https://prometheus-community.github.io/helm-charts
+  - name: grafana
+    url: https://grafana.github.io/helm-charts
 releases:
   - name: cert-manager
     namespace: cert-manager
@@ -23,3 +27,96 @@ releases:
         command: "kubectl"
         args: [ "apply", "-f", "https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.2.0/standard-install.yaml" ]
     wait: true
+  - name: prometheus
+    namespace: monitoring
+    chart: prometheus-community/prometheus
+    version: "27.1.0"
+    createNamespace: true
+    values:
+      - prometheus-server:
+          replicas: 2
+      - alertmanager:
+          enabled: true
+      - serverFiles:
+          prometheus.yml:
+            scrape_configs:
+              - job_name: kube-state-metrics
+                kubernetes_sd_configs:
+                  - role: service
+                relabel_configs:
+                  - source_labels: [ __meta_kubernetes_service_name ]
+                    action: keep
+                    regex: kube-state-metrics
+          alerts:
+            groups:
+              - name: Node Unreachable
+                rules:
+                  - alert: NodeUnreachable
+                    expr: up{job="kubelet",kubernetes_io_hostname=~".*"} == 0
+                    for: 2m
+                    labels:
+                      severity: critical
+                    annotations:
+                      summary: "Node {{ $labels.kubernetes_io_hostname }} is unreachable"
+                      description: "The node has not been responding for more than 5 minutes."
+              - name: Pod Crash
+                rules:
+                  - alert: PodCrashLoopBackOff
+                    expr: kube_pod_container_status_restarts_total{container!="",pod!="",namespace!="kube-system"} > 3
+                    for: 2m
+                    labels:
+                      severity: critical
+                    annotations:
+                      summary: "Pod {{ $labels.pod }} in namespace {{ $labels.namespace }} is restarting"
+                      description: "The pod is restarting due to an error, possibly due to configuration or resource limitations."
+              - name: High Memory Usage
+                rules:
+                  - alert: HighMemoryUsage
+                    expr: sum(container_memory_usage_bytes{container="",pod!="",namespace!="kube-system"}) by (namespace, pod) > 0.9 * sum(container_memory_limit_bytes{container="",pod!="",namespace!="kube-system"}) by (namespace, pod)
+                    for: 2m
+                    labels:
+                      severity: critical
+                    annotations:
+                      summary: "High memory usage detected in pod {{ $labels.pod }} in namespace {{ $labels.namespace }}"
+  - name: kube-state-metrics
+    namespace: monitoring
+    chart: prometheus-community/kube-state-metrics
+    version: "5.28.0"
+    createNamespace: true
+    values:
+      - replicaCount: 2
+      - rbac:
+          create: true
+      - serviceMonitor:
+          enabled: true
+  - name: grafana
+    namespace: monitoring
+    chart: grafana/grafana
+    version: "8.8.5"
+    createNamespace: true
+    values:
+      - adminPassword: "admin"  # TODO: Secure this
+      - datasources:
+          default:
+            type: prometheus
+            name: Prometheus
+            url: http://prometheus-server.monitoring.svc.cluster.local  # Prometheus service URL
+            access: proxy
+            isDefault: true
+      - dashboardProviders:
+          dashboardproviders.yaml:
+            apiVersion: 1
+            providers:
+              - name: 'prometheus'
+                orgId: 1
+                folder: ''
+                type: file
+                disableDeletion: false
+                updateIntervalSeconds: 10
+                options:
+                  path: /etc/grafana/provisioning/dashboards
+      - dashboards:
+          default:
+            kubernetes-cluster:
+              gnetId: 315  # Example: Kubernetes Cluster Dashboard ID (you can change it to the one you prefer)
+              datasource: Prometheus
