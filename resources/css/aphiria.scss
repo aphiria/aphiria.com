@@ -315,6 +315,10 @@ body > main {
         padding-top: 10px;
         overflow-y: auto;
 
+        a.selected {
+            font-weight: bold;
+        }
+
         section {
             &:not(:last-child) {
                 margin-bottom: 25px;
@@ -801,10 +805,6 @@ blockquote {
             float: left;
             width: $docSidebarWidth;
             border-right: 1px solid $pageBorderColor;
-
-            a.selected {
-                font-weight: bold;
-            }
         }
     }
 
