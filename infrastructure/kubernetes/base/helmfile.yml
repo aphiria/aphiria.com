@@ -94,3 +94,13 @@ releases:
     chart: grafana/grafana
     version: "8.8.5"
     createNamespace: true
+    values:
+      - adminPassword: "admin"  # TODO: Secure this
+      - datasources:
+          datasources.yaml:
+            apiVersion: 1
+            datasources:
+            - name: Prometheus
+              type: prometheus
+              url: http://prometheus-server.monitoring.svc.cluster.local
+              isDefault: true
