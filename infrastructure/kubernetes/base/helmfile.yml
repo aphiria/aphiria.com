@@ -47,6 +47,35 @@ releases:
                   - source_labels: [ __meta_kubernetes_service_name ]
                     action: keep
                     regex: kube-state-metrics
+              - job_name: kubernetes-nodes-cadvisor
+                scrape_interval: 10s
+                scrape_timeout: 10s
+                scheme: https
+                tls_config:
+                  ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+                bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+                kubernetes_sd_configs:
+                  - role: node
+                relabel_configs:
+                  - action: labelmap
+                    regex: __meta_kubernetes_node_label_(.+)
+                  - target_label: __address__
+                    replacement: kubernetes.default.svc:443
+                  - source_labels: [ __meta_kubernetes_node_name ]
+                    regex: (.+)
+                    target_label: __metrics_path__
+                    replacement: /api/v1/nodes/${1}/proxy/metrics/cadvisor
+                metric_relabel_configs:
+                  - action: replace
+                    source_labels: [ id ]
+                    regex: '^/machine\.slice/machine-rkt\\x2d([^\\]+)\\.+/([^/]+)\.service$'
+                    target_label: rkt_container_name
+                    replacement: '${2}-${1}'
+                  - action: replace
+                    source_labels: [ id ]
+                    regex: '^/system\.slice/(.+)\.service$'
+                    target_label: systemd_service_name
+                    replacement: '${1}'
           alerts:
             groups:
               - name: Node Unreachable
@@ -78,6 +107,25 @@ releases:
                       severity: critical
                     annotations:
                       summary: "High memory usage detected in pod {{ $labels.pod }} in namespace {{ $labels.namespace }}"
+  - name: node-exporter
+    namespace: monitoring
+    chart: prometheus-community/prometheus-node-exporter
+    version: "4.4.1"
+    createNamespace: true
+    values:
+      - service:
+          annotations:
+            prometheus.io/scrape: "true"
+            prometheus.io/port: "9100"
+      - serviceMonitor:
+          enabled: true
+      - resources:
+          limits:
+            cpu: 100m
+            memory: 128Mi
+          requests:
+            cpu: 50m
+            memory: 64Mi
   - name: kube-state-metrics
     namespace: monitoring
     chart: prometheus-community/kube-state-metrics
@@ -104,3 +152,33 @@ releases:
               type: prometheus
               url: http://prometheus-server.monitoring.svc.cluster.local
               isDefault: true
+              access: proxy
+      - dashboardProviders:
+          dashboardproviders.yaml:
+            apiVersion: 1
+            providers:
+              - name: default
+                orgId: 1
+                folder: default
+                type: file
+                disableDeletion: true
+                editable: true
+                options:
+                  path: /var/lib/grafana/dashboards/standard
+              - name: grafana-dashboards-kubernetes
+                orgId: 1
+                folder: Kubernetes
+                type: file
+                disableDeletion: true
+                editable: true
+                options:
+                  path: /var/lib/grafana/dashboards/grafana-dashboards-kubernetes
+      - dashboards:
+          default:
+            kubernetes-cluster:
+              gnetId: 315
+              datasource: Prometheus
+          grafana-dashboards-kubernetes:
+            api-server:
+              gnetId: 15761
+              datasource: Prometheus
