@@ -3,8 +3,6 @@ repositories:
     url: https://charts.jetstack.io
   - name: prometheus-community
     url: https://prometheus-community.github.io/helm-charts
-  - name: grafana
-    url: https://grafana.github.io/helm-charts
 releases:
   - name: cert-manager
     namespace: cert-manager
@@ -27,158 +25,53 @@ releases:
         command: "kubectl"
         args: [ "apply", "-f", "https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.2.0/standard-install.yaml" ]
     wait: true
-  - name: prometheus
+  - name: kube-prometheus-stack
     namespace: monitoring
-    chart: prometheus-community/prometheus
-    version: "27.1.0"
+    chart: prometheus-community/kube-prometheus-stack
+    version: "69.6.0"
     createNamespace: true
     values:
-      - prometheus-server:
-          replicas: 2
+      - prometheus:
+          prometheusSpec:
+            retention: 7d
+            resources:
+              requests:
+                memory: 2Gi
+              limits:
+                memory: 4Gi
       - alertmanager:
           enabled: true
-      - serverFiles:
-          prometheus.yml:
-            scrape_configs:
-              - job_name: kube-state-metrics
-                kubernetes_sd_configs:
-                  - role: service
-                relabel_configs:
-                  - source_labels: [ __meta_kubernetes_service_name ]
-                    action: keep
-                    regex: kube-state-metrics
-              - job_name: kubernetes-nodes-cadvisor
-                scrape_interval: 10s
-                scrape_timeout: 10s
-                scheme: https
-                tls_config:
-                  ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
-                bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
-                kubernetes_sd_configs:
-                  - role: node
-                relabel_configs:
-                  - action: labelmap
-                    regex: __meta_kubernetes_node_label_(.+)
-                  - target_label: __address__
-                    replacement: kubernetes.default.svc:443
-                  - source_labels: [ __meta_kubernetes_node_name ]
-                    regex: (.+)
-                    target_label: __metrics_path__
-                    replacement: /api/v1/nodes/${1}/proxy/metrics/cadvisor
-                metric_relabel_configs:
-                  - action: replace
-                    source_labels: [ id ]
-                    regex: '^/machine\.slice/machine-rkt\\x2d([^\\]+)\\.+/([^/]+)\.service$'
-                    target_label: rkt_container_name
-                    replacement: '${2}-${1}'
-                  - action: replace
-                    source_labels: [ id ]
-                    regex: '^/system\.slice/(.+)\.service$'
-                    target_label: systemd_service_name
-                    replacement: '${1}'
-          alerts:
-            groups:
-              - name: Node Unreachable
-                rules:
-                  - alert: NodeUnreachable
-                    expr: up{job="kubelet",kubernetes_io_hostname=~".*"} == 0
-                    for: 2m
-                    labels:
-                      severity: critical
-                    annotations:
-                      summary: "Node {{ $labels.kubernetes_io_hostname }} is unreachable"
-                      description: "The node has not been responding for more than 5 minutes."
-              - name: Pod Crash
-                rules:
-                  - alert: PodCrashLoopBackOff
-                    expr: kube_pod_container_status_restarts_total{container!="",pod!="",namespace!="kube-system"} > 3
-                    for: 2m
-                    labels:
-                      severity: critical
-                    annotations:
-                      summary: "Pod {{ $labels.pod }} in namespace {{ $labels.namespace }} is restarting"
-                      description: "The pod is restarting due to an error, possibly due to configuration or resource limitations."
-              - name: High Memory Usage
-                rules:
-                  - alert: HighMemoryUsage
-                    expr: sum(container_memory_usage_bytes{container="",pod!="",namespace!="kube-system"}) by (namespace, pod) > 0.9 * sum(container_memory_limit_bytes{container="",pod!="",namespace!="kube-system"}) by (namespace, pod)
-                    for: 2m
-                    labels:
-                      severity: critical
-                    annotations:
-                      summary: "High memory usage detected in pod {{ $labels.pod }} in namespace {{ $labels.namespace }}"
-  - name: node-exporter
-    namespace: monitoring
-    chart: prometheus-community/prometheus-node-exporter
-    version: "4.4.1"
-    createNamespace: true
-    values:
-      - service:
-          annotations:
-            prometheus.io/scrape: "true"
-            prometheus.io/port: "9100"
-      - serviceMonitor:
-          enabled: true
-      - resources:
-          limits:
-            cpu: 100m
-            memory: 128Mi
-          requests:
-            cpu: 50m
-            memory: 64Mi
-  - name: kube-state-metrics
-    namespace: monitoring
-    chart: prometheus-community/kube-state-metrics
-    version: "5.28.0"
-    createNamespace: true
-    values:
-      - replicaCount: 2
-      - rbac:
-          create: true
-      - serviceMonitor:
-          enabled: true
-  - name: grafana
-    namespace: monitoring
-    chart: grafana/grafana
-    version: "8.8.5"
-    createNamespace: true
-    values:
-      - adminPassword: "admin"  # TODO: Secure this
-      - datasources:
-          datasources.yaml:
-            apiVersion: 1
-            datasources:
-            - name: Prometheus
-              type: prometheus
-              url: http://prometheus-server.monitoring.svc.cluster.local
-              isDefault: true
+      - grafana:
+          adminPassword: "admin"  # TODO: Change for security
+          serviceMonitor:
+            enabled: true
+          defaultDashboardsEnabled: true
+          additionalDataSources:
+            - name: Loki
+              type: loki
               access: proxy
-      - dashboardProviders:
-          dashboardproviders.yaml:
-            apiVersion: 1
-            providers:
-              - name: default
-                orgId: 1
-                folder: default
-                type: file
-                disableDeletion: true
-                editable: true
-                options:
-                  path: /var/lib/grafana/dashboards/standard
-              - name: grafana-dashboards-kubernetes
-                orgId: 1
-                folder: Kubernetes
-                type: file
-                disableDeletion: true
-                editable: true
-                options:
-                  path: /var/lib/grafana/dashboards/grafana-dashboards-kubernetes
-      - dashboards:
-          default:
-            kubernetes-cluster:
-              gnetId: 315
-              datasource: Prometheus
-          grafana-dashboards-kubernetes:
-            api-server:
-              gnetId: 15761
-              datasource: Prometheus
+              url: http://loki.monitoring.svc.cluster.local
+          sidecar:
+            dashboards:
+              enabled: true
+              folderAnnotation: "grafana_folder"
+              searchNamespace: ALL
+            dashboardProviders:
+              dashboardproviders.yaml:
+                apiVersion: 1
+                providers:
+                  - name: grafana-dashboards-kubernetes
+                    orgId: 1
+                    folder: Kubernetes
+                    type: file
+                    disableDeletion: true
+                    options:
+                      path: /var/lib/grafana/dashboards/grafana-dashboards-kubernetes
+      - kubeStateMetrics:
+          enabled: true
+      - nodeExporter:
+          enabled: true
+      - serviceMonitor:
+          enabled: true
+
+# TODO:  Need a way to install dotdc/grafana-dashboards-kubernetes dashboards

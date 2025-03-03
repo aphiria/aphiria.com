@@ -139,7 +139,17 @@ kubectl port-forward service/db 5432:5432
 To view the Prometheus dashboard, you'll need to configure port forwarding in a separate console:
 
 ```
-kubectl port-forward svc/prometheus-server -n monitoring 9090:80
+kubectl port-forward -n monitoring svc/kube-prometheus-stack-prometheus 9090
 ```
 
 Then, visit http://localhost:9090/ in your browser.
+
+## Viewing Grafana
+
+To view the Grafana dashboard, you'll need to configure port forwarding in a separate console:
+
+```
+kubectl port-forward -n monitoring svc/kube-prometheus-stack-grafana 3000:80
+```
+
+Then, visit http://localhost:3000/ in your browser.
