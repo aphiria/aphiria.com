@@ -39,10 +39,24 @@ releases:
                 memory: 2Gi
               limits:
                 memory: 4Gi
+            storageSpec:
+              volumeClaimTemplate:
+                spec:
+                  accessModes: ["ReadWriteOnce"]
+                  resources:
+                    requests:
+                      storage: 50Gi
+                  storageClassName: standard
       - alertmanager:
           enabled: true
       - grafana:
           adminPassword: "admin"  # TODO: Change for security
+          persistence:
+            type: pvc
+            enabled: true
+            storageClassName: standard
+            accessModes: ["ReadWriteOnce"]
+            size: 10Gi
           serviceMonitor:
             enabled: true
           defaultDashboardsEnabled: true
@@ -73,5 +87,6 @@ releases:
           enabled: true
       - serviceMonitor:
           enabled: true
+
 
 # TODO:  Need a way to install dotdc/grafana-dashboards-kubernetes dashboards
