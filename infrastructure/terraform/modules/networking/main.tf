@@ -38,6 +38,14 @@ resource "digitalocean_record" "api_a" {
     ttl = 3600
 }
 
+resource "digitalocean_record" "grafana_a" {
+    domain = digitalocean_domain.default.id
+    type = "A"
+    name = "grafana"
+    value = data.kubernetes_service.load_balancer.status[0].load_balancer[0].ingress[0].ip
+    ttl = 3600
+}
+
 resource "digitalocean_record" "www_cname" {
     domain = digitalocean_domain.default.id
     type = "CNAME"

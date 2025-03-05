@@ -33,6 +33,8 @@ Add the following to your host file:
 127.0.0.1 aphiria.com
 127.0.0.1 api.aphiria.com
 127.0.0.1 www.aphiria.com
+127.0.0.1 grafana.aphiria.com
+127.0.0.1 prometheus.aphiria.com
 ```
 
 ### Log Into Docker
@@ -82,14 +84,6 @@ minikube start \
 
 > **Note:** If you're having issues with starting the Minikube cluster, run `minikube delete` and then retry the commands.
 
-In another console, create a tunnel to be able to connect to Minikube:
-
-```
-minikube tunnel
-```
-
-> **Note:** Be sure to enter your `sudo` password when prompted.
-
 ### Build The Application
 
 You must build your Docker images before you can run the application.  The following will configure Minikube to use its own Docker registry and build the images:
@@ -112,6 +106,14 @@ helmfile -f ./infrastructure/kubernetes/base/helmfile.yml repos \
 && helmfile -f ./infrastructure/kubernetes/base/helmfile.yml sync \
 && kubectl apply -k ./infrastructure/kubernetes/environments/dev
 ```
+
+In another console, create a tunnel to be able to connect to Minikube:
+
+```
+minikube tunnel
+```
+
+> **Note:** Be sure to enter your `sudo` password when prompted.
 
 You should now be able to hit https://www.aphiria.com in your browser.  You will get a TLS certificate error since we're using a self-signed certificate locally.
 
@@ -146,10 +148,4 @@ Then, visit http://localhost:9090/ in your browser.
 
 ## Viewing Grafana
 
-To view the Grafana dashboard, you'll need to configure port forwarding in a separate console:
-
-```
-kubectl port-forward -n monitoring svc/kube-prometheus-stack-grafana 3000:80
-```
-
-Then, visit http://localhost:3000/ in your browser.
+To view the Grafana dashboard, visit https://grafana.aphiria.com.
