@@ -34,7 +34,6 @@ Add the following to your host file:
 127.0.0.1 api.aphiria.com
 127.0.0.1 www.aphiria.com
 127.0.0.1 grafana.aphiria.com
-127.0.0.1 prometheus.aphiria.com
 ```
 
 ### Log Into Docker

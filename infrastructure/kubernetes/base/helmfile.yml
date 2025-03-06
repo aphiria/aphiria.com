@@ -20,7 +20,6 @@ releases:
     version: 1.2.0
     createNamespace: true
     hooks:
-      # Install the necessary CRDs
       - events: [ "prepare" ]
         command: "kubectl"
         args: [ "apply", "-f", "https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.2.0/standard-install.yaml" ]
@@ -50,26 +49,37 @@ releases:
       - alertmanager:
           enabled: true
       - grafana:
-          adminPassword: "admin"  # TODO: Change for security
+          envFromSecret: monitoring-secrets
           grafana.ini:
+            alerting:
+              enabled: true
             auth:
               disable_login_form: true
               disable_signout_menu: true
             auth.github:
               enabled: true
               allow_sign_up: true
-              client_id: # TODO: Add a secret for this
-              client_secret: # TODO: Add a secret for this
+              client_id: $__env{GITHUB_OAUTH_CLIENT_ID}
+              client_secret: $__env{GITHUB_OAUTH_CLIENT_SECRET}
               scopes: user:email,read:org
               auth_url: https://github.com/login/oauth/authorize
               token_url: https://github.com/login/oauth/access_token
               api_url: https://api.github.com/user
-              allowed_organizations: aphiria
+              allowed_organizations: $__env{GITHUB_OAUTH_ORGANIZATION}
             ingress:
-              enabled: false  # We'll use Gateway API instead
+              enabled: false
             server:
               root_url: https://grafana.aphiria.com
               serve_from_sub_path: false
+            smtp:
+              enabled: true
+              host: "$__env{SMTP_HOST}"
+              user: "$__env{SMTP_USER}"
+              password: "$__env{SMTP_PASSWORD}"
+              skip_verify: true
+              from_address: "$__env{SMTP_FROM_NAME} <$__env{SMTP_FROM_ADDRESS}>"
+            unified_alerting:
+              enabled: true
           persistence:
             type: pvc
             enabled: true
@@ -106,6 +116,5 @@ releases:
           enabled: true
       - serviceMonitor:
           enabled: true
-
 
 # TODO:  Need a way to install dotdc/grafana-dashboards-kubernetes dashboards
