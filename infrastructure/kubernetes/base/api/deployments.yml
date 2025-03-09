@@ -30,7 +30,7 @@ spec:
       containers:
         - name: nginx
           image: nginx:alpine
-          command: ["/bin/nonexistent-command"]  # TODO: REMOVE
+          # TODO: Add to simulate failed startup:  command: ["/bin/nonexistent-command"]
           livenessProbe:
             httpGet:
               path: /health

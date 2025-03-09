@@ -101,9 +101,9 @@ eval $(minikube -p minikube docker-env) \
 Use Helmfile to install the required Helm charts and apply the dev Kubernetes manifest:
 
 ```
-helmfile -f ./infrastructure/kubernetes/base/helmfile.yml repos \
-&& helmfile -f ./infrastructure/kubernetes/base/helmfile.yml sync \
-&& kubectl apply -k ./infrastructure/kubernetes/environments/dev
+kubectl apply -k ./infrastructure/kubernetes/environments/dev \
+&& helmfile -f ./infrastructure/kubernetes/base/helmfile.yml repos \
+&& helmfile -f ./infrastructure/kubernetes/base/helmfile.yml sync
 ```
 
 In another console, create a tunnel to be able to connect to Minikube:

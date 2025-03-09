@@ -50,9 +50,10 @@ releases:
           enabled: true
       - grafana:
           envFromSecret: monitoring-secrets
+          adminPassword: "admin"  # TODO: Change for security
           grafana.ini:
             alerting:
-              enabled: true
+              enabled: false # Disable legacy alerting
             auth:
               disable_login_form: true
               disable_signout_menu: true
@@ -67,7 +68,7 @@ releases:
               api_url: https://api.github.com/user
               allowed_organizations: $__env{GITHUB_OAUTH_ORGANIZATION}
             ingress:
-              enabled: false
+              enabled: false # We'll use Gateway API instead
             server:
               root_url: https://grafana.aphiria.com
               serve_from_sub_path: false
@@ -77,7 +78,8 @@ releases:
               user: "$__env{SMTP_USER}"
               password: "$__env{SMTP_PASSWORD}"
               skip_verify: true
-              from_address: "$__env{SMTP_FROM_NAME} <$__env{SMTP_FROM_ADDRESS}>"
+              from_name: "$__env{SMTP_FROM_NAME}"
+              from_address: "$__env{SMTP_FROM_ADDRESS}"
             unified_alerting:
               enabled: true
           persistence:
