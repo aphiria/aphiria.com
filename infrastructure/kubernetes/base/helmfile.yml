@@ -50,7 +50,7 @@ releases:
           enabled: true
       - grafana:
           envFromSecret: monitoring-secrets
-          adminPassword: "admin"  # TODO: Change for security
+          adminPassword: $__env{DEFAULT_GRAFANA_ADMIN_PASSWORD}
           grafana.ini:
             alerting:
               enabled: false # Disable legacy alerting
@@ -91,11 +91,6 @@ releases:
           serviceMonitor:
             enabled: true
           defaultDashboardsEnabled: true
-          additionalDataSources:
-            - name: Loki
-              type: loki
-              access: proxy
-              url: http://loki.monitoring.svc.cluster.local
           sidecar:
             dashboards:
               enabled: true
