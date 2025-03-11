@@ -91,7 +91,13 @@ releases:
           serviceMonitor:
             enabled: true
           defaultDashboardsEnabled: true
+          # Sidecars allow dynamic configuration of Grafana without having to restart pods on deployment
           sidecar:
+            alerts:
+              enabled: true
+              label: grafana_alert
+              labelValue: "1"
+              searchNamespace: ALL
             dashboards:
               enabled: true
               folderAnnotation: "grafana_folder"

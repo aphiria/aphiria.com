@@ -1,0 +1,71 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: alerts
+  namespace: monitoring
+  labels:
+    grafana_alert: "1"  # This must match the label value set in the Helm file
+data:
+  contact-points.yaml: |
+    apiVersion: 1
+    contactPoints:
+      - orgId: 1
+        name: email-contact
+        receivers:
+          - uid: email-receiver
+            type: email
+            settings:
+              addresses: "dave@aphiria.com"
+
+  notification-policies.yaml: |
+    apiVersion: 1
+    notificationPolicies:
+      - orgId: 1
+        receiver: email-contact
+        group_by:
+          - alertname
+
+  alert-rules.yaml: |-
+    apiVersion: 1
+    groups:
+      - name: alert-rules
+        folder: Alerts
+        interval: 60s
+        rules:
+          - title: High CPU Usage
+            condition: B
+            data:
+              - refId: A
+                datasourceUid: prometheus
+                model:
+                  expr: sum(rate(node_cpu_seconds_total{mode!="idle"}[5m])) by (instance) / count(node_cpu_seconds_total{mode="idle"}) by (instance) * 100 > 80
+                  instant: false
+                  intervalMs: 1000
+                  maxDataPoints: 43200
+                  refId: A
+              - refId: B
+                datasourceUid: __expr__
+                model:
+                  conditions:
+                    - evaluator:
+                        params:
+                          - 80
+                        type: gt
+                      operator:
+                        type: and
+                      query:
+                        params:
+                          - A
+                      reducer:
+                        type: last
+                      type: query
+                  refId: B
+            noDataState: NoData
+            execErrState: Error
+            for: 5m
+            isPaused: false
+            annotations:
+              summary: "High CPU usage detected"
+              description: "CPU usage is above 80%"
+            labels:
+              severity: warning
