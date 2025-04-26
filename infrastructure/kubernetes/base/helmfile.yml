@@ -91,28 +91,6 @@ releases:
           serviceMonitor:
             enabled: true
           defaultDashboardsEnabled: true
-          # Sidecars allow dynamic configuration of Grafana without having to restart pods on deployment
-          sidecar:
-            alerts:
-              enabled: true
-              label: grafana_alert
-              labelValue: "1"
-              searchNamespace: ALL
-            dashboards:
-              enabled: true
-              folderAnnotation: "grafana_folder"
-              searchNamespace: ALL
-            dashboardProviders:
-              dashboardproviders.yaml:
-                apiVersion: 1
-                providers:
-                  - name: grafana-dashboards-kubernetes
-                    orgId: 1
-                    folder: Kubernetes
-                    type: file
-                    disableDeletion: true
-                    options:
-                      path: /var/lib/grafana/dashboards/grafana-dashboards-kubernetes
       - kubeStateMetrics:
           enabled: true
       - nodeExporter:
