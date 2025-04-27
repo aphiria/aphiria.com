@@ -1,6 +1,8 @@
 repositories:
   - name: jetstack
     url: https://charts.jetstack.io
+  - name: grafana
+    url: https://grafana.github.io/helm-charts
   - name: prometheus-community
     url: https://prometheus-community.github.io/helm-charts
 releases:
@@ -24,78 +26,67 @@ releases:
         command: "kubectl"
         args: [ "apply", "-f", "https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.2.0/standard-install.yaml" ]
     wait: true
-  - name: kube-prometheus-stack
+  - name: kube-state-metrics
     namespace: monitoring
-    chart: prometheus-community/kube-prometheus-stack
-    version: "69.6.0"
-    createNamespace: true
+    chart: prometheus-community/kube-state-metrics
     values:
-      - prometheus:
-          prometheusSpec:
-            retention: 7d
-            resources:
-              requests:
-                memory: 2Gi
-              limits:
-                memory: 4Gi
-            storageSpec:
-              volumeClaimTemplate:
-                spec:
-                  accessModes: ["ReadWriteOnce"]
-                  resources:
-                    requests:
-                      storage: 50Gi
-                  storageClassName: standard
-      - alertmanager:
-          enabled: true
-      - grafana:
-          envFromSecret: monitoring-secrets
-          adminPassword: $__env{DEFAULT_GRAFANA_ADMIN_PASSWORD}
-          grafana.ini:
-            alerting:
-              enabled: false # Disable legacy alerting
-            auth:
-              disable_login_form: true
-              disable_signout_menu: true
-            auth.github:
-              enabled: true
-              allow_sign_up: true
-              client_id: $__env{GITHUB_OAUTH_CLIENT_ID}
-              client_secret: $__env{GITHUB_OAUTH_CLIENT_SECRET}
-              scopes: user:email,read:org
-              auth_url: https://github.com/login/oauth/authorize
-              token_url: https://github.com/login/oauth/access_token
-              api_url: https://api.github.com/user
-              allowed_organizations: $__env{GITHUB_OAUTH_ORGANIZATION}
-            ingress:
-              enabled: false # We'll use Gateway API instead
-            server:
-              root_url: https://grafana.aphiria.com
-              serve_from_sub_path: false
-            smtp:
-              enabled: true
-              host: "$__env{SMTP_HOST}"
-              user: "$__env{SMTP_USER}"
-              password: "$__env{SMTP_PASSWORD}"
-              skip_verify: true
-              from_name: "$__env{SMTP_FROM_NAME}"
-              from_address: "$__env{SMTP_FROM_ADDRESS}"
-            unified_alerting:
-              enabled: true
-          persistence:
-            type: pvc
-            enabled: true
-            storageClassName: standard
-            accessModes: ["ReadWriteOnce"]
-            size: 10Gi
-          serviceMonitor:
-            enabled: true
-          defaultDashboardsEnabled: true
-      - kubeStateMetrics:
-          enabled: true
-      - nodeExporter:
-          enabled: true
       - serviceMonitor:
           enabled: true
-
-# TODO:  Need a way to install dotdc/grafana-dashboards-kubernetes dashboards
+          namespace: monitoring
+          additionalLabels:
+            release: prometheus
+  - name: grafana
+    namespace: monitoring
+    chart: grafana/grafana
+    values:
+      - ingress:
+          enabled: false
+      - envFromSecrets:
+          - name: monitoring-secrets
+      - extraEnv:
+          - name: GF_SERVER_ROOT_URL
+            value: "https://grafana.aphiria.com"
+          - name: GF_AUTH_DISABLE_LOGIN_FORM
+            value: "true"
+          - name: GF_AUTH_BASIC_ENABLED
+            value: "false"
+      - datasources:
+          datasources.yaml:
+            apiVersion: 1
+            datasources:
+              - name: Prometheus
+                type: prometheus
+                access: proxy
+                url: http://prometheus-operated.monitoring.svc.cluster.local:9090
+                isDefault: true
+      - grafana.ini:
+          server:
+            root_url: https://grafana.aphiria.com
+          auth:
+            disable_login_form: true
+            basic_auth_enabled: false
+          auth.github:
+            enabled: true
+            allow_sign_up: true
+            scopes: user:email,read:org
+            client_id: ${GITHUB_OAUTH_CLIENT_ID}
+            client_secret: ${GITHUB_OAUTH_CLIENT_SECRET}
+            allowed_organizations: ${GITHUB_OAUTH_ORGANIZATION}
+          unified_alerting:
+            enabled: true
+          users:
+            # Auto-add every new OAuth user to the main org
+            auto_assign_org: true
+            # Give them full Org-Admin privileges
+            auto_assign_org_role: Admin
+      - persistence:
+          enabled: true
+          accessModes:
+            - ReadWriteOnce
+          size: 10Gi
+      - sidecar:
+          alerts:
+            enabled: true
+            label: grafana_alert
+            searchNamespace:
+              - monitoring
