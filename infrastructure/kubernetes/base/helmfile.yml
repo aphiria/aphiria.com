@@ -26,6 +26,17 @@ releases:
         command: "kubectl"
         args: [ "apply", "-f", "https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.2.0/standard-install.yaml" ]
     wait: true
+  - name: prometheus
+    namespace: monitoring
+    chart: prometheus-community/prometheus
+    values:
+      - server:
+          persistentVolume:
+            enabled: true
+            accessModes: [ "ReadWriteOnce" ]
+            size: 10Gi
+          service:
+            port: 9090
   - name: kube-state-metrics
     namespace: monitoring
     chart: prometheus-community/kube-state-metrics
@@ -57,7 +68,7 @@ releases:
               - name: Prometheus
                 type: prometheus
                 access: proxy
-                url: http://prometheus-operated.monitoring.svc.cluster.local:9090
+                url: http://prometheus-server:80
                 isDefault: true
       - grafana.ini:
           server:
@@ -90,3 +101,18 @@ releases:
             label: grafana_alert
             searchNamespace:
               - monitoring
+          dashboards:
+            default:
+              # Read the JSON files for the dashboards and add them to the helmfile (their definitions are too long to put into ConfigMaps)
+              cluster-overview.json: |-
+                {{ readFile "monitoring/dashboards/cluster-overview.json" | indent 12 }}
+              node-exporter.json: |-
+                {{ readFile "monitoring/dashboards/node-exporter.json" | indent 12 }}
+              nginx.json: |-
+                {{ readFile "monitoring/dashboards/nginx.json" | indent 12 }}
+            enabled: true
+            label: grafana_dashboard
+            searchNamespace:
+              - monitoring
+            provider:
+              disableDelete: false
