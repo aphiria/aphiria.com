@@ -1,0 +1,18 @@
+# Helps export metrics from the Gateway API
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: nginx-gateway
+  namespace: nginx-gateway
+  labels:
+    release: prometheus
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: gateway-fabric
+  namespaceSelector:
+    matchNames:
+      - nginx-gateway
+  endpoints:
+    - port: metrics
+      interval: 30s

@@ -72,7 +72,7 @@ fi
 
 if [ "$install_helmfile" = true ]; then
     echo "Installing Helmfile (https://helmfile.readthedocs.io/en/latest/#installation)"
-    curl -L https://github.com/helmfile/helmfile/releases/download/v1.0.0-rc.7/helmfile_1.0.0-rc.7_linux_amd64.tar.gz -o helmfile.tar.gz
+    curl -L https://github.com/helmfile/helmfile/releases/download/v1.0.0-rc.12/helmfile_1.0.0-rc.12_linux_amd64.tar.gz -o helmfile.tar.gz
     tar -xzf helmfile.tar.gz
     sudo mv helmfile /usr/local/bin/helmfile
     helmfile --version

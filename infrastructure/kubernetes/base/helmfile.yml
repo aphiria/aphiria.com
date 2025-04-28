@@ -25,18 +25,39 @@ releases:
       - events: [ "prepare" ]
         command: "kubectl"
         args: [ "apply", "-f", "https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.2.0/standard-install.yaml" ]
+    set:
+      - name: metrics.enabled
+        value: true
+      - name: metrics.serviceMonitor.enabled
+        value: true
+      - name: metrics.serviceMonitor.namespace
+        value: nginx-gateway
+      - name: metrics.serviceMonitor.interval
+        value: 30s
+      - name: metrics.serviceMonitor.additionalLabels.release
+        value: prometheus
     wait: true
-  - name: prometheus
+  - name: monitoring-stack
     namespace: monitoring
-    chart: prometheus-community/prometheus
+    chart: prometheus-community/kube-prometheus-stack
+    version: 70.10.0
     values:
-      - server:
-          persistentVolume:
-            enabled: true
-            accessModes: [ "ReadWriteOnce" ]
-            size: 10Gi
-          service:
-            port: 9090
+      - prometheus:
+          prometheusSpec:
+            retention: 15d
+            storageSpec:
+              volumeClaimTemplate:
+                spec:
+                  accessModes: ["ReadWriteOnce"]
+                  resources:
+                    requests:
+                      storage: 50Gi
+            serviceMonitorSelector:
+              matchLabels:
+                release: prometheus
+      - grafana:
+          # We are managing Grafana separately - we just want Prometheus with all the metric scraping for Gateway API
+          enabled: false
   - name: kube-state-metrics
     namespace: monitoring
     chart: prometheus-community/kube-state-metrics
@@ -49,6 +70,39 @@ releases:
   - name: grafana
     namespace: monitoring
     chart: grafana/grafana
+    # Dynamically create ConfigMaps to load the Grafana dashboards.  This deletes old dashboard ConfigMaps and recreates them every time.
+    hooks:
+      - events: [ "prepare" ]
+        command: bash
+        args:
+          - -c
+          - |
+            set -e
+
+            echo "🗑  Pruning stale Grafana dashboard ConfigMaps…"
+            for cm in $(kubectl get cm \
+              -l grafana_dashboard=1 \
+              -n monitoring \
+              -o name); do
+              base=$(basename "$cm" | sed 's/^grafana-dashboard-//; s/\-configmap$//')
+              if [ ! -f "monitoring/dashboards/${base}.json" ]; then
+                kubectl delete "$cm" -n monitoring
+              fi
+            done
+
+            echo "🔄 Applying current Grafana dashboards…"
+            for file in monitoring/dashboards/*.json; do
+              name=$(basename "$file" .json)
+              # delete existing (if any), then create fresh without annotation
+              kubectl delete cm grafana-dashboard-"$name" -n monitoring --ignore-not-found
+              kubectl create configmap grafana-dashboard-"$name" \
+                --from-file="$file" \
+                --namespace monitoring
+              kubectl label cm grafana-dashboard-"$name" \
+                grafana_dashboard=1 \
+                --overwrite \
+                -n monitoring
+            done
     values:
       - ingress:
           enabled: false
@@ -68,7 +122,7 @@ releases:
               - name: Prometheus
                 type: prometheus
                 access: proxy
-                url: http://prometheus-server:80
+                url: http://monitoring-stack-kube-prom-prometheus:9090
                 isDefault: true
       - grafana.ini:
           server:
@@ -102,17 +156,11 @@ releases:
             searchNamespace:
               - monitoring
           dashboards:
-            default:
-              # Read the JSON files for the dashboards and add them to the helmfile (their definitions are too long to put into ConfigMaps)
-              cluster-overview.json: |-
-                {{ readFile "monitoring/dashboards/cluster-overview.json" | indent 12 }}
-              node-exporter.json: |-
-                {{ readFile "monitoring/dashboards/node-exporter.json" | indent 12 }}
-              nginx.json: |-
-                {{ readFile "monitoring/dashboards/nginx.json" | indent 12 }}
             enabled: true
             label: grafana_dashboard
+            labelValue: "1"
             searchNamespace:
               - monitoring
             provider:
               disableDelete: false
+
