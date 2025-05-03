@@ -21,21 +21,32 @@ releases:
     chart: oci://ghcr.io/nginxinc/charts/nginx-gateway-fabric
     version: 1.2.0
     createNamespace: true
-    hooks:
-      - events: [ "prepare" ]
-        command: "kubectl"
-        args: [ "apply", "-f", "https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.2.0/standard-install.yaml" ]
     set:
-      - name: metrics.enabled
-        value: true
-      - name: metrics.serviceMonitor.enabled
-        value: true
+      - name: metrics.enable
+        value: "true"
+      - name: metrics.service.create
+        value: "true"
+      - name: metrics.serviceMonitor.create
+        value: "true"
       - name: metrics.serviceMonitor.namespace
-        value: nginx-gateway
-      - name: metrics.serviceMonitor.interval
-        value: 30s
+        value: monitoring
+      - name: metrics.serviceMonitor.selector.matchLabels.app\.kubernetes\.io/name
+        value: nginx-gateway-fabric
       - name: metrics.serviceMonitor.additionalLabels.release
         value: prometheus
+    values:
+      - service:
+          create: true
+          ports:
+            - name: http
+              port: 80
+              targetPort: 80
+            - name: https
+              port: 443
+              targetPort: 443
+            - name: metrics
+              port: 9113
+              targetPort: 9113
     wait: true
   - name: monitoring-stack
     namespace: monitoring
@@ -52,9 +63,6 @@ releases:
                   resources:
                     requests:
                       storage: 50Gi
-            serviceMonitorSelector:
-              matchLabels:
-                release: prometheus
       - grafana:
           # We are managing Grafana separately - we just want Prometheus with all the metric scraping for Gateway API
           enabled: false
@@ -66,7 +74,7 @@ releases:
           enabled: true
           namespace: monitoring
           additionalLabels:
-            release: prometheus
+            release: monitoring-stack
   - name: grafana
     namespace: monitoring
     chart: grafana/grafana
@@ -151,6 +159,8 @@ releases:
             auto_assign_org: true
             # Give them full Org-Admin privileges
             auto_assign_org_role: Admin
+      - initChownData:
+          enabled: false
       - persistence:
           enabled: true
           accessModes:
