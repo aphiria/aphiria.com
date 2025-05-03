@@ -93,6 +93,13 @@ releases:
             echo "🔄 Applying current Grafana dashboards…"
             for file in monitoring/dashboards/*.json; do
               name=$(basename "$file" .json)
+              # Create the "monitoring" namespace if it doesn't exist
+              if ! kubectl get namespace monitoring &>/dev/null; then
+                echo "Namespace 'monitoring' not found → creating it"
+                kubectl create namespace monitoring
+              else
+                echo "Namespace 'monitoring' already exists"
+              fi
               # delete existing (if any), then create fresh without annotation
               kubectl delete cm grafana-dashboard-"$name" -n monitoring --ignore-not-found
               kubectl create configmap grafana-dashboard-"$name" \
