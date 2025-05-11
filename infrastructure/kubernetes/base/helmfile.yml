@@ -27,13 +27,13 @@ releases:
       - name: metrics.service.create
         value: "true"
       - name: metrics.serviceMonitor.create
-        value: "true"
+        value: "false"
       - name: metrics.serviceMonitor.namespace
         value: monitoring
       - name: metrics.serviceMonitor.selector.matchLabels.app\.kubernetes\.io/name
         value: nginx-gateway-fabric
       - name: metrics.serviceMonitor.additionalLabels.release
-        value: prometheus
+        value: monitoring-stack
     values:
       - service:
           create: true
@@ -180,4 +180,3 @@ releases:
               - monitoring
             provider:
               disableDelete: false
-

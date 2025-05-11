@@ -1,6 +1,7 @@
 .env
 !.env.dist
 /.coverage/
+/.junie/
 /.idea/
 /.php-cs-fixer.cache
 /.phpunit.result.cache
