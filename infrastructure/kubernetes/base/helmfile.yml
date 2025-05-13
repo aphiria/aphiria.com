@@ -21,19 +21,6 @@ releases:
     chart: oci://ghcr.io/nginxinc/charts/nginx-gateway-fabric
     version: 1.2.0
     createNamespace: true
-    set:
-      - name: metrics.enable
-        value: "true"
-      - name: metrics.service.create
-        value: "true"
-      - name: metrics.serviceMonitor.create
-        value: "false"
-      - name: metrics.serviceMonitor.namespace
-        value: monitoring
-      - name: metrics.serviceMonitor.selector.matchLabels.app\.kubernetes\.io/name
-        value: nginx-gateway-fabric
-      - name: metrics.serviceMonitor.additionalLabels.release
-        value: monitoring-stack
     values:
       - service:
           create: true
@@ -47,6 +34,20 @@ releases:
             - name: metrics
               port: 9113
               targetPort: 9113
+      - metrics:
+          enabled: true
+          service:
+            create: true
+            port: 9113
+            targetPort: 9113
+          serviceMonitor:
+            create: true
+            namespace: monitoring
+            selector:
+              matchLabels:
+                app.kubernetes.io/name: nginx-gateway-fabric
+            additionalLabels:
+              release: monitoring-stack
     wait: true
   - name: monitoring-stack
     namespace: monitoring
