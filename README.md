@@ -56,7 +56,7 @@ kubectl config view --flatten > ~/combined.yml
 cp ~/combined.yml ~/.kube/config
 ```
 
-Verify that you see multiple context by running
+Verify that you see multiple contexts by running
 
 ```
 kubectl config get-contexts
@@ -98,10 +98,11 @@ eval $(minikube -p minikube docker-env) \
 
 ### Set Up Your Kubernetes Cluster
 
-Use Helmfile to install the required Helm charts and apply the dev Kubernetes manifest:
+Run these commands to set up the resources in your cluster:
 
 ```
-kubectl apply -k ./infrastructure/kubernetes/environments/dev \
+kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.3.0/standard-install.yaml \
+&& kubectl apply -k ./infrastructure/kubernetes/environments/dev \
 && helmfile -f ./infrastructure/kubernetes/base/helmfile.yml repos \
 && helmfile -f ./infrastructure/kubernetes/base/helmfile.yml sync
 ```
@@ -112,7 +113,7 @@ In another console, create a tunnel to be able to connect to Minikube:
 minikube tunnel
 ```
 
-> **Note:** Be sure to enter your `sudo` password when prompted.
+> **Note:** Be sure to enter your `sudo` password when prompted.  This prompt will only appear after you've started running the Gateway API as it requires ports 80 and 443 to be opened, and they're privileged ports.
 
 You should now be able to hit https://www.aphiria.com in your browser.  You will get a TLS certificate error since we're using a self-signed certificate locally.
 

@@ -69,6 +69,9 @@ jobs:
           doctl auth init --access-token ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
           doctl kubernetes cluster kubeconfig save $(terraform -chdir=./infrastructure/terraform output -raw cluster_id)
 
+          # Install the Gateway API CRDs
+          kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.3.0/standard-install.yaml
+
           # Install Helmfiles
           helmfile -f ./infrastructure/kubernetes/base/helmfile.yml repos
           helmfile -f ./infrastructure/kubernetes/base/helmfile.yml sync
