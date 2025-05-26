@@ -35,19 +35,11 @@ releases:
               port: 9113
               targetPort: 9113
       - metrics:
-          enabled: true
+          enable: true
           service:
             create: true
             port: 9113
             targetPort: 9113
-          serviceMonitor:
-            create: true
-            namespace: monitoring
-            selector:
-              matchLabels:
-                app.kubernetes.io/name: nginx-gateway-fabric
-            additionalLabels:
-              release: monitoring-stack
     wait: true
   - name: monitoring-stack
     namespace: monitoring
