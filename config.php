@@ -204,5 +204,30 @@ return [
                 'type' => DefaultErrorMessageTemplateRegistry::class
             ]
         ]
+    ],
+
+    /**
+     * ----------------------------------------------------------
+     * Configure app components
+     * ----------------------------------------------------------
+     */
+    'app' => [
+
+        /**
+         * ----------------------------------------------------------
+         * Configure monitoring
+         * ----------------------------------------------------------
+         *
+         * redis.host => The host of the Redis instance backing our metrics
+         * redis.port => The port of the Redis instance backing our metrics
+         * redis.password => The password of the Redis instance backing our metrics
+         */
+        'monitoring' => [
+            'redis' => [
+                'host' => \getenv('REDIS_HOST'),
+                'port' => \getenv('REDIS_PORT'),
+                'password' => \getenv('REDIS_PASSWORD')
+            ]
+        ]
     ]
 ];

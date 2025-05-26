@@ -11,6 +11,8 @@ resources:
   - ./database/services.yml
   - ./gateway-api/gateway.yml
   - ./gateway-api/http-routes.yml
+  - ./gateway-api/namespace.yml
+  - ./monitoring/namespace.yml
   - ./monitoring/service-monitor.yml
   - ./web/config-maps.yml
   - ./web/deployments.yml

@@ -11,6 +11,8 @@ WORKDIR /app/api
 # Install dependencies and extensions
 RUN apt-get update && apt-get install -y git libxml2-dev libpq-dev libzip-dev
 RUN docker-php-ext-install dom intl opcache pdo_pgsql pgsql zip
+RUN pecl install redis
+RUN docker-php-ext-enable redis
 
 # Stage 3: Copy the files from the build stage
 FROM base

@@ -5,6 +5,8 @@ repositories:
     url: https://grafana.github.io/helm-charts
   - name: prometheus-community
     url: https://prometheus-community.github.io/helm-charts
+  - name: bitnami
+    url: https://charts.bitnami.com/bitnami
 releases:
   - name: cert-manager
     namespace: cert-manager
@@ -56,6 +58,26 @@ releases:
                   resources:
                     requests:
                       storage: 50Gi
+          additionalServiceMonitors:
+            - name: api-metrics
+              namespaceSelector:
+                matchNames:
+                  - default
+              selector:
+                matchLabels:
+                  app: api
+              endpoints:
+                - port: api
+                  path: /metrics
+                  interval: 15s
+                  # TODO: Add basic auth
+                  #basicAuth:
+                  #  username:
+                  #    name: api-metrics-basic-auth
+                  #    key: username
+                  #  password:
+                  #    name: api-metrics-basic-auth
+                  #    key: password
       - grafana:
           # We are managing Grafana separately - we just want Prometheus with all the metric scraping for Gateway API
           enabled: false
@@ -174,3 +196,28 @@ releases:
               - monitoring
             provider:
               disableDelete: false
+  - name: redis
+    namespace: monitoring
+    chart: bitnami/redis
+    version: 19.5.2
+    values:
+      - auth:
+          enabled: true
+          existingSecret: monitoring-secrets
+          passwordKey: redis-password # Bitnami forces train-case, not snake_case
+      - metrics:
+          enabled: true
+          serviceMonitor:
+            enabled: true
+            namespace: monitoring
+            additionalLabels:
+              release: monitoring-stack
+      - cluster:
+          enabled: true
+      - sentinel:
+          enabled: true
+      - persistence:
+          enabled: true
+          size: 8Gi
+          storageClass: standard
+    wait: true

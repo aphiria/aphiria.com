@@ -43,6 +43,8 @@ use Aphiria\Middleware\MiddlewareBinding;
 use Aphiria\Net\Http\HttpException;
 use App\Api\Middleware\Cors;
 use App\Documentation\DocumentationModule;
+use App\Monitoring\Binders\PrometheusBinder;
+use App\Monitoring\Middleware\Prometheus;
 use App\Web\WebModule;
 use Exception;
 use Psr\Log\LogLevel;
@@ -91,7 +93,9 @@ final class GlobalModule extends AphiriaModule implements IBootstrapper
             ->withValidatorAttributes($appBuilder)
             ->withCommandAttributes($appBuilder)
             ->withGlobalMiddleware($appBuilder, [
-                new MiddlewareBinding(ExceptionHandler::class)
+                new MiddlewareBinding(ExceptionHandler::class),
+                new MiddlewareBinding(Prometheus::class),
+                new MiddlewareBinding(Cors::class)
             ])
             ->withBinders($appBuilder, [
                 new ExceptionHandlerBinder(),
@@ -104,12 +108,12 @@ final class GlobalModule extends AphiriaModule implements IBootstrapper
                 new ResponseWriterBinder(),
                 new RoutingBinder(),
                 new CommandBinder(),
-                new CommandHandlerBinder()
+                new CommandHandlerBinder(),
+                new PrometheusBinder()
             ])
             ->withLogLevelFactory($appBuilder, HttpException::class, static function (HttpException $ex) {
                 return $ex->response->statusCode->value >= 500 ? LogLevel::ERROR : LogLevel::DEBUG;
             })
-            ->withGlobalMiddleware($appBuilder, new MiddlewareBinding(Cors::class))
             ->withModules($appBuilder, [
                 new DocumentationModule(),
                 new WebModule()
