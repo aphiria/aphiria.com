@@ -203,7 +203,7 @@ releases:
     values:
       - auth:
           enabled: true
-          existingSecret: monitoring-secrets
+          existingSecret: redis-secrets
           passwordKey: redis-password # Bitnami forces train-case, not snake_case
       - metrics:
           enabled: true

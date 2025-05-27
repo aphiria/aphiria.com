@@ -136,6 +136,14 @@ To connect locally to the PostgreSQL database in Minikube, you'll need to config
 kubectl port-forward service/db 5432:5432
 ```
 
+## Viewing API logs
+
+You can view the logs for all instances of the API by running
+
+```
+kubectl logs -l app=api -n default -c php -f
+```
+
 ## Viewing Prometheus
 
 To view the Prometheus dashboard, you'll need to configure port forwarding in a separate console:

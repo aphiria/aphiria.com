@@ -6,6 +6,7 @@
 /.php-cs-fixer.cache
 /.phpunit.result.cache
 /composer.phar
+/infrastructure/kubernetes/**/*secrets.yml
 /infrastructure/kubernetes/**/secrets.yml
 /infrastructure/terraform/**/.terraform/
 /infrastructure/terraform/**/.terraform.lock.hcl

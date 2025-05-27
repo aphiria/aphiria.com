@@ -51,6 +51,8 @@ spec:
           envFrom:
             - secretRef:
                 name: env-var-secrets
+            - secretRef:
+                name: redis-secrets
             - configMapRef:
                 name: env-vars
           volumeMounts:

@@ -28,13 +28,13 @@ jobs:
         ports:
           - 5432:5432
       redis:
-        image: bitnami/redis:8
+        image: bitnami/redis:latest
         env:
           # must match your REDIS_PASSWORD in the TEST secret or hard-coded here
           REDIS_PASSWORD: password
         ports:
           - 6379:6379
-        # add a simple healthcheck so Actions waits for Redis
+        # Add a simple health check so Actions waits for Redis
         options: >-
           --health-cmd "redis-cli -a password ping"
           --health-interval 10s

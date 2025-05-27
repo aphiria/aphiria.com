@@ -67,7 +67,7 @@ final class Prometheus implements IMiddleware
             );
             $histogram->observe($latency, [
                 $request->method,
-                $request->uri->path
+                $request->uri->path . ($request->uri->queryString === null ? '' : '?' . $request->uri->queryString)
             ]);
         } catch (MetricsRegistrationException $ex) {
             // Swallow and log the exception - we do not want an inability to log metrics to stop the application from serving requests
