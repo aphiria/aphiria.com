@@ -149,7 +149,7 @@ kubectl logs -l app=api -n default -c php -f
 To view the Prometheus dashboard, you'll need to configure port forwarding in a separate console:
 
 ```
-kubectl port-forward -n monitoring svc/kube-prometheus-stack-prometheus 9090
+kubectl port-forward -n monitoring svc/monitoring-stack-kube-prom-prometheus 9090
 ```
 
 Then, visit http://localhost:9090/ in your browser.

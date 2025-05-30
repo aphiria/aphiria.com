@@ -214,8 +214,6 @@ releases:
               release: monitoring-stack
       - cluster:
           enabled: true
-      - sentinel:
-          enabled: true
       - persistence:
           enabled: true
           size: 8Gi
