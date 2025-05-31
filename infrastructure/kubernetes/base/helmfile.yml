@@ -100,38 +100,51 @@ releases:
         args:
           - -c
           - |
-            set -e
+            set -euo pipefail
 
             echo "🗑  Pruning stale Grafana dashboard ConfigMaps…"
-            for cm in $(kubectl get cm \
-              -l grafana_dashboard=1 \
-              -n monitoring \
-              -o name); do
-              base=$(basename "$cm" | sed 's/^grafana-dashboard-//; s/\-configmap$//')
+            for cm in $(kubectl get cm -l grafana_dashboard=1 -n monitoring -o name); do
+              base=$(basename "$cm" | sed 's/^grafana-dashboard-//' | sed 's/-configmap$//')
               if [ ! -f "monitoring/dashboards/${base}.json" ]; then
                 kubectl delete "$cm" -n monitoring
               fi
             done
 
-            echo "🔄 Applying current Grafana dashboards…"
             for file in monitoring/dashboards/*.json; do
               name=$(basename "$file" .json)
-              # Create the "monitoring" namespace if it doesn't exist
-              if ! kubectl get namespace monitoring &>/dev/null; then
-                echo "Namespace 'monitoring' not found → creating it"
-                kubectl create namespace monitoring
+              cmName="grafana-dashboard-${name}"
+              sha=$(sha256sum "$file" | awk '{print $1}')
+
+              # Read existing checksum (if the CM exists)
+              existingSha=$(kubectl get cm "$cmName" -n monitoring \
+                -o "jsonpath={.metadata.annotations.checksum}" 2>/dev/null || echo "")
+
+              if [ "$sha" != "$existingSha" ]; then
+                echo "🔄 Recreating dashboard $name (checksum changed or new)"
+
+                # Delete existing ConfigMap (ignore errors if it doesn’t exist)
+                kubectl delete cm "$cmName" -n monitoring --ignore-not-found
+
+                # Create a new ConfigMap, saving only a small 'checksum' annotation
+                kubectl create configmap "$cmName" \
+                  --from-file="$file" \
+                  -n monitoring \
+                  --save-config
+
+                # Annotate with the new checksum
+                kubectl annotate cm "$cmName" \
+                  checksum="$sha" \
+                  -n monitoring \
+                  --overwrite
+
+                # Ensure the grafana_dashboard label remains on it
+                kubectl label cm "$cmName" \
+                  grafana_dashboard="1" \
+                  -n monitoring \
+                  --overwrite
               else
-                echo "Namespace 'monitoring' already exists"
+                echo "✅ No change in dashboard $name"
               fi
-              # delete existing (if any), then create fresh without annotation
-              kubectl delete cm grafana-dashboard-"$name" -n monitoring --ignore-not-found
-              kubectl create configmap grafana-dashboard-"$name" \
-                --from-file="$file" \
-                --namespace monitoring
-              kubectl label cm grafana-dashboard-"$name" \
-                grafana_dashboard=1 \
-                --overwrite \
-                -n monitoring
             done
     values:
       - ingress:

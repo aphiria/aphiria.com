@@ -53,7 +53,7 @@ final class Prometheus implements IMiddleware
             );
             $counter->inc([
                 $request->method,
-                $request->uri->path,
+                self::getPathWithQueryString($request),
                 $response->statusCode->value
             ]);
 
@@ -67,7 +67,7 @@ final class Prometheus implements IMiddleware
             );
             $histogram->observe($latency, [
                 $request->method,
-                $request->uri->path . ($request->uri->queryString === null ? '' : '?' . $request->uri->queryString)
+                self::getPathWithQueryString($request)
             ]);
         } catch (MetricsRegistrationException $ex) {
             // Swallow and log the exception - we do not want an inability to log metrics to stop the application from serving requests
@@ -75,5 +75,16 @@ final class Prometheus implements IMiddleware
         }
 
         return $response;
+    }
+
+    /**
+     * Gets a request's URI path + query string
+     *
+     * @param IRequest $request The request whose path and query string we're fetching
+     * @return string The path with the query string
+     */
+    private static function getPathWithQueryString(IRequest $request): string
+    {
+        return $request->uri->path . ($request->uri->queryString === null ? '' : '?' . $request->uri->queryString);
     }
 }
