@@ -1,0 +1,26 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: alerts
+  namespace: monitoring
+  labels:
+    grafana_alert: "1"  # This must match the label value set in the Helm file
+data:
+  contact-points.yml: |
+    apiVersion: 1
+    contactPoints:
+      - orgId: 1
+        name: email-contact
+        receivers:
+          - uid: email-receiver
+            type: email
+            settings:
+              addresses: "${SMTP_TO_ADDRESS}"
+  notification-policies.yml: |
+    apiVersion: 1
+    notificationPolicies:
+      - orgId: 1
+        receiver: email-contact
+        object_matchers: [] # Ensure that all alerts go through this policy
+        group_by:
+          - alertname

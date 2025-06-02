@@ -13,6 +13,7 @@ resources:
   - ./gateway-api/http-routes.yml
   - ./gateway-api/namespace.yml
   - ./monitoring/namespace.yml
+  - ./monitoring/notifications.yml
   - ./monitoring/service-monitor.yml
   - ./redis/default-secrets.yml
   - ./redis/monitoring-secrets.yml

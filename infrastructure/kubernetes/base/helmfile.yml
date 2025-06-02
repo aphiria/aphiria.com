@@ -158,6 +158,35 @@ releases:
             value: "true"
           - name: GF_AUTH_BASIC_ENABLED
             value: "false"
+          - name: GF_SMTP_ENABLED
+            value: "true"
+          - name: GF_SMTP_HOST
+            valueFrom:
+              secretKeyRef:
+                name: monitoring-secrets
+                key: SMTP_HOST
+          - name: GF_SMTP_USER
+            valueFrom:
+              secretKeyRef:
+                name: monitoring-secrets
+                key: SMTP_USER
+          - name: GF_SMTP_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: monitoring-secrets
+                key: SMTP_PASSWORD
+          - name: GF_SMTP_FROM_ADDRESS
+            valueFrom:
+              secretKeyRef:
+                name: monitoring-secrets
+                key: SMTP_FROM_ADDRESS
+          - name: GF_SMTP_FROM_NAME
+            valueFrom:
+              secretKeyRef:
+                name: monitoring-secrets
+                key: SMTP_FROM_NAME
+          - name: GF_SMTP_SKIP_VERIFY
+            value: "false"
       - datasources:
           datasources.yaml:
             apiVersion: 1
@@ -199,8 +228,8 @@ releases:
           alerts:
             enabled: true
             label: grafana_alert
-            searchNamespace:
-              - monitoring
+            labelValue: "1"
+            searchNamespace: monitoring
           dashboards:
             enabled: true
             label: grafana_dashboard
