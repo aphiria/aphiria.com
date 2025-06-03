@@ -209,8 +209,18 @@ releases:
             client_id: ${GITHUB_OAUTH_CLIENT_ID}
             client_secret: ${GITHUB_OAUTH_CLIENT_SECRET}
             allowed_organizations: ${GITHUB_OAUTH_ORGANIZATION}
+
+          smtp:
+            enabled: true
+            host: ${SMTP_HOST}
+            user: ${SMTP_USER}
+            password: ${SMTP_PASSWORD}
+            skip_verify: true
+            from_name: ${SMTP_FROM_NAME}
+            from_address: ${SMTP_FROM_ADDRESS}
           unified_alerting:
             enabled: true
+            auto_create_default_contact_point: false # No need for the default contact point
           users:
             # Auto-add every new OAuth user to the main org
             auto_assign_org: true

@@ -18,9 +18,10 @@ data:
               addresses: "${SMTP_TO_ADDRESS}"
   notification-policies.yml: |
     apiVersion: 1
-    notificationPolicies:
+    policies:
       - orgId: 1
         receiver: email-contact
         object_matchers: [] # Ensure that all alerts go through this policy
         group_by:
           - alertname
+
