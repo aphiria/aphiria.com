@@ -13,7 +13,6 @@ declare(strict_types=1);
 namespace App\Monitoring\Binders;
 
 use Aphiria\Application\Configuration\GlobalConfiguration;
-use Aphiria\Application\Configuration\MissingConfigurationValueException;
 use Aphiria\DependencyInjection\Binders\Binder;
 use Aphiria\DependencyInjection\IContainer;
 use Prometheus\CollectorRegistry;
@@ -39,22 +38,22 @@ final class PrometheusBinder extends Binder
             $adapter = new RedisAdapter([
                 'host' => GlobalConfiguration::getString('app.monitoring.redis.host'),
                 'port' => GlobalConfiguration::getString('app.monitoring.redis.port'),
-                'password' => GlobalConfiguration::getString('app.monitoring.redis.password')
+                'password' => GlobalConfiguration::getString('app.monitoring.redis.password'),
             ]);
             $container->bindInstance(
                 RegistryInterface::class,
-                $this->configureRegistryMetrics(new CollectorRegistry($adapter))
+                $this->configureRegistryMetrics(new CollectorRegistry($adapter)),
             );
         } catch (Throwable $ex) {
             // This is really only useful during CI when Redis has not yet been provisioned
             $container->resolve(LoggerInterface::class)->error(
                 'Failed to connect to Redis, falling back to in-memory metrics',
-                ['exception' => $ex]
+                ['exception' => $ex],
             );
             $adapter = new InMemoryAdapter();
             $container->bindInstance(
                 RegistryInterface::class,
-                $this->configureRegistryMetrics(new CollectorRegistry($adapter))
+                $this->configureRegistryMetrics(new CollectorRegistry($adapter)),
             );
         }
     }
@@ -73,7 +72,7 @@ final class PrometheusBinder extends Binder
             'app',
             'http_requests_total',
             'Total HTTP requests',
-            ['method','path','status']
+            ['method','path','status'],
         );
 
         // HTTP request duration histogram
@@ -82,7 +81,7 @@ final class PrometheusBinder extends Binder
             'http_request_duration_seconds',
             'HTTP request latency in seconds',
             ['method','path'],
-            [0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10]
+            [0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10],
         );
 
         return $registry;

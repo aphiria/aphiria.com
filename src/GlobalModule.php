@@ -57,9 +57,7 @@ final class GlobalModule extends AphiriaModule implements IBootstrapper
     /**
      * @param IContainer $container The application's DI container
      */
-    public function __construct(private readonly IContainer $container)
-    {
-    }
+    public function __construct(private readonly IContainer $container) {}
 
     /**
      * Bootstraps our application, which is the first thing done when starting an application
@@ -73,7 +71,7 @@ final class GlobalModule extends AphiriaModule implements IBootstrapper
             ->addMany([
                 new DotEnvBootstrapper(__DIR__ . '/../.env'),
                 new ConfigurationBootstrapper($globalConfigurationBuilder),
-                new GlobalExceptionHandlerBootstrapper($this->container)
+                new GlobalExceptionHandlerBootstrapper($this->container),
             ])
             ->bootstrapAll();
     }
@@ -95,7 +93,7 @@ final class GlobalModule extends AphiriaModule implements IBootstrapper
             ->withGlobalMiddleware($appBuilder, [
                 new MiddlewareBinding(ExceptionHandler::class),
                 new MiddlewareBinding(Prometheus::class),
-                new MiddlewareBinding(Cors::class)
+                new MiddlewareBinding(Cors::class),
             ])
             ->withBinders($appBuilder, [
                 new ExceptionHandlerBinder(),
@@ -109,14 +107,14 @@ final class GlobalModule extends AphiriaModule implements IBootstrapper
                 new RoutingBinder(),
                 new CommandBinder(),
                 new CommandHandlerBinder(),
-                new PrometheusBinder()
+                new PrometheusBinder(),
             ])
             ->withLogLevelFactory($appBuilder, HttpException::class, static function (HttpException $ex) {
                 return $ex->response->statusCode->value >= 500 ? LogLevel::ERROR : LogLevel::DEBUG;
             })
             ->withModules($appBuilder, [
                 new DocumentationModule(),
-                new WebModule()
+                new WebModule(),
             ]);
     }
 

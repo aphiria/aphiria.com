@@ -31,7 +31,7 @@ final class Prometheus implements IMiddleware
      */
     public function __construct(
         private readonly RegistryInterface $registry,
-        private readonly LoggerInterface $logger
+        private readonly LoggerInterface $logger,
     ) {}
 
     /**
@@ -39,9 +39,9 @@ final class Prometheus implements IMiddleware
      */
     public function handle(IRequest $request, IRequestHandler $next): IResponse
     {
-        $start = microtime(true);
+        $start = \microtime(true);
         $response = $next->handle($request);
-        $latency = microtime(true) - $start;
+        $latency = \microtime(true) - $start;
 
         try {
             // Counter
@@ -49,12 +49,12 @@ final class Prometheus implements IMiddleware
                 'app',
                 'http_requests_total',
                 'Total HTTP requests',
-                ['method', 'path', 'status']
+                ['method', 'path', 'status'],
             );
             $counter->inc([
                 $request->method,
                 self::getPathWithQueryString($request),
-                $response->statusCode->value
+                $response->statusCode->value,
             ]);
 
             // Histogram
@@ -63,11 +63,11 @@ final class Prometheus implements IMiddleware
                 'http_request_duration_seconds',
                 'HTTP request latency',
                 ['method', 'path'],
-                [0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10]
+                [0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10],
             );
             $histogram->observe($latency, [
                 $request->method,
-                self::getPathWithQueryString($request)
+                self::getPathWithQueryString($request),
             ]);
         } catch (MetricsRegistrationException $ex) {
             // Swallow and log the exception - we do not want an inability to log metrics to stop the application from serving requests

@@ -41,7 +41,7 @@ final class DocumentationBuilder
         private readonly string $clonedDocAbsolutePath,
         private readonly string $clonedDocRelativePath,
         private readonly string $htmlDocPath,
-        private readonly FilesystemOperator $files
+        private readonly FilesystemOperator $files,
     ) {}
 
     /**
@@ -143,8 +143,8 @@ final class DocumentationBuilder
                         'git clone -b %s --single-branch %s "%s"',
                         $branch,
                         self::GITHUB_REPOSITORY,
-                        $this->clonedDocAbsolutePath . "/$branch"
-                    )
+                        $this->clonedDocAbsolutePath . "/$branch",
+                    ),
                 );
 
                 // Delete the .git directory so we don't get multiple VCS roots registered

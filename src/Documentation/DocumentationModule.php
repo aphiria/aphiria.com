@@ -33,17 +33,17 @@ final class DocumentationModule extends AphiriaModule
         $this
             ->withBinders($appBuilder, [
                 new SqlBinder(),
-                new DocumentationBinder()
+                new DocumentationBinder(),
             ])
             ->withProblemDetails(
                 $appBuilder,
                 InvalidContextException::class,
-                status: HttpStatusCode::BadRequest
+                status: HttpStatusCode::BadRequest,
             )
             ->withProblemDetails(
                 $appBuilder,
                 InvalidDocumentationVersionException::class,
-                status: HttpStatusCode::BadRequest
+                status: HttpStatusCode::BadRequest,
             );
     }
 }

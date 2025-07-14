@@ -41,6 +41,6 @@ final readonly class IndexEntry
         public ?string $h2InnerText = null,
         public ?string $h3InnerText = null,
         public ?string $h4InnerText = null,
-        public ?string $h5InnerText = null
+        public ?string $h5InnerText = null,
     ) {}
 }

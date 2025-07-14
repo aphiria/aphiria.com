@@ -62,14 +62,14 @@ UNION
           LIMIT :maxResults) AS non_english_matching_query)) AS distinct_query
 ORDER BY rank DESC
 LIMIT :maxResults
-EOF
+EOF,
         );
         // The query must be lower cased for our full text search to work appropriately
         $statement->execute([
             'query' => \mb_strtolower(\trim($query)),
             'version' => $version->value,
             'context' => $context->value,
-            'maxResults' => self::MAX_NUM_SEARCH_RESULTS
+            'maxResults' => self::MAX_NUM_SEARCH_RESULTS,
         ]);
         $searchResults = [];
 
@@ -83,7 +83,7 @@ EOF
                 $row['h3_highlights'],
                 $row['h4_highlights'],
                 $row['h5_highlights'],
-                $row['inner_text_highlights']
+                $row['inner_text_highlights'],
             );
         }
 

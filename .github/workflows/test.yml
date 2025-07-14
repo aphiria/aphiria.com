@@ -76,8 +76,8 @@ jobs:
           vendor/bin/phinx seed:run
       - name: Run Tests
         run: composer phpunit
-      #- name: Run Linter
-      #  run: composer phpcs-test
+      - name: Run Linter
+        run: composer phpcs-test
       #- name: Run Psalm Static Analysis
       #  run: composer psalm -- --shepherd
       - name: Upload Coverage Results To Coveralls

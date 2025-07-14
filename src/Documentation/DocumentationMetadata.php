@@ -19,6 +19,8 @@ use InvalidArgumentException;
  */
 final class DocumentationMetadata
 {
+    /** @var string The default doc branch to display */
+    private const string DEFAULT_VERSION = '1.x';
     /** @var list<string> The list of branch names */
     public array $branches {
         get => \array_keys($this->config);
@@ -31,8 +33,6 @@ final class DocumentationMetadata
     public array $docVersions {
         get => \array_keys($this->config);
     }
-    /** @var string The default doc branch to display */
-    private const string DEFAULT_VERSION = '1.x';
 
     /**
      * @param array<string, array{title: string, default: string, docs: array<string, array<string, array{title: string, linkText: string, description: string, keywords: list<string>}>>}> $config The associative array that contains our metadata

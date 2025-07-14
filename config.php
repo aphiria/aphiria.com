@@ -45,7 +45,7 @@ return [
          * localhostRouterPath => The path to the localhost router file
          */
         'api' => [
-            'localhostRouterPath' => __DIR__ . '/localhost-router.php'
+            'localhostRouterPath' => __DIR__ . '/localhost-router.php',
         ],
 
         /**
@@ -56,7 +56,7 @@ return [
          * continueOnFailure => Whether or not to continue requirement checks on failure
          */
         'authorization' => [
-            'continueOnFailure' => true
+            'continueOnFailure' => true,
         ],
 
         /**
@@ -67,7 +67,7 @@ return [
          * metadataCachePath => The path to the binder metadata cache
          */
         'binders' => [
-            'metadataCachePath' => __DIR__ . '/tmp/framework/binderMetadataCollectionCache.txt'
+            'metadataCachePath' => __DIR__ . '/tmp/framework/binderMetadataCollectionCache.txt',
         ],
 
         /**
@@ -80,7 +80,7 @@ return [
          */
         'console' => [
             'attributePaths' => [__DIR__ . '/src'],
-            'commandCachePath' => __DIR__ . '/tmp/framework/console/commandCache.txt'
+            'commandCachePath' => __DIR__ . '/tmp/framework/console/commandCache.txt',
         ],
 
         /**
@@ -100,9 +100,9 @@ return [
                 JsonMediaTypeFormatter::class,
                 XmlMediaTypeFormatter::class,
                 HtmlMediaTypeFormatter::class,
-                PlainTextMediaTypeFormatter::class
+                PlainTextMediaTypeFormatter::class,
             ],
-            'supportedLanguages' => ['en']
+            'supportedLanguages' => ['en'],
         ],
 
         /**
@@ -113,7 +113,7 @@ return [
          * apiExceptionRenderer => The API exception renderer to use for API applications
          */
         'exceptions' => [
-            'apiExceptionRenderer' => ProblemDetailsExceptionRenderer::class
+            'apiExceptionRenderer' => ProblemDetailsExceptionRenderer::class,
         ],
 
         /**
@@ -129,10 +129,10 @@ return [
                 [
                     'type' => StreamHandler::class,
                     'path' => 'php://stdout',
-                    'level' => \getenv('LOG_LEVEL')
-                ]
+                    'level' => \getenv('LOG_LEVEL'),
+                ],
             ],
-            'name' => 'app'
+            'name' => 'app',
         ],
 
         /**
@@ -147,7 +147,7 @@ return [
         'routing' => [
             'attributePaths' => [__DIR__ . '/src'],
             'routeCachePath' => __DIR__ . '/tmp/framework/api/routeCache.txt',
-            'trieCachePath' => __DIR__ . '/tmp/framework/api/trieCache.txt'
+            'trieCachePath' => __DIR__ . '/tmp/framework/api/trieCache.txt',
         ],
 
         /**
@@ -168,7 +168,7 @@ return [
             'dateTimeFormat' => DateTime::ATOM,
             'encoders' => [
                 JsonEncoder::class,
-                XmlEncoder::class
+                XmlEncoder::class,
             ],
             'nameConverter' => null,
             'normalizers' => [
@@ -176,12 +176,12 @@ return [
                 BackedEnumNormalizer::class,
                 ProblemDetailsNormalizer::class,
                 ObjectNormalizer::class,
-                ArrayDenormalizer::class
+                ArrayDenormalizer::class,
             ],
             'xml' => [
                 'removeEmptyTags' => false,
-                'rootNodeName' => 'response'
-            ]
+                'rootNodeName' => 'response',
+            ],
         ],
 
         /**
@@ -198,12 +198,12 @@ return [
             'attributePaths' => [__DIR__ . '/src'],
             'constraintsCachePath' => __DIR__ . '/tmp/framework/constraintsCache.txt',
             'errorMessageInterpolator' => [
-                'type' => StringReplaceErrorMessageInterpolator::class
+                'type' => StringReplaceErrorMessageInterpolator::class,
             ],
             'errorMessageTemplates' => [
-                'type' => DefaultErrorMessageTemplateRegistry::class
-            ]
-        ]
+                'type' => DefaultErrorMessageTemplateRegistry::class,
+            ],
+        ],
     ],
 
     /**
@@ -226,8 +226,8 @@ return [
             'redis' => [
                 'host' => \getenv('REDIS_HOST'),
                 'port' => \getenv('REDIS_PORT'),
-                'password' => \getenv('REDIS_PASSWORD')
-            ]
-        ]
-    ]
+                'password' => \getenv('REDIS_PASSWORD'),
+            ],
+        ],
+    ],
 ];
