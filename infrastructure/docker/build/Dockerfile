@@ -2,30 +2,49 @@ FROM php:8.4-fpm
 
 WORKDIR /app
 
-# Install dependencies and extensions
-RUN apt-get update && apt-get install -y git libxml2-dev libpq-dev libzip-dev nodejs npm
-RUN docker-php-ext-install dom intl opcache pdo_pgsql pgsql zip
-RUN pecl install redis
-RUN docker-php-ext-enable redis
-RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
-RUN curl -fsSL https://deb.nodesource.com/setup_23.x | bash - && apt-get install -y nodejs
-RUN npm install --global yarn
+# Core build + runtime deps for PHP extensions
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    $PHPIZE_DEPS \
+    git cmake unzip \
+    libxml2-dev libpq-dev libzip-dev zlib1g-dev libicu-dev \
+    curl ca-certificates gnupg \
+ && rm -rf /var/lib/apt/lists/*
 
-# Copy over source files
+# Node.js+ Yarn
+RUN curl -fsSL https://deb.nodesource.com/setup_23.x | bash - \
+ && apt-get update && apt-get install -y --no-install-recommends nodejs \
+ && corepack enable \
+ && rm -rf /var/lib/apt/lists/*
+
+# Help DOM's vendored Lexbor find headers reliably
+ENV CPPFLAGS="-I/usr/src/php"
+
+# Build bundled PHP extensions
+RUN docker-php-ext-install -j"$(nproc)" \
+    dom intl opcache zip pdo pdo_pgsql pgsql
+
+# PECL Redis (needs $PHPIZE_DEPS present)
+RUN pecl install redis \
+ && docker-php-ext-enable redis
+
+# Composer
+COPY composer.json composer.lock* ./
+RUN composer install --no-interaction --ignore-platform-reqs --prefer-dist --no-progress
+
+# Copy the rest of the source
 COPY . .
 COPY ./.env.dist ./.env
 
-# Install dependencies and build the app
-RUN composer install --no-interaction --ignore-platform-reqs && composer dump-autoload -o
-RUN yarn install && yarn global add gulp
+# JS deps + gulp
+RUN yarn install --frozen-lockfile || yarn install \
+ && yarn global add gulp
 
-# Use the docs' git SHA to bust the cache and force gulp build to run when it has changed
+# Bust cache when docs change
 ARG DOCS_SHA=latest
+ENV DOCS_SHA=${DOCS_SHA}
 RUN gulp build
 
-# Perform server-side code highlights
-RUN npm install prismjs jsdom
-RUN chmod +x ./resources/js/server-side/highlight-code.js
-RUN find ./public-web -type f -name "*.html" -exec node ./resources/js/server-side/highlight-code.js {} \;
-
-
+# Server-side code highlighting
+RUN npm install prismjs jsdom \
+ && chmod +x ./resources/js/server-side/highlight-code.js \
+ && find ./public-web -type f -name "*.html" -exec node ./resources/js/server-side/highlight-code.js {} \;
