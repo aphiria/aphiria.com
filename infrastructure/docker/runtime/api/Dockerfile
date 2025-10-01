@@ -9,7 +9,7 @@ FROM php:8.4-fpm AS base
 WORKDIR /app/api
 
 # Install dependencies and extensions
-RUN apt-get update && apt-get install -y git libxml2-dev libpq-dev libzip-dev
+RUN apt-get update && apt-get install -y git libxml2-dev libpq-dev libzip-dev liblexbor-dev
 RUN docker-php-ext-install dom intl opcache pdo_pgsql pgsql zip
 
 # Stage 3: Copy the files from the build stage
