@@ -32,7 +32,7 @@ final class ViewCompiler
         private readonly string $rawViewPath,
         private readonly string $compiledViewPath,
         private readonly DocumentationMetadata $docMetadata,
-        private readonly FilesystemOperator $files
+        private readonly FilesystemOperator $files,
     ) {}
 
     /**
@@ -82,7 +82,7 @@ final class ViewCompiler
     private function compileCommonPartials(
         string $pageContents,
         array $metadataKeywords,
-        string $metadataDescription
+        string $metadataDescription,
     ): string {
         // Compile the head
         $headContents = $this->files->read("$this->rawViewPath/partials/head.html");
@@ -142,7 +142,7 @@ final class ViewCompiler
                     $compiledDocPageContents = $this->compileCommonPartials(
                         $docTemplatePageContents,
                         $doc['keywords'],
-                        $doc['description']
+                        $doc['description'],
                     );
                     $docContents = $this->files->read("$this->rawViewPath/partials/docs/$version/$docName.html");
                     $compiledDocPageContents = $this->compileTag('doc', $docContents, $compiledDocPageContents);
@@ -167,7 +167,7 @@ final class ViewCompiler
         $compiledHomepageContents = $this->compileCommonPartials(
             $homepageContents,
             ['aphiria', 'php', 'framework', 'rest', 'api'],
-            'A simple, extensible REST API framework'
+            'A simple, extensible REST API framework',
         );
         $sideNavContents = $this->files->read("$this->rawViewPath/partials/side-nav.html");
         $mainNavLinksContents = $this->files->read("$this->rawViewPath/partials/main-nav-links.html");
@@ -177,9 +177,9 @@ final class ViewCompiler
             $this->compileTag(
                 'mainNavLinks',
                 $mainNavLinksContents,
-                $nonDocSideNavContents
+                $nonDocSideNavContents,
             ),
-            $sideNavContents
+            $sideNavContents,
         );
         $compiledHomepageContents = $this->compileTag('sideNav', $compiledSideNav, $compiledHomepageContents);
         $this->files->write("$this->compiledViewPath/index.html", $compiledHomepageContents);

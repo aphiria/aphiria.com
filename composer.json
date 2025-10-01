@@ -33,6 +33,7 @@
         "league/commonmark": "^2.6",
         "league/flysystem": "^3.0",
         "php": ">=8.4",
+        "promphp/prometheus_client_php": "^2.14",
         "robmorgan/phinx": "0.x-dev",
         "symfony/dotenv": "^7.0"
     },
@@ -43,11 +44,18 @@
     },
     "scripts": {
         "phpcs-test": "@phpcs-fix --dry-run",
-        "phpcs-fix": "PHP_CS_FIXER_IGNORE_ENV=1 php-cs-fixer fix --config=.php-cs-fixer.dist.php -v --diff",
+        "phpcs-fix": "php-cs-fixer fix --config=.php-cs-fixer.dist.php -v --diff",
         "phpunit": "php vendor/phpunit/phpunit/phpunit --coverage-clover ./.coverage/clover.xml",
         "post-root-package-install": [
             "php -r \"file_exists('.env') || copy('.env.dist', '.env');\"",
-            "php -r \"file_exists('infrastructure/terraform/terraform.tfvars') || copy('infrastructure/terraform/terraform.tfvars.dist', 'infrastructure/terraform/terraform.tfvars');\""
+            "php -r \"file_exists('infrastructure/terraform/terraform.tfvars') || copy('infrastructure/terraform/terraform.tfvars.dist', 'infrastructure/terraform/terraform.tfvars');\"",
+            "php -r \"file_exists('infrastructure/kubernetes/environments/dev/core/secrets.yml') || copy('infrastructure/kubernetes/environments/dev/core/secrets.yml.dist', 'infrastructure/kubernetes/environments/dev/core/secrets.yml');\"",
+            "php -r \"file_exists('infrastructure/kubernetes/environments/dev/monitoring/secrets.yml') || copy('infrastructure/kubernetes/environments/dev/monitoring/secrets.yml.dist', 'infrastructure/kubernetes/environments/dev/monitoring/secrets.yml');\"",
+            "php -r \"file_exists('infrastructure/kubernetes/base/redis/default-secrets.yml') || copy('infrastructure/kubernetes/base/redis/default-secrets.yml.dist', 'infrastructure/kubernetes/base/redis/default-secrets.yml');\"",
+            "php -r \"file_exists('infrastructure/kubernetes/base/redis/monitoring-secrets.yml') || copy('infrastructure/kubernetes/base/redis/monitoring-secrets.yml.dist', 'infrastructure/kubernetes/base/redis/monitoring-secrets.yml');\"",
+            "php -r \"file_exists('infrastructure/kubernetes/environments/prod/core/secrets.yml') || copy('infrastructure/kubernetes/environments/prod/core/secrets.yml.dist', 'infrastructure/kubernetes/environments/prod/core/secrets.yml');\"",
+            "php -r \"file_exists('infrastructure/kubernetes/environments/prod/gateway-api/secrets.yml') || copy('infrastructure/kubernetes/environments/prod/gateway-api/secrets.yml.dist', 'infrastructure/kubernetes/environments/prod/gateway-api/secrets.yml');\"",
+            "php -r \"file_exists('infrastructure/kubernetes/environments/prod/monitoring/secrets.yml') || copy('infrastructure/kubernetes/environments/prod/monitoring/secrets.yml.dist', 'infrastructure/kubernetes/environments/prod/monitoring/secrets.yml');\""
         ],
         "post-create-project-cmd": [
             "php -r \"echo 'Important: make ' . __DIR__ . DIRECTORY_SEPARATOR . 'tmp writable' . PHP_EOL;\""
@@ -55,12 +63,22 @@
         "post-install-cmd": [
             "php -r \"shell_exec((file_exists(getcwd() . '/composer.phar') ? PHP_BINARY . ' composer.phar' : 'composer') . ' dump-autoload -o');\"",
             "php -r \"file_exists('.env') || copy('.env.dist', '.env');\"",
-            "php -r \"file_exists('infrastructure/terraform/terraform.tfvars') || copy('infrastructure/terraform/terraform.tfvars.dist', 'infrastructure/terraform/terraform.tfvars');\""
+            "php -r \"file_exists('infrastructure/terraform/terraform.tfvars') || copy('infrastructure/terraform/terraform.tfvars.dist', 'infrastructure/terraform/terraform.tfvars');\"",
+            "php -r \"file_exists('infrastructure/kubernetes/environments/dev/core/secrets.yml') || copy('infrastructure/kubernetes/environments/dev/core/secrets.yml.dist', 'infrastructure/kubernetes/environments/dev/core/secrets.yml');\"",
+            "php -r \"file_exists('infrastructure/kubernetes/environments/dev/monitoring/secrets.yml') || copy('infrastructure/kubernetes/environments/dev/monitoring/secrets.yml.dist', 'infrastructure/kubernetes/environments/dev/monitoring/secrets.yml');\"",
+            "php -r \"file_exists('infrastructure/kubernetes/environments/prod/core/secrets.yml') || copy('infrastructure/kubernetes/environments/prod/core/secrets.yml.dist', 'infrastructure/kubernetes/environments/prod/core/secrets.yml');\"",
+            "php -r \"file_exists('infrastructure/kubernetes/environments/prod/gateway-api/secrets.yml') || copy('infrastructure/kubernetes/environments/prod/gateway-api/secrets.yml.dist', 'infrastructure/kubernetes/environments/prod/gateway-api/secrets.yml');\"",
+            "php -r \"file_exists('infrastructure/kubernetes/environments/prod/monitoring/secrets.yml') || copy('infrastructure/kubernetes/environments/prod/monitoring/secrets.yml.dist', 'infrastructure/kubernetes/environments/prod/monitoring/secrets.yml');\""
         ],
         "post-update-cmd": [
             "php -r \"shell_exec((file_exists(getcwd() . '/composer.phar') ? PHP_BINARY . ' composer.phar' : 'composer') . ' dump-autoload -o');\"",
             "php -r \"file_exists('.env') || copy('.env.dist', '.env');\"",
-            "php -r \"file_exists('infrastructure/terraform/terraform.tfvars') || copy('infrastructure/terraform/terraform.tfvars.dist', 'infrastructure/terraform/terraform.tfvars');\""
+            "php -r \"file_exists('infrastructure/terraform/terraform.tfvars') || copy('infrastructure/terraform/terraform.tfvars.dist', 'infrastructure/terraform/terraform.tfvars');\"",
+            "php -r \"file_exists('infrastructure/kubernetes/environments/dev/core/secrets.yml') || copy('infrastructure/kubernetes/environments/dev/core/secrets.yml.dist', 'infrastructure/kubernetes/environments/dev/core/secrets.yml');\"",
+            "php -r \"file_exists('infrastructure/kubernetes/environments/dev/monitoring/secrets.yml') || copy('infrastructure/kubernetes/environments/dev/monitoring/secrets.yml.dist', 'infrastructure/kubernetes/environments/dev/monitoring/secrets.yml');\"",
+            "php -r \"file_exists('infrastructure/kubernetes/environments/prod/core/secrets.yml') || copy('infrastructure/kubernetes/environments/prod/core/secrets.yml.dist', 'infrastructure/kubernetes/environments/prod/core/secrets.yml');\"",
+            "php -r \"file_exists('infrastructure/kubernetes/environments/prod/gateway-api/secrets.yml') || copy('infrastructure/kubernetes/environments/prod/gateway-api/secrets.yml.dist', 'infrastructure/kubernetes/environments/prod/gateway-api/secrets.yml');\"",
+            "php -r \"file_exists('infrastructure/kubernetes/environments/prod/monitoring/secrets.yml') || copy('infrastructure/kubernetes/environments/prod/monitoring/secrets.yml.dist', 'infrastructure/kubernetes/environments/prod/monitoring/secrets.yml');\""
         ],
         "psalm": [
             "Composer\\Config::disableProcessTimeout",

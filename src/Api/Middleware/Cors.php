@@ -36,7 +36,7 @@ final class Cors implements IMiddleware
     {
         // Strip off any port numbers
         /** @var array{scheme: string, host: string} $allowedOriginUriParts */
-        $allowedOriginUriParts = \parse_url((string)\getenv('APP_WEB_URL'));
+        $allowedOriginUriParts = \parse_url((string) \getenv('APP_WEB_URL'));
         $this->allowedOrigin = "{$allowedOriginUriParts['scheme']}://{$allowedOriginUriParts['host']}";
     }
 
@@ -72,7 +72,7 @@ final class Cors implements IMiddleware
             new KeyValuePair('Access-Control-Allow-Origin', $this->allowedOrigin),
             new KeyValuePair('Access-Control-Allow-Methods', \implode(', ', self::$allowedMethods)),
             new KeyValuePair('Access-Control-Allow-Headers', \implode(', ', self::$allowedHeaders)),
-            new KeyValuePair('Access-Control-Allow-Credentials', 'true')
+            new KeyValuePair('Access-Control-Allow-Credentials', 'true'),
         ];
         $response->headers->addRange($headers);
 

@@ -11,7 +11,6 @@
 declare(strict_types=1);
 
 use Aphiria\DependencyInjection\Container;
-use Aphiria\DependencyInjection\ResolutionException;
 use App\Documentation\Searching\Context;
 use App\Documentation\Searching\IndexEntry;
 use App\Documentation\Searching\IndexingFailedException;
@@ -31,7 +30,7 @@ class LexemeSeeder extends AbstractSeed
         'h5' => 'D',
         'p' => 'D',
         'li' => 'D',
-        'blockquote' => 'D'
+        'blockquote' => 'D',
     ];
 
     /**
@@ -116,7 +115,7 @@ class LexemeSeeder extends AbstractSeed
         ?DOMNode $h2,
         ?DOMNode $h3,
         ?DOMNode $h4,
-        ?DOMNode $h5
+        ?DOMNode $h5,
     ): IndexEntry {
         $link = "/docs/$version/";
 
@@ -153,7 +152,7 @@ class LexemeSeeder extends AbstractSeed
             $h2 === null ? null : $this->getAllChildNodeTexts($h2),
             $h3 === null ? null : $this->getAllChildNodeTexts($h3),
             $h4 === null ? null : $this->getAllChildNodeTexts($h4),
-            $h5 === null ? null : $this->getAllChildNodeTexts($h5)
+            $h5 === null ? null : $this->getAllChildNodeTexts($h5),
         );
     }
 
@@ -176,6 +175,33 @@ class LexemeSeeder extends AbstractSeed
         }
 
         return $text;
+    }
+
+    /**
+     * Gets the context for a node
+     *
+     * @param DOMNode $node The node whose context we want
+     * @return Context The current context
+     */
+    private function getContext(DOMNode $node): Context
+    {
+        while ($node !== null) {
+            if ($node instanceof DOMElement && $node->hasAttribute('class')) {
+                $classes = \explode(' ', $node->getAttribute('class'));
+
+                if (\in_array('context-framework', $classes, true)) {
+                    return Context::Framework;
+                }
+
+                if (\in_array('context-library', $classes, true)) {
+                    return Context::Library;
+                }
+            }
+
+            $node = $node->parentElement;
+        }
+
+        return Context::Global;
     }
 
     /**
@@ -221,7 +247,8 @@ class LexemeSeeder extends AbstractSeed
      */
     private function insertIndexEntry(IndexEntry $indexEntry): void
     {
-        $this->execute(<<<EOF
+        $this->execute(
+            <<<EOF
 INSERT INTO lexemes (version, h1_inner_text, h2_inner_text, h3_inner_text, h4_inner_text, h5_inner_text, link, html_element_type, inner_text, html_element_weight, context)
 VALUES (:version, :h1InnerText, :h2InnerText, :h3InnerText, :h4InnerText, :h5InnerText, :link, :htmlElementType, :innerText, :htmlElementWeight, :context)
 EOF,
@@ -236,8 +263,8 @@ EOF,
                 'htmlElementType' => $indexEntry->htmlElementType,
                 'innerText' => $indexEntry->innerText,
                 'htmlElementWeight' => $indexEntry->htmlElementWeight,
-                'context' => $indexEntry->context->value
-            ]
+                'context' => $indexEntry->context->value,
+            ],
         );
     }
 
@@ -263,7 +290,7 @@ EOF,
         ?DOMNode &$h2,
         ?DOMNode &$h3,
         ?DOMNode &$h4,
-        ?DOMNode &$h5
+        ?DOMNode &$h5,
     ): void {
         if ($this->shouldSkipProcessingNode($node)) {
             return;
@@ -304,7 +331,7 @@ EOF,
                 $h2,
                 $h3,
                 $h4,
-                $h5
+                $h5,
             );
         }
 
@@ -312,33 +339,6 @@ EOF,
         foreach ($node->childNodes as $childNode) {
             $this->processNode($version, $childNode, $indexEntries, $htmlPath, $h1, $h2, $h3, $h4, $h5);
         }
-    }
-
-    /**
-     * Gets the context for a node
-     *
-     * @param DOMNode $node The node whose context we want
-     * @return Context The current context
-     */
-    private function getContext(DOMNode $node): Context
-    {
-        while ($node !== null) {
-            if ($node instanceof DOMElement && $node->hasAttribute('class')) {
-                $classes = \explode(' ', $node->getAttribute('class'));
-
-                if (\in_array('context-framework', $classes, true)) {
-                    return Context::Framework;
-                }
-
-                if (\in_array('context-library', $classes, true)) {
-                    return Context::Library;
-                }
-            }
-
-            $node = $node->parentElement;
-        }
-
-        return Context::Global;
     }
 
     /**
@@ -360,9 +360,10 @@ EOF,
      */
     private function updateLexemes(): void
     {
-        $this->execute(<<<EOF
+        $this->execute(
+            <<<EOF
 UPDATE lexemes SET english_lexemes = setweight(to_tsvector('english', COALESCE(inner_text, '')), html_element_weight::"char"), simple_lexemes = setweight(to_tsvector(COALESCE(inner_text, '')), html_element_weight::"char")
-EOF
+EOF,
         );
     }
 }

@@ -33,6 +33,7 @@ Add the following to your host file:
 127.0.0.1 aphiria.com
 127.0.0.1 api.aphiria.com
 127.0.0.1 www.aphiria.com
+127.0.0.1 grafana.aphiria.com
 ```
 
 ### Log Into Docker
@@ -55,7 +56,7 @@ kubectl config view --flatten > ~/combined.yml
 cp ~/combined.yml ~/.kube/config
 ```
 
-Verify that you see multiple context by running
+Verify that you see multiple contexts by running
 
 ```
 kubectl config get-contexts
@@ -66,19 +67,6 @@ To switch contexts, simply run
 ```
 kubectl config use-context DESIRED_CONTEXT_NAME
 ```
-
-## Build The Application
-
-You must build your Docker images before you can run the application.  The following will configure Minikube to use its own Docker registry and build the images:
-
-```
-eval $(minikube -p minikube docker-env) \
-&& docker build -t aphiria.com-build -f ./infrastructure/docker/build/Dockerfile . \
-&& docker build -t aphiria.com-api -f ./infrastructure/docker/runtime/api/Dockerfile . --build-arg BUILD_IMAGE=aphiria.com-build \
-&& docker build -t aphiria.com-web -f ./infrastructure/docker/runtime/web/Dockerfile . --build-arg BUILD_IMAGE=aphiria.com-build
-```
-
-> **Note:** To bust the Docker's cache, you should run `gulp build` locally prior to building the images to ensure you're building with the latest compiled documentation.
 
 ## Run The Application
 
@@ -93,23 +81,39 @@ minikube start \
 
 > **Note:** If you're running as the root user, run `minikube start --force` instead.
 
-In another console terminal, create a tunnel to be able to connect to Minikube:
+> **Note:** If you're having issues with starting the Minikube cluster, run `minikube delete` and then retry the commands.
+
+### Build The Application
+
+You must build your Docker images before you can run the application.  The following will configure Minikube to use its own Docker registry and build the images:
+
+```
+eval $(minikube -p minikube docker-env) \
+&& docker build -t aphiria.com-build -f ./infrastructure/docker/build/Dockerfile . \
+&& docker build -t aphiria.com-api -f ./infrastructure/docker/runtime/api/Dockerfile . --build-arg BUILD_IMAGE=aphiria.com-build \
+&& docker build -t aphiria.com-web -f ./infrastructure/docker/runtime/web/Dockerfile . --build-arg BUILD_IMAGE=aphiria.com-build
+```
+
+> **Note:** To bust the Docker's cache, you should run `gulp build` locally prior to building the images to ensure you're building with the latest compiled documentation.
+
+### Set Up Your Kubernetes Cluster
+
+Run these commands to set up the resources in your cluster:
+
+```
+kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.3.0/standard-install.yaml \
+&& kubectl apply -k ./infrastructure/kubernetes/environments/dev \
+&& helmfile -f ./infrastructure/kubernetes/base/helmfile.yml repos \
+&& helmfile -f ./infrastructure/kubernetes/base/helmfile.yml sync
+```
+
+In another console, create a tunnel to be able to connect to Minikube:
 
 ```
 minikube tunnel
 ```
 
-> **Note:** Be sure to enter your `sudo` password when prompted.
-
-### Set Up Your Kubernetes Cluster
-
-Use Helmfile to install the required Helm charts and apply the dev Kubernetes manifest:
-
-```
-helmfile -f ./infrastructure/kubernetes/base/helmfile.yml repos \
-&& helmfile -f ./infrastructure/kubernetes/base/helmfile.yml sync \
-&& kubectl apply -k ./infrastructure/kubernetes/environments/dev
-```
+> **Note:** Be sure to enter your `sudo` password when prompted.  This prompt will only appear after you've started running the Gateway API as it requires ports 80 and 443 to be opened, and they're privileged ports.
 
 You should now be able to hit https://www.aphiria.com in your browser.  You will get a TLS certificate error since we're using a self-signed certificate locally.
 
@@ -131,3 +135,25 @@ To connect locally to the PostgreSQL database in Minikube, you'll need to config
 ```
 kubectl port-forward service/db 5432:5432
 ```
+
+## Viewing API logs
+
+You can view the logs for all instances of the API by running
+
+```
+kubectl logs -l app=api -n default -c php -f
+```
+
+## Viewing Prometheus
+
+To view the Prometheus dashboard, you'll need to configure port forwarding in a separate console:
+
+```
+kubectl port-forward -n monitoring svc/monitoring-stack-kube-prom-prometheus 9090
+```
+
+Then, visit http://localhost:9090/ in your browser.
+
+## Viewing Grafana
+
+To view the Grafana dashboard, visit https://grafana.aphiria.com.

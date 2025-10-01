@@ -18,6 +18,6 @@ namespace App\Documentation\Searching;
 enum Context: string
 {
     case Framework = 'framework';
-    case Library = 'library';
     case Global = 'global';
+    case Library = 'library';
 }

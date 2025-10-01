@@ -5,3 +5,4 @@ resources:
   - ./core/secrets.yml
   - ./gateway-api/certificates.yml
   - ./gateway-api/secrets.yml
+  - ./monitoring/secrets.yml

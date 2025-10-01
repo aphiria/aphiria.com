@@ -4,6 +4,7 @@ resources:
   - ./../../base
   - ./core/secrets.yml
   - ./gateway-api/certificates.yml
+  - ./monitoring/secrets.yml
 patches:
   # Update the images to be local for easier testing
   - target:

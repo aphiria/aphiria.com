@@ -30,6 +30,7 @@ spec:
       containers:
         - name: nginx
           image: nginx:alpine
+          # TODO: Add to simulate failed startup:  command: ["/bin/nonexistent-command"]
           livenessProbe:
             httpGet:
               path: /health
@@ -50,6 +51,8 @@ spec:
           envFrom:
             - secretRef:
                 name: env-var-secrets
+            - secretRef:
+                name: redis-secrets
             - configMapRef:
                 name: env-vars
           volumeMounts:
