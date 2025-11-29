@@ -27,7 +27,7 @@ final class WebModule extends AphiriaModule
     public function configure(IApplicationBuilder $appBuilder): void
     {
         $this->withBinders($appBuilder, [
-            new ViewCompilerBinder()
+            new ViewCompilerBinder(),
         ]);
     }
 }

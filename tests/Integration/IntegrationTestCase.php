@@ -26,7 +26,7 @@ class IntegrationTestCase extends BaseIntegrationTestCase
 {
     /** @inheritdoc */
     protected ?string $appUri {
-        get => empty($appUrl = (string)getenv('APP_WEB_URL')) ? null : $appUrl;
+        get => empty($appUrl = (string) \getenv('APP_WEB_URL')) ? null : $appUrl;
     }
 
     protected function tearDown(): void
@@ -44,7 +44,7 @@ class IntegrationTestCase extends BaseIntegrationTestCase
     {
         $globalModule = new GlobalModule($container);
         $globalModule->bootstrap();
-        $appBuilderClass = (string)\getenv('APP_BUILDER_API');
+        $appBuilderClass = (string) \getenv('APP_BUILDER_API');
 
         if (!\class_exists($appBuilderClass) || !\is_subclass_of($appBuilderClass, IApplicationBuilder::class)) {
             throw new TypeError('Environment variable "APP_BUILDER_API" must implement ' . IApplicationBuilder::class);
