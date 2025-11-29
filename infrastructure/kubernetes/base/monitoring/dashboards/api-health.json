@@ -1,0 +1,165 @@
+{
+    "id": null,
+    "uid": "api-metrics-dashboard",
+    "title": "API Metrics",
+    "tags": ["api", "prometheus"],
+    "timezone": "browser",
+    "schemaVersion": 36,
+    "version": 2,
+    "refresh": "5s",
+    "templating": {
+        "list": [
+            {
+                "name": "DS_PROMETHEUS",
+                "type": "datasource",
+                "label": "Prometheus",
+                "hide": 0,
+                "includeAll": false,
+                "multi": false,
+                "options": [],
+                "query": "prometheus",
+                "refresh": 1,
+                "current": {
+                    "text": "Prometheus",
+                    "value": "Prometheus"
+                },
+                "datasource": {
+                    "type": "prometheus",
+                    "uid": "Prometheus"
+                }
+            }
+        ]
+    },
+    "panels": [
+        {
+            "type": "timeseries",
+            "title": "Requests by Path & Status Code",
+            "gridPos": { "x": 0, "y": 0, "w": 24, "h": 9 },
+            "datasource": "${DS_PROMETHEUS}",
+            "fieldConfig": {
+                "defaults": {
+                    "unit": "reqps",
+                    "min": 0
+                },
+                "overrides": []
+            },
+            "options": {
+                "legend": {
+                    "displayMode": "table",
+                    "placement": "bottom",
+                    "calcs": []
+                },
+                "tooltip": {
+                    "mode": "single"
+                }
+            },
+            "targets": [
+                {
+                    "expr": "sum by (path, status) (rate(app_http_requests_total[5m]))",
+                    "interval": "",
+                    "legendFormat": "{{path}} ({{status}})",
+                    "refId": "A"
+                }
+            ]
+        },
+        {
+            "type": "timeseries",
+            "title": "Response Latency (95th Percentile) by Path",
+            "gridPos": { "x": 0, "y": 9, "w": 24, "h": 9 },
+            "datasource": "${DS_PROMETHEUS}",
+            "fieldConfig": {
+                "defaults": {
+                    "unit": "s",
+                    "min": 0
+                },
+                "overrides": []
+            },
+            "options": {
+                "legend": {
+                    "displayMode": "table",
+                    "placement": "bottom",
+                    "calcs": []
+                },
+                "tooltip": {
+                    "mode": "single"
+                }
+            },
+            "targets": [
+                {
+                    "expr": "histogram_quantile(0.95, sum by (le, path) (rate(app_http_request_duration_seconds_bucket[5m])))",
+                    "interval": "",
+                    "legendFormat": "{{path}}",
+                    "refId": "A"
+                }
+            ]
+        },
+        {
+            "type": "timeseries",
+            "title": "Request Rate Over Time",
+            "gridPos": { "x": 0, "y": 18, "w": 24, "h": 9 },
+            "datasource": "${DS_PROMETHEUS}",
+            "fieldConfig": {
+                "defaults": {
+                    "unit": "reqps",
+                    "min": 0
+                },
+                "overrides": []
+            },
+            "options": {
+                "legend": {
+                    "displayMode": "table",
+                    "placement": "bottom",
+                    "calcs": []
+                },
+                "tooltip": {
+                    "mode": "single"
+                }
+            },
+            "targets": [
+                {
+                    "expr": "sum(rate(app_http_requests_total[5m]))",
+                    "interval": "",
+                    "legendFormat": "total requests",
+                    "refId": "A"
+                }
+            ]
+        },
+        {
+            "type": "timeseries",
+            "title": "Error Rates Over Time (4xx vs 5xx)",
+            "gridPos": { "x": 0, "y": 27, "w": 24, "h": 9 },
+            "datasource": "${DS_PROMETHEUS}",
+            "fieldConfig": {
+                "defaults": {
+                    "unit": "reqps",
+                    "min": 0
+                },
+                "overrides": []
+            },
+            "options": {
+                "legend": {
+                    "displayMode": "table",
+                    "placement": "bottom",
+                    "calcs": []
+                },
+                "tooltip": {
+                    "mode": "single"
+                }
+            },
+            "targets": [
+                {
+                    "expr": "sum(rate(app_http_requests_total{status=~\"4..\"}[5m]))",
+                    "interval": "",
+                    "legendFormat": "4xx errors",
+                    "refId": "B"
+                },
+                {
+                    "expr": "sum(rate(app_http_requests_total{status=~\"5..\"}[5m]))",
+                    "interval": "",
+                    "legendFormat": "5xx errors",
+                    "refId": "C"
+                }
+            ]
+        }
+    ]
+}

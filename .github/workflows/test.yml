@@ -22,8 +22,25 @@ jobs:
           POSTGRES_DB: public
           # This is a temporary database used just for CI
           POSTGRES_PASSWORD: password
+          REDIS_HOST: localhost
+          REDIS_PORT: 6379
+          # This is a temporary Redis used just for CI
+          REDIS_PASSWORD: password
         ports:
           - 5432:5432
+      redis:
+        image: bitnami/redis:latest
+        env:
+          # must match your REDIS_PASSWORD in the TEST secret or hard-coded here
+          REDIS_PASSWORD: password
+        ports:
+          - 6379:6379
+        # Add a simple health check so Actions waits for Redis
+        options: >-
+          --health-cmd "redis-cli -a password ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     # Need to make sure we're using the right environment variables when compiling the views
     env:
       APP_WEB_URL: https://www.aphiria.com
@@ -40,7 +57,7 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
-          extensions: curl, dom, libxml, mbstring, pcntl, pgsql, xdebug, zip
+          extensions: curl, dom, libxml, mbstring, pcntl, pgsql, redis, xdebug, zip
           tools: composer:v2
           coverage: xdebug
       - name: Install Dependencies
@@ -73,7 +90,7 @@ jobs:
           php-coveralls --coverage_clover=./.coverage/clover.xml --json_path=./coveralls-upload.json -v
       - name: Terraform Plan
         id: terraform-plan
-        if: github.event_name == 'pull_request'
+        if: github.event_name == 'pull_request' && matrix.php == '8.4'
         run: |
           terraform -chdir=./infrastructure/terraform init -backend-config="access_key=${{ secrets.DIGITALOCEAN_SPACES_ACCESS_KEY }}" -backend-config="secret_key=${{ secrets.DIGITALOCEAN_SPACES_SECRET_KEY }}"
           terraform -chdir=./infrastructure/terraform validate

@@ -7,27 +7,31 @@ FROM ${BUILD_IMAGE}:${IMAGE_SHA} AS build
 FROM php:8.4-fpm AS base
 WORKDIR /app/api
 
-# Build deps for PHP 8.4 extensions
+# Build deps for PHPextensions
 RUN apt-get update && apt-get install -y --no-install-recommends \
     $PHPIZE_DEPS \
     git cmake unzip \
     libxml2-dev libpq-dev libzip-dev zlib1g-dev libicu-dev \
  && rm -rf /var/lib/apt/lists/*
 
-# Make sure PHP source root is in the compiler include path (helps DOM+Lexbor on some setups)
+# Help DOM’s vendored Lexbor find headers reliably
 ENV CPPFLAGS="-I/usr/src/php"
 
 # Build bundled extensions
 RUN docker-php-ext-install -j"$(nproc)" \
     dom intl opcache zip pdo pdo_pgsql pgsql
 
-# Stage 3: Copy over files
+# Install Redis
+RUN pecl install redis \
+ && docker-php-ext-enable redis
+
+# Stage 3: copy files
 FROM base
 
-# Copy the API application from the build image
+# Copy the API source files from the build image
 COPY --from=build /app/infrastructure/database ./infrastructure/database
 COPY --from=build /app/public-api          ./public
-# We need the web files to be able to index their contents
+# Needed so the API can index web contents
 COPY --from=build /app/public-web          ./public-web
 COPY --from=build /app/src                 ./src
 COPY --from=build /app/tests               ./tests
