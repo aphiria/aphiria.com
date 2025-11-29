@@ -48,6 +48,7 @@ final class Cors implements IMiddleware
         $requestedMethod = null;
 
         // Check if this is a preflight request
+        /** @psalm-suppress MixedMethodCall Psalm cannot figure out the type of the headers - bug */
         if ($request->method === 'OPTIONS' && $request->headers->tryGetFirst('Access-Control-Request-Method', $requestedMethod)) {
             if (!\in_array($requestedMethod, self::$allowedMethods, true)) {
                 return $this->addCorsResponseHeaders(new Response(HttpStatusCode::MethodNotAllowed));
@@ -74,6 +75,7 @@ final class Cors implements IMiddleware
             new KeyValuePair('Access-Control-Allow-Headers', \implode(', ', self::$allowedHeaders)),
             new KeyValuePair('Access-Control-Allow-Credentials', 'true'),
         ];
+        /** @psalm-suppress MixedMethodCall Psalm cannot figure out the type of the headers - bug */
         $response->headers->addRange($headers);
 
         return $response;

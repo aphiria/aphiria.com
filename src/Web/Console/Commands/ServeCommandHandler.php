@@ -17,6 +17,7 @@ use Aphiria\Console\Commands\ICommandHandler;
 use Aphiria\Console\Input\Input;
 use Aphiria\Console\Output\IOutput;
 use Aphiria\Console\StatusCode;
+use RuntimeException;
 
 /**
  * Defines the handler for the serve command
@@ -29,18 +30,34 @@ final class ServeCommandHandler implements ICommandHandler
      */
     public function handle(Input $input, IOutput $output)
     {
+        $publicApiPath = \realpath(__DIR__ . '/../../../../public-api');
+        $publicWebPath = \realpath(__DIR__ . '/../../../../public-web');
+        $localhostRouterPath = \realpath(__DIR__ . '/../../../../localhost-router.php');
+
+        if (!\is_string($publicApiPath)) {
+            throw new RuntimeException('Public API path does not exist');
+        }
+
+        if (!\is_string($publicWebPath)) {
+            throw new RuntimeException('Public web path does not exist');
+        }
+
+        if (!\is_string($localhostRouterPath)) {
+            throw new RuntimeException('Localhost router path does not exist');
+        }
+
         $runApiCommand = \sprintf(
             '%s -S %s -t "%s" "%s"',
             PHP_BINARY,
             \str_replace(['http://', 'https://'], ['', ''], (string) \getenv('APP_API_URL')),
-            \realpath(__DIR__ . '/../../../../public-api'),
-            \realpath(__DIR__ . '/../../../../localhost-router.php'),
+            $publicApiPath,
+            $localhostRouterPath,
         );
         $runWebCommand = \sprintf(
             '%s -S %s -t "%s"',
             PHP_BINARY,
             \str_replace(['http://', 'https://'], ['', ''], (string) \getenv('APP_WEB_URL')),
-            \realpath(__DIR__ . '/../../../../public-web'),
+            $publicWebPath,
         );
 
         $this->runCommandsInBackground([$runApiCommand, $runWebCommand], $output);
@@ -60,7 +77,13 @@ final class ServeCommandHandler implements ICommandHandler
             $output->writeln("<info>Running command:</info> $command");
 
             if (\strpos(\php_uname(), 'Windows') === 0) {
-                \pclose(\popen("start /B $command", 'r'));
+                $openProcess = \popen("start /B $command", 'r');
+
+                if ($openProcess === false) {
+                    throw new RuntimeException("Failed to run command: $command");
+                }
+
+                \pclose($openProcess);
             } else {
                 \exec("$command> /dev/null &");
             }
