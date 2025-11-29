@@ -54,7 +54,7 @@ final class Prometheus implements IMiddleware
             $counter->inc([
                 $request->method,
                 self::getPathWithQueryString($request),
-                $response->statusCode->value,
+                (string) $response->statusCode->value,
             ]);
 
             // Histogram
@@ -85,6 +85,6 @@ final class Prometheus implements IMiddleware
      */
     private static function getPathWithQueryString(IRequest $request): string
     {
-        return $request->uri->path . ($request->uri->queryString === null ? '' : '?' . $request->uri->queryString);
+        return ($request->uri->path ?? '') . ($request->uri->queryString === null ? '' : '?' . $request->uri->queryString);
     }
 }

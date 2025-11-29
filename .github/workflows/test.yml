@@ -14,6 +14,7 @@ jobs:
       matrix:
         include:
           - php: '8.4'
+          - php: '8.5'
     services:
       postgres:
         image: postgres:16-alpine
@@ -78,8 +79,9 @@ jobs:
         run: composer phpunit
       - name: Run Linter
         run: composer phpcs-test
-      #- name: Run Psalm Static Analysis
-      #  run: composer psalm -- --shepherd
+      - name: Run Psalm Static Analysis
+        if: matrix.php == '8.4'
+        run: composer psalm -- --shepherd
       - name: Upload Coverage Results To Coveralls
         env:
           COVERALLS_REPO_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -88,7 +90,7 @@ jobs:
           php-coveralls --coverage_clover=./.coverage/clover.xml --json_path=./coveralls-upload.json -v
       - name: Terraform Plan
         id: terraform-plan
-        if: github.event_name == 'pull_request'
+        if: github.event_name == 'pull_request' && matrix.php == '8.4'
         run: |
           terraform -chdir=./infrastructure/terraform init -backend-config="access_key=${{ secrets.DIGITALOCEAN_SPACES_ACCESS_KEY }}" -backend-config="secret_key=${{ secrets.DIGITALOCEAN_SPACES_SECRET_KEY }}"
           terraform -chdir=./infrastructure/terraform validate
