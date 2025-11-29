@@ -36,7 +36,7 @@ final class Cors implements IMiddleware
     {
         // Strip off any port numbers
         /** @var array{scheme: string, host: string} $allowedOriginUriParts */
-        $allowedOriginUriParts = \parse_url((string)\getenv('APP_WEB_URL'));
+        $allowedOriginUriParts = \parse_url((string) \getenv('APP_WEB_URL'));
         $this->allowedOrigin = "{$allowedOriginUriParts['scheme']}://{$allowedOriginUriParts['host']}";
     }
 
@@ -48,6 +48,7 @@ final class Cors implements IMiddleware
         $requestedMethod = null;
 
         // Check if this is a preflight request
+        /** @psalm-suppress MixedMethodCall Psalm cannot figure out the type of the headers - bug */
         if ($request->method === 'OPTIONS' && $request->headers->tryGetFirst('Access-Control-Request-Method', $requestedMethod)) {
             if (!\in_array($requestedMethod, self::$allowedMethods, true)) {
                 return $this->addCorsResponseHeaders(new Response(HttpStatusCode::MethodNotAllowed));
@@ -72,8 +73,9 @@ final class Cors implements IMiddleware
             new KeyValuePair('Access-Control-Allow-Origin', $this->allowedOrigin),
             new KeyValuePair('Access-Control-Allow-Methods', \implode(', ', self::$allowedMethods)),
             new KeyValuePair('Access-Control-Allow-Headers', \implode(', ', self::$allowedHeaders)),
-            new KeyValuePair('Access-Control-Allow-Credentials', 'true')
+            new KeyValuePair('Access-Control-Allow-Credentials', 'true'),
         ];
+        /** @psalm-suppress MixedMethodCall Psalm cannot figure out the type of the headers - bug */
         $response->headers->addRange($headers);
 
         return $response;

@@ -54,7 +54,7 @@ class DocumentationTest extends IntegrationTestCase
              */
             static function (array $results): bool {
                 return \count($results) > 0 && \str_contains($results[0]->highlightedH1, 'Routing');
-            }
+            },
         );
     }
 
@@ -70,7 +70,7 @@ class DocumentationTest extends IntegrationTestCase
             SearchResult::class . '[]',
             static function (array $results): bool {
                 return \count($results) === 0;
-            }
+            },
         );
     }
 }

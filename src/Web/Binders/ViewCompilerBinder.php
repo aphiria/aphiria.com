@@ -32,7 +32,7 @@ final class ViewCompilerBinder extends Binder
             '/resources/views',
             '/public-web',
             $container->resolve(DocumentationMetadata::class),
-            $container->resolve(FilesystemOperator::class)
+            $container->resolve(FilesystemOperator::class),
         );
         $container->bindInstance(ViewCompiler::class, $viewCompiler);
     }

@@ -41,7 +41,7 @@ final class DocumentationBuilder
         private readonly string $clonedDocAbsolutePath,
         private readonly string $clonedDocRelativePath,
         private readonly string $htmlDocPath,
-        private readonly FilesystemOperator $files
+        private readonly FilesystemOperator $files,
     ) {}
 
     /**
@@ -77,11 +77,12 @@ final class DocumentationBuilder
                 foreach ($markdownFilePaths as $markdownFilePath) {
                     $markdownFilename = \pathinfo($markdownFilePath, PATHINFO_FILENAME);
                     $htmlDocFilename = "$branchDocDir/$markdownFilename.html";
+                    /** @var string $html Psalm misinterprets this as being nullable */
                     $html = $this->markdownConverter->convert($this->files->read($markdownFilePath))->getContent();
                     // Rewrite the links to point to the HTML docs on the site
                     // Note that we explicitly match <a> tags without a target (eg target="_blank") to avoid rewriting links that may be pointing externally, eg to the documentation repo in GitHub
                     $html = \preg_replace('/<a href="([^"]+)\.md(#[^"]+)?">/', '<a href="$1.html$2">', $html);
-                    $this->files->write($htmlDocFilename, $html);
+                    $this->files->write($htmlDocFilename, (string) $html);
                 }
             }
         } catch (FilesystemException|CommonMarkException|ConfigurationExceptionInterface $ex) {
@@ -143,8 +144,8 @@ final class DocumentationBuilder
                         'git clone -b %s --single-branch %s "%s"',
                         $branch,
                         self::GITHUB_REPOSITORY,
-                        $this->clonedDocAbsolutePath . "/$branch"
-                    )
+                        $this->clonedDocAbsolutePath . "/$branch",
+                    ),
                 );
 
                 // Delete the .git directory so we don't get multiple VCS roots registered
