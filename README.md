@@ -25,6 +25,20 @@ First, [install Docker](https://docs.docker.com/engine/install/).  Then, run `./
 
 > **Note:** You may have to run `chmod +x ./install.sh` to make the script executable.
 
+After installing Pulumi, add it to your PATH for future sessions:
+
+```bash
+echo 'export PATH=$PATH:$HOME/.pulumi/bin' >> ~/.bashrc
+source ~/.bashrc
+```
+
+Or for zsh:
+
+```bash
+echo 'export PATH=$PATH:$HOME/.pulumi/bin' >> ~/.zshrc
+source ~/.zshrc
+```
+
 ### Update Your Host File
 
 Add the following to your host file:

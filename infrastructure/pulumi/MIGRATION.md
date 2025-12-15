@@ -22,10 +22,17 @@ npm install
 Set up environment variables for the S3-compatible backend (DigitalOcean Spaces):
 
 ```bash
+# For S3 backend (state storage)
 export AWS_ACCESS_KEY_ID="<your-spaces-access-key>"
 export AWS_SECRET_ACCESS_KEY="<your-spaces-secret-key>"
 export AWS_REGION="us-east-1"
+
+# For DigitalOcean provider (same values as above, different variable names)
 export DIGITALOCEAN_TOKEN="<your-do-token>"
+export SPACES_ACCESS_KEY_ID="<your-spaces-access-key>"  # Same as AWS_ACCESS_KEY_ID
+export SPACES_SECRET_ACCESS_KEY="<your-spaces-secret-key>"  # Same as AWS_SECRET_ACCESS_KEY
+
+# For Pulumi encryption
 export PULUMI_CONFIG_PASSPHRASE="<choose-a-strong-passphrase>"
 ```
 
@@ -63,25 +70,31 @@ pulumi import digitalocean:index/domain:Domain default aphiria.com
 
 **DNS Records:**
 ```bash
-# Get record IDs from: doctl compute domain records list aphiria.com
-pulumi import digitalocean:index/dnsRecord:DnsRecord a <record-id>
-pulumi import digitalocean:index/dnsRecord:DnsRecord api-a <api-record-id>
-pulumi import digitalocean:index/dnsRecord:DnsRecord www-cname <www-record-id>
-pulumi import digitalocean:index/dnsRecord:DnsRecord mx-default <mx-default-id>
-pulumi import digitalocean:index/dnsRecord:DnsRecord mx-1 <mx-1-id>
-pulumi import digitalocean:index/dnsRecord:DnsRecord mx-2 <mx-2-id>
-pulumi import digitalocean:index/dnsRecord:DnsRecord mx-3 <mx-3-id>
-pulumi import digitalocean:index/dnsRecord:DnsRecord mx-4 <mx-4-id>
-pulumi import digitalocean:index/dnsRecord:DnsRecord ns-1 <ns-1-id>
-pulumi import digitalocean:index/dnsRecord:DnsRecord ns-2 <ns-2-id>
-pulumi import digitalocean:index/dnsRecord:DnsRecord ns-3 <ns-3-id>
+# A records
+pulumi import digitalocean:index/dnsRecord:DnsRecord a aphiria.com,1744933307
+pulumi import digitalocean:index/dnsRecord:DnsRecord api-a aphiria.com,1744933306
+
+# CNAME records
+pulumi import digitalocean:index/dnsRecord:DnsRecord www-cname aphiria.com,1744933304
+
+# MX records
+pulumi import digitalocean:index/dnsRecord:DnsRecord mx-default aphiria.com,1744933308  # priority 1, aspmx.l.google.com
+pulumi import digitalocean:index/dnsRecord:DnsRecord mx-1 aphiria.com,1744933310        # priority 5, alt1.aspmx.l.google.com
+pulumi import digitalocean:index/dnsRecord:DnsRecord mx-2 aphiria.com,1744933305        # priority 5, alt2.aspmx.l.google.com
+pulumi import digitalocean:index/dnsRecord:DnsRecord mx-3 aphiria.com,1744933309        # priority 10, alt3.aspmx.l.google.com
+pulumi import digitalocean:index/dnsRecord:DnsRecord mx-4 aphiria.com,1744933302        # priority 10, alt4.aspmx.l.google.com
+
+# NS records (using the first occurrence of each)
+pulumi import digitalocean:index/dnsRecord:DnsRecord ns-1 aphiria.com,1744933299  # ns1.digitalocean.com
+pulumi import digitalocean:index/dnsRecord:DnsRecord ns-2 aphiria.com,1744933300  # ns2.digitalocean.com
+pulumi import digitalocean:index/dnsRecord:DnsRecord ns-3 aphiria.com,1744933301  # ns3.digitalocean.com
 ```
 
 **Uptime Checks:**
 ```bash
-# Get uptime check IDs from: doctl monitoring uptime-check list
-pulumi import digitalocean:index/uptimeCheck:UptimeCheck api <api-check-id>
-pulumi import digitalocean:index/uptimeCheck:UptimeCheck web <web-check-id>
+# Get uptime check IDs from: doctl monitoring uptime list
+pulumi import digitalocean:index/uptimeCheck:UptimeCheck api a0512b62-000e-4344-9588-da1b1bb352b5
+pulumi import digitalocean:index/uptimeCheck:UptimeCheck web 0258c53d-efa3-4f4f-85a1-084856151859
 ```
 
 ### 6. Verify Import
