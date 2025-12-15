@@ -1,8 +1,8 @@
 import * as kubernetes from "@pulumi/kubernetes";
-import { createKubernetesCluster } from "./src/kubernetes";
-import { createMonitoring } from "./src/monitoring";
-import { createNetworking } from "./src/networking";
-import { createStorage } from "./src/storage";
+import { createKubernetesCluster } from "./kubernetes";
+import { createMonitoring } from "./monitoring";
+import { createNetworking } from "./networking";
+import { createStorage } from "./storage";
 
 // Create storage bucket (for state and other infrastructure needs)
 const storage = createStorage();
