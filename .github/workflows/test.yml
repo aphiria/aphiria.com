@@ -73,7 +73,7 @@ jobs:
           npm run lint
           npm run format:check
           npm run type-check
-      - name: Upload Coverage Results To Coveralls
+      - name: Upload PHP Coverage Results To Coveralls
         env:
           COVERALLS_REPO_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
