@@ -73,7 +73,7 @@ jobs:
           php-coveralls --coverage_clover=./.coverage/clover.xml --json_path=./coveralls-upload.json -v
       - name: Terraform Plan
         id: terraform-plan
-        if: github.event_name == 'pull_request'
+        if: matrix.php == '8.4' && github.event_name == 'pull_request'
         run: |
           terraform -chdir=./infrastructure/terraform init -backend-config="access_key=${{ secrets.DIGITALOCEAN_SPACES_ACCESS_KEY }}" -backend-config="secret_key=${{ secrets.DIGITALOCEAN_SPACES_SECRET_KEY }}"
           terraform -chdir=./infrastructure/terraform validate
@@ -84,7 +84,7 @@ jobs:
         continue-on-error: true # We want the output even if this fails
       - name: Comment Terraform Plan
         uses: actions/github-script@v7
-        if: github.event_name == 'pull_request'
+        if: matrix.php == '8.4' && github.event_name == 'pull_request'
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
