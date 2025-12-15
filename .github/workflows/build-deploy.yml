@@ -60,8 +60,8 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.DIGITALOCEAN_SPACES_SECRET_KEY }}
           AWS_REGION: us-east-1
           DIGITALOCEAN_TOKEN: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
-          DIGITALOCEAN_SPACES_ACCESS_KEY: ${{ secrets.DIGITALOCEAN_SPACES_ACCESS_KEY }}
-          DIGITALOCEAN_SPACES_SECRET_KEY: ${{ secrets.DIGITALOCEAN_SPACES_SECRET_KEY }}
+          SPACES_ACCESS_KEY_ID: ${{ secrets.DIGITALOCEAN_SPACES_ACCESS_KEY }}
+          SPACES_SECRET_ACCESS_KEY: ${{ secrets.DIGITALOCEAN_SPACES_SECRET_KEY }}
           PULUMI_CONFIG_PASSPHRASE: ${{ secrets.PULUMI_CONFIG_PASSPHRASE }}
         run: |
           # Install dependencies and login to Pulumi backend
@@ -72,16 +72,20 @@ jobs:
           # Try to select prod stack, create if it doesn't exist
           pulumi stack select prod 2>/dev/null || pulumi stack init prod
 
-          # Check if stack has any resources (migration check)
-          if ! pulumi stack export 2>/dev/null | grep -q '"resources":' || pulumi stack export 2>/dev/null | grep -q '"resources":\[\]'; then
-            echo "⚠️  WARNING: Pulumi stack is empty. Resources need to be imported first!"
+          # Check if stack has the expected number of resources (migration check)
+          # We expect 18 resources total once fully migrated
+          resource_count=$(pulumi stack export 2>/dev/null | jq '.deployment.resources | length' || echo "0")
+
+          if [ "$resource_count" -lt "15" ]; then
+            echo "⚠️  WARNING: Pulumi stack has only $resource_count resources (expected 18+)."
+            echo "Resources need to be imported first!"
             echo "Please run ./infrastructure/pulumi/import-resources.sh locally before deploying."
             echo "Skipping Pulumi deployment to prevent resource duplication."
             echo "Deployment step completed successfully (skipped)."
             exit 0
           fi
 
-          echo "✓ Stack has resources, proceeding with deployment..."
+          echo "✓ Stack has $resource_count resources, proceeding with deployment..."
 
           # Preview and apply changes
           pulumi preview --non-interactive --stack prod

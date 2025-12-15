@@ -10,10 +10,17 @@ Once merged to master, you need to import existing resources **locally**:
 
 ```bash
 # 1. Set environment variables
+# For S3 backend (state storage)
 export AWS_ACCESS_KEY_ID="<your-spaces-access-key>"
 export AWS_SECRET_ACCESS_KEY="<your-spaces-secret-key>"
 export AWS_REGION="us-east-1"
+
+# For DigitalOcean provider (same values as above, different variable names)
 export DIGITALOCEAN_TOKEN="<your-do-token>"
+export SPACES_ACCESS_KEY_ID="<your-spaces-access-key>"  # Same as AWS_ACCESS_KEY_ID
+export SPACES_SECRET_ACCESS_KEY="<your-spaces-secret-key>"  # Same as AWS_SECRET_ACCESS_KEY
+
+# For Pulumi encryption
 export PULUMI_CONFIG_PASSPHRASE="<choose-a-strong-passphrase>"
 
 # 2. Navigate to pulumi directory
