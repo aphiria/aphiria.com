@@ -5,7 +5,7 @@ import { createNetworking } from "./networking";
 import { createStorage } from "./storage";
 
 // Create storage bucket (for state and other infrastructure needs)
-const storage = createStorage();
+createStorage();
 
 // Create Kubernetes cluster
 const k8s = createKubernetesCluster();
@@ -16,10 +16,10 @@ const kubeProvider = new kubernetes.Provider("kubernetes-provider", {
 });
 
 // Create monitoring (depends on cluster being available)
-const monitoring = createMonitoring();
+createMonitoring();
 
 // Create networking (depends on cluster and load balancer being available)
-const networking = createNetworking(kubeProvider);
+createNetworking(kubeProvider);
 
 // Export outputs that are needed by other tooling
 export const clusterId = k8s.clusterId;

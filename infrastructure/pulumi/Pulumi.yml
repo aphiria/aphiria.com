@@ -2,4 +2,4 @@ name: aphiria-com-infrastructure
 runtime: nodejs
 description: Infrastructure as Code for aphiria.com using Pulumi
 backend:
-  url: s3://aphiria-com-infrastructure?endpoint=nyc3.digitaloceanspaces.com&region=us-east-1&s3ForcePathStyle=true
+    url: s3://aphiria-com-infrastructure?endpoint=nyc3.digitaloceanspaces.com&region=us-east-1&s3ForcePathStyle=true

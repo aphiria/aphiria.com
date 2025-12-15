@@ -81,6 +81,15 @@ To switch contexts, simply run
 kubectl config use-context DESIRED_CONTEXT_NAME
 ```
 
+## Lint the Source Code
+
+Run the PHP and TypeScript linters by running the following:
+
+```bash
+composer phpcs-fix
+cd ./infrastructure/pulumi && npm install && npm run lint:fix && npm run format && cd ../../
+```
+
 ## Build The Application
 
 You must build your Docker images before you can run the application.  The following will configure Minikube to use its own Docker registry and build the images:
