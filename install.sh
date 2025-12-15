@@ -6,6 +6,7 @@ install_minikube=false
 install_helm=false
 install_helmfile=false
 install_terraform=false
+install_pulumi=false
 install_doctl=false
 
 # Parse arguments
@@ -26,6 +27,9 @@ for arg in "$@"; do
         --install-terraform)
             install_terraform=true
             ;;
+        --install-pulumi)
+            install_pulumi=true
+            ;;
         --install-doctl)
             install_doctl=true
             ;;
@@ -42,6 +46,7 @@ if [ $# -eq 0 ]; then
     install_helm=true
     install_helmfile=true
     install_terraform=true
+    install_pulumi=true
     install_doctl=true
 fi
 
@@ -83,6 +88,13 @@ if [ "$install_terraform" = true ]; then
     curl -lO https://releases.hashicorp.com/terraform/1.9.8/terraform_1.9.8_linux_amd64.zip
     sudo unzip -o terraform_1.9.8_linux_amd64.zip -d /usr/local/bin
     terraform --version
+fi
+
+if [ "$install_pulumi" = true ]; then
+    echo "Installing Pulumi (https://www.pulumi.com/docs/install/)"
+    curl -fsSL https://get.pulumi.com | sh
+    export PATH=$PATH:$HOME/.pulumi/bin
+    pulumi version
 fi
 
 if [ "$install_doctl" = true ]; then

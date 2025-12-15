@@ -46,7 +46,7 @@ jobs:
       - name: Install Dependencies
         run: |
           chmod +x ./install.sh
-          ./install.sh --install-terraform
+          ./install.sh --install-pulumi
           composer install --ignore-platform-reqs
           composer dump-autoload -o
           chmod -R 755 resources
@@ -71,24 +71,36 @@ jobs:
         run: |
           composer global require php-coveralls/php-coveralls
           php-coveralls --coverage_clover=./.coverage/clover.xml --json_path=./coveralls-upload.json -v
-      - name: Terraform Plan
-        id: terraform-plan
+      - name: Pulumi Preview
+        id: pulumi-preview
         if: matrix.php == '8.4' && github.event_name == 'pull_request'
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.DIGITALOCEAN_SPACES_ACCESS_KEY }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.DIGITALOCEAN_SPACES_SECRET_KEY }}
+          DIGITALOCEAN_TOKEN: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+          DIGITALOCEAN_SPACES_ACCESS_KEY: ${{ secrets.DIGITALOCEAN_SPACES_ACCESS_KEY }}
+          DIGITALOCEAN_SPACES_SECRET_KEY: ${{ secrets.DIGITALOCEAN_SPACES_SECRET_KEY }}
         run: |
-          terraform -chdir=./infrastructure/terraform init -backend-config="access_key=${{ secrets.DIGITALOCEAN_SPACES_ACCESS_KEY }}" -backend-config="secret_key=${{ secrets.DIGITALOCEAN_SPACES_SECRET_KEY }}"
-          terraform -chdir=./infrastructure/terraform validate
-          output=$(terraform -chdir=./infrastructure/terraform plan -var="do_access_token=${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}" -var="do_spaces_access_key=${{ secrets.DIGITALOCEAN_SPACES_ACCESS_KEY }}" -var="do_spaces_secret_key=${{ secrets.DIGITALOCEAN_SPACES_SECRET_KEY }}" -no-color -input=false)
+          cd ./infrastructure/pulumi
+          npm install
+          pulumi login s3://aphiria-com-infrastructure?endpoint=nyc3.digitaloceanspaces.com&region=us-east-1&s3ForcePathStyle=true
+
+          # Try to select prod stack, create if it doesn't exist
+          pulumi stack select prod 2>/dev/null || pulumi stack init prod
+
+          # Run preview and capture output
+          output=$(pulumi preview --non-interactive --stack prod --color never 2>&1 || echo "Preview failed - this is expected during initial migration. Resources need to be imported first.")
           echo "output<<EOF" >> $GITHUB_OUTPUT
           echo "$output" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
         continue-on-error: true # We want the output even if this fails
-      - name: Comment Terraform Plan
+      - name: Comment Pulumi Preview
         uses: actions/github-script@v7
         if: matrix.php == '8.4' && github.event_name == 'pull_request'
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const output = `## Terraform Plan Output\n\`\`\`\n${{ steps.terraform-plan.outputs.output }}\n\`\`\``;
+            const output = `## Pulumi Preview Output\n\`\`\`\n${{ steps.pulumi-preview.outputs.output }}\n\`\`\``;
             github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,

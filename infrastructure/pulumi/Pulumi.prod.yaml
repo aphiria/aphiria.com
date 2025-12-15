@@ -1,0 +1,7 @@
+config:
+  digitalocean:token:
+    secure: ${DIGITALOCEAN_TOKEN}
+  digitalocean:spacesAccessId:
+    secure: ${DIGITALOCEAN_SPACES_ACCESS_KEY}
+  digitalocean:spacesSecretKey:
+    secure: ${DIGITALOCEAN_SPACES_SECRET_KEY}
