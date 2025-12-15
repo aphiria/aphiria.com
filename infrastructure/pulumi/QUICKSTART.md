@@ -12,7 +12,9 @@ Once merged to master, you need to import existing resources **locally**:
 # 1. Set environment variables
 export AWS_ACCESS_KEY_ID="<your-spaces-access-key>"
 export AWS_SECRET_ACCESS_KEY="<your-spaces-secret-key>"
+export AWS_REGION="us-east-1"
 export DIGITALOCEAN_TOKEN="<your-do-token>"
+export PULUMI_CONFIG_PASSPHRASE="<choose-a-strong-passphrase>"
 
 # 2. Navigate to pulumi directory
 cd infrastructure/pulumi

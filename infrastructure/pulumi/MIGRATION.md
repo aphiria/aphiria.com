@@ -24,7 +24,9 @@ Set up environment variables for the S3-compatible backend (DigitalOcean Spaces)
 ```bash
 export AWS_ACCESS_KEY_ID="<your-spaces-access-key>"
 export AWS_SECRET_ACCESS_KEY="<your-spaces-secret-key>"
+export AWS_REGION="us-east-1"
 export DIGITALOCEAN_TOKEN="<your-do-token>"
+export PULUMI_CONFIG_PASSPHRASE="<choose-a-strong-passphrase>"
 ```
 
 ### 3. Login to Pulumi Backend

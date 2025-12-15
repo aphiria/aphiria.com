@@ -58,9 +58,11 @@ jobs:
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.DIGITALOCEAN_SPACES_ACCESS_KEY }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.DIGITALOCEAN_SPACES_SECRET_KEY }}
+          AWS_REGION: us-east-1
           DIGITALOCEAN_TOKEN: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
           DIGITALOCEAN_SPACES_ACCESS_KEY: ${{ secrets.DIGITALOCEAN_SPACES_ACCESS_KEY }}
           DIGITALOCEAN_SPACES_SECRET_KEY: ${{ secrets.DIGITALOCEAN_SPACES_SECRET_KEY }}
+          PULUMI_CONFIG_PASSPHRASE: ${{ secrets.PULUMI_CONFIG_PASSPHRASE }}
         run: |
           # Install dependencies and login to Pulumi backend
           cd ./infrastructure/pulumi
