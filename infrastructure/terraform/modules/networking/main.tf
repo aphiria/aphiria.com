@@ -11,7 +11,7 @@ terraform {
     }
 }
 
-data "kubernetes_service" "load_balancer" {
+data "kubernetes_service_v1" "load_balancer" {
     metadata {
         name = "nginx-gateway-nginx-gateway-fabric"
         namespace = "nginx-gateway"
@@ -26,7 +26,7 @@ resource "digitalocean_record" "a" {
     domain = digitalocean_domain.default.id
     type = "A"
     name = "@"
-    value = data.kubernetes_service.load_balancer.status[0].load_balancer[0].ingress[0].ip
+    value = data.kubernetes_service_v1.load_balancer.status[0].load_balancer[0].ingress[0].ip
     ttl = 3600
 }
 
@@ -34,7 +34,7 @@ resource "digitalocean_record" "api_a" {
     domain = digitalocean_domain.default.id
     type = "A"
     name = "api"
-    value = data.kubernetes_service.load_balancer.status[0].load_balancer[0].ingress[0].ip
+    value = data.kubernetes_service_v1.load_balancer.status[0].load_balancer[0].ingress[0].ip
     ttl = 3600
 }
 
