@@ -6,8 +6,8 @@
     "scripts": {
         "build": "tsc",
         "clean": "rm -rf bin/",
-        "lint": "eslint . --ext .ts",
-        "lint:fix": "eslint . --ext .ts --fix",
+        "lint": "eslint .",
+        "lint:fix": "eslint . --fix",
         "format": "prettier --write \"**/*.{ts,json,yml,yaml}\"",
         "format:check": "prettier --check \"**/*.{ts,json,yml,yaml}\"",
         "type-check": "tsc --noEmit"
