@@ -58,14 +58,22 @@ jobs:
         run: |
           vendor/bin/phinx migrate
           vendor/bin/phinx seed:run
-      - name: Run Tests
+      - name: Run PHP Tests
         run: composer phpunit
-      - name: Run Linter
+      - name: Lint PHP
         run: composer phpcs-test
-      - name: Run Psalm Static Analysis
+      - name: Run PHP Static Analysis
         if: matrix.php == '8.4'
         run: composer psalm -- --shepherd
-      - name: Upload Coverage Results To Coveralls
+      - name: Lint Pulumi TypeScript
+        if: matrix.php == '8.4'
+        run: |
+          cd infrastructure/pulumi
+          npm install
+          npm run lint
+          npm run format:check
+          npm run type-check
+      - name: Upload PHP Coverage Results To Coveralls
         env:
           COVERALLS_REPO_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |

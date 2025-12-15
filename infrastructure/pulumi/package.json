@@ -1,19 +1,29 @@
 {
-  "name": "aphiria-com-infrastructure",
-  "version": "1.0.0",
-  "description": "Pulumi infrastructure for aphiria.com",
-  "main": "index.ts",
-  "scripts": {
-    "build": "tsc",
-    "clean": "rm -rf bin/"
-  },
-  "devDependencies": {
-    "@types/node": "^20.0.0",
-    "typescript": "^5.0.0"
-  },
-  "dependencies": {
-    "@pulumi/pulumi": "^3.0.0",
-    "@pulumi/digitalocean": "^4.0.0",
-    "@pulumi/kubernetes": "^4.0.0"
-  }
+    "name": "aphiria-com-infrastructure",
+    "version": "1.0.0",
+    "description": "Pulumi infrastructure for aphiria.com",
+    "main": "index.ts",
+    "scripts": {
+        "build": "tsc",
+        "clean": "rm -rf bin/",
+        "lint": "eslint .",
+        "lint:fix": "eslint . --fix",
+        "format": "prettier --write \"**/*.{ts,json,yml,yaml}\"",
+        "format:check": "prettier --check \"**/*.{ts,json,yml,yaml}\"",
+        "type-check": "tsc --noEmit"
+    },
+    "devDependencies": {
+        "@eslint/js": "^9.0.0",
+        "@types/node": "^22.0.0",
+        "eslint": "^9.0.0",
+        "eslint-config-prettier": "^9.0.0",
+        "prettier": "^3.0.0",
+        "typescript": "~5.7.0",
+        "typescript-eslint": "^8.0.0"
+    },
+    "dependencies": {
+        "@pulumi/pulumi": "^3.0.0",
+        "@pulumi/digitalocean": "^4.0.0",
+        "@pulumi/kubernetes": "^4.0.0"
+    }
 }
