@@ -20,7 +20,7 @@ First, [install Docker](https://docs.docker.com/engine/install/).  Then, run `./
 * Minikube
 * Helm
 * Helmfile
-* Terraform
+* Pulumi
 * doctl
 
 > **Note:** You may have to run `chmod +x ./install.sh` to make the script executable.

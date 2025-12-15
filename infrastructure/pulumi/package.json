@@ -1,0 +1,19 @@
+{
+  "name": "aphiria-com-infrastructure",
+  "version": "1.0.0",
+  "description": "Pulumi infrastructure for aphiria.com",
+  "main": "index.ts",
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf bin/"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "@pulumi/pulumi": "^3.0.0",
+    "@pulumi/digitalocean": "^4.0.0",
+    "@pulumi/kubernetes": "^4.0.0"
+  }
+}

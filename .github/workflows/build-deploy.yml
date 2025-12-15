@@ -53,21 +53,46 @@ jobs:
       - name: Install Dependencies
         run: |
           chmod +x ./install.sh
-          ./install.sh --install-terraform --install-helm --install-helmfile --install-doctl
-      - name: Terraform Infrastructure
+          ./install.sh --install-pulumi --install-helm --install-helmfile --install-doctl
+      - name: Pulumi Infrastructure
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.DIGITALOCEAN_SPACES_ACCESS_KEY }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.DIGITALOCEAN_SPACES_SECRET_KEY }}
+          AWS_REGION: us-east-1
+          DIGITALOCEAN_TOKEN: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+          DIGITALOCEAN_SPACES_ACCESS_KEY: ${{ secrets.DIGITALOCEAN_SPACES_ACCESS_KEY }}
+          DIGITALOCEAN_SPACES_SECRET_KEY: ${{ secrets.DIGITALOCEAN_SPACES_SECRET_KEY }}
+          PULUMI_CONFIG_PASSPHRASE: ${{ secrets.PULUMI_CONFIG_PASSPHRASE }}
         run: |
-          # Configure and validate Terraform
-          terraform -chdir=./infrastructure/terraform init -backend-config="access_key=${{ secrets.DIGITALOCEAN_SPACES_ACCESS_KEY }}" -backend-config="secret_key=${{ secrets.DIGITALOCEAN_SPACES_SECRET_KEY }}"
-          terraform -chdir=./infrastructure/terraform validate
+          # Install dependencies and login to Pulumi backend
+          cd ./infrastructure/pulumi
+          npm install
+          pulumi login s3://aphiria-com-infrastructure?endpoint=nyc3.digitaloceanspaces.com&region=us-east-1&s3ForcePathStyle=true
 
-          # Plan and apply
-          terraform -chdir=./infrastructure/terraform plan -var="do_access_token=${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}" -var="do_spaces_access_key=${{ secrets.DIGITALOCEAN_SPACES_ACCESS_KEY }}" -var="do_spaces_secret_key=${{ secrets.DIGITALOCEAN_SPACES_SECRET_KEY }}" -no-color -input=false
-          terraform -chdir=./infrastructure/terraform apply -var="do_access_token=${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}" -var="do_spaces_access_key=${{ secrets.DIGITALOCEAN_SPACES_ACCESS_KEY }}" -var="do_spaces_secret_key=${{ secrets.DIGITALOCEAN_SPACES_SECRET_KEY }}" -no-color -input=false -auto-approve
+          # Try to select prod stack, create if it doesn't exist
+          pulumi stack select prod 2>/dev/null || pulumi stack init prod
+
+          # Check if stack has any resources (migration check)
+          resource_count=$(pulumi stack --show-urns 2>/dev/null | grep -c "urn:pulumi:" || echo "0")
+
+          if [ "$resource_count" -eq "0" ]; then
+            echo "⚠️  WARNING: Pulumi stack is empty. Resources need to be imported first!"
+            echo "Please run ./infrastructure/pulumi/import-resources.sh locally before deploying."
+            echo "Skipping Pulumi deployment to prevent resource duplication."
+            exit 0
+          fi
+
+          # Preview and apply changes
+          pulumi preview --non-interactive --stack prod
+          pulumi up --non-interactive --stack prod --yes --skip-preview
       - name: Configure Kubernetes Cluster
         run: |
           # Save the kubeconfig so that kubectl commands apply to the DigitalOcean cluster
           doctl auth init --access-token ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
-          doctl kubernetes cluster kubeconfig save $(terraform -chdir=./infrastructure/terraform output -raw cluster_id)
+          cd ./infrastructure/pulumi
+          cluster_id=$(pulumi stack output clusterId --stack prod)
+          cd ../..
+          doctl kubernetes cluster kubeconfig save $cluster_id
 
           # Install Helmfiles
           helmfile -f ./infrastructure/kubernetes/base/helmfile.yml repos
