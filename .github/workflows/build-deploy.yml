@@ -69,23 +69,8 @@ jobs:
           npm install
           pulumi login s3://aphiria-com-infrastructure?endpoint=nyc3.digitaloceanspaces.com&region=us-east-1&s3ForcePathStyle=true
 
-          # Try to select prod stack, create if it doesn't exist
-          pulumi stack select prod 2>/dev/null || pulumi stack init prod
-
-          # Check if stack has the expected number of resources (migration check)
-          # We expect 18 resources total once fully migrated
-          resource_count=$(pulumi stack export 2>/dev/null | jq '.deployment.resources | length' || echo "0")
-
-          if [ "$resource_count" -lt "15" ]; then
-            echo "⚠️  WARNING: Pulumi stack has only $resource_count resources (expected 18+)."
-            echo "Resources need to be imported first!"
-            echo "Please run ./infrastructure/pulumi/import-resources.sh locally before deploying."
-            echo "Skipping Pulumi deployment to prevent resource duplication."
-            echo "Deployment step completed successfully (skipped)."
-            exit 0
-          fi
-
-          echo "✓ Stack has $resource_count resources, proceeding with deployment..."
+          # Select prod stack
+          pulumi stack select prod
 
           # Preview and apply changes
           pulumi preview --non-interactive --stack prod
