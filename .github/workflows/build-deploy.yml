@@ -73,14 +73,15 @@ jobs:
           pulumi stack select prod 2>/dev/null || pulumi stack init prod
 
           # Check if stack has any resources (migration check)
-          resource_count=$(pulumi stack --show-urns 2>/dev/null | grep -c "urn:pulumi:" || echo "0")
-
-          if [ "$resource_count" -eq "0" ]; then
+          if ! pulumi stack export 2>/dev/null | grep -q '"resources":' || pulumi stack export 2>/dev/null | grep -q '"resources":\[\]'; then
             echo "⚠️  WARNING: Pulumi stack is empty. Resources need to be imported first!"
             echo "Please run ./infrastructure/pulumi/import-resources.sh locally before deploying."
             echo "Skipping Pulumi deployment to prevent resource duplication."
+            echo "Deployment step completed successfully (skipped)."
             exit 0
           fi
+
+          echo "✓ Stack has resources, proceeding with deployment..."
 
           # Preview and apply changes
           pulumi preview --non-interactive --stack prod
