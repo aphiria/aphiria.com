@@ -91,10 +91,20 @@ jobs:
           pulumi stack select prod 2>/dev/null || pulumi stack init prod
 
           # Run preview and capture output
-          output=$(pulumi preview --non-interactive --stack prod --color never 2>&1 || echo "Preview failed - this is expected during initial migration. Resources need to be imported first.")
-          echo "output<<EOF" >> $GITHUB_OUTPUT
-          echo "$output" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
+          set +e
+          pulumi preview --non-interactive --stack prod --color never > preview_output.txt 2>&1
+          preview_exit_code=$?
+          set -e
+
+          if [ $preview_exit_code -ne 0 ]; then
+            echo "Preview failed - this is expected during initial migration. Resources need to be imported first." >> preview_output.txt
+          fi
+
+          {
+            echo "output<<EOF"
+            cat preview_output.txt
+            echo "EOF"
+          } >> $GITHUB_OUTPUT
         continue-on-error: true # We want the output even if this fails
       - name: Comment Pulumi Preview
         uses: actions/github-script@v7
