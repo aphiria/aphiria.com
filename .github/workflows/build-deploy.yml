@@ -91,6 +91,11 @@ jobs:
           pulumi preview --non-interactive --stack prod
           pulumi up --non-interactive --stack prod --yes --skip-preview
       - name: Configure Kubernetes Cluster
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.DIGITALOCEAN_SPACES_ACCESS_KEY }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.DIGITALOCEAN_SPACES_SECRET_KEY }}
+          AWS_REGION: us-east-1
+          PULUMI_CONFIG_PASSPHRASE: ${{ secrets.PULUMI_CONFIG_PASSPHRASE }}
         run: |
           # Save the kubeconfig so that kubectl commands apply to the DigitalOcean cluster
           doctl auth init --access-token ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
