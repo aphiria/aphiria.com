@@ -5,7 +5,6 @@ install_kubectl=false
 install_minikube=false
 install_helm=false
 install_helmfile=false
-install_terraform=false
 install_pulumi=false
 install_doctl=false
 
@@ -23,9 +22,6 @@ for arg in "$@"; do
             ;;
         --install-helmfile)
             install_helmfile=true
-            ;;
-        --install-terraform)
-            install_terraform=true
             ;;
         --install-pulumi)
             install_pulumi=true
@@ -45,7 +41,6 @@ if [ $# -eq 0 ]; then
     install_minikube=true
     install_helm=true
     install_helmfile=true
-    install_terraform=true
     install_pulumi=true
     install_doctl=true
 fi
@@ -81,13 +76,6 @@ if [ "$install_helmfile" = true ]; then
     tar -xzf helmfile.tar.gz
     sudo mv helmfile /usr/local/bin/helmfile
     helmfile --version
-fi
-
-if [ "$install_terraform" = true ]; then
-    echo "Installing Terraform (https://developer.hashicorp.com/terraform/install)"
-    curl -lO https://releases.hashicorp.com/terraform/1.9.8/terraform_1.9.8_linux_amd64.zip
-    sudo unzip -o terraform_1.9.8_linux_amd64.zip -d /usr/local/bin
-    terraform --version
 fi
 
 if [ "$install_pulumi" = true ]; then

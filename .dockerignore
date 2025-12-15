@@ -5,7 +5,7 @@
 # Note: We keep the database infrastructure directory so it can be copied to run migrations against
 /infrastructure/docker
 /infrastructure/kubernetes
-/infrastructure/terraform
+/infrastructure/pulumi
 /node_modules/
 /tmp/framework/**/*.txt
 /tmp/logs/errors.txt
