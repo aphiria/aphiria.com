@@ -5,6 +5,9 @@
 /.php-cs-fixer.cache
 /.phpunit.result.cache
 /composer.phar
+/infrastructure/pulumi/node_modules/
+/infrastructure/pulumi/bin/
+/infrastructure/pulumi/.pulumi/
 /nbproject/
 /node_modules/
 /public-web/docs/
