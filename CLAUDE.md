@@ -158,6 +158,10 @@ Check if sensitive files already exist in `.gitignore` before adding duplicates.
 
 ## Code Standards
 
+### Directory/File Conventions
+
+- Always stick with industry-standard directory/file naming conventions and location/nesting
+
 ### PHP Style Requirements
 
 **PSR Compliance**:
@@ -288,7 +292,7 @@ Before committing any PHP code changes:
 - [ ] `composer phpcs-fix` - Code style fixed
 - [ ] `composer phpunit` - All tests pass
 - [ ] `composer psalm` - No static analysis errors
-- [ ] New files added to git (`git add`)
+- [ ] New files MUST be added to git (`git add`)
 - [ ] Sensitive files added to `.gitignore`
 - [ ] `.env.dist` updated if new env vars added
 - [ ] Tests written for new functionality

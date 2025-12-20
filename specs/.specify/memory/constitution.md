@@ -77,7 +77,8 @@ All changes MUST consider production deployment requirements:
 - **PSR-4 Namespace**: `App\` maps to `src/`
 - **Domain-Driven Structure**: Organize by domain (Documentation, Databases, etc.)
 - **Separation of Concerns**: Binders for DI, Controllers for HTTP, Services for business logic
-- **Database Abstraction**: Use Aphiria's query builders and ORM patterns
+- **Database Abstraction**: Use PDO for database access and Phinx for migrations and seeding
+- **Git**: All new non-sensitive files MUS be added to Git.  Any sensitive files or build directories MUST be added to .gitignore.
 
 ### Dependency Management
 
