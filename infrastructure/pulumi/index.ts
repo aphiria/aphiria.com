@@ -1,25 +1,23 @@
-import * as kubernetes from "@pulumi/kubernetes";
-import { createKubernetesCluster } from "./kubernetes";
-import { createMonitoring } from "./monitoring";
-import { createNetworking } from "./networking";
-import { createStorage } from "./storage";
+/** Shared Pulumi components for dev-local, preview, and production environments. See README.md for usage. */
 
-// Create storage bucket (for state and other infrastructure needs)
-createStorage();
+import * as pulumi from "@pulumi/pulumi";
 
-// Create Kubernetes cluster
-const k8s = createKubernetesCluster();
+// Re-export all shared components
+export * from "./components/types";
+export * from "./components/helm-charts";
+export * from "./components/database";
+export * from "./components/web-deployment";
+export * from "./components/api-deployment";
+export * from "./components/db-migration";
+export * from "./components/http-route";
+export * from "./components/gateway";
 
-// Create Kubernetes provider using the cluster's kubeconfig
-const kubeProvider = new kubernetes.Provider("kubernetes-provider", {
-    kubeconfig: k8s.cluster.kubeConfigs[0].rawConfig,
-});
+// Execute the appropriate stack based on the stack name
+const stack = pulumi.getStack();
 
-// Create monitoring (depends on cluster being available)
-createMonitoring();
-
-// Create networking (depends on cluster and load balancer being available)
-createNetworking(kubeProvider);
-
-// Export outputs that are needed by other tooling
-export const clusterId = k8s.clusterId;
+if (stack === "dev-local") {
+    // Import and execute dev-local stack
+    import("./stacks/dev-local");
+} else {
+    throw new Error(`Unknown stack: ${stack}. Valid stacks: dev-local`);
+}

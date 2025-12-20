@@ -1,0 +1,238 @@
+import * as pulumi from "@pulumi/pulumi";
+import * as k8s from "@pulumi/kubernetes";
+import { APIDeploymentArgs, APIDeploymentResult } from "./types";
+
+/** Creates nginx + PHP-FPM deployment using initContainer to copy code to shared volume */
+export function createAPIDeployment(args: APIDeploymentArgs): APIDeploymentResult {
+    const labels = {
+        app: "api",
+        "app.kubernetes.io/name": "aphiria-api",
+        "app.kubernetes.io/component": "backend",
+        ...(args.labels || {}),
+    };
+
+    // Create nginx configuration ConfigMap
+    const nginxConfig = new k8s.core.v1.ConfigMap("nginx-config", {
+        metadata: {
+            name: "nginx-config",
+            namespace: args.namespace,
+            labels,
+        },
+        data: {
+            "default.conf": `server {
+    index index.php index.html;
+    error_log  /var/log/nginx/error.log;
+    access_log /var/log/nginx/access.log;
+    root /usr/share/nginx/html/public;
+    add_header X-Frame-Options "SAMEORIGIN";
+    add_header X-XSS-Protection "1; mode=block";
+    add_header X-Content-Type-Options "nosniff";
+
+    location / {
+        try_files $uri $uri/ /index.php$is_args$args;
+    }
+
+    location ~ \\.php$ {
+        fastcgi_split_path_info ^(.+\\.php)(/.+)$;
+        # Pass this through to the PHP image running in this pod on port 9000
+        fastcgi_pass 127.0.0.1:9000;
+        fastcgi_index index.php;
+        include fastcgi_params;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+        fastcgi_param PATH_INFO $fastcgi_path_info;
+        fastcgi_hide_header X-Powered-By;
+    }
+}`,
+        },
+    });
+
+    // Create Secret for database credentials
+    const secret = new k8s.core.v1.Secret("env-var-secrets", {
+        metadata: {
+            name: "env-var-secrets",
+            namespace: args.namespace,
+            labels,
+        },
+        type: "Opaque",
+        stringData: {
+            DB_USER: args.dbUser,
+            DB_PASSWORD: args.dbPassword,
+        },
+    });
+
+    // Create ConfigMap for environment variables
+    const configMap = new k8s.core.v1.ConfigMap("env-vars", {
+        metadata: {
+            name: "env-vars",
+            namespace: args.namespace,
+            labels,
+        },
+        data: {
+            DB_HOST: args.dbHost,
+            DB_NAME: args.dbName,
+            DB_PORT: "5432",
+            APP_API_URL: args.apiUrl,
+            APP_WEB_URL: args.webUrl,
+            APP_ENV: args.env === "production" ? "production" : "dev",
+            LOG_LEVEL: args.env === "production" ? "warning" : "debug",
+        },
+    });
+
+    // Create API deployment
+    const deployment = new k8s.apps.v1.Deployment("api", {
+        metadata: {
+            name: "api",
+            namespace: args.namespace,
+            labels,
+        },
+        spec: {
+            replicas: args.replicas,
+            selector: {
+                matchLabels: {
+                    app: "api",
+                },
+            },
+            strategy: {
+                type: "RollingUpdate",
+                rollingUpdate: {
+                    maxUnavailable: 0,
+                    maxSurge: 1,
+                },
+            },
+            template: {
+                metadata: {
+                    labels: {
+                        app: "api",
+                    },
+                },
+                spec: {
+                    // initContainer: Copy PHP code from API image to shared volume
+                    initContainers: [
+                        {
+                            name: "copy-api-code",
+                            image: args.image,
+                            imagePullPolicy: args.image.includes("@sha256:")
+                                ? "IfNotPresent"
+                                : "Always",
+                            // Preserve permissions so nginx can access tmp directory
+                            command: ["sh", "-c", "cp -Rp /app/api/. /usr/share/nginx/html"],
+                            volumeMounts: [
+                                {
+                                    name: "api-code",
+                                    mountPath: "/usr/share/nginx/html",
+                                },
+                            ],
+                        },
+                    ],
+                    containers: [
+                        // nginx: HTTP server and PHP proxy
+                        {
+                            name: "nginx",
+                            image: "nginx:alpine",
+                            livenessProbe: {
+                                httpGet: {
+                                    path: "/health",
+                                    port: 80,
+                                },
+                                initialDelaySeconds: 10,
+                                periodSeconds: 30,
+                            },
+                            ports: [
+                                {
+                                    containerPort: 80,
+                                },
+                            ],
+                            volumeMounts: [
+                                {
+                                    name: "api-code",
+                                    mountPath: "/usr/share/nginx/html",
+                                },
+                                {
+                                    name: "nginx-config",
+                                    mountPath: "/etc/nginx/conf.d/default.conf",
+                                    subPath: "default.conf",
+                                },
+                            ],
+                        },
+                        // php: PHP-FPM process manager
+                        {
+                            name: "php",
+                            image: args.image,
+                            imagePullPolicy: args.image.includes("@sha256:")
+                                ? "IfNotPresent"
+                                : "Always",
+                            ports: [
+                                {
+                                    containerPort: 9000,
+                                },
+                            ],
+                            envFrom: [
+                                {
+                                    secretRef: {
+                                        name: "env-var-secrets",
+                                    },
+                                },
+                                {
+                                    configMapRef: {
+                                        name: "env-vars",
+                                    },
+                                },
+                            ],
+                            volumeMounts: [
+                                {
+                                    name: "api-code",
+                                    mountPath: "/usr/share/nginx/html",
+                                },
+                            ],
+                        },
+                    ],
+                    volumes: [
+                        {
+                            name: "api-code",
+                            emptyDir: {},
+                        },
+                        {
+                            name: "nginx-config",
+                            configMap: {
+                                name: "nginx-config",
+                                items: [
+                                    {
+                                        key: "default.conf",
+                                        path: "default.conf",
+                                    },
+                                ],
+                            },
+                        },
+                    ],
+                },
+            },
+        },
+    });
+
+    // Create Service
+    const service = new k8s.core.v1.Service("api", {
+        metadata: {
+            name: "api",
+            namespace: args.namespace,
+            labels,
+        },
+        spec: {
+            selector: {
+                app: "api",
+            },
+            ports: [
+                {
+                    port: 80,
+                    targetPort: 80,
+                },
+            ],
+            type: "ClusterIP",
+        },
+    });
+
+    return {
+        deployment: deployment.metadata.apply((m) => m),
+        service: service.metadata.apply((m) => m),
+        secret: secret.metadata.apply((m) => m),
+    };
+}

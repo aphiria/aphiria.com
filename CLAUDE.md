@@ -162,6 +162,10 @@ Check if sensitive files already exist in `.gitignore` before adding duplicates.
 
 - Always stick with industry-standard directory/file naming conventions and location/nesting
 
+### YAML Style Requirements
+
+- YAML files MUST end with .yml
+
 ### PHP Style Requirements
 
 **PSR Compliance**:
