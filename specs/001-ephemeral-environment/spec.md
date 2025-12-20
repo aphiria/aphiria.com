@@ -10,9 +10,10 @@
 
 This feature introduces ephemeral, pull-request–scoped preview environments that allow maintainers to validate changes in a production-like setting before merging.
 
-Each pull request may be deployed into an isolated environment with a predictable public URL:
+Each pull request may be deployed into an isolated environment with predictable public URLs:
 
-- `{PR_NUMBER}.pr.aphiria.com` (e.g., `123.pr.aphiria.com`)
+- Web: `{PR_NUMBER}.pr.aphiria.com` (e.g., `123.pr.aphiria.com`)
+- API: `{PR_NUMBER}.pr-api.aphiria.com` (e.g., `123.pr-api.aphiria.com`)
 
 Preview environments are:
 - isolated from production
@@ -94,7 +95,7 @@ As a maintainer, I want preview environments to be destroyed automatically when 
 ### Functional Requirements
 
 - **FR-001**: The system MUST support deploying an isolated preview environment per pull request
-- **FR-002**: Each preview MUST have a stable, predictable URL derived from the PR number
+- **FR-002**: Each preview MUST have stable, predictable URLs derived from the PR number (web + API)
 - **FR-003**: Preview environments MUST deploy the latest commit from the PR
 - **FR-004**: Preview environments MUST update automatically when new commits are pushed
 - **FR-005**: Preview environments MUST be destroyed when the PR is closed or merged
@@ -102,15 +103,93 @@ As a maintainer, I want preview environments to be destroyed automatically when 
 - **FR-007**: Deployment progress and failure states MUST be observable
 - **FR-008**: Provisioning failures MUST be reported clearly
 - **FR-009**: All resources created for a preview MUST be removed on teardown
-- **FR-010**: Preview environments MUST support full application behavior (web/API)
-- **FR-011**: Preview URLs MUST be surfaced in pull request comments or status checks
-- **FR-012**: Preview deployments MUST be gated behind explicit maintainer approval
-- **FR-013**: Untrusted contributors MUST NOT be able to trigger privileged deployments
-- **FR-014**: Privileged credentials MUST NOT be accessible before approval
-- **FR-015** (Build once): The system MUST build a single container image per commit and reuse it across preview and production deployments.
-- **FR-016** (Immutable promotion): Production deployments MUST reference the same immutable image (by digest) that was deployed and tested in the preview environment.
+- **FR-010**: Preview environments MUST deploy both web and API containers with full application behavior
+- **FR-029**: Each preview environment MUST provision separate Kubernetes Deployments for web and API components
+- **FR-030**: Web and API deployments MUST use the same immutable container images (by digest) as production
+- **FR-031**: Gateway/Ingress routing MUST direct `{PR}.pr.aphiria.com` to web service and `{PR}.pr-api.aphiria.com` to API service
+- **FR-032**: Each preview environment MUST run database migrations via Phinx before deployments start
+- **FR-033**: Each preview environment MUST run the LexemeSeeder (Phinx seed) to populate the search index
+- **FR-034**: The database migration job MUST complete successfully before API deployment is marked ready
+- **FR-035**: LexemeSeeder MUST read compiled documentation from the API container's filesystem
+- **FR-036**: Preview URLs MUST be surfaced in pull request comments or status checks
+- **FR-037**: Preview deployments MUST be gated behind explicit maintainer approval
+- **FR-038**: Untrusted contributors MUST NOT be able to trigger privileged deployments
+- **FR-039**: Privileged credentials MUST NOT be accessible before approval
+- **FR-040** (Build once): The system MUST build a single container image per commit and reuse it across preview and production deployments.
+- **FR-041** (Immutable promotion): Production deployments MUST reference the same immutable image (by digest) that was deployed and tested in the preview environment.
 Kubernetes
-- **FR-017** (Runtime config): Environment-specific configuration MUST be provided at deploy/runtime (env vars/secrets/config), not by rebuilding the image.
+- **FR-042** (Runtime config): Environment-specific configuration MUST be provided at deploy/runtime (env vars/secrets/config), not by rebuilding the image.
+- **FR-043**: Each ephemeral environment MUST generate a unique Kubernetes ConfigMap with PR-specific configuration
+- **FR-044**: ConfigMap MUST include PR-specific values: `APP_WEB_URL`, `APP_API_URL`, `APP_COOKIE_DOMAIN`
+- **FR-045**: ConfigMap names MUST follow the pattern `env-vars-pr-{PR_NUMBER}` for isolation
+- **FR-046**: Kubernetes Secrets MUST be generated per-PR for sensitive configuration (DB credentials, etc.)
+- **FR-047**: Secret names MUST follow the pattern `env-var-secrets-pr-{PR_NUMBER}`
+
+---
+
+## Configuration Injection
+
+### GitHub Context Variables
+
+The PR number and related metadata are available in GitHub Actions via context variables:
+
+- `${{ github.event.pull_request.number }}` - PR number (e.g., `123`)
+- `${{ github.event.pull_request.head.sha }}` - Commit SHA
+- `${{ github.repository }}` - Repository name
+- `${{ github.event.pull_request.head.ref }}` - Source branch name
+
+### ConfigMap Generation
+
+For each ephemeral environment, a ConfigMap is dynamically generated with:
+
+```yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: env-vars-pr-{{ PR_NUMBER }}
+  namespace: ephemeral-pr-{{ PR_NUMBER }}
+data:
+  APP_BUILDER_API: "\\Aphiria\\Framework\\Api\\SynchronousApiApplicationBuilder"
+  APP_BUILDER_CONSOLE: "\\Aphiria\\Framework\\Console\\ConsoleApplicationBuilder"
+  APP_ENV: "preview"
+  APP_WEB_URL: "https://{{ PR_NUMBER }}.pr.aphiria.com"
+  APP_API_URL: "https://{{ PR_NUMBER }}.pr-api.aphiria.com"
+  APP_COOKIE_DOMAIN: ".{{ PR_NUMBER }}.pr.aphiria.com"
+  APP_COOKIE_SECURE: "1"
+  DB_HOST: "db-pr-{{ PR_NUMBER }}"
+  DB_NAME: "postgres"
+  DB_PORT: "5432"
+  DOC_LEXEMES_TABLE_NAME: ""
+  LOG_LEVEL: "debug"
+```
+
+### Secret Generation
+
+Sensitive values are stored in Kubernetes Secrets:
+
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: env-var-secrets-pr-{{ PR_NUMBER }}
+  namespace: ephemeral-pr-{{ PR_NUMBER }}
+type: Opaque
+stringData:
+  DB_USER: "preview_user"
+  DB_PASSWORD: "{{ GENERATED_PASSWORD }}"
+```
+
+### Workflow Integration
+
+The GitHub Actions workflow will:
+
+1. Extract PR number from `${{ github.event.pull_request.number }}`
+2. Pass PR number to Pulumi as a stack parameter or environment variable
+3. Pulumi uses PR number to:
+   - Create stack: `ephemeral-pr-{PR_NUMBER}`
+   - Generate ConfigMap/Secrets with interpolated values
+   - Deploy Kubernetes resources with PR-scoped names
+4. Infrastructure provisioning creates namespace, ConfigMap, Secrets, deployments with PR-specific configuration
 
 ---
 
@@ -135,12 +214,17 @@ Kubernetes
 ### Ephemeral Environment
 - Attributes:
     - PR number
-    - unique URL
+    - unique URLs (web + API)
     - status (provisioning / ready / failed / destroying)
     - deployed commit SHA
+    - Kubernetes namespace: `ephemeral-pr-{PR_NUMBER}`
+    - Deployments: `web-pr-{PR_NUMBER}`, `api-pr-{PR_NUMBER}`, `db-pr-{PR_NUMBER}`
+    - Services: `web-pr-{PR_NUMBER}`, `api-pr-{PR_NUMBER}`, `db-pr-{PR_NUMBER}`
+    - Jobs: `db-migration-pr-{PR_NUMBER}` (runs Phinx migrations + LexemeSeeder)
 - Lifecycle:
     - created on approved PR deployment
-    - updated on PR commits
+    - database provisioned → migrations run → LexemeSeeder populates search index → web/API deployed
+    - updated on PR commits (re-runs migrations/seeder if needed)
     - destroyed on PR close or merge
 
 ---
@@ -148,11 +232,32 @@ Kubernetes
 ## Success Criteria (Mandatory)
 
 - **SC-001**: Preview environments are accessible within 5 minutes of approval
-- **SC-002**: Preview URLs are posted to PRs after successful deployment
+- **SC-002**: Both web and API preview URLs are posted to PRs after successful deployment
 - **SC-003**: ≥95% of preview deployments succeed without manual intervention
 - **SC-004**: Preview environments are destroyed on PR close or merge
 - **SC-005**: No orphaned preview resources remain after PR closure
 - **SC-006**: Maintainer approval is required before any privileged deployment
+
+---
+
+## Infrastructure & State Management
+
+### Pulumi Stack Strategy
+
+- **FR-018**: Each ephemeral environment MUST use a dedicated Pulumi stack
+- **FR-019**: Stack names MUST follow the pattern: `ephemeral-pr-{PR_NUMBER}` (e.g., `ephemeral-pr-123`)
+- **FR-020**: Pulumi state MUST be stored in a backend that supports concurrent operations (e.g., S3, Pulumi Cloud)
+- **FR-021**: Stack creation and destruction MUST be automated via CI/CD
+- **FR-022**: Stack teardown MUST remove all provisioned infrastructure resources
+- **FR-023**: Production and dev stacks MUST remain isolated from ephemeral stacks
+
+### Rationale
+
+Each ephemeral environment requires its own Pulumi stack to:
+- Maintain isolated infrastructure state per PR
+- Enable parallel deployments without state conflicts
+- Allow safe teardown without affecting other environments
+- Track resource ownership for cleanup verification
 
 ---
 
@@ -164,6 +269,10 @@ Kubernetes
 4. Preview environments do not use production secrets
 5. Preview infrastructure cost is acceptable for short-lived environments
 6. Maximum concurrent previews is limited by cluster capacity
+7. Pulumi backend supports multiple concurrent stacks
+8. Pulumi credentials allow stack creation/deletion operations
+9. Documentation build (from https://github.com/aphiria/docs) completes successfully in Docker build stage
+10. LexemeSeeder can access compiled documentation files in the API container filesystem
 
 ---
 

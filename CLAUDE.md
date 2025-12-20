@@ -7,6 +7,66 @@
 
 ---
 
+## Architecture Overview
+
+This codebase provides **two distinct applications** in a monorepo:
+
+### 1. Web Frontend (`./public-web`)
+- Serves the documentation website (HTML, CSS, JS)
+- Static documentation files compiled from Markdown
+- Client-side Prism syntax highlighting (pre-rendered server-side during build)
+
+### 2. API Backend (`./public-api`)
+- PHP REST API built with Aphiria
+- Serves search results from indexed documentation
+- Provides full-text search via PostgreSQL TSVectors
+
+### Build & Deployment Pipeline
+
+**Docker Build Stages**:
+
+1. **Build Image** (`./infrastructure/docker/build/Dockerfile`):
+   - Clones https://github.com/aphiria/docs (Markdown documentation)
+   - Compiles Markdown → HTML with server-side Prism syntax highlighting
+   - Runs `gulp build` to generate static assets
+   - Produces compiled documentation in `./public-web`
+
+2. **Runtime Images**:
+   - **API Image** (`./infrastructure/docker/runtime/api/Dockerfile`):
+     - Copies compiled documentation from build image
+     - Includes PHP application code + dependencies
+   - **Web Image** (`./infrastructure/docker/runtime/web/Dockerfile`):
+     - Copies compiled documentation from build image
+     - Serves static HTML/CSS/JS
+
+**Database Seeding & Search Indexing**:
+
+After deployment, the **LexemeSeeder** (Phinx seed) runs to power the search API:
+
+- **Location**: Database migration job in `./infrastructure/kubernetes/base/database/jobs.yml`
+- **Process**:
+  1. Reads compiled HTML documentation files (copied into API container)
+  2. Extracts text content from HTML elements
+  3. Applies weighting: `<h1>` > `<h2>` > `<p>` for search relevance
+  4. Creates PostgreSQL TSVectors (full-text search indexes)
+  5. Stores lexemes in database for API queries
+
+**Critical Dependencies**:
+- API search requires LexemeSeeder to complete successfully
+- LexemeSeeder requires compiled documentation from build image
+- Ephemeral environments MUST run db-migration job to populate search index
+- Build failures in doc compilation break both web display AND API search
+
+### Deployment Architecture
+
+**Production/Ephemeral environments run**:
+- **Web container**: nginx + static HTML files (from build image)
+- **API container**: nginx + PHP-FPM + Aphiria + compiled docs
+- **Database**: PostgreSQL with TSVector-indexed lexemes
+- **Init**: Kubernetes Job runs Phinx migrations + LexemeSeeder
+
+---
+
 ## Constitution
 
 This project follows the **Aphiria.com Constitution** located at `specs/.specify/memory/constitution.md` (v1.0.0).
