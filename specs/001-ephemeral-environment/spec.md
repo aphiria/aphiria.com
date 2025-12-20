@@ -8,13 +8,23 @@
 
 ## Clarifications
 
-### Session 2025-12-20
+### Session 2025-12-20 (Initial Clarifications)
 
 - Q: What ResourceQuota limits should be enforced per ephemeral namespace? → A: Minimal (2 CPU, 4Gi memory, 5 pods max) with 1 replica for preview deployments
 - Q: Should ephemeral environments clone and build the full documentation set or a minimal subset? → A: Full documentation (all versions, all pages)
 - Q: What authentication/authorization should ephemeral preview environments enforce? → A: Public access (no auth)
 - Q: What rate limiting should be applied to preview environment traffic? → A: Kubernetes-level only (connection limits)
 - Q: What maintenance/update strategy for the persistent base infrastructure (cluster, PostgreSQL)? → A: Manual as-needed updates
+
+### Session 2025-12-20 (Architecture Decisions)
+
+- Q: Should preview environments import production Kustomize manifests or use separate Pulumi code? → A: **Migrate all infrastructure (dev-local, preview, production) to Pulumi** to eliminate tool sprawl (Helm + Kustomize + Pulumi → Pulumi only)
+- Q: Should Redis and monitoring be included in migration? → A: No, Redis is unused and monitoring is managed separately
+- Q: What about js-config ConfigMap for web? → A: Required, contains environment-specific JavaScript configuration (API URLs), must be created per-environment
+- Q: Reuse production Gateway or create separate for preview? → A: Separate Gateway for preview environments (isolation)
+- Q: Migrate to GitHub Container Registry (ghcr.io) from DockerHub? → A: Yes, simplifies GitHub Actions integration and eliminates rate limits
+- Q: Should Pulumi manage per-environment databases? → A: Yes, Pulumi creates separate databases for dev-local, preview, and production
+- Q: Migration order? → A: dev-local (Minikube) → preview (ephemeral) → production (DigitalOcean cluster)
 
 ---
 
@@ -207,6 +217,206 @@ The GitHub Actions workflow will:
 
 ---
 
+## CI/CD Workflow Architecture
+
+### Design Principle: Reusable Workflows
+
+**Goal**: Minimize drift between PR preview builds and production builds by using parameterized, reusable workflows.
+
+**Requirements**:
+- **FR-048** (Workflow reuse): Docker image builds MUST use the same reusable workflow for both PR previews and production deployments
+- **FR-049** (Workflow parameterization): Build workflows MUST be parameterized by environment (`preview`, `production`) to avoid duplication
+- **FR-050** (Deployment consistency): Pulumi deployment workflows MUST use shared logic with environment-specific configuration passed as inputs
+- **NFR-011** (Maintainability): Changes to build or deployment logic MUST only require updating a single reusable workflow, not multiple workflow files
+
+### Workflow Structure
+
+**Reusable Workflows** (`.github/workflows/`):
+- `build-images.yml` - Reusable workflow for building Docker images (build, web, API)
+  - Inputs: `environment` (preview/production), `image-tag-strategy` (pr-number/commit-sha/latest), `enable-cache` (true/false)
+  - Outputs: `build-digest`, `web-digest`, `api-digest`
+- `deploy-pulumi.yml` - Reusable workflow for Pulumi deployments
+  - Inputs: `stack-name`, `pulumi-program-path`, `environment`, `image-digests`
+  - Outputs: `deployment-urls`, `stack-outputs`
+
+**Caller Workflows** (`.github/workflows/`):
+- `preview-deploy.yml` - Calls `build-images.yml` + `deploy-pulumi.yml` with preview params
+- `production-deploy.yml` - Calls `build-images.yml` (optional, may skip) + `deploy-pulumi.yml` with production params
+- `preview-cleanup.yml` - Calls `deploy-pulumi.yml` with destroy action
+
+**Migration - Files to Remove**:
+After implementing reusable workflows, the following existing workflow files will be REMOVED (logic replicated in new workflows):
+- `build-docker-image.yml` - Replaced by `build-images.yml`
+- `build-deploy.yml` - Replaced by `production-deploy.yml` + `deploy-pulumi.yml`
+- `build-preview-images.yml` - Replaced by `preview-deploy.yml` + `build-images.yml`
+- `test.yml` - Keep as-is (not part of migration, runs tests only)
+
+**Note**: Old workflows will be removed only after new workflows are tested and validated in preview and production.
+
+### Parameterization Strategy
+
+**Build Workflow Parameters**:
+```yaml
+# .github/workflows/build-images.yml
+inputs:
+  environment:
+    type: string
+    required: true
+    description: "preview or production"
+  image-tag-strategy:
+    type: string
+    required: true
+    description: "pr-number, commit-sha, or latest"
+  registry:
+    type: string
+    default: "ghcr.io"
+  enable-cache:
+    type: boolean
+    default: true
+```
+
+**Deployment Workflow Parameters**:
+```yaml
+# .github/workflows/deploy-pulumi.yml
+inputs:
+  stack-name:
+    type: string
+    required: true
+    description: "Pulumi stack name (e.g., ephemeral-pr-123, production)"
+  pulumi-program-path:
+    type: string
+    required: true
+    description: "Path to Pulumi program (e.g., infrastructure/pulumi/aphiria.com)"
+  environment:
+    type: string
+    required: true
+    description: "GitHub environment for approval gates (preview, production)"
+  web-image-digest:
+    type: string
+    required: true
+  api-image-digest:
+    type: string
+    required: true
+  action:
+    type: string
+    default: "up"
+    description: "Pulumi action: up or destroy"
+```
+
+### Workflow Invocation Examples
+
+**Preview Deployment** (`.github/workflows/preview-deploy.yml`):
+```yaml
+jobs:
+  build:
+    uses: ./.github/workflows/build-images.yml
+    with:
+      environment: preview
+      image-tag-strategy: pr-number
+      enable-cache: true
+
+  deploy:
+    needs: build
+    uses: ./.github/workflows/deploy-pulumi.yml
+    with:
+      stack-name: ephemeral-pr-${{ github.event.pull_request.number }}
+      pulumi-program-path: infrastructure/pulumi/ephemeral
+      environment: preview
+      web-image-digest: ${{ needs.build.outputs.web-digest }}
+      api-image-digest: ${{ needs.build.outputs.api-digest }}
+    secrets: inherit
+```
+
+**Production Deployment** (`.github/workflows/production-deploy.yml`):
+```yaml
+jobs:
+  # Option 1: Build new images for production
+  build:
+    uses: ./.github/workflows/build-images.yml
+    with:
+      environment: production
+      image-tag-strategy: commit-sha
+      enable-cache: true
+
+  # Option 2: Reuse preview images (build-once-deploy-many - PREFERRED)
+  promote:
+    runs-on: ubuntu-latest
+    outputs:
+      web-digest: ${{ steps.get-digests.outputs.web-digest }}
+      api-digest: ${{ steps.get-digests.outputs.api-digest }}
+    steps:
+      - name: Get preview image digests from merged PR labels
+        id: get-digests
+        run: |
+          # Extract digests from PR labels: image-digest/web:sha256:..., image-digest/api:sha256:...
+          echo "web-digest=sha256:..." >> $GITHUB_OUTPUT
+          echo "api-digest=sha256:..." >> $GITHUB_OUTPUT
+
+  deploy:
+    needs: promote
+    uses: ./.github/workflows/deploy-pulumi.yml
+    with:
+      stack-name: production
+      pulumi-program-path: infrastructure/pulumi/aphiria.com
+      environment: production
+      web-image-digest: ${{ needs.promote.outputs.web-digest }}
+      api-image-digest: ${{ needs.promote.outputs.api-digest }}
+    secrets: inherit
+```
+
+### Benefits
+
+1. **Single Source of Truth**: Build logic lives in one file (`build-images.yml`)
+2. **No Drift**: Preview and production use identical build steps, just different parameters
+3. **Easy Testing**: Can test production workflow changes in preview first
+4. **Maintainability**: Bug fixes or improvements apply to all environments automatically
+5. **Type Safety**: Workflow inputs are typed and validated by GitHub Actions
+
+---
+
+## Infrastructure Strategy
+
+### Full Pulumi Migration
+
+This feature includes a **comprehensive migration** from Helm/Kustomize to Pulumi for all environments:
+
+**Current State (Pre-Migration)**:
+- Helm: cert-manager + nginx-gateway-fabric (helmfile.yml)
+- Kustomize: Application deployments (base + dev/prod overlays)
+- Pulumi: DigitalOcean cluster creation only
+
+**Target State (Post-Migration)**:
+- Pulumi: Everything (Helm charts + application deployments + cluster management)
+- Helm/Kustomize: Deprecated
+
+**Rationale**:
+1. **Tool Consolidation**: 3 tools (Helm + Kustomize + Pulumi) → 1 tool (Pulumi)
+2. **Dynamic Infrastructure**: Pulumi excels at ephemeral/per-PR resources
+3. **Type Safety**: TypeScript catches errors before deployment
+4. **State Management**: Full deployment history and rollback capability
+5. **DRY Principle**: Shared components reused across dev-local, preview, production
+6. **Better Local Dev**: Simpler Minikube workflow (`pulumi up` vs `helmfile + kubectl`)
+
+**Migration Scope**:
+- ✅ Helm charts (cert-manager, nginx-gateway) → Pulumi Helm provider
+- ✅ Kustomize base manifests → Pulumi TypeScript components
+- ✅ Environment overlays → Pulumi stacks with configurations
+- ✅ Image registry migration: DockerHub → GitHub Container Registry (ghcr.io)
+- ✅ Per-environment database management (dev-local, preview, production)
+
+**Migration Order**:
+1. **dev-local** (Minikube) - Test locally first, validate workflow
+2. **preview** (ephemeral-pr-*) - Automated preview environments on DigitalOcean
+3. **production** (DigitalOcean cluster) - Live site deployment
+
+**Backward Compatibility**:
+- Existing Kustomize files remain at `infrastructure/kubernetes/` until ALL migration phases complete
+- Files will be moved to `infrastructure/kubernetes-deprecated/` only after Phase 8 (production migration) succeeds
+- After deprecation, preserved for 6 months as reference (can rollback via git history if needed)
+- Deployment patterns remain identical (same Kubernetes resources, just defined in TypeScript)
+
+---
+
 ## Deployment Gating (Open Source Safety)
 
 ### Policy
@@ -220,6 +430,30 @@ The GitHub Actions workflow will:
 - Preview deployment jobs SHALL target a protected deployment environment
 - The environment SHALL require manual approval by the maintainer
 - Deployment secrets SHALL be scoped to the protected environment only
+
+### Container Registry Strategy
+
+**Migration to GitHub Container Registry (ghcr.io)**:
+
+**Why ghcr.io instead of DockerHub**:
+- ✅ No pull rate limits for authenticated users
+- ✅ Native GitHub Actions integration (automatic authentication)
+- ✅ Free for public repositories
+- ✅ Image digests natively supported for build-once-deploy-many
+- ✅ Packages automatically linked to repository
+
+**Authentication**:
+- Builds: GitHub Actions uses `secrets.DOCKER_ACCESS_TOKEN` (personal access token with `write:packages`)
+- Registry username: `davidbyoung`
+- Image naming:
+  - Preview: `ghcr.io/aphiria/aphiria.com-{web|api|build}:pr-{PR_NUMBER}`
+  - Production: `ghcr.io/aphiria/aphiria.com-{web|api}@sha256:{digest}`
+
+**Image Promotion Flow**:
+1. PR opened → Build images with PR tag
+2. Preview deployed → Uses digest from PR build
+3. PR merged → Tag digest as `latest` or version tag
+4. Production deployed → References same digest tested in preview
 
 ---
 
@@ -359,6 +593,29 @@ The following infrastructure persists **independently of PR lifecycle** and rema
 8. Pulumi credentials allow stack creation/deletion operations
 9. Documentation build (from https://github.com/aphiria/docs) completes successfully in Docker build stage using full documentation set (all versions, all pages)
 10. LexemeSeeder can access compiled documentation files in the API container filesystem
+
+---
+
+## Non-Functional Requirements
+
+### Performance
+
+- **NFR-001** (Build speed): Docker builds MUST use layer caching to avoid rebuilding unchanged dependencies and documentation on every CI run
+- **NFR-002** (Cache strategy): Docker builds MUST use registry-based caching (GitHub Container Registry) to share layers across workflow runs
+- **NFR-003** (Build time target): Full builds (including documentation compilation) SHOULD complete within 10 minutes on cache miss, <2 minutes on cache hit
+- **NFR-004** (Deployment speed): Preview environments MUST be accessible within 5 minutes of approval
+
+### Cost Optimization
+
+- **NFR-005**: Shared PostgreSQL instance reduces preview environment costs by 70-80% vs. per-PR instances
+- **NFR-006**: Preview environments use minimal replicas (1 web, 1 API) vs. production (2+ replicas)
+- **NFR-007**: ResourceQuotas prevent runaway resource usage (2 CPU, 4Gi memory max per preview)
+
+### Reliability
+
+- **NFR-008**: Preview deployments MUST NOT impact production stability or performance
+- **NFR-009**: Failed preview deployments MUST NOT leave orphaned resources (Pulumi state tracking ensures cleanup)
+- **NFR-010**: Database migrations MUST be idempotent and reversible
 
 ---
 

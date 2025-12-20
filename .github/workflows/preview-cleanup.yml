@@ -1,0 +1,212 @@
+name: Preview Environment Cleanup
+
+on:
+  pull_request:
+    types: [closed]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  cleanup:
+    name: Destroy Preview Environment
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Extract PR number
+        id: pr
+        run: |
+          PR_NUMBER="${{ github.event.pull_request.number }}"
+          echo "number=${PR_NUMBER}" >> $GITHUB_OUTPUT
+          echo "Cleaning up preview environment for PR #${PR_NUMBER}"
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Pulumi CLI
+        uses: pulumi/actions@v5
+
+      - name: Install Pulumi dependencies
+        run: |
+          cd infrastructure/pulumi/ephemeral
+          npm install
+
+      - name: Destroy preview environment
+        id: destroy
+        working-directory: infrastructure/pulumi/ephemeral
+        env:
+          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
+          KUBECONFIG: ${{ secrets.KUBECONFIG }}
+        run: |
+          PR_NUMBER=${{ steps.pr.outputs.number }}
+          STACK_NAME="ephemeral-pr-${PR_NUMBER}"
+
+          # Check if stack exists
+          if pulumi stack select "${STACK_NAME}" 2>/dev/null; then
+            echo "Stack ${STACK_NAME} found, destroying..."
+
+            # Destroy stack with timeout
+            timeout 300 pulumi destroy --stack "${STACK_NAME}" --yes
+
+            # Remove stack
+            pulumi stack rm "${STACK_NAME}" --yes
+
+            echo "status=destroyed" >> $GITHUB_OUTPUT
+            echo "✅ Preview environment destroyed successfully"
+          else
+            echo "Stack ${STACK_NAME} not found, nothing to clean up"
+            echo "status=not-found" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Verify namespace cleanup
+        if: steps.destroy.outputs.status == 'destroyed'
+        env:
+          KUBECONFIG: ${{ secrets.KUBECONFIG }}
+        run: |
+          PR_NUMBER=${{ steps.pr.outputs.number }}
+          NAMESPACE="ephemeral-pr-${PR_NUMBER}"
+
+          # Verify namespace is gone
+          if kubectl get namespace "${NAMESPACE}" 2>/dev/null; then
+            echo "::warning::Namespace ${NAMESPACE} still exists after stack destroy"
+            kubectl get all -n "${NAMESPACE}"
+          else
+            echo "✅ Namespace ${NAMESPACE} successfully deleted"
+          fi
+
+      - name: Verify database cleanup
+        if: steps.destroy.outputs.status == 'destroyed'
+        continue-on-error: true
+        env:
+          KUBECONFIG: ${{ secrets.KUBECONFIG }}
+        run: |
+          PR_NUMBER=${{ steps.pr.outputs.number }}
+          DB_NAME="aphiria_pr_${PR_NUMBER}"
+
+          # Get PostgreSQL pod name from base infrastructure
+          PG_POD=$(kubectl get pods -l app=postgresql -o jsonpath='{.items[0].metadata.name}' 2>/dev/null)
+
+          if [ -n "${PG_POD}" ]; then
+            # Check if database still exists
+            DB_EXISTS=$(kubectl exec "${PG_POD}" -- psql -U postgres -tAc "SELECT 1 FROM pg_database WHERE datname='${DB_NAME}'" 2>/dev/null || echo "")
+
+            if [ -z "${DB_EXISTS}" ]; then
+              echo "✅ Database ${DB_NAME} successfully dropped"
+            else
+              echo "::warning::Database ${DB_NAME} still exists after stack destroy"
+            fi
+          else
+            echo "::notice::PostgreSQL pod not found, skipping database verification"
+          fi
+
+      - name: Comment on PR
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prNumber = ${{ steps.pr.outputs.number }};
+            const status = '${{ steps.destroy.outputs.status }}';
+            const prState = '${{ github.event.pull_request.merged }}' === 'true' ? 'merged' : 'closed';
+
+            let body;
+
+            if (status === 'destroyed') {
+              body = `### 🧹 Preview Environment Cleanup Complete
+
+              **PR**: #${prNumber} (${prState})
+              **Status**: ✅ Successfully destroyed
+
+              All resources have been cleaned up:
+              - ✅ Kubernetes namespace deleted
+              - ✅ Database dropped
+              - ✅ Pulumi stack removed
+
+              The preview environment is no longer accessible.
+              `;
+            } else if (status === 'not-found') {
+              body = `### 🧹 Preview Environment Cleanup
+
+              **PR**: #${prNumber} (${prState})
+              **Status**: ℹ️  No preview environment found
+
+              No cleanup needed - preview environment was not deployed or already cleaned up.
+              `;
+            } else {
+              body = `### 🧹 Preview Environment Cleanup
+
+              **PR**: #${prNumber} (${prState})
+              **Status**: ⚠️  Cleanup status unknown
+
+              Please verify manually that all resources have been cleaned up.
+              `;
+            }
+
+            // Find existing deployment comment and update it
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+            });
+
+            const deployComment = comments.find(comment =>
+              comment.user.type === 'Bot' &&
+              comment.body.includes('Preview Environment Deployed')
+            );
+
+            if (deployComment) {
+              // Update the deployment comment to show it's cleaned up
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: deployComment.id,
+                body: deployComment.body + '\n\n---\n\n' + body,
+              });
+            } else {
+              // Create new comment
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                body: body,
+              });
+            }
+
+      - name: Remove preview labels
+        if: steps.destroy.outputs.status == 'destroyed'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prNumber = ${{ steps.pr.outputs.number }};
+
+            const { data: pr } = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: prNumber,
+            });
+
+            // Remove all preview-related labels
+            const labelsToRemove = pr.labels
+              .filter(l =>
+                l.name.startsWith('preview:') ||
+                l.name.startsWith('web-digest:') ||
+                l.name.startsWith('api-digest:')
+              )
+              .map(l => l.name);
+
+            for (const label of labelsToRemove) {
+              try {
+                await github.rest.issues.removeLabel({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: prNumber,
+                  name: label,
+                });
+              } catch (error) {
+                console.log(`Could not remove label ${label}: ${error.message}`);
+              }
+            }

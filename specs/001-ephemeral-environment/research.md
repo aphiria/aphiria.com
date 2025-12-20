@@ -503,6 +503,203 @@ spec:
 
 ---
 
+## Decision 13: Full Pulumi Migration Strategy
+
+**Context**: Initial implementation created separate Pulumi code for preview environments, but production uses Helm/Kustomize. This creates divergence - preview environments test different infrastructure than production deploys.
+
+**Decision**: **Migrate ALL infrastructure (dev-local, preview, production) from Helm/Kustomize to Pulumi**
+
+**Rationale**:
+- **Tool Consolidation**: Eliminates complexity of maintaining 3 tools (Helm + Kustomize + Pulumi) → Single tool (Pulumi)
+- **Test What You Deploy**: Preview environments will use identical code as production (TypeScript components shared across stacks)
+- **Better for Dynamic Infrastructure**: Pulumi excels at ephemeral environments (what this project needs)
+- **Type Safety**: TypeScript catches errors before deployment (Kustomize YAML doesn't)
+- **State Management**: Full deployment history, easy rollbacks, know what's deployed where
+- **DRY Principle**: Define deployment components once, reuse across all environments
+- **Simpler Local Dev**: Minikube workflow becomes `pulumi up` instead of `helmfile sync && kubectl apply -k`
+
+**Migration Scope**:
+
+### What Gets Migrated:
+1. **Helm Charts** → Pulumi Helm provider:
+   - cert-manager (v1.16.1) with Gateway API support
+   - nginx-gateway-fabric (1.2.0)
+   - Gateway API CRDs (kubectl apply hook becomes Pulumi YAML resource)
+
+2. **Kustomize Base Manifests** → Pulumi TypeScript components:
+   - Web Deployment (nginx + static files)
+   - API Deployment (nginx + PHP-FPM with initContainer pattern)
+   - Database Deployment (PostgreSQL 16 + PersistentVolume)
+   - DB Migration Job (Phinx migrations + LexemeSeeder)
+   - ConfigMaps (env-vars, nginx-config, js-config)
+   - Secrets (env-var-secrets)
+   - Gateway + HTTPRoutes (production routing)
+
+3. **Environment Overlays** → Pulumi Stack Configurations:
+   - dev-local (Minikube): `pulumi stack select dev-local`
+   - preview (ephemeral): `pulumi stack select ephemeral-pr-{N}`
+   - production (DigitalOcean): `pulumi stack select production`
+
+4. **Image Registry Migration**:
+   - From: DockerHub (`davidbyoung/aphiria.com-{api|web}:latest`)
+   - To: GitHub Container Registry (`ghcr.io/aphiria/aphiria.com-{api|web}@sha256:...`)
+   - Benefit: No rate limits, better GitHub Actions integration, native digest support
+
+5. **Database Management**:
+   - Pulumi creates per-environment databases:
+     - dev-local: `aphiria_dev_local` (in local PostgreSQL)
+     - preview: `aphiria_pr_{N}` (in shared ephemeral PostgreSQL)
+     - production: `aphiria_production` (in production PostgreSQL)
+
+**What Gets Excluded**:
+- ❌ Redis (not used, ignore)
+- ❌ Monitoring secrets (managed separately)
+
+**Component Architecture**:
+
+```
+infrastructure/pulumi/aphiria.com/
+├── index.ts                    # Stack router (selects stack based on name)
+├── src/
+│   ├── shared/                 # Reusable components
+│   │   ├── web-deployment.ts   # Web nginx deployment component
+│   │   ├── api-deployment.ts   # API nginx+PHP-FPM component
+│   │   ├── database.ts         # PostgreSQL deployment component
+│   │   ├── gateway.ts          # Gateway API configuration
+│   │   ├── helm-charts.ts      # cert-manager + nginx-gateway
+│   │   └── types.ts            # Shared TypeScript interfaces
+│   ├── dev-local-stack.ts      # Minikube environment
+│   ├── ephemeral-stack.ts      # Per-PR preview environments
+│   └── production-stack.ts     # Production environment
+├── package.json                # Dependencies (@pulumi/kubernetes, @pulumi/docker)
+└── tsconfig.json               # TypeScript configuration
+```
+
+**Shared Component Pattern Example**:
+
+```typescript
+// src/shared/web-deployment.ts
+export interface WebDeploymentArgs {
+    namespace: pulumi.Input<string>;
+    replicas: number;
+    image: string;
+    jsConfigData: Record<string, string>;
+    env: "dev-local" | "preview" | "production";
+}
+
+export function createWebDeployment(args: WebDeploymentArgs) {
+    // Create js-config ConfigMap
+    const jsConfig = new k8s.core.v1.ConfigMap("js-config", {
+        metadata: { namespace: args.namespace },
+        data: { "config.js": JSON.stringify(args.jsConfigData) }
+    });
+
+    // Create web Deployment (same structure as current Kustomize)
+    return new k8s.apps.v1.Deployment("web", {
+        metadata: { namespace: args.namespace },
+        spec: {
+            replicas: args.replicas,
+            template: {
+                spec: {
+                    containers: [{
+                        name: "web",
+                        image: args.image,
+                        volumeMounts: [{
+                            name: "js-config",
+                            mountPath: "/usr/share/nginx/html/js/config"
+                        }]
+                    }],
+                    volumes: [{
+                        name: "js-config",
+                        configMap: { name: jsConfig.metadata.name }
+                    }]
+                }
+            }
+        }
+    });
+}
+```
+
+**Stack Usage**:
+
+```typescript
+// production-stack.ts
+import { createWebDeployment } from "./shared/web-deployment";
+
+createWebDeployment({
+    namespace: "default",
+    replicas: 2,
+    image: "ghcr.io/aphiria/aphiria.com-web@sha256:...",
+    jsConfigData: {
+        apiUrl: "https://api.aphiria.com",
+        environment: "production"
+    },
+    env: "production"
+});
+
+// ephemeral-stack.ts (per-PR)
+createWebDeployment({
+    namespace: `ephemeral-pr-${prNumber}`,
+    replicas: 1,
+    image: webImageDigest,  // From GitHub Actions
+    jsConfigData: {
+        apiUrl: `https://${prNumber}.pr-api.aphiria.com`,
+        environment: "preview"
+    },
+    env: "preview"
+});
+```
+
+**Migration Order & Testing**:
+
+1. **Phase 1: dev-local (Minikube)**
+   - Migrate first to test locally without cluster access
+   - Validate: `minikube start && pulumi up --stack dev-local`
+   - Test: Access site locally, verify database migrations work
+   - Risk: Low (local only, no production impact)
+
+2. **Phase 2: preview (ephemeral-pr-*)**
+   - Update existing ephemeral stack to use shared components
+   - Test: Open test PR, approve deployment, validate preview works
+   - Risk: Medium (uses DigitalOcean, but isolated from production)
+
+3. **Phase 3: production (DigitalOcean)**
+   - Migrate production last after validating patterns in dev-local + preview
+   - Deploy to production: `pulumi up --stack production`
+   - Risk: High (live site), but mitigated by prior testing
+
+**Backward Compatibility Plan**:
+
+```bash
+# After successful migration, preserve old files for reference
+mv infrastructure/kubernetes infrastructure/kubernetes-deprecated
+
+# Add deprecation notice
+echo "⚠️ DEPRECATED: Migrated to Pulumi (infrastructure/pulumi/aphiria.com/)
+Preserved for reference until 2025-06-20" > infrastructure/kubernetes-deprecated/README.md
+```
+
+**Deployment Commands**:
+
+```bash
+# Before (Kustomize):
+helmfile -f infrastructure/kubernetes/base/helmfile.yml sync
+kubectl apply -k infrastructure/kubernetes/environments/prod
+
+# After (Pulumi):
+cd infrastructure/pulumi/aphiria.com
+pulumi up --stack production
+```
+
+**Benefits Validation**:
+- ✅ **Same Kubernetes Resources**: Pulumi generates identical manifests to Kustomize (just defined in TypeScript)
+- ✅ **Faster Local Dev**: `pulumi up` vs `helmfile + kubectl` (eliminates tool switching)
+- ✅ **Preview = Production**: Both use same TypeScript components (test what you deploy)
+- ✅ **Better Errors**: TypeScript type checking catches config errors pre-deployment
+- ✅ **State Tracking**: `pulumi stack output` shows what's deployed, `pulumi preview` shows diffs
+
+---
+
 ## Summary of Technical Decisions
 
 | Area | Decision | Primary Benefit | Updated |
@@ -514,11 +711,12 @@ spec:
 | Cleanup | Pulumi destroy (namespace + database) | Reliable, complete removal | ✅ Yes |
 | State | PR comments | User-visible status | No |
 | Build Strategy | Build-once, digest-based promotion | Identical artifacts preview → production | No |
-| Image Registry | Docker Hub (davidbyoung/*) | Existing infrastructure | ✅ Yes |
+| Image Registry | GitHub Container Registry (ghcr.io) | No rate limits, native GH Actions integration | ✅ Yes |
 | Rate Limiting | Ingress connection limits | Zero-cost abuse prevention | ✅ Yes |
 | Authentication | Public access (no auth) | UX simplicity, stakeholder sharing | ✅ Yes |
 | Docs Build | Full documentation build | Complete fidelity testing | ✅ Yes |
 | Maintenance | Manual as-needed updates | Cost-conscious, controlled | ✅ Yes |
 | Resource Limits | 2 CPU, 4Gi, 5 pods, 1 replica | Prevents abuse without over-constraint | ✅ Yes |
+| Infrastructure | Full Pulumi migration (all environments) | Tool consolidation, test what you deploy | ✅ Yes |
 
 **All NEEDS CLARIFICATION items resolved. Proceed to Phase 1.**
