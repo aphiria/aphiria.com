@@ -14,5 +14,6 @@
 /public-web/index.html
 /public-web/rev-manifest.json
 /phpunit.phar
+/specs/.claude
 /vendor/
 /yarn-error.log
