@@ -84,7 +84,7 @@ kubectl config view --flatten > ~/combined.yml
 cp ~/combined.yml ~/.kube/config
 ```
 
-Verify that you see multiple context by running
+Verify that you see multiple contexts by running
 
 ```
 kubectl config get-contexts

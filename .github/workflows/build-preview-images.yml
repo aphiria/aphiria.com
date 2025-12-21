@@ -68,6 +68,7 @@ jobs:
           cache-from: |
             type=gha,scope=build-${{ github.event.pull_request.number }}
             type=gha,scope=build
+            type=gha,scope=build-master
           cache-to: |
             type=gha,mode=max,scope=build-${{ github.event.pull_request.number }}
             type=gha,mode=max,scope=build
@@ -91,6 +92,7 @@ jobs:
           cache-from: |
             type=gha,scope=web-${{ github.event.pull_request.number }}
             type=gha,scope=web
+            type=gha,scope=web-master
           cache-to: |
             type=gha,mode=max,scope=web-${{ github.event.pull_request.number }}
             type=gha,mode=max,scope=web
@@ -114,6 +116,7 @@ jobs:
           cache-from: |
             type=gha,scope=api-${{ github.event.pull_request.number }}
             type=gha,scope=api
+            type=gha,scope=api-master
           cache-to: |
             type=gha,mode=max,scope=api-${{ github.event.pull_request.number }}
             type=gha,mode=max,scope=api

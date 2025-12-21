@@ -29,13 +29,39 @@ jobs:
 
       - name: Extract PR number
         id: pr
-        run: |
-          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
-            PR_NUMBER="${{ inputs.pr_number }}"
-          else
-            PR_NUMBER="${{ github.event.workflow_run.pull_requests[0].number }}"
-          fi
-          echo "number=${PR_NUMBER}" >> $GITHUB_OUTPUT
+        uses: actions/github-script@v7
+        with:
+          script: |
+            let prNumber;
+
+            if (context.eventName === 'workflow_dispatch') {
+              prNumber = ${{ inputs.pr_number || 0 }};
+            } else {
+              // Get PR number from workflow_run event
+              const pullRequests = context.payload.workflow_run.pull_requests;
+              if (pullRequests && pullRequests.length > 0) {
+                prNumber = pullRequests[0].number;
+              } else {
+                // Fallback: get PR from head branch
+                const branchName = context.payload.workflow_run.head_branch;
+                const { data: prs } = await github.rest.pulls.list({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  head: `${context.repo.owner}:${branchName}`,
+                  state: 'open'
+                });
+
+                if (prs.length === 0) {
+                  core.setFailed(`No open PR found for branch ${branchName}`);
+                  return;
+                }
+
+                prNumber = prs[0].number;
+              }
+            }
+
+            console.log(`PR Number: ${prNumber}`);
+            core.setOutput('number', prNumber);
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -65,7 +91,17 @@ jobs:
           PR_NUMBER=${{ steps.pr.outputs.number }}
           STACK_NAME="ephemeral-pr-${PR_NUMBER}"
 
+          # Select or create stack
           pulumi stack select "${STACK_NAME}" 2>/dev/null || pulumi stack init "${STACK_NAME}"
+
+          # Set minimal config required for preview (full config set in deploy job)
+          pulumi config set prNumber "${PR_NUMBER}"
+          pulumi config set baseStackReference "davidbyoung/ephemeral-environments/ephemeral-base"
+          pulumi config set --secret postgresql:adminPassword "preview-only"
+          pulumi config set webImageDigest "sha256:preview"
+          pulumi config set apiImageDigest "sha256:preview"
+
+          # Run preview
           pulumi preview --stack "${STACK_NAME}" --non-interactive 2>&1 | tee preview.txt
 
       - name: Add preview comment on PR
@@ -137,18 +173,95 @@ jobs:
               body,
             });
 
-  deploy:
-    name: Deploy Preview Environment
+  check-author:
+    name: Check PR Author
     runs-on: ubuntu-latest
     needs: preview-infra
     if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
+    outputs:
+      is-maintainer: ${{ steps.check.outputs.is-maintainer }}
+      pr-number: ${{ steps.pr.outputs.number }}
 
-    environment:
-      name: preview
-      url: https://${{ steps.deploy.outputs.pr-number }}.pr.aphiria.com
+    steps:
+      - name: Extract PR number
+        id: pr
+        uses: actions/github-script@v7
+        with:
+          script: |
+            let prNumber;
+
+            if (context.eventName === 'workflow_dispatch') {
+              prNumber = ${{ inputs.pr_number || 0 }};
+            } else {
+              // Get PR number from workflow_run event
+              const pullRequests = context.payload.workflow_run.pull_requests;
+              if (pullRequests && pullRequests.length > 0) {
+                prNumber = pullRequests[0].number;
+              } else {
+                // Fallback: get PR from head branch
+                const branchName = context.payload.workflow_run.head_branch;
+                const { data: prs } = await github.rest.pulls.list({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  head: `${context.repo.owner}:${branchName}`,
+                  state: 'open'
+                });
+
+                if (prs.length === 0) {
+                  core.setFailed(`No open PR found for branch ${branchName}`);
+                  return;
+                }
+
+                prNumber = prs[0].number;
+              }
+            }
+
+            console.log(`PR Number: ${prNumber}`);
+            core.setOutput('number', prNumber);
+
+      - name: Check if PR author is maintainer
+        id: check
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prNumber = ${{ steps.pr.outputs.number }};
+
+            // Get PR details
+            const { data: pr } = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: prNumber,
+            });
+
+            // Get repository details to find owner
+            const { data: repo } = await github.rest.repos.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+            });
+
+            const prAuthor = pr.user.login;
+            const repoOwner = repo.owner.login;
+
+            console.log(`PR Author: ${prAuthor}`);
+            console.log(`Repo Owner: ${repoOwner}`);
+
+            const isMaintainer = prAuthor === repoOwner;
+            core.setOutput('is-maintainer', isMaintainer);
+
+            if (isMaintainer) {
+              console.log('✅ PR author is repository owner - auto-approving deployment');
+            } else {
+              console.log('⏳ PR author is not repository owner - manual approval required');
+            }
+
+  deploy:
+    name: Deploy Preview Environment
+    runs-on: ubuntu-latest
+    needs: check-author
+    if: ${{ needs.check-author.outputs.is-maintainer == 'true' }}
 
     concurrency:
-      group: preview-${{ github.event.workflow_run.pull_requests[0].number || inputs.pr_number }}
+      group: preview-${{ needs.check-author.outputs.pr-number }}
       cancel-in-progress: false
 
     steps:
@@ -200,14 +313,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Extract PR number
+      - name: Set PR number
         id: pr
         run: |
-          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
-            PR_NUMBER="${{ inputs.pr_number }}"
-          else
-            PR_NUMBER="${{ github.event.workflow_run.pull_requests[0].number }}"
-          fi
+          PR_NUMBER="${{ needs.check-author.outputs.pr-number }}"
           echo "number=${PR_NUMBER}" >> $GITHUB_OUTPUT
           echo "Deploying preview for PR #${PR_NUMBER}"
 
@@ -439,20 +548,31 @@ jobs:
               });
             }
 
-      - name: Update deployment status
-        if: always()
+  notify-manual-approval:
+    name: Notify Manual Approval Required
+    runs-on: ubuntu-latest
+    needs: check-author
+    if: ${{ needs.check-author.outputs.is-maintainer == 'false' }}
+
+    steps:
+      - name: Add comment on PR
         uses: actions/github-script@v7
         with:
           script: |
-            const prNumber = ${{ steps.pr.outputs.number }};
-            const webUrl = '${{ steps.deploy.outputs.web-url }}';
-            const success = '${{ job.status }}' === 'success';
+            const prNumber = ${{ needs.check-author.outputs.pr-number }};
+            const runUrl = `https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}`;
 
-            await github.rest.repos.createDeploymentStatus({
+            const body = `## ⏳ Manual Approval Required
+
+            Preview environment deployment requires manual approval for non-maintainer contributions.
+
+            A repository maintainer must approve the deployment in the [Actions tab](${runUrl}).
+
+            **Note**: This is a security measure to prevent unauthorized resource usage.`;
+
+            await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              deployment_id: context.payload.deployment.id,
-              state: success ? 'success' : 'failure',
-              environment_url: webUrl,
-              description: success ? 'Preview environment is ready' : 'Deployment failed',
+              issue_number: prNumber,
+              body,
             });

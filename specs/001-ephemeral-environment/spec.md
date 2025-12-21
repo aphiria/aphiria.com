@@ -126,10 +126,12 @@ As a maintainer, I want preview environments to be destroyed automatically when 
 - **FR-008**: Provisioning failures MUST be reported clearly
 - **FR-009**: All resources created for a preview MUST be removed on teardown
 - **FR-010**: Preview environments MUST deploy both web and API containers with full application behavior
+- **FR-011**: Preview deployments MUST auto-approve for PRs authored by the repository owner
+- **FR-012**: Preview deployments MUST require manual approval for PRs authored by external contributors
 - **FR-029**: Each preview environment MUST provision separate Kubernetes Deployments for web and API components (1 replica each for preview traffic)
 - **FR-030**: Web and API deployments MUST use the same immutable container images (by digest) as production
 - **FR-031**: Gateway/Ingress routing MUST direct `{PR}.pr.aphiria.com` to web service and `{PR}.pr-api.aphiria.com` to API service
-- **FR-052**: Gateway/Ingress MUST enforce connection-level rate limiting to prevent resource exhaustion
+- **FR-033**: Gateway/Ingress MUST enforce connection-level rate limiting to prevent resource exhaustion
 - **FR-032**: Each preview environment MUST run database migrations via Phinx before deployments start
 - **FR-033**: Each preview environment MUST run the LexemeSeeder (Phinx seed) to populate the search index
 - **FR-034**: The database migration job MUST complete successfully before API deployment is marked ready
