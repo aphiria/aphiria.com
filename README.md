@@ -10,6 +10,19 @@
 
 This repository contains the code for both https://www.aphiria.com and https://api.aphiria.com.
 
+## Preview Environments
+
+Pull requests automatically generate ephemeral preview environments for testing changes before merging:
+
+- 🌍 **Web Preview**: `https://{PR}.pr.aphiria.com`
+- 🔌 **API Preview**: `https://{PR}.pr-api.aphiria.com`
+
+**For contributors**: Preview deployments happen automatically after maintainer approval. No setup required!
+
+**For maintainers**:
+- Preview deployment workflow: [`infrastructure/pulumi/ephemeral/QUICKSTART.md`](infrastructure/pulumi/ephemeral/QUICKSTART.md)
+- Secrets management: [`SECRETS.md`](SECRETS.md)
+
 ## Configuring Your Environment
 
 ### Install Dependencies

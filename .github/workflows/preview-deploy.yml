@@ -1,0 +1,427 @@
+name: Preview Environment Deploy
+
+on:
+  workflow_run:
+    workflows: ["Build Preview Images"]
+    types:
+      - completed
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'PR number to deploy'
+        required: true
+        type: number
+
+permissions:
+  contents: read
+  pull-requests: write
+  deployments: write
+
+jobs:
+  preview-infra:
+    name: Preview Infrastructure Changes
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Extract PR number
+        id: pr
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            PR_NUMBER="${{ inputs.pr_number }}"
+          else
+            PR_NUMBER="${{ github.event.workflow_run.pull_requests[0].number }}"
+          fi
+          echo "number=${PR_NUMBER}" >> $GITHUB_OUTPUT
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Pulumi CLI
+        uses: pulumi/actions@v5
+
+      - name: Install dependencies and build
+        working-directory: infrastructure/pulumi/ephemeral
+        run: |
+          npm install
+          npm run build
+
+      - name: Run Pulumi preview
+        id: preview
+        working-directory: infrastructure/pulumi/ephemeral
+        env:
+          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
+        run: |
+          PR_NUMBER=${{ steps.pr.outputs.number }}
+          STACK_NAME="ephemeral-pr-${PR_NUMBER}"
+
+          pulumi stack select "${STACK_NAME}" 2>/dev/null || pulumi stack init "${STACK_NAME}"
+          pulumi preview --stack "${STACK_NAME}" --non-interactive 2>&1 | tee preview.txt
+
+      - name: Comment preview on PR
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const prNumber = ${{ steps.pr.outputs.number }};
+            const preview = fs.readFileSync('infrastructure/pulumi/ephemeral/preview.txt', 'utf8');
+
+            const body = `## 🔍 Infrastructure Preview
+
+            \`\`\`
+            ${preview}
+            \`\`\`
+
+            Review changes above, then approve deployment in Actions tab.`;
+
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+            });
+
+            const existing = comments.find(c => c.user.type === 'Bot' && c.body.includes('Infrastructure Preview'));
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                body,
+              });
+            }
+
+  deploy:
+    name: Deploy Preview Environment
+    runs-on: ubuntu-latest
+    needs: preview-infra
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
+
+    environment:
+      name: preview
+      url: https://${{ steps.deploy.outputs.pr-number }}.pr.aphiria.com
+
+    concurrency:
+      group: preview-${{ github.event.workflow_run.pull_requests[0].number || inputs.pr_number }}
+      cancel-in-progress: false
+
+    steps:
+      - name: Validate required secrets
+        run: |
+          MISSING_SECRETS=()
+
+          if [ -z "${{ secrets.POSTGRESQL_ADMIN_PASSWORD }}" ]; then
+            MISSING_SECRETS+=("POSTGRESQL_ADMIN_PASSWORD")
+          fi
+
+          if [ -z "${{ secrets.PULUMI_ACCESS_TOKEN }}" ]; then
+            MISSING_SECRETS+=("PULUMI_ACCESS_TOKEN")
+          fi
+
+          if [ -z "${{ secrets.KUBECONFIG }}" ]; then
+            MISSING_SECRETS+=("KUBECONFIG")
+          fi
+
+          if [ ${#MISSING_SECRETS[@]} -gt 0 ]; then
+            echo "::error::Missing required secrets: ${MISSING_SECRETS[*]}"
+            echo ""
+            echo "Please add the following secrets to your repository:"
+            echo "Settings → Secrets and variables → Actions → New repository secret"
+            echo ""
+            for secret in "${MISSING_SECRETS[@]}"; do
+              case "$secret" in
+                POSTGRESQL_ADMIN_PASSWORD)
+                  echo "  • POSTGRESQL_ADMIN_PASSWORD: PostgreSQL admin password"
+                  echo "    Retrieve from production: kubectl get secret env-var-secrets -o jsonpath='{.data.DB_PASSWORD}' | base64 -d"
+                  echo "    Or generate new: openssl rand -base64 32"
+                  ;;
+                PULUMI_ACCESS_TOKEN)
+                  echo "  • PULUMI_ACCESS_TOKEN: Pulumi Cloud access token"
+                  echo "    Create at: https://app.pulumi.com/settings/tokens"
+                  ;;
+                KUBECONFIG)
+                  echo "  • KUBECONFIG: Kubernetes cluster configuration (base64 encoded)"
+                  echo "    Encode: cat ~/.kube/config | base64 -w 0"
+                  ;;
+              esac
+              echo ""
+            done
+            exit 1
+          fi
+
+          echo "✅ All required secrets are configured"
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Extract PR number
+        id: pr
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            PR_NUMBER="${{ inputs.pr_number }}"
+          else
+            PR_NUMBER="${{ github.event.workflow_run.pull_requests[0].number }}"
+          fi
+          echo "number=${PR_NUMBER}" >> $GITHUB_OUTPUT
+          echo "Deploying preview for PR #${PR_NUMBER}"
+
+      - name: Get image digests from PR labels
+        id: images
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prNumber = ${{ steps.pr.outputs.number }};
+
+            const { data: pr } = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: prNumber,
+            });
+
+            const webDigestLabel = pr.labels.find(l => l.name.startsWith('web-digest:'));
+            const apiDigestLabel = pr.labels.find(l => l.name.startsWith('api-digest:'));
+
+            if (!webDigestLabel || !apiDigestLabel) {
+              core.setFailed('Image digest labels not found. Please rebuild preview images.');
+              return;
+            }
+
+            const webDigest = 'sha256:' + webDigestLabel.name.replace('web-digest:', '');
+            const apiDigest = 'sha256:' + apiDigestLabel.name.replace('api-digest:', '');
+
+            core.setOutput('web-digest', webDigest);
+            core.setOutput('api-digest', apiDigest);
+
+            console.log(`Web digest: ${webDigest}`);
+            console.log(`API digest: ${apiDigest}`);
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Pulumi CLI
+        uses: pulumi/actions@v5
+
+      - name: Install Pulumi dependencies
+        run: |
+          cd infrastructure/pulumi/ephemeral
+          npm install
+
+      - name: Build TypeScript
+        working-directory: infrastructure/pulumi/ephemeral
+        run: npm run build
+
+      - name: Ensure base stack exists
+        working-directory: infrastructure/pulumi/ephemeral
+        env:
+          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
+          KUBECONFIG: ${{ secrets.KUBECONFIG }}
+        run: |
+          # Check if ephemeral-base stack exists
+          if pulumi stack select ephemeral-base 2>/dev/null; then
+            echo "✅ Base stack 'ephemeral-base' exists"
+            pulumi refresh --stack ephemeral-base --yes
+          else
+            echo "📦 Creating base stack 'ephemeral-base'..."
+            pulumi stack init ephemeral-base
+
+            # Set base stack configuration
+            pulumi config set --secret postgresql:adminPassword "${{ secrets.POSTGRESQL_ADMIN_PASSWORD }}"
+            if [ -n "${{ secrets.POSTGRESQL_ADMIN_USER }}" ]; then
+              pulumi config set postgresql:adminUser "${{ secrets.POSTGRESQL_ADMIN_USER }}"
+            fi
+
+            # Deploy base infrastructure
+            pulumi up --stack ephemeral-base --yes
+          fi
+
+      - name: Configure Pulumi stack
+        working-directory: infrastructure/pulumi/ephemeral
+        env:
+          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
+        run: |
+          PR_NUMBER=${{ steps.pr.outputs.number }}
+          STACK_NAME="ephemeral-pr-${PR_NUMBER}"
+
+          # Select or create stack
+          pulumi stack select "${STACK_NAME}" || pulumi stack init "${STACK_NAME}"
+
+          # Set stack configuration
+          pulumi config set prNumber "${PR_NUMBER}"
+          pulumi config set webImageDigest "${{ steps.images.outputs.web-digest }}"
+          pulumi config set apiImageDigest "${{ steps.images.outputs.api-digest }}"
+          pulumi config set baseStackReference "organization/ephemeral-environments/ephemeral-base"
+
+          # Set PostgreSQL credentials (from secrets)
+          pulumi config set --secret postgresql:adminPassword "${{ secrets.POSTGRESQL_ADMIN_PASSWORD }}"
+
+          # Optional: Set custom DB user if different from 'postgres'
+          if [ -n "${{ secrets.POSTGRESQL_ADMIN_USER }}" ]; then
+            pulumi config set postgresql:adminUser "${{ secrets.POSTGRESQL_ADMIN_USER }}"
+          fi
+
+      - name: Deploy preview environment
+        id: deploy
+        working-directory: infrastructure/pulumi/ephemeral
+        env:
+          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
+          KUBECONFIG: ${{ secrets.KUBECONFIG }}
+        run: |
+          PR_NUMBER=${{ steps.pr.outputs.number }}
+          STACK_NAME="ephemeral-pr-${PR_NUMBER}"
+
+          # Deploy with timeout
+          timeout 600 pulumi up --stack "${STACK_NAME}" --yes
+
+          # Capture outputs
+          WEB_URL=$(pulumi stack output webUrl --stack "${STACK_NAME}")
+          API_URL=$(pulumi stack output apiUrl --stack "${STACK_NAME}")
+          DB_NAME=$(pulumi stack output databaseName --stack "${STACK_NAME}")
+
+          echo "web-url=${WEB_URL}" >> $GITHUB_OUTPUT
+          echo "api-url=${API_URL}" >> $GITHUB_OUTPUT
+          echo "db-name=${DB_NAME}" >> $GITHUB_OUTPUT
+          echo "pr-number=${PR_NUMBER}" >> $GITHUB_OUTPUT
+
+      - name: Wait for pods to be ready
+        env:
+          KUBECONFIG: ${{ secrets.KUBECONFIG }}
+        run: |
+          PR_NUMBER=${{ steps.pr.outputs.number }}
+          NAMESPACE="ephemeral-pr-${PR_NUMBER}"
+
+          echo "Waiting for pods in namespace ${NAMESPACE}..."
+
+          # Wait up to 5 minutes for all pods to be ready
+          kubectl wait --for=condition=Ready pods --all \
+            --namespace="${NAMESPACE}" \
+            --timeout=300s || {
+              echo "::warning::Some pods did not become ready within timeout"
+              kubectl get pods -n "${NAMESPACE}"
+            }
+
+      - name: Verify deployment health
+        id: health-check
+        continue-on-error: true
+        run: |
+          WEB_URL="${{ steps.deploy.outputs.web-url }}"
+          API_URL="${{ steps.deploy.outputs.api-url }}"
+
+          # Wait a bit for routing to propagate
+          sleep 10
+
+          # Check web health
+          WEB_STATUS=$(curl -o /dev/null -s -w "%{http_code}" "${WEB_URL}" || echo "000")
+          echo "web-status=${WEB_STATUS}" >> $GITHUB_OUTPUT
+
+          # Check API health
+          API_STATUS=$(curl -o /dev/null -s -w "%{http_code}" "${API_URL}" || echo "000")
+          echo "api-status=${API_STATUS}" >> $GITHUB_OUTPUT
+
+          if [ "${WEB_STATUS}" -ge "200" ] && [ "${WEB_STATUS}" -lt "400" ]; then
+            echo "✅ Web health check passed (HTTP ${WEB_STATUS})"
+          else
+            echo "⚠️  Web health check returned HTTP ${WEB_STATUS}"
+          fi
+
+          if [ "${API_STATUS}" -ge "200" ] && [ "${API_STATUS}" -lt "400" ]; then
+            echo "✅ API health check passed (HTTP ${API_STATUS})"
+          else
+            echo "⚠️  API health check returned HTTP ${API_STATUS}"
+          fi
+
+      - name: Comment on PR
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prNumber = ${{ steps.pr.outputs.number }};
+            const webUrl = '${{ steps.deploy.outputs.web-url }}';
+            const apiUrl = '${{ steps.deploy.outputs.api-url }}';
+            const dbName = '${{ steps.deploy.outputs.db-name }}';
+            const webStatus = '${{ steps.health-check.outputs.web-status }}' || 'unknown';
+            const apiStatus = '${{ steps.health-check.outputs.api-status }}' || 'unknown';
+            const commitSha = context.sha.substring(0, 7);
+
+            const healthIcon = (status) => {
+              const code = parseInt(status);
+              if (code >= 200 && code < 400) return '✅';
+              if (code >= 400) return '❌';
+              return '⏳';
+            };
+
+            const body = `### 🚀 Preview Environment Deployed
+
+            **PR**: #${prNumber}
+            **Commit**: \`${commitSha}\`
+            **Database**: \`${dbName}\`
+
+            **Preview URLs**:
+            - ${healthIcon(webStatus)} **Web**: ${webUrl}
+            - ${healthIcon(apiStatus)} **API**: ${apiUrl}
+
+            **Status**:
+            - Web: HTTP ${webStatus}
+            - API: HTTP ${apiStatus}
+
+            ---
+            *Preview environment will be automatically destroyed when this PR is closed or merged.*
+            `;
+
+            // Find existing deployment comment
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+            });
+
+            const deployComment = comments.find(comment =>
+              comment.user.type === 'Bot' &&
+              comment.body.includes('Preview Environment Deployed')
+            );
+
+            if (deployComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: deployComment.id,
+                body: body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                body: body,
+              });
+            }
+
+      - name: Update deployment status
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prNumber = ${{ steps.pr.outputs.number }};
+            const webUrl = '${{ steps.deploy.outputs.web-url }}';
+            const success = '${{ job.status }}' === 'success';
+
+            await github.rest.repos.createDeploymentStatus({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              deployment_id: context.payload.deployment.id,
+              state: success ? 'success' : 'failure',
+              environment_url: webUrl,
+              description: success ? 'Preview environment is ready' : 'Deployment failed',
+            });

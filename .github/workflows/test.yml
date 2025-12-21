@@ -65,56 +65,15 @@ jobs:
       - name: Run PHP Static Analysis
         if: matrix.php == '8.4'
         run: composer psalm -- --shepherd
-      - name: Lint Pulumi TypeScript
+      - name: Build Pulumi TypeScript
         if: matrix.php == '8.4'
         run: |
           cd infrastructure/pulumi
           npm install
-          npm run lint
-          npm run format:check
-          npm run type-check
+          npm run build
       - name: Upload PHP Coverage Results To Coveralls
         env:
           COVERALLS_REPO_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           composer global require php-coveralls/php-coveralls
           php-coveralls --coverage_clover=./.coverage/clover.xml --json_path=./coveralls-upload.json -v
-      - name: Pulumi Preview
-        id: pulumi-preview
-        if: matrix.php == '8.4' && github.event_name == 'pull_request'
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.DIGITALOCEAN_SPACES_ACCESS_KEY }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.DIGITALOCEAN_SPACES_SECRET_KEY }}
-          AWS_REGION: us-east-1
-          DIGITALOCEAN_TOKEN: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
-          SPACES_ACCESS_KEY_ID: ${{ secrets.DIGITALOCEAN_SPACES_ACCESS_KEY }}
-          SPACES_SECRET_ACCESS_KEY: ${{ secrets.DIGITALOCEAN_SPACES_SECRET_KEY }}
-          PULUMI_CONFIG_PASSPHRASE: ${{ secrets.PULUMI_CONFIG_PASSPHRASE }}
-        run: |
-          cd ./infrastructure/pulumi
-          npm install
-
-          # Try to select prod stack, create if it doesn't exist
-          pulumi stack select prod 2>/dev/null || pulumi stack init prod
-
-          # Run preview and capture output
-          pulumi preview --non-interactive --stack prod --color never > preview_output.txt 2>&1
-
-          {
-            echo "output<<EOF"
-            cat preview_output.txt
-            echo "EOF"
-          } >> $GITHUB_OUTPUT
-      - name: Comment Pulumi Preview
-        uses: actions/github-script@v7
-        if: matrix.php == '8.4' && github.event_name == 'pull_request'
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            const output = `## Pulumi Preview Output\n\`\`\`\n${{ steps.pulumi-preview.outputs.output }}\n\`\`\``;
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: output
-            })

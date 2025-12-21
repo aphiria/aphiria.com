@@ -1,7 +1,6 @@
 # Stage 1: build
-ARG BUILD_IMAGE=davidbyoung/aphiria.com-build
-ARG IMAGE_SHA=latest
-FROM ${BUILD_IMAGE}:${IMAGE_SHA} AS build
+ARG BUILD_IMAGE=davidbyoung/aphiria.com-build:latest
+FROM ${BUILD_IMAGE} AS build
 
 # Stage 2: base PHP with compiled extensions
 FROM php:8.4-fpm AS base

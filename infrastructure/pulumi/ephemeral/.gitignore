@@ -1,0 +1,26 @@
+# Pulumi state
+.pulumi/
+*.state
+*.state.backup
+
+# Node modules
+node_modules/
+package-lock.json
+yarn.lock
+
+# TypeScript build
+dist/
+*.js
+*.d.ts
+!index.ts
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
