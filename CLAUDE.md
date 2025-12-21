@@ -67,6 +67,71 @@ After deployment, the **LexemeSeeder** (Phinx seed) runs to power the search API
 
 ---
 
+## Infrastructure Anti-Patterns (CRITICAL)
+
+**NEVER use workarounds when proper solutions exist. Question every deviation from best practices.**
+
+### Port-Forwarding in CI/CD
+
+❌ **NEVER** use `kubectl port-forward` in GitHub Actions workflows or CI/CD pipelines
+- Port-forwarding is a **debugging tool**, not infrastructure automation
+- Creates race conditions, requires process management, fails unpredictably
+- If a task needs cluster resources, run it **inside the cluster** (Kubernetes Job, init container)
+
+✅ **ALWAYS** use Kubernetes Jobs for cluster-internal tasks:
+- Database initialization/migrations
+- Seed data loading
+- Cluster configuration tasks
+
+**Example - Database Creation:**
+```typescript
+// ❌ WRONG: Port-forward + Pulumi PostgreSQL provider
+kubectl port-forward service/db 5432:5432 &
+const provider = new postgresql.Provider("pg", { host: "localhost" });
+
+// ✅ CORRECT: Kubernetes Job provisioned by Pulumi
+const dbInitJob = new k8s.batch.v1.Job("db-init", {
+    spec: {
+        template: {
+            spec: {
+                containers: [{
+                    name: "db-init",
+                    image: "postgres:16-alpine",
+                    command: ["psql", "-c", "CREATE DATABASE ..."],
+                }],
+            },
+        },
+    },
+});
+```
+
+### Decision Framework: Where Should This Run?
+
+When implementing any infrastructure task, ask:
+
+1. **Does this need access to cluster-internal resources?**
+   - YES → Run inside cluster (Job, init container, sidecar)
+   - NO → Run from CI/CD runner is acceptable
+
+2. **Is this a one-time setup task or ongoing operation?**
+   - One-time → Kubernetes Job
+   - Ongoing → Init container or deployment lifecycle hook
+
+3. **Am I using a "workaround" or a "pattern"?**
+   - If it feels hacky, it probably is
+   - If you need to manage background processes, it's wrong
+   - If documentation says "for debugging/development", don't use it in production
+
+### Other Anti-Patterns to Avoid
+
+❌ **Temporary files without cleanup**
+❌ **Background processes in CI/CD** (use Jobs instead)
+❌ **Hardcoded timeouts/retries** (use proper readiness checks)
+❌ **Skipping resource limits** (always set requests/limits)
+❌ **Using `latest` image tags** (always use digests for immutability)
+
+---
+
 ## Constitution
 
 This project follows the **Aphiria.com Constitution** located at `specs/.specify/memory/constitution.md` (v1.0.0).

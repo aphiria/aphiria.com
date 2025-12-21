@@ -661,6 +661,15 @@ The following infrastructure persists **independently of PR lifecycle** and rema
 - **NFR-012**: Node.js 20.x MUST be used for Pulumi TypeScript compilation
 - **NFR-013**: GitHub Actions workflows MUST use `actions/setup-node@v4` with explicit version specification
 
+### Infrastructure Automation Principles
+
+- **NFR-014**: Infrastructure tasks requiring cluster-internal resources MUST run inside the cluster (Kubernetes Jobs, init containers)
+- **NFR-015**: Port-forwarding (`kubectl port-forward`) MUST NOT be used in CI/CD workflows (debugging tool only)
+- **NFR-016**: Background processes MUST NOT be managed in GitHub Actions workflows (use Kubernetes Jobs instead)
+- **NFR-017**: Database initialization MUST use Kubernetes Jobs provisioned by Pulumi, not external providers requiring network workarounds
+
+**Rationale**: Port-forwarding and process management in CI/CD creates race conditions, requires cleanup handling, and is unreliable. Kubernetes Jobs are the standard pattern for cluster-internal setup tasks and are managed declaratively by Pulumi.
+
 ---
 
 ## Application Code Requirements

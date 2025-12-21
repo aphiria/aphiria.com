@@ -149,29 +149,37 @@ const networkPolicy = new k8s.networking.v1.NetworkPolicy("preview-netpol", {
 });
 
 // ============================================================================
-// Per-PR Database
+// Per-PR Database (via Kubernetes Job)
 // ============================================================================
 
 const postgresqlConfig = new pulumi.Config("postgresql");
 const postgresqlAdminUser = postgresqlConfig.get("adminUser") || "postgres";
 const postgresqlAdminPassword = postgresqlConfig.requireSecret("adminPassword");
 
-const provider = new postgresql.Provider("postgresql-provider", {
-    host: postgresqlHost,
-    port: 5432,
-    username: postgresqlAdminUser,
-    password: postgresqlAdminPassword,
-    sslmode: "disable",
-    superuser: false,
+// Database initialization Job - runs inside the cluster
+const dbInitJob = new k8s.batch.v1.Job("db-init-job", {
+    metadata: {
+        name: `db-init-pr-${prNumber}`,
+        namespace: namespace.metadata.name,
+        labels: commonLabels,
+    },
+    spec: {
+        template: {
+            spec: {
+                restartPolicy: "Never",
+                containers: [{
+                    name: "db-init",
+                    image: "postgres:16-alpine",
+                    command: ["/bin/sh", "-c"],
+                    args: [pulumi.interpolate`
+                        psql "postgresql://${postgresqlAdminUser}:${postgresqlAdminPassword}@${postgresqlHost}:5432/postgres" -c "CREATE DATABASE ${databaseName} ENCODING 'UTF8' LC_COLLATE 'en_US.utf8' LC_CTYPE 'en_US.utf8';" || echo "Database already exists"
+                    `],
+                }],
+            },
+        },
+        backoffLimit: 3,
+    },
 });
-
-const database = new postgresql.Database("preview-database", {
-    name: databaseName,
-    owner: postgresqlAdminUser,
-    encoding: "UTF8",
-    lcCollate: "en_US.utf8",
-    lcCtype: "en_US.utf8",
-}, { provider });
 
 // ============================================================================
 // ConfigMap and Secrets
