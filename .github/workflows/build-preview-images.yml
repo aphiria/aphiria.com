@@ -68,7 +68,9 @@ jobs:
           cache-from: |
             type=gha,scope=build-${{ github.event.pull_request.number }}
             type=gha,scope=build
-          cache-to: type=gha,mode=max,scope=build-${{ github.event.pull_request.number }}
+          cache-to: |
+            type=gha,mode=max,scope=build-${{ github.event.pull_request.number }}
+            type=gha,mode=max,scope=build
           labels: |
             org.opencontainers.image.source=${{ github.event.repository.html_url }}
             org.opencontainers.image.revision=${{ github.sha }}
@@ -89,7 +91,9 @@ jobs:
           cache-from: |
             type=gha,scope=web-${{ github.event.pull_request.number }}
             type=gha,scope=web
-          cache-to: type=gha,mode=max,scope=web-${{ github.event.pull_request.number }}
+          cache-to: |
+            type=gha,mode=max,scope=web-${{ github.event.pull_request.number }}
+            type=gha,mode=max,scope=web
           labels: |
             org.opencontainers.image.source=${{ github.event.repository.html_url }}
             org.opencontainers.image.revision=${{ github.sha }}
@@ -110,7 +114,9 @@ jobs:
           cache-from: |
             type=gha,scope=api-${{ github.event.pull_request.number }}
             type=gha,scope=api
-          cache-to: type=gha,mode=max,scope=api-${{ github.event.pull_request.number }}
+          cache-to: |
+            type=gha,mode=max,scope=api-${{ github.event.pull_request.number }}
+            type=gha,mode=max,scope=api
           labels: |
             org.opencontainers.image.source=${{ github.event.repository.html_url }}
             org.opencontainers.image.revision=${{ github.sha }}
