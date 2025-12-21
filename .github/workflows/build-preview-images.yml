@@ -66,9 +66,9 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.BUILD_TAG }}
           cache-from: |
-            type=registry,ref=${{ steps.meta.outputs.BUILD_TAG }}
-            type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-build:latest
-          cache-to: type=inline
+            type=gha,scope=build-${{ github.event.pull_request.number }}
+            type=gha,scope=build
+          cache-to: type=gha,mode=max,scope=build-${{ github.event.pull_request.number }}
           labels: |
             org.opencontainers.image.source=${{ github.event.repository.html_url }}
             org.opencontainers.image.revision=${{ github.sha }}
@@ -87,9 +87,9 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.WEB_TAG }}
           cache-from: |
-            type=registry,ref=${{ steps.meta.outputs.WEB_TAG }}
-            type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-web:latest
-          cache-to: type=inline
+            type=gha,scope=web-${{ github.event.pull_request.number }}
+            type=gha,scope=web
+          cache-to: type=gha,mode=max,scope=web-${{ github.event.pull_request.number }}
           labels: |
             org.opencontainers.image.source=${{ github.event.repository.html_url }}
             org.opencontainers.image.revision=${{ github.sha }}
@@ -108,9 +108,9 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.API_TAG }}
           cache-from: |
-            type=registry,ref=${{ steps.meta.outputs.API_TAG }}
-            type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-api:latest
-          cache-to: type=inline
+            type=gha,scope=api-${{ github.event.pull_request.number }}
+            type=gha,scope=api
+          cache-to: type=gha,mode=max,scope=api-${{ github.event.pull_request.number }}
           labels: |
             org.opencontainers.image.source=${{ github.event.repository.html_url }}
             org.opencontainers.image.revision=${{ github.sha }}
