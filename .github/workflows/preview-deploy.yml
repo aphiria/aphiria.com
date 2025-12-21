@@ -18,9 +18,61 @@ permissions:
   deployments: write
 
 jobs:
+  ensure-base-stack:
+    name: Ensure Base Stack Exists
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Pulumi CLI
+        uses: pulumi/actions@v5
+
+      - name: Install Pulumi dependencies and build
+        run: |
+          cd infrastructure/pulumi
+          npm install
+          npm run build
+
+      - name: Set up kubeconfig
+        run: |
+          mkdir -p ~/.kube
+          echo "${{ secrets.KUBECONFIG }}" | base64 -d > ~/.kube/config
+
+      - name: Ensure base stack exists
+        working-directory: infrastructure/pulumi/ephemeral
+        env:
+          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
+        run: |
+          # Check if ephemeral-base stack exists
+          if pulumi stack select ephemeral-base 2>/dev/null; then
+            echo "✅ Base stack 'ephemeral-base' exists"
+            pulumi refresh --stack ephemeral-base --yes
+          else
+            echo "📦 Creating base stack 'ephemeral-base'..."
+            pulumi stack init ephemeral-base
+
+            # Set base stack configuration
+            pulumi config set --secret postgresql:adminPassword "${{ secrets.POSTGRESQL_ADMIN_PASSWORD }}"
+            if [ -n "${{ secrets.POSTGRESQL_ADMIN_USER }}" ]; then
+              pulumi config set postgresql:adminUser "${{ secrets.POSTGRESQL_ADMIN_USER }}"
+            fi
+
+            # Deploy base infrastructure
+            pulumi up --stack ephemeral-base --yes
+          fi
+
   preview-infra:
     name: Preview Infrastructure Changes
     runs-on: ubuntu-latest
+    needs: ensure-base-stack
     if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
 
     steps:
@@ -233,25 +285,33 @@ jobs:
               pull_number: prNumber,
             });
 
-            // Get repository details to find owner
-            const { data: repo } = await github.rest.repos.get({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-            });
-
             const prAuthor = pr.user.login;
-            const repoOwner = repo.owner.login;
-
             console.log(`PR Author: ${prAuthor}`);
-            console.log(`Repo Owner: ${repoOwner}`);
 
-            const isMaintainer = prAuthor === repoOwner;
+            // Check if PR author has admin permissions on the repository
+            let isMaintainer = false;
+            try {
+              const { data: permission } = await github.rest.repos.getCollaboratorPermissionLevel({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                username: prAuthor,
+              });
+
+              console.log(`PR Author permission level: ${permission.permission}`);
+
+              // Auto-approve for admin or maintain permission
+              isMaintainer = permission.permission === 'admin' || permission.permission === 'maintain';
+            } catch (error) {
+              console.log(`Could not fetch permission level: ${error.message}`);
+              isMaintainer = false;
+            }
+
             core.setOutput('is-maintainer', isMaintainer);
 
             if (isMaintainer) {
-              console.log('✅ PR author is repository owner - auto-approving deployment');
+              console.log('✅ PR author has admin/maintain permissions - auto-approving deployment');
             } else {
-              console.log('⏳ PR author is not repository owner - manual approval required');
+              console.log('⏳ PR author does not have admin/maintain permissions - manual approval required');
             }
 
   deploy:
@@ -363,30 +423,6 @@ jobs:
           cd infrastructure/pulumi
           npm install
           npm run build
-
-      - name: Ensure base stack exists
-        working-directory: infrastructure/pulumi/ephemeral
-        env:
-          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
-          KUBECONFIG: ${{ secrets.KUBECONFIG }}
-        run: |
-          # Check if ephemeral-base stack exists
-          if pulumi stack select ephemeral-base 2>/dev/null; then
-            echo "✅ Base stack 'ephemeral-base' exists"
-            pulumi refresh --stack ephemeral-base --yes
-          else
-            echo "📦 Creating base stack 'ephemeral-base'..."
-            pulumi stack init ephemeral-base
-
-            # Set base stack configuration
-            pulumi config set --secret postgresql:adminPassword "${{ secrets.POSTGRESQL_ADMIN_PASSWORD }}"
-            if [ -n "${{ secrets.POSTGRESQL_ADMIN_USER }}" ]; then
-              pulumi config set postgresql:adminUser "${{ secrets.POSTGRESQL_ADMIN_USER }}"
-            fi
-
-            # Deploy base infrastructure
-            pulumi up --stack ephemeral-base --yes
-          fi
 
       - name: Configure Pulumi stack
         working-directory: infrastructure/pulumi/ephemeral
