@@ -55,9 +55,14 @@ jobs:
 
             if [ -z "$CLUSTER_ID" ]; then
               echo "⚠️  Base stack exists but cluster not deployed - deploying now..."
+              echo "   This likely means a previous deployment failed partway through."
 
               # Set DigitalOcean token for cluster creation
               pulumi config set --secret digitalocean:token "${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}" --stack preview-base
+
+              # Refresh state to sync with actual infrastructure (state may be out of sync from partial deployment)
+              echo "🔄 Refreshing Pulumi state to match actual infrastructure..."
+              pulumi refresh --stack preview-base --yes
 
               # Deploy base infrastructure with retries (cluster may take time to be ready)
               # Cluster provisioning: 3-10 minutes (typical: 4-5 min)
@@ -97,6 +102,7 @@ jobs:
             pulumi config set --secret digitalocean:token "${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}" --stack preview-base
 
             # Deploy base infrastructure (creates cluster, Helm charts, PostgreSQL, Gateway)
+            # Note: No refresh needed - this is a brand new stack
             echo "🚀 Deploying preview base infrastructure (this will take 5-10 minutes)..."
 
             # Retry logic: Cluster may take time to become fully available

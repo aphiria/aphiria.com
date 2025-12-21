@@ -44,11 +44,10 @@ const cluster = new digitalocean.KubernetesCluster("aphiria-com-preview-cluster"
     protect: true, // Prevents accidental deletion
 });
 
-// 2. Create Kubernetes provider using the preview cluster's kubeconfig
-// The provider will automatically wait for the cluster to be ready before attempting connections
+// Create Kubernetes provider using the cluster's kubeconfig
+// Uses canonical Pulumi pattern - provider validates connection on first resource operation
 const k8sProvider = new k8s.Provider("preview-k8s", {
     kubeconfig: cluster.kubeConfigs[0].rawConfig,
-    // Enable server-side apply to handle CRD race conditions
     enableServerSideApply: true,
 }, {
     dependsOn: [cluster],
