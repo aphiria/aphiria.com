@@ -47,6 +47,8 @@ const cluster = new digitalocean.KubernetesCluster("aphiria-com-preview-cluster"
 // 2. Create Kubernetes provider using the preview cluster's kubeconfig
 const k8sProvider = new k8s.Provider("preview-k8s", {
     kubeconfig: cluster.kubeConfigs[0].rawConfig,
+}, {
+    dependsOn: [cluster], // Ensure cluster is created before provider initialization
 });
 
 // 3. Install Helm charts (cert-manager, nginx-gateway-fabric)
