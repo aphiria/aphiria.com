@@ -4,5 +4,3 @@ runtime:
   name: nodejs
   options:
     typescript: true
-backend:
-  url: https://app.pulumi.com/davidbyoung
