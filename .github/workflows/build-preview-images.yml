@@ -65,7 +65,9 @@ jobs:
           file: ./infrastructure/docker/build/Dockerfile
           push: true
           tags: ${{ steps.meta.outputs.BUILD_TAG }}
-          cache-from: type=registry,ref=${{ steps.meta.outputs.BUILD_TAG }}
+          cache-from: |
+            type=registry,ref=${{ steps.meta.outputs.BUILD_TAG }}
+            type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-build:latest
           cache-to: type=inline
           labels: |
             org.opencontainers.image.source=${{ github.event.repository.html_url }}
@@ -84,7 +86,9 @@ jobs:
             BUILD_IMAGE=${{ steps.meta.outputs.BUILD_TAG }}
           push: true
           tags: ${{ steps.meta.outputs.WEB_TAG }}
-          cache-from: type=registry,ref=${{ steps.meta.outputs.WEB_TAG }}
+          cache-from: |
+            type=registry,ref=${{ steps.meta.outputs.WEB_TAG }}
+            type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-web:latest
           cache-to: type=inline
           labels: |
             org.opencontainers.image.source=${{ github.event.repository.html_url }}
@@ -103,7 +107,9 @@ jobs:
             BUILD_IMAGE=${{ steps.meta.outputs.BUILD_TAG }}
           push: true
           tags: ${{ steps.meta.outputs.API_TAG }}
-          cache-from: type=registry,ref=${{ steps.meta.outputs.API_TAG }}
+          cache-from: |
+            type=registry,ref=${{ steps.meta.outputs.API_TAG }}
+            type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-api:latest
           cache-to: type=inline
           labels: |
             org.opencontainers.image.source=${{ github.event.repository.html_url }}

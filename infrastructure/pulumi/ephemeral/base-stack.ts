@@ -16,7 +16,7 @@ import {
     installBaseHelmCharts,
     createPostgreSQL,
     createGateway,
-} from "../../components";
+} from "../components";
 
 const config = new pulumi.Config();
 
