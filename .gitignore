@@ -5,11 +5,6 @@
 /.php-cs-fixer.cache
 /.phpunit.result.cache
 /composer.phar
-/infrastructure/pulumi/node_modules/
-/infrastructure/pulumi/bin/
-/infrastructure/pulumi/.pulumi/
-/infrastructure/pulumi/Pulumi.*.yml
-/infrastructure/pulumi/Pulumi.*.yaml
 /nbproject/
 /node_modules/
 /public-web/docs/

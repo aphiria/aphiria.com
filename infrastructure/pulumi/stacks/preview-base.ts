@@ -1,16 +1,18 @@
 /** Base Infrastructure Stack for Preview Environments
  *
- * Deploys persistent infrastructure shared across all ephemeral preview environments:
+ * Deploys persistent infrastructure for preview environments:
+ * - Kubernetes cluster (dedicated preview cluster, separate from production)
  * - Helm charts (cert-manager, nginx-gateway-fabric)
  * - Shared PostgreSQL instance (1 replica, persistent storage)
  * - Gateway with Let's Encrypt production TLS
  * - Wildcard certificate for *.pr.aphiria.com
  *
- * This stack references the production stack to get the cluster's kubeconfig.
+ * This stack creates its own dedicated cluster for complete isolation from production.
  * Stack name: preview-base
  */
 
 import * as pulumi from "@pulumi/pulumi";
+import * as digitalocean from "@pulumi/digitalocean";
 import * as k8s from "@pulumi/kubernetes";
 import {
     installBaseHelmCharts,
@@ -20,25 +22,40 @@ import {
 
 const config = new pulumi.Config();
 
-// Reference the production stack to get cluster kubeconfig
-const prodStack = new pulumi.StackReference("production", {
-    name: `${pulumi.getOrganization()}/aphiria-com-infrastructure/production`,
+// 1. Create dedicated preview Kubernetes cluster
+const cluster = new digitalocean.KubernetesCluster("aphiria-com-preview-cluster", {
+    name: "aphiria-com-preview-cluster",
+    region: digitalocean.Region.NYC3,
+    version: "1.34.1-do.0",
+    nodePool: {
+        name: "preview-pool",
+        size: "s-2vcpu-2gb",
+        nodeCount: 1,
+        autoScale: true,
+        minNodes: 1,
+        maxNodes: 3,
+    },
+    vpcUuid: "976f980d-dc84-11e8-80bc-3cfdfea9fba1",
+    maintenancePolicy: {
+        day: "any",
+        startTime: "6:00",
+    },
+}, {
+    protect: true, // Prevents accidental deletion
 });
 
-const kubeconfig = prodStack.requireOutput("kubeconfig");
-
-// Kubernetes provider using production cluster kubeconfig
-const k8sProvider = new k8s.Provider("do-k8s", {
-    kubeconfig: kubeconfig,
+// 2. Create Kubernetes provider using the preview cluster's kubeconfig
+const k8sProvider = new k8s.Provider("preview-k8s", {
+    kubeconfig: cluster.kubeConfigs[0].rawConfig,
 });
 
-// 1. Install Helm charts (cert-manager, nginx-gateway-fabric)
+// 3. Install Helm charts (cert-manager, nginx-gateway-fabric)
 const helmCharts = installBaseHelmCharts({
     env: "preview",
     provider: k8sProvider,
 });
 
-// 2. Create shared PostgreSQL (1 replica, cloud persistent storage)
+// 4. Create shared PostgreSQL (1 replica, cloud persistent storage)
 // This single instance is shared by all preview environments with separate databases per PR
 const postgres = createPostgreSQL({
     env: "preview",
@@ -49,7 +66,7 @@ const postgres = createPostgreSQL({
     provider: k8sProvider,
 });
 
-// 3. Create Gateway with Let's Encrypt production TLS
+// 5. Create Gateway with Let's Encrypt production TLS
 // Wildcard certificate covers all preview subdomains: {PR}.pr.aphiria.com, {PR}.pr-api.aphiria.com
 const gateway = createGateway({
     env: "preview",
@@ -63,7 +80,10 @@ const gateway = createGateway({
     provider: k8sProvider,
 });
 
-// Outputs (used by ephemeral-stack.ts)
+// Outputs (used by ephemeral-stack.ts and workflows)
+export const clusterId = cluster.id;
+export const clusterEndpoint = cluster.endpoint;
+export const kubeconfig = pulumi.secret(cluster.kubeConfigs[0].rawConfig);
 export const postgresqlHost = "db";  // Service name
 export const postgresqlPort = 5432;
 export const gatewayName = "nginx-gateway";

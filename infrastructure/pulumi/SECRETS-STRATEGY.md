@@ -112,6 +112,7 @@ Store in GitHub Settings → Secrets and variables → Actions:
 ```yaml
 # Required for all workflows
 PULUMI_ACCESS_TOKEN: "<pulumi-cloud-token>"  # Access Pulumi Cloud for state management
+DIGITALOCEAN_ACCESS_TOKEN: "<digitalocean-api-token>"  # For creating/managing Kubernetes clusters
 
 # Optional (if using self-managed backend instead of Pulumi Cloud)
 PULUMI_CONFIG_PASSPHRASE: "<strong-passphrase>"  # For encrypting stack configs locally
@@ -119,13 +120,33 @@ AWS_ACCESS_KEY_ID: "<do-spaces-key>"             # For self-managed Pulumi backe
 AWS_SECRET_ACCESS_KEY: "<do-spaces-secret>"      # For self-managed Pulumi backend
 
 # REMOVED - No longer needed
-# DIGITALOCEAN_TOKEN - Kubernetes cluster managed by Pulumi, credentials from stack output
-# KUBECONFIG - Retrieved dynamically from Pulumi production stack
+# KUBECONFIG - Retrieved dynamically from Pulumi preview-base/production stacks
 ```
 
 **Access:** Scoped per environment (production secrets only accessible to production workflows)
 
-**Note**: With Pulumi Cloud (recommended), you only need `PULUMI_ACCESS_TOKEN`. The self-managed backend secrets (`AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `PULUMI_CONFIG_PASSPHRASE`) are only required if you're using DigitalOcean Spaces for Pulumi state.
+**Note**:
+- With Pulumi Cloud (recommended), you need `PULUMI_ACCESS_TOKEN` and `DIGITALOCEAN_ACCESS_TOKEN`
+- The self-managed backend secrets are only required if using DigitalOcean Spaces for Pulumi state
+- `DIGITALOCEAN_ACCESS_TOKEN` is required for Pulumi to create and manage DigitalOcean Kubernetes clusters
+
+### DigitalOcean Access Token Setup
+
+**Create at**: https://cloud.digitalocean.com/account/api/tokens
+
+**Required Scopes**:
+- **Read** and **Write** access (full access token)
+
+**Permissions needed**:
+- `kubernetes` - Create, read, update, delete Kubernetes clusters
+- `vpc` - Access VPC for cluster networking
+- `load_balancer` - Manage LoadBalancers for cluster ingress
+
+**Token Type**: Personal Access Token (not App-specific)
+
+**Expiration**: Set to "No expiry" or use a long expiration (1+ year) with calendar reminder for rotation
+
+**Storage**: Add to GitHub repository secrets as `DIGITALOCEAN_ACCESS_TOKEN`
 
 ### 2. Pulumi Config (Non-Sensitive Configuration)
 Store in stack config files (checked into git):

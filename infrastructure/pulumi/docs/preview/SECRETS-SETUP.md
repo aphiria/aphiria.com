@@ -155,13 +155,50 @@ kubectl get secret env-var-secrets -o jsonpath='{.data.DB_USER}' | base64 -d
 
 ---
 
+### `DIGITALOCEAN_ACCESS_TOKEN` (Environment Secret)
+
+**Type**: 🔒 **Environment Secret** (`preview` environment)
+
+**Purpose**: Authenticate to DigitalOcean API for creating and managing Kubernetes clusters
+
+**Why required**: Pulumi needs this token to create the dedicated preview cluster (`aphiria-com-preview-cluster`) and manage its resources.
+
+**Required Scopes**:
+- **Read** and **Write** access (full access Personal Access Token)
+
+**Permissions needed**:
+- `kubernetes` - Create, read, update, delete Kubernetes clusters
+- `vpc` - Access VPC for cluster networking
+- `load_balancer` - Manage LoadBalancers for cluster ingress
+
+**How to create**:
+1. Go to DigitalOcean: https://cloud.digitalocean.com/account/api/tokens
+2. Click **"Generate New Token"**
+3. Name: `Aphiria Preview Infrastructure`
+4. Scopes: Select **Read** and **Write** (full access)
+5. Click "Generate Token"
+6. Copy the token immediately (you won't be able to see it again)
+
+**How to add as Environment Secret**:
+1. Go to `https://github.com/aphiria/aphiria.com/settings/environments`
+2. Click on the **`preview`** environment
+3. Scroll to **"Environment secrets"**
+4. Click **"Add secret"**
+5. Name: `DIGITALOCEAN_ACCESS_TOKEN`
+6. Value: Paste the DigitalOcean token
+7. Click "Add secret"
+
+**Security note**: This token has full DigitalOcean access. It's protected by environment approval requirements, so only maintainer-approved workflows can access it.
+
+---
+
 ### ~~`KUBECONFIG`~~ (DEPRECATED - No Longer Required)
 
-**Status**: ❌ **REMOVED** - Kubeconfig is now retrieved directly from Pulumi production stack
+**Status**: ❌ **REMOVED** - Kubeconfig is now retrieved directly from Pulumi `preview-base` stack
 
-**Why removed**: Pulumi now manages the Kubernetes cluster and exports the kubeconfig as a stack output. Workflows retrieve it dynamically using:
+**Why removed**: Pulumi now creates the dedicated preview cluster and exports the kubeconfig as a stack output. Workflows retrieve it dynamically using:
 ```bash
-pulumi stack output kubeconfig --stack production
+pulumi stack output kubeconfig --stack preview-base
 ```
 
 **If you have this secret configured**, it can be safely deleted:
@@ -170,7 +207,7 @@ pulumi stack output kubeconfig --stack production
 3. Under "Environment secrets", find `KUBECONFIG`
 4. Click "Remove" to delete it
 
-**Migration note**: The workflow now uses `pulumi stack output kubeconfig` instead of the `KUBECONFIG` secret. This eliminates the need for manual kubeconfig management and ensures the cluster configuration is always up-to-date.
+**Migration note**: The workflow now uses `pulumi stack output kubeconfig --stack preview-base` instead of the `KUBECONFIG` secret. This eliminates the need for manual kubeconfig management and ensures the cluster configuration is always up-to-date.
 
 ---
 

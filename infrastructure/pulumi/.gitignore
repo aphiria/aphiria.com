@@ -1,3 +1,5 @@
+.pulumi/
 bin/
 node_modules/
 *.log
+Pulumi.local.yml

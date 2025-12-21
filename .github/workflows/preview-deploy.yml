@@ -19,7 +19,7 @@ permissions:
 
 jobs:
   ensure-base-stack:
-    name: Ensure Base Stack Exists
+    name: Ensure Preview Base Infrastructure
     runs-on: ubuntu-latest
     if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
 
@@ -41,12 +41,7 @@ jobs:
           npm install
           npm run build
 
-      - name: Set up kubeconfig
-        run: |
-          mkdir -p ~/.kube
-          echo "${{ secrets.KUBECONFIG }}" | base64 -d > ~/.kube/config
-
-      - name: Ensure base stack exists
+      - name: Ensure preview-base stack exists and is deployed
         working-directory: infrastructure/pulumi
         env:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
@@ -54,19 +49,39 @@ jobs:
           # Check if preview-base stack exists
           if pulumi stack select preview-base 2>/dev/null; then
             echo "✅ Base stack 'preview-base' exists"
-            pulumi refresh --stack preview-base --yes
+
+            # Check if cluster exists (validate stack is deployed)
+            CLUSTER_ID=$(pulumi stack output clusterId --stack preview-base 2>/dev/null || echo "")
+
+            if [ -z "$CLUSTER_ID" ]; then
+              echo "⚠️  Base stack exists but cluster not deployed - deploying now..."
+
+              # Set DigitalOcean token for cluster creation
+              pulumi config set --secret digitalocean:token "${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}" --stack preview-base
+
+              # Deploy base infrastructure (creates preview cluster)
+              pulumi up --stack preview-base --yes
+
+              echo "✅ Base infrastructure deployed successfully"
+            else
+              echo "✅ Base infrastructure already deployed (cluster ID: ${CLUSTER_ID})"
+
+              # Refresh to ensure state is current
+              pulumi config set --secret digitalocean:token "${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}" --stack preview-base
+              pulumi refresh --stack preview-base --yes
+            fi
           else
-            echo "📦 Creating base stack 'preview-base'..."
+            echo "📦 Creating and deploying base stack 'preview-base'..."
             pulumi stack init preview-base
 
-            # Set base stack configuration
-            pulumi config set --secret postgresql:adminPassword "${{ secrets.POSTGRESQL_ADMIN_PASSWORD }}"
-            if [ -n "${{ secrets.POSTGRESQL_ADMIN_USER }}" ]; then
-              pulumi config set postgresql:adminUser "${{ secrets.POSTGRESQL_ADMIN_USER }}"
-            fi
+            # Set DigitalOcean token for cluster creation
+            pulumi config set --secret digitalocean:token "${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}" --stack preview-base
 
-            # Deploy base infrastructure
+            # Deploy base infrastructure (creates cluster, Helm charts, PostgreSQL, Gateway)
+            echo "🚀 Deploying preview base infrastructure (this will take 5-10 minutes)..."
             pulumi up --stack preview-base --yes
+
+            echo "✅ Base stack created and deployed successfully"
           fi
 
   preview-infra:
@@ -561,56 +576,14 @@ jobs:
             pulumi config set postgresql:adminUser "${{ secrets.POSTGRESQL_ADMIN_USER }}"
           fi
 
-      - name: Setup kubeconfig from Pulumi
+      - name: Setup kubeconfig from Pulumi (Preview Cluster)
         working-directory: infrastructure/pulumi
         env:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
         run: |
           mkdir -p ~/.kube
-          pulumi stack output kubeconfig --stack production > ~/.kube/config
+          pulumi stack output kubeconfig --stack preview-base > ~/.kube/config
           chmod 600 ~/.kube/config
-
-      - name: Initialize ephemeral base stack
-        working-directory: infrastructure/pulumi
-        env:
-          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
-        run: |
-          BASE_STACK_NAME="preview-base"
-
-          echo "Checking if base stack exists..."
-
-          # Try to select the base stack (stack select outputs to stderr on failure)
-          if pulumi stack select "${BASE_STACK_NAME}" 2>&1 | grep -q "not found"; then
-            echo "❌ Base stack '${BASE_STACK_NAME}' does not exist"
-            echo "Creating base stack..."
-
-            pulumi stack init "${BASE_STACK_NAME}"
-
-            echo "Deploying base stack..."
-            pulumi up --stack "${BASE_STACK_NAME}" --yes
-
-            echo "✅ Base stack created successfully"
-          else
-            echo "✅ Base stack '${BASE_STACK_NAME}' exists"
-
-            # Validate required outputs exist
-            echo "Validating required outputs..."
-            GATEWAY_NAME=$(pulumi stack output gatewayName --stack "${BASE_STACK_NAME}" 2>/dev/null || echo "")
-            POSTGRESQL_HOST=$(pulumi stack output postgresqlHost --stack "${BASE_STACK_NAME}" 2>/dev/null || echo "")
-
-            if [ -z "$GATEWAY_NAME" ] || [ -z "$POSTGRESQL_HOST" ]; then
-              echo "⚠️  Base stack exists but missing required outputs"
-              echo "   gatewayName: ${GATEWAY_NAME:-<missing>}"
-              echo "   postgresqlHost: ${POSTGRESQL_HOST:-<missing>}"
-              echo "   Running 'pulumi up' to refresh outputs..."
-
-              pulumi up --stack "${BASE_STACK_NAME}" --yes
-            else
-              echo "✅ All required outputs present:"
-              echo "   gatewayName: ${GATEWAY_NAME}"
-              echo "   postgresqlHost: ${POSTGRESQL_HOST}"
-            fi
-          fi
 
       - name: Deploy preview environment
         id: deploy
