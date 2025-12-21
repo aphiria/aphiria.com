@@ -294,7 +294,7 @@ jobs:
           pulumi config set prNumber "${PR_NUMBER}"
           pulumi config set webImageDigest "${{ steps.images.outputs.web-digest }}"
           pulumi config set apiImageDigest "${{ steps.images.outputs.api-digest }}"
-          pulumi config set baseStackReference "organization/ephemeral-environments/ephemeral-base"
+          pulumi config set baseStackReference "davidbyoung/ephemeral-environments/ephemeral-base"
 
           # Set PostgreSQL credentials (from secrets)
           pulumi config set --secret postgresql:adminPassword "${{ secrets.POSTGRESQL_ADMIN_PASSWORD }}"

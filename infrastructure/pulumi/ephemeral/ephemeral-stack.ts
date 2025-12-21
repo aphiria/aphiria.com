@@ -20,7 +20,7 @@ const config = new pulumi.Config();
 const prNumber = config.requireNumber("prNumber");
 const webImageDigest = config.require("webImageDigest");
 const apiImageDigest = config.require("apiImageDigest");
-const baseStackRef = config.get("baseStackReference") || "organization/ephemeral-environments/ephemeral-base";
+const baseStackRef = config.get("baseStackReference") || "davidbyoung/ephemeral-environments/ephemeral-base";
 
 // Reference base stack outputs
 const baseStack = new pulumi.StackReference(baseStackRef);
