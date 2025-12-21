@@ -5,10 +5,16 @@ This guide explains how to set up and deploy the Aphiria.com dev-local environme
 ## Prerequisites
 
 1. **Minikube** running: `minikube start`
-2. **kubectl** configured for Minikube context
-3. **Pulumi CLI** installed
-4. **Node.js** and npm installed
-5. **Docker images** built and loaded into Minikube
+2. **Minikube tunnel** running (required for LoadBalancer access):
+   ```bash
+   # In a separate terminal, run:
+   minikube tunnel
+   ```
+   > **Note**: You'll need to enter your `sudo` password when prompted. Keep this terminal running throughout your dev session.
+3. **kubectl** configured for Minikube context
+4. **Pulumi CLI** installed
+5. **Node.js** and npm installed
+6. **Docker images** built and loaded into Minikube
 
 ## Pulumi Backend Configuration
 
