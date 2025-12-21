@@ -1,4 +1,4 @@
-/** Shared Pulumi components for dev-local, preview, and production environments. See README.md for usage. */
+/** Shared Pulumi components for local, preview, and production environments. See README.md for usage. */
 
 import * as pulumi from "@pulumi/pulumi";
 
@@ -15,9 +15,17 @@ export * from "./components/gateway";
 // Execute the appropriate stack based on the stack name
 const stack = pulumi.getStack();
 
-if (stack === "dev-local") {
-    // Import and execute dev-local stack
-    import("./stacks/dev-local");
+if (stack === "local") {
+    // Local development environment (Minikube)
+    import("./stacks/local");
+} else if (stack === "preview-base") {
+    // Preview base infrastructure (shared across all PRs)
+    import("./stacks/preview-base");
+} else if (stack.startsWith("preview-pr-")) {
+    // Per-PR preview environment
+    import("./stacks/preview-pr");
 } else {
-    throw new Error(`Unknown stack: ${stack}. Valid stacks: dev-local`);
+    throw new Error(
+        `Unknown stack: ${stack}. Valid stacks: local, preview-base, preview-pr-{N}`
+    );
 }

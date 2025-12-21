@@ -59,7 +59,7 @@ export function createWebDeployment(args: WebDeploymentArgs): WebDeploymentResul
                         {
                             name: "web",
                             image: args.image,
-                            imagePullPolicy: args.env === "dev-local"
+                            imagePullPolicy: args.env === "local"
                                 ? "Never"  // Local images only
                                 : args.image.includes("@sha256:")
                                 ? "IfNotPresent" // Use digest - don't pull if present

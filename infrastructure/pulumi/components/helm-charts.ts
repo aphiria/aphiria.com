@@ -71,7 +71,7 @@ export function installNginxGateway(
 /** Installs cert-manager and nginx-gateway-fabric with correct dependency ordering */
 export interface BaseHelmChartsArgs {
     /** Environment */
-    env: "dev-local" | "preview" | "production";
+    env: "local" | "preview" | "production";
     /** Optional Kubernetes provider */
     provider?: k8s.Provider;
 }

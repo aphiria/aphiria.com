@@ -46,7 +46,7 @@ export function createDBMigrationJob(args: DBMigrationJobArgs): k8s.batch.v1.Job
                         {
                             name: "db-migration",
                             image: args.image,
-                            imagePullPolicy: args.env === "dev-local"
+                            imagePullPolicy: args.env === "local"
                                 ? "Never"  // Local images only
                                 : args.image.includes("@sha256:")
                                 ? "IfNotPresent"

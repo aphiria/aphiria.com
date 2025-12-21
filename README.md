@@ -31,7 +31,7 @@ For detailed local development setup instructions, see:
 
 This guide covers:
 - Installing dependencies (kubectl, Minikube, Pulumi, Node.js, Docker)
-- Setting up and deploying the dev-local environment with Pulumi
+- Setting up and deploying the local environment with Pulumi
 - Building Docker images
 - Running the application locally
 - Troubleshooting common issues
@@ -41,7 +41,7 @@ This guide covers:
 1. Install dependencies: `./install.sh`
 2. Start Minikube: `minikube start && minikube tunnel` (in separate terminal)
 3. Configure Pulumi backend and secrets
-4. Deploy: `cd infrastructure/pulumi && pulumi up --stack dev-local`
+4. Deploy: `cd infrastructure/pulumi && pulumi up --stack local`
 
 See the full guide for detailed instructions and configuration options.
 

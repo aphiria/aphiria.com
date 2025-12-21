@@ -4,20 +4,28 @@ import { GatewayArgs, GatewayResult } from "./types";
 
 /** Creates Gateway with TLS (self-signed/letsencrypt-staging/letsencrypt-prod) and separate listeners for root/subdomains */
 export function createGateway(args: GatewayArgs): GatewayResult {
-    // Validate required domain formats
+    // Validate domain requirements based on environment
     const rootDomain = args.domains.find((d) => !d.startsWith("*"));
     const wildcardDomain = args.domains.find((d) => d.startsWith("*"));
 
-    if (!rootDomain) {
-        throw new Error(
-            `Gateway requires a root domain (non-wildcard). Provided domains: ${args.domains.join(", ")}`
-        );
-    }
-
-    if (!wildcardDomain) {
-        throw new Error(
-            `Gateway requires a wildcard domain (e.g., *.example.com). Provided domains: ${args.domains.join(", ")}`
-        );
+    // Production environments MUST have both root and wildcard domains
+    // Preview environments MAY use wildcard-only (e.g., *.pr.aphiria.com for PR previews)
+    if (args.env === "production") {
+        if (!rootDomain) {
+            throw new Error(
+                `Production gateway requires a root domain (non-wildcard). Provided domains: ${args.domains.join(", ")}`
+            );
+        }
+        if (!wildcardDomain) {
+            throw new Error(
+                `Production gateway requires a wildcard domain (e.g., *.example.com). Provided domains: ${args.domains.join(", ")}`
+            );
+        }
+    } else {
+        // Non-production: require at least one domain of any type
+        if (args.domains.length === 0) {
+            throw new Error("Gateway requires at least one domain");
+        }
     }
 
     const labels = {
@@ -100,70 +108,84 @@ export function createGateway(args: GatewayArgs): GatewayResult {
             spec: {
                 gatewayClassName: "nginx",
                 listeners: [
-                    // HTTP listener for root domain
-                    {
-                        name: "http-root",
-                        hostname: rootDomain,
-                        port: 80,
-                        protocol: "HTTP",
-                        allowedRoutes: {
-                            namespaces: {
-                                from: "All",
-                            },
-                        },
-                    },
-                    // HTTP listener for subdomains
-                    {
-                        name: "http-subdomains",
-                        hostname: wildcardDomain,
-                        port: 80,
-                        protocol: "HTTP",
-                        allowedRoutes: {
-                            namespaces: {
-                                from: "All",
-                            },
-                        },
-                    },
-                    // HTTPS listener for root domain
-                    {
-                        name: "https-root",
-                        hostname: rootDomain,
-                        port: 443,
-                        protocol: "HTTPS",
-                        allowedRoutes: {
-                            namespaces: {
-                                from: "All",
-                            },
-                        },
-                        tls: {
-                            mode: "Terminate",
-                            certificateRefs: [
-                                {
-                                    name: "tls-cert",
-                                },
-                            ],
-                        },
-                    },
-                    // HTTPS listener for subdomains
-                    {
-                        name: "https-subdomains",
-                        hostname: wildcardDomain,
-                        port: 443,
-                        protocol: "HTTPS",
-                        allowedRoutes: {
-                            namespaces: {
-                                from: "All",
-                            },
-                        },
-                        tls: {
-                            mode: "Terminate",
-                            certificateRefs: [
-                                {
-                                    name: "tls-cert",
-                                },
-                            ],
-                        },
-                    },
+                    // HTTP listeners - conditionally include based on available domains
+                    ...(rootDomain
+                        ? [
+                              {
+                                  name: "http-root",
+                                  hostname: rootDomain,
+                                  port: 80,
+                                  protocol: "HTTP" as const,
+                                  allowedRoutes: {
+                                      namespaces: {
+                                          from: "All" as const,
+                                      },
+                                  },
+                              },
+                          ]
+                        : []),
+                    ...(wildcardDomain
+                        ? [
+                              {
+                                  name: "http-subdomains",
+                                  hostname: wildcardDomain,
+                                  port: 80,
+                                  protocol: "HTTP" as const,
+                                  allowedRoutes: {
+                                      namespaces: {
+                                          from: "All" as const,
+                                      },
+                                  },
+                              },
+                          ]
+                        : []),
+                    // HTTPS listeners - conditionally include based on available domains
+                    ...(rootDomain
+                        ? [
+                              {
+                                  name: "https-root",
+                                  hostname: rootDomain,
+                                  port: 443,
+                                  protocol: "HTTPS" as const,
+                                  allowedRoutes: {
+                                      namespaces: {
+                                          from: "All" as const,
+                                      },
+                                  },
+                                  tls: {
+                                      mode: "Terminate" as const,
+                                      certificateRefs: [
+                                          {
+                                              name: "tls-cert",
+                                          },
+                                      ],
+                                  },
+                              },
+                          ]
+                        : []),
+                    ...(wildcardDomain
+                        ? [
+                              {
+                                  name: "https-subdomains",
+                                  hostname: wildcardDomain,
+                                  port: 443,
+                                  protocol: "HTTPS" as const,
+                                  allowedRoutes: {
+                                      namespaces: {
+                                          from: "All" as const,
+                                      },
+                                  },
+                                  tls: {
+                                      mode: "Terminate" as const,
+                                      certificateRefs: [
+                                          {
+                                              name: "tls-cert",
+                                          },
+                                      ],
+                                  },
+                              },
+                          ]
+                        : []),
                 ],
             },
         },

@@ -16,7 +16,7 @@ export function createPostgreSQL(args: PostgreSQLArgs): PostgreSQLResult {
 
     // Create persistent storage if requested
     if (args.persistentStorage) {
-        if (args.env === "dev-local") {
+        if (args.env === "local") {
             // Minikube: Use hostPath storage
             pv = new k8s.core.v1.PersistentVolume("db-pv", {
                 metadata: {

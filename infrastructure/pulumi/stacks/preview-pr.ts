@@ -1,9 +1,8 @@
 import * as pulumi from "@pulumi/pulumi";
 import * as k8s from "@pulumi/kubernetes";
-import * as postgresql from "@pulumi/postgresql";
 
 /**
- * Ephemeral Stack
+ * Preview PR Stack
  *
  * Deploys per-PR preview environment resources:
  * - Kubernetes namespace with ResourceQuota and NetworkPolicy
@@ -12,7 +11,7 @@ import * as postgresql from "@pulumi/postgresql";
  * - HTTPRoute configuration
  * - ConfigMaps and Secrets
  *
- * Stack name pattern: ephemeral-pr-{PR_NUMBER}
+ * Stack name pattern: preview-pr-{PR_NUMBER}
  * Preview URLs: {PR}.pr.aphiria.com (web), {PR}.pr-api.aphiria.com (api)
  */
 
@@ -20,7 +19,7 @@ const config = new pulumi.Config();
 const prNumber = config.requireNumber("prNumber");
 const webImageDigest = config.require("webImageDigest");
 const apiImageDigest = config.require("apiImageDigest");
-const baseStackRef = config.get("baseStackReference") || "davidbyoung/ephemeral-environments/ephemeral-base";
+const baseStackRef = config.get("baseStackReference") || "davidbyoung/aphiria-com-infrastructure/preview-base";
 
 // Reference base stack outputs
 const baseStack = new pulumi.StackReference(baseStackRef);
@@ -29,7 +28,7 @@ const gatewayName = baseStack.getOutput("gatewayName");
 const tlsSecretName = baseStack.getOutput("tlsSecretName");
 
 // Naming conventions
-const namespaceName = `ephemeral-pr-${prNumber}`;
+const namespaceName = `preview-pr-${prNumber}`;
 const databaseName = `aphiria_pr_${prNumber}`;
 const webUrl = `https://${prNumber}.pr.aphiria.com`;
 const apiUrl = `https://${prNumber}.pr-api.aphiria.com`;

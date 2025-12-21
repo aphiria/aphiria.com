@@ -7,7 +7,7 @@
  * - Wildcard certificate for *.pr.aphiria.com
  *
  * This stack is deployed once to the production DigitalOcean Kubernetes cluster.
- * Stack name: ephemeral-base
+ * Stack name: preview-base
  */
 
 import * as pulumi from "@pulumi/pulumi";

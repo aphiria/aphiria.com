@@ -130,14 +130,6 @@ pulumi stack rm ephemeral-pr-123
 
 ```
 infrastructure/pulumi/ephemeral/
-├── index.ts                # Entry point (stack router)
-├── src/
-│   ├── base-stack.ts       # Base infrastructure (PostgreSQL, Gateway, TLS)
-│   └── ephemeral-stack.ts  # Per-PR resources (namespace, deployments, database)
-├── package.json            # Dependencies
-├── tsconfig.json           # TypeScript configuration
-├── Pulumi.yaml             # Pulumi project configuration
-└── README.md               # This file
 ```
 
 ## Stack Outputs Reference

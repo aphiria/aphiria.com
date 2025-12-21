@@ -111,7 +111,7 @@ export function createAPIDeployment(args: APIDeploymentArgs): APIDeploymentResul
                         {
                             name: "copy-api-code",
                             image: args.image,
-                            imagePullPolicy: args.env === "dev-local"
+                            imagePullPolicy: args.env === "local"
                                 ? "Never"  // Local images only
                                 : args.image.includes("@sha256:")
                                 ? "IfNotPresent"
@@ -160,7 +160,7 @@ export function createAPIDeployment(args: APIDeploymentArgs): APIDeploymentResul
                         {
                             name: "php",
                             image: args.image,
-                            imagePullPolicy: args.env === "dev-local"
+                            imagePullPolicy: args.env === "local"
                                 ? "Never"  // Local images only
                                 : args.image.includes("@sha256:")
                                 ? "IfNotPresent"

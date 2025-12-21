@@ -18,13 +18,13 @@
 
 ### Session 2025-12-20 (Architecture Decisions)
 
-- Q: Should preview environments import production Kustomize manifests or use separate Pulumi code? → A: **Migrate all infrastructure (dev-local, preview, production) to Pulumi** to eliminate tool sprawl (Helm + Kustomize + Pulumi → Pulumi only)
+- Q: Should preview environments import production Kustomize manifests or use separate Pulumi code? → A: **Migrate all infrastructure (local, preview, production) to Pulumi** to eliminate tool sprawl (Helm + Kustomize + Pulumi → Pulumi only)
 - Q: Should Redis and monitoring be included in migration? → A: No, Redis is unused and monitoring is managed separately
 - Q: What about js-config ConfigMap for web? → A: Required, contains environment-specific JavaScript configuration (API URLs), must be created per-environment
 - Q: Reuse production Gateway or create separate for preview? → A: Separate Gateway for preview environments (isolation)
 - Q: Migrate to GitHub Container Registry (ghcr.io) from DockerHub? → A: Yes, simplifies GitHub Actions integration and eliminates rate limits
-- Q: Should Pulumi manage per-environment databases? → A: Yes, Pulumi creates separate databases for dev-local, preview, and production
-- Q: Migration order? → A: dev-local (Minikube) → preview (ephemeral) → production (DigitalOcean cluster)
+- Q: Should Pulumi manage per-environment databases? → A: Yes, Pulumi creates separate databases for local, preview, and production
+- Q: Migration order? → A: local (Minikube) → preview (ephemeral) → production (DigitalOcean cluster)
 
 ---
 
@@ -416,7 +416,7 @@ This feature includes a **comprehensive migration** from Helm/Kustomize to Pulum
 2. **Dynamic Infrastructure**: Pulumi excels at ephemeral/per-PR resources
 3. **Type Safety**: TypeScript catches errors before deployment
 4. **State Management**: Full deployment history and rollback capability
-5. **DRY Principle**: Shared components reused across dev-local, preview, production
+5. **DRY Principle**: Shared components reused across local, preview, production
 6. **Better Local Dev**: Simpler Minikube workflow (`pulumi up` vs `helmfile + kubectl`)
 
 **Migration Scope**:
@@ -424,10 +424,10 @@ This feature includes a **comprehensive migration** from Helm/Kustomize to Pulum
 - ✅ Kustomize base manifests → Pulumi TypeScript components
 - ✅ Environment overlays → Pulumi stacks with configurations
 - ✅ Image registry migration: DockerHub → GitHub Container Registry (ghcr.io)
-- ✅ Per-environment database management (dev-local, preview, production)
+- ✅ Per-environment database management (local, preview, production)
 
 **Migration Order**:
-1. **dev-local** (Minikube) - Test locally first, validate workflow
+1. **local** (Minikube) - Test locally first, validate workflow
 2. **preview** (ephemeral-pr-*) - Automated preview environments on DigitalOcean
 3. **production** (DigitalOcean cluster) - Live site deployment
 

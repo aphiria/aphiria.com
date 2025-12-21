@@ -4,7 +4,7 @@ import * as k8s from "@pulumi/kubernetes";
 /**
  * Environment type for stack configuration
  */
-export type Environment = "dev-local" | "preview" | "production";
+export type Environment = "local" | "preview" | "production";
 
 /**
  * Common arguments shared across all deployment components

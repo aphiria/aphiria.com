@@ -19,9 +19,9 @@ This document organizes implementation tasks by user story to enable independent
 
 ### Architecture Decision (2025-12-20)
 
-**Full Pulumi Migration**: Consolidate ALL infrastructure (dev-local, preview, production) from Helm/Kustomize to Pulumi for tool consolidation and "test what you deploy" validation.
+**Full Pulumi Migration**: Consolidate ALL infrastructure (local, preview, production) from Helm/Kustomize to Pulumi for tool consolidation and "test what you deploy" validation.
 
-**Migration Order**: dev-local → preview → production
+**Migration Order**: local → preview → production
 
 ### MVP Scope (User Story 1 - P1)
 Deploy and update ephemeral preview environments with maintainer approval. This provides core value and validates the infrastructure.
@@ -54,7 +54,7 @@ Phase 5 (US3 - Cleanup)
   ↓
 Phase 6 (Polish)
   ↓
-Phase 7 (Migrate dev-local to Pulumi)
+Phase 7 (Migrate local to Pulumi)
   ↓
 Phase 8 (Migrate production to Pulumi)
 ```
@@ -69,7 +69,7 @@ Phase 8 (Migrate production to Pulumi)
 
 ## Phase 0: Pulumi Migration - Shared Components
 
-**Goal**: Create reusable Pulumi components that will be used across dev-local, preview, and production stacks
+**Goal**: Create reusable Pulumi components that will be used across local, preview, and production stacks
 
 **Rationale**: Consolidate infrastructure tooling from Helm/Kustomize/Pulumi → Pulumi only. This enables "test what you deploy" validation and eliminates tool sprawl.
 
@@ -90,7 +90,7 @@ Phase 8 (Migrate production to Pulumi)
 
 **Completion Criteria**:
 - ✅ All shared components implemented with TypeScript type safety
-- ✅ Components support environment-specific configuration (dev-local, preview, production)
+- ✅ Components support environment-specific configuration (local, preview, production)
 - ✅ Components match existing Kustomize/Helm behavior exactly
 - ✅ README documents component parameters and usage examples
 
@@ -287,7 +287,7 @@ Phase 8 (Migrate production to Pulumi)
 
 ### Secrets Management
 
-- [ ] T059 Review and document all required secrets for dev-local, preview, and production environments
+- [ ] T059 Review and document all required secrets for local, preview, and production environments
 - [ ] T060 Evaluate secrets management strategy: Pulumi ESC (free tier) vs GitHub Secrets vs hybrid approach
 - [ ] T061 Implement chosen secrets management solution across all environments
 - [ ] T062 Document secrets rotation procedures and access control
@@ -321,7 +321,7 @@ Phase 8 (Migrate production to Pulumi)
 
 ---
 
-## Phase 7: Migrate dev-local to Pulumi
+## Phase 7: Migrate local to Pulumi
 
 **Goal**: Migrate Minikube local development from Kustomize to Pulumi using shared components
 
@@ -329,35 +329,35 @@ Phase 8 (Migrate production to Pulumi)
 
 ### Tasks
 
-- [ ] M013 Create dev-local stack program: `infrastructure/pulumi/aphiria.com/src/dev-local-stack.ts`
-- [ ] M014 Import shared Helm chart component (cert-manager, nginx-gateway) in dev-local stack
-- [ ] M015 [P] Import shared PostgreSQL component with dev-local config in dev-local stack
-- [ ] M016 [P] Import shared Gateway component with self-signed TLS for Minikube in dev-local stack
-- [ ] M017 Import shared web deployment component with dev-local configuration in dev-local stack
-- [ ] M018 Import shared API deployment component with dev-local configuration in dev-local stack
-- [ ] M019 [P] Import shared db-migration job component in dev-local stack
-- [ ] M020 [P] Import shared HTTPRoute component for local domains (aphiria.com, api.aphiria.com) in dev-local stack
-- [ ] M021 Configure Pulumi stack config for dev-local: `pulumi config set`
-- [ ] M022 Create `dev-local` Pulumi stack: `pulumi stack init dev-local`
-- [ ] M023 Deploy dev-local stack to Minikube: `pulumi up --stack dev-local`
+- [ ] M013 Create local stack program: `infrastructure/pulumi/aphiria.com/src/local-stack.ts`
+- [ ] M014 Import shared Helm chart component (cert-manager, nginx-gateway) in local stack
+- [ ] M015 [P] Import shared PostgreSQL component with local config in local stack
+- [ ] M016 [P] Import shared Gateway component with self-signed TLS for Minikube in local stack
+- [ ] M017 Import shared web deployment component with local configuration in local stack
+- [ ] M018 Import shared API deployment component with local configuration in local stack
+- [ ] M019 [P] Import shared db-migration job component in local stack
+- [ ] M020 [P] Import shared HTTPRoute component for local domains (aphiria.com, api.aphiria.com) in local stack
+- [ ] M021 Configure Pulumi stack config for local: `pulumi config set`
+- [ ] M022 Create `local` Pulumi stack: `pulumi stack init local`
+- [ ] M023 Deploy local stack to Minikube: `pulumi up --stack local`
 - [ ] M024 Verify local site accessible at https://www.aphiria.com
 - [ ] M025 Verify local API accessible at https://api.aphiria.com/docs
 - [ ] M026 Test local rebuild cycle: build images → pulumi up → verify changes
-- [ ] M027 Document dev-local Pulumi workflow in README.md (replace Kustomize instructions)
+- [ ] M027 Document local Pulumi workflow in README.md (replace Kustomize instructions)
 
 **Completion Criteria**:
 - ✅ Minikube deployment fully managed by Pulumi
-- ✅ `pulumi up --stack dev-local` deploys complete local environment
+- ✅ `pulumi up --stack local` deploys complete local environment
 - ✅ Site and API accessible at local domains
 - ✅ Local development workflow faster than Kustomize (no `helmfile` + `kubectl apply` steps)
 - ✅ Shared components validated in real environment
 
 **Testing**:
 1. Fresh Minikube: `minikube delete && minikube start`
-2. Deploy: `cd infrastructure/pulumi/aphiria.com && pulumi up --stack dev-local`
+2. Deploy: `cd infrastructure/pulumi/aphiria.com && pulumi up --stack local`
 3. Verify: Access https://www.aphiria.com and https://api.aphiria.com/docs
 4. Update: Change code, rebuild images, `pulumi up`, verify changes
-5. Teardown: `pulumi destroy --stack dev-local`
+5. Teardown: `pulumi destroy --stack local`
 
 ---
 
@@ -365,7 +365,7 @@ Phase 8 (Migrate production to Pulumi)
 
 **Goal**: Migrate DigitalOcean production deployment from Kustomize to Pulumi using shared components
 
-**Why Last**: Highest risk. Migrated after validating shared components in dev-local and preview environments.
+**Why Last**: Highest risk. Migrated after validating shared components in local and preview environments.
 
 ### Tasks
 
@@ -434,8 +434,8 @@ Can parallelize after T018 (ephemeral stack program created):
 All documentation tasks (T051-T053) can run in parallel
 All operational tasks (T054-T058) can run in parallel after documentation
 
-### Within Phase 7 (dev-local Migration)
-Can parallelize after M013 (dev-local stack created):
+### Within Phase 7 (local Migration)
+Can parallelize after M013 (local stack created):
 - **Group A**: M014-M020 (all component imports)
 - **Group B**: M021-M022 (stack configuration)
 
@@ -502,15 +502,15 @@ Per constitution check, this is infrastructure-only work. Validation is manual v
 1. **Phase 0 (M001-M012)**: Create shared Pulumi components - foundation for all stacks
 2. **Phase 1-2 (T001-T017)**: Setup preview infrastructure using shared components
 3. **Phase 3-6 (T018-T058)**: Implement preview environments (MVP)
-4. **Phase 7 (M013-M027)**: Migrate dev-local to Pulumi (validate shared components locally)
+4. **Phase 7 (M013-M027)**: Migrate local to Pulumi (validate shared components locally)
 5. **Phase 8 (M028-M047)**: Migrate production to Pulumi (after validation)
 
 **Alternative Order (User Preference)**:
 
-Per user request: "let's migrate dev-local first so i can try running this in minikube before even trying to push anything out over the wire to digitalocean"
+Per user request: "let's migrate local first so i can try running this in minikube before even trying to push anything out over the wire to digitalocean"
 
 1. **Phase 0 (M001-M012)**: Create shared components
-2. **Phase 7 (M013-M027)**: Migrate dev-local FIRST (test locally)
+2. **Phase 7 (M013-M027)**: Migrate local FIRST (test locally)
 3. **Phase 1-2 (T001-T017)**: Setup preview infrastructure
 4. **Phase 3-6 (T018-T058)**: Implement preview environments
 5. **Phase 8 (M028-M047)**: Migrate production LAST
@@ -526,7 +526,7 @@ Per user request: "let's migrate dev-local first so i can try running this in mi
 **Estimated MVP**: ~35 core tasks (includes shared components)
 
 **For Full Migration (All Environments)**:
-- All MVP tasks + Phase 7 (dev-local) + Phase 8 (production)
+- All MVP tasks + Phase 7 (local) + Phase 8 (production)
 - **Estimated Total**: ~70 tasks
 
 ### Rollback Strategy
@@ -546,7 +546,7 @@ Per user request: "let's migrate dev-local first so i can try running this in mi
 
 **Dev-Local Rollback**:
 - Low risk (local only)
-- Worst case: `pulumi destroy --stack dev-local`
+- Worst case: `pulumi destroy --stack local`
 - Redeploy via Kustomize: `helmfile sync && kubectl apply -k infrastructure/kubernetes/environments/dev`
 
 ---
@@ -564,7 +564,7 @@ Per user request: "let's migrate dev-local first so i can try running this in mi
 - `infrastructure/pulumi/aphiria.com/src/shared/http-route.ts` - Gateway API HTTPRoute configuration
 
 **Pulumi Stack Programs**:
-- `infrastructure/pulumi/aphiria.com/src/dev-local-stack.ts` - Minikube local development (Phase 7)
+- `infrastructure/pulumi/aphiria.com/src/local-stack.ts` - Minikube local development (Phase 7)
 - `infrastructure/pulumi/aphiria.com/src/production-stack.ts` - DigitalOcean production deployment (Phase 8)
 - `infrastructure/pulumi/ephemeral/src/base-stack.ts` - Persistent preview infrastructure (Phase 2)
 - `infrastructure/pulumi/ephemeral/src/ephemeral-stack.ts` - Per-PR ephemeral resources (Phase 3)
@@ -599,13 +599,13 @@ Per user request: "let's migrate dev-local first so i can try running this in mi
 **Migration Scope**:
 1. **Helm charts** → Pulumi Helm provider (`src/shared/helm-charts.ts`)
 2. **Kustomize base** → Pulumi shared components (`src/shared/*.ts`)
-3. **Kustomize overlays** → Stack-specific configuration (dev-local, production)
+3. **Kustomize overlays** → Stack-specific configuration (local, production)
 4. **Image registry** → DockerHub to ghcr.io for better GitHub Actions integration
 5. **Databases** → Pulumi manages PostgreSQL and logical databases across all environments
 
 **Migration Order** (per user preference):
 1. Phase 0: Create shared components (M001-M012)
-2. Phase 7: Migrate dev-local FIRST (M013-M027) - test locally before cloud
+2. Phase 7: Migrate local FIRST (M013-M027) - test locally before cloud
 3. Phase 1-2: Setup preview infrastructure (T001-T017)
 4. Phase 3-6: Implement preview environments (T018-T058) - MVP complete
 5. Phase 8: Migrate production LAST (M028-M047) - after validation
@@ -623,11 +623,11 @@ Per user request: "let's migrate dev-local first so i can try running this in mi
 
 **Next Steps**:
 
-**Updated 2025-12-20**: Begin with Phase 0 (Shared Components), then Phase 7 (dev-local migration) to validate locally before implementing preview environments.
+**Updated 2025-12-20**: Begin with Phase 0 (Shared Components), then Phase 7 (local migration) to validate locally before implementing preview environments.
 
 **Execution Order**:
 1. Phase 0 (M001-M012): Shared Pulumi components
-2. Phase 7 (M013-M027): Migrate dev-local to Pulumi (test in Minikube)
+2. Phase 7 (M013-M027): Migrate local to Pulumi (test in Minikube)
 3. Phase 1-2 (T001-T017): Setup preview infrastructure
 4. Phase 3 (T018-T042): Preview deployment (MVP complete)
 5. Phase 4-6 (T043-T058): Public access validation, cleanup, polish

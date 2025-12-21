@@ -266,20 +266,9 @@ final class Example
 
 ### Directory Structure
 
-```
-src/
-├── [Domain]/              # Domain-driven organization
-│   ├── Binders/          # DI configuration
-│   ├── Controllers/      # HTTP controllers
-│   ├── Services/         # Business logic
-│   └── Models/           # Data models
-└── ...
+**Source code** (`src/`): Domain-driven organization with Binders (DI), Controllers, Services, and Models per domain
 
-tests/
-├── unit/                 # Unit tests
-├── integration/          # Integration tests
-└── contract/             # API contract tests
-```
+**Tests** (`tests/`): unit/, integration/, and contract/ directories
 
 ### Database
 
@@ -540,7 +529,7 @@ php aphiria cache:flush
 - ✅ **DO**: Prefer inline scripts over external files unless reused 3+ times
 
 **Pulumi/Infrastructure**:
-- ✅ **DO**: Reuse shared components across environments (dev-local, preview, production)
+- ✅ **DO**: Reuse shared components across environments (local, preview, production)
 - ❌ **DON'T**: Create layers of abstraction that hide what's actually being deployed
 - ✅ **DO**: Keep stack programs readable - anyone should understand what gets deployed
 

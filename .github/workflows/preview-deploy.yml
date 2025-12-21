@@ -47,17 +47,17 @@ jobs:
           echo "${{ secrets.KUBECONFIG }}" | base64 -d > ~/.kube/config
 
       - name: Ensure base stack exists
-        working-directory: infrastructure/pulumi/ephemeral
+        working-directory: infrastructure/pulumi
         env:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
         run: |
-          # Check if ephemeral-base stack exists
-          if pulumi stack select ephemeral-base 2>/dev/null; then
-            echo "✅ Base stack 'ephemeral-base' exists"
-            pulumi refresh --stack ephemeral-base --yes
+          # Check if preview-base stack exists
+          if pulumi stack select preview-base 2>/dev/null; then
+            echo "✅ Base stack 'preview-base' exists"
+            pulumi refresh --stack preview-base --yes
           else
-            echo "📦 Creating base stack 'ephemeral-base'..."
-            pulumi stack init ephemeral-base
+            echo "📦 Creating base stack 'preview-base'..."
+            pulumi stack init preview-base
 
             # Set base stack configuration
             pulumi config set --secret postgresql:adminPassword "${{ secrets.POSTGRESQL_ADMIN_PASSWORD }}"
@@ -66,7 +66,7 @@ jobs:
             fi
 
             # Deploy base infrastructure
-            pulumi up --stack ephemeral-base --yes
+            pulumi up --stack preview-base --yes
           fi
 
   preview-infra:
@@ -136,21 +136,21 @@ jobs:
 
       - name: Run Pulumi preview
         id: preview
-        working-directory: infrastructure/pulumi/ephemeral
+        working-directory: infrastructure/pulumi
         env:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
         run: |
           set -e  # Exit on error
 
           PR_NUMBER=${{ steps.pr.outputs.number }}
-          STACK_NAME="ephemeral-pr-${PR_NUMBER}"
+          STACK_NAME="preview-pr-${PR_NUMBER}"
 
           # Select or create stack
           pulumi stack select "${STACK_NAME}" 2>/dev/null || pulumi stack init "${STACK_NAME}"
 
           # Set minimal config required for preview (full config set in deploy job)
           pulumi config set prNumber "${PR_NUMBER}" --stack "${STACK_NAME}"
-          pulumi config set baseStackReference "davidbyoung/ephemeral-environments/ephemeral-base" --stack "${STACK_NAME}"
+          pulumi config set baseStackReference "davidbyoung/aphiria-com-infrastructure/preview-base" --stack "${STACK_NAME}"
           pulumi config set --secret postgresql:adminPassword "preview-only" --stack "${STACK_NAME}"
           pulumi config set webImageDigest "sha256:preview" --stack "${STACK_NAME}"
           pulumi config set apiImageDigest "sha256:preview" --stack "${STACK_NAME}"
@@ -176,7 +176,7 @@ jobs:
 
             let preview = '';
             try {
-              preview = fs.readFileSync('infrastructure/pulumi/ephemeral/preview.txt', 'utf8');
+              preview = fs.readFileSync('infrastructure/pulumi/preview.txt', 'utf8');
               console.log(`Preview output length: ${preview.length} characters`);
             } catch (error) {
               console.error(`Failed to read preview.txt: ${error.message}`);
@@ -537,12 +537,12 @@ jobs:
           npm run build
 
       - name: Configure Pulumi stack
-        working-directory: infrastructure/pulumi/ephemeral
+        working-directory: infrastructure/pulumi
         env:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
         run: |
           PR_NUMBER=${{ steps.pr.outputs.number }}
-          STACK_NAME="ephemeral-pr-${PR_NUMBER}"
+          STACK_NAME="preview-pr-${PR_NUMBER}"
 
           # Select or create stack
           pulumi stack select "${STACK_NAME}" || pulumi stack init "${STACK_NAME}"
@@ -551,7 +551,7 @@ jobs:
           pulumi config set prNumber "${PR_NUMBER}"
           pulumi config set webImageDigest "${{ steps.images.outputs.web-digest }}"
           pulumi config set apiImageDigest "${{ steps.images.outputs.api-digest }}"
-          pulumi config set baseStackReference "davidbyoung/ephemeral-environments/ephemeral-base"
+          pulumi config set baseStackReference "davidbyoung/aphiria-com-infrastructure/preview-base"
 
           # Set PostgreSQL credentials (from secrets)
           pulumi config set --secret postgresql:adminPassword "${{ secrets.POSTGRESQL_ADMIN_PASSWORD }}"
@@ -573,11 +573,11 @@ jobs:
           chmod 600 ~/.kube/config
 
       - name: Initialize ephemeral base stack
-        working-directory: infrastructure/pulumi/ephemeral
+        working-directory: infrastructure/pulumi
         env:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
         run: |
-          BASE_STACK_NAME="ephemeral-base"
+          BASE_STACK_NAME="preview-base"
 
           echo "Checking if base stack exists..."
 
@@ -616,12 +616,12 @@ jobs:
 
       - name: Deploy preview environment
         id: deploy
-        working-directory: infrastructure/pulumi/ephemeral
+        working-directory: infrastructure/pulumi
         env:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
         run: |
           PR_NUMBER=${{ steps.pr.outputs.number }}
-          STACK_NAME="ephemeral-pr-${PR_NUMBER}"
+          STACK_NAME="preview-pr-${PR_NUMBER}"
 
           # Deploy with timeout
           timeout 600 pulumi up --stack "${STACK_NAME}" --yes
@@ -641,7 +641,7 @@ jobs:
           KUBECONFIG: ${{ secrets.KUBECONFIG }}
         run: |
           PR_NUMBER=${{ steps.pr.outputs.number }}
-          NAMESPACE="ephemeral-pr-${PR_NUMBER}"
+          NAMESPACE="preview-pr-${PR_NUMBER}"
 
           echo "Waiting for pods in namespace ${NAMESPACE}..."
 

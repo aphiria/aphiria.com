@@ -1,6 +1,6 @@
 # Dev-Local Setup Guide
 
-This guide explains how to set up and deploy the Aphiria.com dev-local environment using Pulumi.
+This guide explains how to set up and deploy the Aphiria.com local environment using Pulumi.
 
 ## Prerequisites
 
@@ -50,10 +50,10 @@ cd infrastructure/pulumi
 npm install
 ```
 
-2. **Initialize the dev-local stack**:
+2. **Initialize the local stack**:
 
 ```bash
-pulumi stack init dev-local
+pulumi stack init local
 ```
 
 3. **Configure stack secrets**:
@@ -81,7 +81,7 @@ docker build -t davidbyoung/aphiria.com-web:latest -f ./infrastructure/docker/ru
 
 ```bash
 cd infrastructure/pulumi
-pulumi up --stack dev-local
+pulumi up --stack local
 ```
 
 This will:
@@ -97,7 +97,7 @@ This will:
 1. **Check Pulumi outputs**:
 
 ```bash
-pulumi stack output --stack dev-local
+pulumi stack output --stack local
 ```
 
 Expected outputs:
@@ -139,22 +139,22 @@ docker build -t davidbyoung/aphiria.com-web:latest -f ./infrastructure/docker/ru
 
 # Update deployment
 cd infrastructure/pulumi
-pulumi up --stack dev-local --yes
+pulumi up --stack local --yes
 ```
 
 ## Tear Down
 
-To completely remove the dev-local environment:
+To completely remove the local environment:
 
 ```bash
 cd infrastructure/pulumi
-pulumi destroy --stack dev-local
+pulumi destroy --stack local
 ```
 
 To remove the stack configuration:
 
 ```bash
-pulumi stack rm dev-local
+pulumi stack rm local
 ```
 
 ## Troubleshooting
@@ -200,15 +200,15 @@ kubectl logs job/db-migration-{hash}
 
 | Aspect | Kustomize (Old) | Pulumi (New) |
 |--------|-----------------|--------------|
-| **Deploy** | `helmfile sync && kubectl apply -k infrastructure/kubernetes/environments/dev` | `pulumi up --stack dev-local` |
+| **Deploy** | `helmfile sync && kubectl apply -k infrastructure/kubernetes/environments/dev` | `pulumi up --stack local` |
 | **Update** | Rebuild images + `kubectl apply` | Rebuild images + `pulumi up` |
-| **Teardown** | `kubectl delete -k infrastructure/kubernetes/environments/dev && helmfile destroy` | `pulumi destroy --stack dev-local` |
+| **Teardown** | `kubectl delete -k infrastructure/kubernetes/environments/dev && helmfile destroy` | `pulumi destroy --stack local` |
 | **Configuration** | Multiple YAML files + Kustomize overlays | Single TypeScript stack program |
 | **State** | kubectl (cluster state) | Pulumi state (backend) |
 
 ## Next Steps
 
-After validating dev-local works:
+After validating local works:
 1. Migrate preview environments (Phase 1-6)
 2. Migrate production environment (Phase 8)
 3. Remove deprecated Kustomize files

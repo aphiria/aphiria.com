@@ -68,7 +68,7 @@
 - ✅ Free tier exists
 
 **Cons:**
-- ❌ Only 5 environments (dev-local, ephemeral-base, production = 3 base + 2 ephemeral PRs max)
+- ❌ Only 5 environments (local, ephemeral-base, production = 3 base + 2 ephemeral PRs max)
 - ❌ Limited to 1 team member on free tier (blocking collaboration)
 - ❌ Additional tool to learn and maintain
 - ❌ Requires migration effort
@@ -200,13 +200,13 @@ If your project grows beyond free tier limits and you want to use Pulumi ESC:
 1. **Upgrade to Pulumi Team tier** ($75/user/month)
 2. **Create ESC environments:**
    ```bash
-   pulumi env init dev-local
+   pulumi env init local
    pulumi env init production
    pulumi env init ephemeral-base
    ```
 3. **Migrate secrets from GitHub → ESC:**
    ```yaml
-   # pulumi/dev-local environment
+   # pulumi/local environment
    values:
      pulumiConfig:
        dbPassword:
@@ -220,7 +220,7 @@ If your project grows beyond free tier limits and you want to use Pulumi ESC:
    ```yaml
    - uses: pulumi/actions@v5
      with:
-       environment: dev-local  # Automatically imports ESC environment
+       environment: local  # Automatically imports ESC environment
    ```
 
 **Cost-benefit:** Only worth it if:

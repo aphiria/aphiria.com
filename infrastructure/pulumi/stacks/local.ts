@@ -1,4 +1,4 @@
-/** dev-local stack: Minikube local development environment */
+/** local stack: Minikube local development environment */
 
 import * as pulumi from "@pulumi/pulumi";
 import * as k8s from "@pulumi/kubernetes";
@@ -21,13 +21,13 @@ const k8sProvider = new k8s.Provider("minikube", {
 
 // 1. Install Helm charts (cert-manager, nginx-gateway)
 const helmCharts = installBaseHelmCharts({
-    env: "dev-local",
+    env: "local",
     provider: k8sProvider,
 });
 
 // 2. Create PostgreSQL (1 replica, hostPath storage for Minikube)
 const postgres = createPostgreSQL({
-    env: "dev-local",
+    env: "local",
     namespace: "default",
     replicas: 1,
     persistentStorage: true,
@@ -37,7 +37,7 @@ const postgres = createPostgreSQL({
 
 // 3. Create Gateway with self-signed TLS for Minikube
 const gateway = createGateway({
-    env: "dev-local",
+    env: "local",
     namespace: "nginx-gateway",
     name: "nginx-gateway",
     tlsMode: "self-signed",
@@ -47,7 +47,7 @@ const gateway = createGateway({
 
 // 4. Create web deployment (1 replica)
 const web = createWebDeployment({
-    env: "dev-local",
+    env: "local",
     namespace: "default",
     replicas: 1,
     image: "davidbyoung/aphiria.com-web:latest",
@@ -61,7 +61,7 @@ const web = createWebDeployment({
 
 // 5. Create API deployment (1 replica)
 const api = createAPIDeployment({
-    env: "dev-local",
+    env: "local",
     namespace: "default",
     replicas: 1,
     image: "davidbyoung/aphiria.com-api:latest",
@@ -76,7 +76,7 @@ const api = createAPIDeployment({
 
 // 6. Run database migrations
 const migration = createDBMigrationJob({
-    env: "dev-local",
+    env: "local",
     namespace: "default",
     image: "davidbyoung/aphiria.com-api:latest",
     dbHost: "db",
