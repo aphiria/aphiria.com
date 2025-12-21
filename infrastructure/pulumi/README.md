@@ -20,7 +20,34 @@ This Pulumi project contains:
 
 ## Shared Components
 
-### 1. Helm Charts (`helm-charts.ts`)
+### 1. Kubernetes Cluster (`kubernetes.ts`)
+
+Creates a DigitalOcean managed Kubernetes cluster with auto-scaling.
+
+```typescript
+import { createKubernetesCluster } from "./components/kubernetes";
+
+const cluster = createKubernetesCluster({
+    name: "aphiria-com-cluster",
+    region: "nyc1",
+    version: "1.34.1-do.0",
+    autoUpgrade: true,
+    nodeSize: "s-2vcpu-4gb",
+    nodeCount: 2,
+    autoScale: true,
+    minNodes: 1,
+    maxNodes: 5,
+});
+// Returns: { cluster, clusterId, endpoint, kubeconfig, clusterCaCertificate }
+```
+
+**Key Features**:
+- Auto-scaling node pool (configurable min/max)
+- Automatic Kubernetes version upgrades
+- Exports kubeconfig directly (no doctl required!)
+- Used by production stack only (preview-base references production's cluster)
+
+### 2. Helm Charts (`helm-charts.ts`)
 
 Installs cert-manager and nginx-gateway-fabric with correct dependencies.
 
@@ -34,7 +61,7 @@ const helmCharts = installBaseHelmCharts({
 // Returns: { certManager, gatewayAPICRDs, nginxGateway }
 ```
 
-### 2. PostgreSQL (`database.ts`)
+### 3. PostgreSQL (`database.ts`)
 
 Creates PostgreSQL deployment with optional persistent storage.
 
@@ -56,7 +83,7 @@ const postgres = createPostgreSQL({
 - `preview`: 1 replica, shared instance for all PRs
 - `production`: 2 replicas, cloud persistent storage
 
-### 3. Web Deployment (`web-deployment.ts`)
+### 4. Web Deployment (`web-deployment.ts`)
 
 Creates nginx deployment for the static documentation site.
 
@@ -79,7 +106,7 @@ const web = createWebDeployment({
 
 **js-config ConfigMap**: Required for JavaScript configuration (API URLs, cookie domain).
 
-### 4. API Deployment (`api-deployment.ts`)
+### 5. API Deployment (`api-deployment.ts`)
 
 Creates nginx + PHP-FPM deployment using initContainer pattern.
 
@@ -106,7 +133,7 @@ const api = createAPIDeployment({
 2. nginx serves static assets and proxies to PHP-FPM
 3. PHP-FPM processes PHP requests on port 9000
 
-### 5. Database Migration Job (`db-migration.ts`)
+### 6. Database Migration Job (`db-migration.ts`)
 
 Runs Phinx migrations and LexemeSeeder.
 
@@ -131,7 +158,7 @@ const migration = createDBMigrationJob({
 3. Run seeder: `/app/api/vendor/bin/phinx seed:run`
 4. Auto-cleanup after completion (ttlSecondsAfterFinished: 0)
 
-### 6. HTTPRoute (`http-route.ts`)
+### 7. HTTPRoute (`http-route.ts`)
 
 Creates Gateway API routes for traffic routing.
 
@@ -154,7 +181,7 @@ const webRoute = createHTTPRoute({
 - `createHTTPSRedirectRoute()`: HTTP → HTTPS redirect
 - `createWWWRedirectRoute()`: aphiria.com → www.aphiria.com redirect
 
-### 7. Gateway (`gateway.ts`)
+### 8. Gateway (`gateway.ts`)
 
 Creates Kubernetes Gateway with TLS support.
 
@@ -284,6 +311,7 @@ export const apiUrl = "https://api.aphiria.com";
 
 | Component | local | preview | production |
 |-----------|-----------|---------|------------|
+| **Kubernetes cluster** | Minikube | DigitalOcean (from production) | DigitalOcean (Pulumi-managed) |
 | **PostgreSQL replicas** | 1 | 1 (shared) | 2 |
 | **PostgreSQL storage** | hostPath (5Gi) | Dynamic (10Gi) | Dynamic (20Gi) |
 | **Web replicas** | 1 | 1 | 2 |
@@ -292,6 +320,7 @@ export const apiUrl = "https://api.aphiria.com";
 | **Image strategy** | latest tag | digest | digest |
 | **Namespace** | default | ephemeral-pr-{PR} | default |
 | **Domain** | aphiria.com | {PR}.pr.aphiria.com | aphiria.com |
+| **Kubeconfig source** | Minikube CLI | Production stack output | Cluster component output |
 
 ## Development
 
@@ -403,26 +432,33 @@ pulumi destroy --stack local
 
 See [DEV-LOCAL-SETUP.md](./DEV-LOCAL-SETUP.md) for detailed troubleshooting.
 
-## Migration from Kustomize
+## Migration from Terraform
 
-This project replaces the old Helm/Kustomize infrastructure:
+This project was migrated from Terraform to Pulumi for better TypeScript integration and developer experience.
 
-| Old (Kustomize) | New (Pulumi) |
-|-----------------|--------------|
-| `infrastructure/kubernetes/base/helmfile.yml` | `components/helm-charts.ts` |
-| `infrastructure/kubernetes/base/database/` | `components/database.ts` |
-| `infrastructure/kubernetes/base/web/` | `components/web-deployment.ts` |
-| `infrastructure/kubernetes/base/api/` | `components/api-deployment.ts` |
-| `infrastructure/kubernetes/base/database/jobs.yml` | `components/db-migration.ts` |
-| `infrastructure/kubernetes/base/gateway-api/` | `components/gateway.ts` + `components/http-route.ts` |
+| Infrastructure | Terraform | Pulumi |
+|----------------|-----------|--------|
+| **Kubernetes Cluster** | `terraform/digitalocean.tf` | `components/kubernetes.ts` |
+| **Cluster Kubeconfig** | Retrieved via doctl CLI | Exported directly from cluster component |
+| **Helm Charts** | `infrastructure/kubernetes/base/helmfile.yml` | `components/helm-charts.ts` |
+| **Database** | `infrastructure/kubernetes/base/database/` | `components/database.ts` |
+| **Web/API** | `infrastructure/kubernetes/base/{web,api}/` | `components/{web,api}-deployment.ts` |
+| **Migrations** | `infrastructure/kubernetes/base/database/jobs.yml` | `components/db-migration.ts` |
+| **Gateway/Routes** | `infrastructure/kubernetes/base/gateway-api/` | `components/gateway.ts` + `components/http-route.ts` |
 
-**Migration Order**:
-1. Phase 0 (complete): Shared components created
-2. Phase 7 (next): Migrate local to Pulumi
-3. Phase 1-6: Implement preview environments
-4. Phase 8 (last): Migrate production to Pulumi
+**Key Improvements**:
+- **No doctl required**: Kubeconfig comes directly from Pulumi stack outputs
+- **Type safety**: Full TypeScript typing for all infrastructure
+- **Stack references**: preview-base references production cluster via StackReference
+- **Single project**: All stacks (local, preview-base, preview-pr-*, production) in one Pulumi project
 
-Old Kustomize files remain at `infrastructure/kubernetes/` until Phase 8 completes successfully.
+**Migration Status**:
+- ✅ Phase 0: Shared components created
+- ✅ Phase 7: Local stack migrated to Pulumi
+- 🚧 Phase 1-6: Preview environments in progress
+- ⏳ Phase 8: Production migration pending
+
+Old Kustomize files remain at `infrastructure/kubernetes/` until production migration completes.
 
 ## Stack Naming Conventions
 

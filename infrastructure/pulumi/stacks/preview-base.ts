@@ -6,7 +6,7 @@
  * - Gateway with Let's Encrypt production TLS
  * - Wildcard certificate for *.pr.aphiria.com
  *
- * This stack is deployed once to the production DigitalOcean Kubernetes cluster.
+ * This stack references the production stack to get the cluster's kubeconfig.
  * Stack name: preview-base
  */
 
@@ -20,9 +20,16 @@ import {
 
 const config = new pulumi.Config();
 
-// Kubernetes provider for DigitalOcean
+// Reference the production stack to get cluster kubeconfig
+const prodStack = new pulumi.StackReference("production", {
+    name: `${pulumi.getOrganization()}/aphiria-com-infrastructure/production`,
+});
+
+const kubeconfig = prodStack.requireOutput("kubeconfig");
+
+// Kubernetes provider using production cluster kubeconfig
 const k8sProvider = new k8s.Provider("do-k8s", {
-    // Uses default kubeconfig context (set via KUBECONFIG or ~/.kube/config)
+    kubeconfig: kubeconfig,
 });
 
 // 1. Install Helm charts (cert-manager, nginx-gateway-fabric)

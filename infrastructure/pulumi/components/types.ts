@@ -201,3 +201,48 @@ export interface GatewayResult {
     gateway: pulumi.Output<any>;
     certificate?: pulumi.Output<any>; // Only present for non-self-signed
 }
+
+/**
+ * Arguments for Kubernetes cluster component
+ */
+export interface KubernetesClusterArgs {
+    /** Cluster name */
+    name: string;
+    /** DigitalOcean region (default: nyc1) */
+    region?: string;
+    /** Kubernetes version (default: 1.34.1-do.0) */
+    version?: string;
+    /** Enable automatic Kubernetes version upgrades */
+    autoUpgrade?: boolean;
+    /** Enable surge upgrades (more aggressive) */
+    surgeUpgrade?: boolean;
+    /** Enable high availability control plane */
+    ha?: boolean;
+    /** VPC UUID to attach cluster to */
+    vpcUuid?: string;
+    /** Node pool machine size (default: s-2vcpu-4gb) */
+    nodeSize?: string;
+    /** Initial node count (default: 2) */
+    nodeCount?: number;
+    /** Enable auto-scaling (default: true) */
+    autoScale?: boolean;
+    /** Minimum nodes when auto-scaling (default: 1) */
+    minNodes?: number;
+    /** Maximum nodes when auto-scaling (default: 5) */
+    maxNodes?: number;
+    /** Resource tags */
+    tags?: string[];
+    /** Node labels */
+    labels?: Record<string, string>;
+}
+
+/**
+ * Return type for Kubernetes cluster component
+ */
+export interface KubernetesClusterResult {
+    cluster: any;
+    clusterId: pulumi.Output<string>;
+    endpoint: pulumi.Output<string>;
+    kubeconfig: pulumi.Output<string>;
+    clusterCaCertificate: pulumi.Output<string>;
+}

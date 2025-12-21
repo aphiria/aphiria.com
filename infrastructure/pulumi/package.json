@@ -1,7 +1,7 @@
 {
   "name": "aphiria-com-infrastructure",
   "version": "1.0.0",
-  "description": "Aphiria.com infrastructure - shared components and stacks for dev-local, preview, and production",
+  "description": "Aphiria.com infrastructure - shared components and stacks for local, preview, and production",
   "main": "bin/index.js",
   "scripts": {
     "build": "tsc",

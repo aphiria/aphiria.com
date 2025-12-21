@@ -11,6 +11,7 @@ export * from "./components/api-deployment";
 export * from "./components/db-migration";
 export * from "./components/http-route";
 export * from "./components/gateway";
+export * from "./components/kubernetes";
 
 // Execute the appropriate stack based on the stack name
 const stack = pulumi.getStack();
@@ -24,8 +25,11 @@ if (stack === "local") {
 } else if (stack.startsWith("preview-pr-")) {
     // Per-PR preview environment
     import("./stacks/preview-pr");
+} else if (stack === "production") {
+    // Production environment (DigitalOcean - creates cluster)
+    import("./stacks/production");
 } else {
     throw new Error(
-        `Unknown stack: ${stack}. Valid stacks: local, preview-base, preview-pr-{N}`
+        `Unknown stack: ${stack}. Valid stacks: local, preview-base, preview-pr-{N}, production`
     );
 }

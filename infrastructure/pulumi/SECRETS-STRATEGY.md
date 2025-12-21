@@ -16,17 +16,14 @@
 ### Production
 - `dbPassword` - PostgreSQL password
 - TLS certificates (Let's Encrypt via cert-manager - auto-managed)
-- DigitalOcean credentials:
-  - `DIGITALOCEAN_TOKEN` - For Kubernetes cluster management
-  - `AWS_ACCESS_KEY_ID` - For Spaces backend
-  - `AWS_SECRET_ACCESS_KEY` - For Spaces backend
+- Kubernetes cluster kubeconfig (exported from Pulumi production stack - no manual management)
 - `PULUMI_CONFIG_PASSPHRASE` - Pulumi stack encryption
 
 ### GitHub Actions Secrets (Required)
-- `PULUMI_CONFIG_PASSPHRASE` - Encrypt Pulumi stack state
-- `AWS_ACCESS_KEY_ID` - Access DigitalOcean Spaces (Pulumi backend)
-- `AWS_SECRET_ACCESS_KEY` - Access DigitalOcean Spaces (Pulumi backend)
-- `DIGITALOCEAN_TOKEN` - Manage DigitalOcean resources (production only)
+- `PULUMI_ACCESS_TOKEN` - Authenticate to Pulumi Cloud for state management
+- `PULUMI_CONFIG_PASSPHRASE` - Encrypt Pulumi stack state (optional - deprecated in favor of Pulumi Cloud encryption)
+- ~~`DIGITALOCEAN_TOKEN`~~ - ❌ **REMOVED** - Cluster managed by Pulumi, kubeconfig retrieved from stack output
+- ~~`KUBECONFIG`~~ - ❌ **REMOVED** - Retrieved dynamically from Pulumi production stack
 
 ---
 
@@ -114,15 +111,21 @@ Store in GitHub Settings → Secrets and variables → Actions:
 
 ```yaml
 # Required for all workflows
-PULUMI_CONFIG_PASSPHRASE: "<strong-passphrase>"
-AWS_ACCESS_KEY_ID: "<do-spaces-key>"
-AWS_SECRET_ACCESS_KEY: "<do-spaces-secret>"
+PULUMI_ACCESS_TOKEN: "<pulumi-cloud-token>"  # Access Pulumi Cloud for state management
 
-# Production only
-DIGITALOCEAN_TOKEN: "<do-api-token>"
+# Optional (if using self-managed backend instead of Pulumi Cloud)
+PULUMI_CONFIG_PASSPHRASE: "<strong-passphrase>"  # For encrypting stack configs locally
+AWS_ACCESS_KEY_ID: "<do-spaces-key>"             # For self-managed Pulumi backend
+AWS_SECRET_ACCESS_KEY: "<do-spaces-secret>"      # For self-managed Pulumi backend
+
+# REMOVED - No longer needed
+# DIGITALOCEAN_TOKEN - Kubernetes cluster managed by Pulumi, credentials from stack output
+# KUBECONFIG - Retrieved dynamically from Pulumi production stack
 ```
 
 **Access:** Scoped per environment (production secrets only accessible to production workflows)
+
+**Note**: With Pulumi Cloud (recommended), you only need `PULUMI_ACCESS_TOKEN`. The self-managed backend secrets (`AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `PULUMI_CONFIG_PASSPHRASE`) are only required if you're using DigitalOcean Spaces for Pulumi state.
 
 ### 2. Pulumi Config (Non-Sensitive Configuration)
 Store in stack config files (checked into git):

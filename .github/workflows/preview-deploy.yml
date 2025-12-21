@@ -561,15 +561,13 @@ jobs:
             pulumi config set postgresql:adminUser "${{ secrets.POSTGRESQL_ADMIN_USER }}"
           fi
 
-      - name: Install doctl
-        uses: digitalocean/action-doctl@v2
-        with:
-          token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
-
-      - name: Setup kubeconfig
+      - name: Setup kubeconfig from Pulumi
+        working-directory: infrastructure/pulumi
+        env:
+          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
         run: |
           mkdir -p ~/.kube
-          echo "${{ secrets.KUBECONFIG }}" | base64 -d > ~/.kube/config
+          pulumi stack output kubeconfig --stack production > ~/.kube/config
           chmod 600 ~/.kube/config
 
       - name: Initialize ephemeral base stack
