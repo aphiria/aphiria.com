@@ -304,6 +304,14 @@ Phase 8 (Migrate production to Pulumi)
 - [ ] T067 [FR-067] Post Pulumi preview output as PR comment showing all infrastructure changes (creates, updates, deletes)
 - [ ] T068 [FR-068] Remove `--skip-preview` flags from all `pulumi up` commands in `preview-deploy.yml`
 
+### TypeScript Linting and Code Quality
+
+- [ ] T069 Add ESLint to Pulumi TypeScript projects (`infrastructure/pulumi/package.json`)
+- [ ] T070 Add Prettier for code formatting to Pulumi TypeScript projects
+- [ ] T071 Create `npm run lint` script that runs ESLint
+- [ ] T072 Create `npm run format` and `npm run format:check` scripts for Prettier
+- [ ] T073 Update `test.yml` to run `npm run lint` and `npm run format:check` alongside `npm run build`
+
 **Completion Criteria**:
 - ✅ All documentation complete and accurate
 - ✅ Workflows handle edge cases gracefully
