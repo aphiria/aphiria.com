@@ -140,6 +140,8 @@ jobs:
         env:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
         run: |
+          set -e  # Exit on error
+
           PR_NUMBER=${{ steps.pr.outputs.number }}
           STACK_NAME="ephemeral-pr-${PR_NUMBER}"
 
@@ -147,14 +149,20 @@ jobs:
           pulumi stack select "${STACK_NAME}" 2>/dev/null || pulumi stack init "${STACK_NAME}"
 
           # Set minimal config required for preview (full config set in deploy job)
-          pulumi config set prNumber "${PR_NUMBER}"
-          pulumi config set baseStackReference "davidbyoung/ephemeral-environments/ephemeral-base"
-          pulumi config set --secret postgresql:adminPassword "preview-only"
-          pulumi config set webImageDigest "sha256:preview"
-          pulumi config set apiImageDigest "sha256:preview"
+          pulumi config set prNumber "${PR_NUMBER}" --stack "${STACK_NAME}"
+          pulumi config set baseStackReference "davidbyoung/ephemeral-environments/ephemeral-base" --stack "${STACK_NAME}"
+          pulumi config set --secret postgresql:adminPassword "preview-only" --stack "${STACK_NAME}"
+          pulumi config set webImageDigest "sha256:preview" --stack "${STACK_NAME}"
+          pulumi config set apiImageDigest "sha256:preview" --stack "${STACK_NAME}"
 
-          # Run preview
+          # Run preview and capture output (will exit with error code if preview fails)
+          set +e  # Temporarily disable exit on error for tee
           pulumi preview --stack "${STACK_NAME}" --non-interactive 2>&1 | tee preview.txt
+          PREVIEW_EXIT_CODE=${PIPESTATUS[0]}
+          set -e  # Re-enable exit on error
+
+          # Exit with preview's exit code
+          exit $PREVIEW_EXIT_CODE
 
       - name: Add preview comment on PR
         if: success()
