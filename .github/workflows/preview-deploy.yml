@@ -46,8 +46,10 @@ jobs:
         uses: pulumi/actions@v5
 
       - name: Install dependencies and build
-        working-directory: infrastructure/pulumi/ephemeral
         run: |
+          cd infrastructure/pulumi
+          npm install
+          cd ephemeral
           npm install
           npm run build
 
@@ -217,7 +219,9 @@ jobs:
 
       - name: Install Pulumi dependencies
         run: |
-          cd infrastructure/pulumi/ephemeral
+          cd infrastructure/pulumi
+          npm install
+          cd ephemeral
           npm install
 
       - name: Build TypeScript
