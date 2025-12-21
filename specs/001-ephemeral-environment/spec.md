@@ -130,8 +130,11 @@ As a maintainer, I want preview environments to be destroyed automatically when 
 - **FR-012**: Preview deployments MUST require manual approval for PRs authored by external contributors
 - **FR-072**: GitHub environment protection MUST be used as defense-in-depth alongside workflow-based checks
 - **FR-073**: The `preview` environment MUST use `workflow_run` trigger (runs on master branch workflow) to prevent workflow tampering
-- **FR-074**: The `preview` environment SHOULD allow repository admins to bypass approval for faster maintainer deployments
+- **FR-074**: The workflow MUST programmatically auto-approve deployments for maintainer PRs using GitHub API
 - **FR-075**: Deployment tracking MUST be maintained via GitHub environment deployment history
+- **FR-076**: Auto-approval MUST use a Personal Access Token (PAT) with `repo` and `read:org` scopes stored in `DEPLOYMENT_APPROVAL_TOKEN` secret
+- **FR-077**: The `preview` environment protection MUST have `prevent_self_review: false` to allow maintainer self-approval
+- **FR-078**: The auto-approval job MUST run concurrently with the deploy job and approve pending deployments via the GitHub API
 - **FR-029**: Each preview environment MUST provision separate Kubernetes Deployments for web and API components (1 replica each for preview traffic)
 - **FR-030**: Web and API deployments MUST use the same immutable container images (by digest) as production
 - **FR-031**: Gateway/Ingress routing MUST direct `{PR}.pr.aphiria.com` to web service and `{PR}.pr-api.aphiria.com` to API service
@@ -712,6 +715,35 @@ On PR close/merge, Pulumi must:
 2. **Verify cleanup**:
    - Query `pg_database` to ensure database is removed
    - Fail stack destroy if database still exists (prevents orphaned data)
+
+---
+
+## Polish Tasks
+
+### Secrets Management
+
+- **T073**: Document PAT (Personal Access Token) management strategy
+  - Add to SECRETS.md: DEPLOYMENT_APPROVAL_TOKEN creation, scopes, rotation policy
+  - Include instructions for creating PAT at https://github.com/settings/tokens/new
+  - Required scopes: `repo`, `read:org`
+  - Expiration recommendation: 1 year with calendar reminder for rotation
+  - Describe how to update secret in repository settings
+
+### Workflow Refactoring
+
+- **T070**: Create reusable deployment workflow (`.github/workflows/deploy.yml`) with `workflow_call` trigger
+  - Parameterize: stack name, environment, image digests, Pulumi config values, PostgreSQL password
+  - Support both `up` (deploy) and `destroy` (cleanup) operations
+  - Include Pulumi preview, stack selection/creation, config setting, and deployment steps
+- **T071**: Refactor `preview-deploy.yml` to call reusable `deploy.yml` workflow
+  - Rename `preview-deploy.yml` → `deploy-preview.yml` (follows `{{ACTION}}-{{TARGET}}` convention)
+  - Pass preview-specific parameters to reusable workflow
+  - Keep preview environment protection and auto-approval logic in caller
+- **T072**: Create `deploy-production.yml` workflow using reusable `deploy.yml` workflow (future production deployment)
+
+### Documentation Updates
+
+- **T069**: Fix CI badge in README.md to point to correct workflow(s) (currently points to old 'ci' workflow)
 
 ---
 
