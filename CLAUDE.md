@@ -462,7 +462,29 @@ php aphiria cache:flush
 - **Test thoroughly** - the website serves the Aphiria community
 - **Be explicit** about what files were changed and why
 
+### Simplicity Principle
+
+**NEVER over-engineer solutions.** This project values simple, maintainable code over clever abstractions.
+
+**GitHub Actions Workflows**:
+- ❌ **DON'T**: Duplicate setup logic across jobs when the task is simple
+- ❌ **DON'T**: Add complex abstractions for tasks that are fundamentally "run command, post comment"
+- ❌ **DON'T**: Create elaborate job chains when a single job with clear steps suffices
+- ✅ **DO**: Keep workflows as simple as possible - extract PR number, run command, post result
+- ✅ **DO**: Question complexity - if a workflow feels complicated, simplify first
+- ✅ **DO**: Prefer inline scripts over external files unless reused 3+ times
+
+**Pulumi/Infrastructure**:
+- ✅ **DO**: Reuse shared components across environments (dev-local, preview, production)
+- ❌ **DON'T**: Create layers of abstraction that hide what's actually being deployed
+- ✅ **DO**: Keep stack programs readable - anyone should understand what gets deployed
+
+**Code Reviews**:
+- When proposing changes, ask: "Is this the simplest solution that works?"
+- If a file exceeds 100 lines for a simple task, reconsider the approach
+- Favor boring, obvious code over clever, concise code
+
 ---
 
-**Last Updated**: 2025-12-19
+**Last Updated**: 2025-12-20
 **Constitution Version**: 1.0.0

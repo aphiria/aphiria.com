@@ -138,6 +138,9 @@ As a maintainer, I want preview environments to be destroyed automatically when 
 - **FR-037**: Preview deployments MUST be gated behind explicit maintainer approval
 - **FR-038**: Untrusted contributors MUST NOT be able to trigger privileged deployments
 - **FR-039**: Privileged credentials MUST NOT be accessible before approval
+- **FR-066**: Pulumi preview output MUST be posted to the pull request as a comment BEFORE deployment approval is requested
+- **FR-067**: The preview comment MUST show all infrastructure changes (creates, updates, deletes) that will occur
+- **FR-068**: Deployment workflows MUST NOT use `--skip-preview` flag to ensure maintainers can review infrastructure changes
 - **FR-051**: Preview environments MUST be publicly accessible without authentication (security via URL obscurity)
 - **FR-040** (Build once): The system MUST build a single container image per commit and reuse it across preview and production deployments (includes full documentation build).
 - **FR-041** (Immutable promotion): Production deployments MUST reference the same immutable image (by digest) that was deployed and tested in the preview environment.
@@ -248,8 +251,14 @@ The GitHub Actions workflow will:
 After implementing reusable workflows, the following existing workflow files will be REMOVED (logic replicated in new workflows):
 - `build-docker-image.yml` - Replaced by `build-images.yml`
 - `build-deploy.yml` - Replaced by `production-deploy.yml` + `deploy-pulumi.yml`
-- `build-preview-images.yml` - Replaced by `preview-deploy.yml` + `build-images.yml`
-- `test.yml` - Keep as-is (not part of migration, runs tests only)
+
+**Files to Update**:
+- `test.yml` - Keep for PHP/TypeScript testing, but REMOVE Pulumi preview steps (lines 82-120) since infrastructure preview is now in separate workflows
+
+**Files to Keep (Already Updated)**:
+- `build-preview-images.yml` - Preview image builds (current implementation, will be refactored to reusable `build-images.yml` later)
+- `preview-deploy.yml` - Preview deployment workflow (current implementation)
+- `preview-cleanup.yml` - Cleanup on PR close (current implementation)
 
 **Note**: Old workflows will be removed only after new workflows are tested and validated in preview and production.
 
@@ -443,8 +452,9 @@ This feature includes a **comprehensive migration** from Helm/Kustomize to Pulum
 - ✅ Packages automatically linked to repository
 
 **Authentication**:
-- Builds: GitHub Actions uses `secrets.DOCKER_ACCESS_TOKEN` (personal access token with `write:packages`)
-- Registry username: `davidbyoung`
+- Builds: GitHub Actions uses `secrets.GITHUB_CONTAINER_REGISTRY_TOKEN` (Personal Access Token with `write:packages` scope)
+- Registry username: `davidbyoung` (repository owner)
+- **Why PAT instead of `GITHUB_TOKEN`**: For OSS projects, external contributors' `GITHUB_TOKEN` lacks permission to push to the repository owner's ghcr.io registry. A PAT ensures all builds (internal + external PRs) can push images.
 - Image naming:
   - Preview: `ghcr.io/aphiria/aphiria.com-{web|api|build}:pr-{PR_NUMBER}`
   - Production: `ghcr.io/aphiria/aphiria.com-{web|api}@sha256:{digest}`
@@ -558,7 +568,8 @@ The following infrastructure persists **independently of PR lifecycle** and rema
 - **FR-040**: Stack name SHOULD be `ephemeral-base` or similar
 - **FR-041**: This stack manages: cluster reference, PostgreSQL deployment, Gateway/Ingress, DNS config
 - **FR-042**: The base stack MUST NOT be destroyed when PRs close
-- **FR-043**: The base stack MAY be deployed once manually or via a separate workflow
+- **FR-043**: The PR deployment workflow MUST check if `ephemeral-base` stack exists and create it if missing (idempotent initialization)
+- **FR-043a**: The base stack deployment SHOULD be idempotent and safe to run on every PR deployment (no-op if already exists)
 - **FR-054**: Base infrastructure updates (Kubernetes version, PostgreSQL version) MUST be applied manually as-needed, not automatically
 
 **Per-PR Stacks (Ephemeral):**
@@ -579,6 +590,13 @@ The following infrastructure persists **independently of PR lifecycle** and rema
 - Clear separation of persistent vs. ephemeral state
 - Enables safe parallel PR deployments without base infrastructure contention
 
+**Automatic base stack initialization because:**
+- Eliminates manual bootstrapping steps
+- Pulumi is idempotent - checking/deploying existing stack is fast (~1-2 seconds)
+- Self-healing - base infrastructure automatically recreated if deleted
+- Better developer experience - opening a PR "just works"
+- Follows infrastructure-as-code best practices
+
 ---
 
 ## Assumptions
@@ -593,6 +611,12 @@ The following infrastructure persists **independently of PR lifecycle** and rema
 8. Pulumi credentials allow stack creation/deletion operations
 9. Documentation build (from https://github.com/aphiria/docs) completes successfully in Docker build stage using full documentation set (all versions, all pages)
 10. LexemeSeeder can access compiled documentation files in the API container filesystem
+
+### Documentation Structure
+
+- **FR-069**: README.md MUST focus on local development and contribution workflows only
+- **FR-070**: Infrastructure and secrets management documentation MUST be separated into `SECRETS.md`
+- **FR-071**: `SECRETS.md` MUST document all GitHub repository secrets, rotation procedures, and required scopes
 
 ---
 

@@ -19,7 +19,9 @@ Pull requests automatically generate ephemeral preview environments for testing 
 
 **For contributors**: Preview deployments happen automatically after maintainer approval. No setup required!
 
-**For maintainers**: See [`infrastructure/pulumi/ephemeral/QUICKSTART.md`](infrastructure/pulumi/ephemeral/QUICKSTART.md) for approval and testing instructions.
+**For maintainers**:
+- Preview deployment workflow: [`infrastructure/pulumi/ephemeral/QUICKSTART.md`](infrastructure/pulumi/ephemeral/QUICKSTART.md)
+- Secrets management: [`SECRETS.md`](SECRETS.md)
 
 ## Configuring Your Environment
 

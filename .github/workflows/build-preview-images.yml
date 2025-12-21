@@ -7,7 +7,7 @@ on:
       - 'src/**'
       - 'public-api/**'
       - 'public-web/**'
-      - 'infrastructure/docker/**'
+      - 'infrastructure/**'
       - 'composer.json'
       - 'composer.lock'
       - 'package.json'
@@ -44,7 +44,7 @@ jobs:
         with:
           registry: ${{ env.REGISTRY }}
           username: davidbyoung
-          password: ${{ secrets.DOCKER_ACCESS_TOKEN }}
+          password: ${{ secrets.GITHUB_CONTAINER_REGISTRY_TOKEN }}
 
       - name: Generate image tags
         id: meta

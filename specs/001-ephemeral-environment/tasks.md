@@ -292,6 +292,18 @@ Phase 8 (Migrate production to Pulumi)
 - [ ] T061 Implement chosen secrets management solution across all environments
 - [ ] T062 Document secrets rotation procedures and access control
 
+### Workflow Cleanup
+
+- [ ] T063 Update `test.yml` to remove Pulumi preview steps (lines 82-120) since infrastructure preview is now in separate workflows
+- [ ] T064 Remove `build-docker-image.yml` (replaced by `build-preview-images.yml` for now, will be refactored to reusable `build-images.yml` later)
+- [ ] T065 Remove `build-deploy.yml` (replaced by `production-deploy.yml` - to be created in Phase 8)
+
+### Infrastructure Preview for OSS Safety
+
+- [ ] T066 [FR-066] Add Pulumi preview step to `preview-deploy.yml` that runs BEFORE environment approval gate
+- [ ] T067 [FR-067] Post Pulumi preview output as PR comment showing all infrastructure changes (creates, updates, deletes)
+- [ ] T068 [FR-068] Remove `--skip-preview` flags from all `pulumi up` commands in `preview-deploy.yml`
+
 **Completion Criteria**:
 - ✅ All documentation complete and accurate
 - ✅ Workflows handle edge cases gracefully
