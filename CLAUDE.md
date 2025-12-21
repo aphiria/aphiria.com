@@ -486,5 +486,13 @@ php aphiria cache:flush
 
 ---
 
+---
+
+## GitHub Actions Gotchas
+
+- **Secret naming**: Cannot use `GITHUB_` prefix (reserved by GitHub system). Use alternatives like `GHCR_TOKEN` instead of `GITHUB_CONTAINER_REGISTRY_TOKEN`.
+
+---
+
 **Last Updated**: 2025-12-20
 **Constitution Version**: 1.0.0

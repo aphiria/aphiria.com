@@ -452,9 +452,10 @@ This feature includes a **comprehensive migration** from Helm/Kustomize to Pulum
 - ✅ Packages automatically linked to repository
 
 **Authentication**:
-- Builds: GitHub Actions uses `secrets.GITHUB_CONTAINER_REGISTRY_TOKEN` (Personal Access Token with `write:packages` scope)
+- Builds: GitHub Actions uses `secrets.GHCR_TOKEN` (Personal Access Token with `write:packages` scope)
 - Registry username: `davidbyoung` (repository owner)
 - **Why PAT instead of `GITHUB_TOKEN`**: For OSS projects, external contributors' `GITHUB_TOKEN` lacks permission to push to the repository owner's ghcr.io registry. A PAT ensures all builds (internal + external PRs) can push images.
+- **Note**: Cannot use `GITHUB_` prefix for secret names (reserved by GitHub)
 - Image naming:
   - Preview: `ghcr.io/aphiria/aphiria.com-{web|api|build}:pr-{PR_NUMBER}`
   - Production: `ghcr.io/aphiria/aphiria.com-{web|api}@sha256:{digest}`

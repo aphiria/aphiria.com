@@ -44,7 +44,7 @@ jobs:
         with:
           registry: ${{ env.REGISTRY }}
           username: davidbyoung
-          password: ${{ secrets.GITHUB_CONTAINER_REGISTRY_TOKEN }}
+          password: ${{ secrets.GHCR_TOKEN }}
 
       - name: Generate image tags
         id: meta

@@ -10,7 +10,7 @@ This document describes all GitHub repository secrets used by CI/CD workflows an
 
 | Secret Name | Purpose | Rotation Schedule | Used By |
 |-------------|---------|-------------------|---------|
-| `GITHUB_CONTAINER_REGISTRY_TOKEN` | Push Docker images to ghcr.io | Annually | `build-preview-images.yml` |
+| `GHCR_TOKEN` | Push Docker images to ghcr.io | Annually | `build-preview-images.yml` |
 | `PULUMI_ACCESS_TOKEN` | Manage infrastructure state in Pulumi Cloud | Annually | `preview-deploy.yml`, `preview-cleanup.yml` |
 | `KUBECONFIG` | Access DigitalOcean Kubernetes cluster | When cluster credentials change | `preview-deploy.yml`, `preview-cleanup.yml` |
 | `POSTGRESQL_ADMIN_PASSWORD` | Create/manage preview databases | Quarterly | `preview-deploy.yml` |
@@ -20,7 +20,7 @@ This document describes all GitHub repository secrets used by CI/CD workflows an
 
 ## Rotation Procedures
 
-### GITHUB_CONTAINER_REGISTRY_TOKEN
+### GHCR_TOKEN
 
 **Why this is needed**: External contributors' `GITHUB_TOKEN` can't push to your ghcr.io registry. A Personal Access Token ensures all builds work.
 
@@ -36,7 +36,7 @@ This document describes all GitHub repository secrets used by CI/CD workflows an
 **Update repository secret**:
 
 1. https://github.com/aphiria/aphiria.com/settings/secrets/actions
-2. Click `GITHUB_CONTAINER_REGISTRY_TOKEN` (or "New repository secret")
+2. Click `GHCR_TOKEN` (or "New repository secret")
 3. Paste new token value
 4. Save
 
@@ -134,7 +134,7 @@ If a secret is compromised:
 
 | Error | Cause | Solution |
 |-------|-------|----------|
-| Authentication failed (build-preview-images.yml) | Invalid `GITHUB_CONTAINER_REGISTRY_TOKEN` | Rotate token |
+| Authentication failed (build-preview-images.yml) | Invalid `GHCR_TOKEN` | Rotate token |
 | Pulumi login failed | Invalid `PULUMI_ACCESS_TOKEN` | Rotate token |
 | Unable to connect to cluster | Invalid `KUBECONFIG` | Download fresh kubeconfig from DigitalOcean |
 | Database connection errors | Password mismatch | Update secret or database password |
