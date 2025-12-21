@@ -51,6 +51,11 @@ jobs:
           npm install
           npm run build
 
+      - name: Set up kubeconfig
+        run: |
+          mkdir -p ~/.kube
+          echo "${{ secrets.KUBECONFIG }}" | base64 -d > ~/.kube/config
+
       - name: Run Pulumi preview
         id: preview
         working-directory: infrastructure/pulumi/ephemeral
