@@ -273,6 +273,11 @@ Phase 8 (Migrate production to Pulumi)
 - [X] T051 [P] Create maintainer quickstart guide in `infrastructure/pulumi/ephemeral/QUICKSTART.md`
 - [X] T052 [P] Document approval workflow in `.github/CONTRIBUTING.md`
 - [X] T053 [P] Update project README with preview environment section in `README.md`
+- [ ] T078 Migrate DEV-LOCAL-SETUP.md content into main README.md
+- [ ] T079 Add local database connection, hosts file, and minikube dashboard instructions to README.md
+- [ ] T080 Consolidate SECRETS.md and SECRETS-STRATEGY.md into single comprehensive SECRETS.md file
+- [ ] T081 Clean up migration/import documentation (CLUSTER-IMPORT.md, migration sections in README)
+- [ ] T082 Fix CI badge in README.md to point to correct workflow(s)
 
 ### Operational Enhancements
 
@@ -291,6 +296,9 @@ Phase 8 (Migrate production to Pulumi)
 - [ ] T060 Evaluate secrets management strategy: Pulumi ESC (free tier) vs GitHub Secrets vs hybrid approach
 - [ ] T061 Implement chosen secrets management solution across all environments
 - [ ] T062 Document secrets rotation procedures and access control
+- [ ] T075 Document PAT (Personal Access Token) management strategy in SECRETS.md
+- [ ] T076 Audit and clean up repository secrets (includes removing deprecated KUBECONFIG and DIGITALOCEAN_ACCESS_TOKEN from repo-level)
+- [ ] T077 Audit and clean up environment secrets (verify preview environment has correct secrets only)
 
 ### Workflow Cleanup
 
@@ -311,6 +319,7 @@ Phase 8 (Migrate production to Pulumi)
 - [ ] T071 Create `npm run lint` script that runs ESLint
 - [ ] T072 Create `npm run format` and `npm run format:check` scripts for Prettier
 - [ ] T073 Update `test.yml` to run `npm run lint` and `npm run format:check` alongside `npm run build`
+- [ ] T074 Remove numbered list comments (e.g., `// 1.`, `// 2.`, `// 3.`) from all code files - use descriptive section comments instead to avoid maintenance burden
 
 **Completion Criteria**:
 - ✅ All documentation complete and accurate
@@ -318,6 +327,7 @@ Phase 8 (Migrate production to Pulumi)
 - ✅ Error messages actionable
 - ✅ Deployment observability improved
 - ✅ Secrets management strategy documented and implemented
+- ✅ Code uses descriptive comments without numbered lists
 
 ---
 
@@ -369,26 +379,39 @@ Phase 8 (Migrate production to Pulumi)
 
 ### Tasks
 
-- [ ] M028 Create production stack program: `infrastructure/pulumi/aphiria.com/src/production-stack.ts`
-- [ ] M029 Import shared Helm chart component (cert-manager, nginx-gateway) in production stack
-- [ ] M030 [P] Import shared PostgreSQL component with production config (2 replicas, persistent storage) in production stack
-- [ ] M031 [P] Import shared Gateway component with Let's Encrypt production TLS in production stack
-- [ ] M032 Import shared web deployment component with production configuration (2 replicas) in production stack
-- [ ] M033 Import shared API deployment component with production configuration (2 replicas) in production stack
-- [ ] M034 [P] Import shared db-migration job component in production stack
-- [ ] M035 [P] Import shared HTTPRoute component for production domains (aphiria.com, api.aphiria.com, www.aphiria.com) in production stack
-- [ ] M036 Configure Pulumi stack config for production: `pulumi config set --secret` for sensitive values
-- [ ] M037 Create `production` Pulumi stack: `pulumi stack init production`
-- [ ] M038 **DRY RUN**: `pulumi preview --stack production` (verify changes before applying)
-- [ ] M039 **IMPORT EXISTING RESOURCES**: Use `pulumi import` for existing PostgreSQL, Gateway to avoid recreation
-- [ ] M040 Deploy production stack: `pulumi up --stack production` (off-peak hours)
-- [ ] M041 Verify production site accessible at https://www.aphiria.com
-- [ ] M042 Verify production API accessible at https://api.aphiria.com
-- [ ] M043 Monitor for 24 hours: check logs, metrics, uptime
-- [ ] M044 Update CI/CD workflows to use Pulumi instead of Kustomize for production deployments
-- [ ] M045 Move old Kustomize files to `infrastructure/kubernetes-deprecated/`
-- [ ] M046 Add deprecation notice to `infrastructure/kubernetes-deprecated/README.md`
-- [ ] M047 Update main README.md deployment instructions (replace Kustomize with Pulumi)
+#### Refactor Infrastructure for Reusability
+
+- [ ] M028 Refactor preview-base and production stacks to use shared parameterized base infrastructure component (eliminate code duplication)
+- [ ] M029 Create shared base infrastructure component that accepts environment-specific parameters (cluster config, node pool size, etc.)
+
+#### CI/CD Workflow Refactoring
+
+- [ ] M030 Create reusable deployment workflow `.github/workflows/deploy.yml` (called by environment-specific workflows)
+- [ ] M031 Refactor and rename `preview-deploy.yml` to `deploy-preview.yml` using reusable workflow
+- [ ] M032 Create `deploy-production.yml` workflow using reusable workflow for production deployments
+
+#### Production Stack Implementation
+
+- [ ] M033 Create production stack program: `infrastructure/pulumi/aphiria.com/src/production-stack.ts`
+- [ ] M034 Import shared Helm chart component (cert-manager, nginx-gateway) in production stack
+- [ ] M035 [P] Import shared PostgreSQL component with production config (2 replicas, persistent storage) in production stack
+- [ ] M036 [P] Import shared Gateway component with Let's Encrypt production TLS in production stack
+- [ ] M037 Import shared web deployment component with production configuration (2 replicas) in production stack
+- [ ] M038 Import shared API deployment component with production configuration (2 replicas) in production stack
+- [ ] M039 [P] Import shared db-migration job component in production stack
+- [ ] M040 [P] Import shared HTTPRoute component for production domains (aphiria.com, api.aphiria.com, www.aphiria.com) in production stack
+- [ ] M041 Configure Pulumi stack config for production: `pulumi config set --secret` for sensitive values
+- [ ] M042 Create `production` Pulumi stack: `pulumi stack init production`
+- [ ] M043 **DRY RUN**: `pulumi preview --stack production` (verify changes before applying)
+- [ ] M044 **IMPORT EXISTING RESOURCES**: Use `pulumi import` for existing PostgreSQL, Gateway to avoid recreation
+- [ ] M045 Deploy production stack: `pulumi up --stack production` (off-peak hours)
+- [ ] M046 Verify production site accessible at https://www.aphiria.com
+- [ ] M047 Verify production API accessible at https://api.aphiria.com
+- [ ] M048 Monitor for 24 hours: check logs, metrics, uptime
+- [ ] M049 Update CI/CD workflows to use Pulumi instead of Kustomize for production deployments
+- [ ] M050 Move old Kustomize files to `infrastructure/kubernetes-deprecated/`
+- [ ] M051 Add deprecation notice to `infrastructure/kubernetes-deprecated/README.md`
+- [ ] M052 Update main README.md deployment instructions (replace Kustomize with Pulumi)
 
 **Completion Criteria**:
 - ✅ Production fully managed by Pulumi
