@@ -346,7 +346,7 @@ jobs:
               ENVIRONMENT_ID=$(echo "$PENDING" | jq -r '.[0].environment.id')
 
               gh api -X POST repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/pending_deployments \
-                -f environment_ids[]="${ENVIRONMENT_ID}" \
+                -F environment_ids[]="${ENVIRONMENT_ID}" \
                 -f state=approved \
                 -f comment='Auto-approved: PR author has admin/maintain permissions'
 
