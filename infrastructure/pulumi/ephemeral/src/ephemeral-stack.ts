@@ -512,7 +512,7 @@ const apiHttpRoute = new k8s.apiextensions.CustomResource("api-httproute", {
 // Outputs
 // ============================================================================
 
-export { webUrl, apiUrl, databaseName };
-export const namespaceName = namespace.metadata.name;
+export { webUrl, apiUrl, databaseName, namespaceName };
+export const namespaceResourceName = namespace.metadata.name;
 export const webImageRef = `ghcr.io/aphiria/aphiria.com-web@${webImageDigest}`;
 export const apiImageRef = `ghcr.io/aphiria/aphiria.com-api@${apiImageDigest}`;
