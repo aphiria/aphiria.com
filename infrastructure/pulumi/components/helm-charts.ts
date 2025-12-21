@@ -3,7 +3,7 @@ import * as k8s from "@pulumi/kubernetes";
 import { HelmChartArgs } from "./types";
 
 /** Installs cert-manager with Gateway API support */
-export function installCertManager(args: HelmChartArgs, provider?: k8s.Provider): k8s.helm.v3.Chart {
+export function installCertManager(args: HelmChartArgs): k8s.helm.v3.Chart {
     return new k8s.helm.v3.Chart(
         "cert-manager",
         {
@@ -24,7 +24,7 @@ export function installCertManager(args: HelmChartArgs, provider?: k8s.Provider)
             },
         },
         {
-            provider,
+            provider: args.provider,
             transformations: [
                 (obj: any) => {
                     // Ensure namespace exists
@@ -38,7 +38,7 @@ export function installCertManager(args: HelmChartArgs, provider?: k8s.Provider)
 }
 
 /** Installs Gateway API CRDs (required before nginx-gateway-fabric) */
-export function installGatewayAPICRDs(provider?: k8s.Provider): k8s.yaml.ConfigFile {
+export function installGatewayAPICRDs(provider: k8s.Provider): k8s.yaml.ConfigFile {
     return new k8s.yaml.ConfigFile(
         "gateway-api-crds",
         {
@@ -53,7 +53,6 @@ export function installGatewayAPICRDs(provider?: k8s.Provider): k8s.yaml.ConfigF
 /** Installs nginx-gateway-fabric (Gateway API implementation) */
 export function installNginxGateway(
     args: HelmChartArgs,
-    provider?: k8s.Provider,
     dependsOn?: pulumi.Resource[]
 ): k8s.helm.v3.Chart {
     return new k8s.helm.v3.Chart(
@@ -65,7 +64,7 @@ export function installNginxGateway(
             values: args.values || {},
         },
         {
-            provider,
+            provider: args.provider,
             dependsOn: dependsOn || [],
         }
     );
@@ -75,8 +74,8 @@ export function installNginxGateway(
 export interface BaseHelmChartsArgs {
     /** Environment */
     env: "local" | "preview" | "production";
-    /** Optional Kubernetes provider */
-    provider?: k8s.Provider;
+    /** Kubernetes provider */
+    provider: k8s.Provider;
 }
 
 export interface BaseHelmChartsResult {
@@ -117,7 +116,8 @@ export function installBaseHelmCharts(args: BaseHelmChartsArgs): BaseHelmChartsR
         repository: "https://charts.jetstack.io",
         version: "v1.16.1",
         namespace: "cert-manager",
-    }, args.provider);
+        provider: args.provider,
+    });
 
     // Install nginx-gateway-fabric (depends on Gateway API CRDs)
     const nginxGateway = installNginxGateway(
@@ -127,8 +127,8 @@ export function installBaseHelmCharts(args: BaseHelmChartsArgs): BaseHelmChartsR
             repository: "oci://ghcr.io/nginxinc/charts",
             version: "1.2.0",
             namespace: "nginx-gateway",
+            provider: args.provider,
         },
-        args.provider,
         [gatewayAPICRDs, nginxGatewayNamespace]
     );
 

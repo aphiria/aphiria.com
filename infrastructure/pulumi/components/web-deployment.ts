@@ -25,7 +25,7 @@ export function createWebDeployment(args: WebDeploymentArgs): WebDeploymentResul
         data: {
             "config.js": `export default {\n${jsConfigData}\n    }`,
         },
-    });
+    }, { provider: args.provider });
 
     // Create web deployment
     const deployment = new k8s.apps.v1.Deployment("web", {
@@ -96,7 +96,7 @@ export function createWebDeployment(args: WebDeploymentArgs): WebDeploymentResul
                 },
             },
         },
-    });
+    }, { provider: args.provider });
 
     // Create Service
     const service = new k8s.core.v1.Service("web", {
@@ -117,11 +117,11 @@ export function createWebDeployment(args: WebDeploymentArgs): WebDeploymentResul
             ],
             type: "ClusterIP",
         },
-    });
+    }, { provider: args.provider });
 
     return {
-        deployment: deployment.metadata.apply((m) => m),
-        service: service.metadata.apply((m) => m),
-        configMap: configMap.metadata.apply((m) => m),
+        deployment: deployment.metadata,
+        service: service.metadata,
+        configMap: configMap.metadata,
     };
 }

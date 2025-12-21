@@ -44,7 +44,7 @@ export function createAPIDeployment(args: APIDeploymentArgs): APIDeploymentResul
     }
 }`,
         },
-    });
+    }, { provider: args.provider });
 
     // Create Secret for database credentials
     const secret = new k8s.core.v1.Secret("env-var-secrets", {
@@ -58,7 +58,7 @@ export function createAPIDeployment(args: APIDeploymentArgs): APIDeploymentResul
             DB_USER: args.dbUser,
             DB_PASSWORD: args.dbPassword,
         },
-    });
+    }, { provider: args.provider });
 
     // Create ConfigMap for environment variables
     const configMap = new k8s.core.v1.ConfigMap("env-vars", {
@@ -76,7 +76,7 @@ export function createAPIDeployment(args: APIDeploymentArgs): APIDeploymentResul
             APP_ENV: args.env === "production" ? "production" : "dev",
             LOG_LEVEL: args.env === "production" ? "warning" : "debug",
         },
-    });
+    }, { provider: args.provider });
 
     // Create API deployment
     const deployment = new k8s.apps.v1.Deployment("api", {
@@ -211,7 +211,7 @@ export function createAPIDeployment(args: APIDeploymentArgs): APIDeploymentResul
                 },
             },
         },
-    });
+    }, { provider: args.provider });
 
     // Create Service
     const service = new k8s.core.v1.Service("api", {
@@ -232,11 +232,11 @@ export function createAPIDeployment(args: APIDeploymentArgs): APIDeploymentResul
             ],
             type: "ClusterIP",
         },
-    });
+    }, { provider: args.provider });
 
     return {
-        deployment: deployment.metadata.apply((m) => m),
-        service: service.metadata.apply((m) => m),
-        secret: secret.metadata.apply((m) => m),
+        deployment: deployment.metadata,
+        service: service.metadata,
+        secret: secret.metadata,
     };
 }

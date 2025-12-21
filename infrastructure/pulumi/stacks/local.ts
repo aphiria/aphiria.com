@@ -114,6 +114,7 @@ const httpsRedirect = createHTTPSRedirectRoute({
     namespace: "nginx-gateway",
     gatewayName: "nginx-gateway",
     gatewayNamespace: "nginx-gateway",
+    provider: k8sProvider,
 });
 
 const wwwRedirect = createWWWRedirectRoute({
@@ -122,6 +123,7 @@ const wwwRedirect = createWWWRedirectRoute({
     gatewayNamespace: "nginx-gateway",
     rootDomain: "aphiria.com",
     wwwDomain: "www.aphiria.com",
+    provider: k8sProvider,
 });
 
 // Exports

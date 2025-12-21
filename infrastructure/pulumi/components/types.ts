@@ -16,8 +16,8 @@ export interface CommonDeploymentArgs {
     namespace: pulumi.Input<string>;
     /** Resource labels for Kubernetes resources */
     labels?: Record<string, string>;
-    /** Kubernetes provider (optional) */
-    provider?: k8s.Provider;
+    /** Kubernetes provider */
+    provider: k8s.Provider;
 }
 
 /**
@@ -72,8 +72,8 @@ export interface PostgreSQLArgs {
     storageSize?: string;
     /** Resource labels */
     labels?: Record<string, string>;
-    /** Kubernetes provider (optional) */
-    provider?: k8s.Provider;
+    /** Kubernetes provider */
+    provider: k8s.Provider;
 }
 
 /**
@@ -92,8 +92,8 @@ export interface GatewayArgs {
     domains: string[];
     /** Resource labels */
     labels?: Record<string, string>;
-    /** Kubernetes provider (optional) */
-    provider?: k8s.Provider;
+    /** Kubernetes provider */
+    provider: k8s.Provider;
 }
 
 /**
@@ -117,8 +117,8 @@ export interface HTTPRouteArgs {
     enableRateLimiting?: boolean;
     /** Resource labels */
     labels?: Record<string, string>;
-    /** Kubernetes provider (optional) */
-    provider?: k8s.Provider;
+    /** Kubernetes provider */
+    provider: k8s.Provider;
 }
 
 /**
@@ -143,8 +143,8 @@ export interface DBMigrationJobArgs {
     runSeeder: boolean;
     /** Resource labels */
     labels?: Record<string, string>;
-    /** Kubernetes provider (optional) */
-    provider?: k8s.Provider;
+    /** Kubernetes provider */
+    provider: k8s.Provider;
 }
 
 /**
@@ -163,8 +163,8 @@ export interface HelmChartArgs {
     namespace: pulumi.Input<string>;
     /** Helm values */
     values?: Record<string, any>;
-    /** Kubernetes provider (optional) */
-    provider?: k8s.Provider;
+    /** Kubernetes provider */
+    provider: k8s.Provider;
 }
 
 /**

@@ -84,7 +84,7 @@ const gateway = createGateway({
     provider: k8sProvider,
 });
 
-// Outputs (used by ephemeral-stack.ts and workflows)
+// Outputs (used by workflows)
 export const clusterId = cluster.id;
 export const clusterEndpoint = cluster.endpoint;
 export const kubeconfig = pulumi.secret(cluster.kubeConfigs[0].rawConfig);

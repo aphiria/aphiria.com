@@ -39,11 +39,11 @@ export function createGateway(args: GatewayArgs): GatewayResult {
 
     if (args.tlsMode === "self-signed") {
         // Create self-signed issuer and certificate for dev-local
-        const issuer = createSelfSignedIssuer();
+        const issuer = createSelfSignedIssuer(args.provider);
         certificate = createSelfSignedCert({
             namespace: args.namespace,
             domains: args.domains,
-        });
+        }, args.provider);
     } else {
         const issuerName = args.tlsMode === "letsencrypt-prod" ? "letsencrypt-prod" : "letsencrypt-staging";
         const acmeServer =
@@ -82,7 +82,7 @@ export function createGateway(args: GatewayArgs): GatewayResult {
                     ],
                 },
             },
-        });
+        }, { provider: args.provider });
 
         certificate = clusterIssuer;
     }
@@ -191,12 +191,13 @@ export function createGateway(args: GatewayArgs): GatewayResult {
         },
         {
             dependsOn: certificate ? [certificate] : [],
+            provider: args.provider,
         }
     );
 
     return {
-        gateway: gateway.urn.apply((urn) => ({ urn })),
-        certificate: certificate ? certificate.urn.apply((urn) => ({ urn })) : undefined,
+        gateway: gateway.urn,
+        certificate: certificate ? certificate.urn : undefined,
     };
 }
 
@@ -206,7 +207,7 @@ export interface SelfSignedCertArgs {
     domains: string[];
 }
 
-export function createSelfSignedCert(args: SelfSignedCertArgs): k8s.apiextensions.CustomResource {
+export function createSelfSignedCert(args: SelfSignedCertArgs, provider: k8s.Provider): k8s.apiextensions.CustomResource {
     return new k8s.apiextensions.CustomResource("tls-cert", {
         apiVersion: "cert-manager.io/v1",
         kind: "Certificate",
@@ -222,11 +223,11 @@ export function createSelfSignedCert(args: SelfSignedCertArgs): k8s.apiextension
                 kind: "ClusterIssuer",
             },
         },
-    });
+    }, { provider });
 }
 
 /** Creates self-signed ClusterIssuer (required for self-signed certs) */
-export function createSelfSignedIssuer(): k8s.apiextensions.CustomResource {
+export function createSelfSignedIssuer(provider: k8s.Provider): k8s.apiextensions.CustomResource {
     return new k8s.apiextensions.CustomResource("selfsigned-issuer", {
         apiVersion: "cert-manager.io/v1",
         kind: "ClusterIssuer",
@@ -236,5 +237,5 @@ export function createSelfSignedIssuer(): k8s.apiextensions.CustomResource {
         spec: {
             selfSigned: {},
         },
-    });
+    }, { provider });
 }
