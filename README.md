@@ -12,7 +12,9 @@ This repository contains the code for both https://www.aphiria.com and https://a
 
 ## Preview Environments
 
-Pull requests automatically generate ephemeral preview environments for testing changes before merging:
+Pull requests automatically generate ephemeral preview environments for testing changes before merging.
+
+
 
 - 🌍 **Web Preview**: `https://{PR}.pr.aphiria.com`
 - 🔌 **API Preview**: `https://{PR}.pr-api.aphiria.com`
