@@ -28,7 +28,7 @@ const cluster = new digitalocean.KubernetesCluster("aphiria-com-preview-cluster"
     region: digitalocean.Region.NYC3,
     version: "1.34.1-do.2",
     nodePool: {
-        name: "preview-pool",
+        name: "worker-pool",
         size: "s-2vcpu-2gb",
         nodeCount: 1,
         autoScale: true,
@@ -45,10 +45,13 @@ const cluster = new digitalocean.KubernetesCluster("aphiria-com-preview-cluster"
 });
 
 // 2. Create Kubernetes provider using the preview cluster's kubeconfig
+// The provider will automatically wait for the cluster to be ready before attempting connections
 const k8sProvider = new k8s.Provider("preview-k8s", {
     kubeconfig: cluster.kubeConfigs[0].rawConfig,
+    // Enable server-side apply to handle CRD race conditions
+    enableServerSideApply: true,
 }, {
-    dependsOn: [cluster], // Ensure cluster is created before provider initialization
+    dependsOn: [cluster],
 });
 
 // 3. Install Helm charts (cert-manager, nginx-gateway-fabric)

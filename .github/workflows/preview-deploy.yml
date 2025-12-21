@@ -59,10 +59,29 @@ jobs:
               # Set DigitalOcean token for cluster creation
               pulumi config set --secret digitalocean:token "${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}" --stack preview-base
 
-              # Deploy base infrastructure (creates preview cluster)
-              pulumi up --stack preview-base --yes
+              # Deploy base infrastructure with retries (cluster may take time to be ready)
+              # Cluster provisioning: 3-10 minutes (typical: 4-5 min)
+              # Kubernetes API ready: Additional 1-2 minutes after cluster creation
+              MAX_RETRIES=3
+              RETRY_COUNT=0
 
-              echo "✅ Base infrastructure deployed successfully"
+              while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+                if pulumi up --stack preview-base --yes; then
+                  echo "✅ Base infrastructure deployed successfully"
+                  break
+                else
+                  RETRY_COUNT=$((RETRY_COUNT + 1))
+                  if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
+                    WAIT_TIME=$((60 * RETRY_COUNT))  # Progressive backoff: 60s, 120s
+                    echo "⚠️  Deployment failed (attempt $RETRY_COUNT/$MAX_RETRIES). Retrying in ${WAIT_TIME} seconds..."
+                    echo "   (Kubernetes API may still be initializing - this is normal on first deployment)"
+                    sleep $WAIT_TIME
+                  else
+                    echo "❌ Deployment failed after $MAX_RETRIES attempts"
+                    exit 1
+                  fi
+                fi
+              done
             else
               echo "✅ Base infrastructure already deployed (cluster ID: ${CLUSTER_ID})"
 
@@ -79,9 +98,30 @@ jobs:
 
             # Deploy base infrastructure (creates cluster, Helm charts, PostgreSQL, Gateway)
             echo "🚀 Deploying preview base infrastructure (this will take 5-10 minutes)..."
-            pulumi up --stack preview-base --yes
 
-            echo "✅ Base stack created and deployed successfully"
+            # Retry logic: Cluster may take time to become fully available
+            # Cluster provisioning: 3-10 minutes (typical: 4-5 min)
+            # Kubernetes API ready: Additional 1-2 minutes after cluster creation
+            MAX_RETRIES=3
+            RETRY_COUNT=0
+
+            while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+              if pulumi up --stack preview-base --yes; then
+                echo "✅ Base stack created and deployed successfully"
+                break
+              else
+                RETRY_COUNT=$((RETRY_COUNT + 1))
+                if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
+                  WAIT_TIME=$((60 * RETRY_COUNT))  # Progressive backoff: 60s, 120s
+                  echo "⚠️  Deployment failed (attempt $RETRY_COUNT/$MAX_RETRIES). Retrying in ${WAIT_TIME} seconds..."
+                  echo "   (Cluster may still be initializing - this is normal on first deployment)"
+                  sleep $WAIT_TIME
+                else
+                  echo "❌ Deployment failed after $MAX_RETRIES attempts"
+                  exit 1
+                fi
+              fi
+            done
           fi
 
   preview-infra:
