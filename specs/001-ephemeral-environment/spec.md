@@ -144,6 +144,10 @@ As a maintainer, I want preview environments to be destroyed automatically when 
 - **FR-034**: The database migration job MUST complete successfully before API deployment is marked ready
 - **FR-035**: LexemeSeeder MUST read compiled documentation from the API container's filesystem
 - **FR-036**: Preview URLs MUST be surfaced in pull request comments or status checks
+- **FR-079**: Pulumi preview output MUST be posted as a PR comment after the preview step completes
+- **FR-080**: Preview comments MUST be collapsible (using `<details>` tag) to avoid cluttering the PR discussion
+- **FR-081**: Preview comments MUST indicate success/failure status with visual indicators (✅/❌)
+- **FR-082**: Preview comments MUST be updated (not duplicated) when the workflow re-runs for the same PR
 - **FR-037**: Preview deployments MUST be gated behind explicit maintainer approval
 - **FR-038**: Untrusted contributors MUST NOT be able to trigger privileged deployments
 - **FR-039**: Privileged credentials MUST NOT be accessible before approval

@@ -164,22 +164,45 @@ jobs:
           # Exit with preview's exit code
           exit $PREVIEW_EXIT_CODE
 
-      - name: Add preview comment on PR
-        if: success()
+      - name: Post preview comment on PR
+        if: always() && steps.preview.outcome != 'skipped'
         uses: actions/github-script@v7
         with:
           script: |
             const fs = require('fs');
             const prNumber = ${{ steps.pr.outputs.number }};
-            const preview = fs.readFileSync('infrastructure/pulumi/ephemeral/preview.txt', 'utf8');
 
-            const body = `## 🔍 Infrastructure Preview
+            let preview = '';
+            try {
+              preview = fs.readFileSync('infrastructure/pulumi/ephemeral/preview.txt', 'utf8');
+            } catch (error) {
+              preview = 'Preview output not available';
+            }
+
+            // Truncate if too long (GitHub comment limit is ~65k chars)
+            const maxLength = 60000;
+            if (preview.length > maxLength) {
+              preview = preview.substring(0, maxLength) + '\n\n... (truncated)';
+            }
+
+            const status = '${{ steps.preview.outcome }}' === 'success' ? '✅ Preview Succeeded' : '❌ Preview Failed';
+
+            const body = `## 🔍 Infrastructure Preview - ${status}
+
+            <details>
+            <summary>Click to expand Pulumi preview output</summary>
 
             \`\`\`
             ${preview}
             \`\`\`
 
-            Review changes above, then approve deployment in Actions tab.`;
+            </details>
+
+            ${
+              '${{ steps.preview.outcome }}' === 'success'
+                ? '✅ Preview succeeded. Deployment will proceed after approval.'
+                : '❌ Preview failed. Please review the errors above before re-running.'
+            }`;
 
             const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,
@@ -399,6 +422,10 @@ jobs:
             MISSING_SECRETS+=("DEPLOYMENT_APPROVAL_TOKEN")
           fi
 
+          if [ -z "${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}" ]; then
+            MISSING_SECRETS+=("DIGITALOCEAN_ACCESS_TOKEN")
+          fi
+
           if [ ${#MISSING_SECRETS[@]} -gt 0 ]; then
             echo "::error::Missing required secrets: ${MISSING_SECRETS[*]}"
             echo ""
@@ -424,6 +451,11 @@ jobs:
                   echo "  • DEPLOYMENT_APPROVAL_TOKEN: GitHub PAT for auto-approving deployments"
                   echo "    Create at: https://github.com/settings/tokens/new"
                   echo "    Scopes required: repo, read:org"
+                  ;;
+                DIGITALOCEAN_ACCESS_TOKEN)
+                  echo "  • DIGITALOCEAN_ACCESS_TOKEN: DigitalOcean API token"
+                  echo "    Create at: https://cloud.digitalocean.com/account/api/tokens"
+                  echo "    Required for accessing DigitalOcean Kubernetes cluster"
                   ;;
               esac
               echo ""
@@ -511,6 +543,11 @@ jobs:
           if [ -n "${{ secrets.POSTGRESQL_ADMIN_USER }}" ]; then
             pulumi config set postgresql:adminUser "${{ secrets.POSTGRESQL_ADMIN_USER }}"
           fi
+
+      - name: Install doctl
+        uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
 
       - name: Setup kubeconfig
         run: |
