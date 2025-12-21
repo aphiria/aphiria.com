@@ -1,12 +1,17 @@
 #!/bin/bash
+#
+# Install script for Aphiria.com local development dependencies
+#
+# Usage:
+#   ./install.sh                        # Install all dependencies
+#   ./install.sh --install-kubectl      # Install specific dependencies
+#
 
 # Default values
 install_kubectl=false
 install_minikube=false
-install_helm=false
-install_helmfile=false
 install_pulumi=false
-install_doctl=false
+install_nodejs=false
 
 # Parse arguments
 for arg in "$@"; do
@@ -17,20 +22,16 @@ for arg in "$@"; do
         --install-minikube)
             install_minikube=true
             ;;
-        --install-helm)
-            install_helm=true
-            ;;
-        --install-helmfile)
-            install_helmfile=true
-            ;;
         --install-pulumi)
             install_pulumi=true
             ;;
-        --install-doctl)
-            install_doctl=true
+        --install-nodejs)
+            install_nodejs=true
             ;;
         *)
-            # If any other argument is passed, do nothing
+            echo "Unknown option: $arg"
+            echo "Valid options: --install-kubectl, --install-minikube, --install-pulumi, --install-nodejs"
+            exit 1
             ;;
     esac
 done
@@ -39,10 +40,8 @@ done
 if [ $# -eq 0 ]; then
     install_kubectl=true
     install_minikube=true
-    install_helm=true
-    install_helmfile=true
     install_pulumi=true
-    install_doctl=true
+    install_nodejs=true
 fi
 
 original_dir=$(pwd)
@@ -62,35 +61,34 @@ if [ "$install_minikube" = true ]; then
     minikube version
 fi
 
-if [ "$install_helm" = true ]; then
-    echo "Installing Helm (https://helm.sh/docs/intro/install/)"
-    curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
-    chmod 700 get_helm.sh
-    ./get_helm.sh
-    helm version
-fi
-
-if [ "$install_helmfile" = true ]; then
-    echo "Installing Helmfile (https://helmfile.readthedocs.io/en/latest/#installation)"
-    curl -L https://github.com/helmfile/helmfile/releases/download/v1.0.0-rc.7/helmfile_1.0.0-rc.7_linux_amd64.tar.gz -o helmfile.tar.gz
-    tar -xzf helmfile.tar.gz
-    sudo mv helmfile /usr/local/bin/helmfile
-    helmfile --version
-fi
-
 if [ "$install_pulumi" = true ]; then
     echo "Installing Pulumi (https://www.pulumi.com/docs/install/)"
     curl -fsSL https://get.pulumi.com | sh
     export PATH=$PATH:$HOME/.pulumi/bin
+    echo ""
+    echo "⚠️  Add Pulumi to your PATH by running:"
+    echo "  echo 'export PATH=\$PATH:\$HOME/.pulumi/bin' >> ~/.bashrc && source ~/.bashrc"
+    echo "  OR for zsh:"
+    echo "  echo 'export PATH=\$PATH:\$HOME/.pulumi/bin' >> ~/.zshrc && source ~/.zshrc"
     pulumi version
 fi
 
-if [ "$install_doctl" = true ]; then
-    echo "Installing doctl (https://docs.digitalocean.com/reference/doctl/how-to/install/)"
-    curl -L https://github.com/digitalocean/doctl/releases/download/v1.117.0/doctl-1.117.0-linux-amd64.tar.gz -o doctl.tar.gz
-    tar -xzf doctl.tar.gz
-    sudo mv doctl /usr/local/bin
-    doctl version
+if [ "$install_nodejs" = true ]; then
+    echo "Installing Node.js 20.x (https://nodejs.org/)"
+    # Using NodeSource repository for Ubuntu/Debian
+    curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+    sudo apt-get install -y nodejs
+    node --version
+    npm --version
 fi
 
 cd "$original_dir"
+
+echo ""
+echo "✅ Installation complete!"
+echo ""
+echo "Next steps:"
+echo "  1. Ensure Docker is installed and running"
+echo "  2. Review infrastructure/pulumi/DEV-LOCAL-SETUP.md for setup instructions"
+echo "  3. Start Minikube: minikube start"
+echo "  4. Deploy dev-local: cd infrastructure/pulumi && pulumi up --stack dev-local"

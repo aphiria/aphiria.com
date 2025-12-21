@@ -644,6 +644,12 @@ The following infrastructure persists **independently of PR lifecycle** and rema
 - **NFR-009**: Failed preview deployments MUST NOT leave orphaned resources (Pulumi state tracking ensures cleanup)
 - **NFR-010**: Database migrations MUST be idempotent and reversible
 
+### Development Environment
+
+- **NFR-011**: Node.js version MUST be consistent across local development (install.sh) and CI/CD workflows
+- **NFR-012**: Node.js 20.x MUST be used for Pulumi TypeScript compilation
+- **NFR-013**: GitHub Actions workflows MUST use `actions/setup-node@v4` with explicit version specification
+
 ---
 
 ## Application Code Requirements
