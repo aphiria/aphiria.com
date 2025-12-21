@@ -488,7 +488,17 @@ php aphiria cache:flush
 
 ---
 
-## GitHub Actions Gotchas
+## GitHub Actions Standards
+
+### Naming Conventions
+
+- **Workflow names** (top-level `name:`): Title Case (e.g., "Build Preview Images", "Test")
+- **Job names** (`jobs.<job_id>.name`): Title Case (e.g., "Build Docker Images", "Deploy Preview Environment")
+- **Step names** (`steps[].name`): Sentence case (e.g., "Install dependencies", "Run Pulumi preview")
+- **Job IDs** (`jobs.<job_id>`): lowercase-with-hyphens (e.g., `build`, `preview-infra`, `deploy`)
+- **Workflow file names**: lowercase-with-hyphens.yml (e.g., `build-preview-images.yml`, `test.yml`)
+
+### Gotchas
 
 - **Secret naming**: Cannot use `GITHUB_` prefix (reserved by GitHub system). Use alternatives like `GHCR_TOKEN` instead of `GITHUB_CONTAINER_REGISTRY_TOKEN`.
 

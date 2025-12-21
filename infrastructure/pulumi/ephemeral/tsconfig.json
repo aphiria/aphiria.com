@@ -12,15 +12,10 @@
     "noImplicitReturns": true,
     "forceConsistentCasingInFileNames": true,
     "esModuleInterop": true,
-    "skipLibCheck": true,
-    "baseUrl": "..",
-    "paths": {
-      "@pulumi/*": ["../node_modules/@pulumi/*"]
-    }
+    "skipLibCheck": true
   },
   "include": [
     "index.ts",
-    "src/**/*",
-    "../components/**/*"
+    "src/**/*"
   ]
 }

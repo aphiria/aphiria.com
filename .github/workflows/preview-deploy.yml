@@ -49,6 +49,7 @@ jobs:
         run: |
           cd infrastructure/pulumi
           npm install
+          npm run build
           cd ephemeral
           npm install
           npm run build
@@ -65,7 +66,7 @@ jobs:
           pulumi stack select "${STACK_NAME}" 2>/dev/null || pulumi stack init "${STACK_NAME}"
           pulumi preview --stack "${STACK_NAME}" --non-interactive 2>&1 | tee preview.txt
 
-      - name: Comment preview on PR
+      - name: Add preview comment on PR
         uses: actions/github-script@v7
         with:
           script: |
@@ -221,6 +222,7 @@ jobs:
         run: |
           cd infrastructure/pulumi
           npm install
+          npm run build
           cd ephemeral
           npm install
 
@@ -347,7 +349,7 @@ jobs:
             echo "⚠️  API health check returned HTTP ${API_STATUS}"
           fi
 
-      - name: Comment on PR
+      - name: Add comment on PR
         uses: actions/github-script@v7
         with:
           script: |
