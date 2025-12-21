@@ -4,6 +4,22 @@ import { GatewayArgs, GatewayResult } from "./types";
 
 /** Creates Gateway with TLS (self-signed/letsencrypt-staging/letsencrypt-prod) and separate listeners for root/subdomains */
 export function createGateway(args: GatewayArgs): GatewayResult {
+    // Validate required domain formats
+    const rootDomain = args.domains.find((d) => !d.startsWith("*"));
+    const wildcardDomain = args.domains.find((d) => d.startsWith("*"));
+
+    if (!rootDomain) {
+        throw new Error(
+            `Gateway requires a root domain (non-wildcard). Provided domains: ${args.domains.join(", ")}`
+        );
+    }
+
+    if (!wildcardDomain) {
+        throw new Error(
+            `Gateway requires a wildcard domain (e.g., *.example.com). Provided domains: ${args.domains.join(", ")}`
+        );
+    }
+
     const labels = {
         "app.kubernetes.io/name": args.name,
         "app.kubernetes.io/component": "gateway",
@@ -84,10 +100,10 @@ export function createGateway(args: GatewayArgs): GatewayResult {
             spec: {
                 gatewayClassName: "nginx",
                 listeners: [
-                    // HTTP listener for root domain (aphiria.com)
+                    // HTTP listener for root domain
                     {
                         name: "http-root",
-                        hostname: args.domains.find((d) => !d.startsWith("*")) || "aphiria.com",
+                        hostname: rootDomain,
                         port: 80,
                         protocol: "HTTP",
                         allowedRoutes: {
@@ -96,10 +112,10 @@ export function createGateway(args: GatewayArgs): GatewayResult {
                             },
                         },
                     },
-                    // HTTP listener for subdomains (*.aphiria.com)
+                    // HTTP listener for subdomains
                     {
                         name: "http-subdomains",
-                        hostname: args.domains.find((d) => d.startsWith("*")) || "*.aphiria.com",
+                        hostname: wildcardDomain,
                         port: 80,
                         protocol: "HTTP",
                         allowedRoutes: {
@@ -111,7 +127,7 @@ export function createGateway(args: GatewayArgs): GatewayResult {
                     // HTTPS listener for root domain
                     {
                         name: "https-root",
-                        hostname: args.domains.find((d) => !d.startsWith("*")) || "aphiria.com",
+                        hostname: rootDomain,
                         port: 443,
                         protocol: "HTTPS",
                         allowedRoutes: {
@@ -128,10 +144,10 @@ export function createGateway(args: GatewayArgs): GatewayResult {
                             ],
                         },
                     },
-                    // HTTPS listener for subdomains (*.aphiria.com)
+                    // HTTPS listener for subdomains
                     {
                         name: "https-subdomains",
-                        hostname: args.domains.find((d) => d.startsWith("*")) || "*.aphiria.com",
+                        hostname: wildcardDomain,
                         port: 443,
                         protocol: "HTTPS",
                         allowedRoutes: {

@@ -172,10 +172,14 @@ jobs:
             const fs = require('fs');
             const prNumber = ${{ steps.pr.outputs.number }};
 
+            console.log(`Posting preview comment to PR #${prNumber}`);
+
             let preview = '';
             try {
               preview = fs.readFileSync('infrastructure/pulumi/ephemeral/preview.txt', 'utf8');
+              console.log(`Preview output length: ${preview.length} characters`);
             } catch (error) {
+              console.error(`Failed to read preview.txt: ${error.message}`);
               preview = 'Preview output not available';
             }
 
@@ -183,6 +187,7 @@ jobs:
             const maxLength = 60000;
             if (preview.length > maxLength) {
               preview = preview.substring(0, maxLength) + '\n\n... (truncated)';
+              console.log(`Truncated preview to ${maxLength} characters`);
             }
 
             const status = '${{ steps.preview.outcome }}' === 'success' ? '✅ Preview Succeeded' : '❌ Preview Failed';
@@ -204,28 +209,40 @@ jobs:
                 : '❌ Preview failed. Please review the errors above before re-running.'
             }`;
 
-            const { data: comments } = await github.rest.issues.listComments({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: prNumber,
-            });
-
-            const existing = comments.find(c => c.user.type === 'Bot' && c.body.includes('Infrastructure Preview'));
-
-            if (existing) {
-              await github.rest.issues.updateComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                comment_id: existing.id,
-                body,
-              });
-            } else {
-              await github.rest.issues.createComment({
+            try {
+              console.log('Fetching existing comments...');
+              const { data: comments } = await github.rest.issues.listComments({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 issue_number: prNumber,
-                body,
               });
+
+              console.log(`Found ${comments.length} existing comments`);
+
+              const existing = comments.find(c => c.user.type === 'Bot' && c.body.includes('Infrastructure Preview'));
+
+              if (existing) {
+                console.log(`Updating existing comment ${existing.id}`);
+                await github.rest.issues.updateComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  comment_id: existing.id,
+                  body,
+                });
+                console.log('✅ Comment updated successfully');
+              } else {
+                console.log('Creating new comment...');
+                const result = await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: prNumber,
+                  body,
+                });
+                console.log(`✅ Comment created successfully: ${result.data.html_url}`);
+              }
+            } catch (error) {
+              console.error(`❌ Failed to post comment: ${error.message}`);
+              core.setFailed(`Failed to post preview comment: ${error.message}`);
             }
 
       - name: Notify on failure
@@ -554,6 +571,47 @@ jobs:
           mkdir -p ~/.kube
           echo "${{ secrets.KUBECONFIG }}" | base64 -d > ~/.kube/config
           chmod 600 ~/.kube/config
+
+      - name: Initialize ephemeral base stack
+        working-directory: infrastructure/pulumi/ephemeral
+        env:
+          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
+        run: |
+          BASE_STACK_NAME="ephemeral-base"
+          BASE_STACK_REF="davidbyoung/ephemeral-environments/${BASE_STACK_NAME}"
+
+          echo "Checking if base stack exists..."
+
+          # Try to select the base stack
+          if pulumi stack select "${BASE_STACK_NAME}" 2>/dev/null; then
+            echo "✅ Base stack '${BASE_STACK_NAME}' exists"
+
+            # Validate required outputs exist
+            echo "Validating required outputs..."
+            GATEWAY_NAME=$(pulumi stack output gatewayName --stack "${BASE_STACK_NAME}" 2>/dev/null || echo "")
+            POSTGRESQL_HOST=$(pulumi stack output postgresqlHost --stack "${BASE_STACK_NAME}" 2>/dev/null || echo "")
+
+            if [ -z "$GATEWAY_NAME" ] || [ -z "$POSTGRESQL_HOST" ]; then
+              echo "⚠️  Base stack exists but missing required outputs"
+              echo "   gatewayName: ${GATEWAY_NAME:-<missing>}"
+              echo "   postgresqlHost: ${POSTGRESQL_HOST:-<missing>}"
+              echo "   Running 'pulumi up' to refresh outputs..."
+
+              pulumi up --stack "${BASE_STACK_NAME}" --yes
+            else
+              echo "✅ All required outputs present:"
+              echo "   gatewayName: ${GATEWAY_NAME}"
+              echo "   postgresqlHost: ${POSTGRESQL_HOST}"
+            fi
+          else
+            echo "❌ Base stack '${BASE_STACK_NAME}' does not exist"
+            echo "Creating base stack..."
+
+            pulumi stack init "${BASE_STACK_NAME}"
+            pulumi up --stack "${BASE_STACK_NAME}" --yes
+
+            echo "✅ Base stack created successfully"
+          fi
 
       - name: Deploy preview environment
         id: deploy
