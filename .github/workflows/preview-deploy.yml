@@ -328,6 +328,10 @@ jobs:
     needs: check-author
     if: ${{ needs.check-author.outputs.is-maintainer == 'true' }}
 
+    environment:
+      name: preview
+      url: https://${{ needs.check-author.outputs.pr-number }}.pr.aphiria.com
+
     concurrency:
       group: preview-${{ needs.check-author.outputs.pr-number }}
       cancel-in-progress: false

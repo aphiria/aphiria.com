@@ -126,8 +126,12 @@ As a maintainer, I want preview environments to be destroyed automatically when 
 - **FR-008**: Provisioning failures MUST be reported clearly
 - **FR-009**: All resources created for a preview MUST be removed on teardown
 - **FR-010**: Preview environments MUST deploy both web and API containers with full application behavior
-- **FR-011**: Preview deployments MUST auto-approve for PRs authored by the repository owner
+- **FR-011**: Preview deployments MUST auto-approve for PRs authored by repository admins/maintainers
 - **FR-012**: Preview deployments MUST require manual approval for PRs authored by external contributors
+- **FR-072**: GitHub environment protection MUST be used as defense-in-depth alongside workflow-based checks
+- **FR-073**: The `preview` environment MUST use `workflow_run` trigger (runs on master branch workflow) to prevent workflow tampering
+- **FR-074**: The `preview` environment SHOULD allow repository admins to bypass approval for faster maintainer deployments
+- **FR-075**: Deployment tracking MUST be maintained via GitHub environment deployment history
 - **FR-029**: Each preview environment MUST provision separate Kubernetes Deployments for web and API components (1 replica each for preview traffic)
 - **FR-030**: Web and API deployments MUST use the same immutable container images (by digest) as production
 - **FR-031**: Gateway/Ingress routing MUST direct `{PR}.pr.aphiria.com` to web service and `{PR}.pr-api.aphiria.com` to API service
