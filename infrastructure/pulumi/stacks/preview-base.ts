@@ -26,7 +26,7 @@ const config = new pulumi.Config();
 const cluster = new digitalocean.KubernetesCluster("aphiria-com-preview-cluster", {
     name: "aphiria-com-preview-cluster",
     region: digitalocean.Region.NYC3,
-    version: "1.34.1-do.0",
+    version: "1.34.1-do.2",
     nodePool: {
         name: "preview-pool",
         size: "s-2vcpu-2gb",
