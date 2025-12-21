@@ -728,6 +728,17 @@ On PR close/merge, Pulumi must:
   - Required scopes: `repo`, `read:org`
   - Expiration recommendation: 1 year with calendar reminder for rotation
   - Describe how to update secret in repository settings
+- **T074**: Audit and clean up repository secrets
+  - Review all secrets in repository settings
+  - Identify secrets that are no longer used (from old Helm/Helmfile/Terraform deployments)
+  - Document which secrets are required for current Pulumi-based workflows
+  - Remove deprecated secrets safely
+  - Update SECRETS.md with current secrets inventory
+- **T075**: Audit and clean up environment secrets
+  - Review secrets configured in each environment (preview, production)
+  - Identify which secrets should be environment-specific vs repository-wide
+  - Document environment secret strategy in SECRETS.md
+  - Remove deprecated environment secrets safely
 
 ### Workflow Refactoring
 

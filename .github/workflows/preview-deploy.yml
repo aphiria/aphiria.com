@@ -512,12 +512,17 @@ jobs:
             pulumi config set postgresql:adminUser "${{ secrets.POSTGRESQL_ADMIN_USER }}"
           fi
 
+      - name: Setup kubeconfig
+        run: |
+          mkdir -p ~/.kube
+          echo "${{ secrets.KUBECONFIG }}" | base64 -d > ~/.kube/config
+          chmod 600 ~/.kube/config
+
       - name: Deploy preview environment
         id: deploy
         working-directory: infrastructure/pulumi/ephemeral
         env:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
-          KUBECONFIG: ${{ secrets.KUBECONFIG }}
         run: |
           PR_NUMBER=${{ steps.pr.outputs.number }}
           STACK_NAME="ephemeral-pr-${PR_NUMBER}"
