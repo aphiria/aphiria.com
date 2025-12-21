@@ -578,12 +578,21 @@ jobs:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
         run: |
           BASE_STACK_NAME="ephemeral-base"
-          BASE_STACK_REF="davidbyoung/ephemeral-environments/${BASE_STACK_NAME}"
 
           echo "Checking if base stack exists..."
 
-          # Try to select the base stack
-          if pulumi stack select "${BASE_STACK_NAME}" 2>/dev/null; then
+          # Try to select the base stack (stack select outputs to stderr on failure)
+          if pulumi stack select "${BASE_STACK_NAME}" 2>&1 | grep -q "not found"; then
+            echo "❌ Base stack '${BASE_STACK_NAME}' does not exist"
+            echo "Creating base stack..."
+
+            pulumi stack init "${BASE_STACK_NAME}"
+
+            echo "Deploying base stack..."
+            pulumi up --stack "${BASE_STACK_NAME}" --yes
+
+            echo "✅ Base stack created successfully"
+          else
             echo "✅ Base stack '${BASE_STACK_NAME}' exists"
 
             # Validate required outputs exist
@@ -603,14 +612,6 @@ jobs:
               echo "   gatewayName: ${GATEWAY_NAME}"
               echo "   postgresqlHost: ${POSTGRESQL_HOST}"
             fi
-          else
-            echo "❌ Base stack '${BASE_STACK_NAME}' does not exist"
-            echo "Creating base stack..."
-
-            pulumi stack init "${BASE_STACK_NAME}"
-            pulumi up --stack "${BASE_STACK_NAME}" --yes
-
-            echo "✅ Base stack created successfully"
           fi
 
       - name: Deploy preview environment
