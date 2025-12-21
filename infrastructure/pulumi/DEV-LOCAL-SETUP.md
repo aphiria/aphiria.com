@@ -61,8 +61,6 @@ pulumi stack init dev-local
 ```bash
 # Database password
 pulumi config set --secret dbPassword password
-
-# Add any other required secrets from .env file
 ```
 
 ## Build and Load Docker Images
