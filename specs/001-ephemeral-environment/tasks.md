@@ -285,11 +285,19 @@ Phase 8 (Migrate production to Pulumi)
 - [X] T057 [P] Add deployment metrics to PR comment (build time, deploy time) in `.github/workflows/preview-deploy.yml`
 - [X] T058 [P] Implement health check URL validation after deployment in `.github/workflows/preview-deploy.yml`
 
+### Secrets Management
+
+- [ ] T059 Review and document all required secrets for dev-local, preview, and production environments
+- [ ] T060 Evaluate secrets management strategy: Pulumi ESC (free tier) vs GitHub Secrets vs hybrid approach
+- [ ] T061 Implement chosen secrets management solution across all environments
+- [ ] T062 Document secrets rotation procedures and access control
+
 **Completion Criteria**:
 - ✅ All documentation complete and accurate
 - ✅ Workflows handle edge cases gracefully
 - ✅ Error messages actionable
 - ✅ Deployment observability improved
+- ✅ Secrets management strategy documented and implemented
 
 ---
 

@@ -111,7 +111,9 @@ export function createAPIDeployment(args: APIDeploymentArgs): APIDeploymentResul
                         {
                             name: "copy-api-code",
                             image: args.image,
-                            imagePullPolicy: args.image.includes("@sha256:")
+                            imagePullPolicy: args.env === "dev-local"
+                                ? "Never"  // Local images only
+                                : args.image.includes("@sha256:")
                                 ? "IfNotPresent"
                                 : "Always",
                             // Preserve permissions so nginx can access tmp directory
@@ -158,7 +160,9 @@ export function createAPIDeployment(args: APIDeploymentArgs): APIDeploymentResul
                         {
                             name: "php",
                             image: args.image,
-                            imagePullPolicy: args.image.includes("@sha256:")
+                            imagePullPolicy: args.env === "dev-local"
+                                ? "Never"  // Local images only
+                                : args.image.includes("@sha256:")
                                 ? "IfNotPresent"
                                 : "Always",
                             ports: [

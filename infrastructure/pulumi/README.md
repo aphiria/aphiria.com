@@ -345,11 +345,12 @@ npm run lint
 cd infrastructure/pulumi
 npm install
 
-# 2. Initialize dev-local stack (with passphrase for secrets)
-export PULUMI_CONFIG_PASSPHRASE="your-passphrase"
-pulumi stack init dev-local
+# 2. Select or initialize dev-local stack (with passphrase for secrets)
+export PULUMI_CONFIG_PASSPHRASE="dev-local-test"  # Make up any passphrase for local dev
+pulumi stack select dev-local  # Or: pulumi stack init dev-local if it doesn't exist
 
-# 3. Configure secrets
+# 3. Configure secrets (use same passphrase)
+export PULUMI_CONFIG_PASSPHRASE="dev-local-test"
 pulumi config set --secret dbPassword password
 ```
 
@@ -369,7 +370,7 @@ docker build -t davidbyoung/aphiria.com-web:latest -f ./infrastructure/docker/ru
 
 ```bash
 cd infrastructure/pulumi
-export PULUMI_CONFIG_PASSPHRASE="your-passphrase"
+export PULUMI_CONFIG_PASSPHRASE="dev-local-test"  # Use same passphrase as setup
 pulumi up --stack dev-local
 ```
 
@@ -404,7 +405,7 @@ docker build -t davidbyoung/aphiria.com-web:latest -f ./infrastructure/docker/ru
 
 # Update deployment
 cd infrastructure/pulumi
-export PULUMI_CONFIG_PASSPHRASE="your-passphrase"
+export PULUMI_CONFIG_PASSPHRASE="dev-local-test"  # Use same passphrase as setup
 pulumi up --stack dev-local --yes
 ```
 
@@ -412,7 +413,7 @@ pulumi up --stack dev-local --yes
 
 ```bash
 cd infrastructure/pulumi
-export PULUMI_CONFIG_PASSPHRASE="your-passphrase"
+export PULUMI_CONFIG_PASSPHRASE="dev-local-test"  # Use same passphrase as setup
 pulumi destroy --stack dev-local
 ```
 

@@ -1,0 +1,4 @@
+encryptionsalt: v1:ESXO1ZZIkow=:v1:2jF5fAjTjZiZsYa7:+fslXhSXYAVzQ7ygIavMjw2se4hU4g==
+config:
+  aphiria-com-infrastructure:dbPassword:
+    secure: v1:32u82SD8XjcU31Sw:UPffDhLXr2aSacOmls/Ao+REtQ==

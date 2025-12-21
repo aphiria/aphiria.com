@@ -1,9 +1,11 @@
 {
-  "name": "aphiria.com",
+  "name": "aphiria-com-infrastructure",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "Aphiria.com infrastructure - shared components and stacks for dev-local, preview, and production",
+  "main": "bin/index.js",
   "scripts": {
+    "build": "tsc",
+    "watch": "tsc --watch",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -14,5 +16,9 @@
     "@pulumi/kubernetes": "^4.24.1",
     "@pulumi/postgresql": "^3.16.1",
     "@pulumi/pulumi": "^3.213.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
   }
 }

@@ -10,10 +10,17 @@ export function createGateway(args: GatewayArgs): GatewayResult {
         ...(args.labels || {}),
     };
 
-    // Create ClusterIssuer for cert-manager (if using Let's Encrypt)
+    // Create ClusterIssuer and Certificate for cert-manager
     let certificate: k8s.apiextensions.CustomResource | undefined;
 
-    if (args.tlsMode !== "self-signed") {
+    if (args.tlsMode === "self-signed") {
+        // Create self-signed issuer and certificate for dev-local
+        const issuer = createSelfSignedIssuer();
+        certificate = createSelfSignedCert({
+            namespace: args.namespace,
+            domains: args.domains,
+        });
+    } else {
         const issuerName = args.tlsMode === "letsencrypt-prod" ? "letsencrypt-prod" : "letsencrypt-staging";
         const acmeServer =
             args.tlsMode === "letsencrypt-prod"
