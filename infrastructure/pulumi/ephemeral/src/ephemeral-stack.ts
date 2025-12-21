@@ -13,6 +13,7 @@ import * as postgresql from "@pulumi/postgresql";
  * - ConfigMaps and Secrets
  *
  * Stack name pattern: ephemeral-pr-{PR_NUMBER}
+ * Preview URLs: {PR}.pr.aphiria.com (web), {PR}.pr-api.aphiria.com (api)
  */
 
 const config = new pulumi.Config();

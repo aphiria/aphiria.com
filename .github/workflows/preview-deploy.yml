@@ -46,8 +46,8 @@ jobs:
         uses: pulumi/actions@v5
 
       - name: Install dependencies and build
-        working-directory: infrastructure/pulumi/ephemeral
         run: |
+          cd infrastructure/pulumi
           npm install
           npm run build
 
@@ -63,7 +63,8 @@ jobs:
           pulumi stack select "${STACK_NAME}" 2>/dev/null || pulumi stack init "${STACK_NAME}"
           pulumi preview --stack "${STACK_NAME}" --non-interactive 2>&1 | tee preview.txt
 
-      - name: Comment preview on PR
+      - name: Add preview comment on PR
+        if: success()
         uses: actions/github-script@v7
         with:
           script: |
@@ -102,6 +103,34 @@ jobs:
                 body,
               });
             }
+
+      - name: Notify on failure
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prNumber = ${{ steps.pr.outputs.number }};
+            const runUrl = `https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}`;
+
+            const body = `## ❌ Preview Environment Failed
+
+            The preview environment deployment failed during infrastructure validation.
+
+            **Error**: Check the [workflow logs](${runUrl}) for details.
+
+            Common issues:
+            - TypeScript compilation errors
+            - Missing secrets or configuration
+            - Pulumi stack errors
+
+            Please fix the errors and push again to retry.`;
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+              body,
+            });
 
   deploy:
     name: Deploy Preview Environment
@@ -215,14 +244,11 @@ jobs:
       - name: Install Pulumi CLI
         uses: pulumi/actions@v5
 
-      - name: Install Pulumi dependencies
+      - name: Install Pulumi dependencies and build
         run: |
-          cd infrastructure/pulumi/ephemeral
+          cd infrastructure/pulumi
           npm install
-
-      - name: Build TypeScript
-        working-directory: infrastructure/pulumi/ephemeral
-        run: npm run build
+          npm run build
 
       - name: Ensure base stack exists
         working-directory: infrastructure/pulumi/ephemeral
@@ -343,7 +369,7 @@ jobs:
             echo "⚠️  API health check returned HTTP ${API_STATUS}"
           fi
 
-      - name: Comment on PR
+      - name: Add comment on PR
         uses: actions/github-script@v7
         with:
           script: |

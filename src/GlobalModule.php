@@ -75,7 +75,7 @@ final class GlobalModule extends AphiriaModule implements IBootstrapper
     }
 
     /**
-     * Configures the application's modules and components
+     * Configures the app's modules and components
      *
      * @param IApplicationBuilder $appBuilder The builder that will build our app
      * @throws Exception Thrown if there was an error building the app
