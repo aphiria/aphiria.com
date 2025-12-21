@@ -128,7 +128,7 @@ jobs:
             - Missing secrets or configuration
             - Pulumi stack errors
 
-            Please fix the errors and push again to retry.`;
+            Please fix the errors and push again to retry (may require fixing it, merging this pull request, then opening a new one).`;
 
             await github.rest.issues.createComment({
               owner: context.repo.owner,
