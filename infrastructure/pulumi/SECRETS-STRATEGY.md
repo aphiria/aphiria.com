@@ -69,7 +69,7 @@
 
 **Cons:**
 - ❌ Only 5 environments (dev-local, ephemeral-base, production = 3 base + 2 ephemeral PRs max)
-- ❌ Limited to 1 team member on free tier (blocking for collaboration)
+- ❌ Limited to 1 team member on free tier (blocking collaboration)
 - ❌ Additional tool to learn and maintain
 - ❌ Requires migration effort
 - ❌ Dependency on Pulumi Cloud service availability
