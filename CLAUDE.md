@@ -47,6 +47,42 @@
 
 **Time-Saving Rule**: 5 minutes of research saves hours of wrong implementations.
 
+### Always Consider Idempotency and Existing State
+
+**FORBIDDEN BEHAVIORS**:
+- ❌ Only testing "first run" scenarios
+- ❌ Assuming data doesn't already exist
+- ❌ Creating duplicate entries without checking
+- ❌ Not handling "workflow runs multiple times" scenarios
+
+**REQUIRED BEHAVIORS**:
+- ✅ Think through full lifecycle: 1st run, 2nd run, 3rd run
+- ✅ Ask "what if this already exists?"
+- ✅ Make operations idempotent (same result if run multiple times)
+- ✅ Test mentally: empty state → partial state → full state → re-run
+- ✅ Handle cleanup of old data before adding new data
+
+**Example - What NOT to do**:
+```javascript
+// ❌ Bad: Adds label without checking if it exists
+const newLabels = [...existingLabels, 'my-label'];
+```
+
+**Example - What TO do**:
+```javascript
+// ✅ Good: Removes label first to avoid duplicates
+const newLabels = [
+  ...existingLabels.filter(l => l !== 'my-label'),
+  'my-label'
+];
+```
+
+**Edge Cases Checklist**:
+- First time running (empty state)
+- Re-running after success (data already exists)
+- Re-running after partial failure (incomplete state)
+- Running concurrently (race conditions)
+
 ---
 
 ## Architecture Overview
