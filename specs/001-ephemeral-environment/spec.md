@@ -246,68 +246,77 @@ stringData:
 
 **Purpose**: Centralize CD-specific secrets in Pulumi ESC to eliminate duplication between GitHub Secrets and Pulumi stack config files.
 
-#### ESC Environment Structure
+#### ESC Environment Structure (ACTUAL IMPLEMENTATION)
 
-```
-aphiria-com/
-├── common           # Shared across all environments
-│   └── postgresql:user = "aphiria"
-├── preview          # Preview-specific secrets
-│   ├── imports: [common]
-│   ├── postgresql:password = <preview-password>
-│   └── digitalocean:token = <preview-cluster-scoped-token>
-├── production       # Production-specific secrets
-│   ├── imports: [common]
-│   ├── postgresql:password = <production-password>
-│   └── digitalocean:token = <production-cluster-scoped-token>
-└── local            # Optional: local development
-    ├── imports: [common]
-    └── postgresql:password = <local-dev-password>
+**ESC Project**: `aphiria.com` (note: uses dots, not hyphens)
+
+**Environments**:
+- `aphiria.com/Preview` - Preview cluster secrets
+- `aphiria.com/Production` - Production cluster secrets
+
+**Note**: We chose a flat structure (2 environments) instead of a hierarchical structure with shared `common` environment to simplify initial implementation. Common values like `postgresql:user` are duplicated in both environments.
+
+#### ESC Environment Definitions
+
+**aphiria.com/Preview**:
+```yaml
+values:
+  pulumiConfig:
+    "postgresql:user": aphiria
+    "postgresql:password":
+      fn::secret: <unique-preview-password>
+    "digitalocean:token":
+      fn::secret: <preview-cluster-scoped-token>
 ```
 
-#### Stack Imports
+**aphiria.com/Production**:
+```yaml
+values:
+  pulumiConfig:
+    "postgresql:user": aphiria
+    "postgresql:password":
+      fn::secret: <unique-production-password>
+    "digitalocean:token":
+      fn::secret: <production-cluster-scoped-token>
+```
+
+**Key Requirements**:
+- Config keys MUST be quoted: `"postgresql:user"` not `postgresql: { user: ... }`
+- Non-secret values are plain strings: `aphiria` not `fn::secret: aphiria`
+- Secrets use `fn::secret:` wrapper
+- Zero password reuse between environments
+
+#### Stack Configuration Files
 
 **Pulumi.preview-base.yaml**:
 ```yaml
+# Note: Per Neo, this doesn't actually associate the stack with the environment - this must be done during CI/CD
 environment:
-  - aphiria-com/common
-  - aphiria-com/preview
+  - aphiria.com/Preview
 ```
 
-**Pulumi.production.yaml**:
+**Pulumi.production.yml**:
 ```yaml
+# Note: Per Neo, this doesn't actually associate the stack with the environment - this must be done during CI/CD
 environment:
-  - aphiria-com/common
-  - aphiria-com/production
+  - aphiria.com/Production
+
+config:
+  aphiria-com-infrastructure:webImage: davidbyoung/aphiria.com-web:8e1ebfd326d7d20aea7104f1269cb1a9ce325d69-a9b9031929d39f8dd4863bec41bbe5b76cb2b555
+  aphiria-com-infrastructure:apiImage: nginx:alpine
 ```
 
-**Pulumi.local.yaml** (optional):
+**Pulumi.local.yaml**:
 ```yaml
-environment:
-  - aphiria-com/common
-  - aphiria-com/local
+# Local development stack - uses traditional Pulumi config (no ESC required)
+# This allows developers without ESC access to run Pulumi locally
+
+config:
+  # Set these using: pulumi config set postgresql:user aphiria
+  # Set secrets using: pulumi config set --secret postgresql:password <your-password>
 ```
 
-#### ESC Environment Definition Example
-
-**aphiria-com/common**:
-```yaml
-values:
-  pulumiConfig:
-    postgresql:user: "aphiria"
-```
-
-**aphiria-com/preview**:
-```yaml
-imports:
-  - common
-values:
-  pulumiConfig:
-    postgresql:password:
-      fn::secret: <preview-password>
-    digitalocean:token:
-      fn::secret: <preview-do-token>
-```
+**IMPORTANT**: The `environment:` declaration in stack YAML files is **documentation only**. It does NOT actually bind the stack to the ESC environment. Stack binding happens via CLI during stack initialization (see Workflow Integration below).
 
 #### TypeScript Code Access
 
@@ -328,39 +337,99 @@ const dbPassword = config.requireSecret("password");  // From preview/production
 
 **After ESC**:
 - Secrets stored once in Pulumi ESC
-- Workflows import ESC environments via stack YAML
+- Workflows bind stacks to ESC environments via `pulumi config env add` during stack initialization
 - No `pulumi config set --secret` commands needed
 - GitHub Secrets only used for CI-specific operations (GHCR_TOKEN, PULUMI_ACCESS_TOKEN)
 
+**Removed GitHub Secrets** (moved to ESC):
+- `POSTGRESQL_PREVIEW_PASSWORD` → ESC `aphiria.com/Preview`
+- `DIGITALOCEAN_ACCESS_TOKEN` → ESC `aphiria.com/Preview` and `aphiria.com/Production` (separate tokens)
+- `PULUMI_CONFIG_PASSPHRASE` → Not needed (Pulumi Cloud encryption)
+- `KUBECONFIG` → Generated dynamically from stack outputs
+
+**Remaining GitHub Secrets** (CI-specific):
+- `PULUMI_ACCESS_TOKEN` - Required for Pulumi Cloud authentication
+- `GHCR_TOKEN` - Required for pushing Docker images to GitHub Container Registry
+
 #### Local Development
 
-Developers can use ESC for Pulumi operations:
+**Local stack uses traditional Pulumi config** (no ESC required):
 
 ```bash
-# Login to ESC
-esc login
+# Initialize local stack
+pulumi stack init local
 
-# Run Pulumi with ESC environments
-esc run aphiria-com/local -- pulumi up --stack local
+# Set config manually
+pulumi config set postgresql:user aphiria
+pulumi config set --secret postgresql:password postgres
 
-# Or use pulumi directly (ESC imported via stack YAML)
+# Deploy
 pulumi up --stack local
 ```
 
-Fallback: Local stack can still use traditional config for developers without ESC access.
+This approach allows developers to work without ESC access while preview/production use ESC for centralized secret management.
 
-### Workflow Integration
+#### Workflow Integration: Stack-to-ESC Binding
 
-The GitHub Actions workflow will:
+**Critical**: Stack YAML `environment:` fields do NOT automatically bind stacks to ESC environments. Binding must be done via CLI.
 
+**Correct approach** (during stack initialization):
+```bash
+# Create stack
+pulumi stack init preview-base
+
+# Bind to ESC environment
+pulumi config env add aphiria.com/Preview --stack preview-base
+```
+
+**Incorrect approaches** (these do NOT work):
+```bash
+# ❌ WRONG: --env flag doesn't exist in Pulumi CLI
+pulumi stack init preview-base --env aphiria.com/Preview
+
+# ❌ WRONG: Stack YAML environment field is documentation only
+# Having this in Pulumi.preview-base.yaml does NOT bind the stack:
+environment:
+  - aphiria.com/Preview
+```
+
+**Lessons Learned**:
+1. Pulumi Neo may provide incorrect CLI syntax - always verify with `pulumi <command> --help`
+2. Stack YAML `environment:` is purely declarative/documentation
+3. Actual binding happens via `pulumi config env add` command
+4. This must be done in CI/CD workflows during stack creation
+
+### Workflow Integration (ESC Binding in CI/CD)
+
+The GitHub Actions workflow integrates ESC as follows:
+
+**preview-base stack creation**:
+```yaml
+- name: Ensure preview-base stack exists
+  run: |
+    if ! pulumi stack select preview-base 2>/dev/null; then
+      pulumi stack init preview-base
+      pulumi config env add aphiria.com/Preview --stack preview-base
+    fi
+```
+
+**preview-pr-* stack creation**:
+```yaml
+- name: Create PR-specific stack
+  run: |
+    STACK_NAME="preview-pr-${PR_NUMBER}"
+    if ! pulumi stack select "${STACK_NAME}" 2>/dev/null; then
+      pulumi stack init "${STACK_NAME}"
+      pulumi config env add aphiria.com/Preview --stack "${STACK_NAME}"
+    fi
+```
+
+**Key points**:
 1. Extract PR number from `${{ github.event.pull_request.number }}`
-2. Pass PR number to Pulumi as a stack parameter or environment variable
-3. Pulumi uses PR number to:
-   - Create stack: `ephemeral-pr-{PR_NUMBER}`
-   - Generate ConfigMap/Secrets with interpolated values
-   - Deploy Kubernetes resources with PR-scoped names
-4. Infrastructure provisioning creates namespace, ConfigMap, Secrets, deployments with PR-specific configuration
-5. Secrets (PostgreSQL passwords, DigitalOcean tokens) are automatically loaded from ESC environments
+2. Check if stack exists before creating
+3. If creating new stack, immediately bind to ESC environment
+4. Secrets (PostgreSQL passwords, DigitalOcean tokens) are automatically loaded from ESC
+5. No `pulumi config set --secret` commands needed
 
 ---
 
