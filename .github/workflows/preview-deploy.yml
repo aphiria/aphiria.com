@@ -190,11 +190,6 @@ jobs:
           npm install
           npm run build
 
-      - name: Set up kubeconfig
-        run: |
-          mkdir -p ~/.kube
-          echo "${{ secrets.KUBECONFIG }}" | base64 -d > ~/.kube/config
-
       - name: Run Pulumi preview
         id: preview
         working-directory: infrastructure/pulumi
@@ -495,10 +490,6 @@ jobs:
             MISSING_SECRETS+=("PULUMI_ACCESS_TOKEN")
           fi
 
-          if [ -z "${{ secrets.KUBECONFIG }}" ]; then
-            MISSING_SECRETS+=("KUBECONFIG")
-          fi
-
           if [ -z "${{ secrets.DEPLOYMENT_APPROVAL_TOKEN }}" ]; then
             MISSING_SECRETS+=("DEPLOYMENT_APPROVAL_TOKEN")
           fi
@@ -514,10 +505,6 @@ jobs:
                 PULUMI_ACCESS_TOKEN)
                   echo "  • PULUMI_ACCESS_TOKEN: Pulumi Cloud access token"
                   echo "    Create at: https://app.pulumi.com/settings/tokens"
-                  ;;
-                KUBECONFIG)
-                  echo "  • KUBECONFIG: Kubernetes cluster configuration (base64 encoded)"
-                  echo "    Encode: cat ~/.kube/config | base64 -w 0"
                   ;;
                 DEPLOYMENT_APPROVAL_TOKEN)
                   echo "  • DEPLOYMENT_APPROVAL_TOKEN: GitHub PAT for auto-approving deployments"
@@ -643,8 +630,6 @@ jobs:
           echo "pr-number=${PR_NUMBER}" >> $GITHUB_OUTPUT
 
       - name: Wait for pods to be ready
-        env:
-          KUBECONFIG: ${{ secrets.KUBECONFIG }}
         run: |
           PR_NUMBER=${{ steps.pr.outputs.number }}
           NAMESPACE="preview-pr-${PR_NUMBER}"

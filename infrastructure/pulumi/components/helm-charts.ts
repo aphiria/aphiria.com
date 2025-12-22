@@ -37,18 +37,6 @@ export function installCertManager(args: HelmChartArgs): k8s.helm.v3.Chart {
     );
 }
 
-/** Installs Gateway API CRDs (required before nginx-gateway-fabric) */
-export function installGatewayAPICRDs(provider: k8s.Provider): k8s.yaml.ConfigFile {
-    return new k8s.yaml.ConfigFile(
-        "gateway-api-crds",
-        {
-            file: "https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.2.0/standard-install.yaml",
-        },
-        {
-            provider,
-        }
-    );
-}
 
 /** Installs nginx-gateway-fabric (Gateway API implementation) */
 export function installNginxGateway(
@@ -80,7 +68,6 @@ export interface BaseHelmChartsArgs {
 
 export interface BaseHelmChartsResult {
     certManager: k8s.helm.v3.Chart;
-    gatewayAPICRDs: k8s.yaml.ConfigFile;
     nginxGateway: k8s.helm.v3.Chart;
 }
 
@@ -106,9 +93,6 @@ export function installBaseHelmCharts(args: BaseHelmChartsArgs): BaseHelmChartsR
         { provider: args.provider }
     );
 
-    // Install Gateway API CRDs first
-    const gatewayAPICRDs = installGatewayAPICRDs(args.provider);
-
     // Install cert-manager
     const certManager = installCertManager({
         env: args.env,
@@ -119,7 +103,7 @@ export function installBaseHelmCharts(args: BaseHelmChartsArgs): BaseHelmChartsR
         provider: args.provider,
     });
 
-    // Install nginx-gateway-fabric (depends on Gateway API CRDs)
+    // Install nginx-gateway-fabric (installs Gateway API CRDs automatically)
     const nginxGateway = installNginxGateway(
         {
             env: args.env,
@@ -129,12 +113,11 @@ export function installBaseHelmCharts(args: BaseHelmChartsArgs): BaseHelmChartsR
             namespace: "nginx-gateway",
             provider: args.provider,
         },
-        [gatewayAPICRDs, nginxGatewayNamespace]
+        [nginxGatewayNamespace]
     );
 
     return {
         certManager,
-        gatewayAPICRDs,
         nginxGateway,
     };
 }
