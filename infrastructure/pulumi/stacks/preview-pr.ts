@@ -152,8 +152,8 @@ const networkPolicy = new k8s.networking.v1.NetworkPolicy("preview-netpol", {
 // ============================================================================
 
 const postgresqlConfig = new pulumi.Config("postgresql");
-const postgresqlAdminUser = postgresqlConfig.get("adminUser") || "postgres";
-const postgresqlAdminPassword = postgresqlConfig.requireSecret("adminPassword");
+const postgresqlAdminUser = postgresqlConfig.get("user") || "postgres";
+const postgresqlAdminPassword = postgresqlConfig.requireSecret("password");
 
 // Database initialization Job - runs inside the cluster
 const dbInitJob = new k8s.batch.v1.Job("db-init-job", {

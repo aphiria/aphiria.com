@@ -269,6 +269,8 @@ values:
       fn::secret: <preview-cluster-scoped-token>
 ```
 
+**Note**: Both `preview-base` and `preview-pr-*` stacks use `postgresql:user` and `postgresql:password` from ESC. The per-PR stacks use these credentials to create separate databases within the shared PostgreSQL instance.
+
 **aphiria.com/Production**:
 ```yaml
 values:
