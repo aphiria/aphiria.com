@@ -7,6 +7,48 @@
 
 ---
 
+## Critical Work Principles
+
+### NEVER Guess - Always Research
+
+**FORBIDDEN BEHAVIORS**:
+- ❌ Claiming certainty when uncertain
+- ❌ Defending wrong answers when challenged
+- ❌ Presenting solutions without verification
+- ❌ Implementing workarounds before checking for official solutions
+- ❌ Going down rabbit holes without validating the actual problem exists
+
+**REQUIRED BEHAVIORS**:
+- ✅ Explicitly state "I don't know - let me research" when uncertain
+- ✅ Search for official documentation/APIs BEFORE implementing custom solutions
+- ✅ Verify the problem exists before attempting fixes
+- ✅ Test solutions (when possible without violating constraints) before presenting them
+- ✅ Admit mistakes immediately when corrected - don't argue
+
+**Decision Framework**:
+1. **Do I know this with 100% certainty?**
+   - NO → Research first, present findings, then propose solution
+   - YES → Still verify if it's a critical path (exports, APIs, build systems)
+
+2. **Is there a standard library/API for this?**
+   - Check official docs FIRST
+   - GitHub/Stack Overflow examples SECOND
+   - Custom implementation LAST RESORT
+
+3. **Have I verified this problem actually exists?**
+   - Check error messages carefully
+   - Use diagnostic commands to confirm root cause
+   - Don't fix phantom problems
+
+**Example - What NOT to do**:
+- User: "Exports aren't working"
+- ❌ Bad: "The issue is dynamic imports, use `module.exports = require()`" (guessing)
+- ✅ Good: "Let me check: 1) What does Pulumi docs say about exports? 2) What does the compiled code look like? 3) Does the stack have any resources deployed?"
+
+**Time-Saving Rule**: 5 minutes of research saves hours of wrong implementations.
+
+---
+
 ## Architecture Overview
 
 This codebase provides **two distinct applications** in a monorepo:
