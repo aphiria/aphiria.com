@@ -61,12 +61,15 @@ const helmCharts = installBaseHelmCharts({
 
 // 4. Create shared PostgreSQL (1 replica, cloud persistent storage)
 // This single instance is shared by all preview environments with separate databases per PR
+const postgresqlConfig = new pulumi.Config("postgresql");
 const postgres = createPostgreSQL({
     env: "preview",
     namespace: "default",
     replicas: 1,
     persistentStorage: true,
     storageSize: "20Gi",
+    dbUser: postgresqlConfig.require("user"),
+    dbPassword: postgresqlConfig.requireSecret("password"),
     provider: k8sProvider,
 });
 

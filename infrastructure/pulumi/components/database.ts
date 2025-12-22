@@ -14,6 +14,20 @@ export function createPostgreSQL(args: PostgreSQLArgs): PostgreSQLResult {
     let pvc: k8s.core.v1.PersistentVolumeClaim | undefined;
     let pv: k8s.core.v1.PersistentVolume | undefined;
 
+    // Create secret for database credentials
+    const secret = new k8s.core.v1.Secret("env-var-secrets", {
+        metadata: {
+            name: "env-var-secrets",
+            namespace: args.namespace,
+            labels,
+        },
+        type: "Opaque",
+        stringData: {
+            DB_USER: args.dbUser,
+            DB_PASSWORD: args.dbPassword,
+        },
+    }, { provider: args.provider });
+
     // Create persistent storage if requested
     if (args.persistentStorage) {
         if (args.env === "local") {

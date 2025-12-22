@@ -70,6 +70,10 @@ export interface PostgreSQLArgs {
     persistentStorage: boolean;
     /** Storage size (e.g., "10Gi") - only used if persistentStorage=true */
     storageSize?: string;
+    /** Database user */
+    dbUser: string;
+    /** Database password (sensitive) */
+    dbPassword: pulumi.Input<string>;
     /** Resource labels */
     labels?: Record<string, string>;
     /** Kubernetes provider */

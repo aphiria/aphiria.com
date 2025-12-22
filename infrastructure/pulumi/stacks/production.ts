@@ -71,12 +71,15 @@ const helmCharts = installBaseHelmCharts({
 });
 
 // 4. Create PostgreSQL (2 replicas, cloud persistent storage)
+const postgresqlConfig = new pulumi.Config("postgresql");
 const postgres = createPostgreSQL({
     env: "production",
     namespace: "default",
     replicas: 2,
     persistentStorage: true,
     storageSize: "20Gi",
+    dbUser: postgresqlConfig.require("user"),
+    dbPassword: postgresqlConfig.requireSecret("password"),
     provider: k8sProvider,
 });
 

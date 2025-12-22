@@ -26,12 +26,15 @@ const helmCharts = installBaseHelmCharts({
 });
 
 // 2. Create PostgreSQL (1 replica, hostPath storage for Minikube)
+const postgresqlConfig = new pulumi.Config("postgresql");
 const postgres = createPostgreSQL({
     env: "local",
     namespace: "default",
     replicas: 1,
     persistentStorage: true,
     storageSize: "5Gi",
+    dbUser: postgresqlConfig.get("user") || "postgres",
+    dbPassword: postgresqlConfig.get("password") || "postgres",
     provider: k8sProvider,
 });
 

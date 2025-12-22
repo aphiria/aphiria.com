@@ -349,7 +349,19 @@ npm run lint
 
 1. **Minikube** running: `minikube start`
 2. **Pulumi CLI** installed
-3. **Local backend** configured: `pulumi login --local`
+3. **Pulumi login**: `pulumi login` (uses Pulumi Cloud backend)
+
+### Secret Management for Local Development
+
+The `local` stack uses **traditional Pulumi config** (not ESC) so developers can work without needing Pulumi ESC access.
+
+**How it works:**
+- Secrets stored locally using `pulumi config set --secret`
+- Encrypted in `Pulumi.local.yaml` using Pulumi Cloud encryption
+- **No ESC environment required**
+- **No passphrase required** (Pulumi Cloud handles encryption)
+
+**Preview/Production stacks** use ESC for centralized secret management - but local development doesn't require it.
 
 ### Setup
 
@@ -358,13 +370,13 @@ npm run lint
 cd infrastructure/pulumi
 npm install
 
-# 2. Select or initialize local stack (with passphrase for secrets)
-export PULUMI_CONFIG_PASSPHRASE="local-test"  # Make up any passphrase for local dev
+# 2. Select or initialize local stack
 pulumi stack select local  # Or: pulumi stack init local if it doesn't exist
 
-# 3. Configure secrets (use same passphrase)
-export PULUMI_CONFIG_PASSPHRASE="local-test"
-pulumi config set --secret dbPassword password
+# 3. Configure PostgreSQL credentials
+# Local stack uses traditional Pulumi config (no ESC required)
+pulumi config set postgresql:user aphiria
+pulumi config set --secret postgresql:password postgres  # Or any password you choose
 ```
 
 ### Build and Load Docker Images
@@ -383,7 +395,6 @@ docker build -t davidbyoung/aphiria.com-web:latest -f ./infrastructure/docker/ru
 
 ```bash
 cd infrastructure/pulumi
-export PULUMI_CONFIG_PASSPHRASE="local-test"  # Use same passphrase as setup
 pulumi up --stack local
 ```
 
@@ -418,7 +429,6 @@ docker build -t davidbyoung/aphiria.com-web:latest -f ./infrastructure/docker/ru
 
 # Update deployment
 cd infrastructure/pulumi
-export PULUMI_CONFIG_PASSPHRASE="local-test"  # Use same passphrase as setup
 pulumi up --stack local --yes
 ```
 
@@ -426,7 +436,6 @@ pulumi up --stack local --yes
 
 ```bash
 cd infrastructure/pulumi
-export PULUMI_CONFIG_PASSPHRASE="local-test"  # Use same passphrase as setup
 pulumi destroy --stack local
 ```
 

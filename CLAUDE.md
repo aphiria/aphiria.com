@@ -309,7 +309,7 @@ final class Example
 1. **PHPDoc**: Document public APIs, especially complex methods
 2. **README Updates**: Update README.md when adding new setup steps
 3. **Architecture Decisions**: Document "why" in code comments, not just "what"
-4. **Inline Comments**: Explain complex logic, not obvious code
+4. **Inline Comments**: Explain complex logic, not obvious code, and do not comment on code that has been removed
 
 ---
 

@@ -57,9 +57,6 @@ jobs:
               echo "⚠️  Base stack exists but cluster not deployed - deploying now..."
               echo "   This likely means a previous deployment failed partway through."
 
-              # Set DigitalOcean token for cluster creation
-              pulumi config set --secret digitalocean:token "${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}" --stack preview-base
-
               # Refresh state to sync with actual infrastructure (state may be out of sync from partial deployment)
               echo "🔄 Refreshing Pulumi state to match actual infrastructure..."
               pulumi refresh --stack preview-base --yes
@@ -91,15 +88,11 @@ jobs:
               echo "✅ Base infrastructure already deployed (cluster ID: ${CLUSTER_ID})"
 
               # Refresh to ensure state is current
-              pulumi config set --secret digitalocean:token "${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}" --stack preview-base
               pulumi refresh --stack preview-base --yes
             fi
           else
             echo "📦 Creating and deploying base stack 'preview-base'..."
             pulumi stack init preview-base
-
-            # Set DigitalOcean token for cluster creation
-            pulumi config set --secret digitalocean:token "${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}" --stack preview-base
 
             # Deploy base infrastructure (creates cluster, Helm charts, PostgreSQL, Gateway)
             # Note: No refresh needed - this is a brand new stack
@@ -212,7 +205,6 @@ jobs:
           # Set minimal config required for preview (full config set in deploy job)
           pulumi config set prNumber "${PR_NUMBER}" --stack "${STACK_NAME}"
           pulumi config set baseStackReference "davidbyoung/aphiria-com-infrastructure/preview-base" --stack "${STACK_NAME}"
-          pulumi config set --secret postgresql:adminPassword "preview-only" --stack "${STACK_NAME}"
           pulumi config set webImageDigest "sha256:preview" --stack "${STACK_NAME}"
           pulumi config set apiImageDigest "sha256:preview" --stack "${STACK_NAME}"
 
@@ -484,10 +476,6 @@ jobs:
         run: |
           MISSING_SECRETS=()
 
-          if [ -z "${{ secrets.POSTGRESQL_ADMIN_PASSWORD }}" ]; then
-            MISSING_SECRETS+=("POSTGRESQL_ADMIN_PASSWORD")
-          fi
-
           if [ -z "${{ secrets.PULUMI_ACCESS_TOKEN }}" ]; then
             MISSING_SECRETS+=("PULUMI_ACCESS_TOKEN")
           fi
@@ -500,10 +488,6 @@ jobs:
             MISSING_SECRETS+=("DEPLOYMENT_APPROVAL_TOKEN")
           fi
 
-          if [ -z "${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}" ]; then
-            MISSING_SECRETS+=("DIGITALOCEAN_ACCESS_TOKEN")
-          fi
-
           if [ ${#MISSING_SECRETS[@]} -gt 0 ]; then
             echo "::error::Missing required secrets: ${MISSING_SECRETS[*]}"
             echo ""
@@ -512,11 +496,6 @@ jobs:
             echo ""
             for secret in "${MISSING_SECRETS[@]}"; do
               case "$secret" in
-                POSTGRESQL_ADMIN_PASSWORD)
-                  echo "  • POSTGRESQL_ADMIN_PASSWORD: PostgreSQL admin password"
-                  echo "    Retrieve from production: kubectl get secret env-var-secrets -o jsonpath='{.data.DB_PASSWORD}' | base64 -d"
-                  echo "    Or generate new: openssl rand -base64 32"
-                  ;;
                 PULUMI_ACCESS_TOKEN)
                   echo "  • PULUMI_ACCESS_TOKEN: Pulumi Cloud access token"
                   echo "    Create at: https://app.pulumi.com/settings/tokens"
@@ -529,11 +508,6 @@ jobs:
                   echo "  • DEPLOYMENT_APPROVAL_TOKEN: GitHub PAT for auto-approving deployments"
                   echo "    Create at: https://github.com/settings/tokens/new"
                   echo "    Scopes required: repo, read:org"
-                  ;;
-                DIGITALOCEAN_ACCESS_TOKEN)
-                  echo "  • DIGITALOCEAN_ACCESS_TOKEN: DigitalOcean API token"
-                  echo "    Create at: https://cloud.digitalocean.com/account/api/tokens"
-                  echo "    Required for accessing DigitalOcean Kubernetes cluster"
                   ;;
               esac
               echo ""
@@ -613,14 +587,6 @@ jobs:
           pulumi config set webImageDigest "${{ steps.images.outputs.web-digest }}"
           pulumi config set apiImageDigest "${{ steps.images.outputs.api-digest }}"
           pulumi config set baseStackReference "davidbyoung/aphiria-com-infrastructure/preview-base"
-
-          # Set PostgreSQL credentials (from secrets)
-          pulumi config set --secret postgresql:adminPassword "${{ secrets.POSTGRESQL_ADMIN_PASSWORD }}"
-
-          # Optional: Set custom DB user if different from 'postgres'
-          if [ -n "${{ secrets.POSTGRESQL_ADMIN_USER }}" ]; then
-            pulumi config set postgresql:adminUser "${{ secrets.POSTGRESQL_ADMIN_USER }}"
-          fi
 
       - name: Setup kubeconfig from Pulumi (Preview Cluster)
         working-directory: infrastructure/pulumi

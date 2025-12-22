@@ -26,6 +26,11 @@
 - Q: Should Pulumi manage per-environment databases? → A: Yes, Pulumi creates separate databases for local, preview, and production
 - Q: Migration order? → A: local (Minikube) → preview (ephemeral) → production (DigitalOcean cluster)
 
+### Session 2025-12-21 (ESC and Production Pipeline)
+
+- Q: How should production deployment workflow set image references? → A: Production workflow must use `pulumi config set` to set `webImage` and `apiImage` from build outputs (not hardcoded in stack YAML)
+- Q: What happens to existing preview database when ESC password changes? → A: Database deployment will fail to start with new password; must update existing database password or destroy/recreate database with new credentials
+
 ---
 
 ## Summary
@@ -165,6 +170,24 @@ Kubernetes
 - **FR-046**: Kubernetes Secrets MUST be generated per-PR for sensitive configuration (DB credentials, etc.)
 - **FR-047**: Secret names MUST follow the pattern `env-var-secrets-pr-{PR_NUMBER}`
 
+#### Pulumi ESC Integration
+
+- **FR-083**: CD-specific secrets (PostgreSQL passwords, DigitalOcean tokens) MUST be migrated from GitHub Secrets to Pulumi ESC
+- **FR-084**: ESC environments MUST use inheritance pattern: `common` (shared config) → `preview`/`production` (environment-specific secrets)
+- **FR-085**: Stack YAML files MUST import appropriate ESC environments via `environment:` block
+- **FR-086**: Workflows MUST NOT use `pulumi config set --secret` for secrets stored in ESC
+- **FR-087**: CI-specific secrets (GHCR_TOKEN, PULUMI_ACCESS_TOKEN) MUST remain in GitHub Secrets
+- **FR-088**: ESC environment `aphiria-com/preview` MUST contain: `postgresql:password`, `digitalocean:token` (preview cluster scoped)
+- **FR-089**: ESC environment `aphiria-com/production` MUST contain: `postgresql:password`, `digitalocean:token` (production cluster scoped)
+- **FR-090**: ESC environment `aphiria-com/common` MUST contain: `postgresql:user` (shared configuration)
+- **FR-091**: Local development MUST support `esc run` for Pulumi operations but NOT require ESC access for basic Minikube usage
+- **FR-092**: `preview-base` stack MUST import `aphiria-com/common` and `aphiria-com/preview` ESC environments
+- **FR-093**: `preview-pr-{N}` stacks MUST import `aphiria-com/preview` ESC environment (inherits shared preview secrets)
+- **FR-094**: `production` stack MUST import `aphiria-com/common` and `aphiria-com/production` ESC environments
+- **FR-095**: `local` stack MAY optionally import `aphiria-com/local` ESC environment for `esc run` support
+- **FR-096**: ESC migration MUST be tested in preview environment before applying to production
+- **FR-097**: GitHub Secrets `POSTGRESQL_PREVIEW_PASSWORD`, `POSTGRESQL_ADMIN_PASSWORD`, `DIGITALOCEAN_ACCESS_TOKEN` MUST be removed after successful ESC migration
+
 ---
 
 ## Configuration Injection
@@ -219,6 +242,113 @@ stringData:
   DB_PASSWORD: "{{ GENERATED_PASSWORD }}"
 ```
 
+### Pulumi ESC Architecture
+
+**Purpose**: Centralize CD-specific secrets in Pulumi ESC to eliminate duplication between GitHub Secrets and Pulumi stack config files.
+
+#### ESC Environment Structure
+
+```
+aphiria-com/
+├── common           # Shared across all environments
+│   └── postgresql:user = "aphiria"
+├── preview          # Preview-specific secrets
+│   ├── imports: [common]
+│   ├── postgresql:password = <preview-password>
+│   └── digitalocean:token = <preview-cluster-scoped-token>
+├── production       # Production-specific secrets
+│   ├── imports: [common]
+│   ├── postgresql:password = <production-password>
+│   └── digitalocean:token = <production-cluster-scoped-token>
+└── local            # Optional: local development
+    ├── imports: [common]
+    └── postgresql:password = <local-dev-password>
+```
+
+#### Stack Imports
+
+**Pulumi.preview-base.yaml**:
+```yaml
+environment:
+  - aphiria-com/common
+  - aphiria-com/preview
+```
+
+**Pulumi.production.yaml**:
+```yaml
+environment:
+  - aphiria-com/common
+  - aphiria-com/production
+```
+
+**Pulumi.local.yaml** (optional):
+```yaml
+environment:
+  - aphiria-com/common
+  - aphiria-com/local
+```
+
+#### ESC Environment Definition Example
+
+**aphiria-com/common**:
+```yaml
+values:
+  pulumiConfig:
+    postgresql:user: "aphiria"
+```
+
+**aphiria-com/preview**:
+```yaml
+imports:
+  - common
+values:
+  pulumiConfig:
+    postgresql:password:
+      fn::secret: <preview-password>
+    digitalocean:token:
+      fn::secret: <preview-do-token>
+```
+
+#### TypeScript Code Access
+
+Pulumi stacks access ESC values via standard Config API:
+
+```typescript
+const config = new pulumi.Config("postgresql");
+const dbUser = config.require("user");         // From common ESC
+const dbPassword = config.requireSecret("password");  // From preview/production ESC
+```
+
+#### Migration Impact
+
+**Before ESC**:
+- Secrets stored in GitHub Secrets
+- Workflows run `pulumi config set --secret postgresql:password "${{ secrets.POSTGRESQL_PREVIEW_PASSWORD }}"`
+- Secrets duplicated in Pulumi stack config files (encrypted)
+
+**After ESC**:
+- Secrets stored once in Pulumi ESC
+- Workflows import ESC environments via stack YAML
+- No `pulumi config set --secret` commands needed
+- GitHub Secrets only used for CI-specific operations (GHCR_TOKEN, PULUMI_ACCESS_TOKEN)
+
+#### Local Development
+
+Developers can use ESC for Pulumi operations:
+
+```bash
+# Login to ESC
+esc login
+
+# Run Pulumi with ESC environments
+esc run aphiria-com/local -- pulumi up --stack local
+
+# Or use pulumi directly (ESC imported via stack YAML)
+pulumi up --stack local
+```
+
+Fallback: Local stack can still use traditional config for developers without ESC access.
+
 ### Workflow Integration
 
 The GitHub Actions workflow will:
@@ -230,6 +360,7 @@ The GitHub Actions workflow will:
    - Generate ConfigMap/Secrets with interpolated values
    - Deploy Kubernetes resources with PR-scoped names
 4. Infrastructure provisioning creates namespace, ConfigMap, Secrets, deployments with PR-specific configuration
+5. Secrets (PostgreSQL passwords, DigitalOcean tokens) are automatically loaded from ESC environments
 
 ---
 
