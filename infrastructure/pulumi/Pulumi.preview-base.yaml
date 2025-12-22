@@ -1,4 +1,0 @@
-# Note: Per Neo, this doesn't actually associate the stack with the environment - this must be done during CI/CD
-environment:
-  - aphiria.com/Preview
-

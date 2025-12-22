@@ -50,6 +50,12 @@ jobs:
           if pulumi stack select preview-base 2>/dev/null; then
             echo "✅ Base stack 'preview-base' exists"
 
+            # Ensure ESC environment is bound
+            if ! pulumi config env ls | grep -q "aphiria.com/Preview"; then
+              echo "⚠️  Stack exists but not bound to ESC environment - binding now..."
+              pulumi config env add aphiria.com/Preview --stack preview-base --yes
+            fi
+
             # Check if cluster exists (validate stack is deployed)
             CLUSTER_ID=$(pulumi stack output clusterId --stack preview-base 2>/dev/null || echo "")
 
@@ -204,6 +210,11 @@ jobs:
           if ! pulumi stack select "${STACK_NAME}" 2>/dev/null; then
             pulumi stack init "${STACK_NAME}"
             pulumi config env add aphiria.com/Preview --stack "${STACK_NAME}" --yes
+          else
+            # Ensure ESC environment is bound
+            if ! pulumi config env ls | grep -q "aphiria.com/Preview"; then
+              pulumi config env add aphiria.com/Preview --stack "${STACK_NAME}" --yes
+            fi
           fi
 
           # Set minimal config required for preview (full config set in deploy job)
@@ -587,6 +598,11 @@ jobs:
           if ! pulumi stack select "${STACK_NAME}"; then
             pulumi stack init "${STACK_NAME}"
             pulumi config env add aphiria.com/Preview --stack "${STACK_NAME}" --yes
+          else
+            # Ensure ESC environment is bound
+            if ! pulumi config env ls | grep -q "aphiria.com/Preview"; then
+              pulumi config env add aphiria.com/Preview --stack "${STACK_NAME}" --yes
+            fi
           fi
 
           # Set stack configuration

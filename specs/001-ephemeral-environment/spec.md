@@ -288,25 +288,19 @@ values:
 
 #### Stack Configuration Files
 
-**Pulumi.preview-base.yaml**:
+**Pulumi.preview-base.yml**:
 ```yaml
-# Note: Per Neo, this doesn't actually associate the stack with the environment - this must be done during CI/CD
-environment:
-  - aphiria.com/Preview
+# Empty - ESC binding managed via CI/CD
 ```
 
 **Pulumi.production.yml**:
 ```yaml
-# Note: Per Neo, this doesn't actually associate the stack with the environment - this must be done during CI/CD
-environment:
-  - aphiria.com/Production
-
 config:
   aphiria-com-infrastructure:webImage: davidbyoung/aphiria.com-web:8e1ebfd326d7d20aea7104f1269cb1a9ce325d69-a9b9031929d39f8dd4863bec41bbe5b76cb2b555
   aphiria-com-infrastructure:apiImage: nginx:alpine
 ```
 
-**Pulumi.local.yaml**:
+**Pulumi.local.yml**:
 ```yaml
 # Local development stack - uses traditional Pulumi config (no ESC required)
 # This allows developers without ESC access to run Pulumi locally
@@ -316,7 +310,7 @@ config:
   # Set secrets using: pulumi config set --secret postgresql:password <your-password>
 ```
 
-**IMPORTANT**: The `environment:` declaration in stack YAML files is **documentation only**. It does NOT actually bind the stack to the ESC environment. Stack binding happens via CLI during stack initialization (see Workflow Integration below).
+**CRITICAL**: The `environment:` declaration in stack YAML files does NOT work and causes conflicts with `pulumi config env add`. Stack YAML files MUST NOT contain `environment:` declarations. Stack binding happens exclusively via CLI during stack initialization (see Workflow Integration below).
 
 #### TypeScript Code Access
 
@@ -395,9 +389,11 @@ environment:
 
 **Lessons Learned**:
 1. Pulumi Neo may provide incorrect CLI syntax - always verify with `pulumi <command> --help`
-2. Stack YAML `environment:` is purely declarative/documentation
-3. Actual binding happens via `pulumi config env add` command
+2. Stack YAML `environment:` declaration does NOT work and causes conflicts - it must be removed entirely
+3. Actual binding happens exclusively via `pulumi config env add` command
 4. This must be done in CI/CD workflows during stack creation
+5. If stack YAML contains `environment:` declaration, `pulumi config env add` may fail silently or not persist
+6. Solution: Remove all `environment:` declarations from stack YAML files and rely solely on CI/CD binding
 
 ### Workflow Integration (ESC Binding in CI/CD)
 
