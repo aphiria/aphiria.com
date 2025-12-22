@@ -92,7 +92,7 @@ jobs:
             fi
           else
             echo "📦 Creating and deploying base stack 'preview-base'..."
-            pulumi stack init preview-base
+            pulumi stack init preview-base --env aphiria.com/Preview
 
             # Deploy base infrastructure (creates cluster, Helm charts, PostgreSQL, Gateway)
             # Note: No refresh needed - this is a brand new stack
@@ -200,7 +200,7 @@ jobs:
           STACK_NAME="preview-pr-${PR_NUMBER}"
 
           # Select or create stack
-          pulumi stack select "${STACK_NAME}" 2>/dev/null || pulumi stack init "${STACK_NAME}"
+          pulumi stack select "${STACK_NAME}" 2>/dev/null || pulumi stack init "${STACK_NAME}" --env aphiria.com/Preview
 
           # Set minimal config required for preview (full config set in deploy job)
           pulumi config set prNumber "${PR_NUMBER}" --stack "${STACK_NAME}"
@@ -580,7 +580,7 @@ jobs:
           STACK_NAME="preview-pr-${PR_NUMBER}"
 
           # Select or create stack
-          pulumi stack select "${STACK_NAME}" || pulumi stack init "${STACK_NAME}"
+          pulumi stack select "${STACK_NAME}" || pulumi stack init "${STACK_NAME}" --env aphiria.com/Preview
 
           # Set stack configuration
           pulumi config set prNumber "${PR_NUMBER}"
