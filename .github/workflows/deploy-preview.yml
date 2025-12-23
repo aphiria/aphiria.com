@@ -598,7 +598,7 @@ jobs:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
         run: |
           mkdir -p ~/.kube
-          pulumi stack output kubeconfig --stack preview-base > ~/.kube/config
+          pulumi stack output --json --stack preview-base --show-secrets | jq -r '.kubeconfig' > ~/.kube/config
           chmod 600 ~/.kube/config
 
       - name: Deploy preview environment
