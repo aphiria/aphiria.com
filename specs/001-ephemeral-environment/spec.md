@@ -62,9 +62,9 @@ As a maintainer, I want to preview pull request changes in a live, isolated envi
 
 1. **Given** a pull request is opened  
    **When** the maintainer approves preview deployment  
-   **Then** an ephemeral environment is provisioned with a unique URL
+   **Then** a preview environment is provisioned with a unique URL
 
-2. **Given** an ephemeral environment exists  
+2. **Given** a preview environment exists  
    **When** new commits are pushed to the PR  
    **Then** the environment is updated to reflect the latest commit
 
@@ -173,17 +173,15 @@ Kubernetes
 #### Pulumi ESC Integration
 
 - **FR-083**: CD-specific secrets (PostgreSQL passwords, DigitalOcean tokens) MUST be migrated from GitHub Secrets to Pulumi ESC
-- **FR-084**: ESC environments MUST use inheritance pattern: `common` (shared config) → `preview`/`production` (environment-specific secrets)
 - **FR-085**: Stack YAML files MUST import appropriate ESC environments via `environment:` block
 - **FR-086**: Workflows MUST NOT use `pulumi config set --secret` for secrets stored in ESC
 - **FR-087**: CI-specific secrets (GHCR_TOKEN, PULUMI_ACCESS_TOKEN) MUST remain in GitHub Secrets
 - **FR-088**: ESC environment `aphiria-com/preview` MUST contain: `postgresql:password`, `digitalocean:token` (preview cluster scoped)
 - **FR-089**: ESC environment `aphiria-com/production` MUST contain: `postgresql:password`, `digitalocean:token` (production cluster scoped)
-- **FR-090**: ESC environment `aphiria-com/common` MUST contain: `postgresql:user` (shared configuration)
 - **FR-091**: Local development MUST support `esc run` for Pulumi operations but NOT require ESC access for basic Minikube usage
-- **FR-092**: `preview-base` stack MUST import `aphiria-com/common` and `aphiria-com/preview` ESC environments
+- **FR-092**: `preview-base` stack MUST import `aphiria-com/preview` ESC environment
 - **FR-093**: `preview-pr-{N}` stacks MUST import `aphiria-com/preview` ESC environment (inherits shared preview secrets)
-- **FR-094**: `production` stack MUST import `aphiria-com/common` and `aphiria-com/production` ESC environments
+- **FR-094**: `production` stack MUST import `aphiria-com/production` ESC environment
 - **FR-095**: `local` stack MAY optionally import `aphiria-com/local` ESC environment for `esc run` support
 - **FR-096**: ESC migration MUST be tested in preview environment before applying to production
 - **FR-097**: GitHub Secrets `POSTGRESQL_PREVIEW_PASSWORD`, `POSTGRESQL_ADMIN_PASSWORD`, `DIGITALOCEAN_ACCESS_TOKEN` MUST be removed after successful ESC migration
@@ -201,46 +199,24 @@ The PR number and related metadata are available in GitHub Actions via context v
 - `${{ github.repository }}` - Repository name
 - `${{ github.event.pull_request.head.ref }}` - Source branch name
 
-### ConfigMap Generation
+### API Application Environment Variables
 
-For each ephemeral environment, a ConfigMap is dynamically generated with:
+For each ephemeral environment, we must create the following environment variables (`{{ PR_NUMBER }}` is replaced with the actual PR number) so they're avaialble to the `api` deployment:
 
-```yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: env-vars-pr-{{ PR_NUMBER }}
-  namespace: ephemeral-pr-{{ PR_NUMBER }}
-data:
-  APP_BUILDER_API: "\\Aphiria\\Framework\\Api\\SynchronousApiApplicationBuilder"
-  APP_BUILDER_CONSOLE: "\\Aphiria\\Framework\\Console\\ConsoleApplicationBuilder"
-  APP_ENV: "preview"
-  APP_WEB_URL: "https://{{ PR_NUMBER }}.pr.aphiria.com"
-  APP_API_URL: "https://{{ PR_NUMBER }}.pr-api.aphiria.com"
-  APP_COOKIE_DOMAIN: ".{{ PR_NUMBER }}.pr.aphiria.com"
-  APP_COOKIE_SECURE: "1"
-  DB_HOST: "db"  # Shared PostgreSQL service in default or shared namespace
-  DB_NAME: "aphiria_pr_{{ PR_NUMBER }}"  # PR-specific database
-  DB_PORT: "5432"
-  DOC_LEXEMES_TABLE_NAME: ""
-  LOG_LEVEL: "debug"
-```
-
-### Secret Generation
-
-Sensitive values are stored in Kubernetes Secrets:
-
-```yaml
-apiVersion: v1
-kind: Secret
-metadata:
-  name: env-var-secrets-pr-{{ PR_NUMBER }}
-  namespace: ephemeral-pr-{{ PR_NUMBER }}
-type: Opaque
-stringData:
-  DB_USER: "preview_user"
-  DB_PASSWORD: "{{ GENERATED_PASSWORD }}"
-```
+- APP_BUILDER_API: "\Aphiria\Framework\Api\SynchronousApiApplicationBuilder"
+- APP_BUILDER_CONSOL`: "\Aphiria\Framework\Console\ConsoleApplicationBuilder"
+- APP_ENV: "preview"
+- APP_WEB_URL: "https://{{ PR_NUMBER }}.pr.aphiria.com"
+- APP_API_URL: "https://{{ PR_NUMBER }}.pr-api.aphiria.com"
+- APP_COOKIE_DOMAIN: ".{{ PR_NUMBER }}.pr.aphiria.com"
+- APP_COOKIE_SECURE: "1"
+- DB_USER: {{ postgresql:user from Pulumi ESC for that environment }}
+- DB_PASSWORD: {{ postgresql:password from Pulumi ESC for that environment }}
+- DB_HOST: "db"  # Shared PostgreSQL service in default or shared namespace
+- DB_NAME: "aphiria_pr_{{ PR_NUMBER }}"  # PR-specific database
+- DB_PORT: "5432"
+- DOC_LEXEMES_TABLE_NAME: ""
+- LOG_LEVEL: "debug"
 
 ### Pulumi ESC Architecture
 
@@ -292,11 +268,14 @@ values:
 
 **Pulumi.preview-base.yml**:
 ```yaml
-# Empty - ESC binding managed via CI/CD
+environment:
+  - aphiria.com/Preview
 ```
 
 **Pulumi.production.yml**:
 ```yaml
+environment:
+  - aphiria.com/Production
 config:
   aphiria-com-infrastructure:webImage: davidbyoung/aphiria.com-web:8e1ebfd326d7d20aea7104f1269cb1a9ce325d69-a9b9031929d39f8dd4863bec41bbe5b76cb2b555
   aphiria-com-infrastructure:apiImage: nginx:alpine
@@ -311,8 +290,6 @@ config:
   # Set these using: pulumi config set postgresql:user aphiria
   # Set secrets using: pulumi config set --secret postgresql:password <your-password>
 ```
-
-**CRITICAL**: The `environment:` declaration in stack YAML files does NOT work and causes conflicts with `pulumi config env add`. Stack YAML files MUST NOT contain `environment:` declarations. Stack binding happens exclusively via CLI during stack initialization (see Workflow Integration below).
 
 #### TypeScript Code Access
 
@@ -333,7 +310,6 @@ const dbPassword = config.requireSecret("password");  // From preview/production
 
 **After ESC**:
 - Secrets stored once in Pulumi ESC
-- Workflows bind stacks to ESC environments via `pulumi config env add` during stack initialization
 - No `pulumi config set --secret` commands needed
 - GitHub Secrets only used for CI-specific operations (GHCR_TOKEN, PULUMI_ACCESS_TOKEN)
 
@@ -367,8 +343,6 @@ This approach allows developers to work without ESC access while preview/product
 
 #### Workflow Integration: Stack-to-ESC Binding
 
-**Critical**: Stack YAML `environment:` fields do NOT automatically bind stacks to ESC environments. Binding must be done via CLI.
-
 **Correct approach** (during stack initialization):
 ```bash
 # Create stack
@@ -378,49 +352,10 @@ pulumi stack init preview-base
 pulumi config env add aphiria.com/Preview --stack preview-base
 ```
 
-**Incorrect approaches** (these do NOT work):
-```bash
-# ❌ WRONG: --env flag doesn't exist in Pulumi CLI
-pulumi stack init preview-base --env aphiria.com/Preview
-
-# ❌ WRONG: Stack YAML environment field is documentation only
-# Having this in Pulumi.preview-base.yaml does NOT bind the stack:
-environment:
-  - aphiria.com/Preview
-```
-
 **Lessons Learned**:
 1. Pulumi Neo may provide incorrect CLI syntax - always verify with `pulumi <command> --help`
-2. Stack YAML `environment:` declaration does NOT work and causes conflicts - it must be removed entirely
-3. Actual binding happens exclusively via `pulumi config env add` command
-4. This must be done in CI/CD workflows during stack creation
-5. If stack YAML contains `environment:` declaration, `pulumi config env add` may fail silently or not persist
-6. Solution: Remove all `environment:` declarations from stack YAML files and rely solely on CI/CD binding
 
 ### Workflow Integration (ESC Binding in CI/CD)
-
-The GitHub Actions workflow integrates ESC as follows:
-
-**preview-base stack creation**:
-```yaml
-- name: Ensure preview-base stack exists
-  run: |
-    if ! pulumi stack select preview-base 2>/dev/null; then
-      pulumi stack init preview-base
-      pulumi config env add aphiria.com/Preview --stack preview-base
-    fi
-```
-
-**preview-pr-* stack creation**:
-```yaml
-- name: Create PR-specific stack
-  run: |
-    STACK_NAME="preview-pr-${PR_NUMBER}"
-    if ! pulumi stack select "${STACK_NAME}" 2>/dev/null; then
-      pulumi stack init "${STACK_NAME}"
-      pulumi config env add aphiria.com/Preview --stack "${STACK_NAME}"
-    fi
-```
 
 **Key points**:
 1. Extract PR number from `${{ github.event.pull_request.number }}`
@@ -502,11 +437,11 @@ inputs:
   stack-name:
     type: string
     required: true
-    description: "Pulumi stack name (e.g., ephemeral-pr-123, production)"
+    description: "Pulumi stack name (e.g., preview-pr-123, production)"
   pulumi-program-path:
     type: string
     required: true
-    description: "Path to Pulumi program (e.g., infrastructure/pulumi/aphiria.com)"
+    description: "Path to Pulumi program (infrastructure/pulumi - stack selected via stack-name)"
   environment:
     type: string
     required: true
@@ -539,8 +474,8 @@ jobs:
     needs: build
     uses: ./.github/workflows/deploy-pulumi.yml
     with:
-      stack-name: ephemeral-pr-${{ github.event.pull_request.number }}
-      pulumi-program-path: infrastructure/pulumi/ephemeral
+      stack-name: preview-pr-${{ github.event.pull_request.number }}
+      pulumi-program-path: infrastructure/pulumi
       environment: preview
       web-image-digest: ${{ needs.build.outputs.web-digest }}
       api-image-digest: ${{ needs.build.outputs.api-digest }}
@@ -577,7 +512,7 @@ jobs:
     uses: ./.github/workflows/deploy-pulumi.yml
     with:
       stack-name: production
-      pulumi-program-path: infrastructure/pulumi/aphiria.com
+      pulumi-program-path: infrastructure/pulumi
       environment: production
       web-image-digest: ${{ needs.promote.outputs.web-digest }}
       api-image-digest: ${{ needs.promote.outputs.api-digest }}
@@ -626,7 +561,7 @@ This feature includes a **comprehensive migration** from Helm/Kustomize to Pulum
 
 **Migration Order**:
 1. **local** (Minikube) - Test locally first, validate workflow
-2. **preview** (ephemeral-pr-*) - Automated preview environments on DigitalOcean
+2. **preview** (preview-pr-*) - Automated preview environments on DigitalOcean
 3. **production** (DigitalOcean cluster) - Live site deployment
 
 **Backward Compatibility**:
@@ -687,7 +622,7 @@ This feature includes a **comprehensive migration** from Helm/Kustomize to Pulum
     - unique URLs (web + API)
     - status (provisioning / ready / failed / destroying)
     - deployed commit SHA
-    - Kubernetes namespace: `ephemeral-pr-{PR_NUMBER}`
+    - Kubernetes namespace: `preview-pr-{PR_NUMBER}`
     - Deployments: `web`, `api` (within namespace)
     - Services: `web`, `api` (within namespace)
     - Database: `aphiria_pr_{PR_NUMBER}` (logical database in shared PostgreSQL instance)
@@ -736,7 +671,7 @@ The following infrastructure persists **independently of PR lifecycle** and rema
 **Ephemeral Resources (Created/Destroyed per PR):**
 
 - **FR-024**: Ephemeral environments MUST be isolated via Kubernetes namespaces
-- **FR-025**: Each namespace MUST follow the pattern: `ephemeral-pr-{PR_NUMBER}`
+- **FR-025**: Each namespace MUST follow the pattern: `preview-pr-{PR_NUMBER}`
 - **FR-026**: NetworkPolicies MUST prevent cross-namespace communication between ephemeral environments
 - **FR-027**: ResourceQuotas MUST be applied to each ephemeral namespace to prevent resource exhaustion (2 CPU, 4Gi memory, 5 pods max)
 - **FR-053**: Gateway/Ingress routes for preview environments MUST include connection limiting annotations to prevent abuse
@@ -786,7 +721,7 @@ The following infrastructure persists **independently of PR lifecycle** and rema
 
 **Per-PR Stacks (Ephemeral):**
 - **FR-044**: Each ephemeral environment MUST use a dedicated Pulumi stack
-- **FR-045**: Stack names MUST follow the pattern: `ephemeral-pr-{PR_NUMBER}` (e.g., `ephemeral-pr-123`)
+- **FR-045**: Stack names MUST follow the pattern: `preview-pr-{PR_NUMBER}` (e.g., `preview-pr-123`)
 - **FR-046**: Pulumi state MUST be stored in a backend that supports concurrent operations (e.g., S3, Pulumi Cloud)
 - **FR-047**: Stack creation and destruction MUST be automated via CI/CD
 - **FR-048**: Stack teardown MUST remove all provisioned Kubernetes resources AND drop the PR database

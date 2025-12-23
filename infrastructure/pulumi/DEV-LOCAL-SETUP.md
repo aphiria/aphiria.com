@@ -18,28 +18,35 @@ This guide explains how to set up and deploy the Aphiria.com local environment u
 
 ## Pulumi Backend Configuration
 
-The project uses DigitalOcean Spaces as the Pulumi backend (configured in `Pulumi.yml`).
+The project uses **Pulumi Cloud** as the backend for state management.
 
-### Option 1: Use DigitalOcean Spaces Backend (Recommended)
+### Default: Pulumi Cloud (Recommended)
 
-Set AWS credentials for DigitalOcean Spaces access:
+If you have a Pulumi Cloud account:
 
 ```bash
-export AWS_ACCESS_KEY_ID="your-do-spaces-access-key"
-export AWS_SECRET_ACCESS_KEY="your-do-spaces-secret-key"
+pulumi login
 ```
 
-### Option 2: Use Local Pulumi Backend
+This provides:
+- Automatic state locking (prevents concurrent deployment conflicts)
+- Web UI for viewing deployments and outputs
+- Free for open source projects
+- No additional infrastructure to manage
 
-For local-only development without cloud backend:
+### Alternative: Local Backend
+
+For local-only development without Pulumi Cloud:
 
 ```bash
 # Switch to local backend
 pulumi login --local
 
-# Optionally switch back to Spaces later
-pulumi login s3://aphiria-com-infrastructure?endpoint=nyc3.digitaloceanspaces.com&region=us-east-1&s3ForcePathStyle=true
+# Switch back to Pulumi Cloud later
+pulumi login
 ```
+
+**Note**: Local backend stores state in `~/.pulumi` and does not support concurrent deployment locking.
 
 ## Initial Setup
 

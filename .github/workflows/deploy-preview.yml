@@ -50,12 +50,6 @@ jobs:
           if pulumi stack select preview-base 2>/dev/null; then
             echo "✅ Base stack 'preview-base' exists"
 
-            # Ensure ESC environment is bound
-            if ! pulumi config env ls | grep -q "aphiria.com/Preview"; then
-              echo "⚠️  Stack exists but not bound to ESC environment - binding now..."
-              pulumi config env add aphiria.com/Preview --stack preview-base --yes
-            fi
-
             # Check if cluster exists (validate stack is deployed)
             CLUSTER_ID=$(pulumi stack output clusterId --stack preview-base 2>/dev/null || echo "")
 

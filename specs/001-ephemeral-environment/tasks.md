@@ -75,18 +75,19 @@ Phase 8 (Migrate production to Pulumi)
 
 ### Tasks
 
-- [ ] M001 Create shared Pulumi project structure at `infrastructure/pulumi/aphiria.com/`
-- [ ] M002 Initialize Pulumi project with TypeScript in `infrastructure/pulumi/aphiria.com/`
-- [ ] M003 [P] Install dependencies: @pulumi/kubernetes, @pulumi/pulumi, @pulumi/digitalocean, @pulumi/postgresql in `infrastructure/pulumi/aphiria.com/package.json`
-- [ ] M004 [P] Create shared types definition file: `infrastructure/pulumi/aphiria.com/src/shared/types.ts`
-- [ ] M005 Create shared Helm chart component: `infrastructure/pulumi/aphiria.com/src/shared/helm-charts.ts` (cert-manager, nginx-gateway)
-- [ ] M006 [P] Create shared Gateway component: `infrastructure/pulumi/aphiria.com/src/shared/gateway.ts` (Gateway API resources, TLS certificates)
-- [ ] M007 [P] Create shared PostgreSQL component: `infrastructure/pulumi/aphiria.com/src/shared/database.ts` (deployment, service, database creation)
-- [ ] M008 Create shared web deployment component: `infrastructure/pulumi/aphiria.com/src/shared/web-deployment.ts` (nginx, js-config ConfigMap)
-- [ ] M009 Create shared API deployment component: `infrastructure/pulumi/aphiria.com/src/shared/api-deployment.ts` (nginx + PHP-FPM, initContainer pattern)
-- [ ] M010 [P] Create shared db-migration job component: `infrastructure/pulumi/aphiria.com/src/shared/db-migration.ts` (Phinx + LexemeSeeder)
-- [ ] M011 [P] Create shared HTTPRoute component: `infrastructure/pulumi/aphiria.com/src/shared/http-route.ts` (Gateway API routing)
-- [ ] M012 Document shared component usage in `infrastructure/pulumi/aphiria.com/README.md`
+- [X] M001 Create shared Pulumi project structure at `infrastructure/pulumi/`
+- [X] M002 Initialize Pulumi project with TypeScript in `infrastructure/pulumi/`
+- [X] M003 [P] Install dependencies: @pulumi/kubernetes, @pulumi/pulumi, @pulumi/digitalocean in `infrastructure/pulumi/package.json`
+- [X] M004 [P] Create shared types definition file: `infrastructure/pulumi/components/types.ts`
+- [X] M005 Create shared Helm chart component: `infrastructure/pulumi/components/helm-charts.ts` (cert-manager, nginx-gateway)
+- [X] M006 [P] Create shared Gateway component: `infrastructure/pulumi/components/gateway.ts` (Gateway API resources, TLS certificates)
+- [X] M007 [P] Create shared PostgreSQL component: `infrastructure/pulumi/components/database.ts` (deployment, service, database creation)
+- [X] M008 Create shared web deployment component: `infrastructure/pulumi/components/web-deployment.ts` (nginx, js-config ConfigMap)
+- [X] M009 Create shared API deployment component: `infrastructure/pulumi/components/api-deployment.ts` (nginx + PHP-FPM, initContainer pattern)
+- [X] M010 [P] Create shared db-migration job component: `infrastructure/pulumi/components/db-migration.ts` (Phinx + LexemeSeeder)
+- [X] M011 [P] Create shared HTTPRoute component: `infrastructure/pulumi/components/http-route.ts` (Gateway API routing)
+- [X] M012 Document shared component usage in `infrastructure/pulumi/README.md`
+- [X] M013 Create Kubernetes component: `infrastructure/pulumi/components/kubernetes.ts`
 
 **Completion Criteria**:
 - ✅ All shared components implemented with TypeScript type safety
@@ -94,7 +95,7 @@ Phase 8 (Migrate production to Pulumi)
 - ✅ Components match existing Kustomize/Helm behavior exactly
 - ✅ README documents component parameters and usage examples
 
-**Parallel Opportunities**: M003-M011 can be developed in parallel after M002
+**Parallel Opportunities**: M003-M013 can be developed in parallel after M002
 
 ---
 
@@ -104,14 +105,14 @@ Phase 8 (Migrate production to Pulumi)
 
 ### Tasks
 
-- [X] T001 Create Pulumi project directory structure at `infrastructure/pulumi/ephemeral/`
-- [X] T002 Initialize Pulumi project with TypeScript in `infrastructure/pulumi/ephemeral/`
-- [X] T003 [P] Create `.gitignore` entries for Pulumi state and node_modules in `infrastructure/pulumi/ephemeral/.gitignore`
-- [X] T004 [P] Configure Pulumi backend (Pulumi Cloud or S3) in `infrastructure/pulumi/ephemeral/Pulumi.yaml`
-- [X] T005 Install Pulumi Kubernetes provider in `infrastructure/pulumi/ephemeral/package.json`
-- [X] T006 [P] Install Pulumi PostgreSQL provider (for database operations) in `infrastructure/pulumi/ephemeral/package.json`
+- [X] T001 Create Pulumi project directory structure at `infrastructure/pulumi/`
+- [X] T002 Initialize Pulumi project with TypeScript in `infrastructure/pulumi/`
+- [X] T003 [P] Create `.gitignore` entries for Pulumi state and node_modules in `infrastructure/pulumi/.gitignore`
+- [X] T004 [P] Configure Pulumi backend (Pulumi Cloud) - already configured
+- [X] T005 Install Pulumi Kubernetes provider in `infrastructure/pulumi/package.json`
+- [X] T006 [P] Install Pulumi PostgreSQL provider (for database operations) in `infrastructure/pulumi/package.json`
 - [X] T007 [P] Create GitHub Actions workflow directory structure at `.github/workflows/`
-- [X] T008 Document Pulumi stack naming conventions in `infrastructure/pulumi/ephemeral/README.md`
+- [X] T008 Document Pulumi stack naming conventions in `infrastructure/pulumi/README.md`
 
 **Completion Criteria**:
 - ✅ Pulumi project initialized and can run `pulumi preview`
@@ -122,29 +123,29 @@ Phase 8 (Migrate production to Pulumi)
 
 ## Phase 2: Foundational - Base Infrastructure Stack
 
-**Goal**: Deploy persistent infrastructure (ephemeral-base stack) that supports all preview environments
+**Goal**: Deploy persistent infrastructure (preview-base stack) that supports all preview environments
 
 **Independent Test**: Verify base stack deploys successfully and outputs expected values (PostgreSQL service, Gateway reference, wildcard TLS secret)
 
 ### Tasks
 
-- [X] T009 Create base infrastructure Pulumi program in `infrastructure/pulumi/ephemeral/src/base-stack.ts`
-- [X] T010 [P] Define PostgreSQL deployment in base stack (`infrastructure/pulumi/ephemeral/src/base-stack.ts`)
-- [X] T011 [P] Define Gateway API configuration in base stack (`infrastructure/pulumi/ephemeral/src/base-stack.ts`)
-- [X] T012 Configure wildcard TLS certificate (`*.pr.aphiria.com`) via cert-manager in `infrastructure/pulumi/ephemeral/src/base-stack.ts`
+- [X] T009 Create base infrastructure Pulumi program in `infrastructure/pulumi/stacks/preview-base.ts`
+- [X] T010 [P] Define PostgreSQL deployment in base stack (`infrastructure/pulumi/stacks/preview-base.ts`)
+- [X] T011 [P] Define Gateway API configuration in base stack (`infrastructure/pulumi/stacks/preview-base.ts`)
+- [X] T012 Configure wildcard TLS certificate (`*.pr.aphiria.com`) via cert-manager in `infrastructure/pulumi/stacks/preview-base.ts`
 - [ ] T013 Create DNS wildcard records (`*.pr.aphiria.com`, `*.pr-api.aphiria.com`) in DigitalOcean DNS
-- [X] T014 Export base stack outputs (PostgreSQL host, Gateway name, TLS secret) in `infrastructure/pulumi/ephemeral/src/base-stack.ts`
-- [ ] T015 Deploy base stack manually: `pulumi up --stack ephemeral-base`
+- [X] T014 Export base stack outputs (PostgreSQL host, Gateway name, TLS secret) in `infrastructure/pulumi/stacks/preview-base.ts`
+- [ ] T015 Deploy base stack manually: `pulumi up --stack preview-base`
 - [ ] T016 Verify PostgreSQL is running and accessible within cluster
-- [X] T017 [P] Document base stack outputs and usage in `infrastructure/pulumi/ephemeral/README.md`
+- [X] T017 [P] Document base stack outputs and usage in `infrastructure/pulumi/README.md`
 
 **Completion Criteria**:
-- ✅ `ephemeral-base` Pulumi stack deployed successfully
+- ✅ `preview-base` Pulumi stack deployed successfully
 - ✅ PostgreSQL running and accessible via service `db`
 - ✅ Gateway API configured and ready
 - ✅ Wildcard TLS cert issued and stored as K8s Secret
 - ✅ DNS records resolve to cluster load balancer
-- ✅ Stack outputs available for ephemeral stacks
+- ✅ Stack outputs available for preview stacks
 
 ---
 
@@ -155,43 +156,43 @@ Phase 8 (Migrate production to Pulumi)
 **User Story**: As a maintainer, I want to preview pull request changes in a live, isolated environment so that I can validate functionality and behavior before merging.
 
 **Independent Test**:
-1. Open test PR → approve deployment → verify environment accessible at `{PR}.pr.aphiria.com`
+1. Open test PR → approve deployment → verify environment accessible at `{PR}.pr.aphiria.com` for the web application and `{PR}.pr-api.aphiria.com` for the API application
 2. Push new commit → verify environment updates with new image digest
 3. Verify production can reference same image digest used in preview
 
 ### Infrastructure Tasks
 
-- [X] T018 [US1] Create ephemeral stack Pulumi program in `infrastructure/pulumi/ephemeral/src/ephemeral-stack.ts`
-- [X] T019 [P] [US1] Implement Kubernetes namespace creation in `infrastructure/pulumi/ephemeral/src/ephemeral-stack.ts`
-- [X] T020 [P] [US1] Implement per-PR database creation logic in `infrastructure/pulumi/ephemeral/src/ephemeral-stack.ts`
-- [X] T021 [P] [US1] Create ConfigMap generator with PR-specific values in `infrastructure/pulumi/ephemeral/src/ephemeral-stack.ts`
-- [X] T022 [P] [US1] Create Secret generator for DB credentials in `infrastructure/pulumi/ephemeral/src/ephemeral-stack.ts`
-- [X] T023 [P] [US1] Implement ResourceQuota (2 CPU, 4Gi, 5 pods) in `infrastructure/pulumi/ephemeral/src/ephemeral-stack.ts`
-- [X] T024 [P] [US1] Implement NetworkPolicy for namespace isolation in `infrastructure/pulumi/ephemeral/src/ephemeral-stack.ts`
-- [X] T025 [US1] Create web Deployment (1 replica) with image digest reference in `infrastructure/pulumi/ephemeral/src/ephemeral-stack.ts`
-- [X] T026 [US1] Create API Deployment (1 replica) with image digest reference in `infrastructure/pulumi/ephemeral/src/ephemeral-stack.ts`
-- [X] T027 [P] [US1] Create web and API Services in `infrastructure/pulumi/ephemeral/src/ephemeral-stack.ts`
-- [X] T028 [US1] Create HTTPRoute for web (`{PR}.pr.aphiria.com`) and API (`{PR}.pr-api.aphiria.com`) in `infrastructure/pulumi/ephemeral/src/ephemeral-stack.ts`
-- [X] T029 [P] [US1] Add connection-level rate limiting annotations to HTTPRoute in `infrastructure/pulumi/ephemeral/src/ephemeral-stack.ts`
-- [X] T030 [US1] Create db-migration Job (Phinx migrations + LexemeSeeder) in `infrastructure/pulumi/ephemeral/src/ephemeral-stack.ts`
-- [X] T031 [US1] Export stack outputs (webUrl, apiUrl, databaseName) in `infrastructure/pulumi/ephemeral/src/ephemeral-stack.ts`
+- [X] T018 [US1] Create preview stack Pulumi program in `infrastructure/pulumi/stacks/preview-pr.ts`
+- [X] T019 [P] [US1] Implement Kubernetes namespace creation in `infrastructure/pulumi/stacks/preview-pr.ts`
+- [X] T020 [P] [US1] Implement per-PR database creation logic in `infrastructure/pulumi/stacks/preview-pr.ts`
+- [X] T021 [P] [US1] Create ConfigMap generator with PR-specific values in `infrastructure/pulumi/stacks/preview-pr.ts`
+- [X] T022 [P] [US1] Create Secret generator for DB credentials in `infrastructure/pulumi/stacks/preview-pr.ts`
+- [X] T023 [P] [US1] Implement ResourceQuota (2 CPU, 4Gi, 5 pods) in `infrastructure/pulumi/stacks/preview-pr.ts`
+- [X] T024 [P] [US1] Implement NetworkPolicy for namespace isolation in `infrastructure/pulumi/stacks/preview-pr.ts`
+- [X] T025 [US1] Create web Deployment (1 replica) with image digest reference in `infrastructure/pulumi/stacks/preview-pr.ts`
+- [X] T026 [US1] Create API Deployment (1 replica) with image digest reference in `infrastructure/pulumi/stacks/preview-pr.ts`
+- [X] T027 [P] [US1] Create web and API Services in `infrastructure/pulumi/stacks/preview-pr.ts`
+- [X] T028 [US1] Create HTTPRoute for web (`{PR}.pr.aphiria.com`) and API (`{PR}.pr-api.aphiria.com`) in `infrastructure/pulumi/stacks/preview-pr.ts`
+- [X] T029 [P] [US1] Add connection-level rate limiting annotations to HTTPRoute in `infrastructure/pulumi/stacks/preview-pr.ts`
+- [X] T030 [US1] Create db-migration Job (Phinx migrations + LexemeSeeder) in `infrastructure/pulumi/stacks/preview-pr.ts`
+- [X] T031 [US1] Export stack outputs (webUrl, apiUrl, databaseName) in `infrastructure/pulumi/stacks/preview-pr.ts`
 
 ### CI/CD Tasks
 
 - [X] T032 [P] [US1] Create Docker build workflow in `.github/workflows/build-preview-images.yml`
 - [X] T033 [US1] Implement image digest capture in build workflow (`.github/workflows/build-preview-images.yml`)
-- [X] T034 [US1] Create preview deployment workflow in `.github/workflows/preview-deploy.yml`
-- [ ] T035 [US1] Configure GitHub environment protection ("preview") with required reviewers
-- [X] T036 [US1] Implement Pulumi stack initialization in deployment workflow (`.github/workflows/preview-deploy.yml`)
-- [X] T037 [US1] Pass PR number and image digests to Pulumi program in `.github/workflows/preview-deploy.yml`)
-- [X] T038 [US1] Implement deployment status polling (wait for pods ready) in `.github/workflows/preview-deploy.yml`
-- [X] T039 [US1] Create PR comment with deployment status in `.github/workflows/preview-deploy.yml`
-- [X] T040 [P] [US1] Add PR labels with image digests for production promotion tracking in `.github/workflows/preview-deploy.yml`
+- [X] T034 [US1] Create preview deployment workflow in `.github/workflows/deploy-preview.yml`
+- [X] T035 [US1] Configure GitHub environment protection ("preview") with required reviewers for non-admins of the repository, and auto-approve deployments for admins
+- [X] T036 [US1] Implement Pulumi stack initialization in deployment workflow (`.github/workflows/deploy-preview.yml`)
+- [X] T037 [US1] Pass PR number and image digests to Pulumi program in `.github/workflows/deploy-preview.yml`)
+- [X] T038 [US1] Implement deployment status polling (wait for pods ready) in `.github/workflows/deploy-preview.yml`
+- [X] T039 [US1] Create PR comment with deployment status in `.github/workflows/deploy-preview.yml`
+- [X] T040 [P] [US1] Add PR labels with image digests for production promotion tracking in `.github/workflows/deploy-preview.yml`
 
 ### Update Flow Tasks
 
-- [X] T041 [US1] Implement preview update logic (detect existing stack, run pulumi up with new digests) in `.github/workflows/preview-deploy.yml`
-- [X] T042 [US1] Update PR comment on successful update with new commit SHA in `.github/workflows/preview-deploy.yml`
+- [X] T041 [US1] Implement preview update logic (detect existing stack, run `pulumi up` with new digests) in `.github/workflows/deploy-preview.yml`
+- [X] T042 [US1] Update PR comment on successful update with new commit SHA in `.github/workflows/deploy-preview.yml`
 
 **Acceptance Validation** (Manual):
 1. Open test PR with code changes
@@ -220,7 +221,7 @@ Phase 8 (Migrate production to Pulumi)
 
 - [X] T043 [US2] Verify HTTPRoute has no authentication requirements (public access already configured in US1)
 - [ ] T044 [US2] Test preview URL access from incognito browser (no GitHub session)
-- [X] T045 [US2] Document preview URL sharing instructions in `infrastructure/pulumi/ephemeral/README.md`
+- [X] T045 [US2] Document preview URL sharing instructions in `infrastructure/pulumi/README.md`
 
 **Acceptance Validation** (Manual):
 1. Open preview environment URL in incognito/private browser
@@ -246,20 +247,20 @@ Phase 8 (Migrate production to Pulumi)
 
 ### Tasks
 
-- [X] T046 [US3] Create cleanup workflow in `.github/workflows/preview-cleanup.yml`
-- [X] T047 [US3] Implement Pulumi destroy logic in cleanup workflow (`.github/workflows/preview-cleanup.yml`)
-- [X] T048 [US3] Verify database drop in Pulumi destroy (query pg_database) in `infrastructure/pulumi/ephemeral/src/ephemeral-stack.ts`
-- [X] T049 [US3] Update PR comment on cleanup completion in `.github/workflows/preview-cleanup.yml`
-- [X] T050 [US3] Add cleanup verification (check namespace and stack no longer exist) in `.github/workflows/preview-cleanup.yml`
+- [X] T046 [US3] Create cleanup workflow in `.github/workflows/cleanup-preview.yml`
+- [X] T047 [US3] Implement Pulumi destroy logic in cleanup workflow (`.github/workflows/cleanup-preview.yml`)
+- [X] T048 [US3] Verify database drop in Pulumi destroy (query pg_database) in `infrastructure/pulumi/stacks/preview-pr.ts`
+- [X] T049 [US3] Update PR comment on cleanup completion in `.github/workflows/cleanup-preview.yml`
+- [X] T050 [US3] Add cleanup verification (check namespace and stack no longer exist) in `.github/workflows/cleanup-preview.yml`
 
 **Acceptance Validation** (Manual):
 1. Create and deploy test preview environment
 2. Close the PR without merging
 3. Verify cleanup workflow triggers automatically
 4. Verify preview URL becomes inaccessible
-5. Verify namespace deleted: `kubectl get namespace ephemeral-pr-{PR}` returns not found
+5. Verify namespace deleted: `kubectl get namespace preview-pr-{PR}` returns not found
 6. Verify database dropped: Query PostgreSQL for `aphiria_pr_{PR}` → not found
-7. Verify Pulumi stack removed: `pulumi stack ls` shows no `ephemeral-pr-{PR}`
+7. Verify Pulumi stack removed: `pulumi stack ls` shows no `preview-pr-{PR}`
 8. Repeat test with merged PR instead of closed
 
 ---
@@ -270,7 +271,7 @@ Phase 8 (Migrate production to Pulumi)
 
 ### Documentation
 
-- [X] T051 [P] Create maintainer quickstart guide in `infrastructure/pulumi/ephemeral/QUICKSTART.md`
+- [X] T051 [P] Create maintainer quickstart guide in `infrastructure/pulumi/QUICKSTART.md`
 - [X] T052 [P] Document approval workflow in `.github/CONTRIBUTING.md`
 - [X] T053 [P] Update project README with preview environment section in `README.md`
 - [ ] T078 Migrate DEV-LOCAL-SETUP.md content into main README.md
@@ -281,14 +282,14 @@ Phase 8 (Migrate production to Pulumi)
 
 ### Operational Enhancements
 
-- [X] T054 [P] Add concurrency limits to prevent duplicate deployments for same PR in `.github/workflows/preview-deploy.yml`
-- [X] T055 [P] Implement deployment timeout (fail after 10 minutes) in `.github/workflows/preview-deploy.yml`
-- [X] T056 [P] Add error handling and detailed failure messages in `.github/workflows/preview-deploy.yml`
+- [X] T054 [P] Add concurrency limits to prevent duplicate deployments for same PR in `.github/workflows/deploy-preview.yml`
+- [X] T055 [P] Implement deployment timeout (fail after 10 minutes) in `.github/workflows/deploy-preview.yml`
+- [X] T056 [P] Add error handling and detailed failure messages in `.github/workflows/deploy-preview.yml`
 
 ### Monitoring & Observability
 
-- [X] T057 [P] Add deployment metrics to PR comment (build time, deploy time) in `.github/workflows/preview-deploy.yml`
-- [X] T058 [P] Implement health check URL validation after deployment in `.github/workflows/preview-deploy.yml`
+- [X] T057 [P] Add deployment metrics to PR comment (build time, deploy time) in `.github/workflows/deploy-preview.yml`
+- [X] T058 [P] Implement health check URL validation after deployment in `.github/workflows/deploy-preview.yml`
 
 ### Secrets Management
 
@@ -308,9 +309,9 @@ Phase 8 (Migrate production to Pulumi)
 
 ### Infrastructure Preview for OSS Safety
 
-- [ ] T066 [FR-066] Add Pulumi preview step to `preview-deploy.yml` that runs BEFORE environment approval gate
+- [ ] T066 [FR-066] Add Pulumi preview step to `deploy-preview.yml` that runs BEFORE environment approval gate
 - [ ] T067 [FR-067] Post Pulumi preview output as PR comment showing all infrastructure changes (creates, updates, deletes)
-- [ ] T068 [FR-068] Remove `--skip-preview` flags from all `pulumi up` commands in `preview-deploy.yml`
+- [ ] T068 [FR-068] Remove `--skip-preview` flags from all `pulumi up` commands in `deploy-preview.yml`
 
 ### TypeScript Linting and Code Quality
 
@@ -339,7 +340,7 @@ Phase 8 (Migrate production to Pulumi)
 
 ### Tasks
 
-- [ ] M013 Create local stack program: `infrastructure/pulumi/aphiria.com/src/local-stack.ts`
+- [ ] M013 Create local stack program: `infrastructure/pulumi/stacks/local-stack.ts`
 - [ ] M014 Import shared Helm chart component (cert-manager, nginx-gateway) in local stack
 - [ ] M015 [P] Import shared PostgreSQL component with local config in local stack
 - [ ] M016 [P] Import shared Gateway component with self-signed TLS for Minikube in local stack
@@ -387,12 +388,12 @@ Phase 8 (Migrate production to Pulumi)
 #### CI/CD Workflow Refactoring
 
 - [ ] M030 Create reusable deployment workflow `.github/workflows/deploy.yml` (called by environment-specific workflows)
-- [ ] M031 Refactor and rename `preview-deploy.yml` to `deploy-preview.yml` using reusable workflow
+- [ ] M031 Refactor and rename `deploy-preview.yml` to `deploy-preview.yml` using reusable workflow
 - [ ] M032 Create `deploy-production.yml` workflow using reusable workflow for production deployments
 
 #### Production Stack Implementation
 
-- [ ] M033 Create production stack program: `infrastructure/pulumi/aphiria.com/src/production-stack.ts`
+- [ ] M033 Create production stack program: `infrastructure/pulumi/stacks/production-stack.ts`
 - [ ] M034 Import shared Helm chart component (cert-manager, nginx-gateway) in production stack
 - [ ] M035 [P] Import shared PostgreSQL component with production config (2 replicas, persistent storage) in production stack
 - [ ] M036 [P] Import shared Gateway component with Let's Encrypt production TLS in production stack
@@ -447,7 +448,7 @@ Can parallelize after M002 (Pulumi project initialized):
 - **Group C**: M012 (documentation - can write while implementing)
 
 ### Within Phase 3 (US1)
-Can parallelize after T018 (ephemeral stack program created):
+Can parallelize after T018 (preview stack program created):
 - **Group A**: T019-T024 (namespace, database, ConfigMap, Secret, quotas, policies)
 - **Group B**: T025-T027 (Deployments and Services)
 - **Group C**: T028-T029 (HTTPRoute and rate limiting)
@@ -488,7 +489,7 @@ Track these throughout implementation:
 ### Manual Validation Per Phase
 
 **Phase 2 (Base Infrastructure)**:
-- Deploy `ephemeral-base` stack
+- Deploy `preview-base` stack
 - Verify all stack outputs present
 - Verify PostgreSQL accessible
 - Verify Gateway configured
@@ -555,7 +556,7 @@ Per user request: "let's migrate local first so i can try running this in miniku
 ### Rollback Strategy
 
 **Preview Environments**:
-1. Pulumi stack can be destroyed: `pulumi destroy --stack ephemeral-pr-{PR}`
+1. Pulumi stack can be destroyed: `pulumi destroy --stack preview-pr-{PR}`
 2. Database automatically dropped during stack destroy
 3. GitHub workflow can be manually cancelled
 4. No persistent state outside Pulumi + Kubernetes
@@ -577,30 +578,30 @@ Per user request: "let's migrate local first so i can try running this in miniku
 ## File Reference
 
 **Shared Pulumi Components** (Phase 0):
-- `infrastructure/pulumi/aphiria.com/src/shared/types.ts` - TypeScript type definitions
-- `infrastructure/pulumi/aphiria.com/src/shared/helm-charts.ts` - Helm chart deployments (cert-manager, nginx-gateway)
-- `infrastructure/pulumi/aphiria.com/src/shared/gateway.ts` - Gateway API resources, TLS certificates
-- `infrastructure/pulumi/aphiria.com/src/shared/database.ts` - PostgreSQL deployment and database creation
-- `infrastructure/pulumi/aphiria.com/src/shared/web-deployment.ts` - Web (nginx) deployment with js-config
-- `infrastructure/pulumi/aphiria.com/src/shared/api-deployment.ts` - API (nginx + PHP-FPM) deployment with initContainer
-- `infrastructure/pulumi/aphiria.com/src/shared/db-migration.ts` - Database migration job (Phinx + LexemeSeeder)
-- `infrastructure/pulumi/aphiria.com/src/shared/http-route.ts` - Gateway API HTTPRoute configuration
+- `infrastructure/pulumi/components/types.ts` - TypeScript type definitions
+- `infrastructure/pulumi/components/helm-charts.ts` - Helm chart deployments (cert-manager, nginx-gateway)
+- `infrastructure/pulumi/components/gateway.ts` - Gateway API resources, TLS certificates
+- `infrastructure/pulumi/components/database.ts` - PostgreSQL deployment and database creation
+- `infrastructure/pulumi/components/web-deployment.ts` - Web (nginx) deployment with js-config
+- `infrastructure/pulumi/components/api-deployment.ts` - API (nginx + PHP-FPM) deployment with initContainer
+- `infrastructure/pulumi/components/db-migration.ts` - Database migration job (Phinx + LexemeSeeder)
+- `infrastructure/pulumi/components/http-route.ts` - Gateway API HTTPRoute configuration
 
 **Pulumi Stack Programs**:
-- `infrastructure/pulumi/aphiria.com/src/local-stack.ts` - Minikube local development (Phase 7)
-- `infrastructure/pulumi/aphiria.com/src/production-stack.ts` - DigitalOcean production deployment (Phase 8)
-- `infrastructure/pulumi/ephemeral/src/base-stack.ts` - Persistent preview infrastructure (Phase 2)
-- `infrastructure/pulumi/ephemeral/src/ephemeral-stack.ts` - Per-PR ephemeral resources (Phase 3)
+- `infrastructure/pulumi/stacks/local-stack.ts` - Minikube local development (Phase 7)
+- `infrastructure/pulumi/stacks/production-stack.ts` - DigitalOcean production deployment (Phase 8)
+- `infrastructure/pulumi/stacks/preview-base.ts` - Persistent preview infrastructure (Phase 2)
+- `infrastructure/pulumi/stacks/preview-pr.ts` - Per-PR preview resources (Phase 3)
 
 **GitHub Workflows**:
 - `.github/workflows/build-preview-images.yml` - Docker image builds
-- `.github/workflows/preview-deploy.yml` - Preview deployment and updates
-- `.github/workflows/preview-cleanup.yml` - Cleanup on PR close
+- `.github/workflows/deploy-preview.yml` - Preview deployment and updates
+- `.github/workflows/cleanup-preview.yml` - Cleanup on PR close
 
 **Documentation**:
-- `infrastructure/pulumi/aphiria.com/README.md` - Shared components and stack documentation
-- `infrastructure/pulumi/ephemeral/README.md` - Preview environment Pulumi setup
-- `infrastructure/pulumi/ephemeral/QUICKSTART.md` - Maintainer preview deployment guide
+- `infrastructure/pulumi/README.md` - Shared components and stack documentation
+- `infrastructure/pulumi/README.md` - Preview environment Pulumi setup
+- `infrastructure/pulumi/QUICKSTART.md` - Maintainer preview deployment guide
 - `README.md` - Project README (updated with Pulumi workflow)
 - `.github/CONTRIBUTING.md` - Contributor guide with preview environment info
 

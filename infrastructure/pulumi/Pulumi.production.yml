@@ -1,3 +1,6 @@
+environment:
+  - aphiria.com/Production
+
 config:
   aphiria-com-infrastructure:webImage: davidbyoung/aphiria.com-web:8e1ebfd326d7d20aea7104f1269cb1a9ce325d69-a9b9031929d39f8dd4863bec41bbe5b76cb2b555
   aphiria-com-infrastructure:apiImage: nginx:alpine
