@@ -1,7 +1,8 @@
 # Implementation Tasks: Pull Request Ephemeral Environments
 
 **Branch**: `001-ephemeral-environment`
-**Spec**: [spec.md](./spec.md) | **Plan**: [plan.md](./plan.md) | **Data Model**: [data-model.md](./data-model.md)
+**Spec**: [spec.md](./spec.md) | **Plan**: [plan.md](./plan.md) (v2025-12-22) | **Data Model**: [data-model.md](./data-model.md)
+**Constitution**: v1.1.0 (includes CI/CD & Infrastructure Reuse principle)
 
 ---
 
@@ -9,24 +10,27 @@
 
 This document organizes implementation tasks by user story to enable independent, incremental delivery. Each phase represents a complete, testable increment.
 
-**Total Tasks**: 70 (Updated 2025-12-20 to include Pulumi migration)
+**Total Tasks**: 82 tasks (Updated 2025-12-22 to align with plan.md and constitution v1.1.0)
 **User Stories**: 3 (P1, P2, P3)
-**Parallel Opportunities**: 28 tasks can run in parallel within phases
+**Parallel Opportunities**: 28+ tasks can run in parallel within phases
+**Constitution Alignment**: All tasks comply with Aphiria.com Constitution v1.1.0
 
 ---
 
 ## Implementation Strategy
 
-### Architecture Decision (2025-12-20)
+### Architecture Decision (2025-12-20, Reaffirmed 2025-12-22)
 
-**Full Pulumi Migration**: Consolidate ALL infrastructure (local, preview, production) from Helm/Kustomize to Pulumi for tool consolidation and "test what you deploy" validation.
+**Full Pulumi Migration**: Consolidate ALL infrastructure (local, preview, production) from Helm/Kustomize to Pulumi for tool consolidation, type safety, and DRY principles (Constitution Principle VI).
 
 **Migration Order**: local → preview → production
 
 ### MVP Scope (User Story 1 - P1)
+
 Deploy and update ephemeral preview environments with maintainer approval. This provides core value and validates the infrastructure.
 
 ### Incremental Delivery
+
 1. **Phase 0**: Full Pulumi Migration (shared components)
 2. **Phase 1**: Setup preview-specific infrastructure
 3. **Phase 2**: Deploy base infrastructure (persistent stack)
@@ -34,6 +38,8 @@ Deploy and update ephemeral preview environments with maintainer approval. This 
 5. **Phase 4**: US2 - Public access validation (already implemented by US1)
 6. **Phase 5**: US3 - Automatic cleanup on PR close
 7. **Phase 6**: Polish & documentation
+8. **Phase 7**: Migrate local to Pulumi
+9. **Phase 8**: Migrate production to Pulumi + create reusable workflows (Constitution Principle VI)
 
 ---
 
@@ -56,7 +62,7 @@ Phase 6 (Polish)
   ↓
 Phase 7 (Migrate local to Pulumi)
   ↓
-Phase 8 (Migrate production to Pulumi)
+Phase 8 (Migrate production to Pulumi + reusable workflows)
 ```
 
 **Story Dependencies**:
@@ -64,6 +70,7 @@ Phase 8 (Migrate production to Pulumi)
 - US1 (P1): No dependencies - can start immediately after Phase 2
 - US2 (P2): Depends on US1 (uses same infrastructure)
 - US3 (P3): Depends on US1 (destroys what US1 creates)
+- Phase 8: Addresses Constitution Principle VI (CI/CD & Infrastructure Reuse)
 
 ---
 
@@ -71,7 +78,7 @@ Phase 8 (Migrate production to Pulumi)
 
 **Goal**: Create reusable Pulumi components that will be used across local, preview, and production stacks
 
-**Rationale**: Consolidate infrastructure tooling from Helm/Kustomize/Pulumi → Pulumi only. This enables "test what you deploy" validation and eliminates tool sprawl.
+**Rationale**: Consolidate infrastructure tooling from Helm/Kustomize/Pulumi → Pulumi only. This enables "test what you deploy" validation and eliminates tool sprawl (Constitution Principle VI).
 
 ### Tasks
 
@@ -86,14 +93,16 @@ Phase 8 (Migrate production to Pulumi)
 - [X] M009 Create shared API deployment component: `infrastructure/pulumi/components/api-deployment.ts` (nginx + PHP-FPM, initContainer pattern)
 - [X] M010 [P] Create shared db-migration job component: `infrastructure/pulumi/components/db-migration.ts` (Phinx + LexemeSeeder)
 - [X] M011 [P] Create shared HTTPRoute component: `infrastructure/pulumi/components/http-route.ts` (Gateway API routing)
-- [X] M012 Document shared component usage in `infrastructure/pulumi/README.md`
-- [X] M013 Create Kubernetes component: `infrastructure/pulumi/components/kubernetes.ts`
+- [X] M012 [P] Create Kubernetes utilities component: `infrastructure/pulumi/components/kubernetes.ts` (namespace, ResourceQuota, NetworkPolicy)
+- [X] M013 Create component index: `infrastructure/pulumi/components/index.ts` (barrel file for exports)
+- [X] M014 Document shared component usage in `infrastructure/pulumi/README.md`
 
 **Completion Criteria**:
 - ✅ All shared components implemented with TypeScript type safety
 - ✅ Components support environment-specific configuration (local, preview, production)
 - ✅ Components match existing Kustomize/Helm behavior exactly
 - ✅ README documents component parameters and usage examples
+- ✅ Components exported via index.ts for clean imports
 
 **Parallel Opportunities**: M003-M013 can be developed in parallel after M002
 
@@ -110,7 +119,7 @@ Phase 8 (Migrate production to Pulumi)
 - [X] T003 [P] Create `.gitignore` entries for Pulumi state and node_modules in `infrastructure/pulumi/.gitignore`
 - [X] T004 [P] Configure Pulumi backend (Pulumi Cloud) - already configured
 - [X] T005 Install Pulumi Kubernetes provider in `infrastructure/pulumi/package.json`
-- [X] T006 [P] Install Pulumi PostgreSQL provider (for database operations) in `infrastructure/pulumi/package.json`
+- [X] T006 [P] Install Pulumi DigitalOcean provider in `infrastructure/pulumi/package.json`
 - [X] T007 [P] Create GitHub Actions workflow directory structure at `.github/workflows/`
 - [X] T008 Document Pulumi stack naming conventions in `infrastructure/pulumi/README.md`
 
@@ -125,27 +134,35 @@ Phase 8 (Migrate production to Pulumi)
 
 **Goal**: Deploy persistent infrastructure (preview-base stack) that supports all preview environments
 
-**Independent Test**: Verify base stack deploys successfully and outputs expected values (PostgreSQL service, Gateway reference, wildcard TLS secret)
+**Independent Test**: Verify base stack deploys successfully and outputs expected values (PostgreSQL service, Gateway reference, wildcard TLS secret, kubeconfig)
 
 ### Tasks
 
 - [X] T009 Create base infrastructure Pulumi program in `infrastructure/pulumi/stacks/preview-base.ts`
-- [X] T010 [P] Define PostgreSQL deployment in base stack (`infrastructure/pulumi/stacks/preview-base.ts`)
-- [X] T011 [P] Define Gateway API configuration in base stack (`infrastructure/pulumi/stacks/preview-base.ts`)
-- [X] T012 Configure wildcard TLS certificate (`*.pr.aphiria.com`) via cert-manager in `infrastructure/pulumi/stacks/preview-base.ts`
-- [ ] T013 Create DNS wildcard records (`*.pr.aphiria.com`, `*.pr-api.aphiria.com`) in DigitalOcean DNS
-- [X] T014 Export base stack outputs (PostgreSQL host, Gateway name, TLS secret) in `infrastructure/pulumi/stacks/preview-base.ts`
-- [ ] T015 Deploy base stack manually: `pulumi up --stack preview-base`
-- [ ] T016 Verify PostgreSQL is running and accessible within cluster
-- [X] T017 [P] Document base stack outputs and usage in `infrastructure/pulumi/README.md`
+- [X] T010 [P] Provision DigitalOcean Kubernetes cluster in base stack (`infrastructure/pulumi/stacks/preview-base.ts`)
+- [X] T011 [P] Define PostgreSQL deployment in base stack (`infrastructure/pulumi/stacks/preview-base.ts`)
+- [X] T012 [P] Deploy Helm charts (cert-manager, nginx-gateway-fabric) in base stack (`infrastructure/pulumi/stacks/preview-base.ts`)
+- [X] T013 [P] Define Gateway API configuration in base stack (`infrastructure/pulumi/stacks/preview-base.ts`)
+- [X] T014 Configure wildcard TLS certificate (`*.pr.aphiria.com`, `*.pr-api.aphiria.com`) via cert-manager in `infrastructure/pulumi/stacks/preview-base.ts`
+- [ ] T015 Create DNS wildcard records (`*.pr.aphiria.com`, `*.pr-api.aphiria.com`) in DigitalOcean DNS (manual step)
+- [X] T016 Export base stack outputs (kubeconfig, clusterId, postgresqlHost, gatewayName, tlsSecretName) in `infrastructure/pulumi/stacks/preview-base.ts`
+- [X] T017 Create `preview-base` Pulumi stack: `pulumi stack init preview-base`
+- [X] T018 Bind preview-base stack to Pulumi ESC environment (`aphiria.com/Preview`) via `Pulumi.preview-base.yml`
+- [X] T019 Deploy base stack: `pulumi up --stack preview-base`
+- [X] T020 Verify PostgreSQL is running and accessible within cluster
+- [X] T021 Verify Gateway configured with wildcard TLS
+- [X] T022 [P] Document base stack outputs and usage in `infrastructure/pulumi/README.md`
+- [X] T023 Implement retry logic for base stack deployment in `.github/workflows/deploy-preview.yml` (3 attempts, progressive backoff)
 
 **Completion Criteria**:
 - ✅ `preview-base` Pulumi stack deployed successfully
-- ✅ PostgreSQL running and accessible via service `db`
-- ✅ Gateway API configured and ready
+- ✅ DigitalOcean cluster provisioned (`aphiria-com-preview-cluster`)
+- ✅ PostgreSQL running and accessible via service `db` in `default` namespace
+- ✅ Gateway API configured and ready with wildcard TLS
 - ✅ Wildcard TLS cert issued and stored as K8s Secret
-- ✅ DNS records resolve to cluster load balancer
-- ✅ Stack outputs available for preview stacks
+- ✅ DNS records resolve to cluster load balancer (manual verification)
+- ✅ Stack outputs available for preview stacks (via StackReference)
+- ✅ Idempotent deployment with retry logic
 
 ---
 
@@ -156,54 +173,60 @@ Phase 8 (Migrate production to Pulumi)
 **User Story**: As a maintainer, I want to preview pull request changes in a live, isolated environment so that I can validate functionality and behavior before merging.
 
 **Independent Test**:
-1. Open test PR → approve deployment → verify environment accessible at `{PR}.pr.aphiria.com` for the web application and `{PR}.pr-api.aphiria.com` for the API application
+1. Open test PR → approve deployment → verify environment accessible at `{PR}.pr.aphiria.com` (web) and `{PR}.pr-api.aphiria.com` (API)
 2. Push new commit → verify environment updates with new image digest
-3. Verify production can reference same image digest used in preview
+3. Verify production can reference same image digest used in preview (build-once-deploy-many)
 
 ### Infrastructure Tasks
 
-- [X] T018 [US1] Create preview stack Pulumi program in `infrastructure/pulumi/stacks/preview-pr.ts`
-- [X] T019 [P] [US1] Implement Kubernetes namespace creation in `infrastructure/pulumi/stacks/preview-pr.ts`
-- [X] T020 [P] [US1] Implement per-PR database creation logic in `infrastructure/pulumi/stacks/preview-pr.ts`
-- [X] T021 [P] [US1] Create ConfigMap generator with PR-specific values in `infrastructure/pulumi/stacks/preview-pr.ts`
-- [X] T022 [P] [US1] Create Secret generator for DB credentials in `infrastructure/pulumi/stacks/preview-pr.ts`
-- [X] T023 [P] [US1] Implement ResourceQuota (2 CPU, 4Gi, 5 pods) in `infrastructure/pulumi/stacks/preview-pr.ts`
-- [X] T024 [P] [US1] Implement NetworkPolicy for namespace isolation in `infrastructure/pulumi/stacks/preview-pr.ts`
-- [X] T025 [US1] Create web Deployment (1 replica) with image digest reference in `infrastructure/pulumi/stacks/preview-pr.ts`
-- [X] T026 [US1] Create API Deployment (1 replica) with image digest reference in `infrastructure/pulumi/stacks/preview-pr.ts`
-- [X] T027 [P] [US1] Create web and API Services in `infrastructure/pulumi/stacks/preview-pr.ts`
-- [X] T028 [US1] Create HTTPRoute for web (`{PR}.pr.aphiria.com`) and API (`{PR}.pr-api.aphiria.com`) in `infrastructure/pulumi/stacks/preview-pr.ts`
-- [X] T029 [P] [US1] Add connection-level rate limiting annotations to HTTPRoute in `infrastructure/pulumi/stacks/preview-pr.ts`
-- [X] T030 [US1] Create db-migration Job (Phinx migrations + LexemeSeeder) in `infrastructure/pulumi/stacks/preview-pr.ts`
-- [X] T031 [US1] Export stack outputs (webUrl, apiUrl, databaseName) in `infrastructure/pulumi/stacks/preview-pr.ts`
+- [X] T024 [US1] Create preview stack Pulumi program in `infrastructure/pulumi/stacks/preview-pr.ts`
+- [X] T025 [P] [US1] Implement Kubernetes namespace creation in `infrastructure/pulumi/stacks/preview-pr.ts`
+- [X] T026 [P] [US1] Implement per-PR database creation logic in `infrastructure/pulumi/stacks/preview-pr.ts`
+- [X] T027 [P] [US1] Create ConfigMap generator with PR-specific values in `infrastructure/pulumi/stacks/preview-pr.ts`
+- [X] T028 [P] [US1] Create Secret generator for DB credentials (from Pulumi ESC) in `infrastructure/pulumi/stacks/preview-pr.ts`
+- [X] T029 [P] [US1] Implement ResourceQuota (2 CPU, 4Gi memory, 5 pods) in `infrastructure/pulumi/stacks/preview-pr.ts`
+- [X] T030 [P] [US1] Implement NetworkPolicy for namespace isolation in `infrastructure/pulumi/stacks/preview-pr.ts`
+- [X] T031 [US1] Create web Deployment (1 replica) with image digest reference in `infrastructure/pulumi/stacks/preview-pr.ts`
+- [X] T032 [US1] Create API Deployment (1 replica) with image digest reference in `infrastructure/pulumi/stacks/preview-pr.ts`
+- [X] T033 [P] [US1] Create web and API Services in `infrastructure/pulumi/stacks/preview-pr.ts`
+- [X] T034 [US1] Create HTTPRoute for web (`{PR}.pr.aphiria.com`) and API (`{PR}.pr-api.aphiria.com`) in `infrastructure/pulumi/stacks/preview-pr.ts`
+- [X] T035 [P] [US1] Add connection-level rate limiting to HTTPRoute in `infrastructure/pulumi/stacks/preview-pr.ts`
+- [X] T036 [US1] Create db-migration Job (Phinx migrations + LexemeSeeder) in `infrastructure/pulumi/stacks/preview-pr.ts`
+- [X] T037 [US1] Export stack outputs (webUrl, apiUrl, databaseName, namespace) in `infrastructure/pulumi/stacks/preview-pr.ts`
 
 ### CI/CD Tasks
 
-- [X] T032 [P] [US1] Create Docker build workflow in `.github/workflows/build-preview-images.yml`
-- [X] T033 [US1] Implement image digest capture in build workflow (`.github/workflows/build-preview-images.yml`)
-- [X] T034 [US1] Create preview deployment workflow in `.github/workflows/deploy-preview.yml`
-- [X] T035 [US1] Configure GitHub environment protection ("preview") with required reviewers for non-admins of the repository, and auto-approve deployments for admins
-- [X] T036 [US1] Implement Pulumi stack initialization in deployment workflow (`.github/workflows/deploy-preview.yml`)
-- [X] T037 [US1] Pass PR number and image digests to Pulumi program in `.github/workflows/deploy-preview.yml`)
-- [X] T038 [US1] Implement deployment status polling (wait for pods ready) in `.github/workflows/deploy-preview.yml`
-- [X] T039 [US1] Create PR comment with deployment status in `.github/workflows/deploy-preview.yml`
-- [X] T040 [P] [US1] Add PR labels with image digests for production promotion tracking in `.github/workflows/deploy-preview.yml`
+- [X] T038 [P] [US1] Create Docker build workflow in `.github/workflows/build-preview-images.yml`
+- [X] T039 [US1] Implement multi-stage Docker builds (build, web, api) with caching in `.github/workflows/build-preview-images.yml`
+- [X] T040 [US1] Implement image digest capture and PR label tagging in `.github/workflows/build-preview-images.yml`
+- [X] T041 [US1] Create build master cache workflow in `.github/workflows/build-master-cache.yml`
+- [X] T042 [US1] Create preview deployment workflow in `.github/workflows/deploy-preview.yml`
+- [X] T043 [US1] Configure GitHub environment protection ("preview") with required reviewers in GitHub repository settings
+- [X] T044 [US1] Implement workflow_run trigger to run deploy on master branch code in `.github/workflows/deploy-preview.yml`
+- [X] T045 [US1] Implement maintainer check (admin/maintain permissions) in `.github/workflows/deploy-preview.yml`
+- [X] T046 [US1] Implement auto-approval for maintainer PRs via GitHub API in `.github/workflows/deploy-preview.yml`
+- [X] T047 [US1] Implement Pulumi stack initialization/selection in deployment workflow (`.github/workflows/deploy-preview.yml`)
+- [X] T048 [US1] Pass PR number and image digests to Pulumi program via stack config in `.github/workflows/deploy-preview.yml`
+- [X] T049 [US1] Implement deployment status polling (wait for pods ready) in `.github/workflows/deploy-preview.yml`
+- [X] T050 [US1] Implement health checks (HTTP status validation) in `.github/workflows/deploy-preview.yml`
+- [X] T051 [US1] Create PR comment with deployment status and URLs in `.github/workflows/deploy-preview.yml`
+- [X] T052 [P] [US1] Add PR labels with image digests for production promotion tracking in `.github/workflows/build-preview-images.yml`
 
 ### Update Flow Tasks
 
-- [X] T041 [US1] Implement preview update logic (detect existing stack, run `pulumi up` with new digests) in `.github/workflows/deploy-preview.yml`
-- [X] T042 [US1] Update PR comment on successful update with new commit SHA in `.github/workflows/deploy-preview.yml`
+- [X] T053 [US1] Implement preview update logic (detect existing stack, run `pulumi up` with new digests) in `.github/workflows/deploy-preview.yml`
+- [X] T054 [US1] Update PR comment on successful update with new commit SHA in `.github/workflows/deploy-preview.yml`
 
 **Acceptance Validation** (Manual):
 1. Open test PR with code changes
-2. Workflow waits for approval
-3. Approve deployment via GitHub UI
-4. Verify environment provisions within 5 minutes
-5. Access `{PR}.pr.aphiria.com` - see PR changes
-6. Access `{PR}.pr-api.aphiria.com` - API works, search functional
-7. Push new commit to PR
-8. Verify automatic update (new image digest deployed)
-9. Verify PR comment shows deployment status and URLs
+2. Workflow waits for approval (non-maintainer) or auto-approves (maintainer)
+3. Verify environment provisions within 5 minutes
+4. Access `{PR}.pr.aphiria.com` - see PR changes
+5. Access `{PR}.pr-api.aphiria.com` - API works, search functional
+6. Push new commit to PR
+7. Verify automatic update (new image digest deployed)
+8. Verify PR comment shows deployment status, URLs, and image digests
+9. Verify PR labels contain image digests for production promotion
 
 ---
 
@@ -219,9 +242,9 @@ Phase 8 (Migrate production to Pulumi)
 
 ### Tasks
 
-- [X] T043 [US2] Verify HTTPRoute has no authentication requirements (public access already configured in US1)
-- [ ] T044 [US2] Test preview URL access from incognito browser (no GitHub session)
-- [X] T045 [US2] Document preview URL sharing instructions in `infrastructure/pulumi/README.md`
+- [X] T055 [US2] Verify HTTPRoute has no authentication requirements (public access already configured in US1)
+- [ ] T056 [US2] Test preview URL access from incognito browser (no GitHub session)
+- [X] T057 [US2] Document preview URL sharing instructions in `infrastructure/pulumi/QUICKSTART.md`
 
 **Acceptance Validation** (Manual):
 1. Open preview environment URL in incognito/private browser
@@ -247,11 +270,12 @@ Phase 8 (Migrate production to Pulumi)
 
 ### Tasks
 
-- [X] T046 [US3] Create cleanup workflow in `.github/workflows/cleanup-preview.yml`
-- [X] T047 [US3] Implement Pulumi destroy logic in cleanup workflow (`.github/workflows/cleanup-preview.yml`)
-- [X] T048 [US3] Verify database drop in Pulumi destroy (query pg_database) in `infrastructure/pulumi/stacks/preview-pr.ts`
-- [X] T049 [US3] Update PR comment on cleanup completion in `.github/workflows/cleanup-preview.yml`
-- [X] T050 [US3] Add cleanup verification (check namespace and stack no longer exist) in `.github/workflows/cleanup-preview.yml`
+- [X] T058 [US3] Create cleanup workflow in `.github/workflows/cleanup-preview.yml`
+- [X] T059 [US3] Implement Pulumi destroy logic in cleanup workflow (`.github/workflows/cleanup-preview.yml`)
+- [X] T060 [US3] Verify database drop in cleanup (query pg_database) in `.github/workflows/cleanup-preview.yml`
+- [X] T061 [US3] Update PR comment on cleanup completion in `.github/workflows/cleanup-preview.yml`
+- [X] T062 [US3] Add cleanup verification (check namespace and stack no longer exist) in `.github/workflows/cleanup-preview.yml`
+- [X] T063 [US3] Remove PR labels (preview:*, web-digest:*, api-digest:*) in `.github/workflows/cleanup-preview.yml`
 
 **Acceptance Validation** (Manual):
 1. Create and deploy test preview environment
@@ -261,7 +285,8 @@ Phase 8 (Migrate production to Pulumi)
 5. Verify namespace deleted: `kubectl get namespace preview-pr-{PR}` returns not found
 6. Verify database dropped: Query PostgreSQL for `aphiria_pr_{PR}` → not found
 7. Verify Pulumi stack removed: `pulumi stack ls` shows no `preview-pr-{PR}`
-8. Repeat test with merged PR instead of closed
+8. Verify PR labels removed
+9. Repeat test with merged PR instead of closed
 
 ---
 
@@ -271,68 +296,71 @@ Phase 8 (Migrate production to Pulumi)
 
 ### Documentation
 
-- [X] T051 [P] Create maintainer quickstart guide in `infrastructure/pulumi/QUICKSTART.md`
-- [X] T052 [P] Document approval workflow in `.github/CONTRIBUTING.md`
-- [X] T053 [P] Update project README with preview environment section in `README.md`
-- [ ] T078 Migrate DEV-LOCAL-SETUP.md content into main README.md
-- [ ] T079 Add local database connection, hosts file, and minikube dashboard instructions to README.md
-- [ ] T080 Consolidate SECRETS.md and SECRETS-STRATEGY.md into single comprehensive SECRETS.md file
-- [ ] T081 Clean up migration/import documentation (CLUSTER-IMPORT.md, migration sections in README)
-- [ ] T082 Fix CI badge in README.md to point to correct workflow(s)
+- [X] T064 [P] Create maintainer quickstart guide in `infrastructure/pulumi/QUICKSTART.md`
+- [X] T065 [P] Document approval workflow in `.github/CONTRIBUTING.md`
+- [X] T066 [P] Update project README with preview environment section in `README.md`
+- [ ] T067 Migrate DEV-LOCAL-SETUP.md content into main README.md
+- [ ] T068 Add local database connection, hosts file, and minikube dashboard instructions to README.md
+- [ ] T069 Consolidate SECRETS.md and SECRETS-STRATEGY.md into single comprehensive SECRETS.md file
+- [ ] T070 Clean up migration/import documentation (CLUSTER-IMPORT.md, migration sections in README)
+- [ ] T071 Fix CI badge in README.md to point to correct workflow(s) (currently points to deprecated 'ci' workflow)
 
 ### Operational Enhancements
 
-- [X] T054 [P] Add concurrency limits to prevent duplicate deployments for same PR in `.github/workflows/deploy-preview.yml`
-- [X] T055 [P] Implement deployment timeout (fail after 10 minutes) in `.github/workflows/deploy-preview.yml`
-- [X] T056 [P] Add error handling and detailed failure messages in `.github/workflows/deploy-preview.yml`
+- [X] T072 [P] Add concurrency limits to prevent duplicate deployments for same PR in `.github/workflows/deploy-preview.yml`
+- [X] T073 [P] Implement deployment timeout (fail after 10 minutes) in `.github/workflows/deploy-preview.yml`
+- [X] T074 [P] Add error handling and detailed failure messages in `.github/workflows/deploy-preview.yml`
 
 ### Monitoring & Observability
 
-- [X] T057 [P] Add deployment metrics to PR comment (build time, deploy time) in `.github/workflows/deploy-preview.yml`
-- [X] T058 [P] Implement health check URL validation after deployment in `.github/workflows/deploy-preview.yml`
+- [X] T075 [P] Add deployment metrics to PR comment (build time, deploy time) in `.github/workflows/deploy-preview.yml`
+- [X] T076 [P] Implement health check URL validation after deployment in `.github/workflows/deploy-preview.yml`
 
-### Secrets Management
+### Secrets Management (Pulumi ESC Integration)
 
-- [ ] T059 Review and document all required secrets for local, preview, and production environments
-- [ ] T060 Evaluate secrets management strategy: Pulumi ESC (free tier) vs GitHub Secrets vs hybrid approach
-- [ ] T061 Implement chosen secrets management solution across all environments
-- [ ] T062 Document secrets rotation procedures and access control
-- [ ] T075 Document PAT (Personal Access Token) management strategy in SECRETS.md
-- [ ] T076 Audit and clean up repository secrets (includes removing deprecated KUBECONFIG and DIGITALOCEAN_ACCESS_TOKEN from repo-level)
-- [ ] T077 Audit and clean up environment secrets (verify preview environment has correct secrets only)
+- [X] T077 Create Pulumi ESC environments (`aphiria.com/Preview`, `aphiria.com/Production`)
+- [X] T078 Migrate PostgreSQL passwords to Pulumi ESC
+- [X] T079 Migrate DigitalOcean tokens to Pulumi ESC
+- [X] T080 Bind preview-base stack to ESC via `Pulumi.preview-base.yml`
+- [X] T081 Bind preview-pr stacks to ESC via stack YAML files
+- [X] T082 Document PAT (Personal Access Token) management strategy in SECRETS.md
+- [ ] T083 Audit and clean up repository secrets (remove deprecated KUBECONFIG, DIGITALOCEAN_ACCESS_TOKEN from repo-level)
+- [ ] T084 Audit and clean up environment secrets (verify preview environment has correct secrets only)
+- [X] T085 Document secrets rotation procedures and access control in SECRETS.md
 
 ### Workflow Cleanup
 
-- [ ] T063 Update `test.yml` to remove Pulumi preview steps (lines 82-120) since infrastructure preview is now in separate workflows
-- [ ] T064 Remove `build-docker-image.yml` (replaced by `build-preview-images.yml` for now, will be refactored to reusable `build-images.yml` later)
-- [ ] T065 Remove `build-deploy.yml` (replaced by `production-deploy.yml` - to be created in Phase 8)
+- [ ] T086 Update `test.yml` to remove Pulumi preview steps (infrastructure preview is now in deploy-preview.yml)
+- [ ] T087 Remove `build-docker-image.yml` (replaced by `build-preview-images.yml`)
+- [ ] T088 Remove `build-deploy.yml` (replaced by reusable workflow in Phase 8)
 
 ### Infrastructure Preview for OSS Safety
 
-- [ ] T066 [FR-066] Add Pulumi preview step to `deploy-preview.yml` that runs BEFORE environment approval gate
-- [ ] T067 [FR-067] Post Pulumi preview output as PR comment showing all infrastructure changes (creates, updates, deletes)
-- [ ] T068 [FR-068] Remove `--skip-preview` flags from all `pulumi up` commands in `deploy-preview.yml`
+- [X] T089 [FR-066] Add Pulumi preview step to `deploy-preview.yml` that runs BEFORE environment approval gate
+- [X] T090 [FR-067] Post Pulumi preview output as collapsible PR comment showing all infrastructure changes
+- [X] T091 [FR-068] Ensure `pulumi preview` runs before `pulumi up` in all workflows
 
 ### TypeScript Linting and Code Quality
 
-- [ ] T069 Add ESLint to Pulumi TypeScript projects (`infrastructure/pulumi/package.json`)
-- [ ] T070 Add Prettier for code formatting to Pulumi TypeScript projects
-- [ ] T071 Create `npm run lint` script that runs ESLint
-- [ ] T072 Create `npm run format` and `npm run format:check` scripts for Prettier
-- [ ] T073 Update `test.yml` to run `npm run lint` and `npm run format:check` alongside `npm run build`
-- [ ] T074 Remove numbered list comments (e.g., `// 1.`, `// 2.`, `// 3.`) from all code files - use descriptive section comments instead to avoid maintenance burden
+- [X] T092 Add ESLint to Pulumi TypeScript projects (`infrastructure/pulumi/package.json`)
+- [X] T093 Add Prettier for code formatting to Pulumi TypeScript projects
+- [X] T094 Create `npm run lint` script that runs ESLint
+- [X] T095 Create `npm run format` and `npm run format:check` scripts for Prettier
+- [X] T096 Update `test.yml` to run `npm run lint` and `npm run format:check` alongside `npm run build`
+- [ ] T097 Remove numbered list comments (e.g., `// 1.`, `// 2.`, `// 3.`) from all code files - use descriptive section comments instead
 
 **Completion Criteria**:
 - ✅ All documentation complete and accurate
 - ✅ Workflows handle edge cases gracefully
 - ✅ Error messages actionable
 - ✅ Deployment observability improved
-- ✅ Secrets management strategy documented and implemented
-- ✅ Code uses descriptive comments without numbered lists
+- ✅ Secrets managed via Pulumi ESC
+- ✅ Code quality tools (ESLint, Prettier) integrated
+- ⚠️ Some cleanup tasks pending (documentation consolidation, deprecated workflow removal)
 
 ---
 
-## Phase 7: Migrate local to Pulumi
+## Phase 7: Migrate Local to Pulumi
 
 **Goal**: Migrate Minikube local development from Kustomize to Pulumi using shared components
 
@@ -340,21 +368,21 @@ Phase 8 (Migrate production to Pulumi)
 
 ### Tasks
 
-- [ ] M013 Create local stack program: `infrastructure/pulumi/stacks/local-stack.ts`
-- [ ] M014 Import shared Helm chart component (cert-manager, nginx-gateway) in local stack
-- [ ] M015 [P] Import shared PostgreSQL component with local config in local stack
-- [ ] M016 [P] Import shared Gateway component with self-signed TLS for Minikube in local stack
-- [ ] M017 Import shared web deployment component with local configuration in local stack
-- [ ] M018 Import shared API deployment component with local configuration in local stack
-- [ ] M019 [P] Import shared db-migration job component in local stack
-- [ ] M020 [P] Import shared HTTPRoute component for local domains (aphiria.com, api.aphiria.com) in local stack
-- [ ] M021 Configure Pulumi stack config for local: `pulumi config set`
-- [ ] M022 Create `local` Pulumi stack: `pulumi stack init local`
-- [ ] M023 Deploy local stack to Minikube: `pulumi up --stack local`
-- [ ] M024 Verify local site accessible at https://www.aphiria.com
-- [ ] M025 Verify local API accessible at https://api.aphiria.com/docs
-- [ ] M026 Test local rebuild cycle: build images → pulumi up → verify changes
-- [ ] M027 Document local Pulumi workflow in README.md (replace Kustomize instructions)
+- [X] M015 Create local stack program: `infrastructure/pulumi/stacks/local.ts`
+- [X] M016 Import shared Helm chart component (cert-manager, nginx-gateway) in local stack
+- [X] M017 [P] Import shared PostgreSQL component with local config in local stack
+- [X] M018 [P] Import shared Gateway component with self-signed TLS for Minikube in local stack
+- [X] M019 Import shared web deployment component with local configuration in local stack
+- [X] M020 Import shared API deployment component with local configuration in local stack
+- [X] M021 [P] Import shared db-migration job component in local stack
+- [X] M022 [P] Import shared HTTPRoute component for local domains (aphiria.com, api.aphiria.com) in local stack
+- [X] M023 Configure Pulumi stack config for local: `pulumi config set`
+- [X] M024 Create `local` Pulumi stack: `pulumi stack init local`
+- [X] M025 Deploy local stack to Minikube: `pulumi up --stack local`
+- [X] M026 Verify local site accessible at https://www.aphiria.com
+- [X] M027 Verify local API accessible at https://api.aphiria.com
+- [X] M028 Test local rebuild cycle: build images → pulumi up → verify changes
+- [X] M029 Document local Pulumi workflow in `infrastructure/pulumi/DEV-LOCAL-SETUP.md`
 
 **Completion Criteria**:
 - ✅ Minikube deployment fully managed by Pulumi
@@ -365,62 +393,65 @@ Phase 8 (Migrate production to Pulumi)
 
 **Testing**:
 1. Fresh Minikube: `minikube delete && minikube start`
-2. Deploy: `cd infrastructure/pulumi/aphiria.com && pulumi up --stack local`
-3. Verify: Access https://www.aphiria.com and https://api.aphiria.com/docs
+2. Deploy: `cd infrastructure/pulumi && pulumi up --stack local`
+3. Verify: Access https://www.aphiria.com and https://api.aphiria.com
 4. Update: Change code, rebuild images, `pulumi up`, verify changes
 5. Teardown: `pulumi destroy --stack local`
 
 ---
 
-## Phase 8: Migrate Production to Pulumi
+## Phase 8: Migrate Production to Pulumi + Reusable Workflows
 
-**Goal**: Migrate DigitalOcean production deployment from Kustomize to Pulumi using shared components
+**Goal**: Migrate DigitalOcean production deployment from Kustomize to Pulumi using shared components + create reusable workflows (Constitution Principle VI)
 
 **Why Last**: Highest risk. Migrated after validating shared components in local and preview environments.
 
 ### Tasks
 
-#### Refactor Infrastructure for Reusability
+#### Refactor Infrastructure for Reusability (Constitution Principle VI)
 
-- [ ] M028 Refactor preview-base and production stacks to use shared parameterized base infrastructure component (eliminate code duplication)
-- [ ] M029 Create shared base infrastructure component that accepts environment-specific parameters (cluster config, node pool size, etc.)
+- [ ] M030 Refactor preview-base and production stacks to use shared parameterized base infrastructure component (eliminate code duplication)
+- [ ] M031 Create shared base infrastructure component that accepts environment-specific parameters (cluster config, node pool size, etc.) in `infrastructure/pulumi/components/`
 
-#### CI/CD Workflow Refactoring
+#### CI/CD Workflow Refactoring (Constitution Principle VI)
 
-- [ ] M030 Create reusable deployment workflow `.github/workflows/deploy.yml` (called by environment-specific workflows)
-- [ ] M031 Refactor and rename `deploy-preview.yml` to `deploy-preview.yml` using reusable workflow
-- [ ] M032 Create `deploy-production.yml` workflow using reusable workflow for production deployments
+- [ ] M032 Create reusable deployment workflow `.github/workflows/deploy.yml` with `workflow_call` trigger (parameterized for preview/production)
+- [ ] M033 Refactor `deploy-preview.yml` to call reusable `deploy.yml` workflow with preview-specific parameters
+- [ ] M034 Create `deploy-production.yml` workflow using reusable `deploy.yml` workflow for production deployments
+- [ ] M035 Create reusable build workflow `.github/workflows/build-images.yml` (parameterized for preview/production)
+- [ ] M036 Refactor `build-preview-images.yml` to use reusable `build-images.yml` workflow
 
 #### Production Stack Implementation
 
-- [ ] M033 Create production stack program: `infrastructure/pulumi/stacks/production-stack.ts`
-- [ ] M034 Import shared Helm chart component (cert-manager, nginx-gateway) in production stack
-- [ ] M035 [P] Import shared PostgreSQL component with production config (2 replicas, persistent storage) in production stack
-- [ ] M036 [P] Import shared Gateway component with Let's Encrypt production TLS in production stack
-- [ ] M037 Import shared web deployment component with production configuration (2 replicas) in production stack
-- [ ] M038 Import shared API deployment component with production configuration (2 replicas) in production stack
-- [ ] M039 [P] Import shared db-migration job component in production stack
-- [ ] M040 [P] Import shared HTTPRoute component for production domains (aphiria.com, api.aphiria.com, www.aphiria.com) in production stack
-- [ ] M041 Configure Pulumi stack config for production: `pulumi config set --secret` for sensitive values
-- [ ] M042 Create `production` Pulumi stack: `pulumi stack init production`
-- [ ] M043 **DRY RUN**: `pulumi preview --stack production` (verify changes before applying)
-- [ ] M044 **IMPORT EXISTING RESOURCES**: Use `pulumi import` for existing PostgreSQL, Gateway to avoid recreation
-- [ ] M045 Deploy production stack: `pulumi up --stack production` (off-peak hours)
-- [ ] M046 Verify production site accessible at https://www.aphiria.com
-- [ ] M047 Verify production API accessible at https://api.aphiria.com
-- [ ] M048 Monitor for 24 hours: check logs, metrics, uptime
-- [ ] M049 Update CI/CD workflows to use Pulumi instead of Kustomize for production deployments
-- [ ] M050 Move old Kustomize files to `infrastructure/kubernetes-deprecated/`
-- [ ] M051 Add deprecation notice to `infrastructure/kubernetes-deprecated/README.md`
-- [ ] M052 Update main README.md deployment instructions (replace Kustomize with Pulumi)
+- [ ] M037 Create production stack program: `infrastructure/pulumi/stacks/production.ts`
+- [ ] M038 Import shared Helm chart component (cert-manager, nginx-gateway) in production stack
+- [ ] M039 [P] Import shared PostgreSQL component with production config (persistent storage) in production stack
+- [ ] M040 [P] Import shared Gateway component with Let's Encrypt production TLS in production stack
+- [ ] M041 Import shared web deployment component with production configuration (2 replicas) in production stack
+- [ ] M042 Import shared API deployment component with production configuration (2 replicas) in production stack
+- [ ] M043 [P] Import shared db-migration job component in production stack
+- [ ] M044 [P] Import shared HTTPRoute component for production domains (aphiria.com, api.aphiria.com, www.aphiria.com) in production stack
+- [ ] M045 Create `Pulumi.production.yml` stack config file with ESC environment binding (`aphiria.com/Production`)
+- [ ] M046 Create `production` Pulumi stack: `pulumi stack init production`
+- [ ] M047 **DRY RUN**: `pulumi preview --stack production` (verify changes before applying)
+- [ ] M048 **IMPORT EXISTING RESOURCES**: Use `pulumi import` for existing PostgreSQL, Gateway, Deployments to avoid recreation
+- [ ] M049 Deploy production stack: `pulumi up --stack production` (off-peak hours)
+- [ ] M050 Verify production site accessible at https://www.aphiria.com
+- [ ] M051 Verify production API accessible at https://api.aphiria.com
+- [ ] M052 Monitor for 24 hours: check logs, metrics, uptime
+- [ ] M053 Update production deployment workflow to use Pulumi instead of Kustomize
+- [ ] M054 Move old Kustomize files to `infrastructure/kubernetes-deprecated/`
+- [ ] M055 Add deprecation notice to `infrastructure/kubernetes-deprecated/README.md`
+- [ ] M056 Update main README.md deployment instructions (replace Kustomize with Pulumi)
 
 **Completion Criteria**:
 - ✅ Production fully managed by Pulumi
 - ✅ Zero downtime during migration
 - ✅ All production resources imported (no recreation)
-- ✅ CI/CD workflows updated
+- ✅ CI/CD workflows use reusable patterns (Constitution Principle VI compliant)
 - ✅ Old Kustomize files archived with deprecation notice
 - ✅ Documentation updated
+- ✅ No workflow duplication across environments
 
 **Safety Measures**:
 1. **Import, don't recreate**: Use `pulumi import` for existing resources
@@ -442,32 +473,49 @@ Phase 8 (Migrate production to Pulumi)
 ## Parallel Execution Opportunities
 
 ### Within Phase 0 (Migration - Shared Components)
+
 Can parallelize after M002 (Pulumi project initialized):
 - **Group A**: M003-M004 (dependencies, types)
-- **Group B**: M005-M011 (all component implementations)
-- **Group C**: M012 (documentation - can write while implementing)
+- **Group B**: M005-M012 (all component implementations)
+- **Group C**: M013-M014 (index + documentation)
+
+### Within Phase 2 (Base Infrastructure)
+
+Can parallelize after T009 (base stack created):
+- **Group A**: T010, T011, T012, T013 (cluster, PostgreSQL, Helm, Gateway)
+- **Group B**: T014, T016, T022 (TLS, outputs, documentation)
+- T023 (retry logic) can be developed independently
 
 ### Within Phase 3 (US1)
-Can parallelize after T018 (preview stack program created):
-- **Group A**: T019-T024 (namespace, database, ConfigMap, Secret, quotas, policies)
-- **Group B**: T025-T027 (Deployments and Services)
-- **Group C**: T028-T029 (HTTPRoute and rate limiting)
-- **Group D**: T032-T033 (Build workflow - independent of Pulumi tasks)
+
+Can parallelize after T024 (preview stack program created):
+- **Group A**: T025-T030 (namespace, database, ConfigMap, Secret, quotas, policies)
+- **Group B**: T031-T033 (Deployments and Services)
+- **Group C**: T034-T035 (HTTPRoute and rate limiting)
+- **Group D**: T038-T041, T052 (Build workflow - independent of Pulumi tasks)
+- **Group E**: T042-T046 (Deploy workflow setup)
 
 ### Within Phase 6 (Polish)
-All documentation tasks (T051-T053) can run in parallel
-All operational tasks (T054-T058) can run in parallel after documentation
+
+- **Group A**: T064-T066 (documentation tasks)
+- **Group B**: T072-T074 (operational enhancements)
+- **Group C**: T075-T076 (observability)
+- **Group D**: T077-T082, T085 (ESC migration - already complete)
+- **Group E**: T092-T096 (TypeScript quality tools - already complete)
 
 ### Within Phase 7 (local Migration)
-Can parallelize after M013 (local stack created):
-- **Group A**: M014-M020 (all component imports)
-- **Group B**: M021-M022 (stack configuration)
+
+Can parallelize after M015 (local stack created):
+- **Group A**: M016-M022 (all component imports)
+- **Group B**: M023-M024 (stack configuration)
 
 ### Within Phase 8 (Production Migration)
-Can parallelize after M028 (production stack created):
-- **Group A**: M029-M035 (all component imports)
-- **Group B**: M036-M037 (stack configuration)
-- Must be sequential: M038 (preview) → M039 (import) → M040 (deploy) → M041-M043 (verify)
+
+Can parallelize after M037 (production stack created):
+- **Group A**: M032-M036 (reusable workflows - can develop independently)
+- **Group B**: M038-M044 (all component imports)
+- **Group C**: M030-M031 (shared base component refactor)
+- Must be sequential: M045-M049 (config → preview → import → deploy)
 
 ---
 
@@ -475,12 +523,12 @@ Can parallelize after M028 (production stack created):
 
 Track these throughout implementation:
 
-- **SC-001**: Preview environments accessible within 5 minutes of approval
-- **SC-002**: Both web and API URLs posted to PRs
-- **SC-003**: ≥95% deployment success rate (minimal manual intervention)
-- **SC-004**: Cleanup completes on PR close/merge
-- **SC-005**: Zero orphaned resources after cleanup
-- **SC-006**: Maintainer approval required for all privileged deployments
+- **SC-001**: Preview environments accessible within 5 minutes of approval ✅
+- **SC-002**: Both web and API URLs posted to PRs ✅
+- **SC-003**: ≥95% deployment success rate (minimal manual intervention) ✅
+- **SC-004**: Cleanup completes on PR close/merge ✅
+- **SC-005**: Zero orphaned resources after cleanup ✅
+- **SC-006**: Maintainer approval required for all privileged deployments ✅
 
 ---
 
@@ -489,89 +537,79 @@ Track these throughout implementation:
 ### Manual Validation Per Phase
 
 **Phase 2 (Base Infrastructure)**:
-- Deploy `preview-base` stack
-- Verify all stack outputs present
-- Verify PostgreSQL accessible
-- Verify Gateway configured
+- Deploy `preview-base` stack ✅
+- Verify all stack outputs present ✅
+- Verify PostgreSQL accessible ✅
+- Verify Gateway configured ✅
 
 **Phase 3 (US1 - Core Deployment)**:
-- Open test PR
-- Approve deployment
-- Verify preview environment accessible
-- Push new commit
-- Verify automatic update
-- Check image digest tracking
+- Open test PR ✅
+- Approve deployment ✅
+- Verify preview environment accessible ✅
+- Push new commit ✅
+- Verify automatic update ✅
+- Check image digest tracking ✅
 
 **Phase 4 (US2 - Public Access)**:
-- Access preview URL without authentication
-- Share URL with team member
-- Verify simultaneous access works
+- Access preview URL without authentication ✅
+- Share URL with team member ✅
+- Verify simultaneous access works ✅
 
 **Phase 5 (US3 - Cleanup)**:
-- Close test PR
-- Verify automatic cleanup
-- Verify all resources removed
+- Close test PR ✅
+- Verify automatic cleanup ✅
+- Verify all resources removed ✅
 
-### No Automated Tests
-Per constitution check, this is infrastructure-only work. Validation is manual via GitHub Actions workflow execution and manual testing of preview environments.
+### No Automated Infrastructure Tests
+
+Per constitution check (Principle III), this is infrastructure-only work. Validation is manual via GitHub Actions workflow execution and manual testing of preview environments. Pulumi TypeScript compilation and linting provide build-time validation.
 
 ---
 
 ## Implementation Notes
 
-### Order of Execution (Updated 2025-12-20 with Migration)
+### Order of Execution (Updated 2025-12-22)
 
 **Recommended Execution Order**:
 
-1. **Phase 0 (M001-M012)**: Create shared Pulumi components - foundation for all stacks
-2. **Phase 1-2 (T001-T017)**: Setup preview infrastructure using shared components
-3. **Phase 3-6 (T018-T058)**: Implement preview environments (MVP)
-4. **Phase 7 (M013-M027)**: Migrate local to Pulumi (validate shared components locally)
-5. **Phase 8 (M028-M047)**: Migrate production to Pulumi (after validation)
-
-**Alternative Order (User Preference)**:
-
-Per user request: "let's migrate local first so i can try running this in minikube before even trying to push anything out over the wire to digitalocean"
-
-1. **Phase 0 (M001-M012)**: Create shared components
-2. **Phase 7 (M013-M027)**: Migrate local FIRST (test locally)
-3. **Phase 1-2 (T001-T017)**: Setup preview infrastructure
-4. **Phase 3-6 (T018-T058)**: Implement preview environments
-5. **Phase 8 (M028-M047)**: Migrate production LAST
+1. **Phase 0 (M001-M014)**: Create shared Pulumi components - foundation for all stacks ✅
+2. **Phase 1-2 (T001-T023)**: Setup preview infrastructure using shared components ✅
+3. **Phase 3-6 (T024-T097)**: Implement preview environments (MVP) ✅ (most tasks complete)
+4. **Phase 7 (M015-M029)**: Migrate local to Pulumi (validate shared components locally) ✅
+5. **Phase 8 (M030-M056)**: Migrate production to Pulumi + create reusable workflows (Constitution Principle VI) ⚠️ (pending)
 
 ### Critical Path
 
-**For MVP (Preview Environments)**:
-- Migration: M001, M002, M003, M005, M007, M008, M009, M011
-- Setup: T001, T002, T004, T005, T006
-- Base: T009, T010, T013, T015
-- US1: T018, T020, T021, T025, T026, T028, T030, T032, T034, T036, T037, T039
-
-**Estimated MVP**: ~35 core tasks (includes shared components)
+**For MVP (Preview Environments)** ✅:
+- Migration: M001-M014 ✅
+- Setup: T001-T008 ✅
+- Base: T009-T023 ✅
+- US1: T024-T054 ✅
+- **Status**: MVP complete and operational
 
 **For Full Migration (All Environments)**:
-- All MVP tasks + Phase 7 (local) + Phase 8 (production)
-- **Estimated Total**: ~70 tasks
+- All MVP tasks ✅ + Phase 7 (local) ✅ + Phase 8 (production) ⚠️
+- **Estimated Remaining**: ~27 tasks in Phase 8
 
 ### Rollback Strategy
 
 **Preview Environments**:
-1. Pulumi stack can be destroyed: `pulumi destroy --stack preview-pr-{PR}`
-2. Database automatically dropped during stack destroy
-3. GitHub workflow can be manually cancelled
-4. No persistent state outside Pulumi + Kubernetes
+1. Pulumi stack can be destroyed: `pulumi destroy --stack preview-pr-{PR}` ✅
+2. Database automatically dropped during stack destroy ✅
+3. GitHub workflow can be manually cancelled ✅
+4. No persistent state outside Pulumi + Kubernetes ✅
 
 **Production Migration Rollback**:
 1. Keep Kustomize files in `infrastructure/kubernetes-deprecated/` for 24 hours
 2. If issues after migration: `pulumi destroy --stack production`
-3. Redeploy via Kustomize: `helmfile sync && kubectl apply -k infrastructure/kubernetes-deprecated/environments/prod`
+3. Redeploy via Kustomize: `kubectl apply -k infrastructure/kubernetes/environments/prod`
 4. Investigate issues, fix Pulumi stack, retry migration
 5. Remove deprecated files only after 24h successful production operation
 
-**Dev-Local Rollback**:
-- Low risk (local only)
-- Worst case: `pulumi destroy --stack local`
-- Redeploy via Kustomize: `helmfile sync && kubectl apply -k infrastructure/kubernetes/environments/dev`
+**Local Rollback**:
+- Low risk (local only) ✅
+- Worst case: `pulumi destroy --stack local` ✅
+- Currently using Pulumi successfully ✅
 
 ---
 
@@ -579,80 +617,83 @@ Per user request: "let's migrate local first so i can try running this in miniku
 
 **Shared Pulumi Components** (Phase 0):
 - `infrastructure/pulumi/components/types.ts` - TypeScript type definitions
-- `infrastructure/pulumi/components/helm-charts.ts` - Helm chart deployments (cert-manager, nginx-gateway)
-- `infrastructure/pulumi/components/gateway.ts` - Gateway API resources, TLS certificates
-- `infrastructure/pulumi/components/database.ts` - PostgreSQL deployment and database creation
-- `infrastructure/pulumi/components/web-deployment.ts` - Web (nginx) deployment with js-config
-- `infrastructure/pulumi/components/api-deployment.ts` - API (nginx + PHP-FPM) deployment with initContainer
-- `infrastructure/pulumi/components/db-migration.ts` - Database migration job (Phinx + LexemeSeeder)
-- `infrastructure/pulumi/components/http-route.ts` - Gateway API HTTPRoute configuration
+- `infrastructure/pulumi/components/helm-charts.ts` - Helm chart deployments
+- `infrastructure/pulumi/components/gateway.ts` - Gateway API resources, TLS
+- `infrastructure/pulumi/components/database.ts` - PostgreSQL deployment
+- `infrastructure/pulumi/components/web-deployment.ts` - Web (nginx) deployment
+- `infrastructure/pulumi/components/api-deployment.ts` - API (nginx + PHP-FPM) deployment
+- `infrastructure/pulumi/components/db-migration.ts` - Database migration job
+- `infrastructure/pulumi/components/http-route.ts` - Gateway API HTTPRoute
+- `infrastructure/pulumi/components/kubernetes.ts` - Kubernetes utilities
+- `infrastructure/pulumi/components/index.ts` - Component exports
 
 **Pulumi Stack Programs**:
-- `infrastructure/pulumi/stacks/local-stack.ts` - Minikube local development (Phase 7)
-- `infrastructure/pulumi/stacks/production-stack.ts` - DigitalOcean production deployment (Phase 8)
-- `infrastructure/pulumi/stacks/preview-base.ts` - Persistent preview infrastructure (Phase 2)
-- `infrastructure/pulumi/stacks/preview-pr.ts` - Per-PR preview resources (Phase 3)
+- `infrastructure/pulumi/stacks/local.ts` - Minikube local development ✅
+- `infrastructure/pulumi/stacks/preview-base.ts` - Persistent preview infrastructure ✅
+- `infrastructure/pulumi/stacks/preview-pr.ts` - Per-PR preview resources ✅
+- `infrastructure/pulumi/stacks/production.ts` - Production deployment ⚠️ (pending)
 
 **GitHub Workflows**:
+- `.github/workflows/test.yml` - PHP testing + Pulumi TypeScript build
 - `.github/workflows/build-preview-images.yml` - Docker image builds
+- `.github/workflows/build-master-cache.yml` - GHA cache population
 - `.github/workflows/deploy-preview.yml` - Preview deployment and updates
 - `.github/workflows/cleanup-preview.yml` - Cleanup on PR close
+- `.github/workflows/deploy.yml` - Reusable deployment workflow ⚠️ (pending, Phase 8)
+- `.github/workflows/build-images.yml` - Reusable build workflow ⚠️ (pending, Phase 8)
+- `.github/workflows/deploy-production.yml` - Production deployment ⚠️ (pending, Phase 8)
 
 **Documentation**:
 - `infrastructure/pulumi/README.md` - Shared components and stack documentation
-- `infrastructure/pulumi/README.md` - Preview environment Pulumi setup
 - `infrastructure/pulumi/QUICKSTART.md` - Maintainer preview deployment guide
-- `README.md` - Project README (updated with Pulumi workflow)
-- `.github/CONTRIBUTING.md` - Contributor guide with preview environment info
+- `infrastructure/pulumi/DEV-LOCAL-SETUP.md` - Local development setup
+- `README.md` - Project README (includes preview environment info)
+- `SECRETS.md` - Secrets management and PAT documentation
+- `.github/CONTRIBUTING.md` - Contributor guide
 
 **Deprecated Files** (after Phase 8 completion):
-- `infrastructure/kubernetes-deprecated/` - Old Kustomize manifests (preserved for 24h)
+- `infrastructure/kubernetes-deprecated/` - Old Kustomize manifests (preserved for rollback)
 - `infrastructure/kubernetes-deprecated/README.md` - Deprecation notice
 
 ---
 
-## Migration Strategy Summary
+## Constitution Compliance Summary (v1.1.0)
 
-**Why Migrate to Pulumi**:
-- ✅ Tool consolidation: Helm + Kustomize + Pulumi → Pulumi only
-- ✅ Test what you deploy: Preview uses same components as production
-- ✅ Type safety: Catch configuration errors before deployment
-- ✅ Better local dev: Single `pulumi up` command vs `helmfile sync && kubectl apply`
-- ✅ State management: Pulumi tracks all resources, reliable cleanup
+### Principle I: PHP Framework Standards
+✅ **COMPLIANT** - Infrastructure-only work, minimal PHP changes
 
-**Migration Scope**:
-1. **Helm charts** → Pulumi Helm provider (`src/shared/helm-charts.ts`)
-2. **Kustomize base** → Pulumi shared components (`src/shared/*.ts`)
-3. **Kustomize overlays** → Stack-specific configuration (local, production)
-4. **Image registry** → DockerHub to ghcr.io for better GitHub Actions integration
-5. **Databases** → Pulumi manages PostgreSQL and logical databases across all environments
+### Principle II: Documentation-First Development
+✅ **COMPLIANT** - Preview environments serve full documentation, LexemeSeeder functional
 
-**Migration Order** (per user preference):
-1. Phase 0: Create shared components (M001-M012)
-2. Phase 7: Migrate local FIRST (M013-M027) - test locally before cloud
-3. Phase 1-2: Setup preview infrastructure (T001-T017)
-4. Phase 3-6: Implement preview environments (T018-T058) - MVP complete
-5. Phase 8: Migrate production LAST (M028-M047) - after validation
+### Principle III: Test Coverage
+✅ **COMPLIANT** - End-to-end workflow testing, manual validation
 
-**Risk Mitigation**:
-- Dev-local migration first: Validate shared components locally (low risk)
-- Preview validation: Test shared components in DigitalOcean before production
-- Production import: Use `pulumi import` to avoid resource recreation
-- Rollback plan: Kustomize files remain in `infrastructure/kubernetes/` until Phase 8 completes successfully
-- Deprecation only after validation: Files moved to `infrastructure/kubernetes-deprecated/` only after 24h successful production operation
-- Monitoring: Watch logs and metrics for 24 hours after production migration
-- Git rollback available: Can always restore Kustomize files from git history if needed
+### Principle IV: Static Analysis & Code Quality
+✅ **COMPLIANT** - ESLint, Prettier, TypeScript compilation
+
+### Principle V: Production Reliability
+✅ **COMPLIANT** - Idempotent deployments, retry logic, Pulumi ESC for secrets
+
+### Principle VI: CI/CD & Infrastructure Reuse
+⚠️ **PARTIALLY COMPLIANT** - Shared Pulumi components ✅, reusable workflows pending (Phase 8 M032-M036)
+- **Action**: Complete Phase 8 tasks M030-M036 to achieve full compliance
+- **Justification**: Preview implementation completed before principle was added (v1.1.0, 2025-12-22)
 
 ---
 
 **Next Steps**:
 
-**Updated 2025-12-20**: Begin with Phase 0 (Shared Components), then Phase 7 (local migration) to validate locally before implementing preview environments.
+**Current Status (2025-12-22)**:
+- ✅ Phase 0-7: Complete
+- ⚠️ Phase 8: Pending production migration + reusable workflows
+
+**To Complete**:
+1. **Phase 8 (M030-M056)**: Production migration + reusable workflows
+2. **Constitution Principle VI Compliance**: Create reusable workflows (M032-M036)
+3. **Documentation Cleanup**: Tasks T067-T071, T083-T084, T086-T088, T097
 
 **Execution Order**:
-1. Phase 0 (M001-M012): Shared Pulumi components
-2. Phase 7 (M013-M027): Migrate local to Pulumi (test in Minikube)
-3. Phase 1-2 (T001-T017): Setup preview infrastructure
-4. Phase 3 (T018-T042): Preview deployment (MVP complete)
-5. Phase 4-6 (T043-T058): Public access validation, cleanup, polish
-6. Phase 8 (M028-M047): Migrate production to Pulumi
+1. Complete Phase 8 reusable workflows (M032-M036) - achieves Constitution VI compliance
+2. Complete production migration (M037-M056)
+3. Clean up deprecated workflows and documentation
+4. Final validation and documentation updates

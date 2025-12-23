@@ -158,7 +158,7 @@ As a maintainer, I want preview environments to be destroyed automatically when 
 - **FR-031**: Gateway/Ingress routing MUST direct `{PR}.pr.aphiria.com` to web service and `{PR}.pr-api.aphiria.com` to API service
 - **FR-033**: Gateway/Ingress MUST enforce connection-level rate limiting to prevent resource exhaustion
 - **FR-032**: Each preview environment MUST run database migrations via Phinx before deployments start
-- **FR-033**: Each preview environment MUST run the LexemeSeeder (Phinx seed) to populate the search index
+- **FR-102**: Each preview environment MUST run the LexemeSeeder (Phinx seed) to populate the search index
 - **FR-034**: The database migration job MUST complete successfully before API deployment is marked ready
 - **FR-035**: LexemeSeeder MUST read compiled documentation from the API container's filesystem
 - **FR-036**: Preview URLs MUST be surfaced in pull request comments or status checks
@@ -823,7 +823,7 @@ Originally planned to share production cluster with namespace isolation, but **p
 - **FR-027**: ResourceQuotas MUST be applied to each ephemeral namespace to prevent resource exhaustion (2 CPU, 4Gi memory, 5 pods max)
 - **FR-053**: Gateway/Ingress routes for preview environments MUST include connection limiting annotations to prevent abuse
 - **FR-028**: When a PR closes, its namespace and all contained resources MUST be destroyed
-- **FR-029**: When a PR closes, its database MUST be dropped from the shared PostgreSQL instance
+- **FR-098**: When a PR closes, its database MUST be dropped from the shared PostgreSQL instance
 
 **Per-PR Resources (Namespace-Scoped):**
 - Kubernetes namespace: `ephemeral-pr-{PR_NUMBER}`
@@ -837,17 +837,17 @@ Originally planned to share production cluster with namespace isolation, but **p
 ### Database Strategy
 
 **Persistent PostgreSQL Instance:**
-- **FR-030**: A single PostgreSQL instance MUST run continuously in the cluster (independent of PR lifecycle)
-- **FR-031**: The PostgreSQL instance persists even when zero PRs are active
-- **FR-032**: All ephemeral environments MUST share this single PostgreSQL instance
+- **FR-099**: A single PostgreSQL instance MUST run continuously in the cluster (independent of PR lifecycle)
+- **FR-100**: The PostgreSQL instance persists even when zero PRs are active
+- **FR-101**: All ephemeral environments MUST share this single PostgreSQL instance
 
 **Per-PR Database Isolation:**
-- **FR-033**: Each ephemeral environment MUST use a dedicated logical database: `aphiria_pr_{PR_NUMBER}`
-- **FR-034**: Database users MUST be scoped per-PR or use a shared preview user with appropriate permissions
-- **FR-035**: Database names MUST be passed via ConfigMap: `DB_NAME=aphiria_pr_{{ PR_NUMBER }}`
-- **FR-036**: Application code MUST support dynamic database names via environment variables
-- **FR-037**: On teardown, the PR-specific database MUST be dropped: `DROP DATABASE aphiria_pr_{PR_NUMBER}`
-- **FR-038**: The PostgreSQL instance itself MUST NOT be destroyed when PRs close
+- **FR-103**: Each ephemeral environment MUST use a dedicated logical database: `aphiria_pr_{PR_NUMBER}`
+- **FR-104**: Database users MUST be scoped per-PR or use a shared preview user with appropriate permissions
+- **FR-105**: Database names MUST be passed via ConfigMap: `DB_NAME=aphiria_pr_{{ PR_NUMBER }}`
+- **FR-106**: Application code MUST support dynamic database names via environment variables
+- **FR-107**: On teardown, the PR-specific database MUST be dropped: `DROP DATABASE aphiria_pr_{PR_NUMBER}`
+- **FR-108**: The PostgreSQL instance itself MUST NOT be destroyed when PRs close
 
 **Rationale:**
 - **Cost-effective**: Single PostgreSQL deployment vs. multiple instances per PR
@@ -860,11 +860,11 @@ Originally planned to share production cluster with namespace isolation, but **p
 #### **Actual Implementation (2025-12-22)**
 
 **Base Infrastructure Stack (Persistent):**
-- **FR-039**: ✅ **IMPLEMENTED** - `preview-base` stack manages persistent preview infrastructure
-- **FR-040**: ✅ **IMPLEMENTED** - Stack name: `preview-base` (exact match)
-- **FR-041**: ✅ **IMPLEMENTED** - Stack manages: DigitalOcean cluster, PostgreSQL deployment, Gateway API, Helm charts (cert-manager, nginx-gateway-fabric)
-- **FR-042**: ✅ **IMPLEMENTED** - Base stack persists independently (never destroyed by PR workflows)
-- **FR-043**: ✅ **IMPLEMENTED** - `ensure-base-stack` job in `deploy-preview.yml` checks and creates stack if missing
+- **FR-109**: ✅ **IMPLEMENTED** - `preview-base` stack manages persistent preview infrastructure
+- **FR-110**: ✅ **IMPLEMENTED** - Stack name: `preview-base` (exact match)
+- **FR-111**: ✅ **IMPLEMENTED** - Stack manages: DigitalOcean cluster, PostgreSQL deployment, Gateway API, Helm charts (cert-manager, nginx-gateway-fabric)
+- **FR-112**: ✅ **IMPLEMENTED** - Base stack persists independently (never destroyed by PR workflows)
+- **FR-113**: ✅ **IMPLEMENTED** - `ensure-base-stack` job in `deploy-preview.yml` checks and creates stack if missing
 - **FR-043a**: ✅ **IMPLEMENTED** - Idempotent deployment with retry logic (3 attempts, progressive backoff)
 - **FR-054**: ✅ **IMPLEMENTED** - Base infrastructure updates are manual (not automated in PR workflows)
 
@@ -876,13 +876,13 @@ Originally planned to share production cluster with namespace isolation, but **p
 - `tlsSecretName`: Wildcard TLS certificate secret name
 
 **Per-PR Stacks (Preview):**
-- **FR-044**: ✅ **IMPLEMENTED** - Each PR gets dedicated stack (e.g., `preview-pr-123`)
-- **FR-045**: ✅ **IMPLEMENTED** - Stack naming: `preview-pr-{PR_NUMBER}` (auto-created in `deploy-preview.yml`)
-- **FR-046**: ✅ **IMPLEMENTED** - Pulumi Cloud backend (supports concurrent operations)
-- **FR-047**: ✅ **IMPLEMENTED** - Full automation: stack creation (deploy), destruction (cleanup)
-- **FR-048**: ✅ **IMPLEMENTED** - `pulumi destroy` removes namespace, services, deployments; database drop verified in cleanup workflow
-- **FR-049**: ✅ **IMPLEMENTED** - Per-PR stacks reference base stack via `StackReference`, never modify base resources
-- **FR-050**: ✅ **IMPLEMENTED** - Stacks isolated by Pulumi project (`davidbyoung/aphiria-com-infrastructure`)
+- **FR-114**: ✅ **IMPLEMENTED** - Each PR gets dedicated stack (e.g., `preview-pr-123`)
+- **FR-115**: ✅ **IMPLEMENTED** - Stack naming: `preview-pr-{PR_NUMBER}` (auto-created in `deploy-preview.yml`)
+- **FR-116**: ✅ **IMPLEMENTED** - Pulumi Cloud backend (supports concurrent operations)
+- **FR-117**: ✅ **IMPLEMENTED** - Full automation: stack creation (deploy), destruction (cleanup)
+- **FR-118**: ✅ **IMPLEMENTED** - `pulumi destroy` removes namespace, services, deployments; database drop verified in cleanup workflow
+- **FR-119**: ✅ **IMPLEMENTED** - Per-PR stacks reference base stack via `StackReference`, never modify base resources
+- **FR-120**: ✅ **IMPLEMENTED** - Stacks isolated by Pulumi project (`davidbyoung/aphiria-com-infrastructure`)
 
 **Stack Configuration** (per-PR):
 - `prNumber`: PR number (used for namespace, database names, URLs)
