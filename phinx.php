@@ -46,17 +46,22 @@ return [
         'default_environment' => \getenv('APP_ENV'),
         'production' => [
             'adapter' => 'postgresql',
-            'name' => 'postgres',
+            'name' => \getenv('DB_NAME'),
             'connection' => $container->resolve(PDO::class),
         ],
         'testing' => [
             'adapter' => 'postgresql',
-            'name' => 'postgres',
+            'name' => \getenv('DB_NAME'),
             'connection' => $container->resolve(PDO::class),
         ],
         'development' => [
             'adapter' => 'postgresql',
-            'name' => 'postgres',
+            'name' => \getenv('DB_NAME'),
+            'connection' => $container->resolve(PDO::class),
+        ],
+        'preview' => [
+            'adapter' => 'postgresql',
+            'name' => \getenv('DB_NAME'),
             'connection' => $container->resolve(PDO::class),
         ],
     ],

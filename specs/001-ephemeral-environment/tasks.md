@@ -392,6 +392,77 @@ Phase 8 (Migrate production to Pulumi + reusable workflows)
   - **SpecKit Gap**: Provider configuration was not considered when creating preview-pr stack structure
   - **Constitutional violation**: This violates "Test what you deploy" principle - local Pulumi cannot manage what CI/CD deploys
   - **Note on ConfigMap updates**: Once this bug is fixed, ConfigMap updates will work automatically via Pulumi's replace strategy (see NFR-021 in spec.md). No additional tooling (Reloader, etc.) is needed - Pulumi handles atomic ConfigMap replacement + deployment rollouts automatically.
+
+- [X] T052u [US1] **CRITICAL HOTFIX**: Resolve Server-Side Apply field manager conflict for existing resources
+  - **Why**: Switching from default provider to explicit provider creates field manager conflicts. Existing resources were created by old provider (field manager `pulumi-kubernetes-4afb3fc3`), new provider (field manager `pulumi-kubernetes-9b013652`) cannot adopt them.
+  - **Error from deployment** (https://github.com/aphiria/aphiria.com/actions/runs/20462827054/job/58799423512):
+    ```
+    error: resource "urn:pulumi:preview-pr-107::aphiria-com-infrastructure::kubernetes:batch/v1:Job::db-init-job" was not successfully created by the Kubernetes API server: Server-Side Apply field conflict detected.
+    The resource managed by field manager "pulumi-kubernetes-9b013652" had an apply conflict: Apply failed with 1 conflict: conflict with "pulumi-kubernetes-4afb3fc3": .spec.template.spec.containers[name="db-init"].args
+    ```
+  - **Root Cause**: T052t (adding explicit provider) changed which field manager owns resources. Kubernetes prevents silent ownership transfer to protect against accidental modifications.
+  - **Solution Options**:
+    1. **Delete and recreate** (⚠️ DESTRUCTIVE - causes downtime):
+       ```bash
+       kubectl delete job db-init-pr-107 -n preview-pr-107
+       pulumi up --stack preview-pr-107 --yes
+       ```
+    2. **Force-adopt with Pulumi import** (✅ RECOMMENDED - preserves existing resources):
+       ```bash
+       # Remove resource from state without deleting from cluster
+       pulumi state delete "urn:pulumi:preview-pr-107::aphiria-com-infrastructure::kubernetes:batch/v1:Job::db-init-job" --stack preview-pr-107
+
+       # Re-import with new provider (new field manager takes ownership)
+       pulumi import kubernetes:batch/v1:Job db-init-job preview-pr-107/db-init-pr-107 --stack preview-pr-107
+
+       # Apply remaining changes
+       pulumi up --stack preview-pr-107 --yes
+       ```
+    3. **Manual kubectl takeover** (⚠️ REQUIRES MANUAL INTERVENTION):
+       ```bash
+       # Force new field manager to take ownership
+       kubectl apply -f <(pulumi stack export --stack preview-pr-107 | jq '.deployment.resources[] | select(.type == "kubernetes:batch/v1:Job")') --server-side --force-conflicts
+       ```
+  - **Recommended Approach**: Option 2 (import) - This is the enterprise-grade solution
+  - **Why import is better**:
+    - No downtime (resource stays running during state manipulation)
+    - Pulumi tracks ownership properly
+    - Works for all resource types
+    - Repeatable for other preview-pr stacks that already exist
+  - **File**: `infrastructure/pulumi/stacks/preview-pr.ts`
+  - **Testing**:
+    1. Run import command for db-init-job
+    2. Run `pulumi up --stack preview-pr-107` - should succeed without conflicts
+    3. Verify Job completes: `kubectl get jobs -n preview-pr-107`
+  - **Impact**: Blocks ALL preview-pr-107 deployments until resolved
+  - **SpecKit Gap**: Provider migration strategy was not considered - existing stacks need migration path
+  - **Constitutional violation**: None - this is expected behavior when changing providers. The error is Kubernetes protecting data integrity.
+  - **Follow-up**: Document provider migration pattern for future stack refactoring (add to plan.md or architecture decision records)
+  - **Depends**: T052t
+
+- [X] T052v [US1] **CRITICAL HOTFIX**: Add 'preview' environment to Phinx database migration config
+  - **Why**: Phinx config (phinx.php) only defines 'production', 'testing', and 'development' environments. Preview deployments set `APP_ENV=preview` but Phinx migration fails with "The environment configuration for 'preview' is missing"
+  - **Error from pod logs**: `Init:CrashLoopBackOff` on API pod - db-migration init container fails with Phinx error
+  - **Root Cause**: ConfigMap sets `APP_ENV=preview` (line 236 in preview-pr.ts) but phinx.php doesn't have a 'preview' environment defined
+  - **Solution**: Add 'preview' environment to phinx.php with same config as other environments (PostgreSQL adapter using PDO connection from DI container)
+  - **File**: `phinx.php` (root of project)
+  - **Change**:
+    ```php
+    'preview' => [
+        'adapter' => 'postgresql',
+        'name' => 'postgres',
+        'connection' => $container->resolve(PDO::class),
+    ],
+    ```
+  - **Testing**:
+    1. Rebuild API Docker image (includes updated phinx.php)
+    2. Redeploy preview-pr-107 stack
+    3. Verify API pod init container completes successfully: `kubectl logs -n preview-pr-107 <api-pod> -c db-migration`
+  - **Impact**: Blocks ALL preview environment API deployments - db-migration init container crashes on every attempt
+  - **SpecKit Gap**: Phinx environment configuration not considered during preview environment design
+  - **Constitutional violation**: None - this is a configuration oversight, not a design flaw
+
+- [ ] T052q [US1] Document GHCR token setup in SECRETS.md
   - **Why**: GHCR authentication requires GitHub Personal Access Token (PAT) configured in Pulumi ESC, but SECRETS.md doesn't document how to create this token or what scopes are required
   - **Action**: Update `SECRETS.md` to document GHCR_TOKEN requirements for Kubernetes image pulling
   - **File**: `SECRETS.md`
@@ -940,6 +1011,10 @@ Phase 8 (Migrate production to Pulumi + reusable workflows)
 #### Production Stack Implementation
 
 - [ ] M037 Create production stack program: `infrastructure/pulumi/stacks/production.ts`
+  - **CRITICAL**: Configure explicit Kubernetes provider (see T052t hotfix from preview-pr stack)
+  - **Why**: Without explicit provider configuration, production stack will use default provider (local kubeconfig context) instead of production cluster
+  - **Implementation**: Get kubeconfig from cluster resource, create k8s.Provider, pass to ALL Kubernetes resources
+  - **Reference**: T052t documented the provider configuration bug discovered in preview-pr stack during local testing
 - [ ] M038 Import shared Helm chart component (cert-manager, nginx-gateway) in production stack
 - [ ] M039 [P] Import shared PostgreSQL component with production config (persistent storage) in production stack
 - [ ] M040 [P] Import shared Gateway component with Let's Encrypt production TLS in production stack
