@@ -282,6 +282,28 @@ Phase 8 (Migrate production to Pulumi + reusable workflows)
   - **Root Cause**: T052e only fixed db-init Job, not the API deployment's init container
   - **Testing**: After fix, `kubectl get pods -n preview-pr-107` should show API pod Running
 
+- [X] T052s [US1] **CRITICAL HOTFIX**: Fix PostgreSQL hostname for cross-namespace DNS resolution
+  - **Why**: Preview PR pods are in separate namespaces (`preview-pr-{NUMBER}`) but PostgreSQL service is in `default` namespace. Kubernetes DNS requires FQDN for cross-namespace service access.
+  - **Error**: `SQLSTATE[08006] [7] could not translate host name "db" to address: Name or service not known`
+  - **Symptom**: API pod init container (db-migration) crashes in CrashLoopBackOff, cannot connect to database
+  - **Root Cause**: `postgresqlHost` export in preview-base.ts outputs "db" (short name), which only resolves within same namespace
+  - **Action**: Change `postgresqlHost` export to fully qualified domain name
+  - **File**: `infrastructure/pulumi/stacks/preview-base.ts` (line 137)
+  - **Code Change**:
+    ```typescript
+    // OLD:
+    export const postgresqlHost = "db";  // Service name
+
+    // NEW:
+    export const postgresqlHost = "db.default.svc.cluster.local";  // Fully qualified service name for cross-namespace access
+    ```
+  - **Impact**: All preview PR stacks depend on this output. After fixing preview-base, must redeploy all active preview-pr stacks to pick up new DB_HOST value.
+  - **Deployment sequence**:
+    1. `pulumi up --stack preview-base` (updates output)
+    2. `pulumi up --stack preview-pr-{NUMBER}` for each active preview (updates ConfigMap)
+  - **Testing**: After fix, `kubectl get pods -n preview-pr-107` should show API pod Running with init container completed successfully
+  - **Status**: ✅ COMPLETED (2025-12-23)
+
 ### Image Pull Secrets Task (Added 2025-12-23)
 
 - [X] T052p [US1] **CRITICAL BUG FIX**: Create imagePullSecret for GHCR authentication
