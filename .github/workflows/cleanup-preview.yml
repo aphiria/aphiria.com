@@ -7,6 +7,7 @@ on:
 permissions:
   contents: read
   pull-requests: write
+  deployments: write
 
 jobs:
   cleanup:
@@ -123,6 +124,36 @@ jobs:
           else
             echo "::notice::PostgreSQL pod not found, skipping database verification"
           fi
+
+      - name: Mark GitHub Deployment as inactive
+        if: steps.destroy.outputs.status == 'destroyed'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prNumber = ${{ steps.pr.outputs.number }};
+            const environmentName = `preview-pr-${prNumber}`;
+
+            // Get all deployments for this environment
+            const { data: deployments } = await github.rest.repos.listDeployments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              environment: environmentName,
+            });
+
+            console.log(`Found ${deployments.length} deployments for environment ${environmentName}`);
+
+            // Mark all deployments as inactive
+            for (const deployment of deployments) {
+              await github.rest.repos.createDeploymentStatus({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                deployment_id: deployment.id,
+                state: 'inactive',
+                description: 'Preview environment destroyed',
+              });
+
+              console.log(`✅ Deployment ${deployment.id} marked as inactive`);
+            }
 
       - name: Add comment on PR
         uses: actions/github-script@v7

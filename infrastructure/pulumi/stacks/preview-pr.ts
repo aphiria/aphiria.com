@@ -52,6 +52,26 @@ const namespace = new k8s.core.v1.Namespace("preview-namespace", {
 });
 
 // ============================================================================
+// Image Pull Secret (copy from default namespace)
+// ============================================================================
+
+// Get GHCR credentials to create imagePullSecret in this namespace
+const ghcrConfig = new pulumi.Config("ghcr");
+const ghcrToken = ghcrConfig.requireSecret("token");
+const ghcrUsername = ghcrConfig.require("username");
+
+const imagePullSecret = new k8s.core.v1.Secret("ghcr-pull-secret", {
+    metadata: {
+        name: "ghcr-pull-secret",
+        namespace: namespace.metadata.name,
+    },
+    type: "kubernetes.io/dockerconfigjson",
+    stringData: {
+        ".dockerconfigjson": pulumi.interpolate`{"auths":{"ghcr.io":{"username":"${ghcrUsername}","password":"${ghcrToken}"}}}`,
+    },
+});
+
+// ============================================================================
 // ResourceQuota
 // ============================================================================
 
@@ -246,6 +266,11 @@ const webDeployment = new k8s.apps.v1.Deployment("web", {
                 labels: webLabels,
             },
             spec: {
+                imagePullSecrets: [
+                    {
+                        name: "ghcr-pull-secret",
+                    },
+                ],
                 containers: [
                     {
                         name: "web",
@@ -343,6 +368,11 @@ const apiDeployment = new k8s.apps.v1.Deployment("api", {
                 labels: apiLabels,
             },
             spec: {
+                imagePullSecrets: [
+                    {
+                        name: "ghcr-pull-secret",
+                    },
+                ],
                 initContainers: [
                     {
                         name: "db-migration",
