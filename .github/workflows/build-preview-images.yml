@@ -68,6 +68,7 @@ jobs:
           cache-from: |
             type=gha,scope=build-${{ github.event.pull_request.number }}
             type=gha,scope=build
+            type=gha,scope=build-master
           cache-to: |
             type=gha,mode=max,scope=build-${{ github.event.pull_request.number }}
             type=gha,mode=max,scope=build
@@ -91,6 +92,7 @@ jobs:
           cache-from: |
             type=gha,scope=web-${{ github.event.pull_request.number }}
             type=gha,scope=web
+            type=gha,scope=web-master
           cache-to: |
             type=gha,mode=max,scope=web-${{ github.event.pull_request.number }}
             type=gha,mode=max,scope=web
@@ -114,6 +116,7 @@ jobs:
           cache-from: |
             type=gha,scope=api-${{ github.event.pull_request.number }}
             type=gha,scope=api
+            type=gha,scope=api-master
           cache-to: |
             type=gha,mode=max,scope=api-${{ github.event.pull_request.number }}
             type=gha,mode=max,scope=api
@@ -192,14 +195,33 @@ jobs:
             const webDigest = '${{ steps.web-image.outputs.digest }}'.substring(7, 19);
             const apiDigest = '${{ steps.api-image.outputs.digest }}'.substring(7, 19);
 
-            // Add labels for tracking
-            await github.rest.issues.addLabels({
+            // Get current PR labels
+            const { data: pr } = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: prNumber,
+            });
+
+            // Keep non-digest labels (except preview:images-built which we'll re-add)
+            const keepLabels = pr.labels
+              .filter(l =>
+                !l.name.startsWith('web-digest:') &&
+                !l.name.startsWith('api-digest:') &&
+                l.name !== 'preview:images-built'
+              )
+              .map(l => l.name);
+
+            const newLabels = [
+              ...keepLabels,
+              'preview:images-built',
+              `web-digest:${webDigest}`,
+              `api-digest:${apiDigest}`
+            ];
+
+            // Replace all labels (removes old digests, keeps everything else)
+            await github.rest.issues.setLabels({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: prNumber,
-              labels: [
-                'preview:images-built',
-                `web-digest:${webDigest}`,
-                `api-digest:${apiDigest}`
-              ],
+              labels: newLabels,
             });

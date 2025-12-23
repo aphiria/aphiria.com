@@ -5,7 +5,7 @@ Shared TypeScript components for managing Aphiria.com infrastructure across all 
 ## Overview
 
 This Pulumi project provides **reusable infrastructure components** that are used across:
-- **dev-local** (Minikube): Local development environment
+- **local** (Minikube): Local development environment
 - **preview** (ephemeral-pr-*): PR-based preview environments
 - **production** (DigitalOcean): Live production site
 
@@ -13,30 +13,41 @@ This Pulumi project provides **reusable infrastructure components** that are use
 
 ## Project Structure
 
-```
-infrastructure/pulumi/
-├── index.ts                    # Main entry point (exports all components)
-├── package.json                # Dependencies
-├── Pulumi.yaml                 # Pulumi project configuration
-├── tsconfig.json               # TypeScript configuration
-├── components/                 # Shared components (industry standard)
-│   ├── types.ts                # TypeScript type definitions
-│   ├── helm-charts.ts          # Helm chart deployments (cert-manager, nginx-gateway)
-│   ├── database.ts             # PostgreSQL deployment and database creation
-│   ├── web-deployment.ts       # Web (nginx) deployment
-│   ├── api-deployment.ts       # API (nginx + PHP-FPM) deployment
-│   ├── db-migration.ts         # Database migration job (Phinx + LexemeSeeder)
-│   ├── http-route.ts           # Gateway API HTTPRoute configuration
-│   └── gateway.ts              # Gateway API Gateway with TLS
-└── ephemeral/                  # Preview environment Pulumi project
-    └── src/
-        ├── base-stack.ts       # Persistent preview infrastructure
-        └── ephemeral-stack.ts  # Per-PR resources
-```
+This Pulumi project contains:
+- **components/** - Shared infrastructure components
+- **stacks/** - Stack programs (local, preview-base, preview-pr-{N})
+- **docs/preview/** - Preview environment documentation
 
 ## Shared Components
 
-### 1. Helm Charts (`helm-charts.ts`)
+### 1. Kubernetes Cluster (`kubernetes.ts`)
+
+Creates a DigitalOcean managed Kubernetes cluster with auto-scaling.
+
+```typescript
+import { createKubernetesCluster } from "./components/kubernetes";
+
+const cluster = createKubernetesCluster({
+    name: "aphiria-com-cluster",
+    region: "nyc1",
+    version: "1.34.1-do.0",
+    autoUpgrade: true,
+    nodeSize: "s-2vcpu-4gb",
+    nodeCount: 2,
+    autoScale: true,
+    minNodes: 1,
+    maxNodes: 5,
+});
+// Returns: { cluster, clusterId, endpoint, kubeconfig, clusterCaCertificate }
+```
+
+**Key Features**:
+- Auto-scaling node pool (configurable min/max)
+- Automatic Kubernetes version upgrades
+- Exports kubeconfig directly (no doctl required!)
+- Used by production stack only (preview-base references production's cluster)
+
+### 2. Helm Charts (`helm-charts.ts`)
 
 Installs cert-manager and nginx-gateway-fabric with correct dependencies.
 
@@ -50,7 +61,7 @@ const helmCharts = installBaseHelmCharts({
 // Returns: { certManager, gatewayAPICRDs, nginxGateway }
 ```
 
-### 2. PostgreSQL (`database.ts`)
+### 3. PostgreSQL (`database.ts`)
 
 Creates PostgreSQL deployment with optional persistent storage.
 
@@ -68,11 +79,11 @@ const postgres = createPostgreSQL({
 ```
 
 **Environment differences**:
-- `dev-local`: 1 replica, hostPath storage (Minikube)
+- `local`: 1 replica, hostPath storage (Minikube)
 - `preview`: 1 replica, shared instance for all PRs
 - `production`: 2 replicas, cloud persistent storage
 
-### 3. Web Deployment (`web-deployment.ts`)
+### 4. Web Deployment (`web-deployment.ts`)
 
 Creates nginx deployment for the static documentation site.
 
@@ -95,7 +106,7 @@ const web = createWebDeployment({
 
 **js-config ConfigMap**: Required for JavaScript configuration (API URLs, cookie domain).
 
-### 4. API Deployment (`api-deployment.ts`)
+### 5. API Deployment (`api-deployment.ts`)
 
 Creates nginx + PHP-FPM deployment using initContainer pattern.
 
@@ -122,7 +133,7 @@ const api = createAPIDeployment({
 2. nginx serves static assets and proxies to PHP-FPM
 3. PHP-FPM processes PHP requests on port 9000
 
-### 5. Database Migration Job (`db-migration.ts`)
+### 6. Database Migration Job (`db-migration.ts`)
 
 Runs Phinx migrations and LexemeSeeder.
 
@@ -147,7 +158,7 @@ const migration = createDBMigrationJob({
 3. Run seeder: `/app/api/vendor/bin/phinx seed:run`
 4. Auto-cleanup after completion (ttlSecondsAfterFinished: 0)
 
-### 6. HTTPRoute (`http-route.ts`)
+### 7. HTTPRoute (`http-route.ts`)
 
 Creates Gateway API routes for traffic routing.
 
@@ -170,7 +181,7 @@ const webRoute = createHTTPRoute({
 - `createHTTPSRedirectRoute()`: HTTP → HTTPS redirect
 - `createWWWRedirectRoute()`: aphiria.com → www.aphiria.com redirect
 
-### 7. Gateway (`gateway.ts`)
+### 8. Gateway (`gateway.ts`)
 
 Creates Kubernetes Gateway with TLS support.
 
@@ -196,10 +207,10 @@ const gateway = createGateway({
 
 ## Usage in Stack Programs
 
-### Example: dev-local Stack
+### Example: local Stack
 
 ```typescript
-// infrastructure/pulumi/stacks/dev-local.ts (or inline in index.ts)
+// infrastructure/pulumi/stacks/local.ts (or inline in index.ts)
 import * as pulumi from "@pulumi/pulumi";
 import * as k8s from "@pulumi/kubernetes";
 import {
@@ -213,11 +224,11 @@ import {
 } from "./components";
 
 // 1. Install Helm charts
-const helmCharts = installBaseHelmCharts({ env: "dev-local" });
+const helmCharts = installBaseHelmCharts({ env: "local" });
 
 // 2. Create PostgreSQL
 const postgres = createPostgreSQL({
-    env: "dev-local",
+    env: "local",
     namespace: "default",
     replicas: 1,
     persistentStorage: true,
@@ -226,7 +237,7 @@ const postgres = createPostgreSQL({
 
 // 3. Create Gateway with self-signed cert
 const gateway = createGateway({
-    env: "dev-local",
+    env: "local",
     namespace: "nginx-gateway",
     name: "nginx-gateway",
     tlsMode: "self-signed",
@@ -235,7 +246,7 @@ const gateway = createGateway({
 
 // 4. Create deployments
 const web = createWebDeployment({
-    env: "dev-local",
+    env: "local",
     namespace: "default",
     replicas: 1,
     image: "davidbyoung/aphiria.com-web:latest",
@@ -247,7 +258,7 @@ const web = createWebDeployment({
 });
 
 const api = createAPIDeployment({
-    env: "dev-local",
+    env: "local",
     namespace: "default",
     replicas: 1,
     image: "davidbyoung/aphiria.com-api:latest",
@@ -298,8 +309,9 @@ export const apiUrl = "https://api.aphiria.com";
 
 ## Environment-Specific Configuration
 
-| Component | dev-local | preview | production |
+| Component | local | preview | production |
 |-----------|-----------|---------|------------|
+| **Kubernetes cluster** | Minikube | DigitalOcean (from production) | DigitalOcean (Pulumi-managed) |
 | **PostgreSQL replicas** | 1 | 1 (shared) | 2 |
 | **PostgreSQL storage** | hostPath (5Gi) | Dynamic (10Gi) | Dynamic (20Gi) |
 | **Web replicas** | 1 | 1 | 2 |
@@ -308,6 +320,7 @@ export const apiUrl = "https://api.aphiria.com";
 | **Image strategy** | latest tag | digest | digest |
 | **Namespace** | default | ephemeral-pr-{PR} | default |
 | **Domain** | aphiria.com | {PR}.pr.aphiria.com | aphiria.com |
+| **Kubeconfig source** | Minikube CLI | Production stack output | Cluster component output |
 
 ## Development
 
@@ -330,13 +343,25 @@ npm run tsc
 npm run lint
 ```
 
-## Local Development (dev-local)
+## Local Development (local)
 
 ### Prerequisites
 
 1. **Minikube** running: `minikube start`
 2. **Pulumi CLI** installed
-3. **Local backend** configured: `pulumi login --local`
+3. **Pulumi login**: `pulumi login` (uses Pulumi Cloud backend)
+
+### Secret Management for Local Development
+
+The `local` stack uses **traditional Pulumi config** (not ESC) so developers can work without needing Pulumi ESC access.
+
+**How it works:**
+- Secrets stored locally using `pulumi config set --secret`
+- Encrypted in `Pulumi.local.yaml` using Pulumi Cloud encryption
+- **No ESC environment required**
+- **No passphrase required** (Pulumi Cloud handles encryption)
+
+**Preview/Production stacks** use ESC for centralized secret management - but local development doesn't require it.
 
 ### Setup
 
@@ -345,13 +370,13 @@ npm run lint
 cd infrastructure/pulumi
 npm install
 
-# 2. Select or initialize dev-local stack (with passphrase for secrets)
-export PULUMI_CONFIG_PASSPHRASE="dev-local-test"  # Make up any passphrase for local dev
-pulumi stack select dev-local  # Or: pulumi stack init dev-local if it doesn't exist
+# 2. Select or initialize local stack
+pulumi stack select local  # Or: pulumi stack init local if it doesn't exist
 
-# 3. Configure secrets (use same passphrase)
-export PULUMI_CONFIG_PASSPHRASE="dev-local-test"
-pulumi config set --secret dbPassword password
+# 3. Configure PostgreSQL credentials
+# Local stack uses traditional Pulumi config (no ESC required)
+pulumi config set postgresql:user aphiria
+pulumi config set --secret postgresql:password postgres  # Or any password you choose
 ```
 
 ### Build and Load Docker Images
@@ -370,8 +395,7 @@ docker build -t davidbyoung/aphiria.com-web:latest -f ./infrastructure/docker/ru
 
 ```bash
 cd infrastructure/pulumi
-export PULUMI_CONFIG_PASSPHRASE="dev-local-test"  # Use same passphrase as setup
-pulumi up --stack dev-local
+pulumi up --stack local
 ```
 
 This deploys:
@@ -405,46 +429,51 @@ docker build -t davidbyoung/aphiria.com-web:latest -f ./infrastructure/docker/ru
 
 # Update deployment
 cd infrastructure/pulumi
-export PULUMI_CONFIG_PASSPHRASE="dev-local-test"  # Use same passphrase as setup
-pulumi up --stack dev-local --yes
+pulumi up --stack local --yes
 ```
 
 ### Teardown
 
 ```bash
 cd infrastructure/pulumi
-export PULUMI_CONFIG_PASSPHRASE="dev-local-test"  # Use same passphrase as setup
-pulumi destroy --stack dev-local
+pulumi destroy --stack local
 ```
 
 See [DEV-LOCAL-SETUP.md](./DEV-LOCAL-SETUP.md) for detailed troubleshooting.
 
-## Migration from Kustomize
+## Migration from Terraform
 
-This project replaces the old Helm/Kustomize infrastructure:
+This project was migrated from Terraform to Pulumi for better TypeScript integration and developer experience.
 
-| Old (Kustomize) | New (Pulumi) |
-|-----------------|--------------|
-| `infrastructure/kubernetes/base/helmfile.yml` | `components/helm-charts.ts` |
-| `infrastructure/kubernetes/base/database/` | `components/database.ts` |
-| `infrastructure/kubernetes/base/web/` | `components/web-deployment.ts` |
-| `infrastructure/kubernetes/base/api/` | `components/api-deployment.ts` |
-| `infrastructure/kubernetes/base/database/jobs.yml` | `components/db-migration.ts` |
-| `infrastructure/kubernetes/base/gateway-api/` | `components/gateway.ts` + `components/http-route.ts` |
+| Infrastructure | Terraform | Pulumi |
+|----------------|-----------|--------|
+| **Kubernetes Cluster** | `terraform/digitalocean.tf` | `components/kubernetes.ts` |
+| **Cluster Kubeconfig** | Retrieved via doctl CLI | Exported directly from cluster component |
+| **Helm Charts** | `infrastructure/kubernetes/base/helmfile.yml` | `components/helm-charts.ts` |
+| **Database** | `infrastructure/kubernetes/base/database/` | `components/database.ts` |
+| **Web/API** | `infrastructure/kubernetes/base/{web,api}/` | `components/{web,api}-deployment.ts` |
+| **Migrations** | `infrastructure/kubernetes/base/database/jobs.yml` | `components/db-migration.ts` |
+| **Gateway/Routes** | `infrastructure/kubernetes/base/gateway-api/` | `components/gateway.ts` + `components/http-route.ts` |
 
-**Migration Order**:
-1. Phase 0 (complete): Shared components created
-2. Phase 7 (next): Migrate dev-local to Pulumi
-3. Phase 1-6: Implement preview environments
-4. Phase 8 (last): Migrate production to Pulumi
+**Key Improvements**:
+- **No doctl required**: Kubeconfig comes directly from Pulumi stack outputs
+- **Type safety**: Full TypeScript typing for all infrastructure
+- **Stack references**: preview-base references production cluster via StackReference
+- **Single project**: All stacks (local, preview-base, preview-pr-*, production) in one Pulumi project
 
-Old Kustomize files remain at `infrastructure/kubernetes/` until Phase 8 completes successfully.
+**Migration Status**:
+- ✅ Phase 0: Shared components created
+- ✅ Phase 7: Local stack migrated to Pulumi
+- 🚧 Phase 1-6: Preview environments in progress
+- ⏳ Phase 8: Production migration pending
+
+Old Kustomize files remain at `infrastructure/kubernetes/` until production migration completes.
 
 ## Stack Naming Conventions
 
 | Stack | Purpose | Pulumi Stack Name |
 |-------|---------|-------------------|
-| dev-local | Minikube local development | `dev-local` |
+| local | Minikube local development | `local` |
 | preview base | Shared preview infrastructure | `ephemeral-base` |
 | preview per-PR | Ephemeral preview environment | `ephemeral-pr-{PR_NUMBER}` |
 | production | Live site | `production` |

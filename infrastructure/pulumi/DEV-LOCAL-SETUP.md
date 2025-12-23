@@ -1,6 +1,6 @@
 # Dev-Local Setup Guide
 
-This guide explains how to set up and deploy the Aphiria.com dev-local environment using Pulumi.
+This guide explains how to set up and deploy the Aphiria.com local environment using Pulumi.
 
 ## Prerequisites
 
@@ -18,28 +18,35 @@ This guide explains how to set up and deploy the Aphiria.com dev-local environme
 
 ## Pulumi Backend Configuration
 
-The project uses DigitalOcean Spaces as the Pulumi backend (configured in `Pulumi.yml`).
+The project uses **Pulumi Cloud** as the backend for state management.
 
-### Option 1: Use DigitalOcean Spaces Backend (Recommended)
+### Default: Pulumi Cloud (Recommended)
 
-Set AWS credentials for DigitalOcean Spaces access:
+If you have a Pulumi Cloud account:
 
 ```bash
-export AWS_ACCESS_KEY_ID="your-do-spaces-access-key"
-export AWS_SECRET_ACCESS_KEY="your-do-spaces-secret-key"
+pulumi login
 ```
 
-### Option 2: Use Local Pulumi Backend
+This provides:
+- Automatic state locking (prevents concurrent deployment conflicts)
+- Web UI for viewing deployments and outputs
+- Free for open source projects
+- No additional infrastructure to manage
 
-For local-only development without cloud backend:
+### Alternative: Local Backend
+
+For local-only development without Pulumi Cloud:
 
 ```bash
 # Switch to local backend
 pulumi login --local
 
-# Optionally switch back to Spaces later
-pulumi login s3://aphiria-com-infrastructure?endpoint=nyc3.digitaloceanspaces.com&region=us-east-1&s3ForcePathStyle=true
+# Switch back to Pulumi Cloud later
+pulumi login
 ```
+
+**Note**: Local backend stores state in `~/.pulumi` and does not support concurrent deployment locking.
 
 ## Initial Setup
 
@@ -50,10 +57,10 @@ cd infrastructure/pulumi
 npm install
 ```
 
-2. **Initialize the dev-local stack**:
+2. **Initialize the local stack**:
 
 ```bash
-pulumi stack init dev-local
+pulumi stack init local
 ```
 
 3. **Configure stack secrets**:
@@ -81,7 +88,7 @@ docker build -t davidbyoung/aphiria.com-web:latest -f ./infrastructure/docker/ru
 
 ```bash
 cd infrastructure/pulumi
-pulumi up --stack dev-local
+pulumi up --stack local
 ```
 
 This will:
@@ -97,7 +104,7 @@ This will:
 1. **Check Pulumi outputs**:
 
 ```bash
-pulumi stack output --stack dev-local
+pulumi stack output --stack local
 ```
 
 Expected outputs:
@@ -139,22 +146,22 @@ docker build -t davidbyoung/aphiria.com-web:latest -f ./infrastructure/docker/ru
 
 # Update deployment
 cd infrastructure/pulumi
-pulumi up --stack dev-local --yes
+pulumi up --stack local --yes
 ```
 
 ## Tear Down
 
-To completely remove the dev-local environment:
+To completely remove the local environment:
 
 ```bash
 cd infrastructure/pulumi
-pulumi destroy --stack dev-local
+pulumi destroy --stack local
 ```
 
 To remove the stack configuration:
 
 ```bash
-pulumi stack rm dev-local
+pulumi stack rm local
 ```
 
 ## Troubleshooting
@@ -200,15 +207,15 @@ kubectl logs job/db-migration-{hash}
 
 | Aspect | Kustomize (Old) | Pulumi (New) |
 |--------|-----------------|--------------|
-| **Deploy** | `helmfile sync && kubectl apply -k infrastructure/kubernetes/environments/dev` | `pulumi up --stack dev-local` |
+| **Deploy** | `helmfile sync && kubectl apply -k infrastructure/kubernetes/environments/dev` | `pulumi up --stack local` |
 | **Update** | Rebuild images + `kubectl apply` | Rebuild images + `pulumi up` |
-| **Teardown** | `kubectl delete -k infrastructure/kubernetes/environments/dev && helmfile destroy` | `pulumi destroy --stack dev-local` |
+| **Teardown** | `kubectl delete -k infrastructure/kubernetes/environments/dev && helmfile destroy` | `pulumi destroy --stack local` |
 | **Configuration** | Multiple YAML files + Kustomize overlays | Single TypeScript stack program |
 | **State** | kubectl (cluster state) | Pulumi state (backend) |
 
 ## Next Steps
 
-After validating dev-local works:
+After validating local works:
 1. Migrate preview environments (Phase 1-6)
 2. Migrate production environment (Phase 8)
 3. Remove deprecated Kustomize files

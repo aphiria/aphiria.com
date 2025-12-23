@@ -1,23 +1,20 @@
-/** Shared Pulumi components for dev-local, preview, and production environments. See README.md for usage. */
+/** Shared Pulumi components for local, preview, and production environments. See README.md for usage. */
 
 import * as pulumi from "@pulumi/pulumi";
 
-// Re-export all shared components
-export * from "./components/types";
-export * from "./components/helm-charts";
-export * from "./components/database";
-export * from "./components/web-deployment";
-export * from "./components/api-deployment";
-export * from "./components/db-migration";
-export * from "./components/http-route";
-export * from "./components/gateway";
-
-// Execute the appropriate stack based on the stack name
 const stack = pulumi.getStack();
 
-if (stack === "dev-local") {
-    // Import and execute dev-local stack
-    import("./stacks/dev-local");
+// Execute the appropriate stack based on the stack name and load its code
+if (stack === "local") {
+    module.exports = require("./stacks/local");
+} else if (stack === "preview-base") {
+    module.exports = require("./stacks/preview-base");
+} else if (stack.startsWith("preview-pr-")) {
+    module.exports = require("./stacks/preview-pr");
+} else if (stack === "production") {
+    module.exports = require("./stacks/production");
 } else {
-    throw new Error(`Unknown stack: ${stack}. Valid stacks: dev-local`);
+    throw new Error(
+        `Unknown stack: ${stack}. Valid stacks: local, preview-base, preview-pr-{N}, production`
+    );
 }

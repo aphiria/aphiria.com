@@ -46,7 +46,7 @@ export function createDBMigrationJob(args: DBMigrationJobArgs): k8s.batch.v1.Job
                         {
                             name: "db-migration",
                             image: args.image,
-                            imagePullPolicy: args.env === "dev-local"
+                            imagePullPolicy: args.env === "local"
                                 ? "Never"  // Local images only
                                 : args.image.includes("@sha256:")
                                 ? "IfNotPresent"
@@ -80,17 +80,7 @@ export function createDBMigrationJob(args: DBMigrationJobArgs): k8s.batch.v1.Job
                 },
             },
         },
-    });
+    }, { provider: args.provider });
 
     return job;
-}
-
-/** Helper to wait for migration job completion (use as dependency for API deployment) */
-export function waitForMigrationJob(job: k8s.batch.v1.Job): pulumi.Output<string> {
-    return job.status.apply((status) => {
-        if (status?.succeeded && status.succeeded > 0) {
-            return "Migration completed successfully";
-        }
-        return "Migration pending or failed";
-    });
 }

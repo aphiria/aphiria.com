@@ -4,6 +4,30 @@ import { GatewayArgs, GatewayResult } from "./types";
 
 /** Creates Gateway with TLS (self-signed/letsencrypt-staging/letsencrypt-prod) and separate listeners for root/subdomains */
 export function createGateway(args: GatewayArgs): GatewayResult {
+    // Validate domain requirements based on environment
+    const rootDomain = args.domains.find((d) => !d.startsWith("*"));
+    const wildcardDomain = args.domains.find((d) => d.startsWith("*"));
+
+    // Production environments MUST have both root and wildcard domains
+    // Preview environments MAY use wildcard-only (e.g., *.pr.aphiria.com for PR previews)
+    if (args.env === "production") {
+        if (!rootDomain) {
+            throw new Error(
+                `Production gateway requires a root domain (non-wildcard). Provided domains: ${args.domains.join(", ")}`
+            );
+        }
+        if (!wildcardDomain) {
+            throw new Error(
+                `Production gateway requires a wildcard domain (e.g., *.example.com). Provided domains: ${args.domains.join(", ")}`
+            );
+        }
+    } else {
+        // Non-production: require at least one domain of any type
+        if (args.domains.length === 0) {
+            throw new Error("Gateway requires at least one domain");
+        }
+    }
+
     const labels = {
         "app.kubernetes.io/name": args.name,
         "app.kubernetes.io/component": "gateway",
@@ -15,11 +39,11 @@ export function createGateway(args: GatewayArgs): GatewayResult {
 
     if (args.tlsMode === "self-signed") {
         // Create self-signed issuer and certificate for dev-local
-        const issuer = createSelfSignedIssuer();
+        const issuer = createSelfSignedIssuer(args.provider);
         certificate = createSelfSignedCert({
             namespace: args.namespace,
             domains: args.domains,
-        });
+        }, args.provider);
     } else {
         const issuerName = args.tlsMode === "letsencrypt-prod" ? "letsencrypt-prod" : "letsencrypt-staging";
         const acmeServer =
@@ -58,7 +82,7 @@ export function createGateway(args: GatewayArgs): GatewayResult {
                     ],
                 },
             },
-        });
+        }, { provider: args.provider });
 
         certificate = clusterIssuer;
     }
@@ -84,81 +108,96 @@ export function createGateway(args: GatewayArgs): GatewayResult {
             spec: {
                 gatewayClassName: "nginx",
                 listeners: [
-                    // HTTP listener for root domain (aphiria.com)
-                    {
-                        name: "http-root",
-                        hostname: args.domains.find((d) => !d.startsWith("*")) || "aphiria.com",
-                        port: 80,
-                        protocol: "HTTP",
-                        allowedRoutes: {
-                            namespaces: {
-                                from: "All",
-                            },
-                        },
-                    },
-                    // HTTP listener for subdomains (*.aphiria.com)
-                    {
-                        name: "http-subdomains",
-                        hostname: args.domains.find((d) => d.startsWith("*")) || "*.aphiria.com",
-                        port: 80,
-                        protocol: "HTTP",
-                        allowedRoutes: {
-                            namespaces: {
-                                from: "All",
-                            },
-                        },
-                    },
-                    // HTTPS listener for root domain
-                    {
-                        name: "https-root",
-                        hostname: args.domains.find((d) => !d.startsWith("*")) || "aphiria.com",
-                        port: 443,
-                        protocol: "HTTPS",
-                        allowedRoutes: {
-                            namespaces: {
-                                from: "All",
-                            },
-                        },
-                        tls: {
-                            mode: "Terminate",
-                            certificateRefs: [
-                                {
-                                    name: "tls-cert",
-                                },
-                            ],
-                        },
-                    },
-                    // HTTPS listener for subdomains (*.aphiria.com)
-                    {
-                        name: "https-subdomains",
-                        hostname: args.domains.find((d) => d.startsWith("*")) || "*.aphiria.com",
-                        port: 443,
-                        protocol: "HTTPS",
-                        allowedRoutes: {
-                            namespaces: {
-                                from: "All",
-                            },
-                        },
-                        tls: {
-                            mode: "Terminate",
-                            certificateRefs: [
-                                {
-                                    name: "tls-cert",
-                                },
-                            ],
-                        },
-                    },
+                    // HTTP listeners - conditionally include based on available domains
+                    ...(rootDomain
+                        ? [
+                              {
+                                  name: "http-root",
+                                  hostname: rootDomain,
+                                  port: 80,
+                                  protocol: "HTTP" as const,
+                                  allowedRoutes: {
+                                      namespaces: {
+                                          from: "All" as const,
+                                      },
+                                  },
+                              },
+                          ]
+                        : []),
+                    ...(wildcardDomain
+                        ? [
+                              {
+                                  name: "http-subdomains",
+                                  hostname: wildcardDomain,
+                                  port: 80,
+                                  protocol: "HTTP" as const,
+                                  allowedRoutes: {
+                                      namespaces: {
+                                          from: "All" as const,
+                                      },
+                                  },
+                              },
+                          ]
+                        : []),
+                    // HTTPS listeners - conditionally include based on available domains
+                    ...(rootDomain
+                        ? [
+                              {
+                                  name: "https-root",
+                                  hostname: rootDomain,
+                                  port: 443,
+                                  protocol: "HTTPS" as const,
+                                  allowedRoutes: {
+                                      namespaces: {
+                                          from: "All" as const,
+                                      },
+                                  },
+                                  tls: {
+                                      mode: "Terminate" as const,
+                                      certificateRefs: [
+                                          {
+                                              name: "tls-cert",
+                                          },
+                                      ],
+                                  },
+                              },
+                          ]
+                        : []),
+                    ...(wildcardDomain
+                        ? [
+                              {
+                                  name: "https-subdomains",
+                                  hostname: wildcardDomain,
+                                  port: 443,
+                                  protocol: "HTTPS" as const,
+                                  allowedRoutes: {
+                                      namespaces: {
+                                          from: "All" as const,
+                                      },
+                                  },
+                                  tls: {
+                                      mode: "Terminate" as const,
+                                      certificateRefs: [
+                                          {
+                                              name: "tls-cert",
+                                          },
+                                      ],
+                                  },
+                              },
+                          ]
+                        : []),
                 ],
             },
         },
         {
             dependsOn: certificate ? [certificate] : [],
+            provider: args.provider,
         }
     );
 
     return {
-        gateway: gateway.urn.apply((urn) => ({ urn })),
-        certificate: certificate ? certificate.urn.apply((urn) => ({ urn })) : undefined,
+        gateway: gateway.urn,
+        certificate: certificate ? certificate.urn : undefined,
     };
 }
 
@@ -168,7 +207,7 @@ export interface SelfSignedCertArgs {
     domains: string[];
 }
 
-export function createSelfSignedCert(args: SelfSignedCertArgs): k8s.apiextensions.CustomResource {
+export function createSelfSignedCert(args: SelfSignedCertArgs, provider: k8s.Provider): k8s.apiextensions.CustomResource {
     return new k8s.apiextensions.CustomResource("tls-cert", {
         apiVersion: "cert-manager.io/v1",
         kind: "Certificate",
@@ -184,11 +223,11 @@ export function createSelfSignedCert(args: SelfSignedCertArgs): k8s.apiextension
                 kind: "ClusterIssuer",
             },
         },
-    });
+    }, { provider });
 }
 
 /** Creates self-signed ClusterIssuer (required for self-signed certs) */
-export function createSelfSignedIssuer(): k8s.apiextensions.CustomResource {
+export function createSelfSignedIssuer(provider: k8s.Provider): k8s.apiextensions.CustomResource {
     return new k8s.apiextensions.CustomResource("selfsigned-issuer", {
         apiVersion: "cert-manager.io/v1",
         kind: "ClusterIssuer",
@@ -198,5 +237,5 @@ export function createSelfSignedIssuer(): k8s.apiextensions.CustomResource {
         spec: {
             selfSigned: {},
         },
-    });
+    }, { provider });
 }

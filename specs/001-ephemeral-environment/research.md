@@ -507,7 +507,7 @@ spec:
 
 **Context**: Initial implementation created separate Pulumi code for preview environments, but production uses Helm/Kustomize. This creates divergence - preview environments test different infrastructure than production deploys.
 
-**Decision**: **Migrate ALL infrastructure (dev-local, preview, production) from Helm/Kustomize to Pulumi**
+**Decision**: **Migrate ALL infrastructure (local, preview, production) from Helm/Kustomize to Pulumi**
 
 **Rationale**:
 - **Tool Consolidation**: Eliminates complexity of maintaining 3 tools (Helm + Kustomize + Pulumi) → Single tool (Pulumi)
@@ -536,7 +536,7 @@ spec:
    - Gateway + HTTPRoutes (production routing)
 
 3. **Environment Overlays** → Pulumi Stack Configurations:
-   - dev-local (Minikube): `pulumi stack select dev-local`
+   - local (Minikube): `pulumi stack select local`
    - preview (ephemeral): `pulumi stack select ephemeral-pr-{N}`
    - production (DigitalOcean): `pulumi stack select production`
 
@@ -547,7 +547,7 @@ spec:
 
 5. **Database Management**:
    - Pulumi creates per-environment databases:
-     - dev-local: `aphiria_dev_local` (in local PostgreSQL)
+     - local: `aphiria_dev_local` (in local PostgreSQL)
      - preview: `aphiria_pr_{N}` (in shared ephemeral PostgreSQL)
      - production: `aphiria_production` (in production PostgreSQL)
 
@@ -559,20 +559,6 @@ spec:
 
 ```
 infrastructure/pulumi/aphiria.com/
-├── index.ts                    # Stack router (selects stack based on name)
-├── src/
-│   ├── shared/                 # Reusable components
-│   │   ├── web-deployment.ts   # Web nginx deployment component
-│   │   ├── api-deployment.ts   # API nginx+PHP-FPM component
-│   │   ├── database.ts         # PostgreSQL deployment component
-│   │   ├── gateway.ts          # Gateway API configuration
-│   │   ├── helm-charts.ts      # cert-manager + nginx-gateway
-│   │   └── types.ts            # Shared TypeScript interfaces
-│   ├── dev-local-stack.ts      # Minikube environment
-│   ├── ephemeral-stack.ts      # Per-PR preview environments
-│   └── production-stack.ts     # Production environment
-├── package.json                # Dependencies (@pulumi/kubernetes, @pulumi/docker)
-└── tsconfig.json               # TypeScript configuration
 ```
 
 **Shared Component Pattern Example**:
@@ -584,7 +570,7 @@ export interface WebDeploymentArgs {
     replicas: number;
     image: string;
     jsConfigData: Record<string, string>;
-    env: "dev-local" | "preview" | "production";
+    env: "local" | "preview" | "production";
 }
 
 export function createWebDeployment(args: WebDeploymentArgs) {
@@ -652,9 +638,9 @@ createWebDeployment({
 
 **Migration Order & Testing**:
 
-1. **Phase 1: dev-local (Minikube)**
+1. **Phase 1: local (Minikube)**
    - Migrate first to test locally without cluster access
-   - Validate: `minikube start && pulumi up --stack dev-local`
+   - Validate: `minikube start && pulumi up --stack local`
    - Test: Access site locally, verify database migrations work
    - Risk: Low (local only, no production impact)
 
@@ -664,7 +650,7 @@ createWebDeployment({
    - Risk: Medium (uses DigitalOcean, but isolated from production)
 
 3. **Phase 3: production (DigitalOcean)**
-   - Migrate production last after validating patterns in dev-local + preview
+   - Migrate production last after validating patterns in local + preview
    - Deploy to production: `pulumi up --stack production`
    - Risk: High (live site), but mitigated by prior testing
 

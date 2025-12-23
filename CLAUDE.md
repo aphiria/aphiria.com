@@ -7,6 +7,84 @@
 
 ---
 
+## Critical Work Principles
+
+### NEVER Guess - Always Research
+
+**FORBIDDEN BEHAVIORS**:
+- ❌ Claiming certainty when uncertain
+- ❌ Defending wrong answers when challenged
+- ❌ Presenting solutions without verification
+- ❌ Implementing workarounds before checking for official solutions
+- ❌ Going down rabbit holes without validating the actual problem exists
+
+**REQUIRED BEHAVIORS**:
+- ✅ Explicitly state "I don't know - let me research" when uncertain
+- ✅ Search for official documentation/APIs BEFORE implementing custom solutions
+- ✅ Verify the problem exists before attempting fixes
+- ✅ Test solutions (when possible without violating constraints) before presenting them
+- ✅ Admit mistakes immediately when corrected - don't argue
+
+**Decision Framework**:
+1. **Do I know this with 100% certainty?**
+   - NO → Research first, present findings, then propose solution
+   - YES → Still verify if it's a critical path (exports, APIs, build systems)
+
+2. **Is there a standard library/API for this?**
+   - Check official docs FIRST
+   - GitHub/Stack Overflow examples SECOND
+   - Custom implementation LAST RESORT
+
+3. **Have I verified this problem actually exists?**
+   - Check error messages carefully
+   - Use diagnostic commands to confirm root cause
+   - Don't fix phantom problems
+
+**Example - What NOT to do**:
+- User: "Exports aren't working"
+- ❌ Bad: "The issue is dynamic imports, use `module.exports = require()`" (guessing)
+- ✅ Good: "Let me check: 1) What does Pulumi docs say about exports? 2) What does the compiled code look like? 3) Does the stack have any resources deployed?"
+
+**Time-Saving Rule**: 5 minutes of research saves hours of wrong implementations.
+
+### Always Consider Idempotency and Existing State
+
+**FORBIDDEN BEHAVIORS**:
+- ❌ Only testing "first run" scenarios
+- ❌ Assuming data doesn't already exist
+- ❌ Creating duplicate entries without checking
+- ❌ Not handling "workflow runs multiple times" scenarios
+
+**REQUIRED BEHAVIORS**:
+- ✅ Think through full lifecycle: 1st run, 2nd run, 3rd run
+- ✅ Ask "what if this already exists?"
+- ✅ Make operations idempotent (same result if run multiple times)
+- ✅ Test mentally: empty state → partial state → full state → re-run
+- ✅ Handle cleanup of old data before adding new data
+
+**Example - What NOT to do**:
+```javascript
+// ❌ Bad: Adds label without checking if it exists
+const newLabels = [...existingLabels, 'my-label'];
+```
+
+**Example - What TO do**:
+```javascript
+// ✅ Good: Removes label first to avoid duplicates
+const newLabels = [
+  ...existingLabels.filter(l => l !== 'my-label'),
+  'my-label'
+];
+```
+
+**Edge Cases Checklist**:
+- First time running (empty state)
+- Re-running after success (data already exists)
+- Re-running after partial failure (incomplete state)
+- Running concurrently (race conditions)
+
+---
+
 ## Architecture Overview
 
 This codebase provides **two distinct applications** in a monorepo:
@@ -64,6 +142,71 @@ After deployment, the **LexemeSeeder** (Phinx seed) runs to power the search API
 - **API container**: nginx + PHP-FPM + Aphiria + compiled docs
 - **Database**: PostgreSQL with TSVector-indexed lexemes
 - **Init**: Kubernetes Job runs Phinx migrations + LexemeSeeder
+
+---
+
+## Infrastructure Anti-Patterns (CRITICAL)
+
+**NEVER use workarounds when proper solutions exist. Question every deviation from best practices.**
+
+### Port-Forwarding in CI/CD
+
+❌ **NEVER** use `kubectl port-forward` in GitHub Actions workflows or CI/CD pipelines
+- Port-forwarding is a **debugging tool**, not infrastructure automation
+- Creates race conditions, requires process management, fails unpredictably
+- If a task needs cluster resources, run it **inside the cluster** (Kubernetes Job, init container)
+
+✅ **ALWAYS** use Kubernetes Jobs for cluster-internal tasks:
+- Database initialization/migrations
+- Seed data loading
+- Cluster configuration tasks
+
+**Example - Database Creation:**
+```typescript
+// ❌ WRONG: Port-forward + Pulumi PostgreSQL provider
+kubectl port-forward service/db 5432:5432 &
+const provider = new postgresql.Provider("pg", { host: "localhost" });
+
+// ✅ CORRECT: Kubernetes Job provisioned by Pulumi
+const dbInitJob = new k8s.batch.v1.Job("db-init", {
+    spec: {
+        template: {
+            spec: {
+                containers: [{
+                    name: "db-init",
+                    image: "postgres:16-alpine",
+                    command: ["psql", "-c", "CREATE DATABASE ..."],
+                }],
+            },
+        },
+    },
+});
+```
+
+### Decision Framework: Where Should This Run?
+
+When implementing any infrastructure task, ask:
+
+1. **Does this need access to cluster-internal resources?**
+   - YES → Run inside cluster (Job, init container, sidecar)
+   - NO → Run from CI/CD runner is acceptable
+
+2. **Is this a one-time setup task or ongoing operation?**
+   - One-time → Kubernetes Job
+   - Ongoing → Init container or deployment lifecycle hook
+
+3. **Am I using a "workaround" or a "pattern"?**
+   - If it feels hacky, it probably is
+   - If you need to manage background processes, it's wrong
+   - If documentation says "for debugging/development", don't use it in production
+
+### Other Anti-Patterns to Avoid
+
+❌ **Temporary files without cleanup**
+❌ **Background processes in CI/CD** (use Jobs instead)
+❌ **Hardcoded timeouts/retries** (use proper readiness checks)
+❌ **Skipping resource limits** (always set requests/limits)
+❌ **Using `latest` image tags** (always use digests for immutability)
 
 ---
 
@@ -201,20 +344,9 @@ final class Example
 
 ### Directory Structure
 
-```
-src/
-├── [Domain]/              # Domain-driven organization
-│   ├── Binders/          # DI configuration
-│   ├── Controllers/      # HTTP controllers
-│   ├── Services/         # Business logic
-│   └── Models/           # Data models
-└── ...
+**Source code** (`src/`): Domain-driven organization with Binders (DI), Controllers, Services, and Models per domain
 
-tests/
-├── unit/                 # Unit tests
-├── integration/          # Integration tests
-└── contract/             # API contract tests
-```
+**Tests** (`tests/`): unit/, integration/, and contract/ directories
 
 ### Database
 
@@ -255,7 +387,7 @@ tests/
 1. **PHPDoc**: Document public APIs, especially complex methods
 2. **README Updates**: Update README.md when adding new setup steps
 3. **Architecture Decisions**: Document "why" in code comments, not just "what"
-4. **Inline Comments**: Explain complex logic, not obvious code
+4. **Inline Comments**: Explain complex logic, not obvious code, and do not comment on code that has been removed
 
 ---
 
@@ -475,7 +607,7 @@ php aphiria cache:flush
 - ✅ **DO**: Prefer inline scripts over external files unless reused 3+ times
 
 **Pulumi/Infrastructure**:
-- ✅ **DO**: Reuse shared components across environments (dev-local, preview, production)
+- ✅ **DO**: Reuse shared components across environments (local, preview, production)
 - ❌ **DON'T**: Create layers of abstraction that hide what's actually being deployed
 - ✅ **DO**: Keep stack programs readable - anyone should understand what gets deployed
 

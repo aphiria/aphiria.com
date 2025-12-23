@@ -1,12 +1,10 @@
 <!--
 Sync Impact Report:
-Version change: [new file] → 1.0.0
-Modified principles: N/A (initial version)
+Version change: 1.0.0 → 1.1.0
+Modified principles: None
 Added sections:
-  - Core Principles (5 principles)
-  - Development Standards
-  - Quality Gates
-  - Governance
+  - Core Principle VI: CI/CD & Infrastructure Reuse
+Removed sections: None
 Templates requiring updates:
   ✅ plan-template.md - reviewed, constitution check section compatible
   ✅ spec-template.md - reviewed, requirements alignment compatible
@@ -70,6 +68,17 @@ All changes MUST consider production deployment requirements:
 
 **Rationale**: The site runs in a Kubernetes cluster on DigitalOcean. Deployments must be safe, reversible, and debuggable.
 
+### VI. CI/CD & Infrastructure Reuse
+
+GitHub Actions workflows and infrastructure code MUST be parameterized and reusable across environments:
+- GitHub Actions workflows must accept inputs/variables to support dev/preview/prod environments
+- Pulumi infrastructure must use stacks and configuration, not duplicated code
+- Environment differences (dev/preview/prod) must be expressed via inputs, config files, or stack values
+- Infrastructure-as-code must follow DRY principles - no copy-pasted stack definitions
+- Workflows must not be duplicated for each environment - use matrix strategies or reusable workflows
+
+**Rationale**: Duplicated workflows and infrastructure code create maintenance burden and increase the risk of environment drift. Parameterization ensures consistency across environments and reduces the surface area for bugs.
+
 ## Development Standards
 
 ### Code Organization
@@ -78,7 +87,7 @@ All changes MUST consider production deployment requirements:
 - **Domain-Driven Structure**: Organize by domain (Documentation, Databases, etc.)
 - **Separation of Concerns**: Binders for DI, Controllers for HTTP, Services for business logic
 - **Database Abstraction**: Use PDO for database access and Phinx for migrations and seeding
-- **Git**: All new non-sensitive files MUS be added to Git.  Any sensitive files or build directories MUST be added to .gitignore.
+- **Git**: All new non-sensitive files MUST be added to Git. Any sensitive files or build directories MUST be added to .gitignore.
 
 ### Dependency Management
 
@@ -148,4 +157,4 @@ All pull requests MUST:
 
 This constitution is a living document. As the project grows, principles may be added, refined, or (rarely) removed. All changes must be versioned and documented.
 
-**Version**: 1.0.0 | **Ratified**: 2025-12-19 | **Last Amended**: 2025-12-19
+**Version**: 1.1.0 | **Ratified**: 2025-12-19 | **Last Amended**: 2025-12-22

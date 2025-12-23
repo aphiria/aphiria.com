@@ -1,6 +1,0 @@
-name: ephemeral-environments
-description: Ephemeral preview environments for pull requests
-runtime:
-  name: nodejs
-  options:
-    typescript: true

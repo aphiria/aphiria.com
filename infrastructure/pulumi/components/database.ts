@@ -14,9 +14,23 @@ export function createPostgreSQL(args: PostgreSQLArgs): PostgreSQLResult {
     let pvc: k8s.core.v1.PersistentVolumeClaim | undefined;
     let pv: k8s.core.v1.PersistentVolume | undefined;
 
+    // Create secret for database credentials
+    const secret = new k8s.core.v1.Secret("env-var-secrets", {
+        metadata: {
+            name: "env-var-secrets",
+            namespace: args.namespace,
+            labels,
+        },
+        type: "Opaque",
+        stringData: {
+            DB_USER: args.dbUser,
+            DB_PASSWORD: args.dbPassword,
+        },
+    }, { provider: args.provider });
+
     // Create persistent storage if requested
     if (args.persistentStorage) {
-        if (args.env === "dev-local") {
+        if (args.env === "local") {
             // Minikube: Use hostPath storage
             pv = new k8s.core.v1.PersistentVolume("db-pv", {
                 metadata: {
@@ -33,7 +47,7 @@ export function createPostgreSQL(args: PostgreSQLArgs): PostgreSQLResult {
                         path: "/mnt/data",
                     },
                 },
-            });
+            }, { provider: args.provider });
 
             pvc = new k8s.core.v1.PersistentVolumeClaim(
                 "db-pv-claim",
@@ -53,7 +67,7 @@ export function createPostgreSQL(args: PostgreSQLArgs): PostgreSQLResult {
                         },
                     },
                 },
-                { dependsOn: [pv] }
+                { dependsOn: [pv], provider: args.provider }
             );
         } else {
             // Cloud: Use dynamic provisioning (DigitalOcean Block Storage)
@@ -71,7 +85,7 @@ export function createPostgreSQL(args: PostgreSQLArgs): PostgreSQLResult {
                         },
                     },
                 },
-            });
+            }, { provider: args.provider });
         }
     }
 
@@ -171,7 +185,7 @@ export function createPostgreSQL(args: PostgreSQLArgs): PostgreSQLResult {
                 },
             },
         },
-    });
+    }, { provider: args.provider });
 
     // Create Service
     const service = new k8s.core.v1.Service("db", {
@@ -191,16 +205,16 @@ export function createPostgreSQL(args: PostgreSQLArgs): PostgreSQLResult {
                 },
             ],
         },
-    });
+    }, { provider: args.provider });
 
     return {
-        deployment: deployment.metadata.apply((m) => m),
-        service: service.metadata.apply((m) => m),
-        pvc: pvc ? pvc.metadata.apply((m) => m) : undefined,
+        deployment: deployment.metadata,
+        service: service.metadata,
+        pvc: pvc ? pvc.metadata : undefined,
     };
 }
 
-/** Creates a logical database (placeholder - actual implementation in ephemeral-stack.ts using @pulumi/postgresql) */
+/** Creates a logical database (placeholder - actual implementation in preview/production stacks using @pulumi/postgresql) */
 export interface CreateDatabaseArgs {
     /** Database name (must be valid PostgreSQL identifier) */
     name: string;
@@ -209,10 +223,10 @@ export interface CreateDatabaseArgs {
 }
 
 // Note: Actual database creation will use the @pulumi/postgresql provider
-// in the ephemeral stack, not in shared components, since it requires
+// in the preview/production stacks, not in shared components, since it requires
 // a live PostgreSQL connection. This function is a placeholder for documentation.
 export function createDatabase(args: CreateDatabaseArgs): pulumi.Output<string> {
-    // This will be implemented in ephemeral-stack.ts using @pulumi/postgresql.Database
+    // This will be implemented in preview/production stacks using @pulumi/postgresql.Database
     // See: https://www.pulumi.com/registry/packages/postgresql/api-docs/database/
     return pulumi.output(args.name);
 }

@@ -62,6 +62,7 @@ export function createHTTPRoute(args: HTTPRouteArgs): k8s.apiextensions.CustomRe
         {
             // Ensure Gateway exists before creating HTTPRoute
             dependsOn: [], // Caller should add Gateway as dependency if needed
+            provider: args.provider,
         }
     );
 
@@ -73,6 +74,7 @@ export interface HTTPSRedirectArgs {
     namespace: pulumi.Input<string>;
     gatewayName: string;
     gatewayNamespace?: pulumi.Input<string>;
+    provider: k8s.Provider;
 }
 
 export function createHTTPSRedirectRoute(args: HTTPSRedirectArgs): k8s.apiextensions.CustomResource {
@@ -105,7 +107,7 @@ export function createHTTPSRedirectRoute(args: HTTPSRedirectArgs): k8s.apiextens
                 },
             ],
         },
-    });
+    }, { provider: args.provider });
 }
 
 /** Creates root → www redirect route (e.g., aphiria.com → www.aphiria.com) */
@@ -115,6 +117,7 @@ export interface WWWRedirectArgs {
     gatewayNamespace?: pulumi.Input<string>;
     rootDomain: string;
     wwwDomain: string;
+    provider: k8s.Provider;
 }
 
 export function createWWWRedirectRoute(args: WWWRedirectArgs): k8s.apiextensions.CustomResource {
@@ -154,5 +157,5 @@ export function createWWWRedirectRoute(args: WWWRedirectArgs): k8s.apiextensions
                 },
             ],
         },
-    });
+    }, { provider: args.provider });
 }

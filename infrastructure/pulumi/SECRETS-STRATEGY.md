@@ -16,17 +16,14 @@
 ### Production
 - `dbPassword` - PostgreSQL password
 - TLS certificates (Let's Encrypt via cert-manager - auto-managed)
-- DigitalOcean credentials:
-  - `DIGITALOCEAN_TOKEN` - For Kubernetes cluster management
-  - `AWS_ACCESS_KEY_ID` - For Spaces backend
-  - `AWS_SECRET_ACCESS_KEY` - For Spaces backend
+- Kubernetes cluster kubeconfig (exported from Pulumi production stack - no manual management)
 - `PULUMI_CONFIG_PASSPHRASE` - Pulumi stack encryption
 
 ### GitHub Actions Secrets (Required)
-- `PULUMI_CONFIG_PASSPHRASE` - Encrypt Pulumi stack state
-- `AWS_ACCESS_KEY_ID` - Access DigitalOcean Spaces (Pulumi backend)
-- `AWS_SECRET_ACCESS_KEY` - Access DigitalOcean Spaces (Pulumi backend)
-- `DIGITALOCEAN_TOKEN` - Manage DigitalOcean resources (production only)
+- `PULUMI_ACCESS_TOKEN` - Authenticate to Pulumi Cloud for state management
+- `PULUMI_CONFIG_PASSPHRASE` - Encrypt Pulumi stack state (optional - deprecated in favor of Pulumi Cloud encryption)
+- ~~`DIGITALOCEAN_TOKEN`~~ - ❌ **REMOVED** - Cluster managed by Pulumi, kubeconfig retrieved from stack output
+- ~~`KUBECONFIG`~~ - ❌ **REMOVED** - Retrieved dynamically from Pulumi production stack
 
 ---
 
@@ -68,8 +65,8 @@
 - ✅ Free tier exists
 
 **Cons:**
-- ❌ Only 5 environments (dev-local, ephemeral-base, production = 3 base + 2 ephemeral PRs max)
-- ❌ Limited to 1 team member on free tier (blocking for collaboration)
+- ❌ Only 5 environments (local, ephemeral-base, production = 3 base + 2 ephemeral PRs max)
+- ❌ Limited to 1 team member on free tier (blocking collaboration)
 - ❌ Additional tool to learn and maintain
 - ❌ Requires migration effort
 - ❌ Dependency on Pulumi Cloud service availability
@@ -114,15 +111,42 @@ Store in GitHub Settings → Secrets and variables → Actions:
 
 ```yaml
 # Required for all workflows
-PULUMI_CONFIG_PASSPHRASE: "<strong-passphrase>"
-AWS_ACCESS_KEY_ID: "<do-spaces-key>"
-AWS_SECRET_ACCESS_KEY: "<do-spaces-secret>"
+PULUMI_ACCESS_TOKEN: "<pulumi-cloud-token>"  # Access Pulumi Cloud for state management
+DIGITALOCEAN_ACCESS_TOKEN: "<digitalocean-api-token>"  # For creating/managing Kubernetes clusters
 
-# Production only
-DIGITALOCEAN_TOKEN: "<do-api-token>"
+# Optional (if using self-managed backend instead of Pulumi Cloud)
+PULUMI_CONFIG_PASSPHRASE: "<strong-passphrase>"  # For encrypting stack configs locally
+AWS_ACCESS_KEY_ID: "<do-spaces-key>"             # For self-managed Pulumi backend
+AWS_SECRET_ACCESS_KEY: "<do-spaces-secret>"      # For self-managed Pulumi backend
+
+# REMOVED - No longer needed
+# KUBECONFIG - Retrieved dynamically from Pulumi preview-base/production stacks
 ```
 
 **Access:** Scoped per environment (production secrets only accessible to production workflows)
+
+**Note**:
+- With Pulumi Cloud (recommended), you need `PULUMI_ACCESS_TOKEN` and `DIGITALOCEAN_ACCESS_TOKEN`
+- The self-managed backend secrets are only required if using DigitalOcean Spaces for Pulumi state
+- `DIGITALOCEAN_ACCESS_TOKEN` is required for Pulumi to create and manage DigitalOcean Kubernetes clusters
+
+### DigitalOcean Access Token Setup
+
+**Create at**: https://cloud.digitalocean.com/account/api/tokens
+
+**Required Scopes**:
+- **Read** and **Write** access (full access token)
+
+**Permissions needed**:
+- `kubernetes` - Create, read, update, delete Kubernetes clusters
+- `vpc` - Access VPC for cluster networking
+- `load_balancer` - Manage LoadBalancers for cluster ingress
+
+**Token Type**: Personal Access Token (not App-specific)
+
+**Expiration**: Set to "No expiry" or use a long expiration (1+ year) with calendar reminder for rotation
+
+**Storage**: Add to GitHub repository secrets as `DIGITALOCEAN_ACCESS_TOKEN`
 
 ### 2. Pulumi Config (Non-Sensitive Configuration)
 Store in stack config files (checked into git):
@@ -200,13 +224,13 @@ If your project grows beyond free tier limits and you want to use Pulumi ESC:
 1. **Upgrade to Pulumi Team tier** ($75/user/month)
 2. **Create ESC environments:**
    ```bash
-   pulumi env init dev-local
+   pulumi env init local
    pulumi env init production
    pulumi env init ephemeral-base
    ```
 3. **Migrate secrets from GitHub → ESC:**
    ```yaml
-   # pulumi/dev-local environment
+   # pulumi/local environment
    values:
      pulumiConfig:
        dbPassword:
@@ -220,7 +244,7 @@ If your project grows beyond free tier limits and you want to use Pulumi ESC:
    ```yaml
    - uses: pulumi/actions@v5
      with:
-       environment: dev-local  # Automatically imports ESC environment
+       environment: local  # Automatically imports ESC environment
    ```
 
 **Cost-benefit:** Only worth it if:

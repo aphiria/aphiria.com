@@ -155,31 +155,59 @@ kubectl get secret env-var-secrets -o jsonpath='{.data.DB_USER}' | base64 -d
 
 ---
 
-### `KUBECONFIG` (Environment Secret)
+### `DIGITALOCEAN_ACCESS_TOKEN` (Environment Secret)
 
 **Type**: 🔒 **Environment Secret** (`preview` environment)
 
-**Purpose**: Kubernetes cluster access for deploying preview environments
+**Purpose**: Authenticate to DigitalOcean API for creating and managing Kubernetes clusters
+
+**Why required**: Pulumi needs this token to create the dedicated preview cluster (`aphiria-com-preview-cluster`) and manage its resources.
+
+**Required Scopes**:
+- **Read** and **Write** access (full access Personal Access Token)
+
+**Permissions needed**:
+- `kubernetes` - Create, read, update, delete Kubernetes clusters
+- `vpc` - Access VPC for cluster networking
+- `load_balancer` - Manage LoadBalancers for cluster ingress
 
 **How to create**:
-```bash
-# Encode your kubeconfig file
-cat ~/.kube/config | base64 -w 0
-```
-
-**Security note**: This provides **full cluster access**. The `preview` environment protection ensures:
-- ✅ Manual approval required before workflows can access this secret
-- ✅ Only maintainers can approve deployments
-- ✅ Forked PRs cannot trigger privileged deployments
+1. Go to DigitalOcean: https://cloud.digitalocean.com/account/api/tokens
+2. Click **"Generate New Token"**
+3. Name: `Aphiria Preview Infrastructure`
+4. Scopes: Select **Read** and **Write** (full access)
+5. Click "Generate Token"
+6. Copy the token immediately (you won't be able to see it again)
 
 **How to add as Environment Secret**:
 1. Go to `https://github.com/aphiria/aphiria.com/settings/environments`
 2. Click on the **`preview`** environment
 3. Scroll to **"Environment secrets"**
 4. Click **"Add secret"**
-5. Name: `KUBECONFIG`
-6. Value: Paste the base64-encoded kubeconfig
+5. Name: `DIGITALOCEAN_ACCESS_TOKEN`
+6. Value: Paste the DigitalOcean token
 7. Click "Add secret"
+
+**Security note**: This token has full DigitalOcean access. It's protected by environment approval requirements, so only maintainer-approved workflows can access it.
+
+---
+
+### ~~`KUBECONFIG`~~ (DEPRECATED - No Longer Required)
+
+**Status**: ❌ **REMOVED** - Kubeconfig is now retrieved directly from Pulumi `preview-base` stack
+
+**Why removed**: Pulumi now creates the dedicated preview cluster and exports the kubeconfig as a stack output. Workflows retrieve it dynamically using:
+```bash
+pulumi stack output kubeconfig --stack preview-base
+```
+
+**If you have this secret configured**, it can be safely deleted:
+1. Go to `https://github.com/aphiria/aphiria.com/settings/environments`
+2. Click on the **`preview`** environment
+3. Under "Environment secrets", find `KUBECONFIG`
+4. Click "Remove" to delete it
+
+**Migration note**: The workflow now uses `pulumi stack output kubeconfig --stack preview-base` instead of the `KUBECONFIG` secret. This eliminates the need for manual kubeconfig management and ensures the cluster configuration is always up-to-date.
 
 ---
 
@@ -200,7 +228,6 @@ After adding all secrets, verify they're configured correctly:
 3. Under "Environment secrets", you should see:
    - ✅ `POSTGRESQL_ADMIN_PASSWORD`
    - ✅ `PULUMI_ACCESS_TOKEN`
-   - ✅ `KUBECONFIG`
    - (Optional) ✅ `POSTGRESQL_ADMIN_USER`
 
 ### Environment Protection
@@ -222,7 +249,8 @@ Quick reference for which secrets go where:
 | `POSTGRESQL_ADMIN_PASSWORD` | 🔒 Environment | `/settings/environments/preview` | Requires approval (database access) |
 | `POSTGRESQL_ADMIN_USER` | 🔒 Environment | `/settings/environments/preview` | Requires approval (database access) |
 | `PULUMI_ACCESS_TOKEN` | 🔒 Environment | `/settings/environments/preview` | Requires approval (infrastructure state) |
-| `KUBECONFIG` | 🔒 Environment | `/settings/environments/preview` | Requires approval (cluster access) |
+| ~~`KUBECONFIG`~~ | ~~🔒 Environment~~ | ~~`/settings/environments/preview`~~ | ❌ **REMOVED** - Retrieved from Pulumi stack |
+| ~~`DIGITALOCEAN_ACCESS_TOKEN`~~ | ~~🔒 Environment~~ | ~~`/settings/environments/preview`~~ | ❌ **REMOVED** - Cluster managed by Pulumi |
 
 ---
 
@@ -255,9 +283,9 @@ The workflow will fail with a clear error message listing which secrets are miss
 
 ### Kubernetes connection fails
 
-- Verify `KUBECONFIG` is base64-encoded correctly: `echo $KUBECONFIG | base64 -d | head -5`
-- Check that the kubeconfig context points to the correct cluster
-- Ensure cluster credentials have not expired
+- Verify production stack is deployed and exports kubeconfig: `pulumi stack output kubeconfig --stack production`
+- Check that Pulumi can access the production stack state
+- Ensure cluster credentials have not expired (Pulumi refreshes automatically)
 
 ### Database connection fails
 

@@ -18,13 +18,31 @@
 
 ### Session 2025-12-20 (Architecture Decisions)
 
-- Q: Should preview environments import production Kustomize manifests or use separate Pulumi code? → A: **Migrate all infrastructure (dev-local, preview, production) to Pulumi** to eliminate tool sprawl (Helm + Kustomize + Pulumi → Pulumi only)
+- Q: Should preview environments import production Kustomize manifests or use separate Pulumi code? → A: **Migrate all infrastructure (local, preview, production) to Pulumi** to eliminate tool sprawl (Helm + Kustomize + Pulumi → Pulumi only)
 - Q: Should Redis and monitoring be included in migration? → A: No, Redis is unused and monitoring is managed separately
 - Q: What about js-config ConfigMap for web? → A: Required, contains environment-specific JavaScript configuration (API URLs), must be created per-environment
 - Q: Reuse production Gateway or create separate for preview? → A: Separate Gateway for preview environments (isolation)
 - Q: Migrate to GitHub Container Registry (ghcr.io) from DockerHub? → A: Yes, simplifies GitHub Actions integration and eliminates rate limits
-- Q: Should Pulumi manage per-environment databases? → A: Yes, Pulumi creates separate databases for dev-local, preview, and production
-- Q: Migration order? → A: dev-local (Minikube) → preview (ephemeral) → production (DigitalOcean cluster)
+- Q: Should Pulumi manage per-environment databases? → A: Yes, Pulumi creates separate databases for local, preview, and production
+- Q: Migration order? → A: local (Minikube) → preview (ephemeral) → production (DigitalOcean cluster)
+
+### Session 2025-12-21 (ESC and Production Pipeline)
+
+- Q: How should production deployment workflow set image references? → A: Production workflow must use `pulumi config set` to set `webImage` and `apiImage` from build outputs (not hardcoded in stack YAML)
+- Q: What happens to existing preview database when ESC password changes? → A: Database deployment will fail to start with new password; must update existing database password or destroy/recreate database with new credentials
+
+### Session 2025-12-21 (Separate Preview Cluster Architecture)
+
+- Q: Should preview environments share the production Kubernetes cluster? → A: **No - Create dedicated preview cluster** (`aphiria-com-preview-cluster` on DigitalOcean)
+- Q: Why separate clusters instead of shared cluster with namespaces? → A: **Complexity reduction** - Eliminates complex dependency management between preview-base and production stacks sharing the same cluster
+- **Rationale**:
+  1. **Complete isolation**: Preview cluster failures cannot impact production
+  2. **Simpler Pulumi state management**: No shared cluster resources between preview and production stacks
+  3. **Independent scaling**: Preview cluster sized for ephemeral workloads (smaller node pool)
+  4. **Easier teardown**: Can destroy entire preview cluster if needed without production risk
+  5. **Cost optimization**: Preview cluster uses lower-cost DigitalOcean node pools
+- **Implementation**: `stacks/preview-base.ts` provisions dedicated DigitalOcean cluster + PostgreSQL + Gateway
+- **Trade-off**: Higher cost (2 clusters vs 1), but significantly reduced operational complexity
 
 ---
 
@@ -57,9 +75,9 @@ As a maintainer, I want to preview pull request changes in a live, isolated envi
 
 1. **Given** a pull request is opened  
    **When** the maintainer approves preview deployment  
-   **Then** an ephemeral environment is provisioned with a unique URL
+   **Then** a preview environment is provisioned with a unique URL
 
-2. **Given** an ephemeral environment exists  
+2. **Given** a preview environment exists  
    **When** new commits are pushed to the PR  
    **Then** the environment is updated to reflect the latest commit
 
@@ -126,15 +144,28 @@ As a maintainer, I want preview environments to be destroyed automatically when 
 - **FR-008**: Provisioning failures MUST be reported clearly
 - **FR-009**: All resources created for a preview MUST be removed on teardown
 - **FR-010**: Preview environments MUST deploy both web and API containers with full application behavior
+- **FR-011**: Preview deployments MUST auto-approve for PRs authored by repository admins/maintainers
+- **FR-012**: Preview deployments MUST require manual approval for PRs authored by external contributors
+- **FR-072**: GitHub environment protection MUST be used as defense-in-depth alongside workflow-based checks
+- **FR-073**: The `preview` environment MUST use `workflow_run` trigger (runs on master branch workflow) to prevent workflow tampering
+- **FR-074**: The workflow MUST programmatically auto-approve deployments for maintainer PRs using GitHub API
+- **FR-075**: Deployment tracking MUST be maintained via GitHub environment deployment history
+- **FR-076**: Auto-approval MUST use a Personal Access Token (PAT) with `repo` and `read:org` scopes stored in `DEPLOYMENT_APPROVAL_TOKEN` secret
+- **FR-077**: The `preview` environment protection MUST have `prevent_self_review: false` to allow maintainer self-approval
+- **FR-078**: The auto-approval job MUST run concurrently with the deploy job and approve pending deployments via the GitHub API
 - **FR-029**: Each preview environment MUST provision separate Kubernetes Deployments for web and API components (1 replica each for preview traffic)
 - **FR-030**: Web and API deployments MUST use the same immutable container images (by digest) as production
 - **FR-031**: Gateway/Ingress routing MUST direct `{PR}.pr.aphiria.com` to web service and `{PR}.pr-api.aphiria.com` to API service
-- **FR-052**: Gateway/Ingress MUST enforce connection-level rate limiting to prevent resource exhaustion
+- **FR-033**: Gateway/Ingress MUST enforce connection-level rate limiting to prevent resource exhaustion
 - **FR-032**: Each preview environment MUST run database migrations via Phinx before deployments start
-- **FR-033**: Each preview environment MUST run the LexemeSeeder (Phinx seed) to populate the search index
+- **FR-102**: Each preview environment MUST run the LexemeSeeder (Phinx seed) to populate the search index
 - **FR-034**: The database migration job MUST complete successfully before API deployment is marked ready
 - **FR-035**: LexemeSeeder MUST read compiled documentation from the API container's filesystem
 - **FR-036**: Preview URLs MUST be surfaced in pull request comments or status checks
+- **FR-079**: Pulumi preview output MUST be posted as a PR comment after the preview step completes
+- **FR-080**: Preview comments MUST be collapsible (using `<details>` tag) to avoid cluttering the PR discussion
+- **FR-081**: Preview comments MUST indicate success/failure status with visual indicators (✅/❌)
+- **FR-082**: Preview comments MUST be updated (not duplicated) when the workflow re-runs for the same PR
 - **FR-037**: Preview deployments MUST be gated behind explicit maintainer approval
 - **FR-038**: Untrusted contributors MUST NOT be able to trigger privileged deployments
 - **FR-039**: Privileged credentials MUST NOT be accessible before approval
@@ -152,6 +183,22 @@ Kubernetes
 - **FR-046**: Kubernetes Secrets MUST be generated per-PR for sensitive configuration (DB credentials, etc.)
 - **FR-047**: Secret names MUST follow the pattern `env-var-secrets-pr-{PR_NUMBER}`
 
+#### Pulumi ESC Integration
+
+- **FR-083**: CD-specific secrets (PostgreSQL passwords, DigitalOcean tokens) MUST be migrated from GitHub Secrets to Pulumi ESC
+- **FR-085**: Stack YAML files MUST import appropriate ESC environments via `environment:` block
+- **FR-086**: Workflows MUST NOT use `pulumi config set --secret` for secrets stored in ESC
+- **FR-087**: CI-specific secrets (GHCR_TOKEN, PULUMI_ACCESS_TOKEN) MUST remain in GitHub Secrets
+- **FR-088**: ESC environment `aphiria-com/preview` MUST contain: `postgresql:password`, `digitalocean:token` (preview cluster scoped)
+- **FR-089**: ESC environment `aphiria-com/production` MUST contain: `postgresql:password`, `digitalocean:token` (production cluster scoped)
+- **FR-091**: Local development MUST support `esc run` for Pulumi operations but NOT require ESC access for basic Minikube usage
+- **FR-092**: `preview-base` stack MUST import `aphiria-com/preview` ESC environment
+- **FR-093**: `preview-pr-{N}` stacks MUST import `aphiria-com/preview` ESC environment (inherits shared preview secrets)
+- **FR-094**: `production` stack MUST import `aphiria-com/production` ESC environment
+- **FR-095**: `local` stack MAY optionally import `aphiria-com/local` ESC environment for `esc run` support
+- **FR-096**: ESC migration MUST be tested in preview environment before applying to production
+- **FR-097**: GitHub Secrets `POSTGRESQL_PREVIEW_PASSWORD`, `POSTGRESQL_ADMIN_PASSWORD`, `DIGITALOCEAN_ACCESS_TOKEN` MUST be removed after successful ESC migration
+
 ---
 
 ## Configuration Injection
@@ -165,64 +212,310 @@ The PR number and related metadata are available in GitHub Actions via context v
 - `${{ github.repository }}` - Repository name
 - `${{ github.event.pull_request.head.ref }}` - Source branch name
 
-### ConfigMap Generation
+### API Application Environment Variables
 
-For each ephemeral environment, a ConfigMap is dynamically generated with:
+For each ephemeral environment, environment variables are injected via Kubernetes ConfigMap and Secret resources created by the Pulumi preview-pr stack.
 
+#### Actual Implementation (stacks/preview-pr.ts)
+
+**ConfigMap: `preview-config`** (non-sensitive configuration):
+- `DB_HOST`: PostgreSQL host from preview-base stack output (Service: `db` in `default` namespace)
+- `DB_PORT`: `"5432"`
+- `DB_NAME`: `aphiria_pr_{{ PR_NUMBER }}` (e.g., `aphiria_pr_123`)
+- `DB_USER`: From Pulumi ESC `postgresql:user` (e.g., `aphiria`)
+- `APP_ENV`: `"preview"`
+- `PR_NUMBER`: PR number as string
+- `WEB_URL`: `https://{{ PR_NUMBER }}.pr.aphiria.com`
+- `API_URL`: `https://{{ PR_NUMBER }}.pr-api.aphiria.com`
+
+**Secret: `preview-secret`** (sensitive configuration):
+- `DB_PASSWORD`: From Pulumi ESC `postgresql:password` (unique preview password)
+
+**⚠️ Known Gap**: The following environment variables required by Aphiria are currently **NOT** set in preview environments (see issue tracking):
+- `APP_BUILDER_API`: `"\\Aphiria\\Framework\\Api\\SynchronousApiApplicationBuilder"`
+- `APP_BUILDER_CONSOLE`: `"\\Aphiria\\Framework\\Console\\ConsoleApplicationBuilder"`
+- `APP_COOKIE_DOMAIN`: `.{{ PR_NUMBER }}.pr.aphiria.com`
+- `APP_COOKIE_SECURE`: `"1"`
+- `DOC_LEXEMES_TABLE_NAME`: `""`
+- `LOG_LEVEL`: `"debug"`
+
+**Resolution**: These missing variables should be added to the ConfigMap in `stacks/preview-pr.ts` (lines 187-203) or the stack should be refactored to use the shared `createAPIDeployment` component from `components/api-deployment.ts`, which already includes all required environment variables.
+
+#### Reference: Required Environment Variables (from Kustomize base/production)
+
+For comparison, the production Kustomize manifest (`infrastructure/kubernetes/base/core/config-maps.yml`) defines:
+- `APP_BUILDER_API`, `APP_BUILDER_CONSOLE`, `APP_ENV`, `APP_WEB_URL`, `APP_API_URL`, `APP_COOKIE_DOMAIN`, `APP_COOKIE_SECURE`, `DB_HOST`, `DB_NAME`, `DB_PORT`, `DOC_LEXEMES_TABLE_NAME`, `LOG_LEVEL`
+
+### Pulumi ESC Architecture
+
+**Purpose**: Centralize CD-specific secrets in Pulumi ESC to eliminate duplication between GitHub Secrets and Pulumi stack config files.
+
+#### ESC Environment Structure (ACTUAL IMPLEMENTATION)
+
+**ESC Project**: `aphiria.com` (note: uses dots, not hyphens)
+
+**Environments**:
+- `aphiria.com/Preview` - Preview cluster secrets
+- `aphiria.com/Production` - Production cluster secrets
+
+**Note**: We chose a flat structure (2 environments) instead of a hierarchical structure with shared `common` environment to simplify initial implementation. Common values like `postgresql:user` are duplicated in both environments.
+
+#### ESC Environment Definitions
+
+**aphiria.com/Preview**:
 ```yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: env-vars-pr-{{ PR_NUMBER }}
-  namespace: ephemeral-pr-{{ PR_NUMBER }}
-data:
-  APP_BUILDER_API: "\\Aphiria\\Framework\\Api\\SynchronousApiApplicationBuilder"
-  APP_BUILDER_CONSOLE: "\\Aphiria\\Framework\\Console\\ConsoleApplicationBuilder"
-  APP_ENV: "preview"
-  APP_WEB_URL: "https://{{ PR_NUMBER }}.pr.aphiria.com"
-  APP_API_URL: "https://{{ PR_NUMBER }}.pr-api.aphiria.com"
-  APP_COOKIE_DOMAIN: ".{{ PR_NUMBER }}.pr.aphiria.com"
-  APP_COOKIE_SECURE: "1"
-  DB_HOST: "db"  # Shared PostgreSQL service in default or shared namespace
-  DB_NAME: "aphiria_pr_{{ PR_NUMBER }}"  # PR-specific database
-  DB_PORT: "5432"
-  DOC_LEXEMES_TABLE_NAME: ""
-  LOG_LEVEL: "debug"
+values:
+  pulumiConfig:
+    "postgresql:user": aphiria
+    "postgresql:password":
+      fn::secret: <unique-preview-password>
+    "digitalocean:token":
+      fn::secret: <preview-cluster-scoped-token>
 ```
 
-### Secret Generation
+**Note**: Both `preview-base` and `preview-pr-*` stacks use `postgresql:user` and `postgresql:password` from ESC. The per-PR stacks use these credentials to create separate databases within the shared PostgreSQL instance.
 
-Sensitive values are stored in Kubernetes Secrets:
-
+**aphiria.com/Production**:
 ```yaml
-apiVersion: v1
-kind: Secret
-metadata:
-  name: env-var-secrets-pr-{{ PR_NUMBER }}
-  namespace: ephemeral-pr-{{ PR_NUMBER }}
-type: Opaque
-stringData:
-  DB_USER: "preview_user"
-  DB_PASSWORD: "{{ GENERATED_PASSWORD }}"
+values:
+  pulumiConfig:
+    "postgresql:user": aphiria
+    "postgresql:password":
+      fn::secret: <unique-production-password>
+    "digitalocean:token":
+      fn::secret: <production-cluster-scoped-token>
 ```
 
-### Workflow Integration
+**Key Requirements**:
+- Config keys MUST be quoted: `"postgresql:user"` not `postgresql: { user: ... }`
+- Non-secret values are plain strings: `aphiria` not `fn::secret: aphiria`
+- Secrets use `fn::secret:` wrapper
+- Zero password reuse between environments
 
-The GitHub Actions workflow will:
+#### Stack Configuration Files
 
+**Pulumi.preview-base.yml**:
+```yaml
+environment:
+  - aphiria.com/Preview
+```
+
+**Pulumi.production.yml**:
+```yaml
+environment:
+  - aphiria.com/Production
+config:
+  aphiria-com-infrastructure:webImage: davidbyoung/aphiria.com-web:8e1ebfd326d7d20aea7104f1269cb1a9ce325d69-a9b9031929d39f8dd4863bec41bbe5b76cb2b555
+  aphiria-com-infrastructure:apiImage: nginx:alpine
+```
+
+**Pulumi.local.yml**:
+```yaml
+# Local development stack - uses traditional Pulumi config (no ESC required)
+# This allows developers without ESC access to run Pulumi locally
+
+config:
+  # Set these using: pulumi config set postgresql:user aphiria
+  # Set secrets using: pulumi config set --secret postgresql:password <your-password>
+```
+
+#### TypeScript Code Access
+
+Pulumi stacks access ESC values via standard Config API:
+
+```typescript
+const config = new pulumi.Config("postgresql");
+const dbUser = config.require("user");         // From common ESC
+const dbPassword = config.requireSecret("password");  // From preview/production ESC
+```
+
+#### Migration Impact
+
+**Before ESC**:
+- Secrets stored in GitHub Secrets
+- Workflows run `pulumi config set --secret postgresql:password "${{ secrets.POSTGRESQL_PREVIEW_PASSWORD }}"`
+- Secrets duplicated in Pulumi stack config files (encrypted)
+
+**After ESC**:
+- Secrets stored once in Pulumi ESC
+- No `pulumi config set --secret` commands needed
+- GitHub Secrets only used for CI-specific operations (GHCR_TOKEN, PULUMI_ACCESS_TOKEN)
+
+**Removed GitHub Secrets** (moved to ESC):
+- `POSTGRESQL_PREVIEW_PASSWORD` → ESC `aphiria.com/Preview`
+- `DIGITALOCEAN_ACCESS_TOKEN` → ESC `aphiria.com/Preview` and `aphiria.com/Production` (separate tokens)
+- `PULUMI_CONFIG_PASSPHRASE` → Not needed (Pulumi Cloud encryption)
+- `KUBECONFIG` → Generated dynamically from stack outputs
+
+**Remaining GitHub Secrets** (CI-specific):
+- `PULUMI_ACCESS_TOKEN` - Required for Pulumi Cloud authentication
+- `GHCR_TOKEN` - Required for pushing Docker images to GitHub Container Registry
+
+#### Local Development
+
+**Local stack uses traditional Pulumi config** (no ESC required):
+
+```bash
+# Initialize local stack
+pulumi stack init local
+
+# Set config manually
+pulumi config set postgresql:user aphiria
+pulumi config set --secret postgresql:password postgres
+
+# Deploy
+pulumi up --stack local
+```
+
+This approach allows developers to work without ESC access while preview/production use ESC for centralized secret management.
+
+#### Workflow Integration: Stack-to-ESC Binding
+
+**Correct approach** (during stack initialization):
+```bash
+# Create stack
+pulumi stack init preview-base
+
+# Bind to ESC environment
+pulumi config env add aphiria.com/Preview --stack preview-base
+```
+
+**Lessons Learned**:
+1. Pulumi Neo may provide incorrect CLI syntax - always verify with `pulumi <command> --help`
+
+### Workflow Integration (ESC Binding in CI/CD)
+
+**Key points**:
 1. Extract PR number from `${{ github.event.pull_request.number }}`
-2. Pass PR number to Pulumi as a stack parameter or environment variable
-3. Pulumi uses PR number to:
-   - Create stack: `ephemeral-pr-{PR_NUMBER}`
-   - Generate ConfigMap/Secrets with interpolated values
-   - Deploy Kubernetes resources with PR-scoped names
-4. Infrastructure provisioning creates namespace, ConfigMap, Secrets, deployments with PR-specific configuration
+2. Check if stack exists before creating
+3. If creating new stack, immediately bind to ESC environment
+4. Secrets (PostgreSQL passwords, DigitalOcean tokens) are automatically loaded from ESC
+5. No `pulumi config set --secret` commands needed
 
 ---
 
 ## CI/CD Workflow Architecture
 
-### Design Principle: Reusable Workflows
+### Actual Implementation (2025-12-22)
+
+The preview environment workflows are **fully implemented** and operational. The architecture uses dedicated workflows for preview environments, with plans to create reusable workflows for production in the future.
+
+#### **Implemented Workflows**
+
+**1. Test Workflow** (`.github/workflows/test.yml`)
+- **Trigger**: Push to master, pull requests, daily schedule
+- **Purpose**: PHP code testing (PHPUnit, PHPcs, Psalm), Pulumi TypeScript build verification
+- **Jobs**:
+  - Matrix testing: PHP 8.4 and 8.5
+  - PostgreSQL 16 service container for integration tests
+  - Documentation build (`gulp build`)
+  - Database seeding (Phinx migrations + LexemeSeeder)
+  - Static analysis and code coverage upload
+  - Pulumi TypeScript build verification (only on PHP 8.4)
+
+**2. Build Preview Images** (`.github/workflows/build-preview-images.yml`)
+- **Trigger**: PR opened/synchronize/reopened (on source code changes only)
+- **Purpose**: Multi-stage Docker image builds with caching optimization
+- **Outputs**: Image digests attached as PR labels for deployment tracking
+- **Jobs**:
+  - **build**: Single job with 3 sequential Docker builds
+    1. **Build image** (`aphiria.com-build`): Documentation compilation from https://github.com/aphiria/docs
+    2. **Web image** (`aphiria.com-web`): nginx with compiled static HTML/CSS/JS
+    3. **API image** (`aphiria.com-api`): nginx + PHP-FPM with compiled docs for LexemeSeeder
+  - **Caching strategy**:
+    - Primary: PR-specific GHA cache (`scope=build-${PR_NUMBER}`)
+    - Fallback 1: General preview cache (`scope=build`)
+    - Fallback 2: Master branch cache (`scope=build-master`)
+  - **PR annotations**:
+    - Comment with image digests
+    - Labels: `preview:images-built`, `web-digest:${SHORT_HASH}`, `api-digest:${SHORT_HASH}`
+
+**3. Build Master Cache** (`.github/workflows/build-master-cache.yml`)
+- **Trigger**: Push to master branch
+- **Purpose**: Populate GHA cache for faster initial PR builds
+- **Output**: Cached layers for build, web, and API images at `scope=build-master`
+
+**4. Deploy Preview Environment** (`.github/workflows/deploy-preview.yml`)
+- **Trigger**: Successful completion of "Build Preview Images" workflow (workflow_run)
+- **Purpose**: Deploy ephemeral preview environment with security gates
+- **Jobs**:
+  1. **ensure-base-stack** (runs first):
+     - Checks if `preview-base` stack exists
+     - Auto-provisions preview Kubernetes cluster if needed
+     - Retry logic for cluster initialization (3 attempts, progressive backoff)
+     - Validates cluster deployment via `clusterId` output
+
+  2. **preview-infra** (runs after base stack ready):
+     - Extracts PR number from workflow_run event
+     - Creates or selects `preview-pr-${PR_NUMBER}` stack
+     - Binds Pulumi ESC environment (`aphiria.com/Preview`)
+     - **Runs `pulumi preview`** to show infrastructure changes
+     - **Posts preview output as PR comment** (collapsible, before approval)
+     - ✅ **OSS Security**: Maintainers see infrastructure changes before approval
+
+  3. **check-author** (runs after preview):
+     - Determines if PR author has admin/maintain permissions
+     - Outputs: `is-maintainer` (boolean), `pr-number`
+
+  4. **auto-approve** (runs if maintainer, parallel with deploy):
+     - Waits for deployment to reach pending state (max 30 attempts × 2s)
+     - Auto-approves via GitHub API using `DEPLOYMENT_APPROVAL_TOKEN`
+     - Eliminates manual approval step for trusted contributors
+
+  5. **deploy** (runs if maintainer, requires `preview` environment approval):
+     - **Environment protection**: `preview` environment with required reviewers
+     - Retrieves image digests from PR labels
+     - Configures Pulumi stack with PR number, image digests, base stack reference
+     - Generates kubeconfig from `preview-base` stack output
+     - Deploys with 10-minute timeout
+     - Waits for pod readiness (5-minute timeout)
+     - Health checks: HTTP status validation for web and API URLs
+     - **PR comment**: Deployment status, URLs, HTTP status codes
+     - **Concurrency control**: `group: preview-${PR_NUMBER}`, no cancellation
+
+  6. **notify-manual-approval** (runs if non-maintainer):
+     - Posts PR comment explaining manual approval requirement
+
+**5. Cleanup Preview Environment** (`.github/workflows/cleanup-preview.yml`)
+- **Trigger**: PR closed or merged
+- **Purpose**: Automatic resource cleanup
+- **Jobs**:
+  - **cleanup**:
+    - Retrieves kubeconfig from `preview-base` stack
+    - Runs `pulumi destroy --stack preview-pr-${PR_NUMBER}` (5-minute timeout)
+    - Removes Pulumi stack from Pulumi Cloud
+    - Verifies namespace deletion
+    - Verifies database drop (connects to PostgreSQL pod to query `pg_database`)
+    - Updates PR comment with cleanup status
+    - Removes PR labels: `preview:*`, `web-digest:*`, `api-digest:*`
+
+#### **Key Implementation Details**
+
+**Security Model**:
+- **workflow_run trigger**: Deploy workflow runs on master branch code, not PR branch (prevents workflow tampering)
+- **Environment protection**: `preview` environment requires manual approval for non-maintainers
+- **Auto-approval**: Uses PAT with `repo` and `read:org` scopes (stored in `DEPLOYMENT_APPROVAL_TOKEN`)
+- **Infrastructure preview**: Posted BEFORE approval gate (FR-066-068)
+
+**Image Digest Tracking**:
+- Build workflow captures digests: `${{ steps.build-image.outputs.digest }}`
+- Digests stored as PR labels: `web-digest:abc123def456` (first 12 chars of SHA-256)
+- Deploy workflow reconstructs full digest: `sha256:` + label value
+- Production can promote same digest tested in preview (build-once-deploy-many)
+
+**Database Management**:
+- Per-PR database created via Kubernetes Job: `CREATE DATABASE aphiria_pr_${PR_NUMBER}`
+- Migrations run in API deployment initContainer: `vendor/bin/phinx migrate && vendor/bin/phinx seed:run`
+- Cleanup verifies database drop by querying PostgreSQL directly
+
+**Error Handling**:
+- Base stack deployment: 3 retries with progressive backoff (60s, 120s)
+- Health checks: Continue on error, post status codes to PR
+- Cleanup: Continue on error for verification steps (namespace/database checks)
+
+---
+
+### Future: Reusable Workflows (Planned)
 
 **Goal**: Minimize drift between PR preview builds and production builds by using parameterized, reusable workflows.
 
@@ -232,35 +525,18 @@ The GitHub Actions workflow will:
 - **FR-050** (Deployment consistency): Pulumi deployment workflows MUST use shared logic with environment-specific configuration passed as inputs
 - **NFR-011** (Maintainability): Changes to build or deployment logic MUST only require updating a single reusable workflow, not multiple workflow files
 
-### Workflow Structure
-
-**Reusable Workflows** (`.github/workflows/`):
-- `build-images.yml` - Reusable workflow for building Docker images (build, web, API)
-  - Inputs: `environment` (preview/production), `image-tag-strategy` (pr-number/commit-sha/latest), `enable-cache` (true/false)
-  - Outputs: `build-digest`, `web-digest`, `api-digest`
+**Planned Structure** (not yet implemented):
+- `build-images.yml` - Reusable workflow for building Docker images
 - `deploy-pulumi.yml` - Reusable workflow for Pulumi deployments
-  - Inputs: `stack-name`, `pulumi-program-path`, `environment`, `image-digests`
-  - Outputs: `deployment-urls`, `stack-outputs`
+- Refactor `build-preview-images.yml` and `deploy-preview.yml` to use reusable workflows
+- Create `deploy-production.yml` using reusable patterns
 
-**Caller Workflows** (`.github/workflows/`):
-- `preview-deploy.yml` - Calls `build-images.yml` + `deploy-pulumi.yml` with preview params
-- `production-deploy.yml` - Calls `build-images.yml` (optional, may skip) + `deploy-pulumi.yml` with production params
-- `preview-cleanup.yml` - Calls `deploy-pulumi.yml` with destroy action
-
-**Migration - Files to Remove**:
-After implementing reusable workflows, the following existing workflow files will be REMOVED (logic replicated in new workflows):
+**Migration - Files to Remove** (after production migration):
 - `build-docker-image.yml` - Replaced by `build-images.yml`
 - `build-deploy.yml` - Replaced by `production-deploy.yml` + `deploy-pulumi.yml`
 
 **Files to Update**:
-- `test.yml` - Keep for PHP/TypeScript testing, but REMOVE Pulumi preview steps (lines 82-120) since infrastructure preview is now in separate workflows
-
-**Files to Keep (Already Updated)**:
-- `build-preview-images.yml` - Preview image builds (current implementation, will be refactored to reusable `build-images.yml` later)
-- `preview-deploy.yml` - Preview deployment workflow (current implementation)
-- `preview-cleanup.yml` - Cleanup on PR close (current implementation)
-
-**Note**: Old workflows will be removed only after new workflows are tested and validated in preview and production.
+- `test.yml` - Remove Pulumi preview steps if they exist (infrastructure preview is now in deploy-preview.yml)
 
 ### Parameterization Strategy
 
@@ -291,11 +567,11 @@ inputs:
   stack-name:
     type: string
     required: true
-    description: "Pulumi stack name (e.g., ephemeral-pr-123, production)"
+    description: "Pulumi stack name (e.g., preview-pr-123, production)"
   pulumi-program-path:
     type: string
     required: true
-    description: "Path to Pulumi program (e.g., infrastructure/pulumi/aphiria.com)"
+    description: "Path to Pulumi program (infrastructure/pulumi - stack selected via stack-name)"
   environment:
     type: string
     required: true
@@ -328,8 +604,8 @@ jobs:
     needs: build
     uses: ./.github/workflows/deploy-pulumi.yml
     with:
-      stack-name: ephemeral-pr-${{ github.event.pull_request.number }}
-      pulumi-program-path: infrastructure/pulumi/ephemeral
+      stack-name: preview-pr-${{ github.event.pull_request.number }}
+      pulumi-program-path: infrastructure/pulumi
       environment: preview
       web-image-digest: ${{ needs.build.outputs.web-digest }}
       api-image-digest: ${{ needs.build.outputs.api-digest }}
@@ -366,7 +642,7 @@ jobs:
     uses: ./.github/workflows/deploy-pulumi.yml
     with:
       stack-name: production
-      pulumi-program-path: infrastructure/pulumi/aphiria.com
+      pulumi-program-path: infrastructure/pulumi
       environment: production
       web-image-digest: ${{ needs.promote.outputs.web-digest }}
       api-image-digest: ${{ needs.promote.outputs.api-digest }}
@@ -403,7 +679,7 @@ This feature includes a **comprehensive migration** from Helm/Kustomize to Pulum
 2. **Dynamic Infrastructure**: Pulumi excels at ephemeral/per-PR resources
 3. **Type Safety**: TypeScript catches errors before deployment
 4. **State Management**: Full deployment history and rollback capability
-5. **DRY Principle**: Shared components reused across dev-local, preview, production
+5. **DRY Principle**: Shared components reused across local, preview, production
 6. **Better Local Dev**: Simpler Minikube workflow (`pulumi up` vs `helmfile + kubectl`)
 
 **Migration Scope**:
@@ -411,11 +687,11 @@ This feature includes a **comprehensive migration** from Helm/Kustomize to Pulum
 - ✅ Kustomize base manifests → Pulumi TypeScript components
 - ✅ Environment overlays → Pulumi stacks with configurations
 - ✅ Image registry migration: DockerHub → GitHub Container Registry (ghcr.io)
-- ✅ Per-environment database management (dev-local, preview, production)
+- ✅ Per-environment database management (local, preview, production)
 
 **Migration Order**:
-1. **dev-local** (Minikube) - Test locally first, validate workflow
-2. **preview** (ephemeral-pr-*) - Automated preview environments on DigitalOcean
+1. **local** (Minikube) - Test locally first, validate workflow
+2. **preview** (preview-pr-*) - Automated preview environments on DigitalOcean
 3. **production** (DigitalOcean cluster) - Live site deployment
 
 **Backward Compatibility**:
@@ -476,7 +752,7 @@ This feature includes a **comprehensive migration** from Helm/Kustomize to Pulum
     - unique URLs (web + API)
     - status (provisioning / ready / failed / destroying)
     - deployed commit SHA
-    - Kubernetes namespace: `ephemeral-pr-{PR_NUMBER}`
+    - Kubernetes namespace: `preview-pr-{PR_NUMBER}`
     - Deployments: `web`, `api` (within namespace)
     - Services: `web`, `api` (within namespace)
     - Database: `aphiria_pr_{PR_NUMBER}` (logical database in shared PostgreSQL instance)
@@ -505,19 +781,36 @@ This feature includes a **comprehensive migration** from Helm/Kustomize to Pulum
 
 ### Kubernetes Cluster Strategy
 
+#### **Actual Implementation: Dedicated Preview Cluster (2025-12-21)**
+
+The preview infrastructure uses a **dedicated Kubernetes cluster** separate from production, provisioned by the `preview-base` Pulumi stack.
+
 **Persistent Base Infrastructure (Always Running):**
 
 The following infrastructure persists **independently of PR lifecycle** and remains running even when zero PRs are active:
 
-- **FR-018**: A shared Kubernetes cluster MUST exist to host all ephemeral environments
-- **FR-019**: The shared cluster MAY be the existing dev cluster or a dedicated preview cluster
-- **FR-020**: A PostgreSQL instance MUST run continuously within the cluster
-- **FR-021**: Gateway API / Ingress controller MUST be configured with wildcard DNS routing
-- **FR-022**: DNS wildcard records (`*.pr.aphiria.com`, `*.pr-api.aphiria.com`) MUST be configured
-- **FR-023**: Container registry MUST be accessible for image pulls
+- **FR-018**: ✅ **IMPLEMENTED** - Dedicated preview Kubernetes cluster (`aphiria-com-preview-cluster` on DigitalOcean)
+- **FR-019**: ✅ **IMPLEMENTED** - Dedicated cluster (not shared with production) for complete isolation
+- **FR-020**: ✅ **IMPLEMENTED** - PostgreSQL 16 instance runs continuously in `default` namespace of preview cluster
+- **FR-021**: ✅ **IMPLEMENTED** - nginx-gateway-fabric Gateway API with wildcard TLS (`*.pr.aphiria.com`, `*.pr-api.aphiria.com`)
+- **FR-022**: ⚠️ **PENDING** - DNS wildcard records must be manually configured in DigitalOcean DNS (not automated)
+- **FR-023**: ✅ **IMPLEMENTED** - GitHub Container Registry (ghcr.io) accessible with GHCR_TOKEN
+
+**Architecture Decision: Separate Clusters (2025-12-21):**
+
+Originally planned to share production cluster with namespace isolation, but **pivoted to dedicated preview cluster** for:
+1. **Complete isolation**: Preview cluster failures cannot impact production
+2. **Simpler Pulumi state**: No shared cluster resources between preview-base and production stacks
+3. **Independent scaling**: Preview cluster uses smaller DigitalOcean node pool optimized for ephemeral workloads
+4. **Easier operations**: Can destroy entire preview cluster for maintenance without production risk
+5. **Cost optimization**: Preview cluster uses lower-cost DigitalOcean droplets
+
+**Trade-offs:**
+- ✅ **Pro**: Reduced operational complexity, complete production isolation
+- ❌ **Con**: Higher cost (2 clusters vs 1), but acceptable for improved reliability
 
 **Rationale:**
-- Fast provisioning: No cluster spin-up time for first PR
+- Fast provisioning: No cluster spin-up time for first PR (cluster pre-provisioned)
 - Predictable costs: Cluster costs are constant, not per-PR
 - Simplified logic: No "detect last PR closed" complexity
 - Industry standard: Matches Vercel, Render, Railway architecture
@@ -525,12 +818,12 @@ The following infrastructure persists **independently of PR lifecycle** and rema
 **Ephemeral Resources (Created/Destroyed per PR):**
 
 - **FR-024**: Ephemeral environments MUST be isolated via Kubernetes namespaces
-- **FR-025**: Each namespace MUST follow the pattern: `ephemeral-pr-{PR_NUMBER}`
+- **FR-025**: Each namespace MUST follow the pattern: `preview-pr-{PR_NUMBER}`
 - **FR-026**: NetworkPolicies MUST prevent cross-namespace communication between ephemeral environments
 - **FR-027**: ResourceQuotas MUST be applied to each ephemeral namespace to prevent resource exhaustion (2 CPU, 4Gi memory, 5 pods max)
 - **FR-053**: Gateway/Ingress routes for preview environments MUST include connection limiting annotations to prevent abuse
 - **FR-028**: When a PR closes, its namespace and all contained resources MUST be destroyed
-- **FR-029**: When a PR closes, its database MUST be dropped from the shared PostgreSQL instance
+- **FR-098**: When a PR closes, its database MUST be dropped from the shared PostgreSQL instance
 
 **Per-PR Resources (Namespace-Scoped):**
 - Kubernetes namespace: `ephemeral-pr-{PR_NUMBER}`
@@ -544,17 +837,17 @@ The following infrastructure persists **independently of PR lifecycle** and rema
 ### Database Strategy
 
 **Persistent PostgreSQL Instance:**
-- **FR-030**: A single PostgreSQL instance MUST run continuously in the cluster (independent of PR lifecycle)
-- **FR-031**: The PostgreSQL instance persists even when zero PRs are active
-- **FR-032**: All ephemeral environments MUST share this single PostgreSQL instance
+- **FR-099**: A single PostgreSQL instance MUST run continuously in the cluster (independent of PR lifecycle)
+- **FR-100**: The PostgreSQL instance persists even when zero PRs are active
+- **FR-101**: All ephemeral environments MUST share this single PostgreSQL instance
 
 **Per-PR Database Isolation:**
-- **FR-033**: Each ephemeral environment MUST use a dedicated logical database: `aphiria_pr_{PR_NUMBER}`
-- **FR-034**: Database users MUST be scoped per-PR or use a shared preview user with appropriate permissions
-- **FR-035**: Database names MUST be passed via ConfigMap: `DB_NAME=aphiria_pr_{{ PR_NUMBER }}`
-- **FR-036**: Application code MUST support dynamic database names via environment variables
-- **FR-037**: On teardown, the PR-specific database MUST be dropped: `DROP DATABASE aphiria_pr_{PR_NUMBER}`
-- **FR-038**: The PostgreSQL instance itself MUST NOT be destroyed when PRs close
+- **FR-103**: Each ephemeral environment MUST use a dedicated logical database: `aphiria_pr_{PR_NUMBER}`
+- **FR-104**: Database users MUST be scoped per-PR or use a shared preview user with appropriate permissions
+- **FR-105**: Database names MUST be passed via ConfigMap: `DB_NAME=aphiria_pr_{{ PR_NUMBER }}`
+- **FR-106**: Application code MUST support dynamic database names via environment variables
+- **FR-107**: On teardown, the PR-specific database MUST be dropped: `DROP DATABASE aphiria_pr_{PR_NUMBER}`
+- **FR-108**: The PostgreSQL instance itself MUST NOT be destroyed when PRs close
 
 **Rationale:**
 - **Cost-effective**: Single PostgreSQL deployment vs. multiple instances per PR
@@ -564,23 +857,62 @@ The following infrastructure persists **independently of PR lifecycle** and rema
 
 ### Pulumi Stack Strategy
 
-**Base Infrastructure Stack (Persistent):**
-- **FR-039**: A dedicated Pulumi stack MUST manage the persistent base infrastructure
-- **FR-040**: Stack name SHOULD be `ephemeral-base` or similar
-- **FR-041**: This stack manages: cluster reference, PostgreSQL deployment, Gateway/Ingress, DNS config
-- **FR-042**: The base stack MUST NOT be destroyed when PRs close
-- **FR-043**: The PR deployment workflow MUST check if `ephemeral-base` stack exists and create it if missing (idempotent initialization)
-- **FR-043a**: The base stack deployment SHOULD be idempotent and safe to run on every PR deployment (no-op if already exists)
-- **FR-054**: Base infrastructure updates (Kubernetes version, PostgreSQL version) MUST be applied manually as-needed, not automatically
+#### **Actual Implementation (2025-12-22)**
 
-**Per-PR Stacks (Ephemeral):**
-- **FR-044**: Each ephemeral environment MUST use a dedicated Pulumi stack
-- **FR-045**: Stack names MUST follow the pattern: `ephemeral-pr-{PR_NUMBER}` (e.g., `ephemeral-pr-123`)
-- **FR-046**: Pulumi state MUST be stored in a backend that supports concurrent operations (e.g., S3, Pulumi Cloud)
-- **FR-047**: Stack creation and destruction MUST be automated via CI/CD
-- **FR-048**: Stack teardown MUST remove all provisioned Kubernetes resources AND drop the PR database
-- **FR-049**: Stack teardown MUST NOT affect persistent base infrastructure
-- **FR-050**: Production and dev stacks MUST remain isolated from ephemeral stacks
+**Base Infrastructure Stack (Persistent):**
+- **FR-109**: ✅ **IMPLEMENTED** - `preview-base` stack manages persistent preview infrastructure
+- **FR-110**: ✅ **IMPLEMENTED** - Stack name: `preview-base` (exact match)
+- **FR-111**: ✅ **IMPLEMENTED** - Stack manages: DigitalOcean cluster, PostgreSQL deployment, Gateway API, Helm charts (cert-manager, nginx-gateway-fabric)
+- **FR-112**: ✅ **IMPLEMENTED** - Base stack persists independently (never destroyed by PR workflows)
+- **FR-113**: ✅ **IMPLEMENTED** - `ensure-base-stack` job in `deploy-preview.yml` checks and creates stack if missing
+- **FR-043a**: ✅ **IMPLEMENTED** - Idempotent deployment with retry logic (3 attempts, progressive backoff)
+- **FR-054**: ✅ **IMPLEMENTED** - Base infrastructure updates are manual (not automated in PR workflows)
+
+**Stack Outputs** (exported by `preview-base`):
+- `kubeconfig`: Kubernetes cluster configuration for kubectl/Pulumi access
+- `clusterId`: DigitalOcean cluster ID (used for validation)
+- `postgresqlHost`: Service name for PostgreSQL (`db` in `default` namespace)
+- `gatewayName`: Gateway API Gateway resource name
+- `tlsSecretName`: Wildcard TLS certificate secret name
+
+**Per-PR Stacks (Preview):**
+- **FR-114**: ✅ **IMPLEMENTED** - Each PR gets dedicated stack (e.g., `preview-pr-123`)
+- **FR-115**: ✅ **IMPLEMENTED** - Stack naming: `preview-pr-{PR_NUMBER}` (auto-created in `deploy-preview.yml`)
+- **FR-116**: ✅ **IMPLEMENTED** - Pulumi Cloud backend (supports concurrent operations)
+- **FR-117**: ✅ **IMPLEMENTED** - Full automation: stack creation (deploy), destruction (cleanup)
+- **FR-118**: ✅ **IMPLEMENTED** - `pulumi destroy` removes namespace, services, deployments; database drop verified in cleanup workflow
+- **FR-119**: ✅ **IMPLEMENTED** - Per-PR stacks reference base stack via `StackReference`, never modify base resources
+- **FR-120**: ✅ **IMPLEMENTED** - Stacks isolated by Pulumi project (`davidbyoung/aphiria-com-infrastructure`)
+
+**Stack Configuration** (per-PR):
+- `prNumber`: PR number (used for namespace, database names, URLs)
+- `webImageDigest`: Web container image digest (from build workflow PR labels)
+- `apiImageDigest`: API container image digest (from build workflow PR labels)
+- `baseStackReference`: Reference to `preview-base` stack (`davidbyoung/aphiria-com-infrastructure/preview-base`)
+- `postgresql:user`: From Pulumi ESC `aphiria.com/Preview` (e.g., `aphiria`)
+- `postgresql:password`: From Pulumi ESC `aphiria.com/Preview` (secret)
+
+**Pulumi ESC Integration (Declarative via Stack YAML):**
+- **ESC Environment**: `aphiria.com/Preview`
+- **Binding Method**: Declarative via `environment:` property in stack YAML files (NOT CLI binding)
+- **Stack YAML Configuration**:
+  ```yaml
+  # Pulumi.preview-base.yml
+  environment:
+    - aphiria.com/Preview
+  ```
+  ```yaml
+  # Pulumi.preview-pr-{N}.yml (created dynamically)
+  environment:
+    - aphiria.com/Preview
+  config:
+    prNumber: "123"
+    webImageDigest: "sha256:abc..."
+    apiImageDigest: "sha256:def..."
+    baseStackReference: "davidbyoung/aphiria-com-infrastructure/preview-base"
+  ```
+- **Secrets loaded**: PostgreSQL credentials, DigitalOcean access token (cluster management)
+- **Workflow integration**: Stack YAML files created with `environment:` property; no CLI `pulumi config env add` commands needed
 
 ### Rationale
 
@@ -641,6 +973,21 @@ The following infrastructure persists **independently of PR lifecycle** and rema
 - **NFR-008**: Preview deployments MUST NOT impact production stability or performance
 - **NFR-009**: Failed preview deployments MUST NOT leave orphaned resources (Pulumi state tracking ensures cleanup)
 - **NFR-010**: Database migrations MUST be idempotent and reversible
+
+### Development Environment
+
+- **NFR-011**: Node.js version MUST be consistent across local development (install.sh) and CI/CD workflows
+- **NFR-012**: Node.js 20.x MUST be used for Pulumi TypeScript compilation
+- **NFR-013**: GitHub Actions workflows MUST use `actions/setup-node@v4` with explicit version specification
+
+### Infrastructure Automation Principles
+
+- **NFR-014**: Infrastructure tasks requiring cluster-internal resources MUST run inside the cluster (Kubernetes Jobs, init containers)
+- **NFR-015**: Port-forwarding (`kubectl port-forward`) MUST NOT be used in CI/CD workflows (debugging tool only)
+- **NFR-016**: Background processes MUST NOT be managed in GitHub Actions workflows (use Kubernetes Jobs instead)
+- **NFR-017**: Database initialization MUST use Kubernetes Jobs provisioned by Pulumi, not external providers requiring network workarounds
+
+**Rationale**: Port-forwarding and process management in CI/CD creates race conditions, requires cleanup handling, and is unreliable. Kubernetes Jobs are the standard pattern for cluster-internal setup tasks and are managed declaratively by Pulumi.
 
 ---
 
@@ -703,9 +1050,48 @@ On PR close/merge, Pulumi must:
 
 ---
 
+## Polish Tasks
+
+### Secrets Management
+
+- **T073**: Document PAT (Personal Access Token) management strategy
+  - Add to SECRETS.md: DEPLOYMENT_APPROVAL_TOKEN creation, scopes, rotation policy
+  - Include instructions for creating PAT at https://github.com/settings/tokens/new
+  - Required scopes: `repo`, `read:org`
+  - Expiration recommendation: 1 year with calendar reminder for rotation
+  - Describe how to update secret in repository settings
+- **T074**: Audit and clean up repository secrets
+  - Review all secrets in repository settings
+  - Identify secrets that are no longer used (from old Helm/Helmfile/Terraform deployments)
+  - Document which secrets are required for current Pulumi-based workflows
+  - Remove deprecated secrets safely
+  - Update SECRETS.md with current secrets inventory
+- **T075**: Audit and clean up environment secrets
+  - Review secrets configured in each environment (preview, production)
+  - Identify which secrets should be environment-specific vs repository-wide
+  - Document environment secret strategy in SECRETS.md
+  - Remove deprecated environment secrets safely
+
+### Workflow Refactoring
+
+- **T070**: Create reusable deployment workflow (`.github/workflows/deploy.yml`) with `workflow_call` trigger
+  - Parameterize: stack name, environment, image digests, Pulumi config values, PostgreSQL password
+  - Support both `up` (deploy) and `destroy` (cleanup) operations
+  - Include Pulumi preview, stack selection/creation, config setting, and deployment steps
+- **T071**: Refactor `preview-deploy.yml` to call reusable `deploy.yml` workflow
+  - Rename `preview-deploy.yml` → `deploy-preview.yml` (follows `{{ACTION}}-{{TARGET}}` convention)
+  - Pass preview-specific parameters to reusable workflow
+  - Keep preview environment protection and auto-approval logic in caller
+- **T072**: Create `deploy-production.yml` workflow using reusable `deploy.yml` workflow (future production deployment)
+
+### Documentation Updates
+
+- **T069**: Fix CI badge in README.md to point to correct workflow(s) (currently points to old 'ci' workflow)
+
+---
+
 ## Out of Scope
 
-- Production deployment workflows
 - Time-based preview expiration
 - Performance or load testing
 - Multi-region previews

@@ -1,0 +1,763 @@
+name: Preview Environment Deploy
+
+on:
+  workflow_run:
+    workflows: ["Build Preview Images"]
+    types:
+      - completed
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'PR number to deploy'
+        required: true
+        type: number
+
+permissions:
+  contents: read
+  pull-requests: write
+  deployments: write
+
+jobs:
+  ensure-base-stack:
+    name: Ensure Preview Base Infrastructure
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Pulumi CLI
+        uses: pulumi/actions@v5
+
+      - name: Install Pulumi dependencies and build
+        run: |
+          cd infrastructure/pulumi
+          npm install
+          npm run build
+
+      - name: Ensure preview-base stack exists and is deployed
+        working-directory: infrastructure/pulumi
+        env:
+          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
+        run: |
+          # Check if preview-base stack exists
+          if pulumi stack select preview-base 2>/dev/null; then
+            echo "✅ Base stack 'preview-base' exists"
+
+            # Check if cluster exists (validate stack is deployed)
+            CLUSTER_ID=$(pulumi stack output clusterId --stack preview-base 2>/dev/null || echo "")
+
+            if [ -z "$CLUSTER_ID" ]; then
+              echo "⚠️  Base stack exists but cluster not deployed - deploying now..."
+              echo "   This likely means a previous deployment failed partway through."
+
+              # Refresh state to sync with actual infrastructure (state may be out of sync from partial deployment)
+              echo "🔄 Refreshing Pulumi state to match actual infrastructure..."
+              pulumi refresh --stack preview-base --yes
+
+              # Deploy base infrastructure with retries (cluster may take time to be ready)
+              # Cluster provisioning: 3-10 minutes (typical: 4-5 min)
+              # Kubernetes API ready: Additional 1-2 minutes after cluster creation
+              MAX_RETRIES=3
+              RETRY_COUNT=0
+
+              while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+                if pulumi up --stack preview-base --yes; then
+                  echo "✅ Base infrastructure deployed successfully"
+                  break
+                else
+                  RETRY_COUNT=$((RETRY_COUNT + 1))
+                  if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
+                    WAIT_TIME=$((60 * RETRY_COUNT))  # Progressive backoff: 60s, 120s
+                    echo "⚠️  Deployment failed (attempt $RETRY_COUNT/$MAX_RETRIES). Retrying in ${WAIT_TIME} seconds..."
+                    echo "   (Kubernetes API may still be initializing - this is normal on first deployment)"
+                    sleep $WAIT_TIME
+                  else
+                    echo "❌ Deployment failed after $MAX_RETRIES attempts"
+                    exit 1
+                  fi
+                fi
+              done
+            else
+              echo "✅ Base infrastructure already deployed (cluster ID: ${CLUSTER_ID})"
+
+              # Refresh to ensure state is current
+              pulumi refresh --stack preview-base --yes
+            fi
+          else
+            echo "📦 Creating and deploying base stack 'preview-base'..."
+            pulumi stack init preview-base
+            pulumi config env add aphiria.com/Preview --stack preview-base --yes
+
+            # Deploy base infrastructure (creates cluster, Helm charts, PostgreSQL, Gateway)
+            # Note: No refresh needed - this is a brand new stack
+            echo "🚀 Deploying preview base infrastructure (this will take 5-10 minutes)..."
+
+            # Retry logic: Cluster may take time to become fully available
+            # Cluster provisioning: 3-10 minutes (typical: 4-5 min)
+            # Kubernetes API ready: Additional 1-2 minutes after cluster creation
+            MAX_RETRIES=3
+            RETRY_COUNT=0
+
+            while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+              if pulumi up --stack preview-base --yes; then
+                echo "✅ Base stack created and deployed successfully"
+                break
+              else
+                RETRY_COUNT=$((RETRY_COUNT + 1))
+                if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
+                  WAIT_TIME=$((60 * RETRY_COUNT))  # Progressive backoff: 60s, 120s
+                  echo "⚠️  Deployment failed (attempt $RETRY_COUNT/$MAX_RETRIES). Retrying in ${WAIT_TIME} seconds..."
+                  echo "   (Cluster may still be initializing - this is normal on first deployment)"
+                  sleep $WAIT_TIME
+                else
+                  echo "❌ Deployment failed after $MAX_RETRIES attempts"
+                  exit 1
+                fi
+              fi
+            done
+          fi
+
+  preview-infra:
+    name: Preview Infrastructure Changes
+    runs-on: ubuntu-latest
+    needs: ensure-base-stack
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Extract PR number
+        id: pr
+        uses: actions/github-script@v7
+        with:
+          script: |
+            let prNumber;
+
+            if (context.eventName === 'workflow_dispatch') {
+              prNumber = ${{ inputs.pr_number || 0 }};
+            } else {
+              // Get PR number from workflow_run event
+              const pullRequests = context.payload.workflow_run.pull_requests;
+              if (pullRequests && pullRequests.length > 0) {
+                prNumber = pullRequests[0].number;
+              } else {
+                // Fallback: get PR from head branch
+                const branchName = context.payload.workflow_run.head_branch;
+                const { data: prs } = await github.rest.pulls.list({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  head: `${context.repo.owner}:${branchName}`,
+                  state: 'open'
+                });
+
+                if (prs.length === 0) {
+                  core.setFailed(`No open PR found for branch ${branchName}`);
+                  return;
+                }
+
+                prNumber = prs[0].number;
+              }
+            }
+
+            console.log(`PR Number: ${prNumber}`);
+            core.setOutput('number', prNumber);
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Pulumi CLI
+        uses: pulumi/actions@v5
+
+      - name: Install dependencies and build
+        run: |
+          cd infrastructure/pulumi
+          npm install
+          npm run build
+
+      - name: Run Pulumi preview
+        id: preview
+        working-directory: infrastructure/pulumi
+        env:
+          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
+        run: |
+          set -e  # Exit on error
+
+          PR_NUMBER=${{ steps.pr.outputs.number }}
+          STACK_NAME="preview-pr-${PR_NUMBER}"
+
+          # Select or create stack
+          if ! pulumi stack select "${STACK_NAME}" 2>/dev/null; then
+            pulumi stack init "${STACK_NAME}"
+            pulumi config env add aphiria.com/Preview --stack "${STACK_NAME}" --yes
+          else
+            # Ensure ESC environment is bound
+            if ! pulumi config env ls | grep -q "aphiria.com/Preview"; then
+              pulumi config env add aphiria.com/Preview --stack "${STACK_NAME}" --yes
+            fi
+          fi
+
+          # Set minimal config required for preview (full config set in deploy job)
+          pulumi config set prNumber "${PR_NUMBER}" --stack "${STACK_NAME}"
+          pulumi config set baseStackReference "davidbyoung/aphiria-com-infrastructure/preview-base" --stack "${STACK_NAME}"
+          pulumi config set webImageDigest "sha256:preview" --stack "${STACK_NAME}"
+          pulumi config set apiImageDigest "sha256:preview" --stack "${STACK_NAME}"
+
+          # Run preview and capture output (will exit with error code if preview fails)
+          set +e  # Temporarily disable exit on error for tee
+          pulumi preview --stack "${STACK_NAME}" --non-interactive 2>&1 | tee preview.txt
+          PREVIEW_EXIT_CODE=${PIPESTATUS[0]}
+          set -e  # Re-enable exit on error
+
+          # Exit with preview's exit code
+          exit $PREVIEW_EXIT_CODE
+
+      - name: Post preview comment on PR
+        if: always() && steps.preview.outcome != 'skipped'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const prNumber = ${{ steps.pr.outputs.number }};
+
+            console.log(`Posting preview comment to PR #${prNumber}`);
+
+            let preview = '';
+            try {
+              preview = fs.readFileSync('infrastructure/pulumi/preview.txt', 'utf8');
+              console.log(`Preview output length: ${preview.length} characters`);
+            } catch (error) {
+              console.error(`Failed to read preview.txt: ${error.message}`);
+              preview = 'Preview output not available';
+            }
+
+            // Truncate if too long (GitHub comment limit is ~65k chars)
+            const maxLength = 60000;
+            if (preview.length > maxLength) {
+              preview = preview.substring(0, maxLength) + '\n\n... (truncated)';
+              console.log(`Truncated preview to ${maxLength} characters`);
+            }
+
+            const status = '${{ steps.preview.outcome }}' === 'success' ? '✅ Preview Succeeded' : '❌ Preview Failed';
+
+            const body = `## 🔍 Infrastructure Preview - ${status}
+
+            <details>
+            <summary>Click to expand Pulumi preview output</summary>
+
+            \`\`\`
+            ${preview}
+            \`\`\`
+
+            </details>
+
+            ${
+              '${{ steps.preview.outcome }}' === 'success'
+                ? '✅ Preview succeeded. Deployment will proceed after approval.'
+                : '❌ Preview failed. Please review the errors above before re-running.'
+            }`;
+
+            try {
+              console.log('Fetching existing comments...');
+              const { data: comments } = await github.rest.issues.listComments({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+              });
+
+              console.log(`Found ${comments.length} existing comments`);
+
+              const existing = comments.find(c => c.user.type === 'Bot' && c.body.includes('Infrastructure Preview'));
+
+              if (existing) {
+                console.log(`Updating existing comment ${existing.id}`);
+                await github.rest.issues.updateComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  comment_id: existing.id,
+                  body,
+                });
+                console.log('✅ Comment updated successfully');
+              } else {
+                console.log('Creating new comment...');
+                const result = await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: prNumber,
+                  body,
+                });
+                console.log(`✅ Comment created successfully: ${result.data.html_url}`);
+              }
+            } catch (error) {
+              console.error(`❌ Failed to post comment: ${error.message}`);
+              core.setFailed(`Failed to post preview comment: ${error.message}`);
+            }
+
+      - name: Notify on failure
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prNumber = ${{ steps.pr.outputs.number }};
+            const runUrl = `https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}`;
+
+            const body = `## ❌ Preview Environment Failed
+
+            The preview environment deployment failed during infrastructure validation.
+
+            **Error**: Check the [workflow logs](${runUrl}) for details.
+
+            Common issues:
+            - TypeScript compilation errors
+            - Missing secrets or configuration
+            - Pulumi stack errors
+
+            Please fix the errors and push again to retry (may require fixing it, merging this pull request, then opening a new one).`;
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+              body,
+            });
+
+  check-author:
+    name: Check PR Author
+    runs-on: ubuntu-latest
+    needs: preview-infra
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
+    outputs:
+      is-maintainer: ${{ steps.check.outputs.is-maintainer }}
+      pr-number: ${{ steps.pr.outputs.number }}
+
+    steps:
+      - name: Extract PR number
+        id: pr
+        uses: actions/github-script@v7
+        with:
+          script: |
+            let prNumber;
+
+            if (context.eventName === 'workflow_dispatch') {
+              prNumber = ${{ inputs.pr_number || 0 }};
+            } else {
+              // Get PR number from workflow_run event
+              const pullRequests = context.payload.workflow_run.pull_requests;
+              if (pullRequests && pullRequests.length > 0) {
+                prNumber = pullRequests[0].number;
+              } else {
+                // Fallback: get PR from head branch
+                const branchName = context.payload.workflow_run.head_branch;
+                const { data: prs } = await github.rest.pulls.list({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  head: `${context.repo.owner}:${branchName}`,
+                  state: 'open'
+                });
+
+                if (prs.length === 0) {
+                  core.setFailed(`No open PR found for branch ${branchName}`);
+                  return;
+                }
+
+                prNumber = prs[0].number;
+              }
+            }
+
+            console.log(`PR Number: ${prNumber}`);
+            core.setOutput('number', prNumber);
+
+      - name: Check if PR author is maintainer
+        id: check
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prNumber = ${{ steps.pr.outputs.number }};
+
+            // Get PR details
+            const { data: pr } = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: prNumber,
+            });
+
+            const prAuthor = pr.user.login;
+            console.log(`PR Author: ${prAuthor}`);
+
+            // Check if PR author has admin permissions on the repository
+            let isMaintainer = false;
+            try {
+              const { data: permission } = await github.rest.repos.getCollaboratorPermissionLevel({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                username: prAuthor,
+              });
+
+              console.log(`PR Author permission level: ${permission.permission}`);
+
+              // Auto-approve for admin or maintain permission
+              isMaintainer = permission.permission === 'admin' || permission.permission === 'maintain';
+            } catch (error) {
+              console.log(`Could not fetch permission level: ${error.message}`);
+              isMaintainer = false;
+            }
+
+            core.setOutput('is-maintainer', isMaintainer);
+
+            if (isMaintainer) {
+              console.log('✅ PR author has admin/maintain permissions - auto-approving deployment');
+            } else {
+              console.log('⏳ PR author does not have admin/maintain permissions - manual approval required');
+            }
+
+  auto-approve:
+    name: Auto-approve Deployment
+    runs-on: ubuntu-latest
+    needs: check-author
+    if: ${{ needs.check-author.outputs.is-maintainer == 'true' }}
+
+    steps:
+      - name: Wait for pending deployment and auto-approve
+        run: |
+          echo "Waiting for deployment to reach pending state..."
+
+          MAX_ATTEMPTS=30
+          ATTEMPT=0
+
+          while [ $ATTEMPT -lt $MAX_ATTEMPTS ]; do
+            PENDING=$(gh api repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/pending_deployments)
+
+            if [ "$PENDING" != "[]" ]; then
+              echo "Pending deployment found!"
+              echo "Pending deployments: $PENDING"
+
+              ENVIRONMENT_ID=$(echo "$PENDING" | jq -r '.[0].environment.id')
+
+              gh api -X POST repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/pending_deployments \
+                -F environment_ids[]="${ENVIRONMENT_ID}" \
+                -f state=approved \
+                -f comment='Auto-approved: PR author has admin/maintain permissions'
+
+              echo "✅ Deployment auto-approved for environment ID: ${ENVIRONMENT_ID}"
+              exit 0
+            fi
+
+            ATTEMPT=$((ATTEMPT + 1))
+            echo "Attempt $ATTEMPT/$MAX_ATTEMPTS: No pending deployments yet, waiting 2 seconds..."
+            sleep 2
+          done
+
+          echo "⚠️ No pending deployment found after ${MAX_ATTEMPTS} attempts"
+          exit 1
+        env:
+          GH_TOKEN: ${{ secrets.DEPLOYMENT_APPROVAL_TOKEN }}
+
+  deploy:
+    name: Deploy Preview Environment
+    runs-on: ubuntu-latest
+    needs: check-author
+    if: ${{ needs.check-author.outputs.is-maintainer == 'true' }}
+
+    environment:
+      name: preview
+      url: https://${{ needs.check-author.outputs.pr-number }}.pr.aphiria.com
+
+    concurrency:
+      group: preview-${{ needs.check-author.outputs.pr-number }}
+      cancel-in-progress: false
+
+    steps:
+      - name: Validate required secrets
+        run: |
+          MISSING_SECRETS=()
+
+          if [ -z "${{ secrets.PULUMI_ACCESS_TOKEN }}" ]; then
+            MISSING_SECRETS+=("PULUMI_ACCESS_TOKEN")
+          fi
+
+          if [ -z "${{ secrets.DEPLOYMENT_APPROVAL_TOKEN }}" ]; then
+            MISSING_SECRETS+=("DEPLOYMENT_APPROVAL_TOKEN")
+          fi
+
+          if [ ${#MISSING_SECRETS[@]} -gt 0 ]; then
+            echo "::error::Missing required secrets: ${MISSING_SECRETS[*]}"
+            echo ""
+            echo "Please add the following secrets to your repository:"
+            echo "Settings → Secrets and variables → Actions → New repository secret"
+            echo ""
+            for secret in "${MISSING_SECRETS[@]}"; do
+              case "$secret" in
+                PULUMI_ACCESS_TOKEN)
+                  echo "  • PULUMI_ACCESS_TOKEN: Pulumi Cloud access token"
+                  echo "    Create at: https://app.pulumi.com/settings/tokens"
+                  ;;
+                DEPLOYMENT_APPROVAL_TOKEN)
+                  echo "  • DEPLOYMENT_APPROVAL_TOKEN: GitHub PAT for auto-approving deployments"
+                  echo "    Create at: https://github.com/settings/tokens/new"
+                  echo "    Scopes required: repo, read:org"
+                  ;;
+              esac
+              echo ""
+            done
+            exit 1
+          fi
+
+          echo "✅ All required secrets are configured"
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set PR number
+        id: pr
+        run: |
+          PR_NUMBER="${{ needs.check-author.outputs.pr-number }}"
+          echo "number=${PR_NUMBER}" >> $GITHUB_OUTPUT
+          echo "Deploying preview for PR #${PR_NUMBER}"
+
+      - name: Get image digests from PR labels
+        id: images
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prNumber = ${{ steps.pr.outputs.number }};
+
+            const { data: pr } = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: prNumber,
+            });
+
+            const webDigestLabel = pr.labels.find(l => l.name.startsWith('web-digest:'));
+            const apiDigestLabel = pr.labels.find(l => l.name.startsWith('api-digest:'));
+
+            if (!webDigestLabel || !apiDigestLabel) {
+              core.setFailed('Image digest labels not found. Please rebuild preview images.');
+              return;
+            }
+
+            const webDigest = 'sha256:' + webDigestLabel.name.replace('web-digest:', '');
+            const apiDigest = 'sha256:' + apiDigestLabel.name.replace('api-digest:', '');
+
+            core.setOutput('web-digest', webDigest);
+            core.setOutput('api-digest', apiDigest);
+
+            console.log(`Web digest: ${webDigest}`);
+            console.log(`API digest: ${apiDigest}`);
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Pulumi CLI
+        uses: pulumi/actions@v5
+
+      - name: Install Pulumi dependencies and build
+        run: |
+          cd infrastructure/pulumi
+          npm install
+          npm run build
+
+      - name: Configure Pulumi stack
+        working-directory: infrastructure/pulumi
+        env:
+          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
+        run: |
+          PR_NUMBER=${{ steps.pr.outputs.number }}
+          STACK_NAME="preview-pr-${PR_NUMBER}"
+
+          # Select or create stack
+          if ! pulumi stack select "${STACK_NAME}"; then
+            pulumi stack init "${STACK_NAME}"
+            pulumi config env add aphiria.com/Preview --stack "${STACK_NAME}" --yes
+          else
+            # Ensure ESC environment is bound
+            if ! pulumi config env ls | grep -q "aphiria.com/Preview"; then
+              pulumi config env add aphiria.com/Preview --stack "${STACK_NAME}" --yes
+            fi
+          fi
+
+          # Set stack configuration
+          pulumi config set prNumber "${PR_NUMBER}"
+          pulumi config set webImageDigest "${{ steps.images.outputs.web-digest }}"
+          pulumi config set apiImageDigest "${{ steps.images.outputs.api-digest }}"
+          pulumi config set baseStackReference "davidbyoung/aphiria-com-infrastructure/preview-base"
+
+      - name: Setup kubeconfig from Pulumi (Preview Cluster)
+        working-directory: infrastructure/pulumi
+        env:
+          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
+        run: |
+          mkdir -p ~/.kube
+          pulumi stack output kubeconfig --stack preview-base > ~/.kube/config
+          chmod 600 ~/.kube/config
+
+      - name: Deploy preview environment
+        id: deploy
+        working-directory: infrastructure/pulumi
+        env:
+          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
+        run: |
+          PR_NUMBER=${{ steps.pr.outputs.number }}
+          STACK_NAME="preview-pr-${PR_NUMBER}"
+
+          # Deploy with timeout
+          timeout 600 pulumi up --stack "${STACK_NAME}" --yes
+
+          # Capture outputs
+          WEB_URL=$(pulumi stack output webUrl --stack "${STACK_NAME}")
+          API_URL=$(pulumi stack output apiUrl --stack "${STACK_NAME}")
+          DB_NAME=$(pulumi stack output databaseName --stack "${STACK_NAME}")
+
+          echo "web-url=${WEB_URL}" >> $GITHUB_OUTPUT
+          echo "api-url=${API_URL}" >> $GITHUB_OUTPUT
+          echo "db-name=${DB_NAME}" >> $GITHUB_OUTPUT
+          echo "pr-number=${PR_NUMBER}" >> $GITHUB_OUTPUT
+
+      - name: Wait for pods to be ready
+        run: |
+          PR_NUMBER=${{ steps.pr.outputs.number }}
+          NAMESPACE="preview-pr-${PR_NUMBER}"
+
+          echo "Waiting for pods in namespace ${NAMESPACE}..."
+
+          # Wait up to 5 minutes for all pods to be ready
+          kubectl wait --for=condition=Ready pods --all \
+            --namespace="${NAMESPACE}" \
+            --timeout=300s || {
+              echo "::warning::Some pods did not become ready within timeout"
+              kubectl get pods -n "${NAMESPACE}"
+            }
+
+      - name: Verify deployment health
+        id: health-check
+        continue-on-error: true
+        run: |
+          WEB_URL="${{ steps.deploy.outputs.web-url }}"
+          API_URL="${{ steps.deploy.outputs.api-url }}"
+
+          # Wait a bit for routing to propagate
+          sleep 10
+
+          # Check web health
+          WEB_STATUS=$(curl -o /dev/null -s -w "%{http_code}" "${WEB_URL}" || echo "000")
+          echo "web-status=${WEB_STATUS}" >> $GITHUB_OUTPUT
+
+          # Check API health
+          API_STATUS=$(curl -o /dev/null -s -w "%{http_code}" "${API_URL}" || echo "000")
+          echo "api-status=${API_STATUS}" >> $GITHUB_OUTPUT
+
+          if [ "${WEB_STATUS}" -ge "200" ] && [ "${WEB_STATUS}" -lt "400" ]; then
+            echo "✅ Web health check passed (HTTP ${WEB_STATUS})"
+          else
+            echo "⚠️  Web health check returned HTTP ${WEB_STATUS}"
+          fi
+
+          if [ "${API_STATUS}" -ge "200" ] && [ "${API_STATUS}" -lt "400" ]; then
+            echo "✅ API health check passed (HTTP ${API_STATUS})"
+          else
+            echo "⚠️  API health check returned HTTP ${API_STATUS}"
+          fi
+
+      - name: Add comment on PR
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prNumber = ${{ steps.pr.outputs.number }};
+            const webUrl = '${{ steps.deploy.outputs.web-url }}';
+            const apiUrl = '${{ steps.deploy.outputs.api-url }}';
+            const dbName = '${{ steps.deploy.outputs.db-name }}';
+            const webStatus = '${{ steps.health-check.outputs.web-status }}' || 'unknown';
+            const apiStatus = '${{ steps.health-check.outputs.api-status }}' || 'unknown';
+            const commitSha = context.sha.substring(0, 7);
+
+            const healthIcon = (status) => {
+              const code = parseInt(status);
+              if (code >= 200 && code < 400) return '✅';
+              if (code >= 400) return '❌';
+              return '⏳';
+            };
+
+            const body = `### 🚀 Preview Environment Deployed
+
+            **PR**: #${prNumber}
+            **Commit**: \`${commitSha}\`
+            **Database**: \`${dbName}\`
+
+            **Preview URLs**:
+            - ${healthIcon(webStatus)} **Web**: ${webUrl}
+            - ${healthIcon(apiStatus)} **API**: ${apiUrl}
+
+            **Status**:
+            - Web: HTTP ${webStatus}
+            - API: HTTP ${apiStatus}
+
+            ---
+            *Preview environment will be automatically destroyed when this PR is closed or merged.*
+            `;
+
+            // Find existing deployment comment
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+            });
+
+            const deployComment = comments.find(comment =>
+              comment.user.type === 'Bot' &&
+              comment.body.includes('Preview Environment Deployed')
+            );
+
+            if (deployComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: deployComment.id,
+                body: body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                body: body,
+              });
+            }
+
+  notify-manual-approval:
+    name: Notify Manual Approval Required
+    runs-on: ubuntu-latest
+    needs: check-author
+    if: ${{ needs.check-author.outputs.is-maintainer == 'false' }}
+
+    steps:
+      - name: Add comment on PR
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prNumber = ${{ needs.check-author.outputs.pr-number }};
+            const runUrl = `https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}`;
+
+            const body = `## ⏳ Manual Approval Required
+
+            Preview environment deployment requires manual approval for non-maintainer contributions.
+
+            A repository maintainer must approve the deployment in the [Actions tab](${runUrl}).
+
+            **Note**: This is a security measure to prevent unauthorized resource usage.`;
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+              body,
+            });

@@ -4,7 +4,7 @@ import * as k8s from "@pulumi/kubernetes";
 /**
  * Environment type for stack configuration
  */
-export type Environment = "dev-local" | "preview" | "production";
+export type Environment = "local" | "preview" | "production";
 
 /**
  * Common arguments shared across all deployment components
@@ -16,8 +16,8 @@ export interface CommonDeploymentArgs {
     namespace: pulumi.Input<string>;
     /** Resource labels for Kubernetes resources */
     labels?: Record<string, string>;
-    /** Kubernetes provider (optional) */
-    provider?: k8s.Provider;
+    /** Kubernetes provider */
+    provider: k8s.Provider;
 }
 
 /**
@@ -70,10 +70,14 @@ export interface PostgreSQLArgs {
     persistentStorage: boolean;
     /** Storage size (e.g., "10Gi") - only used if persistentStorage=true */
     storageSize?: string;
+    /** Database user */
+    dbUser: string;
+    /** Database password (sensitive) */
+    dbPassword: pulumi.Input<string>;
     /** Resource labels */
     labels?: Record<string, string>;
-    /** Kubernetes provider (optional) */
-    provider?: k8s.Provider;
+    /** Kubernetes provider */
+    provider: k8s.Provider;
 }
 
 /**
@@ -92,8 +96,8 @@ export interface GatewayArgs {
     domains: string[];
     /** Resource labels */
     labels?: Record<string, string>;
-    /** Kubernetes provider (optional) */
-    provider?: k8s.Provider;
+    /** Kubernetes provider */
+    provider: k8s.Provider;
 }
 
 /**
@@ -117,8 +121,8 @@ export interface HTTPRouteArgs {
     enableRateLimiting?: boolean;
     /** Resource labels */
     labels?: Record<string, string>;
-    /** Kubernetes provider (optional) */
-    provider?: k8s.Provider;
+    /** Kubernetes provider */
+    provider: k8s.Provider;
 }
 
 /**
@@ -143,8 +147,8 @@ export interface DBMigrationJobArgs {
     runSeeder: boolean;
     /** Resource labels */
     labels?: Record<string, string>;
-    /** Kubernetes provider (optional) */
-    provider?: k8s.Provider;
+    /** Kubernetes provider */
+    provider: k8s.Provider;
 }
 
 /**
@@ -163,8 +167,8 @@ export interface HelmChartArgs {
     namespace: pulumi.Input<string>;
     /** Helm values */
     values?: Record<string, any>;
-    /** Kubernetes provider (optional) */
-    provider?: k8s.Provider;
+    /** Kubernetes provider */
+    provider: k8s.Provider;
 }
 
 /**
@@ -200,4 +204,49 @@ export interface PostgreSQLResult {
 export interface GatewayResult {
     gateway: pulumi.Output<any>;
     certificate?: pulumi.Output<any>; // Only present for non-self-signed
+}
+
+/**
+ * Arguments for Kubernetes cluster component
+ */
+export interface KubernetesClusterArgs {
+    /** Cluster name */
+    name: string;
+    /** DigitalOcean region (default: nyc1) */
+    region?: string;
+    /** Kubernetes version (default: 1.34.1-do.0) */
+    version?: string;
+    /** Enable automatic Kubernetes version upgrades */
+    autoUpgrade?: boolean;
+    /** Enable surge upgrades (more aggressive) */
+    surgeUpgrade?: boolean;
+    /** Enable high availability control plane */
+    ha?: boolean;
+    /** VPC UUID to attach cluster to */
+    vpcUuid?: string;
+    /** Node pool machine size (default: s-2vcpu-4gb) */
+    nodeSize?: string;
+    /** Initial node count (default: 2) */
+    nodeCount?: number;
+    /** Enable auto-scaling (default: true) */
+    autoScale?: boolean;
+    /** Minimum nodes when auto-scaling (default: 1) */
+    minNodes?: number;
+    /** Maximum nodes when auto-scaling (default: 5) */
+    maxNodes?: number;
+    /** Resource tags */
+    tags?: string[];
+    /** Node labels */
+    labels?: Record<string, string>;
+}
+
+/**
+ * Return type for Kubernetes cluster component
+ */
+export interface KubernetesClusterResult {
+    cluster: any;
+    clusterId: pulumi.Output<string>;
+    endpoint: pulumi.Output<string>;
+    kubeconfig: pulumi.Output<string>;
+    clusterCaCertificate: pulumi.Output<string>;
 }
