@@ -73,7 +73,24 @@ const postgres = createPostgreSQL({
     provider: k8sProvider,
 });
 
-// 5. Create Gateway with Let's Encrypt production TLS
+// 5. Create imagePullSecret for GitHub Container Registry
+// Required for pulling private images from ghcr.io
+const ghcrConfig = new pulumi.Config("ghcr");
+const ghcrToken = ghcrConfig.requireSecret("token");
+const ghcrUsername = ghcrConfig.require("username");
+
+const imagePullSecret = new k8s.core.v1.Secret("ghcr-pull-secret", {
+    metadata: {
+        name: "ghcr-pull-secret",
+        namespace: "default",
+    },
+    type: "kubernetes.io/dockerconfigjson",
+    stringData: {
+        ".dockerconfigjson": pulumi.interpolate`{"auths":{"ghcr.io":{"username":"${ghcrUsername}","password":"${ghcrToken}"}}}`,
+    },
+}, { provider: k8sProvider });
+
+// 6. Create Gateway with Let's Encrypt production TLS
 // Wildcard certificate covers all preview subdomains: {PR}.pr.aphiria.com, {PR}.pr-api.aphiria.com
 const gateway = createGateway({
     env: "preview",
@@ -85,6 +102,32 @@ const gateway = createGateway({
         "*.pr-api.aphiria.com",  // API preview URLs
     ],
     provider: k8sProvider,
+});
+
+// 7. Get LoadBalancer IP from nginx-gateway Service
+const gatewayService = k8s.core.v1.Service.get(
+    "nginx-gateway-svc",
+    pulumi.interpolate`nginx-gateway/nginx-gateway-nginx-gateway-fabric`,
+    { provider: k8sProvider }
+);
+
+const loadBalancerIp = gatewayService.status.loadBalancer.ingress[0].ip;
+
+// 8. Create DNS wildcard records for preview environments
+const previewWebDns = new digitalocean.DnsRecord("preview-web-dns", {
+    domain: "aphiria.com",
+    type: "A",
+    name: "*.pr",
+    value: loadBalancerIp,
+    ttl: 300,
+});
+
+const previewApiDns = new digitalocean.DnsRecord("preview-api-dns", {
+    domain: "aphiria.com",
+    type: "A",
+    name: "*.pr-api",
+    value: loadBalancerIp,
+    ttl: 300,
 });
 
 // Outputs (used by workflows)

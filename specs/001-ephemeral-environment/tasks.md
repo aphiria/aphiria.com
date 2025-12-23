@@ -144,7 +144,20 @@ Phase 8 (Migrate production to Pulumi + reusable workflows)
 - [X] T012 [P] Deploy Helm charts (cert-manager, nginx-gateway-fabric) in base stack (`infrastructure/pulumi/stacks/preview-base.ts`)
 - [X] T013 [P] Define Gateway API configuration in base stack (`infrastructure/pulumi/stacks/preview-base.ts`)
 - [X] T014 Configure wildcard TLS certificate (`*.pr.aphiria.com`, `*.pr-api.aphiria.com`) via cert-manager in `infrastructure/pulumi/stacks/preview-base.ts`
-- [ ] T015 Create DNS wildcard records (`*.pr.aphiria.com`, `*.pr-api.aphiria.com`) in DigitalOcean DNS (manual step)
+- [X] T015 Create DNS wildcard records (`*.pr.aphiria.com`, `*.pr-api.aphiria.com`) in DigitalOcean DNS
+  - **Why**: Preview environments require DNS records pointing to the Gateway LoadBalancer IP for browser access
+  - **Action**: Add `digitalocean.DnsRecord` resources to `preview-base.ts` that create wildcard A records pointing to Gateway LoadBalancer external IP
+  - **File**: `infrastructure/pulumi/stacks/preview-base.ts`
+  - **DNS Records Needed**:
+    - `*.pr.aphiria.com` → A record → Gateway LoadBalancer IP
+    - `*.pr-api.aphiria.com` → A record → Gateway LoadBalancer IP
+  - **Implementation**:
+    1. Get the nginx-gateway LoadBalancer Service: `k8s.core.v1.Service.get("nginx-gateway-svc", pulumi.interpolate`${gateway.gatewayNamespace}/nginx-gateway-nginx-gateway-fabric`, { provider: k8sProvider })`
+    2. Extract LoadBalancer IP: `gatewayService.status.loadBalancer.ingress[0].ip`
+    3. Create DNS records:
+       - `new digitalocean.DnsRecord("preview-web-dns", { domain: "aphiria.com", type: "A", name: "*.pr", value: loadBalancerIp })`
+       - `new digitalocean.DnsRecord("preview-api-dns", { domain: "aphiria.com", type: "A", name: "*.pr-api", value: loadBalancerIp })`
+  - **Note**: Domain `aphiria.com` is already managed by DigitalOcean DNS (verified via `doctl`)
 - [X] T016 Export base stack outputs (kubeconfig, clusterId, postgresqlHost, gatewayName, tlsSecretName) in `infrastructure/pulumi/stacks/preview-base.ts`
 - [X] T017 Create `preview-base` Pulumi stack: `pulumi stack init preview-base`
 - [X] T018 Bind preview-base stack to Pulumi ESC environment (`aphiria.com/Preview`) via `Pulumi.preview-base.yml`
@@ -247,6 +260,56 @@ Phase 8 (Migrate production to Pulumi + reusable workflows)
   - **File**: `infrastructure/pulumi/stacks/preview-pr.ts` (lines 169-176)
   - **Status**: ✅ COMPLETED (2025-12-23)
 
+### Image Pull Secrets Task (Added 2025-12-23)
+
+- [X] T052p [US1] **CRITICAL BUG FIX**: Create imagePullSecret for GHCR authentication
+  - **Why**: Kubernetes cannot pull images from private GitHub Container Registry without credentials (401 Unauthorized error)
+  - **Error**: `failed to authorize: failed to fetch anonymous token... 401 Unauthorized`
+  - **Action**: Create Kubernetes Secret with GHCR credentials in both preview-base and preview-pr stacks
+  - **Files**:
+    - `infrastructure/pulumi/stacks/preview-base.ts` (create secret in default namespace)
+    - `infrastructure/pulumi/stacks/preview-pr.ts` (copy secret to preview namespace OR reference from default)
+  - **Implementation**:
+    1. Add `ghcr` config to Pulumi ESC `aphiria.com/Preview` environment with GHCR_TOKEN
+    2. Create imagePullSecret in preview-base:
+       ```typescript
+       const ghcrToken = config.requireSecret("ghcrToken");
+       const imagePullSecret = new k8s.core.v1.Secret("ghcr-pull-secret", {
+           metadata: { namespace: "default" },
+           type: "kubernetes.io/dockerconfigjson",
+           stringData: {
+               ".dockerconfigjson": pulumi.interpolate`{"auths":{"ghcr.io":{"username":"davidbyoung","password":"${ghcrToken}"}}}`,
+           },
+       }, { provider: k8sProvider });
+       ```
+    3. Copy secret to preview-pr namespace OR use service account with imagePullSecrets
+    4. Add `imagePullSecrets: [{ name: "ghcr-pull-secret" }]` to web and API Deployments in preview-pr.ts
+  - **GHCR Token**: Use existing `GHCR_TOKEN` from repository secrets (same token used for pushing images)
+  - **SpecKit Gap**: Image pull authentication was not considered during planning phase
+
+- [X] T052q [US1] Document GHCR token setup in SECRETS.md
+  - **Why**: GHCR authentication requires GitHub Personal Access Token (PAT) configured in Pulumi ESC, but SECRETS.md doesn't document how to create this token or what scopes are required
+  - **Action**: Update `SECRETS.md` to document GHCR_TOKEN requirements for Kubernetes image pulling
+  - **File**: `SECRETS.md`
+  - **Depends**: T052p
+  - **Documentation to add**:
+    - **Secret Name**: `GHCR_TOKEN` (GitHub Container Registry token)
+    - **Purpose**: Kubernetes authentication for pulling private images from ghcr.io (used in imagePullSecret)
+    - **How to Create**: https://github.com/settings/tokens
+    - **Required Scopes**:
+      - `read:packages` - Pull container images from GitHub Container Registry
+      - `write:packages` - Push container images to GitHub Container Registry (already configured for CI/CD)
+    - **Pulumi ESC Configuration**:
+      ```bash
+      # Add to aphiria.com/Preview environment
+      pulumi config set ghcr:token --secret --stack preview-base
+      pulumi config set ghcr:username <github-username> --stack preview-base
+      ```
+    - **Repository Secret**: Already exists as `GHCR_TOKEN` for CI/CD image pushes (same token can be added to Pulumi ESC)
+    - **Rotation Schedule**: Annually
+    - **Rotation Procedure**: Generate new PAT → Update Pulumi ESC → Test deployment → Delete old PAT
+  - **Note**: This token is DIFFERENT from WORKFLOW_DISPATCH_TOKEN (different scopes, different purpose)
+
 ### Workflow Dispatch Tasks (Added 2025-12-23)
 
 - [X] T052m [US1] **CRITICAL BUG FIX**: Add PAT authentication for workflow_dispatch trigger
@@ -298,7 +361,7 @@ Phase 8 (Migrate production to Pulumi + reusable workflows)
 
 ### GitHub Deployment Integration Tasks (Added 2025-12-23)
 
-- [ ] T052h [US1] Create GitHub Deployment object at start of preview deployment
+- [X] T052h [US1] Create GitHub Deployment object at start of preview deployment
   - **Why**: GitHub shows "No deployments" despite successful deploys because we have `deployments: write` permission but don't use the Deployment API. The "This branch was successfully deployed" banner comes from workflow completion, not actual Deployment objects.
   - **Action**: Add step after "Set PR number" in `deploy-preview.yml` that calls `github.rest.repos.createDeployment()` with environment `preview-pr-{PR_NUMBER}`, ref from PR head SHA, and task `deploy`. Store deployment ID in outputs.
   - **File**: `.github/workflows/deploy-preview.yml`
@@ -309,28 +372,28 @@ Phase 8 (Migrate production to Pulumi + reusable workflows)
     - Payload: `{ pr_number, web_digest, api_digest, web_url, api_url }`
   - **GitHub API**: `POST /repos/{owner}/{repo}/deployments`
 
-- [ ] T052i [US1] Update deployment status to "in_progress" after approval
+- [X] T052i [US1] Update deployment status to "in_progress" after approval
   - **Why**: Shows deployment is actively running in GitHub UI
   - **Action**: Add step after environment approval that calls `github.rest.repos.createDeploymentStatus()` with deployment ID from T052h, state "in_progress", and log URL pointing to workflow run
   - **File**: `.github/workflows/deploy-preview.yml`
   - **Depends**: T052h
   - **GitHub API**: `POST /repos/{owner}/{repo}/deployments/{deployment_id}/statuses`
 
-- [ ] T052j [US1] Update deployment status to "success" on successful completion
+- [X] T052j [US1] Update deployment status to "success" on successful completion
   - **Why**: Marks deployment as active in GitHub UI, shows in "Deployments" tab
   - **Action**: Add step at end of deploy job that calls `github.rest.repos.createDeploymentStatus()` with state "success", environment_url pointing to preview web URL, and log_url pointing to workflow run
   - **File**: `.github/workflows/deploy-preview.yml`
   - **Depends**: T052h, T052i
   - **GitHub API**: `POST /repos/{owner}/{repo}/deployments/{deployment_id}/statuses`
 
-- [ ] T052k [US1] Update deployment status to "failure" on error
+- [X] T052k [US1] Update deployment status to "failure" on error
   - **Why**: Shows failed deployment in GitHub UI for debugging
   - **Action**: Add cleanup step with `if: failure()` that calls `github.rest.repos.createDeploymentStatus()` with state "failure" and log_url
   - **File**: `.github/workflows/deploy-preview.yml`
   - **Depends**: T052h
   - **GitHub API**: `POST /repos/{owner}/{repo}/deployments/{deployment_id}/statuses`
 
-- [ ] T052l [US1] Mark deployment as "inactive" during cleanup
+- [X] T052l [US1] Mark deployment as "inactive" during cleanup
   - **Why**: Shows deployment is destroyed in GitHub UI
   - **Action**: Add step in `cleanup-preview.yml` that calls `github.rest.repos.createDeploymentStatus()` with state "inactive" for the preview environment
   - **File**: `.github/workflows/cleanup-preview.yml`

@@ -853,6 +853,81 @@ php aphiria cache:flush
 
 ---
 
+## Kubernetes & Container Registry Patterns
+
+### Private Container Registry Authentication
+
+**CRITICAL**: When deploying to Kubernetes from **private** container registries (GHCR, Docker Hub, etc.), you MUST configure imagePullSecrets.
+
+**Common Mistake**:
+```typescript
+// ❌ WRONG: No imagePullSecrets for private registry
+const deployment = new k8s.apps.v1.Deployment("web", {
+    spec: {
+        template: {
+            spec: {
+                containers: [{
+                    image: "ghcr.io/myorg/myapp@sha256:...",  // Private image
+                }],
+                // Missing imagePullSecrets!
+            },
+        },
+    },
+});
+```
+
+**Correct Approach**:
+```typescript
+// ✅ CORRECT: Create imagePullSecret and reference it
+const imagePullSecret = new k8s.core.v1.Secret("registry-pull-secret", {
+    metadata: { namespace: "default" },
+    type: "kubernetes.io/dockerconfigjson",
+    stringData: {
+        ".dockerconfigjson": pulumi.interpolate`{
+            "auths":{
+                "ghcr.io":{
+                    "username":"your-username",
+                    "password":"${registryToken}"
+                }
+            }
+        }`,
+    },
+}, { provider: k8sProvider });
+
+const deployment = new k8s.apps.v1.Deployment("web", {
+    spec: {
+        template: {
+            spec: {
+                containers: [{
+                    image: "ghcr.io/myorg/myapp@sha256:...",
+                }],
+                imagePullSecrets: [{ name: "registry-pull-secret" }],  // ✅ Required!
+            },
+        },
+    },
+}, { dependsOn: [imagePullSecret] });
+```
+
+**Why This Matters**:
+- Public images (Docker Hub official images, etc.) work without authentication
+- Private images (GHCR, private Docker Hub repos) fail with `401 Unauthorized` or `ErrImagePull`
+- Error appears during pod creation, NOT during deployment validation
+- Pulumi won't catch this - it's a runtime Kubernetes error
+
+**Best Practice**:
+- Store registry tokens in Pulumi ESC (secrets management)
+- Create imagePullSecret in base stack (shared across namespaces)
+- Reference secret in all Deployments, StatefulSets, Jobs, etc.
+- Use the **same token** for pushing (CI/CD) and pulling (Kubernetes)
+
+**SpecKit Checklist**:
+- [ ] All Deployments using private images have `imagePullSecrets` configured
+- [ ] imagePullSecret created in base infrastructure stack
+- [ ] Registry token stored in Pulumi ESC, not hardcoded
+- [ ] Token has `read:packages` scope (for pulling images)
+
+---
+
 ## GitHub Actions Gotchas
 
 ### workflow_dispatch Ref Parameter
