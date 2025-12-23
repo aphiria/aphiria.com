@@ -200,13 +200,187 @@ When implementing any infrastructure task, ask:
    - If you need to manage background processes, it's wrong
    - If documentation says "for debugging/development", don't use it in production
 
+### Kubernetes Resource Management (NON-NEGOTIABLE)
+
+**CRITICAL**: All Kubernetes containers MUST have resource requests and limits defined.
+
+**Why This Matters**:
+1. **ResourceQuotas** - Namespaces with quotas will reject pods without limits (deployment fails immediately)
+2. **Cost Control** - Prevents runaway resource usage in preview environments
+3. **Stability** - Protects cluster from resource exhaustion and noisy neighbor problems
+4. **Quality of Service** - Ensures predictable performance and proper eviction behavior
+
+**Rules**:
+- ✅ **ALWAYS** set `resources.requests` and `resources.limits` on every container
+- ✅ **ALWAYS** include limits on Jobs and init containers (even if short-lived)
+- ✅ **ALWAYS** set both CPU and memory (never skip one)
+- ❌ **NEVER** deploy containers without resource specifications in production-like environments
+
+**Example - Correct Resource Specification**:
+```typescript
+// ✅ CORRECT: All containers have resource limits
+const dbInitJob = new k8s.batch.v1.Job("db-init", {
+    spec: {
+        template: {
+            spec: {
+                containers: [{
+                    name: "db-init",
+                    image: "postgres:16-alpine",
+                    resources: {
+                        requests: {
+                            cpu: "100m",      // Minimum guaranteed
+                            memory: "128Mi",
+                        },
+                        limits: {
+                            cpu: "200m",      // Maximum allowed
+                            memory: "256Mi",
+                        },
+                    },
+                }],
+            },
+        },
+    },
+});
+
+// ❌ WRONG: Missing resource limits (will fail if namespace has ResourceQuota)
+const dbInitJob = new k8s.batch.v1.Job("db-init", {
+    spec: {
+        template: {
+            spec: {
+                containers: [{
+                    name: "db-init",
+                    image: "postgres:16-alpine",
+                    // Missing resources field - Kubernetes will reject this!
+                }],
+            },
+        },
+    },
+});
+```
+
+**Sizing Guidelines**:
+- **Jobs/Init Containers**: Start with 100m CPU / 128Mi memory (requests), 200m / 256Mi (limits)
+- **API Containers**: Start with 250m CPU / 512Mi memory
+- **Web Containers**: Start with 100m CPU / 256Mi memory
+- **Monitor and adjust** based on actual usage (use `kubectl top pod`)
+
+### Container Image Best Practices (IMMUTABILITY)
+
+**CRITICAL**: Always use full SHA256 digests for container images in production-like environments.
+
+**Why This Matters**:
+1. **Immutability** - Ensures exact same image is deployed every time (no surprises)
+2. **Security** - Prevents tag hijacking attacks (`:latest` can be overwritten)
+3. **Reproducibility** - Can recreate exact deployment state months later
+4. **Audit Trail** - Know exactly what code is running in production
+
+**Rules**:
+- ✅ **ALWAYS** use full 64-character SHA256 digests: `sha256:abc123...` (71 chars total with prefix)
+- ✅ **ALWAYS** get digests from `docker/build-push-action` outputs
+- ✅ **NEVER** truncate or modify digests (Docker will reject them as invalid)
+- ✅ **NEVER** use mutable tags like `:latest` or `:pr-123` in production
+- ✅ **ALWAYS** pass digests via type-safe mechanisms (workflow inputs, not labels/comments)
+
+**Example - Correct Digest Handling**:
+```typescript
+// ✅ CORRECT: Full SHA256 digest (64 hex characters)
+const deployment = new k8s.apps.v1.Deployment("api", {
+    spec: {
+        template: {
+            spec: {
+                containers: [{
+                    name: "api",
+                    // Full 64-character digest after sha256: prefix
+                    image: "ghcr.io/org/app@sha256:1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
+                }],
+            },
+        },
+    },
+});
+
+// ❌ WRONG: Truncated digest (invalid - Docker will fail with "invalid reference format")
+image: "ghcr.io/org/app@sha256:1234567890ab"  // Only 12 chars - FAILS!
+
+// ❌ WRONG: Mutable tag (not reproducible - someone could push new code to same tag)
+image: "ghcr.io/org/app:pr-123"
+```
+
+**GitHub Actions Pattern - The Enterprise Way**:
+```yaml
+# BUILD WORKFLOW: Capture full digest, trigger deploy with inputs
+jobs:
+  build:
+    outputs:
+      web-digest: ${{ steps.web.outputs.digest }}
+      api-digest: ${{ steps.api.outputs.digest }}
+    steps:
+      - name: Build web image
+        id: web
+        uses: docker/build-push-action@v5
+        with:
+          push: true
+          tags: ghcr.io/org/app-web:pr-${{ github.event.pull_request.number }}
+
+  trigger-deploy:
+    needs: build
+    steps:
+      - name: Trigger deployment with digests
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'deploy-preview.yml',
+              ref: context.ref,
+              inputs: {
+                pr_number: '${{ github.event.pull_request.number }}',
+                web_digest: '${{ needs.build.outputs.web-digest }}',  // Full SHA256
+                api_digest: '${{ needs.build.outputs.api-digest }}'   // Full SHA256
+              }
+            });
+
+# DEPLOY WORKFLOW: Accept typed inputs (enterprise pattern)
+on:
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'PR number to deploy'
+        required: true
+        type: number
+      web_digest:
+        description: 'Full SHA256 digest for web image'
+        required: true
+        type: string
+      api_digest:
+        description: 'Full SHA256 digest for API image'
+        required: true
+        type: string
+
+jobs:
+  deploy:
+    steps:
+      - name: Use digests directly from inputs
+        run: |
+          echo "Deploying web: ${{ inputs.web_digest }}"
+          echo "Deploying API: ${{ inputs.api_digest }}"
+```
+
+**Why workflow_dispatch inputs > alternatives**:
+- ✅ **Type-safe**: GitHub validates input types (string, number, boolean)
+- ✅ **Explicit contract**: Inputs are documented, self-describing
+- ✅ **No parsing**: Direct parameter access, no regex/JSON extraction
+- ✅ **Auditable**: GitHub logs show exact inputs used for each run
+- ✅ **Manual override**: Can manually trigger with specific digests for rollback
+- ❌ **PR labels**: 100-char limit (fatal for 71-char SHA256 digests)
+- ❌ **GitHub Artifacts**: Requires upload/download, retention limits, complexity
+- ❌ **Comment parsing**: Fragile, can be edited by users, not machine-readable
+
 ### Other Anti-Patterns to Avoid
 
 ❌ **Temporary files without cleanup**
 ❌ **Background processes in CI/CD** (use Jobs instead)
 ❌ **Hardcoded timeouts/retries** (use proper readiness checks)
-❌ **Skipping resource limits** (always set requests/limits)
-❌ **Using `latest` image tags** (always use digests for immutability)
 
 ---
 
@@ -419,6 +593,56 @@ data:
 
 Reference in deployment manifests.
 
+### GitHub Secrets & PAT Documentation (REQUIRED)
+
+**CRITICAL**: All GitHub repository secrets and Personal Access Tokens (PATs) MUST be documented in `SECRETS.md`.
+
+**Why This Matters**:
+1. **Onboarding** - New maintainers need to know what secrets exist and how to rotate them
+2. **Security** - Undocumented secrets become orphaned and never rotated
+3. **Incident Response** - When a token expires or is compromised, you need to know what breaks
+4. **Compliance** - Audit trail of what credentials exist and their purpose
+
+**Rules**:
+- ✅ **ALWAYS** document new secrets in `SECRETS.md` when adding them to workflows
+- ✅ **ALWAYS** include: secret name, purpose, PAT scopes (if applicable), rotation schedule, used by (which workflows)
+- ✅ **ALWAYS** provide step-by-step rotation procedures for each PAT
+- ❌ **NEVER** add secrets to workflows without updating `SECRETS.md`
+- ❌ **NEVER** commit actual secret values (document the NAME and PURPOSE only)
+
+**Template for `SECRETS.md` entries**:
+
+```markdown
+### SECRET_NAME
+
+**Why this is needed**: Brief explanation of why default GITHUB_TOKEN isn't sufficient
+
+**Generate new token**:
+1. https://github.com/settings/tokens
+2. "Generate new token (classic)"
+3. Name: `Descriptive Name (project-name)`
+4. Scopes: `scope1`, `scope2`, `scope3`
+5. Expiration: 1 year (or no expiration with justification)
+6. Copy the token
+
+**Update repository secret**:
+1. https://github.com/org/repo/settings/secrets/actions
+2. Click `SECRET_NAME` (or "New repository secret")
+3. Paste new token value
+4. Save
+
+**Test**: Describe how to verify the secret works (e.g., "Push commit to PR, verify workflow succeeds")
+
+**Cleanup**: Delete old token at https://github.com/settings/tokens
+```
+
+**Example - WORKFLOW_DISPATCH_TOKEN**:
+- **Secret Name**: `WORKFLOW_DISPATCH_TOKEN`
+- **Purpose**: Trigger preview deployment workflow from build workflow (default `GITHUB_TOKEN` cannot trigger workflows per GitHub security policy)
+- **PAT Scopes**: `workflow` (allows triggering workflow_dispatch events)
+- **Rotation**: Annually
+- **Used By**: `build-preview-images.yml` (trigger-deploy job)
+
 ---
 
 ## Pre-Commit Checklist
@@ -434,6 +658,15 @@ Before committing any PHP code changes:
 - [ ] Tests written for new functionality
 - [ ] PHPDoc added for public methods
 - [ ] No `TODO` or `FIXME` comments without issue tracking
+
+**Before committing GitHub Actions workflow changes**:
+
+- [ ] New secrets documented in `SECRETS.md` (name, purpose, scopes, rotation)
+- [ ] PAT scopes are minimal (only what's required)
+- [ ] Secret usage is justified (can't use default `GITHUB_TOKEN`)
+- [ ] Rotation procedure documented with test steps
+- [ ] `workflow_dispatch` ref parameter uses a branch name (not `context.ref` from PR workflows)
+- [ ] Triggered workflows exist on the target branch (usually `master`)
 
 ---
 
@@ -617,6 +850,49 @@ php aphiria cache:flush
 - Favor boring, obvious code over clever, concise code
 
 ---
+
+---
+
+## GitHub Actions Gotchas
+
+### workflow_dispatch Ref Parameter
+
+**CRITICAL**: When triggering workflows via `workflow_dispatch`, the `ref` parameter MUST be a **branch or tag name**, not a PR merge ref.
+
+**Common Mistake**:
+```javascript
+// ❌ WRONG: Using context.ref from PR workflow
+await github.rest.actions.createWorkflowDispatch({
+  workflow_id: 'deploy.yml',
+  ref: context.ref,  // This is "refs/pull/123/merge" - NOT VALID!
+  inputs: { ... }
+});
+```
+
+**Correct Approach**:
+```javascript
+// ✅ CORRECT: Use a branch name
+await github.rest.actions.createWorkflowDispatch({
+  workflow_id: 'deploy.yml',
+  ref: 'master',  // Use the branch where the workflow file exists
+  inputs: { ... }
+});
+```
+
+**Why This Matters**:
+- PR merge refs (`refs/pull/123/merge`) are virtual refs created by GitHub for PR validation
+- They are **not real branches** and cannot be used to trigger workflows
+- Using them results in: `No ref found for: refs/pull/123/merge` (HTTP 422)
+
+**Best Practice**:
+- For security-gated deployments, trigger workflows on `master` (ensures workflow code is reviewed/merged)
+- The triggered workflow runs the master version of the YAML file
+- Pass PR-specific data (PR number, image digests, etc.) via `inputs` parameters
+
+**SpecKit Checklist**:
+- [ ] `workflow_dispatch` uses branch name (`master`, `main`, etc.), not `context.ref`
+- [ ] Triggered workflow exists on the target branch
+- [ ] PR-specific data passed via `inputs`, not inferred from workflow ref
 
 ---
 

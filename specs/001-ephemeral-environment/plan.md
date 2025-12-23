@@ -65,11 +65,22 @@ Implement ephemeral, pull-request scoped preview environments that allow maintai
 - Environment lifetime: Typically <48 hours
 - Pulumi stacks: 1 base stack (`preview-base`), N per-PR stacks (`preview-pr-{N}`), 1 production stack, 1 local stack
 
-**Image Promotion**:
-- **Build workflow**: Captures image digests (`sha256:...`) and stores as PR labels (`web-digest:abc123`, `api-digest:def456`)
-- **Preview deployment**: Reads digests from PR labels, deploys to preview environment
-- **Production deployment**: Reads same digests from merged PR labels, promotes identical images to production
+**Image Digest Propagation** (Updated 2025-12-23):
+- **Build workflow**: Captures full SHA256 digests (64 hex chars) from docker/build-push-action outputs
+- **Preview deployment**: Build workflow triggers deploy workflow via `workflow_dispatch` with digests as **typed inputs**
+- **Production deployment**: Build-from-master workflow passes digests directly to Pulumi stack config
 - **Registry**: GitHub Container Registry (ghcr.io/aphiria/aphiria.com-{web|api})
+- **Rationale for workflow_dispatch**:
+  - ✅ **Type-safe**: Inputs are explicitly declared, typed, and validated by GitHub Actions
+  - ✅ **No parsing**: Direct string parameters, no JSON/regex/comment parsing required
+  - ✅ **Auditable**: GitHub audit log shows exact digests used for each deployment
+  - ✅ **Manual override**: Allows manual trigger with specific digests for rollback scenarios
+  - ✅ **No storage overhead**: No artifacts to upload/download/expire, no label length limits (100 chars)
+  - ❌ **Rejected alternatives**:
+    - PR labels: 100-character limit (fatal for full SHA256 digests which are 71 chars: `sha256:` + 64 hex)
+    - GitHub Artifacts: Extra upload/download steps, retention limits, unnecessary complexity
+    - Comment parsing: Fragile, not machine-readable, can be edited/deleted by users
+  - **Enterprise pattern**: Workflow inputs are the idiomatic GitHub Actions mechanism for workflow-to-workflow communication
 
 ## Constitution Check
 

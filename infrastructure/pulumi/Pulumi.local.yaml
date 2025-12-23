@@ -2,10 +2,10 @@
 # This allows developers without ESC access to run Pulumi locally
 
 config:
-  # Set these using: pulumi config set postgresql:user aphiria
+  # Set these using: pulumi config set postgresql:user <your-username>
   # Set secrets using: pulumi config set --secret postgresql:password <your-password>
 
   # Example setup:
   # pulumi stack select local
-  # pulumi config set postgresql:user aphiria
-  # pulumi config set --secret postgresql:password postgres
+  # pulumi config set postgresql:user foo
+  # pulumi config set --secret postgresql:password bar

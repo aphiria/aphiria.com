@@ -187,41 +187,32 @@ jobs:
               });
             }
 
-      - name: Label PR with image digests
+  trigger-deploy:
+    name: Trigger Preview Deployment
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger deployment workflow with image digests
         uses: actions/github-script@v7
         with:
+          github-token: ${{ secrets.WORKFLOW_DISPATCH_TOKEN }}
           script: |
             const prNumber = context.payload.pull_request.number;
-            const webDigest = '${{ steps.web-image.outputs.digest }}'.substring(7, 19);
-            const apiDigest = '${{ steps.api-image.outputs.digest }}'.substring(7, 19);
+            const webDigest = '${{ needs.build.outputs.web-image-digest }}';
+            const apiDigest = '${{ needs.build.outputs.api-image-digest }}';
 
-            // Get current PR labels
-            const { data: pr } = await github.rest.pulls.get({
+            console.log(`Triggering deployment for PR #${prNumber}`);
+            console.log(`Web digest: ${webDigest}`);
+            console.log(`API digest: ${apiDigest}`);
+
+            await github.rest.actions.createWorkflowDispatch({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              pull_number: prNumber,
-            });
-
-            // Keep non-digest labels (except preview:images-built which we'll re-add)
-            const keepLabels = pr.labels
-              .filter(l =>
-                !l.name.startsWith('web-digest:') &&
-                !l.name.startsWith('api-digest:') &&
-                l.name !== 'preview:images-built'
-              )
-              .map(l => l.name);
-
-            const newLabels = [
-              ...keepLabels,
-              'preview:images-built',
-              `web-digest:${webDigest}`,
-              `api-digest:${apiDigest}`
-            ];
-
-            // Replace all labels (removes old digests, keeps everything else)
-            await github.rest.issues.setLabels({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: prNumber,
-              labels: newLabels,
+              workflow_id: 'deploy-preview.yml',
+              ref: 'master',
+              inputs: {
+                pr_number: String(prNumber),
+                web_digest: webDigest,
+                api_digest: apiDigest
+              }
             });
