@@ -214,33 +214,53 @@ Phase 8 (Migrate production to Pulumi + reusable workflows)
 
 ### Image Digest Propagation Tasks (Added 2025-12-23)
 
-- [ ] T052a [US1] **CRITICAL BUG FIX**: Migrate from PR label digest storage to workflow_dispatch inputs
+- [X] T052a [US1] **CRITICAL BUG FIX**: Migrate from PR label digest storage to workflow_dispatch inputs
   - **Why**: PR labels limited to 100 chars, but full SHA256 digests are 71 chars (`sha256:` + 64 hex). Current implementation truncates to 12 chars causing invalid image references.
   - **Action**: Update `build-preview-images.yml` to remove label-based digest storage (lines 190-228)
   - **File**: `.github/workflows/build-preview-images.yml`
+  - **Status**: ✅ COMPLETED (2025-12-23)
 
-- [ ] T052b [US1] **CRITICAL BUG FIX**: Update build workflow to trigger deploy via workflow_dispatch with digest inputs
+- [X] T052b [US1] **CRITICAL BUG FIX**: Update build workflow to trigger deploy via workflow_dispatch with digest inputs
   - **Why**: Replace PR label approach with type-safe workflow inputs (enterprise pattern)
   - **Action**: Add `trigger-deploy` job that calls `workflow_dispatch` on `deploy-preview.yml` with `pr_number`, `web_digest`, `api_digest` as typed string inputs
   - **File**: `.github/workflows/build-preview-images.yml`
   - **Depends**: T052a
+  - **Status**: ✅ COMPLETED (2025-12-23)
 
-- [ ] T052c [US1] **CRITICAL BUG FIX**: Update deploy workflow to accept workflow_dispatch inputs instead of reading PR labels
+- [X] T052c [US1] **CRITICAL BUG FIX**: Update deploy workflow to accept workflow_dispatch inputs instead of reading PR labels
   - **Why**: Eliminate fragile label parsing, use explicit type-safe inputs
   - **Action**: Change `deploy-preview.yml` trigger from `workflow_run` to `workflow_dispatch` with inputs: `pr_number` (number), `web_digest` (string), `api_digest` (string)
   - **File**: `.github/workflows/deploy-preview.yml`
   - **Depends**: T052a
+  - **Status**: ✅ COMPLETED (2025-12-23)
 
-- [ ] T052d [US1] **CRITICAL BUG FIX**: Remove digest extraction from PR labels in deploy workflow
+- [X] T052d [US1] **CRITICAL BUG FIX**: Remove digest extraction from PR labels in deploy workflow
   - **Why**: Read digests directly from workflow inputs instead of parsing labels
   - **Action**: Replace "Get image digests from PR labels" step (lines 526-567) with direct input references `${{ inputs.web_digest }}` and `${{ inputs.api_digest }}`
   - **File**: `.github/workflows/deploy-preview.yml`
   - **Depends**: T052c
+  - **Status**: ✅ COMPLETED (2025-12-23)
 
-- [ ] T052e [US1] Add resource limits to db-init Job container
+- [X] T052e [US1] Add resource limits to db-init Job container
   - **Why**: Namespace ResourceQuota requires all containers to specify CPU/memory limits. Missing limits cause pod creation failures.
   - **Action**: Add `resources.requests` (100m CPU, 128Mi memory) and `resources.limits` (200m CPU, 256Mi memory) to db-init container spec
   - **File**: `infrastructure/pulumi/stacks/preview-pr.ts` (lines 169-176)
+  - **Status**: ✅ COMPLETED (2025-12-23)
+
+### Label Cleanup Tasks (Added 2025-12-23)
+
+- [X] T052f [US1] Remove obsolete `preview:images-built` label from build workflow
+  - **Why**: Label is no longer needed since workflow_dispatch triggers deployment immediately after build. No polling or status checking required.
+  - **Action**: Remove "Label PR as images built" step from `build-preview-images.yml` (lines 190-213)
+  - **File**: `.github/workflows/build-preview-images.yml`
+  - **Rationale**: With workflow_dispatch, the build job directly triggers deployment. The label served as a signal for workflow_run triggers, which have been removed.
+  - **Status**: ✅ COMPLETED (2025-12-23)
+
+- [X] T052g [US1] Remove label cleanup from preview cleanup workflow
+  - **Why**: No longer adding `preview:images-built` label, so cleanup is unnecessary
+  - **Action**: Remove PR label removal logic from `cleanup-preview.yml` (find and remove step that removes `preview:*`, `web-digest:*`, `api-digest:*` labels)
+  - **File**: `.github/workflows/cleanup-preview.yml`
+  - **Depends**: T052f
   - **Status**: ✅ COMPLETED (2025-12-23)
 
 ### Update Flow Tasks

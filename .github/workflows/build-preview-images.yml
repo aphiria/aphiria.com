@@ -187,27 +187,31 @@ jobs:
               });
             }
 
-      - name: Label PR as images built
+  trigger-deploy:
+    name: Trigger Preview Deployment
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger deployment workflow with image digests
         uses: actions/github-script@v7
         with:
           script: |
             const prNumber = context.payload.pull_request.number;
+            const webDigest = '${{ needs.build.outputs.web-image-digest }}';
+            const apiDigest = '${{ needs.build.outputs.api-image-digest }}';
 
-            // Get current PR labels
-            const { data: pr } = await github.rest.pulls.get({
+            console.log(`Triggering deployment for PR #${prNumber}`);
+            console.log(`Web digest: ${webDigest}`);
+            console.log(`API digest: ${apiDigest}`);
+
+            await github.rest.actions.createWorkflowDispatch({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              pull_number: prNumber,
+              workflow_id: 'deploy-preview.yml',
+              ref: context.ref,
+              inputs: {
+                pr_number: String(prNumber),
+                web_digest: webDigest,
+                api_digest: apiDigest
+              }
             });
-
-            // Check if preview:images-built label already exists
-            const hasLabel = pr.labels.some(l => l.name === 'preview:images-built');
-
-            if (!hasLabel) {
-              await github.rest.issues.addLabels({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: prNumber,
-                labels: ['preview:images-built'],
-              });
-            }

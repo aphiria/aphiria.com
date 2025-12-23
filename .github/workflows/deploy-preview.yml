@@ -1,16 +1,20 @@
 name: Preview Environment Deploy
 
 on:
-  workflow_run:
-    workflows: ["Build Preview Images"]
-    types:
-      - completed
   workflow_dispatch:
     inputs:
       pr_number:
         description: 'PR number to deploy'
         required: true
         type: number
+      web_digest:
+        description: 'Full SHA256 digest for web image'
+        required: true
+        type: string
+      api_digest:
+        description: 'Full SHA256 digest for API image'
+        required: true
+        type: string
 
 permissions:
   contents: read
@@ -21,7 +25,6 @@ jobs:
   ensure-base-stack:
     name: Ensure Preview Base Infrastructure
     runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
 
     steps:
       - name: Checkout repository
@@ -128,7 +131,6 @@ jobs:
     name: Preview Infrastructure Changes
     runs-on: ubuntu-latest
     needs: ensure-base-stack
-    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
 
     steps:
       - name: Checkout repository
@@ -136,39 +138,10 @@ jobs:
 
       - name: Extract PR number
         id: pr
-        uses: actions/github-script@v7
-        with:
-          script: |
-            let prNumber;
-
-            if (context.eventName === 'workflow_dispatch') {
-              prNumber = ${{ inputs.pr_number || 0 }};
-            } else {
-              // Get PR number from workflow_run event
-              const pullRequests = context.payload.workflow_run.pull_requests;
-              if (pullRequests && pullRequests.length > 0) {
-                prNumber = pullRequests[0].number;
-              } else {
-                // Fallback: get PR from head branch
-                const branchName = context.payload.workflow_run.head_branch;
-                const { data: prs } = await github.rest.pulls.list({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  head: `${context.repo.owner}:${branchName}`,
-                  state: 'open'
-                });
-
-                if (prs.length === 0) {
-                  core.setFailed(`No open PR found for branch ${branchName}`);
-                  return;
-                }
-
-                prNumber = prs[0].number;
-              }
-            }
-
-            console.log(`PR Number: ${prNumber}`);
-            core.setOutput('number', prNumber);
+        run: |
+          PR_NUMBER="${{ inputs.pr_number }}"
+          echo "number=${PR_NUMBER}" >> $GITHUB_OUTPUT
+          echo "PR Number: ${PR_NUMBER}"
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -334,7 +307,6 @@ jobs:
     name: Check PR Author
     runs-on: ubuntu-latest
     needs: preview-infra
-    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
     outputs:
       is-maintainer: ${{ steps.check.outputs.is-maintainer }}
       pr-number: ${{ steps.pr.outputs.number }}
@@ -342,39 +314,10 @@ jobs:
     steps:
       - name: Extract PR number
         id: pr
-        uses: actions/github-script@v7
-        with:
-          script: |
-            let prNumber;
-
-            if (context.eventName === 'workflow_dispatch') {
-              prNumber = ${{ inputs.pr_number || 0 }};
-            } else {
-              // Get PR number from workflow_run event
-              const pullRequests = context.payload.workflow_run.pull_requests;
-              if (pullRequests && pullRequests.length > 0) {
-                prNumber = pullRequests[0].number;
-              } else {
-                // Fallback: get PR from head branch
-                const branchName = context.payload.workflow_run.head_branch;
-                const { data: prs } = await github.rest.pulls.list({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  head: `${context.repo.owner}:${branchName}`,
-                  state: 'open'
-                });
-
-                if (prs.length === 0) {
-                  core.setFailed(`No open PR found for branch ${branchName}`);
-                  return;
-                }
-
-                prNumber = prs[0].number;
-              }
-            }
-
-            console.log(`PR Number: ${prNumber}`);
-            core.setOutput('number', prNumber);
+        run: |
+          PR_NUMBER="${{ inputs.pr_number }}"
+          echo "number=${PR_NUMBER}" >> $GITHUB_OUTPUT
+          echo "PR Number: ${PR_NUMBER}"
 
       - name: Check if PR author is maintainer
         id: check
@@ -519,52 +462,21 @@ jobs:
       - name: Set PR number
         id: pr
         run: |
-          PR_NUMBER="${{ needs.check-author.outputs.pr-number }}"
+          PR_NUMBER="${{ inputs.pr_number }}"
           echo "number=${PR_NUMBER}" >> $GITHUB_OUTPUT
           echo "Deploying preview for PR #${PR_NUMBER}"
 
-      - name: Get image digests from PR comment
+      - name: Set image digests from inputs
         id: images
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const prNumber = ${{ steps.pr.outputs.number }};
+        run: |
+          WEB_DIGEST="${{ inputs.web_digest }}"
+          API_DIGEST="${{ inputs.api_digest }}"
 
-            // Find the comment with image digests
-            const { data: comments } = await github.rest.issues.listComments({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: prNumber,
-            });
+          echo "web-digest=${WEB_DIGEST}" >> $GITHUB_OUTPUT
+          echo "api-digest=${API_DIGEST}" >> $GITHUB_OUTPUT
 
-            const imageComment = comments.find(comment =>
-              comment.user.type === 'Bot' &&
-              comment.body.includes('Preview Images Built')
-            );
-
-            if (!imageComment) {
-              core.setFailed('Image digest comment not found. Please rebuild preview images.');
-              return;
-            }
-
-            // Extract digests from comment using regex
-            // Comment format: **Web**: `sha256:xxxxx`
-            const webMatch = imageComment.body.match(/\*\*Web\*\*:\s*`(sha256:[a-f0-9]{64})`/);
-            const apiMatch = imageComment.body.match(/\*\*API\*\*:\s*`(sha256:[a-f0-9]{64})`/);
-
-            if (!webMatch || !apiMatch) {
-              core.setFailed('Could not parse image digests from comment. Please rebuild preview images.');
-              return;
-            }
-
-            const webDigest = webMatch[1];
-            const apiDigest = apiMatch[1];
-
-            core.setOutput('web-digest', webDigest);
-            core.setOutput('api-digest', apiDigest);
-
-            console.log(`Web digest: ${webDigest}`);
-            console.log(`API digest: ${apiDigest}`);
+          echo "Web digest: ${WEB_DIGEST}"
+          echo "API digest: ${API_DIGEST}"
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
