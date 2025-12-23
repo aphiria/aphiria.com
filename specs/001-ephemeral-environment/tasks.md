@@ -260,6 +260,28 @@ Phase 8 (Migrate production to Pulumi + reusable workflows)
   - **File**: `infrastructure/pulumi/stacks/preview-pr.ts` (lines 169-176)
   - **Status**: ✅ COMPLETED (2025-12-23)
 
+- [ ] T052r [US1] **CRITICAL HOTFIX**: Add resource limits to API deployment db-migration init container
+  - **Why**: ResourceQuota requires ALL containers (including init containers) to have resource limits. The db-migration init container in API deployment is missing them, causing pod creation failures.
+  - **Error**: `pods "api-577665d6db-..." is forbidden: failed quota: preview-quota: must specify limits.cpu for: db-migration; limits.memory for: db-migration; requests.cpu for: db-migration; requests.memory for: db-migration`
+  - **Action**: Add `resources` block to db-migration init container in API deployment
+  - **File**: `infrastructure/pulumi/stacks/preview-pr.ts` (lines 376-396)
+  - **Code to Add** (after line 395, before the closing `},`):
+    ```typescript
+    resources: {
+        requests: {
+            cpu: "200m",
+            memory: "256Mi",
+        },
+        limits: {
+            cpu: "500m",
+            memory: "512Mi",
+        },
+    },
+    ```
+  - **Impact**: API pods cannot start without this fix. Web works but API returns 503.
+  - **Root Cause**: T052e only fixed db-init Job, not the API deployment's init container
+  - **Testing**: After fix, `kubectl get pods -n preview-pr-107` should show API pod Running
+
 ### Image Pull Secrets Task (Added 2025-12-23)
 
 - [X] T052p [US1] **CRITICAL BUG FIX**: Create imagePullSecret for GHCR authentication
@@ -464,6 +486,50 @@ Phase 8 (Migrate production to Pulumi + reusable workflows)
 - [X] T061 [US3] Update PR comment on cleanup completion in `.github/workflows/cleanup-preview.yml`
 - [X] T062 [US3] Add cleanup verification (check namespace and stack no longer exist) in `.github/workflows/cleanup-preview.yml`
 - [X] T063 [US3] Remove PR labels (preview:*, web-digest:*, api-digest:*) in `.github/workflows/cleanup-preview.yml`
+- [ ] T062a [US3] **ENHANCEMENT**: Force-delete namespace if Pulumi destroy doesn't remove it
+  - **Why**: In some cases (e.g., Pulumi errors, stuck finalizers), namespaces may linger after `pulumi destroy`. This leaves orphaned resources consuming cluster capacity.
+  - **Current behavior**: Workflow only logs a warning if namespace still exists (line 97 in cleanup-preview.yml)
+  - **Desired behavior**: Automatically force-delete the namespace to ensure complete cleanup
+  - **File**: `.github/workflows/cleanup-preview.yml` (modify "Verify namespace cleanup" step at lines 87-101)
+  - **Implementation**:
+    ```yaml
+    - name: Force delete namespace if still exists
+      if: steps.destroy.outputs.status == 'destroyed'
+      env:
+        KUBECONFIG: ${{ steps.kubeconfig.outputs.path }}
+      run: |
+        PR_NUMBER=${{ steps.pr.outputs.number }}
+        NAMESPACE="preview-pr-${PR_NUMBER}"
+
+        # Check if namespace still exists
+        if kubectl get namespace "${NAMESPACE}" 2>/dev/null; then
+          echo "⚠️  Namespace ${NAMESPACE} still exists after stack destroy, force deleting..."
+
+          # Force delete namespace (removes finalizers and all resources)
+          kubectl delete namespace "${NAMESPACE}" --force --grace-period=0 || true
+
+          # Wait up to 30 seconds for deletion to complete
+          for i in {1..30}; do
+            if ! kubectl get namespace "${NAMESPACE}" 2>/dev/null; then
+              echo "✅ Namespace ${NAMESPACE} successfully force-deleted"
+              break
+            fi
+            echo "Waiting for namespace deletion... ($i/30)"
+            sleep 1
+          done
+
+          # Final check
+          if kubectl get namespace "${NAMESPACE}" 2>/dev/null; then
+            echo "::error::Namespace ${NAMESPACE} still exists after force delete - manual intervention required"
+            kubectl get all -n "${NAMESPACE}"
+            exit 1
+          fi
+        else
+          echo "✅ Namespace ${NAMESPACE} successfully deleted by Pulumi"
+        fi
+    ```
+  - **Testing**: Close a PR with a preview environment, verify namespace is deleted even if Pulumi leaves it behind
+  - **Acceptance**: All preview namespace deletions succeed, no orphaned namespaces remain in cluster
 
 **Acceptance Validation** (Manual):
 1. Create and deploy test preview environment
@@ -515,6 +581,99 @@ Phase 8 (Migrate production to Pulumi + reusable workflows)
 - [ ] T083 Audit and clean up repository secrets (remove deprecated KUBECONFIG, DIGITALOCEAN_ACCESS_TOKEN from repo-level)
 - [ ] T084 Audit and clean up environment secrets (verify preview environment has correct secrets only)
 - [X] T085 Document secrets rotation procedures and access control in SECRETS.md
+- [ ] T085a **FUTURE ENHANCEMENT** (BLOCKED - Requires Team Edition): Migrate from Pulumi access tokens to OIDC authentication for GitHub Actions
+  - **Status**: ❌ BLOCKED - Requires Pulumi Team Edition ($40/month)
+  - **Current Plan**: Keep using `PULUMI_ACCESS_TOKEN` with annual rotation
+  - **Revisit When**: Project grows to multiple maintainers OR budget allows Team edition
+  - **Why**: OIDC provides enterprise-grade security benefits over static access tokens:
+    - **Zero long-lived secrets**: No `PULUMI_ACCESS_TOKEN` stored in GitHub repository secrets
+    - **Automatic credential lifecycle**: Tokens expire after 2 hours (customizable), eliminating rotation burden
+    - **Principle of least privilege**: Scope tokens to specific repositories or teams
+    - **Better audit trail**: Identity-based authentication traces specific workflows/runs
+    - **Compliance**: Meets SOC 2, ISO 27001 requirements for credential management
+    - **Leak mitigation**: Accidentally exposed tokens auto-expire vs permanent access
+  - **Current state**: Workflows use `PULUMI_ACCESS_TOKEN` secret (static, permanent until revoked)
+  - **Target state**: Workflows use OIDC token exchange with pulumi/auth-actions@v1
+  - **Prerequisites**:
+    - Admin access to Pulumi organization (davidbyoung or aphiria org)
+    - Organization must support OIDC (available in Team/Enterprise plans - verify subscription)
+  - **Implementation steps**:
+    1. **Register OIDC issuer in Pulumi Cloud**:
+       - Navigate to Organization Settings → Access Tokens → OIDC
+       - Click "Register a new issuer"
+       - Issuer URL: `https://token.actions.githubusercontent.com`
+       - Audience: `urn:pulumi:org:<org-name>` (replace with actual Pulumi org name)
+    2. **Create authorization policy**:
+       - Policy decision: "Allow"
+       - Token type: "Organization"
+       - Subject claim: `repo:aphiria/aphiria.com:*` (allows all workflows in this repo)
+       - Audience claim: `urn:pulumi:org:<org-name>`
+    3. **Update GitHub Actions workflows**:
+       - Files: `deploy-preview.yml`, `cleanup-preview.yml`, `test.yml` (if Pulumi used)
+       - Add OIDC permissions to workflow:
+         ```yaml
+         permissions:
+           id-token: write      # Required for OIDC
+           contents: read
+           pull-requests: write
+           deployments: write
+         ```
+       - Replace Pulumi CLI installation steps with auth-actions:
+         ```yaml
+         # OLD (access token):
+         - name: Install Pulumi CLI
+           uses: pulumi/actions@v5
+
+         # Environment variables in later steps:
+         env:
+           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
+
+         # NEW (OIDC):
+         - name: Authenticate to Pulumi Cloud via OIDC
+           uses: pulumi/auth-actions@v1
+           with:
+             organization: <org-name>
+             requested-token-type: urn:pulumi:token-type:access_token:organization
+
+         - name: Install Pulumi CLI
+           uses: pulumi/actions@v5
+
+         # No PULUMI_ACCESS_TOKEN needed in env - auth-actions sets it automatically
+         ```
+    4. **Test OIDC authentication**:
+       - Trigger deploy-preview.yml workflow on a test PR
+       - Verify "Authenticate to Pulumi Cloud via OIDC" step succeeds
+       - Verify subsequent Pulumi commands work (preview, up, destroy)
+    5. **Remove static access token**:
+       - Delete `PULUMI_ACCESS_TOKEN` from GitHub repository secrets (Settings → Secrets → Actions)
+       - Update SECRETS.md to document OIDC setup instead of PAT creation
+    6. **Update documentation**:
+       - SECRETS.md: Replace "PULUMI_ACCESS_TOKEN" section with OIDC configuration guide
+       - Infrastructure README: Document OIDC setup for contributors
+       - Add troubleshooting section for common OIDC errors (token expiration, policy mismatches)
+  - **Files to modify**:
+    - `.github/workflows/deploy-preview.yml` (add OIDC auth, remove PULUMI_ACCESS_TOKEN env var)
+    - `.github/workflows/cleanup-preview.yml` (add OIDC auth, remove PULUMI_ACCESS_TOKEN env var)
+    - `.github/workflows/test.yml` (if Pulumi preview used - verify if applicable)
+    - `SECRETS.md` (replace PAT documentation with OIDC setup)
+    - `infrastructure/pulumi/README.md` or `QUICKSTART.md` (document OIDC for maintainers)
+  - **Testing**:
+    - Create test PR, trigger deployment
+    - Close test PR, trigger cleanup
+    - Verify all Pulumi operations succeed with OIDC
+    - Verify no `PULUMI_ACCESS_TOKEN` references remain in workflows
+  - **Rollback plan**: If OIDC fails, re-create `PULUMI_ACCESS_TOKEN` secret and revert workflow changes
+  - **Dependencies**: None (can be done independently)
+  - **Acceptance criteria**:
+    - ✅ OIDC issuer registered in Pulumi Cloud with correct audience and subject policies
+    - ✅ All workflows authenticate via pulumi/auth-actions@v1
+    - ✅ `PULUMI_ACCESS_TOKEN` secret removed from GitHub
+    - ✅ Documentation updated to reflect OIDC authentication
+    - ✅ Test deployment and cleanup succeed with OIDC
+  - **References**:
+    - [Pulumi OIDC GitHub Docs](https://www.pulumi.com/docs/administration/access-identity/oidc-client/github/)
+    - [pulumi/auth-actions GitHub Action](https://github.com/pulumi/auth-actions)
+    - [Native OIDC Token Exchange Blog](https://www.pulumi.com/blog/native-oidc-token-exchange/)
 
 ### Workflow Cleanup
 
@@ -571,6 +730,43 @@ Phase 8 (Migrate production to Pulumi + reusable workflows)
 - [X] M027 Verify local API accessible at https://api.aphiria.com
 - [X] M028 Test local rebuild cycle: build images → pulumi up → verify changes
 - [X] M029 Document local Pulumi workflow in `infrastructure/pulumi/DEV-LOCAL-SETUP.md`
+- [ ] M029a Update local stack to use locally-built images instead of Docker Hub
+  - **Why**: Docker Hub is deprecated for this project. Local development should use images built locally via `docker build` in Minikube's Docker daemon. This eliminates external dependencies and makes local dev faster.
+  - **Files to Update**:
+    1. `infrastructure/pulumi/stacks/local.ts` - Stack program
+    2. `infrastructure/pulumi/DEV-LOCAL-SETUP.md` - Developer documentation
+    3. `CLAUDE.md` - Local development section
+  - **Code Changes for `local.ts`**:
+    - Line 56: Change `image: "davidbyoung/aphiria.com-web:latest"` → `image: "aphiria.com-web:latest"`
+    - Line 70: Change `image: "davidbyoung/aphiria.com-api:latest"` → `image: "aphiria.com-api:latest"`
+    - Line 84: Change `image: "davidbyoung/aphiria.com-api:latest"` → `image: "aphiria.com-api:latest"`
+    - Add `imagePullPolicy: "IfNotPresent"` parameter to web deployment (after `image:` line)
+    - Add `imagePullPolicy: "IfNotPresent"` parameter to API deployment (after `image:` line)
+    - Add `imagePullPolicy: "IfNotPresent"` parameter to migration job (after `image:` line)
+  - **Documentation Changes for `DEV-LOCAL-SETUP.md`**:
+    - Lines 82-84: Update build commands to use `aphiria.com-web:latest` and `aphiria.com-api:latest` (remove `davidbyoung/` prefix)
+    - Lines 144-145: Update rebuild commands to use `aphiria.com-web:latest` and `aphiria.com-api:latest`
+    - Add note: "Images are built with local tags (no registry prefix) and stored in Minikube's Docker daemon. Kubernetes uses `imagePullPolicy: IfNotPresent` to prevent pulling from external registries."
+  - **Documentation Changes for `CLAUDE.md`**:
+    - Lines 680-682: Update build commands to use `aphiria.com-web:latest` and `aphiria.com-api:latest` tags
+  - **Component Changes** (if needed):
+    - Check if `createWebDeployment`, `createAPIDeployment`, and `createDBMigrationJob` components accept `imagePullPolicy` parameter
+    - If not, add optional `imagePullPolicy?: string` parameter to component interfaces and pass through to Kubernetes Deployment/Job spec
+  - **Build Commands** (updated):
+    ```bash
+    eval $(minikube -p minikube docker-env) \
+    && docker build -t aphiria.com-build -f ./infrastructure/docker/build/Dockerfile . \
+    && docker build -t aphiria.com-api:latest -f ./infrastructure/docker/runtime/api/Dockerfile . --build-arg BUILD_IMAGE=aphiria.com-build \
+    && docker build -t aphiria.com-web:latest -f ./infrastructure/docker/runtime/web/Dockerfile . --build-arg BUILD_IMAGE=aphiria.com-build
+    ```
+  - **Testing**:
+    1. Delete local stack: `pulumi destroy --stack local && pulumi stack rm local`
+    2. Build images with new tags (see command above)
+    3. Recreate stack: `pulumi stack init local && pulumi config set --secret dbPassword password`
+    4. Deploy: `pulumi up --stack local`
+    5. Verify pods running: `kubectl get pods` (should show Running, not ImagePullBackOff)
+    6. Verify site accessible: https://www.aphiria.com
+  - **Benefit**: Faster local development (no registry pulls), eliminates Docker Hub dependency, uses same workflow as production (GHCR) but with local images
 
 **Completion Criteria**:
 - ✅ Minikube deployment fully managed by Pulumi
@@ -600,6 +796,56 @@ Phase 8 (Migrate production to Pulumi + reusable workflows)
 
 - [ ] M030 Refactor preview-base and production stacks to use shared parameterized base infrastructure component (eliminate code duplication)
 - [ ] M031 Create shared base infrastructure component that accepts environment-specific parameters (cluster config, node pool size, etc.) in `infrastructure/pulumi/components/`
+- [ ] M031a **CRITICAL**: Design shared components to support optional resource limits (preview requires them due to ResourceQuota, production does not)
+  - **Why**: Preview environments use ResourceQuota for cost control/isolation, requiring ALL containers to have resource limits. Production has no ResourceQuota, so hardcoded limits would be unnecessarily restrictive.
+  - **Design principle**: Resource limits should be **optional parameters** passed to shared components, not hardcoded
+  - **Implementation approach**:
+    ```typescript
+    // Shared component signature example
+    interface DeploymentConfig {
+      replicas: number;
+      image: string;
+      resources?: {  // ← Optional, not required
+        requests?: { cpu: string; memory: string };
+        limits?: { cpu: string; memory: string };
+      };
+    }
+
+    // Preview stack (with ResourceQuota) - MUST specify limits
+    const apiDeployment = createApiDeployment({
+      replicas: 1,
+      image: apiImage,
+      resources: {
+        requests: { cpu: "200m", memory: "512Mi" },
+        limits: { cpu: "1", memory: "2Gi" },
+      },
+    });
+
+    // Production stack (no ResourceQuota) - limits optional/generous
+    const apiDeployment = createApiDeployment({
+      replicas: 2,
+      image: apiImage,
+      resources: {
+        // Optional: set generous limits for production if desired
+        // Or omit entirely - no ResourceQuota means no enforcement
+        requests: { cpu: "500m", memory: "1Gi" },
+        limits: { cpu: "4", memory: "8Gi" },  // Much higher than preview
+      },
+    });
+    ```
+  - **Components affected**: All shared deployment/job components (web, API, database init, migrations)
+  - **Validation**:
+    - Preview stacks MUST provide resource limits (fail build if missing and ResourceQuota exists)
+    - Production stack MAY omit or use generous limits
+  - **Documentation**: Clearly document in component JSDoc when resource limits are required vs optional
+  - **Default behavior**: If `resources` parameter is undefined, do NOT add resources block to Kubernetes manifest (let cluster defaults apply)
+  - **Anti-pattern to avoid**: DO NOT hardcode preview-sized limits (200m CPU, 512Mi RAM) in shared components - production needs significantly more headroom
+  - **Acceptance criteria**:
+    - ✅ Shared components accept optional `resources` parameter
+    - ✅ Preview stacks pass explicit resource limits
+    - ✅ Production stack can omit limits OR use generous production-appropriate values
+    - ✅ Component documentation clearly states when limits are required (hint: when ResourceQuota is present)
+    - ✅ No hardcoded resource limits in shared component implementations
 
 #### CI/CD Workflow Refactoring (Constitution Principle VI)
 

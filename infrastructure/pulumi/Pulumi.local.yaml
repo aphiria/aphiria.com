@@ -1,5 +1,5 @@
 # Local development stack - uses traditional Pulumi config (no ESC required)
-# This allows developers without ESC access to run Pulumi locally 
+# This allows developers without ESC access to run Pulumi locally
 
 config:
   # Set these using: pulumi config set postgresql:user <your-username>

@@ -989,6 +989,21 @@ Originally planned to share production cluster with namespace isolation, but **p
 
 **Rationale**: Port-forwarding and process management in CI/CD creates race conditions, requires cleanup handling, and is unreliable. Kubernetes Jobs are the standard pattern for cluster-internal setup tasks and are managed declaratively by Pulumi.
 
+### Resource Limits and Component Reusability
+
+- **NFR-019**: Shared Pulumi components MUST accept resource limits as optional parameters, not hardcode them
+  - **Rationale**: Preview environments use ResourceQuota (requiring resource limits on ALL containers), while production has no ResourceQuota (making limits optional)
+  - **Preview context**: ResourceQuota enforces cost control and multi-tenant isolation (2 CPU, 4Gi RAM max per PR)
+  - **Production context**: No ResourceQuota exists, so hardcoded preview-sized limits (200m CPU, 512Mi RAM) would unnecessarily constrain production workloads
+  - **Design pattern**: Components accept optional `resources?: { requests?, limits? }` parameter
+  - **Preview behavior**: Stacks MUST provide explicit resource limits to satisfy ResourceQuota enforcement
+  - **Production behavior**: Stacks MAY omit limits entirely OR provide generous production-appropriate values (e.g., 4 CPU, 8Gi RAM)
+  - **Default behavior**: If `resources` parameter is undefined, components MUST NOT add a `resources:` block to Kubernetes manifests (let cluster defaults apply)
+- **NFR-020**: ResourceQuota enforcement MUST be environment-specific, not applied universally
+  - **Preview**: ResourceQuota required for cost control and PR isolation
+  - **Production**: No ResourceQuota (single tenant, trusted code, full cluster resources available)
+  - **Local development**: No ResourceQuota (developer's Minikube, no multi-tenant concerns)
+
 ---
 
 ## Application Code Requirements
@@ -1071,6 +1086,24 @@ On PR close/merge, Pulumi must:
   - Identify which secrets should be environment-specific vs repository-wide
   - Document environment secret strategy in SECRETS.md
   - Remove deprecated environment secrets safely
+
+### Future Security Enhancement (Team Edition Required)
+
+- **NFR-018** (OIDC Authentication - OPTIONAL): GitHub Actions workflows MAY use OIDC token exchange for Pulumi Cloud authentication instead of static access tokens
+  - **Status**: Deferred - Requires Pulumi Team Edition ($40/month)
+  - **Current Approach**: Use `PULUMI_ACCESS_TOKEN` with documented annual rotation procedures
+  - **Rationale for OIDC**: If Team Edition is adopted, OIDC provides enterprise-grade security benefits:
+    - Zero long-lived secrets stored in GitHub repository secrets
+    - Automatic credential lifecycle with 2-hour token expiration (customizable)
+    - Principle of least privilege with repository/team-scoped tokens
+    - Better audit trail for compliance (SOC 2, ISO 27001)
+    - Leak mitigation (tokens auto-expire vs permanent access)
+  - **Implementation** (if Team Edition adopted): Use `pulumi/auth-actions@v1` instead of static `PULUMI_ACCESS_TOKEN`
+  - **Prerequisites**: Pulumi Team/Enterprise plan with OIDC support ($40/month minimum)
+  - **Configuration**: Register GitHub as OIDC issuer in Pulumi Cloud organization settings
+  - **Subject claim pattern**: `repo:aphiria/aphiria.com:*` (allows all workflows in repository)
+  - **Audience claim**: `urn:pulumi:org:<org-name>`
+  - **Decision Point**: Revisit if project grows to multiple maintainers or budget allows Team edition
 
 ### Workflow Refactoring
 
