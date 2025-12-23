@@ -200,13 +200,187 @@ When implementing any infrastructure task, ask:
    - If you need to manage background processes, it's wrong
    - If documentation says "for debugging/development", don't use it in production
 
+### Kubernetes Resource Management (NON-NEGOTIABLE)
+
+**CRITICAL**: All Kubernetes containers MUST have resource requests and limits defined.
+
+**Why This Matters**:
+1. **ResourceQuotas** - Namespaces with quotas will reject pods without limits (deployment fails immediately)
+2. **Cost Control** - Prevents runaway resource usage in preview environments
+3. **Stability** - Protects cluster from resource exhaustion and noisy neighbor problems
+4. **Quality of Service** - Ensures predictable performance and proper eviction behavior
+
+**Rules**:
+- ✅ **ALWAYS** set `resources.requests` and `resources.limits` on every container
+- ✅ **ALWAYS** include limits on Jobs and init containers (even if short-lived)
+- ✅ **ALWAYS** set both CPU and memory (never skip one)
+- ❌ **NEVER** deploy containers without resource specifications in production-like environments
+
+**Example - Correct Resource Specification**:
+```typescript
+// ✅ CORRECT: All containers have resource limits
+const dbInitJob = new k8s.batch.v1.Job("db-init", {
+    spec: {
+        template: {
+            spec: {
+                containers: [{
+                    name: "db-init",
+                    image: "postgres:16-alpine",
+                    resources: {
+                        requests: {
+                            cpu: "100m",      // Minimum guaranteed
+                            memory: "128Mi",
+                        },
+                        limits: {
+                            cpu: "200m",      // Maximum allowed
+                            memory: "256Mi",
+                        },
+                    },
+                }],
+            },
+        },
+    },
+});
+
+// ❌ WRONG: Missing resource limits (will fail if namespace has ResourceQuota)
+const dbInitJob = new k8s.batch.v1.Job("db-init", {
+    spec: {
+        template: {
+            spec: {
+                containers: [{
+                    name: "db-init",
+                    image: "postgres:16-alpine",
+                    // Missing resources field - Kubernetes will reject this!
+                }],
+            },
+        },
+    },
+});
+```
+
+**Sizing Guidelines**:
+- **Jobs/Init Containers**: Start with 100m CPU / 128Mi memory (requests), 200m / 256Mi (limits)
+- **API Containers**: Start with 250m CPU / 512Mi memory
+- **Web Containers**: Start with 100m CPU / 256Mi memory
+- **Monitor and adjust** based on actual usage (use `kubectl top pod`)
+
+### Container Image Best Practices (IMMUTABILITY)
+
+**CRITICAL**: Always use full SHA256 digests for container images in production-like environments.
+
+**Why This Matters**:
+1. **Immutability** - Ensures exact same image is deployed every time (no surprises)
+2. **Security** - Prevents tag hijacking attacks (`:latest` can be overwritten)
+3. **Reproducibility** - Can recreate exact deployment state months later
+4. **Audit Trail** - Know exactly what code is running in production
+
+**Rules**:
+- ✅ **ALWAYS** use full 64-character SHA256 digests: `sha256:abc123...` (71 chars total with prefix)
+- ✅ **ALWAYS** get digests from `docker/build-push-action` outputs
+- ✅ **NEVER** truncate or modify digests (Docker will reject them as invalid)
+- ✅ **NEVER** use mutable tags like `:latest` or `:pr-123` in production
+- ✅ **ALWAYS** pass digests via type-safe mechanisms (workflow inputs, not labels/comments)
+
+**Example - Correct Digest Handling**:
+```typescript
+// ✅ CORRECT: Full SHA256 digest (64 hex characters)
+const deployment = new k8s.apps.v1.Deployment("api", {
+    spec: {
+        template: {
+            spec: {
+                containers: [{
+                    name: "api",
+                    // Full 64-character digest after sha256: prefix
+                    image: "ghcr.io/org/app@sha256:1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
+                }],
+            },
+        },
+    },
+});
+
+// ❌ WRONG: Truncated digest (invalid - Docker will fail with "invalid reference format")
+image: "ghcr.io/org/app@sha256:1234567890ab"  // Only 12 chars - FAILS!
+
+// ❌ WRONG: Mutable tag (not reproducible - someone could push new code to same tag)
+image: "ghcr.io/org/app:pr-123"
+```
+
+**GitHub Actions Pattern - The Enterprise Way**:
+```yaml
+# BUILD WORKFLOW: Capture full digest, trigger deploy with inputs
+jobs:
+  build:
+    outputs:
+      web-digest: ${{ steps.web.outputs.digest }}
+      api-digest: ${{ steps.api.outputs.digest }}
+    steps:
+      - name: Build web image
+        id: web
+        uses: docker/build-push-action@v5
+        with:
+          push: true
+          tags: ghcr.io/org/app-web:pr-${{ github.event.pull_request.number }}
+
+  trigger-deploy:
+    needs: build
+    steps:
+      - name: Trigger deployment with digests
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'deploy-preview.yml',
+              ref: context.ref,
+              inputs: {
+                pr_number: '${{ github.event.pull_request.number }}',
+                web_digest: '${{ needs.build.outputs.web-digest }}',  // Full SHA256
+                api_digest: '${{ needs.build.outputs.api-digest }}'   // Full SHA256
+              }
+            });
+
+# DEPLOY WORKFLOW: Accept typed inputs (enterprise pattern)
+on:
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'PR number to deploy'
+        required: true
+        type: number
+      web_digest:
+        description: 'Full SHA256 digest for web image'
+        required: true
+        type: string
+      api_digest:
+        description: 'Full SHA256 digest for API image'
+        required: true
+        type: string
+
+jobs:
+  deploy:
+    steps:
+      - name: Use digests directly from inputs
+        run: |
+          echo "Deploying web: ${{ inputs.web_digest }}"
+          echo "Deploying API: ${{ inputs.api_digest }}"
+```
+
+**Why workflow_dispatch inputs > alternatives**:
+- ✅ **Type-safe**: GitHub validates input types (string, number, boolean)
+- ✅ **Explicit contract**: Inputs are documented, self-describing
+- ✅ **No parsing**: Direct parameter access, no regex/JSON extraction
+- ✅ **Auditable**: GitHub logs show exact inputs used for each run
+- ✅ **Manual override**: Can manually trigger with specific digests for rollback
+- ❌ **PR labels**: 100-char limit (fatal for 71-char SHA256 digests)
+- ❌ **GitHub Artifacts**: Requires upload/download, retention limits, complexity
+- ❌ **Comment parsing**: Fragile, can be edited by users, not machine-readable
+
 ### Other Anti-Patterns to Avoid
 
 ❌ **Temporary files without cleanup**
 ❌ **Background processes in CI/CD** (use Jobs instead)
 ❌ **Hardcoded timeouts/retries** (use proper readiness checks)
-❌ **Skipping resource limits** (always set requests/limits)
-❌ **Using `latest` image tags** (always use digests for immutability)
 
 ---
 

@@ -523,29 +523,42 @@ jobs:
           echo "number=${PR_NUMBER}" >> $GITHUB_OUTPUT
           echo "Deploying preview for PR #${PR_NUMBER}"
 
-      - name: Get image digests from PR labels
+      - name: Get image digests from PR comment
         id: images
         uses: actions/github-script@v7
         with:
           script: |
             const prNumber = ${{ steps.pr.outputs.number }};
 
-            const { data: pr } = await github.rest.pulls.get({
+            // Find the comment with image digests
+            const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              pull_number: prNumber,
+              issue_number: prNumber,
             });
 
-            const webDigestLabel = pr.labels.find(l => l.name.startsWith('web-digest:'));
-            const apiDigestLabel = pr.labels.find(l => l.name.startsWith('api-digest:'));
+            const imageComment = comments.find(comment =>
+              comment.user.type === 'Bot' &&
+              comment.body.includes('Preview Images Built')
+            );
 
-            if (!webDigestLabel || !apiDigestLabel) {
-              core.setFailed('Image digest labels not found. Please rebuild preview images.');
+            if (!imageComment) {
+              core.setFailed('Image digest comment not found. Please rebuild preview images.');
               return;
             }
 
-            const webDigest = 'sha256:' + webDigestLabel.name.replace('web-digest:', '');
-            const apiDigest = 'sha256:' + apiDigestLabel.name.replace('api-digest:', '');
+            // Extract digests from comment using regex
+            // Comment format: **Web**: `sha256:xxxxx`
+            const webMatch = imageComment.body.match(/\*\*Web\*\*:\s*`(sha256:[a-f0-9]{64})`/);
+            const apiMatch = imageComment.body.match(/\*\*API\*\*:\s*`(sha256:[a-f0-9]{64})`/);
+
+            if (!webMatch || !apiMatch) {
+              core.setFailed('Could not parse image digests from comment. Please rebuild preview images.');
+              return;
+            }
+
+            const webDigest = webMatch[1];
+            const apiDigest = apiMatch[1];
 
             core.setOutput('web-digest', webDigest);
             core.setOutput('api-digest', apiDigest);

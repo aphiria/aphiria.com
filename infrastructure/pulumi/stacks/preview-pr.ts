@@ -173,6 +173,16 @@ const dbInitJob = new k8s.batch.v1.Job("db-init-job", {
                     args: [pulumi.interpolate`
                         psql "postgresql://${postgresqlAdminUser}:${postgresqlAdminPassword}@${postgresqlHost}:5432/postgres" -c "CREATE DATABASE ${databaseName} ENCODING 'UTF8' LC_COLLATE 'en_US.utf8' LC_CTYPE 'en_US.utf8';" || echo "Database already exists"
                     `],
+                    resources: {
+                        requests: {
+                            cpu: "100m",
+                            memory: "128Mi",
+                        },
+                        limits: {
+                            cpu: "200m",
+                            memory: "256Mi",
+                        },
+                    },
                 }],
             },
         },
