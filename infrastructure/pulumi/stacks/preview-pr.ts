@@ -26,6 +26,14 @@ const baseStack = new pulumi.StackReference(baseStackRef);
 const postgresqlHost = baseStack.getOutput("postgresqlHost");
 const gatewayName = baseStack.getOutput("gatewayName");
 const tlsSecretName = baseStack.getOutput("tlsSecretName");
+const kubeconfig = baseStack.requireOutput("kubeconfig");
+
+// Create Kubernetes provider using kubeconfig from base stack
+// This ensures preview-pr stacks connect to the same cluster as preview-base
+const k8sProvider = new k8s.Provider("preview-pr-k8s", {
+    kubeconfig: kubeconfig,
+    enableServerSideApply: true,
+});
 
 // Naming conventions
 const namespaceName = `preview-pr-${prNumber}`;
@@ -49,7 +57,7 @@ const namespace = new k8s.core.v1.Namespace("preview-namespace", {
         name: namespaceName,
         labels: commonLabels,
     },
-});
+}, { provider: k8sProvider });
 
 // ============================================================================
 // Image Pull Secret (copy from default namespace)
@@ -69,7 +77,7 @@ const imagePullSecret = new k8s.core.v1.Secret("ghcr-pull-secret", {
     stringData: {
         ".dockerconfigjson": pulumi.interpolate`{"auths":{"ghcr.io":{"username":"${ghcrUsername}","password":"${ghcrToken}"}}}`,
     },
-});
+}, { provider: k8sProvider });
 
 // ============================================================================
 // ResourceQuota
@@ -89,7 +97,7 @@ const resourceQuota = new k8s.core.v1.ResourceQuota("preview-quota", {
             "pods": "5",
         },
     },
-});
+}, { provider: k8sProvider });
 
 // ============================================================================
 // NetworkPolicy
@@ -165,7 +173,7 @@ const networkPolicy = new k8s.networking.v1.NetworkPolicy("preview-netpol", {
             },
         ],
     },
-});
+}, { provider: k8sProvider });
 
 // ============================================================================
 // Per-PR Database (via Kubernetes Job)
@@ -208,7 +216,7 @@ const dbInitJob = new k8s.batch.v1.Job("db-init-job", {
         },
         backoffLimit: 3,
     },
-});
+}, { provider: k8sProvider });
 
 // ============================================================================
 // ConfigMap and Secrets
@@ -230,7 +238,7 @@ const configMap = new k8s.core.v1.ConfigMap("preview-config", {
         WEB_URL: webUrl,
         API_URL: apiUrl,
     },
-});
+}, { provider: k8sProvider });
 
 const secret = new k8s.core.v1.Secret("preview-secret", {
     metadata: {
@@ -242,7 +250,7 @@ const secret = new k8s.core.v1.Secret("preview-secret", {
     stringData: {
         DB_PASSWORD: postgresqlAdminPassword,
     },
-});
+}, { provider: k8sProvider });
 
 // ============================================================================
 // Web Deployment
@@ -324,7 +332,7 @@ const webDeployment = new k8s.apps.v1.Deployment("web", {
             },
         },
     },
-});
+}, { provider: k8sProvider });
 
 const webService = new k8s.core.v1.Service("web-service", {
     metadata: {
@@ -344,7 +352,7 @@ const webService = new k8s.core.v1.Service("web-service", {
         ],
         selector: webLabels,
     },
-});
+}, { provider: k8sProvider });
 
 // ============================================================================
 // API Deployment
@@ -458,7 +466,7 @@ const apiDeployment = new k8s.apps.v1.Deployment("api", {
             },
         },
     },
-});
+}, { provider: k8sProvider });
 
 const apiService = new k8s.core.v1.Service("api-service", {
     metadata: {
@@ -478,7 +486,7 @@ const apiService = new k8s.core.v1.Service("api-service", {
         ],
         selector: apiLabels,
     },
-});
+}, { provider: k8sProvider });
 
 // ============================================================================
 // HTTPRoute Configuration
@@ -523,7 +531,7 @@ const webHttpRoute = new k8s.apiextensions.CustomResource("web-httproute", {
             },
         ],
     },
-});
+}, { provider: k8sProvider });
 
 const apiHttpRoute = new k8s.apiextensions.CustomResource("api-httproute", {
     apiVersion: "gateway.networking.k8s.io/v1",
@@ -564,7 +572,7 @@ const apiHttpRoute = new k8s.apiextensions.CustomResource("api-httproute", {
             },
         ],
     },
-});
+}, { provider: k8sProvider });
 
 // ============================================================================
 // Outputs

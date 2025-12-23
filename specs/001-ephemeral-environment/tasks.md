@@ -332,6 +332,66 @@ Phase 8 (Migrate production to Pulumi + reusable workflows)
   - **SpecKit Gap**: Image pull authentication was not considered during planning phase
 
 - [X] T052q [US1] Document GHCR token setup in SECRETS.md
+
+- [X] T052t [US1] **CRITICAL ARCHITECTURE BUG**: Configure Kubernetes provider in preview-pr stack
+  - **Why**: The `preview-pr.ts` stack uses the default Kubernetes provider, which connects to the local kubeconfig context instead of the DigitalOcean preview cluster. This causes Pulumi to lose track of deployed resources.
+  - **Symptom**:
+    - `pulumi refresh` deletes resources from state (thinks they don't exist in cluster)
+    - `pulumi up` fails with "namespaces 'preview-pr-{NUMBER}' not found" even though namespace exists
+    - Resources deployed via CI/CD cannot be managed locally
+  - **Root Cause**: `preview-pr.ts` does not create a Kubernetes provider with the cluster's kubeconfig
+  - **Current behavior**:
+    ```typescript
+    // preview-pr.ts has NO provider configuration
+    const namespace = new k8s.core.v1.Namespace("preview-namespace", {
+        metadata: { name: namespaceName },
+    });
+    // ↑ Uses default provider (local kubeconfig context)
+    ```
+  - **Expected behavior** (like preview-base.ts):
+    ```typescript
+    // Get kubeconfig from base stack
+    const baseStack = new pulumi.StackReference(baseStackRef);
+    const kubeconfig = baseStack.requireOutput("kubeconfig");
+
+    // Create Kubernetes provider
+    const k8sProvider = new k8s.Provider("preview-pr-k8s", {
+        kubeconfig: kubeconfig,
+        enableServerSideApply: true,
+    });
+
+    // Pass provider to ALL resources
+    const namespace = new k8s.core.v1.Namespace("preview-namespace", {
+        metadata: { name: namespaceName },
+    }, { provider: k8sProvider });
+    ```
+  - **File**: `infrastructure/pulumi/stacks/preview-pr.ts`
+  - **Implementation steps**:
+    1. Import kubeconfig from base stack via StackReference (already exists at line 25)
+    2. Create Kubernetes provider using `baseStack.requireOutput("kubeconfig")`
+    3. Add `{ provider: k8sProvider }` to ALL Kubernetes resources:
+       - Namespace (line 47)
+       - Secret (imagePullSecret, line 63)
+       - ResourceQuota (line 78)
+       - NetworkPolicy (line 98)
+       - Job (db-init-job, line 179)
+       - ConfigMap (line 217)
+       - Secret (preview-secret, line 235)
+       - Deployment (web, line 253)
+       - Service (web-service, line 329)
+       - Deployment (api, line 355)
+       - Service (api-service, line 453)
+       - CustomResource (web-httproute, line 477)
+       - CustomResource (api-httproute, line 518)
+  - **Impact**: Without this fix, preview-pr stacks are completely broken for local management. Only CI/CD can deploy them, and even then, updates fail unpredictably.
+  - **Testing**:
+    1. Apply fix to preview-pr.ts
+    2. Run `pulumi refresh --stack preview-pr-107` - should NOT delete resources
+    3. Run `pulumi up --stack preview-pr-107` - should successfully update ConfigMap with new DB_HOST
+    4. Verify pods start correctly: `kubectl get pods -n preview-pr-107`
+  - **SpecKit Gap**: Provider configuration was not considered when creating preview-pr stack structure
+  - **Constitutional violation**: This violates "Test what you deploy" principle - local Pulumi cannot manage what CI/CD deploys
+  - **Note on ConfigMap updates**: Once this bug is fixed, ConfigMap updates will work automatically via Pulumi's replace strategy (see NFR-021 in spec.md). No additional tooling (Reloader, etc.) is needed - Pulumi handles atomic ConfigMap replacement + deployment rollouts automatically.
   - **Why**: GHCR authentication requires GitHub Personal Access Token (PAT) configured in Pulumi ESC, but SECRETS.md doesn't document how to create this token or what scopes are required
   - **Action**: Update `SECRETS.md` to document GHCR_TOKEN requirements for Kubernetes image pulling
   - **File**: `SECRETS.md`

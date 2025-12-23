@@ -1004,6 +1004,26 @@ Originally planned to share production cluster with namespace isolation, but **p
   - **Production**: No ResourceQuota (single tenant, trusted code, full cluster resources available)
   - **Local development**: No ResourceQuota (developer's Minikube, no multi-tenant concerns)
 
+### Configuration Management
+
+- **NFR-021**: ConfigMap and Secret updates MUST trigger automatic deployment rollouts
+  - **Rationale**: Pulumi uses replace strategy (not in-place updates) for ConfigMaps/Secrets, which provides enterprise-grade configuration management
+  - **Pulumi replace strategy**:
+    1. Create new ConfigMap/Secret with new name and updated data
+    2. Update Deployment PodTemplate to reference new resource
+    3. Trigger Deployment controller to roll out new pods
+    4. Delete old ConfigMap/Secret after successful rollout
+  - **Benefits**:
+    - Atomic updates: All-or-nothing changes (no partial state)
+    - Zero downtime: Rolling update with surge/unavailability config
+    - Automatic pod restarts: Pods get new config without manual `kubectl rollout restart`
+    - Safe rollback: Old ConfigMap retained until new rollout succeeds
+  - **Contrast with kubectl**: kubectl updates ConfigMaps in-place; pods don't restart until TTL expires or manual intervention
+  - **No additional tools required**: Unlike vanilla Kubernetes (which needs Reloader or custom operators), Pulumi handles this automatically
+  - **References**:
+    - [Pulumi ConfigMap Rollout Guide](https://www.pulumi.com/registry/packages/kubernetes/how-to-guides/configmap-rollout/)
+    - [Kubernetes Automatic Pod Updates](https://www.pulumi.com/ai/answers/7oZd5WbabyfinXwmdeBCxj/kubernetes-automatic-pod-updates-on-configmap-changes)
+
 ---
 
 ## Application Code Requirements
