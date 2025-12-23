@@ -33,7 +33,7 @@ All code MUST adhere to modern PHP best practices and framework conventions:
 Documentation changes MUST be treated as first-class features:
 - Documentation accuracy is critical - it directly impacts framework adoption
 - All framework API changes require corresponding documentation updates
-- Documentation builds (Gulp) must complete successfully before deployment
+- Documentation bui/lds (Gulp) must complete successfully before deployment
 - Search functionality must remain operational and accurate
 
 **Rationale**: This project exists to document the Aphiria framework. Incorrect or outdated documentation undermines the entire purpose of the site.
