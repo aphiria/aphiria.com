@@ -12,9 +12,7 @@ This document describes all GitHub repository secrets used by CI/CD workflows an
 |-------------|---------|-------------------|---------|
 | `GHCR_TOKEN` | Push Docker images to ghcr.io | Annually | `build-preview-images.yml` |
 | `PULUMI_ACCESS_TOKEN` | Manage infrastructure state in Pulumi Cloud | Annually | `preview-deploy.yml`, `preview-cleanup.yml` |
-| `KUBECONFIG` | Access DigitalOcean Kubernetes cluster | When cluster credentials change | `preview-deploy.yml`, `preview-cleanup.yml` |
-| `POSTGRESQL_ADMIN_PASSWORD` | Create/manage preview databases | Quarterly | `preview-deploy.yml` |
-| `POSTGRESQL_ADMIN_USER` | PostgreSQL username (optional, defaults to `postgres`) | N/A | `preview-deploy.yml` |
+| `WORKFLOW_DISPATCH_TOKEN` | Trigger preview deployment workflow from build workflow | Annually | `build-preview-images.yml` |
 
 ---
 
@@ -46,6 +44,32 @@ This document describes all GitHub repository secrets used by CI/CD workflows an
 
 ---
 
+### WORKFLOW_DISPATCH_TOKEN
+
+**Why this is needed**: The default `GITHUB_TOKEN` cannot trigger workflow_dispatch events (GitHub security policy to prevent infinite loops). A Personal Access Token with `workflow` scope is required to trigger the preview deployment workflow from the build workflow.
+
+**Generate new token**:
+
+1. https://github.com/settings/tokens
+2. "Generate new token (classic)"
+3. Name: `Workflow Dispatch (aphiria.com)`
+4. Scopes: `workflow` (or `public_repo` + `workflow` for public repos)
+5. Expiration: No expiration (or 1 year)
+6. Copy the token
+
+**Update repository secret**:
+
+1. https://github.com/aphiria/aphiria.com/settings/secrets/actions
+2. Click `WORKFLOW_DISPATCH_TOKEN` (or "New repository secret")
+3. Paste new token value
+4. Save
+
+**Test**: Push a commit to any PR, verify "Build Preview Images" workflow triggers "Deploy Preview Environment" workflow
+
+**Cleanup**: Delete old token at https://github.com/settings/tokens
+
+---
+
 ### PULUMI_ACCESS_TOKEN
 
 **Generate new token**:
@@ -66,58 +90,6 @@ This document describes all GitHub repository secrets used by CI/CD workflows an
 
 **Cleanup**: Delete old token at https://app.pulumi.com/settings/tokens
 
----
-
-### KUBECONFIG
-
-**Generate new kubeconfig**:
-
-1. https://cloud.digitalocean.com
-2. Kubernetes → Your cluster → "Download Config File"
-3. Base64 encode it:
-   ```bash
-   cat ~/Downloads/your-cluster-kubeconfig.yaml | base64 -w 0
-   ```
-4. Copy the output
-
-**Update repository secret**:
-
-1. https://github.com/aphiria/aphiria.com/settings/secrets/actions
-2. Click `KUBECONFIG` (or "New repository secret")
-3. Paste base64-encoded value
-4. Save
-
-**Test**: Check "Ensure base stack exists" step in preview-deploy.yml logs
-
----
-
-### POSTGRESQL_ADMIN_PASSWORD
-
-**Generate new password**:
-
-```bash
-openssl rand -base64 32
-```
-
-**Update repository secret**:
-
-1. https://github.com/aphiria/aphiria.com/settings/secrets/actions
-2. Click `POSTGRESQL_ADMIN_PASSWORD` (or "New repository secret")
-3. Paste new password
-4. Save
-
-**Update database password** (critical step):
-
-```bash
-kubectl config use-context <digitalocean-cluster>
-PG_POD=$(kubectl get pods -l app=postgresql -o jsonpath='{.items[0].metadata.name}')
-kubectl exec -it $PG_POD -- psql -U postgres -c "ALTER USER postgres PASSWORD 'NEW_PASSWORD';"
-```
-
-**Test**: Deploy a preview environment, verify database migrations succeed
-
----
-
 ## Emergency Rotation
 
 If a secret is compromised:
@@ -136,9 +108,8 @@ If a secret is compromised:
 |-------|-------|----------|
 | Authentication failed (build-preview-images.yml) | Invalid `GHCR_TOKEN` | Rotate token |
 | Pulumi login failed | Invalid `PULUMI_ACCESS_TOKEN` | Rotate token |
-| Unable to connect to cluster | Invalid `KUBECONFIG` | Download fresh kubeconfig from DigitalOcean |
-| Database connection errors | Password mismatch | Update secret or database password |
+| workflow_dispatch trigger fails (403 error) | Invalid `WORKFLOW_DISPATCH_TOKEN` | Rotate token |
 
 ---
 
-**Last Updated**: 2025-12-20
+**Last Updated**: 2025-12-23

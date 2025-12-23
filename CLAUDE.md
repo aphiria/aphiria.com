@@ -593,6 +593,56 @@ data:
 
 Reference in deployment manifests.
 
+### GitHub Secrets & PAT Documentation (REQUIRED)
+
+**CRITICAL**: All GitHub repository secrets and Personal Access Tokens (PATs) MUST be documented in `SECRETS.md`.
+
+**Why This Matters**:
+1. **Onboarding** - New maintainers need to know what secrets exist and how to rotate them
+2. **Security** - Undocumented secrets become orphaned and never rotated
+3. **Incident Response** - When a token expires or is compromised, you need to know what breaks
+4. **Compliance** - Audit trail of what credentials exist and their purpose
+
+**Rules**:
+- ✅ **ALWAYS** document new secrets in `SECRETS.md` when adding them to workflows
+- ✅ **ALWAYS** include: secret name, purpose, PAT scopes (if applicable), rotation schedule, used by (which workflows)
+- ✅ **ALWAYS** provide step-by-step rotation procedures for each PAT
+- ❌ **NEVER** add secrets to workflows without updating `SECRETS.md`
+- ❌ **NEVER** commit actual secret values (document the NAME and PURPOSE only)
+
+**Template for `SECRETS.md` entries**:
+
+```markdown
+### SECRET_NAME
+
+**Why this is needed**: Brief explanation of why default GITHUB_TOKEN isn't sufficient
+
+**Generate new token**:
+1. https://github.com/settings/tokens
+2. "Generate new token (classic)"
+3. Name: `Descriptive Name (project-name)`
+4. Scopes: `scope1`, `scope2`, `scope3`
+5. Expiration: 1 year (or no expiration with justification)
+6. Copy the token
+
+**Update repository secret**:
+1. https://github.com/org/repo/settings/secrets/actions
+2. Click `SECRET_NAME` (or "New repository secret")
+3. Paste new token value
+4. Save
+
+**Test**: Describe how to verify the secret works (e.g., "Push commit to PR, verify workflow succeeds")
+
+**Cleanup**: Delete old token at https://github.com/settings/tokens
+```
+
+**Example - WORKFLOW_DISPATCH_TOKEN**:
+- **Secret Name**: `WORKFLOW_DISPATCH_TOKEN`
+- **Purpose**: Trigger preview deployment workflow from build workflow (default `GITHUB_TOKEN` cannot trigger workflows per GitHub security policy)
+- **PAT Scopes**: `workflow` (allows triggering workflow_dispatch events)
+- **Rotation**: Annually
+- **Used By**: `build-preview-images.yml` (trigger-deploy job)
+
 ---
 
 ## Pre-Commit Checklist
@@ -608,6 +658,13 @@ Before committing any PHP code changes:
 - [ ] Tests written for new functionality
 - [ ] PHPDoc added for public methods
 - [ ] No `TODO` or `FIXME` comments without issue tracking
+
+**Before committing GitHub Actions workflow changes**:
+
+- [ ] New secrets documented in `SECRETS.md` (name, purpose, scopes, rotation)
+- [ ] PAT scopes are minimal (only what's required)
+- [ ] Secret usage is justified (can't use default `GITHUB_TOKEN`)
+- [ ] Rotation procedure documented with test steps
 
 ---
 

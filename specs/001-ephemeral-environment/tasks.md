@@ -247,6 +247,30 @@ Phase 8 (Migrate production to Pulumi + reusable workflows)
   - **File**: `infrastructure/pulumi/stacks/preview-pr.ts` (lines 169-176)
   - **Status**: ✅ COMPLETED (2025-12-23)
 
+### Workflow Dispatch Permissions Task (Added 2025-12-23)
+
+- [X] T052m [US1] **CRITICAL BUG FIX**: Add PAT authentication for workflow_dispatch trigger
+  - **Why**: Default `GITHUB_TOKEN` cannot trigger other workflows (403 error: "Resource not accessible by integration"). GitHub prevents this to avoid recursive workflow loops.
+  - **Action**: Update `trigger-deploy` job in `build-preview-images.yml` to use a PAT from secrets instead of default token
+  - **File**: `.github/workflows/build-preview-images.yml`
+  - **Code Change**: Add `github-token: ${{ secrets.WORKFLOW_DISPATCH_TOKEN }}` to the github-script action
+  - **Required**: Create PAT with `workflow` scope and add to repository secrets as `WORKFLOW_DISPATCH_TOKEN`
+  - **Documentation**: https://docs.github.com/rest/actions/workflows#create-a-workflow-dispatch-event
+  - **Error**: `HttpError: Resource not accessible by integration (403)` when using default GITHUB_TOKEN
+
+- [X] T052n [US1] Document WORKFLOW_DISPATCH_TOKEN in SECRETS.md
+  - **Why**: All PATs and secrets must be documented with scopes, rotation procedures, and usage context for maintainers
+  - **Action**: Add new entry to `SECRETS.md` in the "Required Secrets" table and add rotation procedure section
+  - **File**: `SECRETS.md`
+  - **Depends**: T052m
+  - **Documentation to add**:
+    - **Secret Name**: `WORKFLOW_DISPATCH_TOKEN`
+    - **Purpose**: Trigger preview deployment workflow from build workflow (default GITHUB_TOKEN cannot trigger workflows)
+    - **PAT Scopes**: `workflow` (or `public_repo` + `workflow`)
+    - **Rotation Schedule**: Annually
+    - **Used By**: `build-preview-images.yml`
+    - **Rotation procedure**: Step-by-step guide to generate new PAT, update secret, test, and cleanup old token
+
 ### Label Cleanup Tasks (Added 2025-12-23)
 
 - [X] T052f [US1] Remove obsolete `preview:images-built` label from build workflow
@@ -262,6 +286,47 @@ Phase 8 (Migrate production to Pulumi + reusable workflows)
   - **File**: `.github/workflows/cleanup-preview.yml`
   - **Depends**: T052f
   - **Status**: ✅ COMPLETED (2025-12-23)
+
+### GitHub Deployment Integration Tasks (Added 2025-12-23)
+
+- [ ] T052h [US1] Create GitHub Deployment object at start of preview deployment
+  - **Why**: GitHub shows "No deployments" despite successful deploys because we have `deployments: write` permission but don't use the Deployment API. The "This branch was successfully deployed" banner comes from workflow completion, not actual Deployment objects.
+  - **Action**: Add step after "Set PR number" in `deploy-preview.yml` that calls `github.rest.repos.createDeployment()` with environment `preview-pr-{PR_NUMBER}`, ref from PR head SHA, and task `deploy`. Store deployment ID in outputs.
+  - **File**: `.github/workflows/deploy-preview.yml`
+  - **Technical Details**:
+    - Environment name: `preview-pr-${PR_NUMBER}` (e.g., `preview-pr-104`)
+    - Auto-merge: false (manual approval required)
+    - Required contexts: [] (no status checks required)
+    - Payload: `{ pr_number, web_digest, api_digest, web_url, api_url }`
+  - **GitHub API**: `POST /repos/{owner}/{repo}/deployments`
+
+- [ ] T052i [US1] Update deployment status to "in_progress" after approval
+  - **Why**: Shows deployment is actively running in GitHub UI
+  - **Action**: Add step after environment approval that calls `github.rest.repos.createDeploymentStatus()` with deployment ID from T052h, state "in_progress", and log URL pointing to workflow run
+  - **File**: `.github/workflows/deploy-preview.yml`
+  - **Depends**: T052h
+  - **GitHub API**: `POST /repos/{owner}/{repo}/deployments/{deployment_id}/statuses`
+
+- [ ] T052j [US1] Update deployment status to "success" on successful completion
+  - **Why**: Marks deployment as active in GitHub UI, shows in "Deployments" tab
+  - **Action**: Add step at end of deploy job that calls `github.rest.repos.createDeploymentStatus()` with state "success", environment_url pointing to preview web URL, and log_url pointing to workflow run
+  - **File**: `.github/workflows/deploy-preview.yml`
+  - **Depends**: T052h, T052i
+  - **GitHub API**: `POST /repos/{owner}/{repo}/deployments/{deployment_id}/statuses`
+
+- [ ] T052k [US1] Update deployment status to "failure" on error
+  - **Why**: Shows failed deployment in GitHub UI for debugging
+  - **Action**: Add cleanup step with `if: failure()` that calls `github.rest.repos.createDeploymentStatus()` with state "failure" and log_url
+  - **File**: `.github/workflows/deploy-preview.yml`
+  - **Depends**: T052h
+  - **GitHub API**: `POST /repos/{owner}/{repo}/deployments/{deployment_id}/statuses`
+
+- [ ] T052l [US1] Mark deployment as "inactive" during cleanup
+  - **Why**: Shows deployment is destroyed in GitHub UI
+  - **Action**: Add step in `cleanup-preview.yml` that calls `github.rest.repos.createDeploymentStatus()` with state "inactive" for the preview environment
+  - **File**: `.github/workflows/cleanup-preview.yml`
+  - **Technical Details**: Query deployments by environment name `preview-pr-${PR_NUMBER}`, find active deployment, mark as inactive
+  - **GitHub API**: `GET /repos/{owner}/{repo}/deployments`, `POST /repos/{owner}/{repo}/deployments/{deployment_id}/statuses`
 
 ### Update Flow Tasks
 
