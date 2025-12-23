@@ -665,6 +665,8 @@ Before committing any PHP code changes:
 - [ ] PAT scopes are minimal (only what's required)
 - [ ] Secret usage is justified (can't use default `GITHUB_TOKEN`)
 - [ ] Rotation procedure documented with test steps
+- [ ] `workflow_dispatch` ref parameter uses a branch name (not `context.ref` from PR workflows)
+- [ ] Triggered workflows exist on the target branch (usually `master`)
 
 ---
 
@@ -848,6 +850,49 @@ php aphiria cache:flush
 - Favor boring, obvious code over clever, concise code
 
 ---
+
+---
+
+## GitHub Actions Gotchas
+
+### workflow_dispatch Ref Parameter
+
+**CRITICAL**: When triggering workflows via `workflow_dispatch`, the `ref` parameter MUST be a **branch or tag name**, not a PR merge ref.
+
+**Common Mistake**:
+```javascript
+// ❌ WRONG: Using context.ref from PR workflow
+await github.rest.actions.createWorkflowDispatch({
+  workflow_id: 'deploy.yml',
+  ref: context.ref,  // This is "refs/pull/123/merge" - NOT VALID!
+  inputs: { ... }
+});
+```
+
+**Correct Approach**:
+```javascript
+// ✅ CORRECT: Use a branch name
+await github.rest.actions.createWorkflowDispatch({
+  workflow_id: 'deploy.yml',
+  ref: 'master',  // Use the branch where the workflow file exists
+  inputs: { ... }
+});
+```
+
+**Why This Matters**:
+- PR merge refs (`refs/pull/123/merge`) are virtual refs created by GitHub for PR validation
+- They are **not real branches** and cannot be used to trigger workflows
+- Using them results in: `No ref found for: refs/pull/123/merge` (HTTP 422)
+
+**Best Practice**:
+- For security-gated deployments, trigger workflows on `master` (ensures workflow code is reviewed/merged)
+- The triggered workflow runs the master version of the YAML file
+- Pass PR-specific data (PR number, image digests, etc.) via `inputs` parameters
+
+**SpecKit Checklist**:
+- [ ] `workflow_dispatch` uses branch name (`master`, `main`, etc.), not `context.ref`
+- [ ] Triggered workflow exists on the target branch
+- [ ] PR-specific data passed via `inputs`, not inferred from workflow ref
 
 ---
 

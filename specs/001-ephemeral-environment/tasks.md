@@ -247,7 +247,7 @@ Phase 8 (Migrate production to Pulumi + reusable workflows)
   - **File**: `infrastructure/pulumi/stacks/preview-pr.ts` (lines 169-176)
   - **Status**: ✅ COMPLETED (2025-12-23)
 
-### Workflow Dispatch Permissions Task (Added 2025-12-23)
+### Workflow Dispatch Tasks (Added 2025-12-23)
 
 - [X] T052m [US1] **CRITICAL BUG FIX**: Add PAT authentication for workflow_dispatch trigger
   - **Why**: Default `GITHUB_TOKEN` cannot trigger other workflows (403 error: "Resource not accessible by integration"). GitHub prevents this to avoid recursive workflow loops.
@@ -270,6 +270,15 @@ Phase 8 (Migrate production to Pulumi + reusable workflows)
     - **Rotation Schedule**: Annually
     - **Used By**: `build-preview-images.yml`
     - **Rotation procedure**: Step-by-step guide to generate new PAT, update secret, test, and cleanup old token
+
+- [X] T052o [US1] **CRITICAL BUG FIX**: Fix workflow_dispatch ref parameter to use branch name instead of PR merge ref
+  - **Why**: The `ref` parameter in `createWorkflowDispatch()` must be a branch or tag name. PR merge refs like `refs/pull/123/merge` are virtual refs and cannot trigger workflows (HTTP 422: "No ref found").
+  - **Action**: Change `ref: context.ref` to `ref: 'master'` in the workflow_dispatch call
+  - **File**: `.github/workflows/build-preview-images.yml:212`
+  - **Error**: `RequestError [HttpError]: No ref found for: refs/pull/105/merge` (status 422)
+  - **Root Cause**: PR workflows run on merge refs (`refs/pull/N/merge`), which are ephemeral and not valid for triggering other workflows
+  - **Fix**: Use `'master'` branch to trigger the deployment workflow (ensures security-reviewed workflow code runs)
+  - **SpecKit Gap**: Added "GitHub Actions Gotchas > workflow_dispatch Ref Parameter" section to CLAUDE.md to prevent future occurrences
 
 ### Label Cleanup Tasks (Added 2025-12-23)
 

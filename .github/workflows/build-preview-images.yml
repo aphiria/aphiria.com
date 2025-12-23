@@ -209,7 +209,7 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               workflow_id: 'deploy-preview.yml',
-              ref: context.ref,
+              ref: 'master',
               inputs: {
                 pr_number: String(prNumber),
                 web_digest: webDigest,
