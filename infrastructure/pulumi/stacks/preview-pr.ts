@@ -393,6 +393,16 @@ const apiDeployment = new k8s.apps.v1.Deployment("api", {
                                 },
                             },
                         ],
+                        resources: {
+                            requests: {
+                                cpu: "200m",
+                                memory: "256Mi",
+                            },
+                            limits: {
+                                cpu: "500m",
+                                memory: "512Mi",
+                            },
+                        },
                     },
                 ],
                 containers: [

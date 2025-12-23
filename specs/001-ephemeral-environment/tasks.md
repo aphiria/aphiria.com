@@ -260,7 +260,7 @@ Phase 8 (Migrate production to Pulumi + reusable workflows)
   - **File**: `infrastructure/pulumi/stacks/preview-pr.ts` (lines 169-176)
   - **Status**: ✅ COMPLETED (2025-12-23)
 
-- [ ] T052r [US1] **CRITICAL HOTFIX**: Add resource limits to API deployment db-migration init container
+- [X] T052r [US1] **CRITICAL HOTFIX**: Add resource limits to API deployment db-migration init container
   - **Why**: ResourceQuota requires ALL containers (including init containers) to have resource limits. The db-migration init container in API deployment is missing them, causing pod creation failures.
   - **Error**: `pods "api-577665d6db-..." is forbidden: failed quota: preview-quota: must specify limits.cpu for: db-migration; limits.memory for: db-migration; requests.cpu for: db-migration; requests.memory for: db-migration`
   - **Action**: Add `resources` block to db-migration init container in API deployment
