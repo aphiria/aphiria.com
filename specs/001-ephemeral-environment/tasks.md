@@ -2452,6 +2452,138 @@ FACTORY-06 (verify all stacks build and deploy)
 
 ---
 
+### Phase 13: Resource Limits Configuration (2025-12-24)
+
+**Goal**: Add optional resource limits to factory pattern to support environment-specific resource constraints
+
+**Context**: During factory refactoring, we lost per-container resource limits that were present in preview-pr.ts. Industry best practice is to make resource limits environment-specific configuration (not hardcoded in components), as different environments have different needs (production needs more than preview, preview needs limits for cost control, local may not need limits).
+
+**Tasks**:
+
+- [x] RESOURCES-01 **[Types]** Add resource limits to AppConfig interface
+  - **Why**: Factory needs to accept optional resource configuration and pass it to components
+  - **File**: `infrastructure/pulumi/shared/types.ts`
+  - **Changes**:
+    - Add optional `resources?` field to `AppConfig` interface
+    - Define `ResourceLimits` interface with web/api-specific limits
+    - Web: Simple container with requests/limits
+    - API: Complex container with nginx/php/initContainer limits
+  - **Implementation**:
+    ```typescript
+    export interface ResourceLimits {
+        requests: {
+            cpu: string;
+            memory: string;
+        };
+        limits: {
+            cpu: string;
+            memory: string;
+        };
+    }
+
+    export interface APIResourceLimits {
+        nginx?: ResourceLimits;
+        php?: ResourceLimits;
+        initContainer?: ResourceLimits;
+    }
+
+    export interface AppConfig {
+        // ... existing fields ...
+        webResources?: ResourceLimits;
+        apiResources?: APIResourceLimits;
+    }
+    ```
+  - **Acceptance**: TypeScript compiles without errors, interfaces define optional resource limits
+  - **Dependencies**: None
+
+---
+
+- [x] RESOURCES-02 **[Factory]** Pass resource limits to deployment components
+  - **Why**: Factory must forward resource configuration to web/API components
+  - **File**: `infrastructure/pulumi/shared/factory.ts`
+  - **Changes**:
+    - Pass `config.app.webResources` to `createWebDeployment()` (line ~136)
+    - Pass `config.app.apiResources` to `createAPIDeployment()` (line ~156)
+  - **Implementation**:
+    ```typescript
+    // Web deployment (line ~136)
+    resources.web = createWebDeployment({
+        // ... existing fields ...
+        resources: config.app.webResources,
+        provider: k8sProvider,
+    });
+
+    // API deployment (line ~156)
+    resources.api = createAPIDeployment({
+        // ... existing fields ...
+        resources: config.app.apiResources,
+        provider: k8sProvider,
+    });
+    ```
+  - **Acceptance**: TypeScript compiles, factory passes optional resources to components
+  - **Dependencies**: RESOURCES-01
+
+---
+
+- [x] RESOURCES-03 **[Stack]** Add resource limits to preview-pr configuration
+  - **Why**: Preview environments need strict resource limits to prevent cost overruns from runaway PRs
+  - **File**: `infrastructure/pulumi/stacks/preview-pr.ts`
+  - **Changes**: Add `webResources` and `apiResources` to `app` config object
+  - **Values** (from original preview-pr.ts before refactoring):
+    ```typescript
+    app: {
+        // ... existing fields ...
+        webResources: {
+            requests: { cpu: "100m", memory: "256Mi" },
+            limits: { cpu: "500m", memory: "1Gi" },
+        },
+        apiResources: {
+            nginx: {
+                requests: { cpu: "100m", memory: "128Mi" },
+                limits: { cpu: "200m", memory: "256Mi" },
+            },
+            php: {
+                requests: { cpu: "500m", memory: "1280Mi" },
+                limits: { cpu: "1", memory: "2560Mi" },
+            },
+            initContainer: {
+                requests: { cpu: "100m", memory: "128Mi" },
+                limits: { cpu: "200m", memory: "256Mi" },
+            },
+        },
+    }
+    ```
+  - **Acceptance**: preview-pr.ts specifies resource limits matching original values
+  - **Dependencies**: RESOURCES-01, RESOURCES-02
+
+---
+
+- [x] RESOURCES-04 **[Verification]** Build and verify all stacks
+  - **Why**: Ensure resource limits compile and don't break existing stacks
+  - **Commands**:
+    ```bash
+    cd infrastructure/pulumi && npm run build
+    ```
+  - **Checks**:
+    - TypeScript compiles without errors
+    - local.ts builds (no resource limits - developer convenience)
+    - preview-base.ts builds (no app deployment)
+    - preview-pr.ts builds (with resource limits)
+    - production.ts builds (unchanged)
+  - **Acceptance**: All stacks compile successfully, no TypeScript errors
+  - **Dependencies**: RESOURCES-01, RESOURCES-02, RESOURCES-03
+
+---
+
+**Phase 13 Summary**:
+- Adds optional resource limits to factory pattern
+- Preview-PR gets strict limits for cost control
+- Local remains unlimited for developer convenience
+- Production can add limits later based on metrics
+- Follows industry best practice: environment-specific configuration
+
+---
+
 ### CI/CD Hotfix Dependencies
 
 ```

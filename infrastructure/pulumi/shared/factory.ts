@@ -60,7 +60,7 @@ export function createStack(config: StackConfig, k8sProvider: k8s.Provider): Sta
     const namespace = config.namespace?.name || "default";
     const gatewayNamespace = config.env === "local" ? "nginx-gateway" : "nginx-gateway";
 
-    // 1. Create custom namespace with ResourceQuota and NetworkPolicy (preview-pr only)
+    // Create custom namespace with ResourceQuota and NetworkPolicy (preview-pr only)
     if (config.namespace) {
         resources.namespace = createNamespace({
             name: config.namespace.name,
@@ -72,7 +72,7 @@ export function createStack(config: StackConfig, k8sProvider: k8s.Provider): Sta
         });
     }
 
-    // 2. Install Helm charts (cert-manager, nginx-gateway) - skip for local (already installed)
+    // Install Helm charts (cert-manager, nginx-gateway) - skip for local (already installed)
     if (config.env !== "local") {
         resources.helmCharts = installBaseHelmCharts({
             env: config.env,
@@ -80,7 +80,7 @@ export function createStack(config: StackConfig, k8sProvider: k8s.Provider): Sta
         });
     }
 
-    // 3. Create database (shared PostgreSQL instance OR per-PR database)
+    // Create database (shared PostgreSQL instance OR per-PR database)
     if (config.database.createDatabase && config.database.databaseName) {
         // Preview-PR: Create database on shared instance
         resources.dbInitJob = createDatabaseCreationJob({
@@ -106,7 +106,7 @@ export function createStack(config: StackConfig, k8sProvider: k8s.Provider): Sta
         });
     }
 
-    // 4. Create Gateway with TLS
+    // Create Gateway with TLS
     resources.gateway = createGateway({
         env: config.env,
         namespace: gatewayNamespace,
@@ -117,7 +117,7 @@ export function createStack(config: StackConfig, k8sProvider: k8s.Provider): Sta
         provider: k8sProvider,
     });
 
-    // 5. Deploy applications (skip for preview-base)
+    // Deploy applications (skip for preview-base)
     if (config.app) {
         // Determine database connection details
         const dbHost = config.database.createDatabase
@@ -149,6 +149,7 @@ export function createStack(config: StackConfig, k8sProvider: k8s.Provider): Sta
                 prNumber: config.namespace.name.replace("preview-pr-", ""),
             } : undefined,
             imagePullSecrets: config.namespace?.imagePullSecret ? ["ghcr-pull-secret"] : undefined,
+            resources: config.app.webResources,
             provider: k8sProvider,
         });
 
@@ -171,6 +172,7 @@ export function createStack(config: StackConfig, k8sProvider: k8s.Provider): Sta
                 prNumber: config.namespace.name.replace("preview-pr-", ""),
             } : undefined,
             imagePullSecrets: config.namespace?.imagePullSecret ? ["ghcr-pull-secret"] : undefined,
+            resources: config.app.apiResources,
             provider: k8sProvider,
         });
 

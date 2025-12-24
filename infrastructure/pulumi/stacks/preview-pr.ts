@@ -86,6 +86,24 @@ const stack = createStack({
         webImage: `ghcr.io/aphiria/aphiria.com-web@${webImageDigest}`,
         apiImage: `ghcr.io/aphiria/aphiria.com-api@${apiImageDigest}`,
         cookieDomain: ".pr.aphiria.com",
+        webResources: {
+            requests: { cpu: "100m", memory: "256Mi" },
+            limits: { cpu: "500m", memory: "1Gi" },
+        },
+        apiResources: {
+            nginx: {
+                requests: { cpu: "100m", memory: "128Mi" },
+                limits: { cpu: "200m", memory: "256Mi" },
+            },
+            php: {
+                requests: { cpu: "500m", memory: "1280Mi" },
+                limits: { cpu: "1", memory: "2560Mi" },
+            },
+            initContainer: {
+                requests: { cpu: "100m", memory: "128Mi" },
+                limits: { cpu: "200m", memory: "256Mi" },
+            },
+        },
     },
 }, k8sProvider);
 

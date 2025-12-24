@@ -66,6 +66,31 @@ export interface GatewayConfig {
 }
 
 /**
+ * Kubernetes resource limits (CPU and memory)
+ * Used for container resource requests and limits
+ */
+export interface ResourceLimits {
+    requests: {
+        cpu: string;
+        memory: string;
+    };
+    limits: {
+        cpu: string;
+        memory: string;
+    };
+}
+
+/**
+ * API deployment resource limits (multi-container)
+ * API pods have nginx, PHP-FPM, and init containers with different resource needs
+ */
+export interface APIResourceLimits {
+    nginx?: ResourceLimits;
+    php?: ResourceLimits;
+    initContainer?: ResourceLimits;
+}
+
+/**
  * Application deployment configuration (web + API)
  */
 export interface AppConfig {
@@ -83,6 +108,10 @@ export interface AppConfig {
     apiImage: string;
     /** Cookie domain for sessions (e.g., ".aphiria.com", ".pr.aphiria.com") */
     cookieDomain?: string;
+    /** Web container resource limits (optional - for cost control in preview/production) */
+    webResources?: ResourceLimits;
+    /** API container resource limits (optional - for cost control in preview/production) */
+    apiResources?: APIResourceLimits;
 }
 
 /**
