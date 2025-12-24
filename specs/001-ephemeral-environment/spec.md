@@ -10,7 +10,7 @@
 
 ### Session 2025-12-20 (Initial Clarifications)
 
-- Q: What ResourceQuota limits should be enforced per ephemeral namespace? → A: Minimal (2 CPU, 4Gi memory, 5 pods max) with 1 replica for preview deployments
+- Q: What ResourceQuota limits should be enforced per ephemeral namespace? → A: 4 CPU, 8Gi memory, 5 pods max with 1 replica for preview deployments (allows headroom for rolling updates)
 - Q: Should ephemeral environments clone and build the full documentation set or a minimal subset? → A: Full documentation (all versions, all pages)
 - Q: What authentication/authorization should ephemeral preview environments enforce? → A: Public access (no auth)
 - Q: What rate limiting should be applied to preview environment traffic? → A: Kubernetes-level only (connection limits)
@@ -820,7 +820,7 @@ Originally planned to share production cluster with namespace isolation, but **p
 - **FR-024**: Ephemeral environments MUST be isolated via Kubernetes namespaces
 - **FR-025**: Each namespace MUST follow the pattern: `preview-pr-{PR_NUMBER}`
 - **FR-026**: NetworkPolicies MUST prevent cross-namespace communication between ephemeral environments
-- **FR-027**: ResourceQuotas MUST be applied to each ephemeral namespace to prevent resource exhaustion (2 CPU, 4Gi memory, 5 pods max)
+- **FR-027**: ResourceQuotas MUST be applied to each ephemeral namespace to prevent resource exhaustion (4 CPU, 8Gi memory, 5 pods max) with sufficient headroom for rolling updates
 - **FR-053**: Gateway/Ingress routes for preview environments MUST include connection limiting annotations to prevent abuse
 - **FR-028**: When a PR closes, its namespace and all contained resources MUST be destroyed
 - **FR-098**: When a PR closes, its database MUST be dropped from the shared PostgreSQL instance
@@ -966,7 +966,7 @@ Originally planned to share production cluster with namespace isolation, but **p
 
 - **NFR-005**: Shared PostgreSQL instance reduces preview environment costs by 70-80% vs. per-PR instances
 - **NFR-006**: Preview environments use minimal replicas (1 web, 1 API) vs. production (2+ replicas)
-- **NFR-007**: ResourceQuotas prevent runaway resource usage (2 CPU, 4Gi memory max per preview)
+- **NFR-007**: ResourceQuotas prevent runaway resource usage (4 CPU, 8Gi memory max per preview with headroom for rolling updates)
 
 ### Reliability
 
@@ -993,7 +993,7 @@ Originally planned to share production cluster with namespace isolation, but **p
 
 - **NFR-019**: Shared Pulumi components MUST accept resource limits as optional parameters, not hardcode them
   - **Rationale**: Preview environments use ResourceQuota (requiring resource limits on ALL containers), while production has no ResourceQuota (making limits optional)
-  - **Preview context**: ResourceQuota enforces cost control and multi-tenant isolation (2 CPU, 4Gi RAM max per PR)
+  - **Preview context**: ResourceQuota enforces cost control and multi-tenant isolation (4 CPU, 8Gi RAM max per PR with headroom for rolling updates)
   - **Production context**: No ResourceQuota exists, so hardcoded preview-sized limits (200m CPU, 512Mi RAM) would unnecessarily constrain production workloads
   - **Design pattern**: Components accept optional `resources?: { requests?, limits? }` parameter
   - **Preview behavior**: Stacks MUST provide explicit resource limits to satisfy ResourceQuota enforcement

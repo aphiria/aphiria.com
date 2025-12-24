@@ -1,5 +1,19 @@
 import * as pulumi from "@pulumi/pulumi";
 import * as k8s from "@pulumi/kubernetes";
+import * as crypto from "crypto";
+
+/**
+ * Calculate SHA256 checksum of ConfigMap data for pod template annotation.
+ * This forces pod restarts when ConfigMap data changes.
+ *
+ * @param data ConfigMap data object
+ * @returns SHA256 hex digest
+ */
+function configMapChecksum(data: Record<string, pulumi.Input<string>>): string {
+    // Serialize with sorted keys for deterministic hashing
+    const serialized = JSON.stringify(data, Object.keys(data).sort());
+    return crypto.createHash("sha256").update(serialized).digest("hex");
+}
 
 /**
  * Preview PR Stack
@@ -91,10 +105,10 @@ const resourceQuota = new k8s.core.v1.ResourceQuota("preview-quota", {
     },
     spec: {
         hard: {
-            "requests.cpu": "2",
-            "requests.memory": "4Gi",
-            "limits.cpu": "2",
-            "limits.memory": "4Gi",
+            "requests.cpu": "4",
+            "requests.memory": "8Gi",
+            "limits.cpu": "4",
+            "limits.memory": "8Gi",
             "pods": "5",
         },
     },
@@ -223,36 +237,42 @@ const dbInitJob = new k8s.batch.v1.Job("db-init-job", {
 // ConfigMap and Secrets
 // ============================================================================
 
+// Define ConfigMap data as variable (single source of truth for checksum calculation)
+const previewConfigData = {
+    // Database configuration
+    DB_HOST: postgresqlHost,
+    DB_PORT: "5432",
+    DB_NAME: databaseName,
+    DB_USER: postgresqlAdminUser,
+
+    // Environment configuration
+    APP_ENV: "preview",
+    PR_NUMBER: prNumber.toString(),
+
+    // URL configuration (legacy names - kept for compatibility)
+    WEB_URL: webUrl,
+    API_URL: apiUrl,
+
+    // APP_* prefixed variables (required by CORS middleware and application code)
+    APP_WEB_URL: webUrl,
+    APP_API_URL: apiUrl,
+    APP_COOKIE_DOMAIN: ".pr.aphiria.com",
+    APP_COOKIE_SECURE: "1",
+    APP_BUILDER_API: "\\Aphiria\\Framework\\Api\\SynchronousApiApplicationBuilder",
+    APP_BUILDER_CONSOLE: "\\Aphiria\\Framework\\Console\\ConsoleApplicationBuilder",
+    LOG_LEVEL: "debug",
+};
+
+// Calculate checksum for pod template annotation (triggers restart when config changes)
+const previewConfigChecksum = configMapChecksum(previewConfigData);
+
 const configMap = new k8s.core.v1.ConfigMap("preview-config", {
     metadata: {
         name: "preview-config",
         namespace: namespace.metadata.name,
         labels: commonLabels,
     },
-    data: {
-        // Database configuration
-        DB_HOST: postgresqlHost,
-        DB_PORT: "5432",
-        DB_NAME: databaseName,
-        DB_USER: postgresqlAdminUser,
-
-        // Environment configuration
-        APP_ENV: "preview",
-        PR_NUMBER: prNumber.toString(),
-
-        // URL configuration (legacy names - kept for compatibility)
-        WEB_URL: webUrl,
-        API_URL: apiUrl,
-
-        // APP_* prefixed variables (required by CORS middleware and application code)
-        APP_WEB_URL: webUrl,
-        APP_API_URL: apiUrl,
-        APP_COOKIE_DOMAIN: ".pr.aphiria.com",
-        APP_COOKIE_SECURE: "1",
-        APP_BUILDER_API: "\\Aphiria\\Framework\\Api\\SynchronousApiApplicationBuilder",
-        APP_BUILDER_CONSOLE: "\\Aphiria\\Framework\\Console\\ConsoleApplicationBuilder",
-        LOG_LEVEL: "debug",
-    },
+    data: previewConfigData,
 }, { provider: k8sProvider });
 
 const secret = new k8s.core.v1.Secret("preview-secret", {
@@ -343,6 +363,10 @@ const webDeployment = new k8s.apps.v1.Deployment("web", {
         template: {
             metadata: {
                 labels: webLabels,
+                annotations: {
+                    // Force pod restart when ConfigMap data changes
+                    "checksum/config": previewConfigChecksum,
+                },
             },
             spec: {
                 imagePullSecrets: [
@@ -459,6 +483,10 @@ const apiDeployment = new k8s.apps.v1.Deployment("api", {
         template: {
             metadata: {
                 labels: apiLabels,
+                annotations: {
+                    // Force pod restart when ConfigMap data changes
+                    "checksum/config": previewConfigChecksum,
+                },
             },
             spec: {
                 imagePullSecrets: [
