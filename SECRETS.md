@@ -22,7 +22,8 @@ These secrets are stored in Pulumi ESC environments (`aphiria.com/Preview` and `
 
 | Secret Name | Purpose | Rotation Schedule |
 |-------------|---------|-------------------|
-| `digitalocean:token` | DigitalOcean API access for DNS, cluster management | Annually |
+| `digitalocean:token` | DigitalOcean API access for cluster management (Kubernetes cluster creation) | Annually |
+| `certmanager:digitaloceanDnsToken` | DigitalOcean API access for DNS management (cert-manager DNS-01 ACME challenges for wildcard TLS) | Annually |
 | `ghcr:token` | Pull Docker images from ghcr.io (Kubernetes imagePullSecret) | Annually |
 | `ghcr:username` | GitHub username for GHCR authentication | N/A (only update if username changes) |
 | `postgresql:user` | PostgreSQL admin user | N/A |
@@ -152,6 +153,84 @@ kubectl get pods -n preview-pr-XXX
 **Test**: Trigger preview deployment workflow manually or merge a PR
 
 **Cleanup**: Delete old token at https://app.pulumi.com/settings/tokens
+
+---
+
+### certmanager:digitaloceanDnsToken
+
+**Why this is needed**: cert-manager requires DigitalOcean DNS API access to create TXT records for ACME DNS-01 challenges when provisioning wildcard TLS certificates (`*.pr.aphiria.com`, `*.pr-api.aphiria.com`). Wildcard certificates cannot use HTTP-01 validation and must use DNS-01.
+
+**Generate new token**:
+
+1. https://cloud.digitalocean.com/account/api/tokens
+2. Click "Generate New Token"
+3. Token name: `cert-manager DNS-01 (aphiria.com)`
+4. **Scopes** (REQUIRED - select these exact scopes):
+   - Under **"Scopes"** dropdown, select **"Custom Scopes"**
+   - Expand **"domain"** section
+   - ✅ Enable **"domain:read"** (allows cert-manager to query existing DNS records)
+   - ✅ Enable **"domain:create"** (allows cert-manager to create TXT records for ACME challenge)
+   - ✅ Enable **"domain:delete"** (allows cert-manager to cleanup TXT records after validation)
+   - Leave all other scopes disabled (droplet, kubernetes, etc. are not needed)
+5. Expiration: No expiration (or set custom expiration date)
+6. Click "Generate Token"
+7. Copy the token (starts with `dop_v1_`)
+
+**Alternative: If Custom Scopes not available, use Full Access**:
+   - Select **"Full Access"** (read + write to all resources)
+   - Note: This grants broader permissions than needed, but is acceptable for cert-manager use case
+
+**Configure in Pulumi ESC**:
+
+```bash
+# Navigate to Pulumi directory
+cd infrastructure/pulumi
+
+# Configure for Preview environment
+pulumi env set aphiria.com/Preview certmanager:digitaloceanDnsToken "dop_v1_YOUR_TOKEN_HERE" --secret
+
+# Verify it's set
+pulumi env get aphiria.com/Preview
+# Should show: certmanager:digitaloceanDnsToken: [secret]
+
+# Configure for Production environment (when ready)
+pulumi env set aphiria.com/Production certmanager:digitaloceanDnsToken "dop_v1_YOUR_TOKEN_HERE" --secret
+```
+
+**Test**:
+
+1. Deploy preview-base stack:
+   ```bash
+   cd infrastructure/pulumi
+   pulumi up --stack preview-base
+   ```
+
+2. Verify cert-manager can access DNS API:
+   ```bash
+   # Get kubeconfig
+   pulumi stack output kubeconfig --stack preview-base --show-secrets > /tmp/preview-kubeconfig.yaml
+
+   # Check Secret exists
+   kubectl --kubeconfig=/tmp/preview-kubeconfig.yaml get secret -n cert-manager digitalocean-dns-token
+
+   # Check Certificate status (should transition to Ready within 2-5 minutes)
+   kubectl --kubeconfig=/tmp/preview-kubeconfig.yaml get certificate -n nginx-gateway
+
+   # Check cert-manager logs if issues
+   kubectl --kubeconfig=/tmp/preview-kubeconfig.yaml logs -n cert-manager -l app=cert-manager --tail=50
+   ```
+
+3. Expected result: Certificate shows `READY: True`, wildcard cert Secret created
+
+**Security Notes**:
+- Minimum required scopes: `domain:read`, `domain:create`, `domain:delete`
+- This token grants DNS write access to your entire `aphiria.com` domain
+- Store securely in Pulumi ESC (never commit to git)
+- Rotate annually or if compromised
+
+**Cleanup**: Delete old token at https://cloud.digitalocean.com/account/api/tokens
+
+---
 
 ## Emergency Rotation
 

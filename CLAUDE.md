@@ -47,6 +47,30 @@
 
 **Time-Saving Rule**: 5 minutes of research saves hours of wrong implementations.
 
+**Critical Infrastructure Claims Checklist**:
+
+Before making ANY statement about how infrastructure systems work (Kubernetes, Docker, Pulumi, GitHub Actions), you MUST:
+
+1. **STOP** - Do not present any theory yet
+2. **SEARCH** - Look up official documentation for the exact behavior
+3. **VERIFY** - Cross-reference with at least 2 sources
+4. **STATE UNCERTAINTY** - If you haven't verified, say "I need to research this first"
+5. **NEVER GUESS** - Especially about core platform behaviors like:
+   - Kubernetes rolling updates and pod lifecycle
+   - Docker layer caching and BuildKit behavior
+   - Pulumi state management and resource updates
+   - GitHub Actions workflow triggers and job dependencies
+
+**Real Example of This Mistake**:
+- ❌ **WRONG**: "Kubernetes doesn't automatically restart pods when image digest changes" (stated as fact without checking docs)
+- ✅ **CORRECT**: "I'm not certain how Kubernetes handles Deployment spec changes - let me check the official docs first" (then research and verify)
+
+**Why This Matters**:
+Making incorrect statements about platform behavior leads to:
+- Wasted time implementing unnecessary workarounds
+- Loss of user trust when corrected by external sources
+- Potential production issues from misunderstanding core behaviors
+
 ### Always Consider Idempotency and Existing State
 
 **FORBIDDEN BEHAVIORS**:
@@ -381,6 +405,157 @@ jobs:
 ❌ **Temporary files without cleanup**
 ❌ **Background processes in CI/CD** (use Jobs instead)
 ❌ **Hardcoded timeouts/retries** (use proper readiness checks)
+
+### Cluster Connection Verification (CRITICAL)
+
+**NEVER assume which cluster kubectl is connected to. ALWAYS verify before running commands.**
+
+**The Problem**: Multiple clusters exist (production, preview, local). Running commands against the wrong cluster causes:
+- Deleting resources from production when debugging preview issues
+- State desync between Pulumi and actual cluster
+- Wasted hours debugging phantom problems
+
+**REQUIRED VERIFICATION STEPS**:
+
+Before ANY kubectl command during debugging:
+
+1. **Check cluster endpoint**:
+   ```bash
+   kubectl cluster-info | head -1
+   # Expected: Kubernetes control plane is running at https://<EXPECTED-CLUSTER-ID>.k8s.ondigitalocean.com
+   ```
+
+2. **Compare with expected cluster from Pulumi**:
+   ```bash
+   cd infrastructure/pulumi
+   pulumi stack output kubeconfig --stack preview-base --show-secrets | grep "server:"
+   # Verify server matches kubectl cluster-info output
+   ```
+
+3. **Use explicit kubeconfig when debugging CI/CD issues**:
+   ```bash
+   # DON'T rely on default context
+   kubectl get pods -n preview-pr-107  # ❌ MAY BE WRONG CLUSTER
+
+   # DO use explicit kubeconfig from Pulumi
+   pulumi stack output kubeconfig --stack preview-base --show-secrets > /tmp/preview-kubeconfig.yaml
+   kubectl --kubeconfig=/tmp/preview-kubeconfig.yaml get pods -n preview-pr-107  # ✅ CORRECT
+   ```
+
+**Real Example of This Mistake**:
+- GitHub Actions deploys to preview cluster (`e1284e62-00b6...`)
+- Local kubectl connected to production cluster (`c0bc903e-71c8...`)
+- Deleted namespace from production thinking it was preview
+- Spent hours debugging "missing namespace" that actually existed in preview cluster
+- 10-hour deployment hang because looking at wrong cluster
+
+**Prevention**:
+- Add cluster endpoint to shell prompt
+- Use kubectl contexts with descriptive names (`kubectl config rename-context`)
+- Always run `kubectl cluster-info` before destructive operations
+- Export KUBECONFIG explicitly when debugging CI/CD deployments
+
+### Container Architecture Validation (CRITICAL)
+
+**NEVER deploy containers without verifying port configuration matches application architecture.**
+
+**The Problem**: Container ports must match application protocol and Kubernetes probes:
+- PHP-FPM speaks FastCGI on port 9000, NOT HTTP
+- nginx speaks HTTP on port 80
+- Kubernetes probes must match the protocol the container actually speaks
+- Mismatches cause CrashLoopBackOff and silent failures
+
+**REQUIRED VALIDATION CHECKLIST**:
+
+Before deploying any container:
+
+1. **Verify Dockerfile EXPOSE matches Deployment containerPort**:
+   ```dockerfile
+   # Dockerfile: EXPOSE 9000 → Deployment: containerPort: 9000 ✅
+   # Dockerfile: EXPOSE 9000 → Deployment: containerPort: 80 ❌ WRONG
+   ```
+
+2. **Verify probe protocol matches container**:
+   ```typescript
+   // ❌ WRONG: HTTP probe on FastCGI port
+   livenessProbe: {
+       httpGet: { path: "/", port: 9000 }  // PHP-FPM doesn't speak HTTP!
+   }
+
+   // ✅ CORRECT: TCP probe on FastCGI port OR HTTP probe on nginx
+   livenessProbe: {
+       tcpSocket: { port: 9000 }  // PHP-FPM: TCP check
+   }
+   // OR use nginx sidecar with HTTP probe on port 80
+   ```
+
+3. **Verify multi-container architecture matches production**:
+   - If production uses nginx + PHP-FPM sidecar pattern, preview MUST use same pattern
+   - If production uses init containers, preview MUST use same pattern
+   - NEVER simplify container architecture for preview environments
+
+**Container Architecture Patterns**:
+
+**PHP API (nginx + PHP-FPM sidecar)**:
+```typescript
+// ✅ CORRECT: Production pattern with init + nginx + PHP-FPM
+{
+    initContainers: [{
+        name: "copy-code",
+        image: "app-api:digest",
+        command: ["cp", "-Rp", "/app/.", "/shared"],
+        volumeMounts: [{ name: "shared", mountPath: "/shared" }]
+    }],
+    containers: [
+        {
+            name: "nginx",
+            image: "nginx:alpine",
+            ports: [{ containerPort: 80 }],  // HTTP
+            livenessProbe: { httpGet: { path: "/health", port: 80 } },  // ✅ HTTP probe
+            volumeMounts: [
+                { name: "shared", mountPath: "/usr/share/nginx/html" },
+                { name: "nginx-config", mountPath: "/etc/nginx/conf.d/default.conf", subPath: "default.conf" }
+            ]
+        },
+        {
+            name: "php-fpm",
+            image: "app-api:digest",
+            ports: [{ containerPort: 9000 }],  // FastCGI
+            volumeMounts: [{ name: "shared", mountPath: "/usr/share/nginx/html" }]
+        }
+    ],
+    volumes: [
+        { name: "shared", emptyDir: {} },
+        { name: "nginx-config", configMap: { name: "nginx-config" } }
+    ]
+}
+```
+
+**Static Web (nginx only)**:
+```typescript
+// ✅ CORRECT: Static content - HTTP on port 80
+{
+    containers: [{
+        name: "web",
+        image: "app-web:digest",
+        ports: [{ containerPort: 80 }],  // HTTP
+        livenessProbe: { httpGet: { path: "/", port: 80 } }  // ✅ HTTP probe
+    }]
+}
+```
+
+**Real Example of This Mistake**:
+- API Dockerfile changed to `php:8.4-fpm` (port 9000, FastCGI only)
+- Deployment still configured for port 80 with HTTP probes
+- Result: 189 pod restarts over 10 hours (CrashLoopBackOff)
+- PHP-FPM started fine, but HTTP probe failed → Kubernetes killed pod → repeat
+- Never became ready because probe protocol didn't match application
+
+**Prevention**:
+- Test container locally: `docker run -p 80:80 app:latest && curl localhost:80`
+- Add container tests to CI: Verify exposed ports respond to expected protocol
+- Document container architecture in Dockerfile comments
+- Use production architecture patterns for ALL environments (dev, preview, production)
 
 ---
 

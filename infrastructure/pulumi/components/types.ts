@@ -94,6 +94,8 @@ export interface GatewayArgs {
     tlsMode: "self-signed" | "letsencrypt-staging" | "letsencrypt-prod";
     /** Domains to secure with TLS */
     domains: string[];
+    /** DigitalOcean DNS API token for DNS-01 ACME challenges (required for wildcard certs) */
+    dnsToken?: pulumi.Input<string>;
     /** Resource labels */
     labels?: Record<string, string>;
     /** Kubernetes provider */

@@ -73,6 +73,10 @@ const postgres = createPostgreSQL({
     provider: k8sProvider,
 });
 
+// 5. Get DigitalOcean DNS token for DNS-01 ACME challenges (wildcard certificates)
+const certmanagerConfig = new pulumi.Config("certmanager");
+const dnsToken = certmanagerConfig.requireSecret("digitaloceanDnsToken");
+
 // 5. Create imagePullSecret for GitHub Container Registry
 // Required for pulling private images from ghcr.io
 const ghcrConfig = new pulumi.Config("ghcr");
@@ -92,6 +96,7 @@ const imagePullSecret = new k8s.core.v1.Secret("ghcr-pull-secret", {
 
 // 6. Create Gateway with Let's Encrypt production TLS
 // Wildcard certificate covers all preview subdomains: {PR}.pr.aphiria.com, {PR}.pr-api.aphiria.com
+// DNS-01 challenge used for wildcard domain validation via DigitalOcean DNS API
 const gateway = createGateway({
     env: "preview",
     namespace: "nginx-gateway",
@@ -101,6 +106,7 @@ const gateway = createGateway({
         "*.pr.aphiria.com",      // Web preview URLs
         "*.pr-api.aphiria.com",  // API preview URLs
     ],
+    dnsToken: dnsToken,          // Required for wildcard cert DNS-01 validation
     provider: k8sProvider,
 });
 

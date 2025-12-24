@@ -25,6 +25,7 @@ const baseStackRef = config.get("baseStackReference") || "davidbyoung/aphiria-co
 const baseStack = new pulumi.StackReference(baseStackRef);
 const postgresqlHost = baseStack.getOutput("postgresqlHost");
 const gatewayName = baseStack.getOutput("gatewayName");
+const gatewayNamespace = baseStack.getOutput("gatewayNamespace");
 const tlsSecretName = baseStack.getOutput("tlsSecretName");
 const kubeconfig = baseStack.requireOutput("kubeconfig");
 
@@ -113,12 +114,12 @@ const networkPolicy = new k8s.networking.v1.NetworkPolicy("preview-netpol", {
         policyTypes: ["Ingress", "Egress"],
         ingress: [
             {
-                // Allow ingress from Gateway
+                // Allow ingress from Gateway (nginx-gateway namespace)
                 from: [
                     {
                         namespaceSelector: {
                             matchLabels: {
-                                "kubernetes.io/metadata.name": "default",
+                                "kubernetes.io/metadata.name": "nginx-gateway",
                             },
                         },
                     },
@@ -508,7 +509,8 @@ const webHttpRoute = new k8s.apiextensions.CustomResource("web-httproute", {
         parentRefs: [
             {
                 name: gatewayName,
-                namespace: "default",
+                namespace: gatewayNamespace,
+                sectionName: "https-subdomains",
             },
         ],
         hostnames: [`${prNumber}.pr.aphiria.com`],
@@ -549,7 +551,8 @@ const apiHttpRoute = new k8s.apiextensions.CustomResource("api-httproute", {
         parentRefs: [
             {
                 name: gatewayName,
-                namespace: "default",
+                namespace: gatewayNamespace,
+                sectionName: "https-subdomains",
             },
         ],
         hostnames: [`${prNumber}.pr-api.aphiria.com`],

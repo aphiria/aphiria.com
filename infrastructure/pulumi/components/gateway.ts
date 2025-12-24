@@ -28,6 +28,15 @@ export function createGateway(args: GatewayArgs): GatewayResult {
         }
     }
 
+    // Validate DNS-01 requirement for wildcard certificates
+    if (wildcardDomain && args.tlsMode !== "self-signed" && !args.dnsToken) {
+        throw new Error(
+            `Wildcard domain "${wildcardDomain}" requires DNS-01 ACME challenge. ` +
+            `You must provide dnsToken for DigitalOcean DNS API access. ` +
+            `HTTP-01 challenge cannot validate wildcard certificates.`
+        );
+    }
+
     const labels = {
         "app.kubernetes.io/name": args.name,
         "app.kubernetes.io/component": "gateway",
@@ -51,6 +60,19 @@ export function createGateway(args: GatewayArgs): GatewayResult {
                 ? "https://acme-v02.api.letsencrypt.org/directory"
                 : "https://acme-staging-v02.api.letsencrypt.org/directory";
 
+        // Create Secret for DigitalOcean DNS token if provided (for DNS-01 challenges)
+        if (args.dnsToken) {
+            new k8s.core.v1.Secret("digitalocean-dns-token", {
+                metadata: {
+                    name: "digitalocean-dns-token",
+                    namespace: "cert-manager",
+                },
+                stringData: {
+                    "access-token": args.dnsToken,
+                },
+            }, { provider: args.provider });
+        }
+
         // Create ClusterIssuer for Let's Encrypt
         const clusterIssuer = new k8s.apiextensions.CustomResource("cert-issuer", {
             apiVersion: "cert-manager.io/v1",
@@ -65,7 +87,18 @@ export function createGateway(args: GatewayArgs): GatewayResult {
                     privateKeySecretRef: {
                         name: `${issuerName}-account-key`,
                     },
-                    solvers: [
+                    solvers: args.dnsToken ? [
+                        {
+                            dns01: {
+                                digitalocean: {
+                                    tokenSecretRef: {
+                                        name: "digitalocean-dns-token",
+                                        key: "access-token",
+                                    },
+                                },
+                            },
+                        },
+                    ] : [
                         {
                             http01: {
                                 gatewayHTTPRoute: {
@@ -84,7 +117,23 @@ export function createGateway(args: GatewayArgs): GatewayResult {
             },
         }, { provider: args.provider });
 
-        certificate = clusterIssuer;
+        // Create Certificate resource for Let's Encrypt
+        certificate = new k8s.apiextensions.CustomResource("tls-cert", {
+            apiVersion: "cert-manager.io/v1",
+            kind: "Certificate",
+            metadata: {
+                name: "tls-cert",
+                namespace: args.namespace,
+            },
+            spec: {
+                secretName: "tls-cert",
+                dnsNames: args.domains,
+                issuerRef: {
+                    name: issuerName,
+                    kind: "ClusterIssuer",
+                },
+            },
+        }, { provider: args.provider, dependsOn: [clusterIssuer] });
     }
 
     // Create Gateway

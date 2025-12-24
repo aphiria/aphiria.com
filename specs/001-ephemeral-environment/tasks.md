@@ -462,6 +462,367 @@ Phase 8 (Migrate production to Pulumi + reusable workflows)
   - **SpecKit Gap**: Phinx environment configuration not considered during preview environment design
   - **Constitutional violation**: None - this is a configuration oversight, not a design flaw
 
+- [ ] T052w [US1] **CRITICAL ARCHITECTURE AUDIT**: Comprehensive comparison of Pulumi preview-pr.ts vs production YAML manifests
+  - **Why**: PR 107 web deployment is not accessible at https://107.pr.aphiria.com despite successful Pulumi deployment, indicating systematic conversion errors from YAML → Pulumi
+  - **Root Cause**: Trust assumption - assumed Pulumi conversion was correct without line-by-line validation against working production YAML
+  - **Scope**: Audit EVERY resource in preview-pr.ts against `infrastructure/kubernetes/base/`:
+    1. **Web Deployment**: Compare with `web/deployments.yml`, `web/config-maps.yml`, `web/services.yml`
+    2. **API Deployment**: Compare with `api/deployments.yml`, `api/config-maps.yml`, `api/services.yml`
+    3. **Database Jobs**: Compare with `database/jobs.yml`
+    4. **HTTPRoutes**: Compare with `gateway-api/http-routes.yml`
+    5. **Gateway Configuration**: Verify listeners, sectionName usage, namespace refs
+    6. **All ConfigMaps**: Ensure all required ConfigMaps exist (js-config, nginx-config, env-vars)
+    7. **All Secrets**: Verify secret structure matches
+    8. **Resource Limits**: Compare CPU/memory specs
+    9. **Volume Mounts**: Verify all volume configurations
+    10. **Init Containers**: Validate purpose and order
+  - **Method**:
+    - Create comparison table: YAML vs Pulumi for each resource type
+    - Identify ALL missing resources (e.g., js-config ConfigMap for web)
+    - Identify ALL incorrect configurations (e.g., API missing nginx sidecar)
+    - Document functional differences (e.g., migrations in Job vs init container)
+  - **Deliverable**: Detailed audit report with:
+    - List of missing resources
+    - List of incorrect configurations
+    - Recommended fixes for each issue
+    - Priority ranking (blocking vs non-blocking)
+  - **Depends**: T052v (completed)
+  - **Impact**: CRITICAL - prevents any preview environment from functioning correctly
+
+- [ ] T052x [US1] **CRITICAL HOTFIX**: Add missing js-config ConfigMap to web deployment
+  - **Why**: Web application imports `/js/config/config.js` to get `apiUri` for backend API calls. Preview deployment missing this ConfigMap causes frontend to use hardcoded production API URL (`https://api.aphiria.com`) instead of preview-specific URL (`https://{PR}.pr-api.aphiria.com`).
+  - **Root Cause**: preview-pr.ts creates web deployment manually without js-config ConfigMap (production uses infrastructure/kubernetes/base/web/config-maps.yml)
+  - **Error**: Web loads but JavaScript API calls go to wrong endpoint (production instead of preview)
+  - **Production Reference**: `infrastructure/kubernetes/base/web/config-maps.yml`
+  - **Solution**: Add js-config ConfigMap to preview-pr.ts
+  - **File**: `infrastructure/pulumi/stacks/preview-pr.ts`
+  - **Add after line 253 (after preview-secret)**:
+    ```typescript
+    const jsConfigMap = new k8s.core.v1.ConfigMap("js-config", {
+        metadata: {
+            name: "js-config",
+            namespace: namespace.metadata.name,
+            labels: commonLabels,
+        },
+        data: {
+            "config.js": pulumi.interpolate`export default {
+      apiUri: '${apiUrl}',
+      cookieDomain: '.pr.aphiria.com'
+    }`,
+        },
+    }, { provider: k8sProvider });
+    ```
+  - **Update web deployment (line 292-303)**: Add volumeMounts and volumes
+    ```typescript
+    volumeMounts: [{
+        name: "js-config",
+        mountPath: "/usr/share/nginx/html/js/config",
+    }],
+    // ... (after containers array, in spec section)
+    volumes: [{
+        name: "js-config",
+        configMap: {
+            name: jsConfigMap.metadata.name,
+        },
+    }],
+    ```
+  - **Testing**:
+    1. Deploy updated stack: `pulumi up --stack preview-pr-107`
+    2. Verify ConfigMap created: `kubectl get cm js-config -n preview-pr-107`
+    3. Verify ConfigMap content: `kubectl get cm js-config -n preview-pr-107 -o yaml` (should show `apiUri: 'https://107.pr-api.aphiria.com'`)
+    4. Verify volume mounted: `kubectl describe pod <web-pod> -n preview-pr-107` (should show js-config volume)
+    5. Verify file in container: `kubectl exec -n preview-pr-107 deployment/web -- cat /usr/share/nginx/html/js/config/config.js` (should show preview API URL)
+    6. Access https://107.pr.aphiria.com and check browser console: `import('/js/config/config.js').then(m => console.log(m.default))` (should show `{apiUri: 'https://107.pr-api.aphiria.com', cookieDomain: '.pr.aphiria.com'}`)
+  - **Environment-Specific URLs**:
+    - **Preview**: `apiUri: 'https://{PR}.pr-api.aphiria.com'`, `cookieDomain: '.pr.aphiria.com'`
+    - **Production**: `apiUri: 'https://api.aphiria.com'`, `cookieDomain: '.aphiria.com'`
+    - **Local**: `apiUri: 'https://api.aphiria.com'`, `cookieDomain: '.aphiria.com'` (or local API if running)
+  - **Depends**: T052w (audit identifies this)
+  - **Impact**: CRITICAL - Web loads but all API calls go to production endpoint instead of preview (breaks isolation, contaminates production metrics)
+
+- [ ] T052y [US1] **CRITICAL HOTFIX**: Rewrite API deployment to use nginx + PHP-FPM sidecar pattern
+  - **Why**: Current API deployment has single PHP-FPM container expecting HTTP on port 80, but PHP-FPM only speaks FastCGI on port 9000. Results in CrashLoopBackOff (189+ restarts).
+  - **Root Cause**: Conversion from YAML → Pulumi missed multi-container sidecar architecture
+  - **Production Reference**: `infrastructure/kubernetes/base/api/deployments.yml` (init + nginx + php containers)
+  - **Error**: `Init:CrashLoopBackOff` - liveness probe HTTP GET on port 80 fails because no HTTP listener exists
+  - **Solution**: Replace entire API Deployment section (lines 363-469) with nginx + PHP-FPM pattern
+  - **File**: `infrastructure/pulumi/stacks/preview-pr.ts`
+  - **Add after line 253**: nginx ConfigMap (see T052w audit for details)
+  - **Replace lines 363-469**: API Deployment with:
+    - Init container: `copy-api-code` (NOT db-migration)
+    - Container 1: nginx (port 80, HTTP, with liveness probe)
+    - Container 2: php-fpm (port 9000, FastCGI)
+    - Shared volume: `api-code` emptyDir
+    - nginx config volume: from nginx ConfigMap
+  - **Detailed implementation**: See corrected analysis section above
+  - **Testing**:
+    1. Deploy: `pulumi up --stack preview-pr-107`
+    2. Verify 2 containers ready: `kubectl get pods -n preview-pr-107` (should show `2/2` for API pod)
+    3. Check nginx logs: `kubectl logs -n preview-pr-107 <api-pod> -c nginx`
+    4. Check PHP-FPM logs: `kubectl logs -n preview-pr-107 <api-pod> -c php`
+    5. Test HTTP: `curl -v https://107.pr-api.aphiria.com`
+  - **Depends**: T052w (audit), T052z (separate migration Job)
+  - **Impact**: CRITICAL - API completely non-functional (CrashLoopBackOff)
+
+- [ ] T052z [US1] **CRITICAL HOTFIX**: Create separate database migration Job (remove from Deployment init container)
+  - **Why**: Production uses separate `db-migration` Job to run Phinx migrations ONCE. Current Pulumi runs migrations in Deployment init container, causing migrations to re-run on EVERY pod restart.
+  - **Root Cause**: Misidentified purpose of init container - should copy code, not run migrations
+  - **Production Reference**: `infrastructure/kubernetes/base/database/jobs.yml`
+  - **Issues with current approach**:
+    - Migrations run on every pod restart (inefficient, risky)
+    - No wait-for-db init container (migrations can fail if DB not ready)
+    - Multiple replicas would cause migration race conditions
+  - **Solution**: Create separate Job for migrations, change Deployment init container to code copy only
+  - **File**: `infrastructure/pulumi/stacks/preview-pr.ts`
+  - **Add after line 219 (after db-init-job)**:
+    ```typescript
+    const dbMigrationJob = new k8s.batch.v1.Job("db-migration-job", {
+        metadata: {
+            name: `db-migration-pr-${prNumber}`,
+            namespace: namespace.metadata.name,
+            labels: commonLabels,
+        },
+        spec: {
+            ttlSecondsAfterFinished: 0,
+            template: {
+                spec: {
+                    restartPolicy: "Never",
+                    initContainers: [{
+                        name: "wait-for-db",
+                        image: "busybox",
+                        command: ["sh", "-c", pulumi.interpolate`until nc -z ${postgresqlHost} 5432; do echo "Waiting..."; sleep 2; done`],
+                        resources: {
+                            requests: { cpu: "50m", memory: "64Mi" },
+                            limits: { cpu: "100m", memory: "128Mi" },
+                        },
+                    }],
+                    containers: [{
+                        name: "db-migration",
+                        image: pulumi.interpolate`ghcr.io/aphiria/aphiria.com-api@${apiImageDigest}`,
+                        command: ["sh", "-c", "/app/api/vendor/bin/phinx migrate && /app/api/vendor/bin/phinx seed:run"],
+                        envFrom: [
+                            { configMapRef: { name: configMap.metadata.name } },
+                            { secretRef: { name: secret.metadata.name } },
+                        ],
+                        resources: {
+                            requests: { cpu: "200m", memory: "256Mi" },
+                            limits: { cpu: "500m", memory: "512Mi" },
+                        },
+                    }],
+                },
+            },
+            backoffLimit: 3,
+        },
+    }, { provider: k8sProvider });
+    ```
+  - **Remove from API Deployment**: Delete db-migration init container (lines 384-414)
+  - **Replace with**: code-copy init container (see T052y)
+  - **Testing**:
+    1. Deploy: `pulumi up --stack preview-pr-107`
+    2. Verify migration Job runs: `kubectl get jobs -n preview-pr-107`
+    3. Check migration logs: `kubectl logs -n preview-pr-107 job/db-migration-pr-107`
+    4. Verify migrations don't re-run on pod restart
+  - **Depends**: T052w (audit)
+  - **Impact**: HIGH - inefficient, risky migration pattern
+
+- [ ] T052ab [US1] **CRITICAL HOTFIX**: Fix HTTPRoute parentRef namespace from hardcoded 'default' to stack output
+  - **Why**: HTTPRoutes reference Gateway in wrong namespace (default instead of nginx-gateway), causing ZERO routes to attach to Gateway. This is why https://107.pr.aphiria.com is completely inaccessible despite DNS, pods, and services all being correct.
+  - **Root Cause**: Hardcoded `namespace: "default"` in HTTPRoute parentRefs instead of using `baseStack.getOutput("gatewayNamespace")`
+  - **Evidence**:
+    - Gateway status shows `attachedRoutes: 0`
+    - Gateway is in `nginx-gateway` namespace
+    - HTTPRoutes point to `default` namespace
+    - Production YAML correctly uses `namespace: nginx-gateway`
+  - **Solution**: Use stack output for Gateway namespace, add missing sectionName
+  - **File**: `infrastructure/pulumi/stacks/preview-pr.ts`
+  - **Changes needed**:
+    1. **Line 25-28**: Add `const gatewayNamespace = baseStack.getOutput("gatewayNamespace");` after line 27
+    2. **Line 510-511** (web HTTPRoute parentRefs):
+       ```typescript
+       parentRefs: [{
+           name: gatewayName,
+           namespace: gatewayNamespace,        // CHANGE from "default"
+           sectionName: "https-subdomains",    // ADD this line
+       }],
+       ```
+    3. **Line 549-552** (API HTTPRoute parentRefs): Same changes as web HTTPRoute
+  - **Testing**:
+    1. Deploy: `pulumi up --stack preview-pr-107`
+    2. Verify routes attached: `kubectl --kubeconfig=/tmp/preview-kubeconfig.yaml get gateway nginx-gateway -n nginx-gateway -o yaml | grep attachedRoutes` (should show 2, not 0)
+    3. Test web: `curl -v https://107.pr.aphiria.com` (should get HTTP 200)
+    4. Test API: `curl -v https://107.pr-api.aphiria.com` (will still fail due to API architecture issues, but should connect)
+  - **Impact**: **BLOCKS ALL ACCESS** - most critical bug, prevents any traffic from reaching deployed services
+  - **Priority**: **URGENT** - must fix before any other hotfixes (T052x, T052y, T052z depend on being able to test)
+  - **Depends**: None - this is the root blocker
+
+- [X] T052ab [US1] **CRITICAL HOTFIX**: Fix HTTPRoute parentRef namespace from hardcoded 'default' to stack output
+  - **Status**: COMPLETED - Fixed namespace and added sectionName
+  - **Files Changed**: `infrastructure/pulumi/stacks/preview-pr.ts` (lines 28, 512-513, 554-555)
+
+- [X] T052ac [US1] **CRITICAL HOTFIX**: Implement DNS-01 solver for wildcard TLS certificates
+  - **Why**: Wildcard certificates (`*.pr.aphiria.com`) require DNS-01 challenge (HTTP-01 only works for specific hostnames). Without this, Gateway HTTPS listeners are invalid and reject all HTTPRoutes.
+  - **Root Cause**: ClusterIssuer configured with http01 solver, but wildcards require dns01 solver with DNS provider credentials
+  - **Evidence**:
+    - cert-manager Order shows: "Failed to determine a valid solver configuration for the set of domains on the Order: no configured challenge solvers can be used for this challenge"
+    - Certificate stays in "pending" state indefinitely
+    - Gateway has no valid TLS certificate, making HTTPS listeners non-functional
+    - HTTPRoutes rejected with "InvalidListener"
+  - **Solution**: Configure DNS-01 solver with DigitalOcean DNS provider
+  - **Files to modify**:
+    1. `infrastructure/pulumi/components/gateway.ts` - Add dns01 solver support
+    2. `infrastructure/pulumi/stacks/preview-base.ts` - Create DigitalOcean API token secret, update Gateway config
+  - **Prerequisites**: DigitalOcean API token with DNS write permissions
+  - **Depends**: T052ab (must be able to deploy stacks)
+
+- [X] T052ad [US1] Configure DigitalOcean API token in Pulumi ESC for DNS-01 validation
+  - **Why**: DNS-01 challenge requires DigitalOcean API token to create TXT records for ACME validation
+  - **Security**: Token must be stored securely in Pulumi ESC (not hardcoded or in git)
+  - **ESC Secret Naming**: Use `certmanager:digitaloceanDnsToken` (avoids conflict with digitalocean provider namespace)
+  - **Steps**:
+    1. Generate DigitalOcean API token with DNS write scope at https://cloud.digitalocean.com/account/api/tokens
+    2. Add to Pulumi ESC environment `aphiria.com/Preview`:
+       ```bash
+       pulumi env set aphiria.com/Preview certmanager:digitaloceanDnsToken "dop_v1_YOUR_TOKEN_HERE" --secret
+       ```
+    3. Verify: `pulumi env get aphiria.com/Preview` (should show certmanager:digitaloceanDnsToken as [secret])
+  - **Status**: COMPLETED by user
+  - **Depends**: None (can be done in parallel with code changes)
+
+- [X] T052ae [US1] Update gateway.ts component to support DNS-01 solver with DigitalOcean
+  - **Why**: Enable wildcard certificate issuance via DNS-01 challenge
+  - **File**: `infrastructure/pulumi/components/gateway.ts`
+  - **Changes needed**:
+    1. Add `dnsToken` parameter to `GatewayArgs` interface in `types.ts`
+    2. Update ClusterIssuer creation (lines 87-103) to support both http01 and dns01 solvers:
+       ```typescript
+       solvers: args.dnsToken ? [
+         {
+           dns01: {
+             digitalocean: {
+               tokenSecretRef: {
+                 name: "digitalocean-dns-token",
+                 key: "access-token",
+               },
+             },
+           },
+         },
+       ] : [
+         {
+           http01: {
+             gatewayHTTPRoute: {
+               parentRefs: [/* ... */],
+             },
+           },
+         },
+       ],
+       ```
+    3. Create Secret for DigitalOcean token when `args.dnsToken` is provided:
+       ```typescript
+       if (args.dnsToken) {
+         new k8s.core.v1.Secret("digitalocean-dns-token", {
+           metadata: {
+             name: "digitalocean-dns-token",
+             namespace: "cert-manager",
+           },
+           stringData: {
+             "access-token": args.dnsToken,
+           },
+         }, { provider: args.provider });
+       }
+       ```
+  - **Testing**: Verify TypeScript compiles after changes
+  - **Depends**: T052ad (need token in ESC first)
+
+- [X] T052af [US1] Update preview-base.ts to pass DigitalOcean DNS token to Gateway component
+  - **Why**: Wire up ESC secret to Gateway component for DNS-01 validation
+  - **File**: `infrastructure/pulumi/stacks/preview-base.ts`
+  - **Changes needed**:
+    1. Read token from Pulumi config (after line 64):
+       ```typescript
+       const digitaloceanConfig = new pulumi.Config("digitalocean");
+       const dnsToken = digitaloceanConfig.requireSecret("dnsToken");
+       ```
+    2. Pass token to createGateway (update call around line 96):
+       ```typescript
+       const gateway = createGateway({
+         env: "preview",
+         namespace: "nginx-gateway",
+         name: "nginx-gateway",
+         tlsMode: "letsencrypt-prod",
+         domains: [
+           "*.pr.aphiria.com",
+           "*.pr-api.aphiria.com",
+         ],
+         dnsToken: dnsToken,  // ADD THIS
+         provider: k8sProvider,
+       });
+       ```
+    3. Remove `skipCertificate: true` if present (revert to default behavior)
+  - **Testing**: `pulumi preview --stack preview-base` should show Secret + ClusterIssuer with dns01 solver
+  - **Depends**: T052ae (component must support dnsToken parameter)
+
+- [X] T052ag [US1] Deploy preview-base with DNS-01 and verify wildcard certificate provisioning
+  - **Why**: Validate that DNS-01 solver works and wildcard certificate is issued
+  - **Steps**:
+    1. Deploy: `pulumi up --stack preview-base --yes`
+    2. Verify Secret created: `kubectl --kubeconfig=/tmp/preview-kubeconfig.yaml get secret -n cert-manager digitalocean-dns-token`
+    3. Verify ClusterIssuer updated: `kubectl --kubeconfig=/tmp/preview-kubeconfig.yaml get clusterissuer letsencrypt-prod -o yaml | grep dns01`
+    4. Check Certificate status: `kubectl --kubeconfig=/tmp/preview-kubeconfig.yaml get certificate -n nginx-gateway`
+    5. Watch Order progress: `kubectl --kubeconfig=/tmp/preview-kubeconfig.yaml describe order -n nginx-gateway`
+    6. Verify DNS TXT record created at DigitalOcean (check DNS records for `_acme-challenge.pr.aphiria.com`)
+    7. Wait for Certificate READY=True (can take 2-5 minutes for DNS propagation + validation)
+    8. Verify Secret created: `kubectl --kubeconfig=/tmp/preview-kubeconfig.yaml get secret -n nginx-gateway tls-cert`
+    9. Check Gateway status: `kubectl --kubeconfig=/tmp/preview-kubeconfig.yaml describe gateway nginx-gateway -n nginx-gateway` (listeners should show "Programmed")
+  - **Expected**: Certificate transitions from Pending → Issuing → Ready, TLS secret created
+  - **Troubleshooting**: If fails, check cert-manager logs: `kubectl --kubeconfig=/tmp/preview-kubeconfig.yaml logs -n cert-manager -l app=cert-manager`
+  - **Depends**: T052af (preview-base must be updated to use DNS-01)
+
+- [X] T052ah [US1] Redeploy preview-pr-107 and test end-to-end HTTPS access
+  - **Why**: Validate that HTTPRoutes now attach to Gateway with valid TLS certificate
+  - **Prerequisites**: T052ag completed successfully (wildcard cert is READY)
+  - **Steps**:
+    1. Deploy preview-pr-107: `pulumi up --stack preview-pr-107 --yes`
+    2. Verify Gateway has attached routes: `kubectl --kubeconfig=/tmp/preview-kubeconfig.yaml get gateway nginx-gateway -n nginx-gateway -o jsonpath='{.status.listeners[*].attachedRoutes}'` (should show non-zero)
+    3. Verify HTTPRoute accepted: `kubectl --kubeconfig=/tmp/preview-kubeconfig.yaml describe httproute web -n preview-pr-107 | grep "Type.*Accepted"` (should show Status: True)
+    4. Test HTTPS web: `curl -v https://107.pr.aphiria.com` (should connect with valid TLS, may get HTTP error but TLS handshake must succeed)
+    5. Check TLS certificate: `curl -v https://107.pr.aphiria.com 2>&1 | grep "subject:"` (should show Let's Encrypt cert for `*.pr.aphiria.com`)
+    6. Test web pod directly: `kubectl --kubeconfig=/tmp/preview-kubeconfig.yaml port-forward -n preview-pr-107 deployment/web 8080:80` then `curl localhost:8080` (validate pod is healthy)
+  - **Success Criteria**:
+    - TLS handshake succeeds (no certificate errors)
+    - HTTPRoute shows Accepted=True
+    - Gateway shows attachedRoutes > 0
+    - Web pod responds to health checks
+  - **Note**: API pod will still crash (expected, needs T052y), but web should be fully accessible
+  - **Implementation Notes**:
+    - Fixed NetworkPolicy in preview-pr.ts to allow ingress from `nginx-gateway` namespace (was incorrectly set to `default`)
+    - Verified HTTPS access works with Let's Encrypt wildcard certificate (CN=*.pr.aphiria.com, Issuer: R12)
+    - Confirmed Gateway can route to web pods after NetworkPolicy fix
+  - **Depends**: T052ag (wildcard cert must exist)
+
+- [ ] T052aa [US1] **ARCHITECTURE RECOMMENDATION**: Document enterprise-grade improvements for preview environments
+  - **Why**: Current implementation works but has technical debt and patterns that don't scale to production
+  - **Scope**: Analyze current preview-pr.ts and production YAML, recommend improvements:
+    1. **Configuration Management**: ESC vs ConfigMaps for environment-specific config
+    2. **Migration Strategy**: Job vs init container for different use cases
+    3. **Resource Limits**: Standardize across environments (preview uses limits, production doesn't)
+    4. **Image Pull Policy**: Digest-based vs tag-based strategies
+    5. **Rolling Update Strategy**: Zero-downtime deployment patterns
+    6. **Health Check Endpoints**: `/health` vs `/` for production readiness
+    7. **Volume Management**: emptyDir vs persistent volumes for shared code
+    8. **Secret Management**: Pulumi secrets vs Kubernetes secrets vs ESC
+    9. **Gateway Listener Architecture**: sectionName usage for multi-tenant routing
+    10. **Namespace Isolation**: NetworkPolicy and ResourceQuota best practices
+  - **Deliverable**: Markdown document with:
+    - Current pattern analysis (what we have)
+    - Best practice recommendations (what we should have)
+    - Migration path (how to get there)
+    - Risk assessment (what breaks if we change)
+  - **Target Audience**: Production migration planning (Phase 8)
+  - **File**: Create `specs/001-ephemeral-environment/recommendations.md`
+  - **Depends**: T052w (audit complete)
+  - **Priority**: LOW - informational, doesn't block preview functionality
+  - **Note**: This task MUST be completed BEFORE production migration (M037-M044)
+
 - [ ] T052q [US1] Document GHCR token setup in SECRETS.md
   - **Why**: GHCR authentication requires GitHub Personal Access Token (PAT) configured in Pulumi ESC, but SECRETS.md doesn't document how to create this token or what scopes are required
   - **Action**: Update `SECRETS.md` to document GHCR_TOKEN requirements for Kubernetes image pulling
