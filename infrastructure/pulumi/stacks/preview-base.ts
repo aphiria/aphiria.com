@@ -15,6 +15,7 @@ import * as pulumi from "@pulumi/pulumi";
 import * as digitalocean from "@pulumi/digitalocean";
 import * as k8s from "@pulumi/kubernetes";
 import {
+    createKubernetesCluster,
     installBaseHelmCharts,
     createPostgreSQL,
     createGateway,
@@ -23,31 +24,22 @@ import {
 const config = new pulumi.Config();
 
 // 1. Create dedicated preview Kubernetes cluster
-const cluster = new digitalocean.KubernetesCluster("aphiria-com-preview-cluster", {
+const { cluster, kubeconfig: clusterKubeconfig } = createKubernetesCluster({
     name: "aphiria-com-preview-cluster",
-    region: digitalocean.Region.NYC3,
+    region: "nyc3",
     version: "1.34.1-do.2",
-    nodePool: {
-        name: "worker-pool",
-        size: "s-2vcpu-2gb",
-        nodeCount: 1,
-        autoScale: true,
-        minNodes: 1,
-        maxNodes: 3,
-    },
+    nodeSize: "s-2vcpu-2gb",
+    nodeCount: 1,
+    autoScale: true,
+    minNodes: 1,
+    maxNodes: 3,
     vpcUuid: "976f980d-dc84-11e8-80bc-3cfdfea9fba1",
-    maintenancePolicy: {
-        day: "any",
-        startTime: "6:00",
-    },
-}, {
-    protect: true, // Prevents accidental deletion
 });
 
 // Create Kubernetes provider using the cluster's kubeconfig
 // Uses canonical Pulumi pattern - provider validates connection on first resource operation
 const k8sProvider = new k8s.Provider("preview-k8s", {
-    kubeconfig: cluster.kubeConfigs[0].rawConfig,
+    kubeconfig: clusterKubeconfig,
     enableServerSideApply: true,
 }, {
     dependsOn: [cluster],
@@ -139,7 +131,7 @@ const previewApiDns = new digitalocean.DnsRecord("preview-api-dns", {
 // Outputs (used by workflows)
 export const clusterId = cluster.id;
 export const clusterEndpoint = cluster.endpoint;
-export const kubeconfig = pulumi.secret(cluster.kubeConfigs[0].rawConfig);
+export const kubeconfig = pulumi.secret(clusterKubeconfig);
 export const postgresqlHost = "db.default.svc.cluster.local";  // Fully qualified service name for cross-namespace access
 export const postgresqlPort = 5432;
 export const gatewayName = "nginx-gateway";

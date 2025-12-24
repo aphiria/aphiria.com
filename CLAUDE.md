@@ -207,6 +207,49 @@ const dbInitJob = new k8s.batch.v1.Job("db-init", {
 });
 ```
 
+### Pulumi Component Reusability Principle
+
+**CRITICAL: All reusable infrastructure logic MUST be in components, not stack files.**
+
+✅ **ALWAYS** create components for:
+- Any Kubernetes resources used by 2+ stacks
+- ConfigMap/Secret creation patterns
+- Database initialization logic
+- Any infrastructure pattern with hardcoded constants
+
+❌ **NEVER** duplicate infrastructure code across stacks:
+- Stack files should only contain configuration parameters
+- Stack files should only call component functions
+- Hardcoded values (ports, image names, resource limits) belong in components
+
+**Example - WRONG:**
+```typescript
+// ❌ preview-pr.ts - Manual ConfigMap creation
+const configMap = new k8s.core.v1.ConfigMap("config", {
+    data: {
+        DB_PORT: "5432",  // Hardcoded in stack
+        APP_BUILDER_API: "\\Aphiria\\Framework\\...",  // Hardcoded in stack
+    },
+});
+```
+
+**Example - CORRECT:**
+```typescript
+// ✅ components/api-deployment.ts - Component handles ConfigMaps
+export function createAPIDeployment(args: APIDeploymentArgs) {
+    const DB_PORT = "5432";  // Hardcoded in component (shared across all stacks)
+    const configMap = new k8s.core.v1.ConfigMap(...);
+    // Component creates all resources internally
+}
+
+// ✅ preview-pr.ts - Stack only provides parameters
+createAPIDeployment({
+    dbHost: postgresqlHost,  // Environment-specific
+    dbName: "aphiria_pr_123",  // Environment-specific
+    apiUrl: "https://123.pr-api.aphiria.com",  // Environment-specific
+});
+```
+
 ### Decision Framework: Where Should This Run?
 
 When implementing any infrastructure task, ask:
@@ -217,6 +260,10 @@ When implementing any infrastructure task, ask:
 
 2. **Is this a one-time setup task or ongoing operation?**
    - One-time → Kubernetes Job
+
+3. **Is this logic shared across multiple stacks?**
+   - YES → Create a component function
+   - NO → Inline in stack is acceptable (but consider future reuse)
    - Ongoing → Init container or deployment lifecycle hook
 
 3. **Am I using a "workaround" or a "pattern"?**

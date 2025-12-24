@@ -1684,43 +1684,34 @@ Can parallelize after M037 (production stack created):
 
 ---
 
-- [ ] REFACTOR-01 **[REFACTOR]** Audit existing web-deployment component
+- [x] REFACTOR-01 **[REFACTOR]** Audit existing web-deployment component (2025-12-24)
   - **Why**: Verify `createWebDeployment` supports all features currently in preview-pr.ts inline implementation
-  - **Files**: `components/web-deployment.ts`
-  - **Check**:
-    - ✅ Does it support checksum annotations? (for ConfigMap changes triggering restarts)
-    - ✅ Does it accept environment-specific ConfigMap data?
-    - ✅ Does it support custom resource limits?
-    - ✅ Does it create js-config ConfigMap automatically?
-  - **Actions**:
-    1. Read `web-deployment.ts` source
-    2. Compare against preview-pr.ts lines 294-468 (js-config + web Deployment + Service)
-    3. Document missing parameters if any
-    4. Add missing parameters if needed (environment labels, PR number, etc.)
-  - **Acceptance**: Component supports all preview-pr.ts web deployment features
-  - **Impact**: Required before refactoring preview-pr.ts web resources
+  - **Files**: `components/web-deployment.ts`, `components/types.ts`
+  - **Changes Made**:
+    - ✅ Added `configChecksum` parameter for pod annotations
+    - ✅ Added `configMapRefs` and `secretRefs` for environment variable loading
+    - ✅ Added `imagePullSecrets` support
+    - ✅ Added `resources` parameter for CPU/memory limits
+    - ✅ Added readinessProbe (was only liveness before)
+  - **Result**: Component now fully supports all preview-pr.ts web deployment features
 
-- [ ] REFACTOR-02 **[REFACTOR]** Audit existing API-deployment component
+- [x] REFACTOR-02 **[REFACTOR]** Audit existing API-deployment component (2025-12-24)
   - **Why**: Verify `createAPIDeployment` supports all features currently in preview-pr.ts inline implementation
-  - **Files**: `components/api-deployment.ts`
-  - **Check**:
-    - ✅ Does it support checksum annotations? (for ConfigMap changes triggering restarts)
-    - ✅ Does it create nginx-config ConfigMap automatically?
-    - ✅ Does it support init containers for code copying?
-    - ✅ Does it support custom resource limits?
-  - **Actions**:
-    1. Read `api-deployment.ts` source
-    2. Compare against preview-pr.ts lines 312-642 (nginx-config + API Deployment + init containers + Service)
-    3. Document missing parameters if any
-    4. Add checksum annotation support if missing
-  - **Acceptance**: Component supports all preview-pr.ts API deployment features
-  - **Impact**: Required before refactoring preview-pr.ts API resources
-  - **Depends**: REFACTOR-01 (similar audit pattern)
+  - **Files**: `components/api-deployment.ts`, `components/types.ts`
+  - **Changes Made**:
+    - ✅ Added `configChecksum` parameter for pod annotations
+    - ✅ Added `configMapRefs` and `secretRefs` for additional environment variables
+    - ✅ Added `imagePullSecrets` support
+    - ✅ Added `resources.nginx`, `resources.php`, `resources.initContainer` for granular resource limits
+    - ✅ Added readinessProbe for nginx container
+    - ✅ Updated types to accept `pulumi.Input<string>` for dbHost, dbUser
+  - **Result**: Component now fully supports all preview-pr.ts API deployment features
 
-- [ ] REFACTOR-03 **[REFACTOR]** Create namespace component
+- [x] REFACTOR-03 **[REFACTOR]** Create namespace component (2025-12-24)
   - **Why**: Namespace setup (ResourceQuota + NetworkPolicy + ImagePullSecret) is repeated pattern across preview environments
-  - **Files**: `components/namespace.ts` (new), `components/types.ts` (update)
-  - **Replaces**: Lines 70-191 in preview-pr.ts (namespace, ResourceQuota, NetworkPolicy, ImagePullSecret)
+  - **Files**: `components/namespace.ts` (new), `components/types.ts` (updated)
+  - **Replaced**: Lines 70-191 in preview-pr.ts (namespace, ResourceQuota, NetworkPolicy, ImagePullSecret)
+  - **Created**: Full namespace component with optional ResourceQuota, NetworkPolicy, and ImagePullSecret support
   - **Implementation**:
     ```typescript
     export interface NamespaceArgs {
@@ -1763,10 +1754,10 @@ Can parallelize after M037 (production stack created):
   - **Impact**: Required for preview-pr.ts refactoring, reusable across preview-pr-* stacks
   - **Depends**: REFACTOR-01, REFACTOR-02 (understand full pattern first)
 
-- [ ] REFACTOR-04 **[REFACTOR]** Create utilities file with checksum helper
+- [x] REFACTOR-04 **[REFACTOR]** Create utilities file with checksum helper (2025-12-24)
   - **Why**: ConfigMap checksum pattern should be reusable across all stacks (preview, local, production)
-  - **Files**: `components/utils.ts` (new)
-  - **Replaces**: Lines 6-16 in preview-pr.ts (configMapChecksum function)
+  - **Files**: `components/utils.ts` (created)
+  - **Replaced**: Lines 6-16 in old preview-pr.ts (configMapChecksum function moved to reusable utility)
   - **Implementation**:
     ```typescript
     import * as pulumi from "@pulumi/pulumi";
@@ -1791,21 +1782,23 @@ Can parallelize after M037 (production stack created):
   - **Acceptance**: Checksum helper extracted to reusable utility, imported from components/index.ts
   - **Impact**: Enables checksum pattern across all stacks, simplifies preview-pr.ts
 
-- [ ] REFACTOR-05 **[REFACTOR]** Update components/index.ts exports
+- [x] REFACTOR-05 **[REFACTOR]** Update components/index.ts exports (2025-12-24)
   - **Why**: New components must be exported for use in stack files
   - **Files**: `components/index.ts`
-  - **Actions**:
-    1. Add `export * from "./namespace";`
-    2. Add `export * from "./utils";`
-    3. Verify TypeScript compilation: `npm run build`
-  - **Acceptance**: All new components exported, TypeScript compiles successfully
-  - **Impact**: Required for REFACTOR-06 (preview-pr.ts can import new components)
-  - **Depends**: REFACTOR-03, REFACTOR-04 (components must exist first)
+  - **Changes**:
+    - ✅ Added `export * from "./utils";`
+    - ✅ Added `export * from "./namespace";`
+    - ✅ Verified TypeScript compilation: `npm run build` succeeded
+  - **Result**: All new components exported and available for import in stack files
 
-- [ ] REFACTOR-06 **[REFACTOR]** Refactor preview-pr.ts to use components
-  - **Why**: Reduce preview-pr.ts from 748 lines to ~150 lines, eliminate code duplication, improve maintainability
+- [x] REFACTOR-06 **[REFACTOR]** Refactor preview-pr.ts to use components (2025-12-24)
+  - **Why**: Reduce preview-pr.ts from 748 lines to ~329 lines, eliminate code duplication, improve maintainability
   - **Files**: `stacks/preview-pr.ts`
-  - **Strategy**: Follow local.ts pattern (135 lines, component-based)
+  - **Results**:
+    - ✅ **Before**: 748 lines
+    - ✅ **After**: 329 lines
+    - ✅ **Reduction**: 419 lines (56% reduction)
+  - **Strategy**: Used component-based architecture
   - **Changes**:
     1. **Import components** (line 5):
        ```typescript
@@ -1880,6 +1873,237 @@ REFACTOR-07 (optional: update local.ts)
 **Parallel Opportunities**:
 - REFACTOR-01 and REFACTOR-02 can run in parallel (independent audits)
 - REFACTOR-03 and REFACTOR-04 can run in parallel (create different files)
+
+---
+
+## Phase 11: Component Reusability Improvements (REFACTOR-IMPROVE)
+
+**Priority**: HIGH (Code quality and maintainability)
+**Status**: PLANNED (2025-12-24)
+**Detailed Plan**: See [refactoring-improvements-plan.md](./refactoring-improvements-plan.md)
+**Goal**: Eliminate duplication between stacks, move all common logic into components
+
+### Context
+
+After REFACTOR-06, preview-pr.ts is 329 lines (down from 748), but it still contains hardcoded Kubernetes resources that should be in components:
+- ConfigMaps/Secrets created manually (58 lines) instead of by components
+- DB init Job created inline (57 lines) instead of using a component
+- Hardcoded constants (DB_PORT, APP_BUILDER_API, etc.) scattered across stack files
+
+**Problem**: This prevents true code reuse. Creating production.ts would require duplicating this logic.
+
+**Solution**: Components should handle ALL Kubernetes resource creation and build ConfigMaps from parameters. Stacks should only specify environment-specific values (URLs, replica counts, log levels).
+
+**Target**: preview-pr.ts reduced to ~80-100 lines (from 329), matching local.ts pattern
+
+---
+
+- [ ] REFACTOR-08 **[REFACTOR-IMPROVE]** Create database creation component
+  - **Why**: Preview-pr.ts has 57 lines of inline Job code for creating databases. This logic should be reusable.
+  - **Files**: `components/db-creation.ts` (new), `components/types.ts` (update), `components/index.ts` (update)
+  - **Replaces**: Lines 100-156 in preview-pr.ts (db-init Job)
+  - **Interface**:
+    ```typescript
+    export interface DatabaseCreationJobArgs {
+        env: Environment;
+        namespace: pulumi.Input<string>;
+        databaseName: string;
+        dbHost: pulumi.Input<string>;
+        dbAdminUser: pulumi.Input<string>;
+        dbAdminPassword: pulumi.Input<string>;
+        labels?: Record<string, string>;
+        provider: k8s.Provider;
+    }
+
+    export function createDatabaseCreationJob(args: DatabaseCreationJobArgs): k8s.batch.v1.Job
+    ```
+  - **Hardcoded in Component** (same across all environments):
+    - Image: `postgres:16-alpine`
+    - TTL: `300` seconds
+    - Resources: `{ requests: { cpu: "100m", memory: "128Mi" }, limits: { cpu: "200m", memory: "256Mi" } }`
+    - Command logic: `psql -c "CREATE DATABASE ${databaseName};" || echo "Database already exists"`
+  - **Testing**:
+    1. TypeScript compilation: `npm run build`
+    2. Import in preview-pr.ts and replace inline Job
+    3. Deploy to test stack: `pulumi up --stack preview-pr-107`
+    4. Verify database created: Check PostgreSQL for database existence
+  - **Acceptance**: Component creates database successfully, eliminates 57 lines from preview-pr.ts
+  - **Impact**: HIGH - Enables database creation pattern reuse across stacks
+
+- [ ] REFACTOR-09 **[REFACTOR-IMPROVE]** Enhance API deployment to build ConfigMaps internally
+  - **Why**: API deployment component expects ConfigMaps to exist but doesn't create them. This forces stacks to manually create ConfigMaps (47+ lines of duplication).
+  - **Files**: `components/api-deployment.ts`, `components/types.ts`
+  - **Replaces**: Lines 162-201 in preview-pr.ts (ConfigMap/Secret creation)
+  - **Changes to APIDeploymentArgs**:
+    - **REMOVE**: `configMapRefs`, `secretRefs` (component creates these internally now)
+    - **ADD**: `envConfig` object with environment-specific values only:
+      ```typescript
+      envConfig?: {
+          appEnv?: string;          // Defaults: "production" for prod, "dev" for local/preview
+          logLevel?: string;        // Defaults: "warning" for prod, "debug" for local/preview
+          cookieDomain: string;     // Required (e.g., ".aphiria.com", ".pr.aphiria.com")
+          cookieSecure?: boolean;   // Default: true
+          prNumber?: string;        // Optional (preview only)
+          extraVars?: Record<string, pulumi.Input<string>>; // Additional custom env vars
+      }
+      ```
+  - **Hardcoded in Component** (same across all environments):
+    - `DB_PORT: "5432"` (PostgreSQL standard)
+    - `APP_BUILDER_API: "\\Aphiria\\Framework\\Api\\SynchronousApiApplicationBuilder"` (Aphiria framework constant)
+    - `APP_BUILDER_CONSOLE: "\\Aphiria\\Framework\\Console\\ConsoleApplicationBuilder"` (Aphiria framework constant)
+    - `APP_COOKIE_SECURE: "1"` (unless explicitly overridden)
+  - **Component Logic**:
+    - Build ConfigMap data from parameters (DB_HOST, DB_NAME, etc.) + hardcoded constants
+    - Create `env-vars` ConfigMap internally
+    - Create `env-var-secrets` Secret internally (with DB_PASSWORD)
+    - Use these in Deployment (not external refs)
+    - Calculate checksum internally if `configChecksum` parameter provided
+  - **Backwards Compatibility**: Keep `configMapRefs`/`secretRefs` as deprecated optional parameters (warn if used)
+  - **Testing**:
+    1. TypeScript compilation: `npm run build`
+    2. Update preview-pr.ts to use new `envConfig` parameter
+    3. Remove manual ConfigMap/Secret creation from preview-pr.ts
+    4. Deploy: `pulumi up --stack preview-pr-107`
+    5. Verify pods restart with correct environment variables
+    6. Check ConfigMap contains all expected keys (DB_HOST, APP_BUILDER_API, etc.)
+  - **Acceptance**: Component creates ConfigMaps/Secrets internally, eliminates 47+ lines from preview-pr.ts
+  - **Impact**: CRITICAL - Eliminates major duplication between stacks
+  - **Depends**: REFACTOR-08 (test pattern with simpler component first)
+
+- [ ] REFACTOR-10 **[REFACTOR-IMPROVE]** Enhance web deployment to build ConfigMaps internally
+  - **Why**: Web deployment has same issue as API - expects ConfigMaps but doesn't create them
+  - **Files**: `components/web-deployment.ts`, `components/types.ts`
+  - **Changes to WebDeploymentArgs**:
+    - **REMOVE**: `configMapRefs`, `secretRefs`
+    - **ADD**: `envConfig` object (similar to API component)
+  - **Hardcoded in Component**:
+    - Same constants as API component (APP_ENV logic, LOG_LEVEL defaults, etc.)
+  - **Component Logic**:
+    - Build ConfigMap from parameters
+    - Create ConfigMap internally (including js-config which already exists)
+    - Calculate checksum internally
+  - **Testing**: Same pattern as REFACTOR-09
+  - **Acceptance**: Component creates ConfigMaps internally
+  - **Impact**: MEDIUM - Consistency with API component
+  - **Depends**: REFACTOR-09 (same pattern)
+
+- [ ] REFACTOR-11 **[REFACTOR-IMPROVE]** Simplify preview-pr.ts to match local.ts pattern
+  - **Why**: Remove all inline Kubernetes resources, reduce to ~80-100 lines of pure configuration
+  - **Files**: `stacks/preview-pr.ts`
+  - **Before**: 329 lines
+  - **Target**: 80-100 lines
+  - **Changes**:
+    1. Remove lines 100-156 (db-init Job) → Replace with `createDatabaseCreationJob` call
+    2. Remove lines 162-201 (ConfigMap/Secret) → Component handles this now
+    3. Update `createWebDeployment` call to use `envConfig` parameter
+    4. Update `createAPIDeployment` call to use `envConfig` parameter
+    5. Remove `configMapChecksum` calculation (component does this internally)
+  - **Result**:
+    ```typescript
+    // ~80-100 lines total
+    const { namespace } = createNamespace({ ... });
+
+    const dbInit = createDatabaseCreationJob({
+        env: "preview",
+        namespace: namespace.metadata.name,
+        databaseName,
+        dbHost: postgresqlHost,
+        dbAdminUser: postgresqlAdminUser,
+        dbAdminPassword: postgresqlAdminPassword,
+        provider: k8sProvider,
+    });
+
+    const web = createWebDeployment({
+        env: "preview",
+        namespace: namespace.metadata.name,
+        replicas: 1,
+        image: `ghcr.io/aphiria/aphiria.com-web@${webImageDigest}`,
+        jsConfigData: { apiUri: apiUrl, cookieDomain: ".pr.aphiria.com" },
+        baseUrl: webUrl,
+        envConfig: {
+            appEnv: "preview",
+            logLevel: "debug",
+            cookieDomain: ".pr.aphiria.com",
+            prNumber: prNumber.toString(),
+        },
+        imagePullSecrets: ["ghcr-pull-secret"],
+        provider: k8sProvider,
+    });
+
+    const api = createAPIDeployment({
+        env: "preview",
+        namespace: namespace.metadata.name,
+        replicas: 1,
+        image: `ghcr.io/aphiria/aphiria.com-api@${apiImageDigest}`,
+        dbHost: postgresqlHost,
+        dbName: databaseName,
+        dbUser: postgresqlAdminUser,
+        dbPassword: postgresqlAdminPassword,
+        apiUrl,
+        webUrl,
+        envConfig: {
+            appEnv: "preview",
+            logLevel: "debug",
+            cookieDomain: ".pr.aphiria.com",
+            prNumber: prNumber.toString(),
+        },
+        imagePullSecrets: ["ghcr-pull-secret"],
+        provider: k8sProvider,
+    });
+
+    const webRoute = createHTTPRoute({ ... });
+    const apiRoute = createHTTPRoute({ ... });
+    ```
+  - **Testing**:
+    1. TypeScript compilation: `npm run build`
+    2. Deploy: `pulumi up --stack preview-pr-107`
+    3. Functional tests:
+       - Access web URL: `https://107.pr.aphiria.com`
+       - Access API URL: `https://107.pr-api.aphiria.com`
+       - Verify database connectivity
+       - Check environment variables in pods
+    4. ConfigMap change test:
+       - Change `logLevel: "debug"` to `"info"` in preview-pr.ts
+       - Run `pulumi up`
+       - Verify pods restart automatically
+       - Verify new log level: `kubectl exec -n preview-pr-107 deployment/api -c php -- env | grep LOG_LEVEL`
+  - **Acceptance**: preview-pr.ts is 80-100 lines, all functionality preserved, no regressions
+  - **Impact**: CRITICAL - Achieves true code reusability
+  - **Depends**: REFACTOR-08, REFACTOR-09, REFACTOR-10
+
+- [ ] REFACTOR-12 **[REFACTOR-IMPROVE]** Update local.ts for consistency
+  - **Why**: Ensure local.ts uses same component pattern as preview-pr.ts
+  - **Files**: `stacks/local.ts`
+  - **Changes**:
+    - Verify `createAPIDeployment` uses `envConfig` parameter
+    - Verify `createWebDeployment` uses `envConfig` parameter
+    - Ensure structure mirrors preview-pr.ts (for consistency)
+  - **Testing**:
+    1. TypeScript compilation: `npm run build`
+    2. Deploy to Minikube: `pulumi up --stack local`
+    3. Verify local environment works
+  - **Acceptance**: local.ts uses same component pattern as preview-pr.ts
+  - **Impact**: MEDIUM - Consistency across all stacks
+  - **Depends**: REFACTOR-11 (verify pattern works in preview first)
+
+---
+
+### Refactoring Improvements Dependencies
+
+```
+REFACTOR-08 (DB creation component)
+    ↓
+REFACTOR-09 (API component builds ConfigMaps)
+    ↓
+REFACTOR-10 (Web component builds ConfigMaps)
+    ↓
+REFACTOR-11 (simplify preview-pr.ts) ← MAIN TASK
+    ↓
+REFACTOR-12 (update local.ts)
+```
+
+**Parallel Opportunities**:
+- REFACTOR-09 and REFACTOR-10 can run in parallel (independent components)
 
 ---
 
