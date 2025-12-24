@@ -6,7 +6,8 @@ import { GatewayArgs, GatewayResult } from "./types";
 export function createGateway(args: GatewayArgs): GatewayResult {
     // Validate domain requirements based on environment
     const rootDomain = args.domains.find((d) => !d.startsWith("*"));
-    const wildcardDomain = args.domains.find((d) => d.startsWith("*"));
+    const wildcardDomains = args.domains.filter((d) => d.startsWith("*"));
+    const wildcardDomain = wildcardDomains[0]; // Keep for backward compatibility with validation
 
     // Production environments MUST have both root and wildcard domains
     // Preview environments MAY use wildcard-only (e.g., *.pr.aphiria.com for PR previews)
@@ -173,21 +174,18 @@ export function createGateway(args: GatewayArgs): GatewayResult {
                               },
                           ]
                         : []),
-                    ...(wildcardDomain
-                        ? [
-                              {
-                                  name: "http-subdomains",
-                                  hostname: wildcardDomain,
-                                  port: 80,
-                                  protocol: "HTTP" as const,
-                                  allowedRoutes: {
-                                      namespaces: {
-                                          from: "All" as const,
-                                      },
-                                  },
-                              },
-                          ]
-                        : []),
+                    // Create HTTP listener for EACH wildcard domain
+                    ...wildcardDomains.map((domain, index) => ({
+                        name: wildcardDomains.length === 1 ? "http-subdomains" : `http-subdomains-${index + 1}`,
+                        hostname: domain,
+                        port: 80,
+                        protocol: "HTTP" as const,
+                        allowedRoutes: {
+                            namespaces: {
+                                from: "All" as const,
+                            },
+                        },
+                    })),
                     // HTTPS listeners - conditionally include based on available domains
                     ...(rootDomain
                         ? [
@@ -212,29 +210,26 @@ export function createGateway(args: GatewayArgs): GatewayResult {
                               },
                           ]
                         : []),
-                    ...(wildcardDomain
-                        ? [
-                              {
-                                  name: "https-subdomains",
-                                  hostname: wildcardDomain,
-                                  port: 443,
-                                  protocol: "HTTPS" as const,
-                                  allowedRoutes: {
-                                      namespaces: {
-                                          from: "All" as const,
-                                      },
-                                  },
-                                  tls: {
-                                      mode: "Terminate" as const,
-                                      certificateRefs: [
-                                          {
-                                              name: "tls-cert",
-                                          },
-                                      ],
-                                  },
-                              },
-                          ]
-                        : []),
+                    // Create HTTPS listener for EACH wildcard domain
+                    ...wildcardDomains.map((domain, index) => ({
+                        name: wildcardDomains.length === 1 ? "https-subdomains" : `https-subdomains-${index + 1}`,
+                        hostname: domain,
+                        port: 443,
+                        protocol: "HTTPS" as const,
+                        allowedRoutes: {
+                            namespaces: {
+                                from: "All" as const,
+                            },
+                        },
+                        tls: {
+                            mode: "Terminate" as const,
+                            certificateRefs: [
+                                {
+                                    name: "tls-cert",
+                                },
+                            ],
+                        },
+                    })),
                 ],
             },
         },

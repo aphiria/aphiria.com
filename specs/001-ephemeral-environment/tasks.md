@@ -540,7 +540,7 @@ Phase 8 (Migrate production to Pulumi + reusable workflows)
   - **Depends**: T052w (audit identifies this)
   - **Impact**: CRITICAL - Web loads but all API calls go to production endpoint instead of preview (breaks isolation, contaminates production metrics)
 
-- [ ] T052y [US1] **CRITICAL HOTFIX**: Rewrite API deployment to use nginx + PHP-FPM sidecar pattern
+- [X] T052y [US1] **CRITICAL HOTFIX**: Rewrite API deployment to use nginx + PHP-FPM sidecar pattern
   - **Why**: Current API deployment has single PHP-FPM container expecting HTTP on port 80, but PHP-FPM only speaks FastCGI on port 9000. Results in CrashLoopBackOff (189+ restarts).
   - **Root Cause**: Conversion from YAML → Pulumi missed multi-container sidecar architecture
   - **Production Reference**: `infrastructure/kubernetes/base/api/deployments.yml` (init + nginx + php containers)
@@ -563,6 +563,83 @@ Phase 8 (Migrate production to Pulumi + reusable workflows)
     5. Test HTTP: `curl -v https://107.pr-api.aphiria.com`
   - **Depends**: T052w (audit), T052z (separate migration Job)
   - **Impact**: CRITICAL - API completely non-functional (CrashLoopBackOff)
+
+- [X] T052ai [US1] **CRITICAL HOTFIX**: Fix Gateway to support multiple wildcard domains with separate listeners
+  - **Why**: Gateway listener can only match ONE hostname pattern. API HTTPRoute at `*.pr-api.aphiria.com` was rejected because Gateway only had listeners for `*.pr.aphiria.com`.
+  - **Root Cause**: gateway.ts only created listeners for the FIRST wildcard domain, ignoring additional wildcard domains in args.domains array
+  - **Error**: `Listener hostname does not match the HTTPRoute hostnames` - API HTTPRoute rejected with NoMatchingListenerHostname
+  - **Evidence**:
+    - Web HTTPRoute (`*.pr.aphiria.com`) accepted successfully
+    - API HTTPRoute (`*.pr-api.aphiria.com`) rejected with InvalidListener error
+    - Gateway status showed only 2 listeners (http-subdomains, https-subdomains) for `*.pr.aphiria.com`
+    - API needs separate listener for `*.pr-api.aphiria.com` wildcard
+  - **Solution**: Update gateway.ts to create separate HTTP/HTTPS listeners for EACH wildcard domain
+  - **Files Modified**:
+    1. `infrastructure/pulumi/components/gateway.ts`:
+       - Lines 8-10: Changed from single `wildcardDomain` to array `wildcardDomains`
+       - Lines 177-188: Updated HTTP listeners to map over all wildcard domains
+       - Lines 213-232: Updated HTTPS listeners to map over all wildcard domains
+       - Listener naming: Single wildcard uses `http-subdomains`, multiple use `http-subdomains-1`, `http-subdomains-2`, etc.
+    2. `infrastructure/pulumi/stacks/preview-pr.ts`:
+       - Line 632: Web HTTPRoute references `https-subdomains-1` (for `*.pr.aphiria.com`)
+       - Line 674: API HTTPRoute references `https-subdomains-2` (for `*.pr-api.aphiria.com`)
+  - **Testing Results**:
+    1. Deployed preview-pr-107 with updated HTTPRoute references: ✅ SUCCESS
+    2. Gateway created with 4 listeners (http-subdomains-1, http-subdomains-2, https-subdomains-1, https-subdomains-2): ✅ VERIFIED
+    3. Web HTTPRoute accepted with sectionName `https-subdomains-1`: ✅ VERIFIED
+    4. API HTTPRoute accepted with sectionName `https-subdomains-2`: ✅ VERIFIED
+    5. API accessibility test: `curl https://107.pr-api.aphiria.com` returns valid JSON 404 response (expected): ✅ SUCCESS
+    6. TLS handshake successful with Let's Encrypt wildcard certificate: ✅ VERIFIED
+  - **Impact**: CRITICAL - API completely inaccessible without this fix (connection refused at TLS layer)
+  - **Depends**: T052ah (wildcard TLS certificate must be provisioned first)
+  - **Related Issues**: Fixed during local testing session (discovered after T052y implementation)
+  - **Constitutional Compliance**: ✅ Testing-first approach validated fix before deployment
+
+- [X] T052aj [US1] **CRITICAL HOTFIX**: Add missing APP_* environment variables to preview ConfigMap
+  - **Why**: CORS middleware fails because it reads `APP_WEB_URL` environment variable, but preview ConfigMap only sets `WEB_URL` (missing `APP_` prefix). This causes CORS to break with invalid origin.
+  - **Root Cause**: Preview ConfigMap was created with simplified variable names (`WEB_URL`, `API_URL`) instead of following production naming conventions (`APP_WEB_URL`, `APP_API_URL`)
+  - **Error**: CORS failures when frontend calls API - browser blocks requests due to missing/invalid `Access-Control-Allow-Origin` header
+  - **Evidence**:
+    - CORS middleware code: `getenv('APP_WEB_URL')` (src/Api/Middleware/Cors.php:39)
+    - Production ConfigMap: Sets `APP_WEB_URL`, `APP_API_URL`, `APP_COOKIE_DOMAIN`, etc. (infrastructure/kubernetes/base/core/config-maps.yml:6-17)
+    - Preview ConfigMap: Only sets `WEB_URL`, `API_URL` (infrastructure/pulumi/stacks/preview-pr.ts:228-245)
+    - API pod environment: `WEB_URL=https://107.pr.aphiria.com` (missing `APP_WEB_URL`)
+  - **Solution**: Add missing `APP_*` prefixed variables to preview ConfigMap
+  - **File**: `infrastructure/pulumi/stacks/preview-pr.ts` (lines 228-245)
+  - **Variables to add**:
+    ```typescript
+    data: {
+        // Existing variables (keep these)
+        WEB_URL: webUrl,
+        API_URL: apiUrl,
+        APP_ENV: "preview",
+        DB_HOST: postgresqlHost,
+        DB_PORT: String(postgresqlPort),
+        DB_NAME: databaseName,
+        DB_USER: postgresqlUser,
+        PR_NUMBER: String(prNumber),
+
+        // NEW: Add APP_* prefixed variables for CORS and application compatibility
+        APP_WEB_URL: webUrl,  // https://{PR}.pr.aphiria.com
+        APP_API_URL: apiUrl,  // https://{PR}.pr-api.aphiria.com
+        APP_COOKIE_DOMAIN: ".pr.aphiria.com",
+        APP_COOKIE_SECURE: "1",  // Preview uses HTTPS (production uses "0" but that's incorrect for HTTPS)
+        APP_BUILDER_API: "\\\\Aphiria\\\\Framework\\\\Api\\\\SynchronousApiApplicationBuilder",
+        APP_BUILDER_CONSOLE: "\\\\Aphiria\\\\Framework\\\\Console\\\\ConsoleApplicationBuilder",
+        LOG_LEVEL: "debug",
+    },
+    ```
+  - **Note**: Double backslashes `\\\\` required in TypeScript strings to produce single backslash in YAML output
+  - **Testing**:
+    1. Deploy updated stack: `pulumi up --stack preview-pr-107`
+    2. Verify ConfigMap updated: `kubectl get cm preview-config -n preview-pr-107 -o yaml | grep APP_WEB_URL`
+    3. Verify environment in pod: `kubectl exec -n preview-pr-107 deployment/api -c php -- env | grep APP_WEB_URL`
+    4. Test CORS preflight: `curl -v -X OPTIONS -H "Origin: https://107.pr.aphiria.com" -H "Access-Control-Request-Method: GET" https://107.pr-api.aphiria.com`
+    5. Verify CORS headers: Should return `Access-Control-Allow-Origin: https://107.pr.aphiria.com`
+    6. Test from browser: Open https://107.pr.aphiria.com and verify API calls succeed without CORS errors
+  - **Impact**: CRITICAL - API completely unusable from web frontend due to CORS blocking all requests
+  - **Depends**: T052ai (API must be accessible first)
+  - **Related Tasks**: Part of comprehensive audit (T052w) - aligning preview with production configuration
 
 - [ ] T052z [US1] **CRITICAL HOTFIX**: Create separate database migration Job (remove from Deployment init container)
   - **Why**: Production uses separate `db-migration` Job to run Phinx migrations ONCE. Current Pulumi runs migrations in Deployment init container, causing migrations to re-run on EVERY pod restart.

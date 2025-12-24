@@ -230,14 +230,28 @@ const configMap = new k8s.core.v1.ConfigMap("preview-config", {
         labels: commonLabels,
     },
     data: {
+        // Database configuration
         DB_HOST: postgresqlHost,
         DB_PORT: "5432",
         DB_NAME: databaseName,
         DB_USER: postgresqlAdminUser,
+
+        // Environment configuration
         APP_ENV: "preview",
         PR_NUMBER: prNumber.toString(),
+
+        // URL configuration (legacy names - kept for compatibility)
         WEB_URL: webUrl,
         API_URL: apiUrl,
+
+        // APP_* prefixed variables (required by CORS middleware and application code)
+        APP_WEB_URL: webUrl,
+        APP_API_URL: apiUrl,
+        APP_COOKIE_DOMAIN: ".pr.aphiria.com",
+        APP_COOKIE_SECURE: "1",
+        APP_BUILDER_API: "\\Aphiria\\Framework\\Api\\SynchronousApiApplicationBuilder",
+        APP_BUILDER_CONSOLE: "\\Aphiria\\Framework\\Console\\ConsoleApplicationBuilder",
+        LOG_LEVEL: "debug",
     },
 }, { provider: k8sProvider });
 
@@ -268,6 +282,44 @@ const jsConfigMap = new k8s.core.v1.ConfigMap("js-config", {
       apiUri: '${apiUrl}',
       cookieDomain: '.pr.aphiria.com'
     }`,
+    },
+}, { provider: k8sProvider });
+
+// ============================================================================
+// nginx Configuration for API (nginx-config ConfigMap)
+// ============================================================================
+
+const nginxConfigMap = new k8s.core.v1.ConfigMap("nginx-config", {
+    metadata: {
+        name: "nginx-config",
+        namespace: namespace.metadata.name,
+        labels: commonLabels,
+    },
+    data: {
+        "default.conf": `server {
+    index index.php index.html;
+    error_log  /var/log/nginx/error.log;
+    access_log /var/log/nginx/access.log;
+    root /usr/share/nginx/html/public;
+    add_header X-Frame-Options "SAMEORIGIN";
+    add_header X-XSS-Protection "1; mode=block";
+    add_header X-Content-Type-Options "nosniff";
+
+    location / {
+        try_files $uri $uri/ /index.php$is_args$args;
+    }
+
+    location ~ \\.php$ {
+        fastcgi_split_path_info ^(.+\\.php)(/.+)$;
+        # Pass this through to the PHP image running in this pod on port 9000
+        fastcgi_pass 127.0.0.1:9000;
+        fastcgi_index index.php;
+        include fastcgi_params;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+        fastcgi_param PATH_INFO $fastcgi_path_info;
+        fastcgi_hide_header X-Powered-By;
+    }
+}`,
     },
 }, { provider: k8sProvider });
 
@@ -414,48 +466,89 @@ const apiDeployment = new k8s.apps.v1.Deployment("api", {
                         name: "ghcr-pull-secret",
                     },
                 ],
+                // Init container: copy PHP source code to shared volume
                 initContainers: [
                     {
-                        name: "db-migration",
+                        name: "copy-api-code",
                         image: `ghcr.io/aphiria/aphiria.com-api@${apiImageDigest}`,
-                        command: ["/bin/sh", "-c"],
-                        args: [
-                            "vendor/bin/phinx migrate && vendor/bin/phinx seed:run",
-                        ],
-                        envFrom: [
+                        command: ["sh", "-c", "cp -Rp /app/api/. /usr/share/nginx/html"],
+                        volumeMounts: [
                             {
-                                configMapRef: {
-                                    name: configMap.metadata.name,
-                                },
-                            },
-                            {
-                                secretRef: {
-                                    name: secret.metadata.name,
-                                },
+                                name: "api-code",
+                                mountPath: "/usr/share/nginx/html",
                             },
                         ],
                         resources: {
                             requests: {
-                                cpu: "200m",
-                                memory: "256Mi",
+                                cpu: "100m",
+                                memory: "128Mi",
                             },
                             limits: {
-                                cpu: "500m",
-                                memory: "512Mi",
+                                cpu: "200m",
+                                memory: "256Mi",
                             },
                         },
                     },
                 ],
                 containers: [
+                    // nginx container: serves HTTP on port 80, proxies PHP to FastCGI
                     {
-                        name: "api",
-                        image: `ghcr.io/aphiria/aphiria.com-api@${apiImageDigest}`,
+                        name: "nginx",
+                        image: "nginx:alpine",
                         ports: [
                             {
                                 containerPort: 80,
                                 name: "http",
                             },
                         ],
+                        volumeMounts: [
+                            {
+                                name: "api-code",
+                                mountPath: "/usr/share/nginx/html",
+                            },
+                            {
+                                name: "nginx-config",
+                                mountPath: "/etc/nginx/conf.d/default.conf",
+                                subPath: "default.conf",
+                            },
+                        ],
+                        livenessProbe: {
+                            httpGet: {
+                                path: "/health",
+                                port: 80,
+                            },
+                            initialDelaySeconds: 10,
+                            periodSeconds: 10,
+                        },
+                        readinessProbe: {
+                            httpGet: {
+                                path: "/health",
+                                port: 80,
+                            },
+                            initialDelaySeconds: 5,
+                            periodSeconds: 5,
+                        },
+                        resources: {
+                            requests: {
+                                cpu: "100m",
+                                memory: "128Mi",
+                            },
+                            limits: {
+                                cpu: "200m",
+                                memory: "256Mi",
+                            },
+                        },
+                    },
+                    // PHP-FPM container: runs PHP on port 9000 (FastCGI)
+                    {
+                        name: "php",
+                        image: `ghcr.io/aphiria/aphiria.com-api@${apiImageDigest}`,
+                        ports: [
+                            {
+                                containerPort: 9000,
+                                name: "fastcgi",
+                            },
+                        ],
                         envFrom: [
                             {
                                 configMapRef: {
@@ -466,6 +559,12 @@ const apiDeployment = new k8s.apps.v1.Deployment("api", {
                                 secretRef: {
                                     name: secret.metadata.name,
                                 },
+                            },
+                        ],
+                        volumeMounts: [
+                            {
+                                name: "api-code",
+                                mountPath: "/usr/share/nginx/html",
                             },
                         ],
                         resources: {
@@ -478,21 +577,23 @@ const apiDeployment = new k8s.apps.v1.Deployment("api", {
                                 memory: "2Gi",
                             },
                         },
-                        livenessProbe: {
-                            httpGet: {
-                                path: "/",
-                                port: 80,
-                            },
-                            initialDelaySeconds: 30,
-                            periodSeconds: 10,
-                        },
-                        readinessProbe: {
-                            httpGet: {
-                                path: "/",
-                                port: 80,
-                            },
-                            initialDelaySeconds: 10,
-                            periodSeconds: 5,
+                    },
+                ],
+                volumes: [
+                    {
+                        name: "api-code",
+                        emptyDir: {},
+                    },
+                    {
+                        name: "nginx-config",
+                        configMap: {
+                            name: nginxConfigMap.metadata.name,
+                            items: [
+                                {
+                                    key: "default.conf",
+                                    path: "default.conf",
+                                },
+                            ],
                         },
                     },
                 ],
@@ -542,7 +643,7 @@ const webHttpRoute = new k8s.apiextensions.CustomResource("web-httproute", {
             {
                 name: gatewayName,
                 namespace: gatewayNamespace,
-                sectionName: "https-subdomains",
+                sectionName: "https-subdomains-1", // Listener for *.pr.aphiria.com
             },
         ],
         hostnames: [`${prNumber}.pr.aphiria.com`],
@@ -584,7 +685,7 @@ const apiHttpRoute = new k8s.apiextensions.CustomResource("api-httproute", {
             {
                 name: gatewayName,
                 namespace: gatewayNamespace,
-                sectionName: "https-subdomains",
+                sectionName: "https-subdomains-2", // Listener for *.pr-api.aphiria.com
             },
         ],
         hostnames: [`${prNumber}.pr-api.aphiria.com`],
