@@ -804,7 +804,7 @@ Phase 8 (Migrate production to Pulumi + reusable workflows)
   - **Depends**: T052w (audit)
   - **Impact**: HIGH - inefficient, risky migration pattern
 
-- [ ] T052ab [US1] **CRITICAL HOTFIX**: Fix HTTPRoute parentRef namespace from hardcoded 'default' to stack output
+- [x] T052ab [US1] **CRITICAL HOTFIX**: Fix HTTPRoute parentRef namespace from hardcoded 'default' to stack output
   - **Why**: HTTPRoutes reference Gateway in wrong namespace (default instead of nginx-gateway), causing ZERO routes to attach to Gateway. This is why https://107.pr.aphiria.com is completely inaccessible despite DNS, pods, and services all being correct.
   - **Root Cause**: Hardcoded `namespace: "default"` in HTTPRoute parentRefs instead of using `baseStack.getOutput("gatewayNamespace")`
   - **Evidence**:
@@ -1656,6 +1656,308 @@ Can parallelize after M037 (production stack created):
 - **Group B**: M038-M044 (all component imports)
 - **Group C**: M030-M031 (shared base component refactor)
 - Must be sequential: M045-M049 (config → preview → import → deploy)
+
+---
+
+## Phase 9: Pulumi Stack Refactoring (REFACTOR)
+
+**Priority**: HIGH (Maintainability)
+**Status**: PLANNED (2025-12-24)
+**Detailed Plan**: See [pulumi-refactoring-plan.md](./pulumi-refactoring-plan.md)
+**Goal**: Reduce preview-pr.ts from 748 lines to ~150 lines by using existing component architecture
+
+### Context
+
+`preview-pr.ts` (748 lines) implements all resources inline instead of using the component architecture that local.ts (135 lines), preview-base.ts (147 lines), and production.ts (176 lines) use successfully. This creates maintainability issues, code duplication, and inconsistency.
+
+**Existing components** (already created and tested):
+- `createWebDeployment` (web-deployment.ts, 127 lines)
+- `createAPIDeployment` (api-deployment.ts, 242 lines)
+- `createHTTPRoute` (http-route.ts, 161 lines)
+- `createGateway` (gateway.ts, 285 lines)
+- `createPostgreSQL` (database.ts, 232 lines)
+- `createDBMigrationJob` (db-migration.ts, 86 lines)
+
+**Missing components** (need to create):
+- `createNamespace` (for ResourceQuota + NetworkPolicy + ImagePullSecret)
+- `configMapChecksum` utility (for forcing pod restarts on config changes)
+
+---
+
+- [ ] REFACTOR-01 **[REFACTOR]** Audit existing web-deployment component
+  - **Why**: Verify `createWebDeployment` supports all features currently in preview-pr.ts inline implementation
+  - **Files**: `components/web-deployment.ts`
+  - **Check**:
+    - ✅ Does it support checksum annotations? (for ConfigMap changes triggering restarts)
+    - ✅ Does it accept environment-specific ConfigMap data?
+    - ✅ Does it support custom resource limits?
+    - ✅ Does it create js-config ConfigMap automatically?
+  - **Actions**:
+    1. Read `web-deployment.ts` source
+    2. Compare against preview-pr.ts lines 294-468 (js-config + web Deployment + Service)
+    3. Document missing parameters if any
+    4. Add missing parameters if needed (environment labels, PR number, etc.)
+  - **Acceptance**: Component supports all preview-pr.ts web deployment features
+  - **Impact**: Required before refactoring preview-pr.ts web resources
+
+- [ ] REFACTOR-02 **[REFACTOR]** Audit existing API-deployment component
+  - **Why**: Verify `createAPIDeployment` supports all features currently in preview-pr.ts inline implementation
+  - **Files**: `components/api-deployment.ts`
+  - **Check**:
+    - ✅ Does it support checksum annotations? (for ConfigMap changes triggering restarts)
+    - ✅ Does it create nginx-config ConfigMap automatically?
+    - ✅ Does it support init containers for code copying?
+    - ✅ Does it support custom resource limits?
+  - **Actions**:
+    1. Read `api-deployment.ts` source
+    2. Compare against preview-pr.ts lines 312-642 (nginx-config + API Deployment + init containers + Service)
+    3. Document missing parameters if any
+    4. Add checksum annotation support if missing
+  - **Acceptance**: Component supports all preview-pr.ts API deployment features
+  - **Impact**: Required before refactoring preview-pr.ts API resources
+  - **Depends**: REFACTOR-01 (similar audit pattern)
+
+- [ ] REFACTOR-03 **[REFACTOR]** Create namespace component
+  - **Why**: Namespace setup (ResourceQuota + NetworkPolicy + ImagePullSecret) is repeated pattern across preview environments
+  - **Files**: `components/namespace.ts` (new), `components/types.ts` (update)
+  - **Replaces**: Lines 70-191 in preview-pr.ts (namespace, ResourceQuota, NetworkPolicy, ImagePullSecret)
+  - **Implementation**:
+    ```typescript
+    export interface NamespaceArgs {
+        name: string;
+        env: "local" | "preview" | "production";
+        resourceQuota?: { cpu: string; memory: string; pods: string; };
+        networkPolicy?: {
+            allowDNS: boolean;
+            allowHTTPS: boolean;
+            allowPostgreSQL?: { host: string; port: number; };
+        };
+        imagePullSecret?: {
+            registry: string;
+            username: pulumi.Input<string>;
+            token: pulumi.Input<string>;
+        };
+        labels?: Record<string, string>;
+        provider: k8s.Provider;
+    }
+
+    export interface NamespaceResult {
+        namespace: k8s.core.v1.Namespace;
+        resourceQuota?: k8s.core.v1.ResourceQuota;
+        networkPolicy?: k8s.networking.v1.NetworkPolicy;
+        imagePullSecret?: k8s.core.v1.Secret;
+    }
+
+    export function createNamespace(args: NamespaceArgs): NamespaceResult {
+        // Create namespace, optional ResourceQuota, NetworkPolicy, ImagePullSecret
+        // All child resources use parent: namespace for proper dependency tracking
+    }
+    ```
+  - **Testing**:
+    1. TypeScript compilation: `npm run build`
+    2. Create test stack using component
+    3. Verify ResourceQuota enforced
+    4. Verify NetworkPolicy rules applied
+    5. Verify ImagePullSecret works for GHCR
+  - **Acceptance**: Namespace component created, replaces lines 70-191 in preview-pr.ts
+  - **Impact**: Required for preview-pr.ts refactoring, reusable across preview-pr-* stacks
+  - **Depends**: REFACTOR-01, REFACTOR-02 (understand full pattern first)
+
+- [ ] REFACTOR-04 **[REFACTOR]** Create utilities file with checksum helper
+  - **Why**: ConfigMap checksum pattern should be reusable across all stacks (preview, local, production)
+  - **Files**: `components/utils.ts` (new)
+  - **Replaces**: Lines 6-16 in preview-pr.ts (configMapChecksum function)
+  - **Implementation**:
+    ```typescript
+    import * as pulumi from "@pulumi/pulumi";
+    import * as crypto from "crypto";
+
+    /**
+     * Calculate SHA256 checksum of ConfigMap data for pod template annotation.
+     * This forces pod restarts when ConfigMap data changes.
+     *
+     * @param data ConfigMap data object
+     * @returns SHA256 hex digest
+     */
+    export function configMapChecksum(data: Record<string, pulumi.Input<string>>): string {
+        const serialized = JSON.stringify(data, Object.keys(data).sort());
+        return crypto.createHash("sha256").update(serialized).digest("hex");
+    }
+    ```
+  - **Testing**:
+    1. Import in preview-pr.ts: `import { configMapChecksum } from "../components";`
+    2. Calculate checksum for ConfigMap
+    3. Verify hash matches original implementation
+  - **Acceptance**: Checksum helper extracted to reusable utility, imported from components/index.ts
+  - **Impact**: Enables checksum pattern across all stacks, simplifies preview-pr.ts
+
+- [ ] REFACTOR-05 **[REFACTOR]** Update components/index.ts exports
+  - **Why**: New components must be exported for use in stack files
+  - **Files**: `components/index.ts`
+  - **Actions**:
+    1. Add `export * from "./namespace";`
+    2. Add `export * from "./utils";`
+    3. Verify TypeScript compilation: `npm run build`
+  - **Acceptance**: All new components exported, TypeScript compiles successfully
+  - **Impact**: Required for REFACTOR-06 (preview-pr.ts can import new components)
+  - **Depends**: REFACTOR-03, REFACTOR-04 (components must exist first)
+
+- [ ] REFACTOR-06 **[REFACTOR]** Refactor preview-pr.ts to use components
+  - **Why**: Reduce preview-pr.ts from 748 lines to ~150 lines, eliminate code duplication, improve maintainability
+  - **Files**: `stacks/preview-pr.ts`
+  - **Strategy**: Follow local.ts pattern (135 lines, component-based)
+  - **Changes**:
+    1. **Import components** (line 5):
+       ```typescript
+       import {
+           createNamespace,
+           createWebDeployment,
+           createAPIDeployment,
+           createHTTPRoute,
+           configMapChecksum,
+       } from "../components";
+       ```
+    2. **Replace namespace setup** (lines 70-191) with `createNamespace` call
+    3. **Replace web deployment** (lines 294-468) with `createWebDeployment` call
+    4. **Replace API deployment** (lines 312-642) with `createAPIDeployment` call
+    5. **Replace HTTP routes** (lines 645-747) with `createHTTPRoute` calls
+    6. **Keep inline** (environment-specific resources):
+       - ConfigMaps (preview-config with PR-specific data)
+       - Secrets (preview-secret with DB credentials)
+       - DB init Job (per-PR database creation)
+  - **Testing**:
+    1. TypeScript compilation: `cd infrastructure/pulumi && npm run build`
+    2. Stack validation: `pulumi preview --stack preview-pr-107`
+    3. Deployment test: `pulumi up --stack preview-pr-107 --yes`
+    4. Functional tests:
+       - Access web URL: `https://107.pr.aphiria.com`
+       - Access API URL: `https://107.pr-api.aphiria.com`
+       - Verify CORS headers
+       - Verify database connectivity
+    5. ConfigMap checksum test:
+       - Change LOG_LEVEL in preview-pr.ts
+       - Run `pulumi up`
+       - Verify pods restart automatically
+       - Verify new config loaded: `kubectl exec -n preview-pr-107 deployment/api -c php -- env | grep LOG_LEVEL`
+  - **Acceptance Criteria**:
+    - preview-pr.ts reduced to ~150 lines (80% reduction from 748)
+    - All functionality preserved (no regressions)
+    - All tests pass
+    - Deployment time unchanged or faster
+  - **Impact**: CRITICAL - Main refactoring work, eliminates 598 lines of duplicated code
+  - **Depends**: REFACTOR-01, REFACTOR-02, REFACTOR-03, REFACTOR-04, REFACTOR-05
+
+- [ ] REFACTOR-07 **[REFACTOR]** Update local.ts to use checksum utility (optional)
+  - **Why**: Consistency across all stacks, reuse checksum pattern
+  - **Files**: `stacks/local.ts`
+  - **Actions**:
+    1. Import `configMapChecksum` from components
+    2. Apply checksum annotations to web/API deployments if not already present
+  - **Acceptance**: Local stack uses same checksum pattern as preview-pr
+  - **Impact**: OPTIONAL - Improves local development experience (config changes auto-reload)
+  - **Depends**: REFACTOR-06 (verify pattern works in preview first)
+
+---
+
+### Refactoring Dependencies
+
+```
+REFACTOR-01 (audit web component)
+    ↓
+REFACTOR-02 (audit API component)
+    ↓
+REFACTOR-03 (create namespace component)
+    ↓
+REFACTOR-04 (create utils with checksum)
+    ↓
+REFACTOR-05 (update exports)
+    ↓
+REFACTOR-06 (refactor preview-pr.ts) ← MAIN TASK
+    ↓
+REFACTOR-07 (optional: update local.ts)
+```
+
+**Parallel Opportunities**:
+- REFACTOR-01 and REFACTOR-02 can run in parallel (independent audits)
+- REFACTOR-03 and REFACTOR-04 can run in parallel (create different files)
+
+---
+
+## Phase 10: CI/CD Hotfixes (CICD-HOTFIX)
+
+**Priority**: CRITICAL (Blocking deployments)
+**Status**: ACTIVE (2025-12-24)
+**Root Cause**: API pods cannot be created - db-migration init container missing resource limits
+
+### Context
+
+CI/CD run failed with exit code 124 (timeout) at https://github.com/aphiria/aphiria.com/actions/runs/20490492943/job/58881711973.
+
+**Actual Problem** (discovered via kubectl investigation):
+```
+Error creating: pods "api-5dfcb7694-xxxxx" is forbidden:
+failed quota: preview-quota: must specify limits.cpu for: db-migration;
+limits.memory for: db-migration; requests.cpu for: db-migration;
+requests.memory for: db-migration
+```
+
+**Root Cause**: The API Deployment has a `db-migration` init container that is missing resource requests/limits. When we increased the ResourceQuota (T052ak), it now enforces that ALL containers (including init containers) must specify resources, but the db-migration init container doesn't have them.
+
+**Why timeout occurred**: Pulumi waited 10 minutes for pods to become ready, but they were never created due to ResourceQuota violation. Kubernetes kept retrying pod creation and failing silently.
+
+**Evidence**:
+- ReplicaSet shows: `0 current / 1 desired` (no pods created)
+- Events show repeated: `FailedCreate` with ResourceQuota error
+- API deployment is stuck: `READY: 0/1`, `UP-TO-DATE: 0`, `AVAILABLE: 0`
+- Web deployment works fine (no init containers with missing resources)
+
+---
+
+- [x] CICD-HOTFIX-01 **[CICD]** Fix ResourceQuota violation in master branch (2025-12-24)
+  - **Why**: CI/CD deployments fail because master branch code violates ResourceQuota
+  - **Root Cause**: CI/CD ran from master branch (commit 3d2fbc8) which has `db-migration` init container WITHOUT resource specifications
+  - **Error**: `failed quota: preview-quota: must specify limits.cpu for: db-migration; limits.memory for: db-migration`
+  - **Branch Analysis**:
+    - **Master branch** (3d2fbc8): Has `db-migration` init container WITHOUT resource limits → VIOLATES ResourceQuota
+    - **001-ephemeral-environments branch** (6d55f60): Has `copy-api-code` init container WITH resource limits → WORKS
+    - **Local deploys worked** because they ran from 001-ephemeral-environments branch
+  - **Solution**: Deploy from 001-ephemeral-environments branch instead of master, OR merge 001-ephemeral-environments to master first
+  - **Recommendation**: Merge feature branch to master once refactoring complete, ensuring CI/CD uses latest code with proper resource specifications
+  - **Acceptance**: This is a branch mismatch issue, not a code fix needed in current branch. Current branch (001-ephemeral-environments) already has correct code with `copy-api-code` init container including resource limits.
+
+---
+
+- [x] CICD-HOTFIX-02 **[CICD]** Fix kubectl wait timeout for Job pods (2025-12-24)
+  - **Why**: Every deployment waits 5 minutes before reporting success, making it impossible to know if deployment actually succeeded
+  - **Root Cause**: `kubectl wait --for=condition=Ready pods --all` includes completed Job pods (db-init) which never reach "Ready" state
+  - **Error**: "Some pods did not become ready within timeout" warning after 5-minute delay on EVERY deployment
+  - **File**: `.github/workflows/deploy-preview.yml` (lines 607-621)
+  - **Fix Applied**: Changed from `--all` to label selector `app in (web,api)` to exclude Job pods
+  - **Before**:
+    ```bash
+    kubectl wait --for=condition=Ready pods --all \
+      --namespace="${NAMESPACE}" \
+      --timeout=300s
+    ```
+  - **After**:
+    ```bash
+    kubectl wait --for=condition=Ready pods \
+      -l 'app in (web,api)' \
+      --namespace="${NAMESPACE}" \
+      --timeout=300s
+    ```
+  - **Impact**: Eliminates 5-minute delay on every deployment, provides fast feedback on actual deployment success/failure
+  - **Acceptance**: ✅ Only Deployment pods (web, api) checked for readiness, Job pods (db-init) excluded
+  - **Next**: Test on next PR deployment to verify <30 second completion time
+
+---
+
+### CI/CD Hotfix Dependencies
+
+```
+CICD-HOTFIX-01 (branch mismatch) ← RESOLVED - No code fix needed
+CICD-HOTFIX-02 (kubectl wait) ← HIGH PRIORITY - Fix immediately (5min delay per deployment)
+```
 
 ---
 

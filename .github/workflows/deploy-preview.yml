@@ -609,13 +609,14 @@ jobs:
           PR_NUMBER=${{ steps.pr.outputs.number }}
           NAMESPACE="preview-pr-${PR_NUMBER}"
 
-          echo "Waiting for pods in namespace ${NAMESPACE}..."
+          echo "Waiting for deployment pods in namespace ${NAMESPACE}..."
 
-          # Wait up to 5 minutes for all pods to be ready
-          kubectl wait --for=condition=Ready pods --all \
+          # Wait up to 5 minutes for deployment pods to be ready (excludes Jobs like db-init)
+          kubectl wait --for=condition=Ready pods \
+            -l 'app in (web,api)' \
             --namespace="${NAMESPACE}" \
             --timeout=300s || {
-              echo "::warning::Some pods did not become ready within timeout"
+              echo "::warning::Some deployment pods did not become ready within timeout"
               kubectl get pods -n "${NAMESPACE}"
             }
 
