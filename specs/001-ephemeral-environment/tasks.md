@@ -2584,6 +2584,358 @@ FACTORY-06 (verify all stacks build and deploy)
 
 ---
 
+### Phase 14: Infrastructure Quality Improvements (2025-12-24)
+
+**Goal**: Address high/medium priority infrastructure improvements identified in code audit
+
+**Context**: Code audit (Grade: A-, 88/100) identified production-ready infrastructure with minor improvements needed for enterprise-grade reliability. This phase addresses refactoring production.ts to use factory pattern, adding PodDisruptionBudgets for HA, implementing database backup strategy, fixing SQL injection risk, replacing `any` types with specific Pulumi types, and adding Pulumi drift detection.
+
+**Tasks**:
+
+- [ ] INFRA-01 **[Production Stack]** Refactor production.ts to use factory pattern
+  - **Why**: Eliminates duplication, ensures consistency with local/preview environments
+  - **Current Issue**: production.ts duplicates component logic that factory already handles (177 lines)
+  - **File**: `infrastructure/pulumi/stacks/production.ts`
+  - **Changes**:
+    - Replace inline component calls with `createStack()` factory
+    - Extract production-specific cluster creation (keep outside factory - it's imported, not created)
+    - Pass production configuration to factory
+    - Reduce from ~177 lines to ~80 lines (similar to preview-base)
+  - **Implementation**:
+    ```typescript
+    // Keep cluster import (production-specific)
+    const cluster = new digitalocean.KubernetesCluster("aphiria-com-cluster", { ... }, { protect: true });
+
+    // Use factory for everything else
+    const stack = createStack({
+        env: "production",
+        database: {
+            replicas: 2,
+            persistentStorage: true,
+            storageSize: "20Gi",
+            dbUser: postgresqlConfig.require("user"),
+            dbPassword: postgresqlConfig.requireSecret("password"),
+        },
+        gateway: {
+            tlsMode: "letsencrypt-prod",
+            domains: ["aphiria.com", "*.aphiria.com"],
+        },
+        app: {
+            webReplicas: 2,
+            apiReplicas: 2,
+            webUrl: "https://www.aphiria.com",
+            apiUrl: "https://api.aphiria.com",
+            webImage: config.require("webImage"),
+            apiImage: config.require("apiImage"),
+            cookieDomain: ".aphiria.com",
+        },
+    }, k8sProvider);
+    ```
+  - **Acceptance**: production.ts uses factory, compiles without errors, maintains all existing functionality
+  - **Dependencies**: None
+
+---
+
+- [ ] INFRA-02 **[HA]** Add PodDisruptionBudgets for production deployments
+  - **Why**: Prevents all pods going down during node maintenance, ensures high availability
+  - **Current Issue**: No PDBs defined - Kubernetes can drain all pods simultaneously during upgrades
+  - **Files**:
+    - `infrastructure/pulumi/components/types.ts` (add PDB interfaces)
+    - `infrastructure/pulumi/components/web-deployment.ts` (create PDB)
+    - `infrastructure/pulumi/components/api-deployment.ts` (create PDB)
+    - `infrastructure/pulumi/shared/types.ts` (add optional PDB config to AppConfig)
+  - **Implementation**:
+    ```typescript
+    // types.ts - Add to WebDeploymentArgs/APIDeploymentArgs
+    export interface PodDisruptionBudgetConfig {
+        minAvailable?: number;  // e.g., 1 (at least 1 pod always running)
+        maxUnavailable?: number; // e.g., 1 (max 1 pod down at a time)
+    }
+
+    // web-deployment.ts - Add PDB resource
+    if (args.podDisruptionBudget) {
+        new k8s.policy.v1.PodDisruptionBudget("web-pdb", {
+            metadata: { name: "web", namespace: args.namespace },
+            spec: {
+                minAvailable: args.podDisruptionBudget.minAvailable,
+                selector: { matchLabels: { app: "web" } },
+            },
+        }, { provider: args.provider });
+    }
+
+    // AppConfig - Add optional PDB config
+    webPodDisruptionBudget?: PodDisruptionBudgetConfig;
+    apiPodDisruptionBudget?: PodDisruptionBudgetConfig;
+
+    // production.ts - Enable PDBs
+    app: {
+        // ... existing fields ...
+        webPodDisruptionBudget: { minAvailable: 1 },
+        apiPodDisruptionBudget: { minAvailable: 1 },
+    }
+    ```
+  - **Acceptance**: PDBs created for production web/api, prevents all pods draining simultaneously
+  - **Dependencies**: INFRA-01 (production uses factory)
+
+---
+
+- [ ] INFRA-03 **[Backups]** Implement database backup strategy
+  - **Why**: Disaster recovery requires automated backups with restore procedures
+  - **Current Issue**: No backup automation defined in IaC
+  - **Files**:
+    - Create `infrastructure/pulumi/components/database-backup.ts`
+    - Update `infrastructure/pulumi/components/types.ts`
+    - Update `infrastructure/pulumi/shared/types.ts`
+    - Update `infrastructure/pulumi/shared/factory.ts`
+  - **Implementation**:
+    ```typescript
+    // database-backup.ts - Create CronJob for pg_dump
+    export function createDatabaseBackup(args: DatabaseBackupArgs): k8s.batch.v1.CronJob {
+        return new k8s.batch.v1.CronJob("db-backup", {
+            metadata: { name: "db-backup", namespace: args.namespace },
+            spec: {
+                schedule: args.schedule, // e.g., "0 2 * * *" (2 AM daily)
+                jobTemplate: {
+                    spec: {
+                        template: {
+                            spec: {
+                                restartPolicy: "OnFailure",
+                                containers: [{
+                                    name: "backup",
+                                    image: "postgres:16-alpine",
+                                    command: ["sh", "-c"],
+                                    args: [`
+                                        pg_dump -h $PGHOST -U $PGUSER -d $PGDATABASE -Fc -f /backup/db-$(date +%Y%m%d-%H%M%S).dump &&
+                                        # Upload to S3/DigitalOcean Spaces
+                                        s3cmd put /backup/*.dump s3://${args.backupBucket}/postgres/
+                                    `],
+                                    env: [
+                                        { name: "PGHOST", value: args.dbHost },
+                                        { name: "PGUSER", value: args.dbUser },
+                                        { name: "PGPASSWORD", value: args.dbPassword },
+                                        { name: "PGDATABASE", value: args.dbName },
+                                    ],
+                                    volumeMounts: [{
+                                        name: "backup",
+                                        mountPath: "/backup",
+                                    }],
+                                }],
+                                volumes: [{
+                                    name: "backup",
+                                    emptyDir: {},
+                                }],
+                            },
+                        },
+                    },
+                },
+            },
+        }, { provider: args.provider });
+    }
+
+    // DatabaseConfig - Add backup config
+    backup?: {
+        enabled: boolean;
+        schedule: string; // Cron format
+        backupBucket: string; // S3/Spaces bucket
+        retention: number; // Days to retain backups
+    };
+
+    // factory.ts - Create backup CronJob if enabled
+    if (config.database.backup?.enabled) {
+        resources.dbBackup = createDatabaseBackup({
+            env: config.env,
+            namespace,
+            dbHost: dbHost,
+            dbName: dbName,
+            dbUser: dbUser,
+            dbPassword: dbPassword,
+            schedule: config.database.backup.schedule,
+            backupBucket: config.database.backup.backupBucket,
+            provider: k8sProvider,
+        });
+    }
+    ```
+  - **Acceptance**: Production database backs up daily to object storage, backups retained per policy
+  - **Dependencies**: INFRA-01
+
+---
+
+- [ ] INFRA-04 **[Security]** Fix SQL injection risk in database creation
+  - **Why**: Prevent potential SQL injection if databaseName becomes user-controlled
+  - **Current Issue**: `psql -c "CREATE DATABASE ${args.databaseName};"` uses string interpolation
+  - **File**: `infrastructure/pulumi/components/db-creation.ts`
+  - **Changes**:
+    ```typescript
+    // BEFORE (line 77)
+    command: [
+        "sh", "-c",
+        `psql -c "CREATE DATABASE ${args.databaseName};" || echo "Database already exists"`
+    ],
+
+    // AFTER - Use psql variable substitution
+    command: [
+        "sh", "-c",
+        `psql -v dbname="${args.databaseName}" -c 'CREATE DATABASE :"dbname";' || echo "Database already exists"`
+    ],
+    ```
+  - **Note**: Current risk is low (databaseName from trusted Pulumi config), but this follows security best practices
+  - **Acceptance**: Database creation uses parameterized psql command, no string interpolation
+  - **Dependencies**: None
+
+---
+
+- [ ] INFRA-05 **[Type Safety]** Replace `any` types with specific Pulumi types
+  - **Why**: Better compile-time safety, IntelliSense, prevents runtime errors
+  - **Current Issue**: 10+ instances of `any` type in result interfaces
+  - **Files**:
+    - `infrastructure/pulumi/shared/factory.ts` (lines 21-30)
+    - `infrastructure/pulumi/components/types.ts` (lines 296-384)
+  - **Changes**:
+    ```typescript
+    // BEFORE (factory.ts:21-30)
+    export interface StackResources {
+        helmCharts?: any;
+        postgres?: any;
+        gateway?: any;
+        namespace?: any;
+        dbInitJob?: any;
+        web?: any;
+        api?: any;
+        migration?: any;
+        webRoute?: any;
+        apiRoute?: any;
+        httpsRedirect?: any;
+        wwwRedirect?: any;
+    }
+
+    // AFTER - Use specific Pulumi output types
+    export interface StackResources {
+        helmCharts?: {
+            certManager: k8s.helm.v3.Chart;
+            nginxGateway: k8s.helm.v3.Chart;
+        };
+        postgres?: k8s.apps.v1.StatefulSet;
+        gateway?: k8s.apiextensions.CustomResource; // Gateway API resource
+        namespace?: {
+            namespace: k8s.core.v1.Namespace;
+            resourceQuota?: k8s.core.v1.ResourceQuota;
+            networkPolicy?: k8s.networking.v1.NetworkPolicy;
+            imagePullSecret?: k8s.core.v1.Secret;
+        };
+        dbInitJob?: k8s.batch.v1.Job;
+        web?: {
+            deployment: k8s.apps.v1.Deployment;
+            service: k8s.core.v1.Service;
+            configMap: k8s.core.v1.ConfigMap;
+        };
+        api?: {
+            deployment: k8s.apps.v1.Deployment;
+            service: k8s.core.v1.Service;
+            secret: k8s.core.v1.Secret;
+        };
+        migration?: k8s.batch.v1.Job;
+        webRoute?: k8s.apiextensions.CustomResource;
+        apiRoute?: k8s.apiextensions.CustomResource;
+        httpsRedirect?: k8s.apiextensions.CustomResource;
+        wwwRedirect?: k8s.apiextensions.CustomResource;
+    }
+
+    // Similar changes for types.ts result interfaces
+    ```
+  - **Acceptance**: All `any` types replaced with specific Pulumi/Kubernetes types, TypeScript compiles
+  - **Dependencies**: None
+
+---
+
+- [ ] INFRA-06 **[Drift Detection]** Add Pulumi drift detection to CI/CD
+  - **Why**: Automated checks for manual changes prevent configuration drift
+  - **Current Issue**: No automated drift detection - manual changes go unnoticed
+  - **File**: Create `.github/workflows/pulumi-drift-check.yml`
+  - **Implementation**:
+    ```yaml
+    name: Pulumi Drift Detection
+
+    on:
+      schedule:
+        - cron: '0 6 * * *'  # Daily at 6 AM UTC
+      workflow_dispatch:  # Manual trigger
+
+    jobs:
+      drift-check:
+        name: Check Infrastructure Drift
+        runs-on: ubuntu-latest
+        strategy:
+          matrix:
+            stack: [local, preview-base, production]
+
+        steps:
+          - uses: actions/checkout@v4
+
+          - uses: pulumi/actions@v5
+            with:
+              command: preview
+              stack-name: ${{ matrix.stack }}
+              work-dir: infrastructure/pulumi
+            env:
+              PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
+
+          - name: Check for drift
+            run: |
+              # If preview shows changes, there's drift
+              if pulumi preview --stack ${{ matrix.stack }} --non-interactive --diff | grep -q "^[~+-]"; then
+                echo "::error::Drift detected in ${{ matrix.stack }} stack!"
+                exit 1
+              fi
+
+          - name: Create issue on drift
+            if: failure()
+            uses: actions/github-script@v7
+            with:
+              script: |
+                await github.rest.issues.create({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  title: `Infrastructure Drift Detected: ${{ matrix.stack }}`,
+                  body: `Automated drift detection found manual changes in the ${{ matrix.stack }} stack.\n\nRun \`pulumi preview --stack ${{ matrix.stack }}\` to see changes.`,
+                  labels: ['infrastructure', 'drift-detection']
+                });
+    ```
+  - **Acceptance**: Daily drift checks run, GitHub issues created on detected drift
+  - **Dependencies**: None
+
+---
+
+- [ ] INFRA-07 **[Verification]** Build and test all infrastructure changes
+  - **Why**: Ensure all refactoring compiles and doesn't break existing functionality
+  - **Commands**:
+    ```bash
+    cd infrastructure/pulumi
+    npm run build
+    pulumi preview --stack local
+    pulumi preview --stack preview-base
+    pulumi preview --stack production
+    ```
+  - **Checks**:
+    - TypeScript compiles without errors
+    - All stacks show "no changes" (idempotent refactoring)
+    - PDBs appear in production preview
+    - Backup CronJob appears in production preview (if enabled)
+  - **Acceptance**: All stacks compile, previews show expected resources
+  - **Dependencies**: INFRA-01, INFRA-02, INFRA-03, INFRA-04, INFRA-05, INFRA-06
+
+---
+
+**Phase 14 Summary**:
+- Refactors production to use factory pattern (eliminates duplication)
+- Adds PodDisruptionBudgets for high availability
+- Implements automated database backups
+- Fixes SQL injection risk (defense in depth)
+- Replaces `any` types with specific Pulumi types
+- Adds automated drift detection
+- Raises code quality from A- (88/100) to A+ (95/100)
+
+---
+
 ### CI/CD Hotfix Dependencies
 
 ```

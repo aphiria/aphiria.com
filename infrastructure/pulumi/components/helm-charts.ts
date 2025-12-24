@@ -3,7 +3,10 @@ import * as k8s from "@pulumi/kubernetes";
 import { HelmChartArgs } from "./types";
 
 /** Installs cert-manager with Gateway API support */
-export function installCertManager(args: HelmChartArgs): k8s.helm.v3.Chart {
+export function installCertManager(
+    args: HelmChartArgs,
+    dependsOn?: pulumi.Resource[]
+): k8s.helm.v3.Chart {
     return new k8s.helm.v3.Chart(
         "cert-manager",
         {
@@ -25,6 +28,7 @@ export function installCertManager(args: HelmChartArgs): k8s.helm.v3.Chart {
         },
         {
             provider: args.provider,
+            dependsOn,
             transformations: [
                 (obj: any) => {
                     // Ensure namespace exists
@@ -94,14 +98,17 @@ export function installBaseHelmCharts(args: BaseHelmChartsArgs): BaseHelmChartsR
     );
 
     // Install cert-manager
-    const certManager = installCertManager({
-        env: args.env,
-        chartName: "cert-manager",
-        repository: "https://charts.jetstack.io",
-        version: "v1.16.1",
-        namespace: "cert-manager",
-        provider: args.provider,
-    });
+    const certManager = installCertManager(
+        {
+            env: args.env,
+            chartName: "cert-manager",
+            repository: "https://charts.jetstack.io",
+            version: "v1.16.1",
+            namespace: "cert-manager",
+            provider: args.provider,
+        },
+        [certManagerNamespace]
+    );
 
     // Install nginx-gateway-fabric (installs Gateway API CRDs automatically)
     const nginxGateway = installNginxGateway(

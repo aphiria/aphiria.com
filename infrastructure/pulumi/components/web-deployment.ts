@@ -170,9 +170,29 @@ export function createWebDeployment(args: WebDeploymentArgs): WebDeploymentResul
         },
     }, { provider: args.provider });
 
+    // Create PodDisruptionBudget if configured (production HA)
+    let pdb: k8s.policy.v1.PodDisruptionBudget | undefined;
+    if (args.podDisruptionBudget) {
+        pdb = new k8s.policy.v1.PodDisruptionBudget("web-pdb", {
+            metadata: {
+                name: "web",
+                namespace: args.namespace,
+                labels,
+            },
+            spec: {
+                minAvailable: args.podDisruptionBudget.minAvailable,
+                maxUnavailable: args.podDisruptionBudget.maxUnavailable,
+                selector: {
+                    matchLabels: { app: "web" },
+                },
+            },
+        }, { provider: args.provider });
+    }
+
     return {
         deployment: deployment.metadata,
         service: service.metadata,
         configMap: configMap.metadata,
+        podDisruptionBudget: pdb?.metadata,
     };
 }

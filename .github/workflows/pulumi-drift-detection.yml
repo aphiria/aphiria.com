@@ -1,0 +1,109 @@
+name: Pulumi Drift Detection
+
+on:
+  schedule:
+    # Run daily at 3am UTC
+    - cron: '0 3 * * *'
+  workflow_dispatch: # Allow manual triggers
+
+jobs:
+  detect-drift:
+    name: Detect Infrastructure Drift
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        stack:
+          - production
+          - preview-base
+      fail-fast: false # Continue checking other stacks even if one fails
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: infrastructure/pulumi/package-lock.json
+
+      - name: Install dependencies
+        working-directory: infrastructure/pulumi
+        run: npm ci
+
+      - name: Build TypeScript
+        working-directory: infrastructure/pulumi
+        run: npm run build
+
+      - name: Configure Pulumi credentials
+        env:
+          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
+        run: pulumi login
+
+      - name: Select stack
+        working-directory: infrastructure/pulumi/stacks
+        run: pulumi stack select davidbyoung/aphiria-com-infrastructure/${{ matrix.stack }}
+
+      - name: Run drift detection (refresh)
+        id: refresh
+        working-directory: infrastructure/pulumi/stacks
+        env:
+          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
+          DIGITALOCEAN_TOKEN: ${{ secrets.DIGITALOCEAN_TOKEN }}
+        run: |
+          pulumi refresh --yes --diff > refresh-output.txt 2>&1 || true
+
+          if grep -q "Resources:" refresh-output.txt; then
+            echo "drift_detected=true" >> $GITHUB_OUTPUT
+          else
+            echo "drift_detected=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create GitHub issue for drift
+        if: steps.refresh.outputs.drift_detected == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const output = fs.readFileSync('infrastructure/pulumi/stacks/refresh-output.txt', 'utf8');
+
+            // Check if issue already exists
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              labels: ['infrastructure', 'drift-detection'],
+              state: 'open'
+            });
+
+            const existingIssue = issues.data.find(issue =>
+              issue.title.includes('${{ matrix.stack }}')
+            );
+
+            const issueBody = 'Infrastructure Drift Detected\n\n' +
+              'Stack: ${{ matrix.stack }}\n' +
+              'Detected: ' + new Date().toISOString() + '\n\n' +
+              'Drift Details:\n\n' +
+              output + '\n\n' +
+              'Action Required:\n' +
+              '1. Review the changes above\n' +
+              '2. Determine if this is expected or unexpected\n' +
+              '3. Run pulumi up to reconcile state if needed\n\n' +
+              'Workflow Run: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}';
+
+            if (existingIssue) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existingIssue.number,
+                body: 'New Drift Detected\n\n' + issueBody
+              });
+            } else {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: '[Drift Detection] Infrastructure drift in ${{ matrix.stack }} stack',
+                body: issueBody,
+                labels: ['infrastructure', 'drift-detection', 'needs-investigation']
+              });
+            }

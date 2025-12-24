@@ -1,4 +1,3 @@
-import * as pulumi from "@pulumi/pulumi";
 import * as k8s from "@pulumi/kubernetes";
 import { DBMigrationJobArgs } from "./types";
 
@@ -16,7 +15,7 @@ export function createDBMigrationJob(args: DBMigrationJobArgs): k8s.batch.v1.Job
         ? "/app/api/vendor/bin/phinx migrate && /app/api/vendor/bin/phinx seed:run"
         : "/app/api/vendor/bin/phinx migrate";
 
-    const job = new k8s.batch.v1.Job("db-migration", {
+    return new k8s.batch.v1.Job("db-migration", {
         metadata: {
             name: "db-migration",
             namespace: args.namespace,
@@ -81,6 +80,4 @@ export function createDBMigrationJob(args: DBMigrationJobArgs): k8s.batch.v1.Job
             },
         },
     }, { provider: args.provider });
-
-    return job;
 }

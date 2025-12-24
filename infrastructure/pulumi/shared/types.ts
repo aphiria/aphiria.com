@@ -34,8 +34,8 @@ export interface DatabaseConfig {
     replicas: number;
     /** Enable persistent storage (false for ephemeral dev, true for preview/production) */
     persistentStorage: boolean;
-    /** Storage size (e.g., "5Gi", "20Gi") - required if persistentStorage is true */
-    storageSize?: string;
+    /** Storage size (e.g., "5Gi", "20Gi") */
+    storageSize: string;
     /** Database username */
     dbUser: pulumi.Input<string>;
     /** Database password (sensitive) */
@@ -107,11 +107,15 @@ export interface AppConfig {
     /** API Docker image reference (tag or digest) */
     apiImage: string;
     /** Cookie domain for sessions (e.g., ".aphiria.com", ".pr.aphiria.com") */
-    cookieDomain?: string;
+    cookieDomain: string;
     /** Web container resource limits (optional - for cost control in preview/production) */
     webResources?: ResourceLimits;
     /** API container resource limits (optional - for cost control in preview/production) */
     apiResources?: APIResourceLimits;
+    /** Web PodDisruptionBudget (optional - production only) */
+    webPodDisruptionBudget?: { minAvailable?: number; maxUnavailable?: number; };
+    /** API PodDisruptionBudget (optional - production only) */
+    apiPodDisruptionBudget?: { minAvailable?: number; maxUnavailable?: number; };
 }
 
 /**

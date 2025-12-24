@@ -7,6 +7,17 @@ import * as k8s from "@pulumi/kubernetes";
 export type Environment = "local" | "preview" | "production";
 
 /**
+ * PodDisruptionBudget configuration for high availability
+ * Ensures minimum pod availability during voluntary disruptions (node drains, upgrades)
+ */
+export interface PodDisruptionBudgetConfig {
+    /** Minimum number of pods that must be available (e.g., 1) */
+    minAvailable?: number;
+    /** Maximum number of pods that can be unavailable (e.g., 1) */
+    maxUnavailable?: number;
+}
+
+/**
  * Common arguments shared across all deployment components
  */
 export interface CommonDeploymentArgs {
@@ -56,6 +67,8 @@ export interface WebDeploymentArgs extends CommonDeploymentArgs {
             memory?: string;
         };
     };
+    /** Optional PodDisruptionBudget for high availability (production only) */
+    podDisruptionBudget?: PodDisruptionBudgetConfig;
     /** @deprecated Component calculates checksum internally. ConfigMap checksum for pod annotations */
     configChecksum?: string;
     /** @deprecated Use envConfig instead. ConfigMap references to load as environment variables */
@@ -116,6 +129,8 @@ export interface APIDeploymentArgs extends CommonDeploymentArgs {
             limits?: { cpu?: string; memory?: string; };
         };
     };
+    /** Optional PodDisruptionBudget for high availability (production only) */
+    podDisruptionBudget?: PodDisruptionBudgetConfig;
     /** @deprecated Use envConfig instead. ConfigMap references to load as environment variables */
     configMapRefs?: pulumi.Input<string>[];
     /** @deprecated Use envConfig instead. Secret references to load as environment variables */
@@ -312,35 +327,37 @@ export interface NamespaceResult {
  * Return type for web deployment component
  */
 export interface WebDeploymentResult {
-    deployment: pulumi.Output<any>;
-    service: pulumi.Output<any>;
-    configMap: pulumi.Output<any>;
+    deployment: pulumi.Output<k8s.types.output.meta.v1.ObjectMeta>;
+    service: pulumi.Output<k8s.types.output.meta.v1.ObjectMeta>;
+    configMap: pulumi.Output<k8s.types.output.meta.v1.ObjectMeta>;
+    podDisruptionBudget?: pulumi.Output<k8s.types.output.meta.v1.ObjectMeta>;
 }
 
 /**
  * Return type for API deployment component
  */
 export interface APIDeploymentResult {
-    deployment: pulumi.Output<any>;
-    service: pulumi.Output<any>;
-    secret: pulumi.Output<any>;
+    deployment: pulumi.Output<k8s.types.output.meta.v1.ObjectMeta>;
+    service: pulumi.Output<k8s.types.output.meta.v1.ObjectMeta>;
+    secret: pulumi.Output<k8s.types.output.meta.v1.ObjectMeta>;
+    podDisruptionBudget?: pulumi.Output<k8s.types.output.meta.v1.ObjectMeta>;
 }
 
 /**
  * Return type for PostgreSQL component
  */
 export interface PostgreSQLResult {
-    deployment: pulumi.Output<any>;
-    service: pulumi.Output<any>;
-    pvc?: pulumi.Output<any>; // Only present if persistentStorage=true
+    deployment: pulumi.Output<k8s.types.output.meta.v1.ObjectMeta>;
+    service: pulumi.Output<k8s.types.output.meta.v1.ObjectMeta>;
+    pvc?: pulumi.Output<k8s.types.output.meta.v1.ObjectMeta>; // Only present if persistentStorage=true
 }
 
 /**
  * Return type for Gateway component
  */
 export interface GatewayResult {
-    gateway: pulumi.Output<any>;
-    certificate?: pulumi.Output<any>; // Only present for non-self-signed
+    gateway: pulumi.Output<string>;
+    certificate?: pulumi.Output<string>; // Only present for non-self-signed
 }
 
 /**

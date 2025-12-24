@@ -13,23 +13,30 @@ import {
     createWWWRedirectRoute,
 } from "../components";
 import { StackConfig } from "./types";
+import {
+    WebDeploymentResult,
+    APIDeploymentResult,
+    PostgreSQLResult,
+    GatewayResult,
+    NamespaceResult,
+} from "../components/types";
 
 /**
  * Stack resources returned by createStack factory
  */
 export interface StackResources {
-    helmCharts?: any;
-    postgres?: any;
-    gateway?: any;
-    namespace?: any;
-    dbInitJob?: any;
-    web?: any;
-    api?: any;
-    migration?: any;
-    webRoute?: any;
-    apiRoute?: any;
-    httpsRedirect?: any;
-    wwwRedirect?: any;
+    helmCharts?: { certManager: k8s.helm.v3.Chart; nginxGateway: k8s.helm.v3.Chart };
+    postgres?: PostgreSQLResult;
+    gateway?: GatewayResult;
+    namespace?: NamespaceResult;
+    dbInitJob?: k8s.batch.v1.Job;
+    web?: WebDeploymentResult;
+    api?: APIDeploymentResult;
+    migration?: k8s.batch.v1.Job;
+    webRoute?: k8s.apiextensions.CustomResource;
+    apiRoute?: k8s.apiextensions.CustomResource;
+    httpsRedirect?: k8s.apiextensions.CustomResource;
+    wwwRedirect?: k8s.apiextensions.CustomResource;
 }
 
 /**
@@ -58,7 +65,7 @@ export function createStack(config: StackConfig, k8sProvider: k8s.Provider): Sta
 
     // Determine namespace (default or custom)
     const namespace = config.namespace?.name || "default";
-    const gatewayNamespace = config.env === "local" ? "nginx-gateway" : "nginx-gateway";
+    const gatewayNamespace = "nginx-gateway";
 
     // Create custom namespace with ResourceQuota and NetworkPolicy (preview-pr only)
     if (config.namespace) {
@@ -140,7 +147,7 @@ export function createStack(config: StackConfig, k8sProvider: k8s.Provider): Sta
             image: config.app.webImage,
             jsConfigData: {
                 apiUri: config.app.apiUrl,
-                cookieDomain: config.app.cookieDomain || (config.env === "local" ? ".aphiria.com" : ".pr.aphiria.com"),
+                cookieDomain: config.app.cookieDomain,
             },
             baseUrl: config.app.webUrl,
             envConfig: config.env === "preview" && config.namespace ? {
@@ -150,6 +157,7 @@ export function createStack(config: StackConfig, k8sProvider: k8s.Provider): Sta
             } : undefined,
             imagePullSecrets: config.namespace?.imagePullSecret ? ["ghcr-pull-secret"] : undefined,
             resources: config.app.webResources,
+            podDisruptionBudget: config.app.webPodDisruptionBudget,
             provider: k8sProvider,
         });
 
@@ -168,11 +176,12 @@ export function createStack(config: StackConfig, k8sProvider: k8s.Provider): Sta
             envConfig: config.env === "preview" && config.namespace ? {
                 appEnv: "preview",
                 logLevel: "debug",
-                cookieDomain: config.app.cookieDomain || ".pr.aphiria.com",
+                cookieDomain: config.app.cookieDomain,
                 prNumber: config.namespace.name.replace("preview-pr-", ""),
             } : undefined,
             imagePullSecrets: config.namespace?.imagePullSecret ? ["ghcr-pull-secret"] : undefined,
             resources: config.app.apiResources,
+            podDisruptionBudget: config.app.apiPodDisruptionBudget,
             provider: k8sProvider,
         });
 

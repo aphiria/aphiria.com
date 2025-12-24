@@ -1,4 +1,3 @@
-import * as pulumi from "@pulumi/pulumi";
 import * as k8s from "@pulumi/kubernetes";
 import { DatabaseCreationJobArgs } from "./types";
 
@@ -74,7 +73,7 @@ export function createDatabaseCreationJob(args: DatabaseCreationJobArgs): k8s.ba
                             command: [
                                 "sh",
                                 "-c",
-                                `psql -c "CREATE DATABASE ${args.databaseName};" || echo "Database already exists (this is normal on re-runs)"`,
+                                `psql -v dbname="${args.databaseName}" -c 'CREATE DATABASE :"dbname";' || echo "Database already exists (this is normal on re-runs)"`,
                             ],
                             resources: DEFAULT_RESOURCES,
                         },

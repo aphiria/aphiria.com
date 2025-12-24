@@ -259,7 +259,7 @@ export function createAPIDeployment(args: APIDeploymentArgs): APIDeploymentResul
                 },
             },
         },
-    }, { provider: args.provider });
+    }, { provider: args.provider, dependsOn: [configMap, secret, nginxConfig] });
 
     // Create Service
     const service = new k8s.core.v1.Service("api", {
@@ -282,9 +282,29 @@ export function createAPIDeployment(args: APIDeploymentArgs): APIDeploymentResul
         },
     }, { provider: args.provider });
 
+    // Create PodDisruptionBudget if configured (production HA)
+    let pdb: k8s.policy.v1.PodDisruptionBudget | undefined;
+    if (args.podDisruptionBudget) {
+        pdb = new k8s.policy.v1.PodDisruptionBudget("api-pdb", {
+            metadata: {
+                name: "api",
+                namespace: args.namespace,
+                labels,
+            },
+            spec: {
+                minAvailable: args.podDisruptionBudget.minAvailable,
+                maxUnavailable: args.podDisruptionBudget.maxUnavailable,
+                selector: {
+                    matchLabels: { app: "api" },
+                },
+            },
+        }, { provider: args.provider });
+    }
+
     return {
         deployment: deployment.metadata,
         service: service.metadata,
         secret: secret.metadata,
+        podDisruptionBudget: pdb?.metadata,
     };
 }

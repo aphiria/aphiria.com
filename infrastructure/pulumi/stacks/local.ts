@@ -16,7 +16,7 @@ const k8sProvider = new k8s.Provider("minikube", {
 const postgresqlConfig = new pulumi.Config("postgresql");
 
 // Create all infrastructure using factory
-const stack = createStack({
+createStack({
     env: "local",
     database: {
         replicas: 1,

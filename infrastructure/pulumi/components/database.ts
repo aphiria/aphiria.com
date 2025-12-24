@@ -185,7 +185,10 @@ export function createPostgreSQL(args: PostgreSQLArgs): PostgreSQLResult {
                 },
             },
         },
-    }, { provider: args.provider });
+    }, {
+        provider: args.provider,
+        dependsOn: [secret, ...(pvc ? [pvc] : [])],
+    });
 
     // Create Service
     const service = new k8s.core.v1.Service("db", {
@@ -212,21 +215,4 @@ export function createPostgreSQL(args: PostgreSQLArgs): PostgreSQLResult {
         service: service.metadata,
         pvc: pvc ? pvc.metadata : undefined,
     };
-}
-
-/** Creates a logical database (placeholder - actual implementation in preview/production stacks using @pulumi/postgresql) */
-export interface CreateDatabaseArgs {
-    /** Database name (must be valid PostgreSQL identifier) */
-    name: string;
-    /** Database owner user (must already exist) */
-    owner: string;
-}
-
-// Note: Actual database creation will use the @pulumi/postgresql provider
-// in the preview/production stacks, not in shared components, since it requires
-// a live PostgreSQL connection. This function is a placeholder for documentation.
-export function createDatabase(args: CreateDatabaseArgs): pulumi.Output<string> {
-    // This will be implemented in preview/production stacks using @pulumi/postgresql.Database
-    // See: https://www.pulumi.com/registry/packages/postgresql/api-docs/database/
-    return pulumi.output(args.name);
 }

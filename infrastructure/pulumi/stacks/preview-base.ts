@@ -10,7 +10,7 @@ import * as k8s from "@pulumi/kubernetes";
 import { createKubernetesCluster } from "../components";
 import { createStack } from "../shared/factory";
 
-// Create dedicated preview Kubernetes cluster
+// Create a dedicated preview Kubernetes cluster
 const { cluster, kubeconfig: clusterKubeconfig } = createKubernetesCluster({
     name: "aphiria-com-preview-cluster",
     region: "nyc3",
@@ -23,7 +23,7 @@ const { cluster, kubeconfig: clusterKubeconfig } = createKubernetesCluster({
     vpcUuid: "976f980d-dc84-11e8-80bc-3cfdfea9fba1",
 });
 
-// Create Kubernetes provider using the cluster's kubeconfig
+// Create a Kubernetes provider using the cluster's kubeconfig
 const k8sProvider = new k8s.Provider("preview-k8s", {
     kubeconfig: clusterKubeconfig,
     enableServerSideApply: true,
@@ -37,7 +37,7 @@ const certmanagerConfig = new pulumi.Config("certmanager");
 const ghcrConfig = new pulumi.Config("ghcr");
 
 // Create base infrastructure using factory (no app deployment)
-const stack = createStack({
+createStack({
     env: "preview",
     database: {
         replicas: 1,
@@ -59,7 +59,7 @@ const stack = createStack({
 
 // Create imagePullSecret for GitHub Container Registry
 // Required for preview-pr stacks to pull private images from ghcr.io
-const imagePullSecret = new k8s.core.v1.Secret("ghcr-pull-secret", {
+new k8s.core.v1.Secret("ghcr-pull-secret", {
     metadata: {
         name: "ghcr-pull-secret",
         namespace: "default",
@@ -80,7 +80,7 @@ const gatewayService = k8s.core.v1.Service.get(
 const loadBalancerIp = gatewayService.status.loadBalancer.ingress[0].ip;
 
 // Create DNS wildcard records for preview environments
-const previewWebDns = new digitalocean.DnsRecord("preview-web-dns", {
+new digitalocean.DnsRecord("preview-web-dns", {
     domain: "aphiria.com",
     type: "A",
     name: "*.pr",
@@ -88,7 +88,7 @@ const previewWebDns = new digitalocean.DnsRecord("preview-web-dns", {
     ttl: 300,
 });
 
-const previewApiDns = new digitalocean.DnsRecord("preview-api-dns", {
+new digitalocean.DnsRecord("preview-api-dns", {
     domain: "aphiria.com",
     type: "A",
     name: "*.pr-api",

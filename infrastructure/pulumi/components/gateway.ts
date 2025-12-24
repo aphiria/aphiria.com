@@ -49,7 +49,7 @@ export function createGateway(args: GatewayArgs): GatewayResult {
 
     if (args.tlsMode === "self-signed") {
         // Create self-signed issuer and certificate for dev-local
-        const issuer = createSelfSignedIssuer(args.provider);
+        createSelfSignedIssuer(args.provider);
         certificate = createSelfSignedCert({
             namespace: args.namespace,
             domains: args.domains,

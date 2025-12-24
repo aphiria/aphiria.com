@@ -19,7 +19,7 @@ export function createHTTPRoute(args: HTTPRouteArgs): k8s.apiextensions.CustomRe
         annotations["nginx.org/rate-limit-burst"] = "20"; // Allow bursts up to 20 requests
     }
 
-    const httpRoute = new k8s.apiextensions.CustomResource(
+    return new k8s.apiextensions.CustomResource(
         args.name,
         {
             apiVersion: "gateway.networking.k8s.io/v1",
@@ -65,8 +65,6 @@ export function createHTTPRoute(args: HTTPRouteArgs): k8s.apiextensions.CustomRe
             provider: args.provider,
         }
     );
-
-    return httpRoute;
 }
 
 /** Creates HTTP → HTTPS redirect route */

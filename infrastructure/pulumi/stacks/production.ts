@@ -8,15 +8,7 @@
 import * as pulumi from "@pulumi/pulumi";
 import * as digitalocean from "@pulumi/digitalocean";
 import * as k8s from "@pulumi/kubernetes";
-import {
-    installBaseHelmCharts,
-    createPostgreSQL,
-    createGateway,
-    createWebDeployment,
-    createAPIDeployment,
-    createDBMigrationJob,
-    createHTTPRoute,
-} from "../components";
+import { createStack } from "../shared/factory";
 
 const config = new pulumi.Config();
 
@@ -55,107 +47,35 @@ const k8sProvider = new k8s.Provider("production-k8s", {
     kubeconfig: cluster.kubeConfigs[0].rawConfig,
 });
 
-// Install Helm charts (cert-manager, nginx-gateway-fabric)
-const helmCharts = installBaseHelmCharts({
-    env: "production",
-    provider: k8sProvider,
-});
-
-// Create PostgreSQL (2 replicas, cloud persistent storage)
+// Get configuration
 const postgresqlConfig = new pulumi.Config("postgresql");
-const postgres = createPostgreSQL({
-    env: "production",
-    namespace: "default",
-    replicas: 2,
-    persistentStorage: true,
-    storageSize: "20Gi",
-    dbUser: postgresqlConfig.require("user"),
-    dbPassword: postgresqlConfig.requireSecret("password"),
-    provider: k8sProvider,
-});
 
-// Create Gateway with Let's Encrypt production TLS
-const gateway = createGateway({
+// Create all infrastructure using factory
+createStack({
     env: "production",
-    namespace: "nginx-gateway",
-    name: "nginx-gateway",
-    tlsMode: "letsencrypt-prod",
-    domains: [
-        "aphiria.com",
-        "*.aphiria.com",
-    ],
-    provider: k8sProvider,
-});
-
-// Create web deployment
-const webImage = config.require("webImage");
-const web = createWebDeployment({
-    env: "production",
-    namespace: "default",
-    replicas: 2,
-    image: webImage,
-    jsConfigData: {
-        apiUri: "https://api.aphiria.com",
-        cookieDomain: ".aphiria.com",
+    database: {
+        replicas: 2,
+        persistentStorage: true,
+        storageSize: "20Gi",
+        dbUser: postgresqlConfig.require("user"),
+        dbPassword: postgresqlConfig.requireSecret("password"),
     },
-    baseUrl: "https://www.aphiria.com",
-    provider: k8sProvider,
-});
-
-// Create API deployment
-const apiImage = config.require("apiImage");
-const dbPassword = config.requireSecret("dbPassword");
-
-const api = createAPIDeployment({
-    env: "production",
-    namespace: "default",
-    replicas: 2,
-    image: apiImage,
-    dbHost: "db",
-    dbName: "aphiria",
-    dbUser: "aphiria",
-    dbPassword: dbPassword,
-    apiUrl: "https://api.aphiria.com",
-    webUrl: "https://www.aphiria.com",
-    provider: k8sProvider,
-});
-
-// Run database migrations and seeder
-const migration = createDBMigrationJob({
-    namespace: "default",
-    image: apiImage,
-    dbHost: "db",
-    dbName: "aphiria",
-    dbUser: "aphiria",
-    dbPassword: dbPassword,
-    runSeeder: true,
-    provider: k8sProvider,
-});
-
-// Create HTTP routes
-const webRoute = createHTTPRoute({
-    namespace: "default",
-    name: "web",
-    hostname: "www.aphiria.com",
-    serviceName: "web",
-    servicePort: 80,
-    gatewayName: "nginx-gateway",
-    gatewayNamespace: "nginx-gateway",
-    enableRateLimiting: true,
-    provider: k8sProvider,
-});
-
-const apiRoute = createHTTPRoute({
-    namespace: "default",
-    name: "api",
-    hostname: "api.aphiria.com",
-    serviceName: "api",
-    servicePort: 80,
-    gatewayName: "nginx-gateway",
-    gatewayNamespace: "nginx-gateway",
-    enableRateLimiting: true,
-    provider: k8sProvider,
-});
+    gateway: {
+        tlsMode: "letsencrypt-prod",
+        domains: ["aphiria.com", "*.aphiria.com"],
+    },
+    app: {
+        webReplicas: 2,
+        apiReplicas: 2,
+        webUrl: "https://www.aphiria.com",
+        apiUrl: "https://api.aphiria.com",
+        webImage: config.require("webImage"),
+        apiImage: config.require("apiImage"),
+        cookieDomain: ".aphiria.com",
+        webPodDisruptionBudget: { minAvailable: 1 },
+        apiPodDisruptionBudget: { minAvailable: 1 },
+    },
+}, k8sProvider);
 
 // Outputs
 export const clusterId = cluster.id;
