@@ -34,8 +34,8 @@ const stack = createStack({
         apiReplicas: 1,
         webUrl: "https://www.aphiria.com",
         apiUrl: "https://api.aphiria.com",
-        webImage: "davidbyoung/aphiria.com-web:latest",
-        apiImage: "davidbyoung/aphiria.com-api:latest",
+        webImage: "aphiria.com-web:latest",
+        apiImage: "aphiria.com-api:latest",
         cookieDomain: ".aphiria.com",
     },
 }, k8sProvider);
