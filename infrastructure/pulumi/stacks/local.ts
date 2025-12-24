@@ -1,133 +1,44 @@
-/** local stack: Minikube local development environment */
+/**
+ * Local Stack (Minikube local development environment)
+ * Stack name: local
+ */
 
 import * as pulumi from "@pulumi/pulumi";
 import * as k8s from "@pulumi/kubernetes";
-import {
-    installBaseHelmCharts,
-    createPostgreSQL,
-    createGateway,
-    createWebDeployment,
-    createAPIDeployment,
-    createDBMigrationJob,
-    createHTTPRoute,
-    createHTTPSRedirectRoute,
-    createWWWRedirectRoute,
-} from "../components";
+import { createStack } from "../shared/factory";
 
 // Minikube provider (default kubeconfig)
 const k8sProvider = new k8s.Provider("minikube", {
     context: "minikube",
 });
 
-// 1. Install Helm charts (cert-manager, nginx-gateway)
-const helmCharts = installBaseHelmCharts({
-    env: "local",
-    provider: k8sProvider,
-});
-
-// 2. Create PostgreSQL (1 replica, hostPath storage for Minikube)
+// Get PostgreSQL credentials from config
 const postgresqlConfig = new pulumi.Config("postgresql");
-const postgres = createPostgreSQL({
-    env: "local",
-    namespace: "default",
-    replicas: 1,
-    persistentStorage: true,
-    storageSize: "5Gi",
-    dbUser: postgresqlConfig.get("user") || "postgres",
-    dbPassword: postgresqlConfig.get("password") || "postgres",
-    provider: k8sProvider,
-});
 
-// 3. Create Gateway with self-signed TLS for Minikube
-const gateway = createGateway({
+// Create all infrastructure using factory
+const stack = createStack({
     env: "local",
-    namespace: "nginx-gateway",
-    name: "nginx-gateway",
-    tlsMode: "self-signed",
-    domains: ["aphiria.com", "*.aphiria.com"],
-    provider: k8sProvider,
-});
-
-// 4. Create web deployment (1 replica)
-const web = createWebDeployment({
-    env: "local",
-    namespace: "default",
-    replicas: 1,
-    image: "davidbyoung/aphiria.com-web:latest",
-    jsConfigData: {
-        apiUri: "https://api.aphiria.com",
+    database: {
+        replicas: 1,
+        persistentStorage: true,
+        storageSize: "5Gi",
+        dbUser: postgresqlConfig.get("user") || "postgres",
+        dbPassword: postgresqlConfig.get("password") || "postgres",
+    },
+    gateway: {
+        tlsMode: "self-signed",
+        domains: ["aphiria.com", "*.aphiria.com"],
+    },
+    app: {
+        webReplicas: 1,
+        apiReplicas: 1,
+        webUrl: "https://www.aphiria.com",
+        apiUrl: "https://api.aphiria.com",
+        webImage: "davidbyoung/aphiria.com-web:latest",
+        apiImage: "davidbyoung/aphiria.com-api:latest",
         cookieDomain: ".aphiria.com",
     },
-    baseUrl: "https://www.aphiria.com",
-    provider: k8sProvider,
-});
-
-// 5. Create API deployment (1 replica)
-const api = createAPIDeployment({
-    env: "local",
-    namespace: "default",
-    replicas: 1,
-    image: "davidbyoung/aphiria.com-api:latest",
-    dbHost: "db",
-    dbName: "postgres",
-    dbUser: "aphiria",
-    dbPassword: pulumi.secret("password"),
-    apiUrl: "https://api.aphiria.com",
-    webUrl: "https://www.aphiria.com",
-    provider: k8sProvider,
-});
-
-// 6. Run database migrations
-const migration = createDBMigrationJob({
-    env: "local",
-    namespace: "default",
-    image: "davidbyoung/aphiria.com-api:latest",
-    dbHost: "db",
-    dbName: "postgres",
-    dbUser: "aphiria",
-    dbPassword: pulumi.secret("password"),
-    runSeeder: true,
-    provider: k8sProvider,
-});
-
-// 7. Create HTTP routes
-const webRoute = createHTTPRoute({
-    namespace: "default",
-    name: "web",
-    hostname: "www.aphiria.com",
-    serviceName: "web",
-    servicePort: 80,
-    gatewayName: "nginx-gateway",
-    gatewayNamespace: "nginx-gateway",
-    provider: k8sProvider,
-});
-
-const apiRoute = createHTTPRoute({
-    namespace: "default",
-    name: "api",
-    hostname: "api.aphiria.com",
-    serviceName: "api",
-    servicePort: 80,
-    gatewayName: "nginx-gateway",
-    gatewayNamespace: "nginx-gateway",
-    provider: k8sProvider,
-});
-
-const httpsRedirect = createHTTPSRedirectRoute({
-    namespace: "nginx-gateway",
-    gatewayName: "nginx-gateway",
-    gatewayNamespace: "nginx-gateway",
-    provider: k8sProvider,
-});
-
-const wwwRedirect = createWWWRedirectRoute({
-    namespace: "nginx-gateway",
-    gatewayName: "nginx-gateway",
-    gatewayNamespace: "nginx-gateway",
-    rootDomain: "aphiria.com",
-    wwwDomain: "www.aphiria.com",
-    provider: k8sProvider,
-});
+}, k8sProvider);
 
 // Exports
 export const webUrl = "https://www.aphiria.com";

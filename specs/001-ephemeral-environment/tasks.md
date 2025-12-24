@@ -2147,6 +2147,282 @@ requests.memory for: db-migration
     - **Local deploys worked** because they ran from 001-ephemeral-environments branch
   - **Solution**: Deploy from 001-ephemeral-environments branch instead of master, OR merge 001-ephemeral-environments to master first
   - **Recommendation**: Merge feature branch to master once refactoring complete, ensuring CI/CD uses latest code with proper resource specifications
+
+---
+
+## Phase 12: Stack Factory Pattern (FACTORY)
+
+**Priority**: HIGH
+**Status**: PLANNED (2025-12-24)
+**Goal**: Eliminate duplication across local.ts, preview-base.ts, preview-pr.ts, and future production.ts by creating a single stack factory function
+
+### Context
+
+Currently, each stack file (local.ts, preview-base.ts, preview-pr.ts) manually creates similar infrastructure:
+- Helm charts installation
+- PostgreSQL database
+- Gateway with TLS
+- Web and API deployments
+- HTTPRoutes
+
+**Problem**: When adding a new component (e.g., Redis cache), we must manually update all 3+ stack files, leading to:
+- Code duplication
+- Maintenance burden
+- Risk of inconsistency between environments
+
+**Solution**: Create a **stack factory function** that encapsulates all infrastructure creation logic, with each stack file only providing environment-specific configuration.
+
+### Architecture
+
+```
+lib/stack-factory.ts
+  ├── StackConfig interface (type-safe configuration)
+  └── createStack(config) → all resources
+
+stacks/local.ts         → createStack({ env: "local", ... })
+stacks/preview-base.ts  → createStack({ env: "preview", ... })
+stacks/preview-pr.ts    → createStack({ env: "preview", ... })
+stacks/production.ts    → createStack({ env: "production", ... })
+```
+
+### Benefits
+
+1. **Single source of truth**: Add component once in factory, automatically available in all stacks
+2. **Type safety**: TypeScript ensures all stacks provide required configuration
+3. **DRY compliance**: Aligns with Constitution Principle VI (Infrastructure Reuse)
+4. **Maintainability**: Changes propagate automatically to all environments
+
+### Dependency Graph
+
+```
+FACTORY-01 (create StackConfig interface)
+    ↓
+FACTORY-02 (create stack factory function)
+    ↓
+FACTORY-03 (refactor local.ts to use factory)
+    ↓
+FACTORY-04 (refactor preview-base.ts to use factory)
+    ↓
+FACTORY-05 (refactor preview-pr.ts to use factory)
+    ↓
+FACTORY-06 (verify all stacks build and deploy)
+```
+
+---
+
+- [ ] FACTORY-01 **[Infra]** Create StackConfig interface and types
+  - **File**: `infrastructure/pulumi/lib/types.ts`
+  - **Why**: Define type-safe configuration structure for all environments
+  - **What**:
+    - Create `StackConfig` interface with all environment-specific parameters:
+      - `env: Environment` (local/preview/production)
+      - `cluster?: KubernetesClusterConfig` (optional for local - uses minikube)
+      - `database: DatabaseConfig` (replicas, storage, credentials)
+      - `gateway: GatewayConfig` (TLS mode, domains, DNS token)
+      - `app: AppConfig` (replicas, URLs, image refs)
+      - `namespace?: NamespaceConfig` (quota, network policy, image pull secrets)
+    - Create supporting interfaces:
+      - `KubernetesClusterConfig`: cluster name, region, node pool settings
+      - `DatabaseConfig`: replicas, persistentStorage, storageSize, credentials
+      - `GatewayConfig`: tlsMode, domains, dnsToken (optional)
+      - `AppConfig`: webReplicas, apiReplicas, webUrl, apiUrl, webImage, apiImage
+      - `NamespaceConfig`: name, resourceQuota, networkPolicy, imagePullSecret
+    - Document interface with JSDoc comments
+  - **Acceptance**:
+    - `lib/types.ts` exists with all config interfaces
+    - All required fields documented
+    - Optional fields clearly marked
+    - TypeScript compiles without errors
+  - **Dependencies**: None
+
+- [ ] FACTORY-02 **[Infra]** Create stack factory function
+  - **File**: `infrastructure/pulumi/lib/stack-factory.ts`
+  - **Why**: Centralize all infrastructure creation logic in one place
+  - **What**:
+    - Create `createStack(config: StackConfig, k8sProvider: k8s.Provider)` function
+    - Function creates all infrastructure resources based on config:
+      - Install Helm charts (cert-manager, nginx-gateway) if config.env !== "local"
+      - Create PostgreSQL database with config.database settings
+      - Create Gateway with config.gateway settings (including DNS token for wildcard certs)
+      - Create namespace with ResourceQuota and NetworkPolicy if config.namespace provided
+      - Create ImagePullSecret if config.namespace.imagePullSecret provided
+      - Create Web deployment with config.app.webReplicas, webUrl, webImage
+      - Create API deployment with config.app.apiReplicas, apiUrl, apiImage, database connection
+      - Create HTTPRoutes for web and API
+      - Create database migration job
+    - Return object with all created resources for exports
+    - Handle environment-specific logic:
+      - Skip Helm charts for local (already installed in minikube)
+      - Use different TLS modes per environment
+      - Conditionally create namespace (preview-pr needs it, others use "default")
+  - **Acceptance**:
+    - `lib/stack-factory.ts` exports `createStack` function
+    - Function accepts StackConfig and k8sProvider
+    - All components created with proper configuration
+    - Returns all resources for stack exports
+    - TypeScript compiles without errors
+  - **Dependencies**: FACTORY-01
+
+- [ ] FACTORY-03 **[Infra]** Refactor local.ts to use stack factory
+  - **File**: `infrastructure/pulumi/stacks/local.ts`
+  - **Why**: Eliminate duplication and validate factory pattern works for simplest case
+  - **What**:
+    - Import `createStack` from `../lib/stack-factory`
+    - Import `StackConfig` from `../lib/types`
+    - Replace all inline resource creation with single `createStack()` call
+    - Provide local-specific configuration:
+      ```typescript
+      const stackConfig: StackConfig = {
+          env: "local",
+          database: {
+              replicas: 1,
+              persistentStorage: true,
+              storageSize: "5Gi",
+              dbUser: "postgres",
+              dbPassword: pulumi.secret("postgres"),
+          },
+          gateway: {
+              tlsMode: "self-signed",
+              domains: ["aphiria.com", "*.aphiria.com"],
+          },
+          app: {
+              webReplicas: 1,
+              apiReplicas: 1,
+              webUrl: "https://www.aphiria.com",
+              apiUrl: "https://api.aphiria.com",
+              webImage: "davidbyoung/aphiria.com-web:latest",
+              apiImage: "davidbyoung/aphiria.com-api:latest",
+          },
+      };
+
+      const stack = createStack(stackConfig, k8sProvider);
+      ```
+    - Update exports to use `stack.*` resources
+    - Keep file under 50 lines (was 135 lines)
+  - **Acceptance**:
+    - local.ts uses stack factory
+    - File is <50 lines
+    - `pulumi preview` shows no changes (infrastructure identical)
+    - TypeScript compiles without errors
+  - **Dependencies**: FACTORY-02
+
+- [ ] FACTORY-04 **[Infra]** Refactor preview-base.ts to use stack factory
+  - **File**: `infrastructure/pulumi/stacks/preview-base.ts`
+  - **Why**: Validate factory handles cluster creation and complex base infrastructure
+  - **What**:
+    - Import `createStack` from `../lib/stack-factory`
+    - Create cluster using `createKubernetesCluster` component (keep this part)
+    - Replace infrastructure creation with `createStack()` call
+    - Provide preview-base-specific configuration:
+      ```typescript
+      const stackConfig: StackConfig = {
+          env: "preview",
+          database: {
+              replicas: 1,
+              persistentStorage: true,
+              storageSize: "20Gi",
+              dbUser: postgresqlConfig.require("user"),
+              dbPassword: postgresqlConfig.requireSecret("password"),
+          },
+          gateway: {
+              tlsMode: "letsencrypt-prod",
+              domains: ["*.pr.aphiria.com", "*.pr-api.aphiria.com"],
+              dnsToken: certmanagerConfig.requireSecret("digitaloceanDnsToken"),
+          },
+          // No app deployment in base stack
+      };
+      ```
+    - Keep DNS record creation (wildcard A records)
+    - Keep exports (cluster info, gateway info, postgresql connection)
+    - Target: <100 lines (was 148 lines)
+  - **Acceptance**:
+    - preview-base.ts uses stack factory
+    - File is <100 lines
+    - Cluster creation still works
+    - DNS records still created
+    - `pulumi preview` shows no changes
+    - TypeScript compiles without errors
+  - **Dependencies**: FACTORY-02
+
+- [ ] FACTORY-05 **[Infra]** Refactor preview-pr.ts to use stack factory
+  - **File**: `infrastructure/pulumi/stacks/preview-pr.ts`
+  - **Why**: Validate factory handles per-PR namespaces and database creation
+  - **What**:
+    - Import `createStack` from `../lib/stack-factory`
+    - Replace infrastructure creation with `createStack()` call
+    - Provide preview-pr-specific configuration:
+      ```typescript
+      const stackConfig: StackConfig = {
+          env: "preview",
+          namespace: {
+              name: `preview-pr-${prNumber}`,
+              resourceQuota: {
+                  cpu: "4",
+                  memory: "8Gi",
+                  pods: "5",
+              },
+              networkPolicy: {
+                  allowDNS: true,
+                  allowHTTPS: true,
+                  allowPostgreSQL: {
+                      host: "db.preview-base",
+                      port: 5432,
+                  },
+              },
+              imagePullSecret: {
+                  registry: "ghcr.io",
+                  username: ghcrUsername,
+                  token: ghcrToken,
+              },
+          },
+          database: {
+              createDatabase: true, // Use createDatabaseCreationJob component
+              databaseName: `aphiria_pr_${prNumber}`,
+              dbHost: postgresqlHost,
+              dbAdminUser: postgresqlAdminUser,
+              dbAdminPassword: postgresqlAdminPassword,
+          },
+          app: {
+              webReplicas: 1,
+              apiReplicas: 1,
+              webUrl: `https://${prNumber}.pr.aphiria.com`,
+              apiUrl: `https://${prNumber}.pr-api.aphiria.com`,
+              webImage: `ghcr.io/aphiria/aphiria.com-web@${webImageDigest}`,
+              apiImage: `ghcr.io/aphiria/aphiria.com-api@${apiImageDigest}`,
+          },
+      };
+      ```
+    - Keep stack reference to preview-base
+    - Keep configuration loading (PR number, image digests)
+    - Target: <100 lines (was 238 lines)
+  - **Acceptance**:
+    - preview-pr.ts uses stack factory
+    - File is <100 lines
+    - Per-PR namespace created
+    - Database creation job works
+    - `pulumi preview` shows no changes
+    - TypeScript compiles without errors
+  - **Dependencies**: FACTORY-02
+
+- [ ] FACTORY-06 **[Infra]** Verify all stacks build and deploy successfully
+  - **Files**: All stack files
+  - **Why**: Ensure factory pattern doesn't introduce regressions
+  - **What**:
+    - Run `npm run build` - must succeed with zero errors
+    - Run `pulumi preview` on local stack - must show "no changes"
+    - Run `pulumi preview` on preview-base stack - must show "no changes"
+    - Run `pulumi preview` on preview-pr stack - must show "no changes"
+    - Verify all TypeScript types are correct (no `any` types in stack files)
+    - Check that all stack files are under target line counts:
+      - local.ts: <50 lines
+      - preview-base.ts: <100 lines
+      - preview-pr.ts: <100 lines
+  - **Acceptance**:
+    - All stacks build without errors
+    - All `pulumi preview` commands show "no changes"
+    - No TypeScript errors in any files
+    - Line count targets met
+  - **Dependencies**: FACTORY-03, FACTORY-04, FACTORY-05
   - **Acceptance**: This is a branch mismatch issue, not a code fix needed in current branch. Current branch (001-ephemeral-environments) already has correct code with `copy-api-code` init container including resource limits.
 
 ---

@@ -1,16 +1,7 @@
-/** Production Infrastructure Stack
- *
- * Deploys production infrastructure to DigitalOcean:
- * - Kubernetes cluster (auto-scaling, auto-upgrade enabled)
- * - Helm charts (cert-manager, nginx-gateway-fabric)
- * - PostgreSQL with persistent storage (2 replicas)
- * - Gateway with Let's Encrypt production TLS
- * - Web and API deployments (2 replicas each)
- * - Database migrations and search index seeding
- *
+/**
+ * Production Infrastructure Stack (DigitalOcean)
  * This stack creates the Kubernetes cluster itself, unlike preview-base which assumes
  * a pre-existing cluster. The cluster is long-lived infrastructure.
- *
  * Stack name: production
  */
 
@@ -29,7 +20,7 @@ import {
 
 const config = new pulumi.Config();
 
-// 1. Imported DigitalOcean Kubernetes cluster (existing cluster, not created by Pulumi)
+// Imported DigitalOcean Kubernetes cluster (existing cluster, not created by Pulumi)
 // This matches the actual cluster configuration from the import
 const cluster = new digitalocean.KubernetesCluster("aphiria-com-cluster", {
     amdGpuDeviceMetricsExporterPlugin: {
@@ -59,18 +50,18 @@ const cluster = new digitalocean.KubernetesCluster("aphiria-com-cluster", {
     protect: true, // Prevents accidental deletion
 });
 
-// 2. Create Kubernetes provider using the cluster's kubeconfig
+// Create Kubernetes provider using the cluster's kubeconfig
 const k8sProvider = new k8s.Provider("production-k8s", {
     kubeconfig: cluster.kubeConfigs[0].rawConfig,
 });
 
-// 3. Install Helm charts (cert-manager, nginx-gateway-fabric)
+// Install Helm charts (cert-manager, nginx-gateway-fabric)
 const helmCharts = installBaseHelmCharts({
     env: "production",
     provider: k8sProvider,
 });
 
-// 4. Create PostgreSQL (2 replicas, cloud persistent storage)
+// Create PostgreSQL (2 replicas, cloud persistent storage)
 const postgresqlConfig = new pulumi.Config("postgresql");
 const postgres = createPostgreSQL({
     env: "production",
@@ -83,7 +74,7 @@ const postgres = createPostgreSQL({
     provider: k8sProvider,
 });
 
-// 5. Create Gateway with Let's Encrypt production TLS
+// Create Gateway with Let's Encrypt production TLS
 const gateway = createGateway({
     env: "production",
     namespace: "nginx-gateway",
@@ -96,7 +87,7 @@ const gateway = createGateway({
     provider: k8sProvider,
 });
 
-// 6. Create web deployment
+// Create web deployment
 const webImage = config.require("webImage");
 const web = createWebDeployment({
     env: "production",
@@ -111,7 +102,7 @@ const web = createWebDeployment({
     provider: k8sProvider,
 });
 
-// 7. Create API deployment
+// Create API deployment
 const apiImage = config.require("apiImage");
 const dbPassword = config.requireSecret("dbPassword");
 
@@ -129,7 +120,7 @@ const api = createAPIDeployment({
     provider: k8sProvider,
 });
 
-// 8. Run database migrations and seeder
+// Run database migrations and seeder
 const migration = createDBMigrationJob({
     namespace: "default",
     image: apiImage,
@@ -141,7 +132,7 @@ const migration = createDBMigrationJob({
     provider: k8sProvider,
 });
 
-// 9. Create HTTP routes
+// Create HTTP routes
 const webRoute = createHTTPRoute({
     namespace: "default",
     name: "web",

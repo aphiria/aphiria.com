@@ -1,12 +1,5 @@
-/** Base Infrastructure Stack for Preview Environments
- *
- * Deploys persistent infrastructure for preview environments:
- * - Kubernetes cluster (dedicated preview cluster, separate from production)
- * - Helm charts (cert-manager, nginx-gateway-fabric)
- * - Shared PostgreSQL instance (1 replica, persistent storage)
- * - Gateway with Let's Encrypt production TLS
- * - Wildcard certificate for *.pr.aphiria.com
- *
+/**
+ * Base Infrastructure Stack for Preview Environments
  * This stack creates its own dedicated cluster for complete isolation from production.
  * Stack name: preview-base
  */
@@ -14,14 +7,8 @@
 import * as pulumi from "@pulumi/pulumi";
 import * as digitalocean from "@pulumi/digitalocean";
 import * as k8s from "@pulumi/kubernetes";
-import {
-    createKubernetesCluster,
-    installBaseHelmCharts,
-    createPostgreSQL,
-    createGateway,
-} from "../components";
-
-const config = new pulumi.Config();
+import { createKubernetesCluster } from "../components";
+import { createStack } from "../shared/factory";
 
 // 1. Create dedicated preview Kubernetes cluster
 const { cluster, kubeconfig: clusterKubeconfig } = createKubernetesCluster({
@@ -36,8 +23,7 @@ const { cluster, kubeconfig: clusterKubeconfig } = createKubernetesCluster({
     vpcUuid: "976f980d-dc84-11e8-80bc-3cfdfea9fba1",
 });
 
-// Create Kubernetes provider using the cluster's kubeconfig
-// Uses canonical Pulumi pattern - provider validates connection on first resource operation
+// 2. Create Kubernetes provider using the cluster's kubeconfig
 const k8sProvider = new k8s.Provider("preview-k8s", {
     kubeconfig: clusterKubeconfig,
     enableServerSideApply: true,
@@ -45,36 +31,34 @@ const k8sProvider = new k8s.Provider("preview-k8s", {
     dependsOn: [cluster],
 });
 
-// 3. Install Helm charts (cert-manager, nginx-gateway-fabric)
-const helmCharts = installBaseHelmCharts({
-    env: "preview",
-    provider: k8sProvider,
-});
-
-// 4. Create shared PostgreSQL (1 replica, cloud persistent storage)
-// This single instance is shared by all preview environments with separate databases per PR
+// 3. Get configuration
 const postgresqlConfig = new pulumi.Config("postgresql");
-const postgres = createPostgreSQL({
-    env: "preview",
-    namespace: "default",
-    replicas: 1,
-    persistentStorage: true,
-    storageSize: "20Gi",
-    dbUser: postgresqlConfig.require("user"),
-    dbPassword: postgresqlConfig.requireSecret("password"),
-    provider: k8sProvider,
-});
-
-// 5. Get DigitalOcean DNS token for DNS-01 ACME challenges (wildcard certificates)
 const certmanagerConfig = new pulumi.Config("certmanager");
-const dnsToken = certmanagerConfig.requireSecret("digitaloceanDnsToken");
+const ghcrConfig = new pulumi.Config("ghcr");
+
+// 4. Create base infrastructure using factory (no app deployment)
+const stack = createStack({
+    env: "preview",
+    database: {
+        replicas: 1,
+        persistentStorage: true,
+        storageSize: "20Gi",
+        dbUser: postgresqlConfig.require("user"),
+        dbPassword: postgresqlConfig.requireSecret("password"),
+    },
+    gateway: {
+        tlsMode: "letsencrypt-prod",
+        domains: [
+            "*.pr.aphiria.com",      // Web preview URLs
+            "*.pr-api.aphiria.com",  // API preview URLs
+        ],
+        dnsToken: certmanagerConfig.requireSecret("digitaloceanDnsToken"),
+    },
+    // No app config - preview-base is infrastructure only
+}, k8sProvider);
 
 // 5. Create imagePullSecret for GitHub Container Registry
-// Required for pulling private images from ghcr.io
-const ghcrConfig = new pulumi.Config("ghcr");
-const ghcrToken = ghcrConfig.requireSecret("token");
-const ghcrUsername = ghcrConfig.require("username");
-
+// Required for preview-pr stacks to pull private images from ghcr.io
 const imagePullSecret = new k8s.core.v1.Secret("ghcr-pull-secret", {
     metadata: {
         name: "ghcr-pull-secret",
@@ -82,27 +66,11 @@ const imagePullSecret = new k8s.core.v1.Secret("ghcr-pull-secret", {
     },
     type: "kubernetes.io/dockerconfigjson",
     stringData: {
-        ".dockerconfigjson": pulumi.interpolate`{"auths":{"ghcr.io":{"username":"${ghcrUsername}","password":"${ghcrToken}"}}}`,
+        ".dockerconfigjson": pulumi.interpolate`{"auths":{"ghcr.io":{"username":"${ghcrConfig.require("username")}","password":"${ghcrConfig.requireSecret("token")}"}}}`,
     },
 }, { provider: k8sProvider });
 
-// 6. Create Gateway with Let's Encrypt production TLS
-// Wildcard certificate covers all preview subdomains: {PR}.pr.aphiria.com, {PR}.pr-api.aphiria.com
-// DNS-01 challenge used for wildcard domain validation via DigitalOcean DNS API
-const gateway = createGateway({
-    env: "preview",
-    namespace: "nginx-gateway",
-    name: "nginx-gateway",
-    tlsMode: "letsencrypt-prod",
-    domains: [
-        "*.pr.aphiria.com",      // Web preview URLs
-        "*.pr-api.aphiria.com",  // API preview URLs
-    ],
-    dnsToken: dnsToken,          // Required for wildcard cert DNS-01 validation
-    provider: k8sProvider,
-});
-
-// 7. Get LoadBalancer IP from nginx-gateway Service
+// 6. Get LoadBalancer IP from nginx-gateway Service
 const gatewayService = k8s.core.v1.Service.get(
     "nginx-gateway-svc",
     pulumi.interpolate`nginx-gateway/nginx-gateway-nginx-gateway-fabric`,
@@ -111,7 +79,7 @@ const gatewayService = k8s.core.v1.Service.get(
 
 const loadBalancerIp = gatewayService.status.loadBalancer.ingress[0].ip;
 
-// 8. Create DNS wildcard records for preview environments
+// 7. Create DNS wildcard records for preview environments
 const previewWebDns = new digitalocean.DnsRecord("preview-web-dns", {
     domain: "aphiria.com",
     type: "A",
@@ -132,7 +100,7 @@ const previewApiDns = new digitalocean.DnsRecord("preview-api-dns", {
 export const clusterId = cluster.id;
 export const clusterEndpoint = cluster.endpoint;
 export const kubeconfig = pulumi.secret(clusterKubeconfig);
-export const postgresqlHost = "db.default.svc.cluster.local";  // Fully qualified service name for cross-namespace access
+export const postgresqlHost = "db.default.svc.cluster.local";
 export const postgresqlPort = 5432;
 export const gatewayName = "nginx-gateway";
 export const gatewayNamespace = "nginx-gateway";
