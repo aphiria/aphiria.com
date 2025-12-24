@@ -254,6 +254,24 @@ const secret = new k8s.core.v1.Secret("preview-secret", {
 }, { provider: k8sProvider });
 
 // ============================================================================
+// JavaScript Configuration (js-config ConfigMap)
+// ============================================================================
+
+const jsConfigMap = new k8s.core.v1.ConfigMap("js-config", {
+    metadata: {
+        name: "js-config",
+        namespace: namespace.metadata.name,
+        labels: commonLabels,
+    },
+    data: {
+        "config.js": pulumi.interpolate`export default {
+      apiUri: '${apiUrl}',
+      cookieDomain: '.pr.aphiria.com'
+    }`,
+    },
+}, { provider: k8sProvider });
+
+// ============================================================================
 // Web Deployment
 // ============================================================================
 
@@ -302,6 +320,12 @@ const webDeployment = new k8s.apps.v1.Deployment("web", {
                                 },
                             },
                         ],
+                        volumeMounts: [
+                            {
+                                name: "js-config",
+                                mountPath: "/usr/share/nginx/html/js/config",
+                            },
+                        ],
                         resources: {
                             requests: {
                                 cpu: "100m",
@@ -327,6 +351,14 @@ const webDeployment = new k8s.apps.v1.Deployment("web", {
                             },
                             initialDelaySeconds: 5,
                             periodSeconds: 5,
+                        },
+                    },
+                ],
+                volumes: [
+                    {
+                        name: "js-config",
+                        configMap: {
+                            name: jsConfigMap.metadata.name,
                         },
                     },
                 ],

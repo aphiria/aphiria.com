@@ -489,7 +489,7 @@ Phase 8 (Migrate production to Pulumi + reusable workflows)
   - **Depends**: T052v (completed)
   - **Impact**: CRITICAL - prevents any preview environment from functioning correctly
 
-- [ ] T052x [US1] **CRITICAL HOTFIX**: Add missing js-config ConfigMap to web deployment
+- [X] T052x [US1] **CRITICAL HOTFIX**: Add missing js-config ConfigMap to web deployment
   - **Why**: Web application imports `/js/config/config.js` to get `apiUri` for backend API calls. Preview deployment missing this ConfigMap causes frontend to use hardcoded production API URL (`https://api.aphiria.com`) instead of preview-specific URL (`https://{PR}.pr-api.aphiria.com`).
   - **Root Cause**: preview-pr.ts creates web deployment manually without js-config ConfigMap (production uses infrastructure/kubernetes/base/web/config-maps.yml)
   - **Error**: Web loads but JavaScript API calls go to wrong endpoint (production instead of preview)
