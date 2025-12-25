@@ -49,6 +49,8 @@ const k8sProvider = new k8s.Provider("production-k8s", {
 
 // Get configuration
 const postgresqlConfig = new pulumi.Config("postgresql");
+const webImageRef = config.require("webImage");
+const apiImageRef = config.require("apiImage");
 
 const postgresqlUser = postgresqlConfig.require("user");
 const postgresqlPassword = postgresqlConfig.requireSecret("password");
@@ -76,8 +78,8 @@ const stack = createStack({
         apiReplicas: 2,
         webUrl: "https://www.aphiria.com",
         apiUrl: "https://api.aphiria.com",
-        webImage: config.require("webImage"),
-        apiImage: config.require("apiImage"),
+        webImage: webImageRef,
+        apiImage: apiImageRef,
         cookieDomain: ".aphiria.com",
         webPodDisruptionBudget: { minAvailable: 1 },
         apiPodDisruptionBudget: { minAvailable: 1 },
@@ -97,5 +99,4 @@ export const gatewayNamespace = "nginx-gateway";
  * TODO: Add when production uses factory pattern correctly (currently hardcoded in components)
  */
 export const databaseName = "aphiria_production";
-export const webImageRef = config.require("webImage");
-export const apiImageRef = config.require("apiImage");
+export { webImageRef, apiImageRef };

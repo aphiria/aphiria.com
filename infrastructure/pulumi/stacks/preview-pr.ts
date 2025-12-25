@@ -17,6 +17,8 @@ const apiImageDigest = config.require("apiImageDigest");
 const baseStackRef = config.require("baseStackReference");
 const ghcrUsername = ghcrConfig.require("username");
 const ghcrToken = ghcrConfig.requireSecret("token");
+const webImageRef = `ghcr.io/aphiria/aphiria.com-web@${webImageDigest}`;
+const apiImageRef = `ghcr.io/aphiria/aphiria.com-api@${apiImageDigest}`;
 
 // Reference base stack outputs
 const baseStack = new pulumi.StackReference(baseStackRef);
@@ -86,8 +88,8 @@ const stack = createStack({
         apiReplicas: 1,
         webUrl: webUrl,
         apiUrl: apiUrl,
-        webImage: `ghcr.io/aphiria/aphiria.com-web@${webImageDigest}`,
-        apiImage: `ghcr.io/aphiria/aphiria.com-api@${apiImageDigest}`,
+        webImage: webImageRef,
+        apiImage: apiImageRef,
         cookieDomain: ".pr.aphiria.com",
         webResources: {
             requests: { cpu: "50m", memory: "128Mi" },
@@ -128,5 +130,4 @@ export { databaseName };
  * @internal Used for Pulumi dependency tracking
  */
 export const namespaceResourceName = stack.namespace?.namespace.metadata.name;
-export const webImageRef = `ghcr.io/aphiria/aphiria.com-web@${webImageDigest}`;
-export const apiImageRef = `ghcr.io/aphiria/aphiria.com-api@${apiImageDigest}`;
+export { webImageRef, apiImageRef };

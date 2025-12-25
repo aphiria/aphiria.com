@@ -1690,7 +1690,7 @@ Phase 8 (Migrate production to Pulumi + reusable workflows)
     ```
   - **Output file**: `specs/001-ephemeral-environment/workflow-migration-audit.md`
 
-- [ ] M031d **TYPESCRIPT SCRIPT**: Create shared TypeScript utilities for GitHub Actions workflows
+- [X] M031d **TYPESCRIPT SCRIPT**: Create shared TypeScript utilities for GitHub Actions workflows
   - **Why**: Centralize reusable logic to avoid duplication across bash-to-TypeScript migrations
   - **Directory**: Create `infrastructure/github-actions/` for TypeScript utilities
   - **Files to create**:
