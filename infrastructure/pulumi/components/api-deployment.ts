@@ -1,7 +1,7 @@
 import * as pulumi from "@pulumi/pulumi";
 import * as k8s from "@pulumi/kubernetes";
 import { APIDeploymentArgs, APIDeploymentResult } from "./types";
-import { configMapChecksum } from "./utils";
+import { checksum } from "./utils";
 
 /** Creates nginx + PHP-FPM deployment using initContainer to copy code to shared volume */
 export function createAPIDeployment(args: APIDeploymentArgs): APIDeploymentResult {
@@ -42,8 +42,14 @@ export function createAPIDeployment(args: APIDeploymentArgs): APIDeploymentResul
         ...(args.envConfig?.extraVars || {}),
     };
 
-    // Calculate checksum for pod annotations (forces restart when config changes)
-    const checksum = configMapChecksum(configData);
+    // Build Secret data
+    const secretData: Record<string, pulumi.Input<string>> = {
+        DB_PASSWORD: args.dbPassword,
+    };
+
+    // Calculate checksums for pod annotations (forces restart when config or secrets change)
+    const configChecksum = checksum(configData);
+    const secretChecksum = checksum(secretData);
 
     // Create nginx configuration ConfigMap
     const nginxConfig = new k8s.core.v1.ConfigMap("nginx-config", {
@@ -88,9 +94,7 @@ export function createAPIDeployment(args: APIDeploymentArgs): APIDeploymentResul
             labels,
         },
         type: "Opaque",
-        stringData: {
-            DB_PASSWORD: args.dbPassword,
-        },
+        stringData: secretData,
     }, { provider: args.provider });
 
     // Create ConfigMap for environment variables (built from parameters)
@@ -130,7 +134,8 @@ export function createAPIDeployment(args: APIDeploymentArgs): APIDeploymentResul
                         app: "api",
                     },
                     annotations: {
-                        "checksum/config": checksum,
+                        "checksum/config": configChecksum,
+                        "checksum/secret": secretChecksum,
                     },
                 },
                 spec: {

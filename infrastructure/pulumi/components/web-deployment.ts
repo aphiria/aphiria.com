@@ -1,7 +1,7 @@
 import * as pulumi from "@pulumi/pulumi";
 import * as k8s from "@pulumi/kubernetes";
 import { WebDeploymentArgs, WebDeploymentResult } from "./types";
-import { configMapChecksum } from "./utils";
+import { checksum } from "./utils";
 
 /** Creates nginx deployment for static site with js-config ConfigMap */
 export function createWebDeployment(args: WebDeploymentArgs): WebDeploymentResult {
@@ -49,7 +49,7 @@ export function createWebDeployment(args: WebDeploymentArgs): WebDeploymentResul
         : undefined;
 
     // Calculate checksum for pod annotations (forces restart when config changes)
-    const checksum = configMapChecksum({
+    const configChecksum = checksum({
         ...args.jsConfigData,
         ...envConfigData,
     });
@@ -81,7 +81,7 @@ export function createWebDeployment(args: WebDeploymentArgs): WebDeploymentResul
                         app: "web",
                     },
                     annotations: {
-                        "checksum/config": checksum,
+                        "checksum/config": configChecksum,
                     },
                 },
                 spec: {

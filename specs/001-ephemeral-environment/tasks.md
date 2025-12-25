@@ -10,7 +10,7 @@
 
 This document organizes implementation tasks by user story to enable independent, incremental delivery. Each phase represents a complete, testable increment.
 
-**Total Tasks**: 82 tasks (Updated 2025-12-22 to align with plan.md and constitution v1.1.0)
+**Total Tasks**: 83 tasks (Updated 2025-12-25 to add Secret checksum task T076a)
 **User Stories**: 3 (P1, P2, P3)
 **Parallel Opportunities**: 28+ tasks can run in parallel within phases
 **Constitution Alignment**: All tasks comply with Aphiria.com Constitution v1.1.0
@@ -1271,6 +1271,32 @@ Phase 8 (Migrate production to Pulumi + reusable workflows)
 
 - [X] T075 [P] Add deployment metrics to PR comment (build time, deploy time) in `.github/workflows/deploy-preview.yml`
 - [X] T076 [P] Implement health check URL validation after deployment in `.github/workflows/deploy-preview.yml`
+
+### Configuration Management
+
+- [X] T076a Add Secret checksum annotations to force pod restarts on Secret changes in `infrastructure/pulumi/components/api-deployment.ts`
+  - **Why**: When database credentials rotate (DB_PASSWORD changes), API pods need to restart to pick up the new password. Current implementation only tracks ConfigMap changes via checksum annotations, not Secret changes.
+  - **Current behavior**: ConfigMap has checksum annotation (`checksum/config`) that forces pod restart when config changes. Secrets do not have this pattern - pods won't restart if DB_PASSWORD rotates.
+  - **Standard practice**: Helm and enterprise Kubernetes deployments use checksums for both ConfigMaps AND Secrets to ensure pods restart when either changes.
+  - **Implementation approach**:
+    1. Rename `configMapChecksum()` utility to `checksum()` in `infrastructure/pulumi/components/utils.ts` (generic name, works for any data)
+    2. In `api-deployment.ts`, calculate combined checksum including both ConfigMap data AND Secret data
+    3. Add Secret checksum to pod template annotation alongside existing ConfigMap checksum
+       ```typescript
+       annotations: {
+         "checksum/config": checksum(configMapData),
+         "checksum/secret": checksum(secretData),
+       }
+       ```
+    4. Test by rotating DB_PASSWORD in Pulumi ESC and verify pods restart
+  - **Scope**: API deployment only (uses DB_PASSWORD Secret). Web deployment doesn't mount sensitive secrets - no change needed.
+  - **Files to modify**:
+    - `infrastructure/pulumi/components/utils.ts` - Rename `configMapChecksum()` to `checksum()`
+    - `infrastructure/pulumi/components/api-deployment.ts` - Add Secret checksum to pod annotations
+  - **Rationale**: Ensures pods always have current credentials. Without this, database password rotation requires manual `kubectl rollout restart`, which is error-prone and not automated.
+  - **Testing**: After implementation, verify by changing `postgresql:password` in Pulumi ESC environment and running `pulumi up` - API pods should restart automatically.
+  - **Dependencies**: None (ConfigMap checksum pattern already implemented)
+  - **Related**: NFR-021 in spec.md (ConfigMap and Secret updates MUST trigger automatic deployment rollouts)
 
 ### Secrets Management (Pulumi ESC Integration)
 
