@@ -50,6 +50,10 @@ const k8sProvider = new k8s.Provider("production-k8s", {
 // Get configuration
 const postgresqlConfig = new pulumi.Config("postgresql");
 
+// Naming conventions
+const webUrl = "https://www.aphiria.com";
+const apiUrl = "https://api.aphiria.com";
+
 // Create all infrastructure using a factory
 createStack({
     env: "production",
@@ -78,10 +82,9 @@ createStack({
 }, k8sProvider);
 
 // Outputs
+export { webUrl, apiUrl };
 export const clusterId = cluster.id;
 export const clusterEndpoint = cluster.endpoint;
 export const kubeconfig = pulumi.secret(cluster.kubeConfigs[0].rawConfig);
-export const webUrl = "https://www.aphiria.com";
-export const apiUrl = "https://api.aphiria.com";
 export const gatewayName = "nginx-gateway";
 export const gatewayNamespace = "nginx-gateway";

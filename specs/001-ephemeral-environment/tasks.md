@@ -462,33 +462,6 @@ Phase 8 (Migrate production to Pulumi + reusable workflows)
   - **SpecKit Gap**: Phinx environment configuration not considered during preview environment design
   - **Constitutional violation**: None - this is a configuration oversight, not a design flaw
 
-- [ ] T052w [US1] **CRITICAL ARCHITECTURE AUDIT**: Comprehensive comparison of Pulumi preview-pr.ts vs production YAML manifests
-  - **Why**: PR 107 web deployment is not accessible at https://107.pr.aphiria.com despite successful Pulumi deployment, indicating systematic conversion errors from YAML → Pulumi
-  - **Root Cause**: Trust assumption - assumed Pulumi conversion was correct without line-by-line validation against working production YAML
-  - **Scope**: Audit EVERY resource in preview-pr.ts against `infrastructure/kubernetes/base/`:
-    1. **Web Deployment**: Compare with `web/deployments.yml`, `web/config-maps.yml`, `web/services.yml`
-    2. **API Deployment**: Compare with `api/deployments.yml`, `api/config-maps.yml`, `api/services.yml`
-    3. **Database Jobs**: Compare with `database/jobs.yml`
-    4. **HTTPRoutes**: Compare with `gateway-api/http-routes.yml`
-    5. **Gateway Configuration**: Verify listeners, sectionName usage, namespace refs
-    6. **All ConfigMaps**: Ensure all required ConfigMaps exist (js-config, nginx-config, env-vars)
-    7. **All Secrets**: Verify secret structure matches
-    8. **Resource Limits**: Compare CPU/memory specs
-    9. **Volume Mounts**: Verify all volume configurations
-    10. **Init Containers**: Validate purpose and order
-  - **Method**:
-    - Create comparison table: YAML vs Pulumi for each resource type
-    - Identify ALL missing resources (e.g., js-config ConfigMap for web)
-    - Identify ALL incorrect configurations (e.g., API missing nginx sidecar)
-    - Document functional differences (e.g., migrations in Job vs init container)
-  - **Deliverable**: Detailed audit report with:
-    - List of missing resources
-    - List of incorrect configurations
-    - Recommended fixes for each issue
-    - Priority ranking (blocking vs non-blocking)
-  - **Depends**: T052v (completed)
-  - **Impact**: CRITICAL - prevents any preview environment from functioning correctly
-
 - [X] T052x [US1] **CRITICAL HOTFIX**: Add missing js-config ConfigMap to web deployment
   - **Why**: Web application imports `/js/config/config.js` to get `apiUri` for backend API calls. Preview deployment missing this ConfigMap causes frontend to use hardcoded production API URL (`https://api.aphiria.com`) instead of preview-specific URL (`https://{PR}.pr-api.aphiria.com`).
   - **Root Cause**: preview-pr.ts creates web deployment manually without js-config ConfigMap (production uses infrastructure/kubernetes/base/web/config-maps.yml)
@@ -743,7 +716,7 @@ Phase 8 (Migrate production to Pulumi + reusable workflows)
   - **Depends**: T052aj (ConfigMap structure finalized)
   - **Reference**: See `specs/001-ephemeral-environment/configmap-reload-comparison.md` for detailed analysis
 
-- [ ] T052z [US1] **CRITICAL HOTFIX**: Create separate database migration Job (remove from Deployment init container)
+- [X] T052z [US1] **CRITICAL HOTFIX**: Create separate database migration Job (remove from Deployment init container)
   - **Why**: Production uses separate `db-migration` Job to run Phinx migrations ONCE. Current Pulumi runs migrations in Deployment init container, causing migrations to re-run on EVERY pod restart.
   - **Root Cause**: Misidentified purpose of init container - should copy code, not run migrations
   - **Production Reference**: `infrastructure/kubernetes/base/database/jobs.yml`
@@ -1179,11 +1152,75 @@ Phase 8 (Migrate production to Pulumi + reusable workflows)
 - [X] T061 [US3] Update PR comment on cleanup completion in `.github/workflows/cleanup-preview.yml`
 - [X] T062 [US3] Add cleanup verification (check namespace and stack no longer exist) in `.github/workflows/cleanup-preview.yml`
 - [X] T063 [US3] Remove PR labels (preview:*, web-digest:*, api-digest:*) in `.github/workflows/cleanup-preview.yml`
-- [ ] T062a [US3] **ENHANCEMENT**: Force-delete namespace if Pulumi destroy doesn't remove it
-  - **Why**: In some cases (e.g., Pulumi errors, stuck finalizers), namespaces may linger after `pulumi destroy`. This leaves orphaned resources consuming cluster capacity.
-  - **Current behavior**: Workflow only logs a warning if namespace still exists (line 97 in cleanup-preview.yml)
-  - **Desired behavior**: Automatically force-delete the namespace to ensure complete cleanup
-  - **File**: `.github/workflows/cleanup-preview.yml` (modify "Verify namespace cleanup" step at lines 87-101)
+- [X] T062b [US3] **REFACTOR**: Remove kubectl fallback from cleanup workflow (trust Pulumi as source of truth)
+  - **Why**: Using kubectl to force-delete resources bypasses Pulumi state and violates "Pulumi is source of truth" principle
+  - **Current behavior**: If `pulumi destroy` succeeds but namespace still exists, kubectl force-deletes it (workaround added in T062a)
+  - **Correct behavior**: If `pulumi destroy` succeeds, namespace MUST be gone. If not, it's a bug in Pulumi components that needs fixing.
+  - **File**: `.github/workflows/cleanup-preview.yml`
+  - **Changes**:
+    1. ✅ Removed "Force delete namespace if still exists" step (was lines 87-120)
+    2. ✅ Replaced with verification step that FAILS if namespace still exists after Pulumi destroy
+    3. ✅ Removed kubectl force-delete logic entirely
+    4. NOTE: Kept kubeconfig setup for database verification step (lines 122-145)
+  - **Implementation**:
+    ```yaml
+    - name: Destroy preview stack
+      id: destroy
+      working-directory: infrastructure/pulumi
+      env:
+        PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
+      run: |
+        PR_NUMBER=${{ steps.pr.outputs.number }}
+        STACK_NAME="preview-pr-${PR_NUMBER}"
+
+        if pulumi stack select "${STACK_NAME}" 2>/dev/null; then
+          echo "Destroying stack ${STACK_NAME}..."
+          pulumi destroy --stack "${STACK_NAME}" --yes
+
+          # Remove stack from Pulumi Cloud
+          pulumi stack rm "${STACK_NAME}" --yes
+
+          echo "status=destroyed" >> $GITHUB_OUTPUT
+          echo "✅ Stack destroyed and removed"
+        else
+          echo "Stack ${STACK_NAME} not found, nothing to clean up"
+          echo "status=not-found" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Verify namespace cleanup
+      if: steps.destroy.outputs.status == 'destroyed'
+      run: |
+        PR_NUMBER=${{ steps.pr.outputs.number }}
+        NAMESPACE="preview-pr-${PR_NUMBER}"
+
+        # Get kubeconfig from preview-base to check namespace
+        cd infrastructure/pulumi
+        KUBECONFIG_JSON=$(pulumi stack output kubeconfig --stack preview-base --show-secrets)
+        echo "$KUBECONFIG_JSON" > /tmp/preview-kubeconfig.yaml
+
+        # Verify namespace is gone
+        if kubectl --kubeconfig=/tmp/preview-kubeconfig.yaml get namespace "${NAMESPACE}" 2>/dev/null; then
+          echo "::error::Namespace ${NAMESPACE} still exists after Pulumi destroy!"
+          echo "::error::This indicates a bug in Pulumi components - resources may have finalizers not handled correctly"
+          kubectl --kubeconfig=/tmp/preview-kubeconfig.yaml get all -n "${NAMESPACE}"
+          exit 1
+        else
+          echo "✅ Namespace ${NAMESPACE} successfully deleted by Pulumi"
+        fi
+    ```
+  - **Rationale**:
+    - Pulumi is the source of truth - if destroy fails, we need to know WHY
+    - kubectl force-delete can leave Pulumi state inconsistent
+    - Proper fix is to handle finalizers correctly in Pulumi components
+    - Failing the workflow alerts us to bugs that need fixing
+  - **Impact**: Cleanup workflow may fail if Pulumi components have finalizer bugs (this is GOOD - we want to know!)
+  - **Follow-up**: If namespace deletion fails, investigate and fix the component (likely namespace.ts or deployment components)
+  - **Supersedes**: T062a (kubectl fallback was a workaround, not a proper solution)
+
+- [X] T062a [US3] **DEPRECATED**: Force-delete namespace if Pulumi destroy doesn't remove it
+  - **Status**: Implemented but deprecated by T062b
+  - **Why deprecated**: kubectl fallback violates "Pulumi is source of truth" principle
+  - **Replacement**: T062b removes kubectl usage and fails workflow if namespace persists (proper behavior)
   - **Implementation**:
     ```yaml
     - name: Force delete namespace if still exists
@@ -1524,7 +1561,7 @@ Phase 8 (Migrate production to Pulumi + reusable workflows)
 
 - [ ] M030 Refactor preview-base and production stacks to use shared parameterized base infrastructure component (eliminate code duplication)
 - [ ] M031 Create shared base infrastructure component that accepts environment-specific parameters (cluster config, node pool size, etc.) in `infrastructure/pulumi/components/`
-- [ ] M031a **CRITICAL**: Design shared components to support optional resource limits (preview requires them due to ResourceQuota, production does not)
+- [X] M031a **CRITICAL**: Design shared components to support optional resource limits (preview requires them due to ResourceQuota, production does not)
   - **Why**: Preview environments use ResourceQuota for cost control/isolation, requiring ALL containers to have resource limits. Production has no ResourceQuota, so hardcoded limits would be unnecessarily restrictive.
   - **Design principle**: Resource limits should be **optional parameters** passed to shared components, not hardcoded
   - **Implementation approach**:
@@ -1575,21 +1612,393 @@ Phase 8 (Migrate production to Pulumi + reusable workflows)
     - ✅ Component documentation clearly states when limits are required (hint: when ResourceQuota is present)
     - ✅ No hardcoded resource limits in shared component implementations
 
+#### Stack Export Standardization (Foundation for Production Migration)
+
+- [ ] M031b **CRITICAL**: Standardize stack exports across all stacks for consistency and reusability
+  - **Why**: Current stacks export different outputs, making it difficult to write reusable workflows and reference stack outputs consistently
+  - **Current state**:
+    - `local.ts`: Exports `webUrl`, `apiUrl`, `dbHost`
+    - `preview-base.ts`: Exports `clusterId`, `clusterEndpoint`, `kubeconfig`, `postgresqlHost`, `postgresqlPort`, `postgresqlAdminUser`, `postgresqlAdminPassword`, `gatewayName`, `gatewayNamespace`, `namespace`
+    - `preview-pr.ts`: Exports `webUrl`, `apiUrl`, `databaseName`, `namespaceName`, `namespaceResourceName`, `webImageRef`, `apiImageRef`
+    - `production.ts`: Exports `webUrl`, `apiUrl`, `clusterId`, `clusterEndpoint`, `kubeconfig`, `gatewayName`, `gatewayNamespace`
+  - **Required standardization**:
+    - **Common exports** (all stacks MUST export these):
+      - `webUrl` - Public web URL (https://www.aphiria.com, https://107.pr.aphiria.com, etc.)
+      - `apiUrl` - Public API URL (https://api.aphiria.com, https://107.pr-api.aphiria.com, etc.)
+      - `namespace` - Kubernetes namespace where app is deployed (default, preview-pr-107, etc.)
+    - **Base stack exports** (preview-base, production base if applicable):
+      - `clusterId` - Cluster identifier for validation
+      - `clusterEndpoint` - Cluster API endpoint
+      - `kubeconfig` - Kubernetes config for cluster access (secret)
+      - `gatewayName` - Gateway resource name
+      - `gatewayNamespace` - Gateway namespace
+      - `postgresqlHost` - Database host
+      - `postgresqlPort` - Database port
+      - `postgresqlAdminUser` - Database admin user
+      - `postgresqlAdminPassword` - Database admin password (secret)
+    - **App stack exports** (preview-pr, production):
+      - All common exports
+      - `databaseName` - Database name (aphiria_pr_107, aphiria_production, etc.)
+      - `webImageRef` - Web image reference with digest (for deployment verification)
+      - `apiImageRef` - API image reference with digest (for deployment verification)
+  - **Files to modify**:
+    - `infrastructure/pulumi/stacks/local.ts` - Add missing exports
+    - `infrastructure/pulumi/stacks/preview-base.ts` - Already correct, document as standard
+    - `infrastructure/pulumi/stacks/preview-pr.ts` - Already correct, document as standard
+    - `infrastructure/pulumi/stacks/production.ts` - Add missing exports (databaseName, imageRefs)
+  - **Validation**: Run `pulumi stack output --json` for each stack, verify all required exports present
+  - **Documentation**: Add JSDoc comments explaining each export's purpose
+  - **Depends**: None - this is a foundation task
+  - **Blocks**: M032-M036 (reusable workflows need consistent exports), M037-M049 (production stack migration)
+
+#### CI/CD Workflow Analysis & Bash-to-TypeScript Migration
+
+- [ ] M031c **ANALYSIS**: Audit all GitHub Actions workflows for complex bash logic requiring TypeScript migration
+  - **Why**: Complex bash logic (loops, conditionals, case statements, arrays) is error-prone and hard to test/maintain
+  - **Principle**: Bash is acceptable for simple commands (1-3 lines), TypeScript required for complex logic
+  - **Files to audit**:
+    - `build-preview-images.yml` (218 lines)
+    - `deploy-preview.yml` (689 lines) - PRIORITY
+    - `cleanup-preview.yml` (247 lines)
+    - `build-master-cache.yml` (75 lines)
+    - `pulumi-drift-detection.yml` (109 lines)
+    - `test.yml` (79 lines)
+  - **Audit criteria** - Flag for TypeScript migration if bash block contains:
+    - While loops (`while [ $RETRY_COUNT -lt $MAX_RETRIES ]`)
+    - For loops (`for i in {1..30}`)
+    - Case statements (`case "$secret" in`)
+    - Conditionals beyond simple existence checks (complex `if-elif-else`)
+    - Array operations (`MISSING_SECRETS+=()`)
+    - String manipulation beyond simple concatenation
+    - Retry logic with backoff
+    - Multi-step validation sequences
+  - **Deliverable**: Markdown table with:
+    - Workflow file
+    - Step name
+    - Line numbers
+    - Complexity score (Simple/Medium/High)
+    - Migration priority (P0-Critical, P1-High, P2-Medium, P3-Low)
+    - Rationale (why TypeScript is better)
+  - **Example findings** (from quick scan):
+    ```markdown
+    | File | Step | Lines | Complexity | Priority | Rationale |
+    |------|------|-------|------------|----------|-----------|
+    | deploy-preview.yml | Ensure preview-base stack | 47-128 | High | P0 | Retry loops, conditional deployment, state validation |
+    | deploy-preview.yml | Wait for pending deployment | 372-403 | High | P0 | While loop, polling, conditional approval |
+    | deploy-preview.yml | Validate required secrets | 422-457 | Medium | P1 | Array operations, case statement, validation |
+    | cleanup-preview.yml | Force delete namespace | 87-120 | High | P0 | Retry loop, error handling, validation |
+    ```
+  - **Output file**: `specs/001-ephemeral-environment/workflow-migration-audit.md`
+
+- [ ] M031d **TYPESCRIPT SCRIPT**: Create shared TypeScript utilities for GitHub Actions workflows
+  - **Why**: Centralize reusable logic to avoid duplication across bash-to-TypeScript migrations
+  - **Directory**: Create `infrastructure/github-actions/` for TypeScript utilities
+  - **Files to create**:
+    - `package.json` - Dependencies (@actions/core, @actions/github, @actions/exec)
+    - `tsconfig.json` - TypeScript configuration
+    - `src/pulumi.ts` - Pulumi CLI wrappers (stack select, up, destroy, refresh, output)
+    - `src/kubernetes.ts` - kubectl wrappers (get, delete, wait, logs)
+    - `src/retry.ts` - Retry logic with exponential backoff
+    - `src/validation.ts` - Secret validation, output validation
+    - `src/github.ts` - GitHub API helpers (comments, labels, deployments)
+    - `src/types.ts` - Shared TypeScript types/interfaces
+  - **Build setup**:
+    - Compile to `dist/` directory
+    - Add `npm run build` script to compile TypeScript
+    - Add workflow step to build utilities before use
+  - **Testing**: Unit tests for retry logic, validation functions
+  - **Depends**: M031c (audit complete, know what utilities are needed)
+
+- [ ] M031e **MIGRATE**: Replace deploy-preview.yml "Ensure preview-base stack" bash with TypeScript
+  - **Why**: Most complex bash block (82 lines, retry loops, conditional logic, state validation)
+  - **Current**: Lines 47-128 in deploy-preview.yml (bash script with retry logic, state checks)
+  - **New approach**:
+    ```yaml
+    - name: Ensure preview-base stack exists and is deployed
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const { ensureBaseStack } = require('./infrastructure/github-actions/dist/pulumi');
+          await ensureBaseStack({
+            stackName: 'preview-base',
+            escEnvironment: 'aphiria.com/Preview',
+            maxRetries: 3,
+            retryBackoff: 60000, // 60s initial, exponential
+          });
+    ```
+  - **TypeScript implementation** (`infrastructure/github-actions/src/pulumi.ts`):
+    - `ensureBaseStack()` function with typed parameters
+    - Proper error handling and logging
+    - Testable retry logic
+  - **Files to modify**:
+    - `.github/workflows/deploy-preview.yml` - Replace bash with TypeScript action call
+    - `infrastructure/github-actions/src/pulumi.ts` - Implement ensureBaseStack()
+  - **Testing**: Unit tests for ensureBaseStack(), integration test in workflow
+  - **Depends**: M031d (TypeScript utilities created)
+
+- [ ] M031f **MIGRATE**: Replace deploy-preview.yml "Wait for pending deployment" bash with TypeScript
+  - **Why**: Complex polling logic with conditional approval (32 lines, while loop, API calls)
+  - **Current**: Lines 372-403 in deploy-preview.yml
+  - **New**: TypeScript function `waitForDeploymentApproval()` in github.ts
+  - **Depends**: M031d
+
+- [ ] M031g **MIGRATE**: Replace cleanup-preview.yml "Force delete namespace" bash with TypeScript
+  - **Why**: Complex retry logic with validation (34 lines, for loop, conditional exit)
+  - **Current**: Lines 87-120 in cleanup-preview.yml
+  - **New**: TypeScript function `forceDeleteNamespace()` in kubernetes.ts
+  - **Depends**: M031d
+
+- [ ] M031h **MIGRATE**: Replace deploy-preview.yml "Validate required secrets" bash with TypeScript
+  - **Why**: Array operations, case statement, complex validation (36 lines)
+  - **Current**: Lines 422-457 in deploy-preview.yml
+  - **New**: TypeScript function `validateRequiredSecrets()` in validation.ts
+  - **Depends**: M031d
+
+- [ ] M031i **CODE REVIEW**: Review all bash-to-TypeScript migrations for maintainability
+  - **Why**: Ensure TypeScript migrations are actually more maintainable than bash
+  - **Criteria**:
+    - Type safety: All inputs/outputs strongly typed
+    - Error handling: Proper try/catch, meaningful errors
+    - Testability: Unit tests cover edge cases
+    - Readability: Clear function names, comments for complex logic
+    - DRY: No duplication across workflows
+  - **Deliverable**: Sign-off document or list of improvements needed
+  - **Depends**: M031e, M031f, M031g, M031h (all migrations complete)
+
 #### CI/CD Workflow Refactoring (Constitution Principle VI)
 
-- [ ] M032 Create reusable deployment workflow `.github/workflows/deploy.yml` with `workflow_call` trigger (parameterized for preview/production)
-- [ ] M033 Refactor `deploy-preview.yml` to call reusable `deploy.yml` workflow with preview-specific parameters
-- [ ] M034 Create `deploy-production.yml` workflow using reusable `deploy.yml` workflow for production deployments
-- [ ] M035 Create reusable build workflow `.github/workflows/build-images.yml` (parameterized for preview/production)
-- [ ] M036 Refactor `build-preview-images.yml` to use reusable `build-images.yml` workflow
+- [ ] M032 Create reusable deployment workflow `.github/workflows/deploy-shared.yml` with `workflow_call` trigger (parameterized for preview/production)
+  - **Why**: Eliminate duplication between preview and production deployments
+  - **Inputs**:
+    - `environment` (preview, production) - Determines stack name pattern, approval requirements
+    - `stack_name` (preview-pr-107, production) - Pulumi stack to deploy
+    - `web_image_digest` - Web image SHA256 digest
+    - `api_image_digest` - API image SHA256 digest
+    - `pr_number` (optional) - PR number for preview environments
+    - `cluster_stack` (preview-base, production-base) - Base stack for kubeconfig
+  - **Secrets**:
+    - `PULUMI_ACCESS_TOKEN` - Pulumi Cloud API token
+    - `DEPLOYMENT_APPROVAL_TOKEN` (optional) - GitHub PAT for auto-approval
+  - **Steps** (all TypeScript, no complex bash):
+    1. Checkout repository
+    2. Setup Node.js, Pulumi CLI
+    3. Build infrastructure/pulumi TypeScript
+    4. Ensure base stack deployed (using TypeScript utility from M031e)
+    5. Configure Pulumi stack (stack select/init, config set)
+    6. Setup kubeconfig from base stack
+    7. Run Pulumi preview (validation)
+    8. Post preview comment to PR (if pr_number provided)
+    9. Check author permissions (if pr_number provided)
+    10. Auto-approve deployment (if maintainer, using TypeScript utility from M031f)
+    11. Run Pulumi up (deployment)
+    12. Wait for pods ready (using TypeScript utility)
+    13. Health check endpoints (using TypeScript utility)
+    14. Post deployment comment to PR (if pr_number provided)
+  - **Outputs**:
+    - `deployment_status` (success, failed, pending)
+    - `web_url` - Deployed web URL
+    - `api_url` - Deployed API URL
+  - **File**: `.github/workflows/deploy-shared.yml`
+  - **Depends**: M031b (standardized stack exports), M031e-M031i (TypeScript utilities)
+
+- [ ] M033 Create reusable image build workflow `.github/workflows/build-images-shared.yml` (parameterized for preview/production)
+  - **Why**: Eliminate duplication between preview and production image builds
+  - **Inputs**:
+    - `environment` (preview, production) - Determines image tags, cache scopes
+    - `tag_suffix` (pr-107, latest, v1.2.3) - Image tag suffix
+    - `enable_cache_from_master` (boolean) - Whether to use master branch cache
+  - **Outputs**:
+    - `build_image_digest` - Build image SHA256 digest
+    - `web_image_digest` - Web image SHA256 digest
+    - `api_image_digest` - API image SHA256 digest
+  - **Steps**:
+    1. Checkout repository
+    2. Setup Docker Buildx
+    3. Login to GHCR
+    4. Generate image tags (TypeScript utility for consistency)
+    5. Build documentation image (multi-platform if production)
+    6. Build web image
+    7. Build API image
+    8. Output digests (JSON format for easy parsing)
+  - **File**: `.github/workflows/build-images-shared.yml`
+  - **Depends**: None (can be created independently)
+
+- [ ] M034 Refactor `build-preview-images.yml` to call reusable `build-images-shared.yml` workflow
+  - **Why**: Eliminate 218 lines of duplicated build logic
+  - **New structure** (drastically simplified):
+    ```yaml
+    jobs:
+      build:
+        uses: ./.github/workflows/build-images-shared.yml
+        with:
+          environment: preview
+          tag_suffix: pr-${{ github.event.pull_request.number }}
+          enable_cache_from_master: true
+        secrets: inherit
+
+      trigger-deploy:
+        needs: build
+        # ... (existing trigger logic, simplified with TypeScript)
+    ```
+  - **Files to modify**:
+    - `.github/workflows/build-preview-images.yml` - Reduce from 218 to ~50 lines
+  - **Depends**: M033 (reusable build workflow created)
+
+- [ ] M035 Refactor `deploy-preview.yml` to call reusable `deploy-shared.yml` workflow
+  - **Why**: Eliminate 689 lines of complex deployment logic
+  - **New structure**:
+    ```yaml
+    jobs:
+      deploy:
+        uses: ./.github/workflows/deploy-shared.yml
+        with:
+          environment: preview
+          stack_name: preview-pr-${{ inputs.pr_number }}
+          web_image_digest: ${{ inputs.web_digest }}
+          api_image_digest: ${{ inputs.api_digest }}
+          pr_number: ${{ inputs.pr_number }}
+          cluster_stack: preview-base
+        secrets: inherit
+    ```
+  - **Files to modify**:
+    - `.github/workflows/deploy-preview.yml` - Reduce from 689 to ~100 lines
+  - **Depends**: M032 (reusable deploy workflow created)
+
+- [ ] M036 Create `deploy-production.yml` workflow using reusable `deploy-shared.yml` workflow
+  - **Why**: Production deployments should use same validated logic as preview
+  - **Trigger**: Manual workflow_dispatch with optional image digests (defaults to latest master build)
+  - **Structure**:
+    ```yaml
+    on:
+      workflow_dispatch:
+        inputs:
+          web_digest:
+            description: 'Web image digest (defaults to latest master)'
+            required: false
+          api_digest:
+            description: 'API image digest (defaults to latest master)'
+            required: false
+
+      push:
+        branches: [master]
+        paths:
+          - 'src/**'
+          - 'public-api/**'
+          - 'public-web/**'
+          - 'infrastructure/**'
+
+    jobs:
+      build:
+        if: github.event_name == 'push'
+        uses: ./.github/workflows/build-images-shared.yml
+        with:
+          environment: production
+          tag_suffix: latest
+          enable_cache_from_master: false
+        secrets: inherit
+
+      deploy:
+        needs: [build]
+        if: always()
+        uses: ./.github/workflows/deploy-shared.yml
+        with:
+          environment: production
+          stack_name: production
+          web_image_digest: ${{ inputs.web_digest || needs.build.outputs.web_image_digest }}
+          api_image_digest: ${{ inputs.api_digest || needs.build.outputs.api_image_digest }}
+          cluster_stack: production  # Assumes production has own cluster (not shared)
+        secrets: inherit
+    ```
+  - **File**: `.github/workflows/deploy-production.yml` (new)
+  - **Depends**: M032, M033 (reusable workflows created)
 
 #### Production Stack Implementation
 
+- [ ] M037a Refactor production.ts to match standardized stack structure and use shared components
+  - **Why**: Current production.ts creates cluster inline instead of using shared `createKubernetesCluster` component (inconsistent with preview-base)
+  - **Goal**: Make production.ts structure identical to preview-base.ts (different config values only)
+  - **Files to modify**: `infrastructure/pulumi/stacks/production.ts`
+  - **Changes required**:
+    1. **Use shared cluster component**: Replace inline `digitalocean.KubernetesCluster` with `createKubernetesCluster` (like preview-base)
+    2. **Add missing exports**: `databaseName`, `namespace`, `webImageRef`, `apiImageRef` (match M031b standard)
+    3. **Use image digests from config**: `webImageDigest` and `apiImageDigest` config params (like preview-pr)
+    4. **Add explicit provider dependency**: `dependsOn: [cluster]` in k8sProvider options (fixes race condition)
+    5. **Add enableServerSideApply**: Set to `true` for consistency with other stacks
+    6. **Simplify cluster config**: Remove unused properties (amdGpuDeviceMetricsExporterPlugin, etc.)
+    7. **Remove protect flag**: Or keep if desired for safety (discuss in PR)
+  - **Migration approach**:
+    - Backup production data (PostgreSQL dump)
+    - `pulumi destroy --stack production` (clean slate)
+    - Update production.ts with new structure
+    - `pulumi up --stack production` with new image digests
+    - Restore data if needed
+  - **Validation**: Production stack structure matches preview-base except for config values (replicas, storage, etc.)
+  - **Depends**: M031b (standardized exports defined)
+  - **Example structure**:
+    ```typescript
+    // Use shared component (like preview-base)
+    const { cluster, kubeconfig: clusterKubeconfig } = createKubernetesCluster({
+        name: "aphiria-com-cluster",
+        region: "nyc3",
+        version: "1.34.1-do.0",
+        nodeSize: "s-2vcpu-2gb",
+        nodeCount: 2,
+        autoScale: false,
+        minNodes: 2,
+        maxNodes: 2,
+        vpcUuid: "976f980d-dc84-11e8-80bc-3cfdfea9fba1",
+    });
+
+    const k8sProvider = new k8s.Provider("production-k8s", {
+        kubeconfig: clusterKubeconfig,
+        enableServerSideApply: true,
+    }, {
+        dependsOn: [cluster],  // Explicit dependency
+    });
+
+    // Use factory (already doing this)
+    const stack = createStack({...}, k8sProvider);
+
+    // Standardized exports (add missing ones)
+    export { webUrl, apiUrl, databaseName, namespace };
+    export const clusterId = cluster.id;
+    export const clusterEndpoint = cluster.endpoint;
+    export const kubeconfig = pulumi.secret(clusterKubeconfig);
+    export const gatewayName = "nginx-gateway";
+    export const gatewayNamespace = "nginx-gateway";
+    export const webImageRef = `ghcr.io/aphiria/aphiria.com-web@${webImageDigest}`;
+    export const apiImageRef = `ghcr.io/aphiria/aphiria.com-api@${apiImageDigest}`;
+    ```
+
+- [ ] M037b Fix missing dependsOn in preview-pr.ts k8sProvider
+  - **Why**: Stack references should have explicit dependencies to avoid race conditions during concurrent updates
+  - **File**: `infrastructure/pulumi/stacks/preview-pr.ts`
+  - **Change**: Add `dependsOn: [baseStack]` to k8sProvider resource options
+  - **Current** (implicit dependency):
+    ```typescript
+    const baseStack = new pulumi.StackReference(baseStackRef);
+    const kubeconfig = baseStack.requireOutput("kubeconfig");
+    const k8sProvider = new k8s.Provider("preview-pr-k8s", {
+        kubeconfig: kubeconfig,
+        enableServerSideApply: true,
+    });
+    ```
+  - **Fixed** (explicit dependency):
+    ```typescript
+    const baseStack = new pulumi.StackReference(baseStackRef);
+    const kubeconfig = baseStack.requireOutput("kubeconfig");
+    const k8sProvider = new k8s.Provider("preview-pr-k8s", {
+        kubeconfig: kubeconfig,
+        enableServerSideApply: true,
+    }, {
+        dependsOn: [baseStack],  // Ensure base stack outputs are resolved
+    });
+    ```
+  - **Impact**: More robust dependency resolution when base stack is updating
+
 - [ ] M037 Create production stack program: `infrastructure/pulumi/stacks/production.ts`
-  - **CRITICAL**: Configure explicit Kubernetes provider (see T052t hotfix from preview-pr stack)
-  - **Why**: Without explicit provider configuration, production stack will use default provider (local kubeconfig context) instead of production cluster
-  - **Implementation**: Get kubeconfig from cluster resource, create k8s.Provider, pass to ALL Kubernetes resources
-  - **Reference**: T052t documented the provider configuration bug discovered in preview-pr stack during local testing
+  - **NOTE**: This task is replaced by M037a (refactor existing production.ts instead of creating new)
+  - **DEPRECATED**: Original task assumed production.ts didn't exist
 - [ ] M038 Import shared Helm chart component (cert-manager, nginx-gateway) in production stack
 - [ ] M039 [P] Import shared PostgreSQL component with production config (persistent storage) in production stack
 - [ ] M040 [P] Import shared Gateway component with Let's Encrypt production TLS in production stack

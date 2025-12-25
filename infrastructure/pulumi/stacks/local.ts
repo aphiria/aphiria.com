@@ -15,6 +15,10 @@ const k8sProvider = new k8s.Provider("minikube", {
 // Get PostgreSQL credentials from config
 const postgresqlConfig = new pulumi.Config("postgresql");
 
+// Naming conventions
+const webUrl = "https://www.aphiria.com";
+const apiUrl = "https://api.aphiria.com";
+
 // Create all infrastructure using a factory
 createStack({
     env: "local",
@@ -42,6 +46,5 @@ createStack({
 }, k8sProvider);
 
 // Exports
-export const webUrl = "https://www.aphiria.com";
-export const apiUrl = "https://api.aphiria.com";
+export { webUrl, apiUrl };
 export const dbHost = "db";

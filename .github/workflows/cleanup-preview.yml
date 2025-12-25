@@ -92,12 +92,14 @@ jobs:
           PR_NUMBER=${{ steps.pr.outputs.number }}
           NAMESPACE="preview-pr-${PR_NUMBER}"
 
-          # Verify namespace is gone
+          # Verify namespace is gone - FAIL if it still exists
           if kubectl get namespace "${NAMESPACE}" 2>/dev/null; then
-            echo "::warning::Namespace ${NAMESPACE} still exists after stack destroy"
+            echo "::error::Namespace ${NAMESPACE} still exists after Pulumi destroy"
+            echo "::error::This indicates a bug in Pulumi components - resources should be fully deleted"
             kubectl get all -n "${NAMESPACE}"
+            exit 1
           else
-            echo "✅ Namespace ${NAMESPACE} successfully deleted"
+            echo "✅ Namespace ${NAMESPACE} successfully deleted by Pulumi"
           fi
 
       - name: Verify database cleanup
