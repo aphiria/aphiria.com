@@ -15,7 +15,7 @@ const k8sProvider = new k8s.Provider("minikube", {
 // Get PostgreSQL credentials from config
 const postgresqlConfig = new pulumi.Config("postgresql");
 
-// Create all infrastructure using factory
+// Create all infrastructure using a factory
 createStack({
     env: "local",
     skipBaseInfrastructure: true, // Helm charts already installed via minikube setup

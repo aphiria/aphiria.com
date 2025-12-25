@@ -58,7 +58,7 @@ export interface DatabaseConfig {
  */
 export interface GatewayConfig {
     /** TLS certificate mode */
-    tlsMode: "self-signed" | "letsencrypt-staging" | "letsencrypt-prod";
+    tlsMode: "self-signed" | "letsencrypt-prod";
     /** Domains to secure with TLS (supports wildcards like "*.pr.aphiria.com") */
     domains: string[];
     /** DigitalOcean DNS API token for DNS-01 ACME challenges (required for wildcard certs) */

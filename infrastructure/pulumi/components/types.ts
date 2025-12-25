@@ -174,7 +174,7 @@ export interface GatewayArgs {
     /** Gateway name */
     name: string;
     /** TLS certificate type */
-    tlsMode: "self-signed" | "letsencrypt-staging" | "letsencrypt-prod";
+    tlsMode: "self-signed" | "letsencrypt-prod";
     /** Domains to secure with TLS */
     domains: string[];
     /** DigitalOcean DNS API token for DNS-01 ACME challenges (required for wildcard certs) */

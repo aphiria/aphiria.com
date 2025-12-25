@@ -50,7 +50,7 @@ const k8sProvider = new k8s.Provider("production-k8s", {
 // Get configuration
 const postgresqlConfig = new pulumi.Config("postgresql");
 
-// Create all infrastructure using factory
+// Create all infrastructure using a factory
 createStack({
     env: "production",
     database: {

@@ -2,7 +2,7 @@ import * as pulumi from "@pulumi/pulumi";
 import * as k8s from "@pulumi/kubernetes";
 import { GatewayArgs, GatewayResult } from "./types";
 
-/** Creates Gateway with TLS (self-signed/letsencrypt-staging/letsencrypt-prod) and separate listeners for root/subdomains */
+/** Creates Gateway with TLS (self-signed or letsencrypt-prod) and separate listeners for root/subdomains */
 export function createGateway(args: GatewayArgs): GatewayResult {
     // Validate domain requirements based on environment
     const rootDomain = args.domains.find((d) => !d.startsWith("*"));
@@ -55,11 +55,9 @@ export function createGateway(args: GatewayArgs): GatewayResult {
             domains: args.domains,
         }, args.provider);
     } else {
-        const issuerName = args.tlsMode === "letsencrypt-prod" ? "letsencrypt-prod" : "letsencrypt-staging";
-        const acmeServer =
-            args.tlsMode === "letsencrypt-prod"
-                ? "https://acme-v02.api.letsencrypt.org/directory"
-                : "https://acme-staging-v02.api.letsencrypt.org/directory";
+        // letsencrypt-prod only (staging removed - not used in any stacks)
+        const issuerName = "letsencrypt-prod";
+        const acmeServer = "https://acme-v02.api.letsencrypt.org/directory";
 
         // Create Secret for DigitalOcean DNS token if provided (for DNS-01 challenges)
         if (args.dnsToken) {
@@ -150,8 +148,7 @@ export function createGateway(args: GatewayArgs): GatewayResult {
                 annotations:
                     args.tlsMode !== "self-signed"
                         ? {
-                              "cert-manager.io/cluster-issuer":
-                                  args.tlsMode === "letsencrypt-prod" ? "letsencrypt-prod" : "letsencrypt-staging",
+                              "cert-manager.io/cluster-issuer": "letsencrypt-prod",
                           }
                         : undefined,
             },

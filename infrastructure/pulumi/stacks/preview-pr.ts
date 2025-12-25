@@ -14,7 +14,7 @@ const ghcrConfig = new pulumi.Config("ghcr");
 const prNumber = config.requireNumber("prNumber");
 const webImageDigest = config.require("webImageDigest");
 const apiImageDigest = config.require("apiImageDigest");
-const baseStackRef = config.get("baseStackReference") || "davidbyoung/aphiria-com-infrastructure/preview-base";
+const baseStackRef = config.require("baseStackReference");
 const ghcrUsername = ghcrConfig.require("username");
 const ghcrToken = ghcrConfig.requireSecret("token");
 
@@ -37,7 +37,7 @@ const databaseName = `aphiria_pr_${prNumber}`;
 const webUrl = `https://${prNumber}.pr.aphiria.com`;
 const apiUrl = `https://${prNumber}.pr-api.aphiria.com`;
 
-// Create all infrastructure using factory
+// Create all infrastructure using a factory
 const stack = createStack({
     env: "preview",
     skipBaseInfrastructure: true, // Uses shared Helm charts and Gateway from preview-base
