@@ -18,6 +18,7 @@ const postgresqlConfig = new pulumi.Config("postgresql");
 // Create all infrastructure using factory
 createStack({
     env: "local",
+    skipBaseInfrastructure: true, // Helm charts already installed via minikube setup
     database: {
         replicas: 1,
         persistentStorage: true,

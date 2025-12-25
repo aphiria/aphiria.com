@@ -37,8 +37,17 @@ export function createDBMigrationJob(args: DBMigrationJobArgs): k8s.batch.v1.Job
                             command: [
                                 "sh",
                                 "-c",
-                                `until nc -z ${args.dbHost} 5432; do echo "Waiting for db..."; sleep 2; done`,
+                                "until nc -z $DB_HOST 5432; do echo 'Waiting for db...'; sleep 2; done",
                             ],
+                            env: [
+                                {
+                                    name: "DB_HOST",
+                                    value: args.dbHost,
+                                },
+                            ],
+                            ...(args.resources?.initContainer && {
+                                resources: args.resources.initContainer,
+                            }),
                         },
                     ],
                     containers: [
@@ -73,9 +82,15 @@ export function createDBMigrationJob(args: DBMigrationJobArgs): k8s.batch.v1.Job
                                     value: args.dbPassword,
                                 },
                             ],
+                            ...(args.resources?.migration && {
+                                resources: args.resources.migration,
+                            }),
                         },
                     ],
                     restartPolicy: "Never",
+                    ...(args.imagePullSecrets && {
+                        imagePullSecrets: args.imagePullSecrets.map(name => ({ name })),
+                    }),
                 },
             },
         },

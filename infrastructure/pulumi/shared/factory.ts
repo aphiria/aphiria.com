@@ -63,8 +63,6 @@ export interface StackResources {
 export function createStack(config: StackConfig, k8sProvider: k8s.Provider): StackResources {
     const resources: StackResources = {};
 
-    // Determine namespace (default or custom)
-    const namespace = config.namespace?.name || "default";
     const gatewayNamespace = "nginx-gateway";
 
     // Create custom namespace with ResourceQuota and NetworkPolicy (preview-pr only)
@@ -79,8 +77,11 @@ export function createStack(config: StackConfig, k8sProvider: k8s.Provider): Sta
         });
     }
 
-    // Install Helm charts (cert-manager, nginx-gateway) - skip for local (already installed)
-    if (config.env !== "local") {
+    // Determine namespace (use created namespace or default)
+    const namespace = resources.namespace?.namespace.metadata.name || "default";
+
+    // Install Helm charts (cert-manager, nginx-gateway) if not skipped
+    if (!config.skipBaseInfrastructure) {
         resources.helmCharts = installBaseHelmCharts({
             env: config.env,
             provider: k8sProvider,
@@ -113,16 +114,18 @@ export function createStack(config: StackConfig, k8sProvider: k8s.Provider): Sta
         });
     }
 
-    // Create Gateway with TLS
-    resources.gateway = createGateway({
-        env: config.env,
-        namespace: gatewayNamespace,
-        name: "nginx-gateway",
-        tlsMode: config.gateway.tlsMode,
-        domains: config.gateway.domains,
-        dnsToken: config.gateway.dnsToken,
-        provider: k8sProvider,
-    });
+    // Create Gateway with TLS if not skipped
+    if (!config.skipBaseInfrastructure) {
+        resources.gateway = createGateway({
+            env: config.env,
+            namespace: gatewayNamespace,
+            name: "nginx-gateway",
+            tlsMode: config.gateway.tlsMode,
+            domains: config.gateway.domains,
+            dnsToken: config.gateway.dnsToken,
+            provider: k8sProvider,
+        });
+    }
 
     // Deploy applications (skip for preview-base)
     if (config.app) {
@@ -190,20 +193,23 @@ export function createStack(config: StackConfig, k8sProvider: k8s.Provider): Sta
             env: config.env,
             namespace,
             image: config.app.apiImage,
-            dbHost: String(dbHost),
+            dbHost,
             dbName,
-            dbUser: String(dbUser),
+            dbUser,
             dbPassword,
             runSeeder: true,
+            imagePullSecrets: config.namespace?.imagePullSecret ? ["ghcr-pull-secret"] : undefined,
+            resources: config.app.migrationResources,
             provider: k8sProvider,
         });
 
-        // HTTPRoutes
+        // HTTPRoutes (always in same namespace as services to avoid cross-namespace ReferenceGrant)
         resources.webRoute = createHTTPRoute({
-            namespace: config.namespace ? gatewayNamespace : namespace,
-            name: config.namespace ? `${config.namespace.name}-web` : "web",
+            namespace: namespace,
+            name: "web",
             hostname: new URL(config.app.webUrl).hostname,
             serviceName: "web",
+            serviceNamespace: namespace,
             servicePort: 80,
             gatewayName: "nginx-gateway",
             gatewayNamespace: gatewayNamespace,
@@ -211,10 +217,11 @@ export function createStack(config: StackConfig, k8sProvider: k8s.Provider): Sta
         });
 
         resources.apiRoute = createHTTPRoute({
-            namespace: config.namespace ? gatewayNamespace : namespace,
-            name: config.namespace ? `${config.namespace.name}-api` : "api",
+            namespace: namespace,
+            name: "api",
             hostname: new URL(config.app.apiUrl).hostname,
             serviceName: "api",
+            serviceNamespace: namespace,
             servicePort: 80,
             gatewayName: "nginx-gateway",
             gatewayNamespace: gatewayNamespace,

@@ -112,6 +112,17 @@ export interface AppConfig {
     webResources?: ResourceLimits;
     /** API container resource limits (optional - for cost control in preview/production) */
     apiResources?: APIResourceLimits;
+    /** Database migration job resource limits (optional - for namespaces with ResourceQuotas) */
+    migrationResources?: {
+        migration?: {
+            requests?: { cpu?: string; memory?: string; };
+            limits?: { cpu?: string; memory?: string; };
+        };
+        initContainer?: {
+            requests?: { cpu?: string; memory?: string; };
+            limits?: { cpu?: string; memory?: string; };
+        };
+    };
     /** Web PodDisruptionBudget (optional - production only) */
     webPodDisruptionBudget?: { minAvailable?: number; maxUnavailable?: number; };
     /** API PodDisruptionBudget (optional - production only) */
@@ -177,6 +188,12 @@ export interface NamespaceConfig {
 export interface StackConfig {
     /** Environment type (determines default behaviors) */
     env: Environment;
+
+    /**
+     * Skip base infrastructure installation (Helm charts, Gateway)
+     * Set to true for preview-pr stacks that use shared infrastructure from preview-base
+     */
+    skipBaseInfrastructure?: boolean;
 
     /**
      * Kubernetes cluster configuration

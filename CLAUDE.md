@@ -207,6 +207,96 @@ const dbInitJob = new k8s.batch.v1.Job("db-init", {
 });
 ```
 
+### Pulumi TypeScript Build Requirement (CRITICAL)
+
+❌ **NEVER** run Pulumi commands without compiling TypeScript first
+- Pulumi executes the COMPILED JavaScript in `bin/`, not the TypeScript source
+- Changes to `.ts` files have NO EFFECT until you run `npm run build`
+- Forgetting to compile leads to deploying OLD CODE with OLD CONFIGURATIONS
+
+✅ **ALWAYS** compile TypeScript before EVERY Pulumi command:
+```bash
+# REQUIRED before pulumi up/preview/destroy/refresh
+cd /home/dyoung/PHPStormProjects/aphiria_com/infrastructure/pulumi && npm run build
+```
+
+**Decision Framework**:
+1. **Did I edit any `.ts` file?**
+   - YES → Run `npm run build` BEFORE any Pulumi command
+   - NO → Still run `npm run build` if unsure
+
+2. **Am I about to run `pulumi up` or `pulumi preview`?**
+   - ALWAYS run `npm run build` first, even if you think you didn't change anything
+
+**Example - Wrong Approach:**
+```bash
+# ❌ Edit preview-pr.ts: change cpu: "1" to cpu: "1200m"
+# ❌ Run: pulumi up
+# ❌ Result: Deploys with cpu: "1" because JavaScript wasn't recompiled
+```
+
+**Example - Correct Approach:**
+```bash
+# ✅ Edit preview-pr.ts: change cpu: "1" to cpu: "1200m"
+# ✅ Run: npm run build (compile TypeScript to JavaScript)
+# ✅ Run: pulumi up (deploys with cpu: "1200m")
+# ✅ Verify: kubectl get resourcequota (confirms "1200m")
+```
+
+**Git Commit Checklist**:
+- [ ] Run `npm run build` after TypeScript changes
+- [ ] Commit BOTH `.ts` source files AND compiled `.js` files in `bin/`
+- [ ] Never commit only `.ts` without corresponding `.js` changes
+
+### kubectl Usage Policy (CRITICAL)
+
+❌ **NEVER** use `kubectl` to modify cluster state
+- `kubectl` is a **debugging and inspection tool ONLY**
+- ALL infrastructure changes MUST go through Pulumi
+- If you find yourself using `kubectl patch`, `kubectl apply`, `kubectl edit`, `kubectl delete` (except for debugging), you are doing it WRONG
+
+✅ **ALWAYS** use `kubectl` for read-only operations:
+- `kubectl get` - Inspect resources
+- `kubectl describe` - Get detailed resource information
+- `kubectl logs` - View pod logs
+- `kubectl cluster-info` - Verify cluster connection
+- `kubectl port-forward` - Local debugging ONLY (never in CI/CD)
+
+**Decision Framework**:
+1. **Do I need to change cluster state?**
+   - YES → Compile TypeScript (`npm run build`), then use Pulumi (`pulumi up`)
+   - NO → Use kubectl for inspection
+
+2. **Is Pulumi not applying my changes?**
+   - WRONG: Use kubectl to manually fix it, then `pulumi refresh`
+   - CORRECT: Investigate WHY Pulumi isn't applying the change (Did you compile TypeScript? Check `git diff bin/`)
+
+3. **Is there a resource that needs cleanup?**
+   - WRONG: `kubectl delete resource-name`
+   - CORRECT: Remove from Pulumi code, compile (`npm run build`), run `pulumi up` (or `pulumi destroy` for entire stack)
+
+**Example - Wrong Approach:**
+```bash
+# ❌ Changed preview-pr.ts ResourceQuota from 1 CPU to 1200m
+# ❌ Pulumi didn't apply it (forgot to compile!)
+# ❌ Manual fix: kubectl patch resourcequota preview-pr-107-quota ...
+# ❌ Sync state: pulumi refresh
+# Result: State is now correct but you didn't fix the root problem
+```
+
+**Example - Correct Approach:**
+```bash
+# ✅ Changed preview-pr.ts ResourceQuota from 1 CPU to 1200m
+# ✅ Run: npm run build (compile TypeScript)
+# ✅ Run: pulumi preview --diff (check what Pulumi will change)
+# ✅ If ResourceQuota isn't in the diff, investigate:
+#    - Did the compilation succeed? Check bin/stacks/preview-pr.js
+#    - Is the resource properly imported in Pulumi state?
+#    - Is there a different stack managing this resource?
+# ✅ Run: pulumi up (let Pulumi apply the change)
+# ✅ Verify: kubectl get resourcequota (confirm change applied)
+```
+
 ### Pulumi Component Reusability Principle
 
 **CRITICAL: All reusable infrastructure logic MUST be in components, not stack files.**

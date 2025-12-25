@@ -10,12 +10,13 @@ import { createStack } from "../shared/factory";
 
 // Configuration
 const config = new pulumi.Config();
+const ghcrConfig = new pulumi.Config("ghcr");
 const prNumber = config.requireNumber("prNumber");
 const webImageDigest = config.require("webImageDigest");
 const apiImageDigest = config.require("apiImageDigest");
 const baseStackRef = config.get("baseStackReference") || "davidbyoung/aphiria-com-infrastructure/preview-base";
-const ghcrUsername = config.require("ghcr-username");
-const ghcrToken = config.requireSecret("ghcr-token");
+const ghcrUsername = ghcrConfig.require("username");
+const ghcrToken = ghcrConfig.requireSecret("token");
 
 // Reference base stack outputs
 const baseStack = new pulumi.StackReference(baseStackRef);
@@ -39,11 +40,12 @@ const apiUrl = `https://${prNumber}.pr-api.aphiria.com`;
 // Create all infrastructure using factory
 const stack = createStack({
     env: "preview",
+    skipBaseInfrastructure: true, // Uses shared Helm charts and Gateway from preview-base
     namespace: {
         name: namespaceName,
         resourceQuota: {
-            cpu: "4",
-            memory: "8Gi",
+            cpu: "1200m",
+            memory: "2Gi",
             pods: "5",
         },
         networkPolicy: {
@@ -88,21 +90,31 @@ const stack = createStack({
         apiImage: `ghcr.io/aphiria/aphiria.com-api@${apiImageDigest}`,
         cookieDomain: ".pr.aphiria.com",
         webResources: {
-            requests: { cpu: "100m", memory: "256Mi" },
-            limits: { cpu: "500m", memory: "1Gi" },
+            requests: { cpu: "50m", memory: "128Mi" },
+            limits: { cpu: "250m", memory: "512Mi" },
         },
         apiResources: {
             nginx: {
-                requests: { cpu: "100m", memory: "128Mi" },
-                limits: { cpu: "200m", memory: "256Mi" },
+                requests: { cpu: "50m", memory: "64Mi" },
+                limits: { cpu: "100m", memory: "128Mi" },
             },
             php: {
-                requests: { cpu: "500m", memory: "1280Mi" },
-                limits: { cpu: "1", memory: "2560Mi" },
+                requests: { cpu: "250m", memory: "512Mi" },
+                limits: { cpu: "500m", memory: "1Gi" },
             },
             initContainer: {
-                requests: { cpu: "100m", memory: "128Mi" },
+                requests: { cpu: "50m", memory: "64Mi" },
+                limits: { cpu: "100m", memory: "128Mi" },
+            },
+        },
+        migrationResources: {
+            migration: {
+                requests: { cpu: "50m", memory: "128Mi" },
                 limits: { cpu: "200m", memory: "256Mi" },
+            },
+            initContainer: {
+                requests: { cpu: "10m", memory: "32Mi" },
+                limits: { cpu: "50m", memory: "64Mi" },
             },
         },
     },

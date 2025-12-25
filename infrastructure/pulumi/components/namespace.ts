@@ -83,6 +83,11 @@ export function createNamespace(args: NamespaceArgs): NamespaceResult {
             egressRules.push({
                 to: [
                     {
+                        namespaceSelector: {
+                            matchLabels: {
+                                "kubernetes.io/metadata.name": "default",
+                            },
+                        },
                         podSelector: {
                             matchLabels: {
                                 app: "db",

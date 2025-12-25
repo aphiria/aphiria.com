@@ -36,7 +36,7 @@ export function createHTTPRoute(args: HTTPRouteArgs): k8s.apiextensions.CustomRe
                     {
                         name: args.gatewayName,
                         namespace: args.gatewayNamespace,
-                        sectionName: "https-subdomains", // Matches Gateway listener name
+                        // sectionName omitted - Gateway auto-matches based on hostname
                     },
                 ],
                 rules: [
@@ -44,6 +44,7 @@ export function createHTTPRoute(args: HTTPRouteArgs): k8s.apiextensions.CustomRe
                         backendRefs: [
                             {
                                 name: args.serviceName,
+                                namespace: args.serviceNamespace,
                                 port: args.servicePort,
                             },
                         ],

@@ -197,6 +197,8 @@ export interface HTTPRouteArgs {
     hostname: string;
     /** Backend service name */
     serviceName: string;
+    /** Backend service namespace (for cross-namespace routing) */
+    serviceNamespace: pulumi.Input<string>;
     /** Backend service port */
     servicePort: number;
     /** Gateway reference */
@@ -243,15 +245,28 @@ export interface DBMigrationJobArgs {
     /** Docker image containing migrations */
     image: string;
     /** Database host */
-    dbHost: string;
+    dbHost: pulumi.Input<string>;
     /** Database name */
     dbName: string;
     /** Database user */
-    dbUser: string;
+    dbUser: pulumi.Input<string>;
     /** Database password (sensitive) */
     dbPassword: pulumi.Input<string>;
     /** Run LexemeSeeder after migrations */
     runSeeder: boolean;
+    /** Optional image pull secrets for private registries */
+    imagePullSecrets?: pulumi.Input<string>[];
+    /** Optional resource limits for containers */
+    resources?: {
+        migration?: {
+            requests?: { cpu?: string; memory?: string; };
+            limits?: { cpu?: string; memory?: string; };
+        };
+        initContainer?: {
+            requests?: { cpu?: string; memory?: string; };
+            limits?: { cpu?: string; memory?: string; };
+        };
+    };
     /** Resource labels */
     labels?: Record<string, string>;
     /** Kubernetes provider */
