@@ -875,6 +875,18 @@ final class Example
 3. **Architecture Decisions**: Document "why" in code comments, not just "what"
 4. **Inline Comments**: Explain complex logic, not obvious code, and do not comment on code that has been removed
 
+**Comment Guidelines** (IMPORTANT):
+- ❌ **DON'T** add comments for self-explanatory code:
+  - `export const namespace = "default"` - NO COMMENT NEEDED
+  - `const maxRetries = 3` - NO COMMENT NEEDED
+  - Simple assignments, obvious variable names, standard patterns
+- ✅ **DO** add comments for:
+  - Complex business logic that isn't immediately obvious
+  - Non-obvious technical decisions ("why" not "what")
+  - Workarounds with TODO/FIXME linked to issues
+  - Public API contracts (PHPDoc/JSDoc)
+- **Rule of thumb**: If the code is self-documenting (clear variable names, obvious purpose), don't add a comment
+
 ---
 
 ## Environment Configuration

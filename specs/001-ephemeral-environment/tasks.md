@@ -1614,7 +1614,7 @@ Phase 8 (Migrate production to Pulumi + reusable workflows)
 
 #### Stack Export Standardization (Foundation for Production Migration)
 
-- [ ] M031b **CRITICAL**: Standardize stack exports across all stacks for consistency and reusability
+- [X] M031b **CRITICAL**: Standardize stack exports across all stacks for consistency and reusability
   - **Why**: Current stacks export different outputs, making it difficult to write reusable workflows and reference stack outputs consistently
   - **Current state**:
     - `local.ts`: Exports `webUrl`, `apiUrl`, `dbHost`
@@ -1653,7 +1653,7 @@ Phase 8 (Migrate production to Pulumi + reusable workflows)
 
 #### CI/CD Workflow Analysis & Bash-to-TypeScript Migration
 
-- [ ] M031c **ANALYSIS**: Audit all GitHub Actions workflows for complex bash logic requiring TypeScript migration
+- [X] M031c **ANALYSIS**: Audit all GitHub Actions workflows for complex bash logic requiring TypeScript migration
   - **Why**: Complex bash logic (loops, conditionals, case statements, arrays) is error-prone and hard to test/maintain
   - **Principle**: Bash is acceptable for simple commands (1-3 lines), TypeScript required for complex logic
   - **Files to audit**:

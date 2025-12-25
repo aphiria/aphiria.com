@@ -36,6 +36,9 @@ const postgresqlConfig = new pulumi.Config("postgresql");
 const certmanagerConfig = new pulumi.Config("certmanager");
 const ghcrConfig = new pulumi.Config("ghcr");
 
+const postgresqlAdminUser = postgresqlConfig.require("user");
+const postgresqlAdminPassword = postgresqlConfig.requireSecret("password");
+
 // Create base infrastructure using factory (no app deployment)
 createStack({
     env: "preview",
@@ -43,8 +46,8 @@ createStack({
         replicas: 1,
         persistentStorage: true,
         storageSize: "20Gi",
-        dbUser: postgresqlConfig.require("user"),
-        dbPassword: postgresqlConfig.requireSecret("password"),
+        dbUser: postgresqlAdminUser,
+        dbPassword: postgresqlAdminPassword,
     },
     gateway: {
         tlsMode: "letsencrypt-prod",
@@ -96,14 +99,13 @@ new digitalocean.DnsRecord("preview-api-dns", {
     ttl: 300,
 });
 
-// Outputs (used by workflows)
+// Outputs
 export const clusterId = cluster.id;
 export const clusterEndpoint = cluster.endpoint;
 export const kubeconfig = pulumi.secret(clusterKubeconfig);
 export const postgresqlHost = "db.default.svc.cluster.local";
 export const postgresqlPort = 5432;
-export const postgresqlAdminUser = postgresqlConfig.require("user");
-export const postgresqlAdminPassword = postgresqlConfig.requireSecret("password");
+export { postgresqlAdminUser, postgresqlAdminPassword };
 export const gatewayName = "nginx-gateway";
 export const gatewayNamespace = "nginx-gateway";
 export const namespace = "default";

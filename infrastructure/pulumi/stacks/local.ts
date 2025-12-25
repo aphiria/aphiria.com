@@ -15,6 +15,9 @@ const k8sProvider = new k8s.Provider("minikube", {
 // Get PostgreSQL credentials from config
 const postgresqlConfig = new pulumi.Config("postgresql");
 
+const postgresqlUser = postgresqlConfig.get("user") || "postgres";
+const postgresqlPassword = postgresqlConfig.get("password") || "postgres";
+
 // Naming conventions
 const webUrl = "https://www.aphiria.com";
 const apiUrl = "https://api.aphiria.com";
@@ -27,8 +30,8 @@ createStack({
         replicas: 1,
         persistentStorage: true,
         storageSize: "5Gi",
-        dbUser: postgresqlConfig.get("user") || "postgres",
-        dbPassword: postgresqlConfig.get("password") || "postgres",
+        dbUser: postgresqlUser,
+        dbPassword: postgresqlPassword,
     },
     gateway: {
         tlsMode: "self-signed",
@@ -37,14 +40,14 @@ createStack({
     app: {
         webReplicas: 1,
         apiReplicas: 1,
-        webUrl: "https://www.aphiria.com",
-        apiUrl: "https://api.aphiria.com",
+        webUrl: webUrl,
+        apiUrl: apiUrl,
         webImage: "aphiria.com-web:latest",
         apiImage: "aphiria.com-api:latest",
         cookieDomain: ".aphiria.com",
     },
 }, k8sProvider);
 
-// Exports
+// Outputs
 export { webUrl, apiUrl };
-export const dbHost = "db";
+export const namespace = "default";

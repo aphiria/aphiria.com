@@ -121,7 +121,12 @@ const stack = createStack({
 }, k8sProvider);
 
 // Outputs
-export { webUrl, apiUrl, databaseName, namespaceName };
+export { webUrl , apiUrl };
+export const namespace = namespaceName;
+export { databaseName };
+/**
+ * @internal Used for Pulumi dependency tracking
+ */
 export const namespaceResourceName = stack.namespace?.namespace.metadata.name;
 export const webImageRef = `ghcr.io/aphiria/aphiria.com-web@${webImageDigest}`;
 export const apiImageRef = `ghcr.io/aphiria/aphiria.com-api@${apiImageDigest}`;

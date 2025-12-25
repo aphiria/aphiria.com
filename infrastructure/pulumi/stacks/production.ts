@@ -50,19 +50,22 @@ const k8sProvider = new k8s.Provider("production-k8s", {
 // Get configuration
 const postgresqlConfig = new pulumi.Config("postgresql");
 
+const postgresqlUser = postgresqlConfig.require("user");
+const postgresqlPassword = postgresqlConfig.requireSecret("password");
+
 // Naming conventions
 const webUrl = "https://www.aphiria.com";
 const apiUrl = "https://api.aphiria.com";
 
 // Create all infrastructure using a factory
-createStack({
+const stack = createStack({
     env: "production",
     database: {
         replicas: 2,
         persistentStorage: true,
         storageSize: "20Gi",
-        dbUser: postgresqlConfig.require("user"),
-        dbPassword: postgresqlConfig.requireSecret("password"),
+        dbUser: postgresqlUser,
+        dbPassword: postgresqlPassword,
     },
     gateway: {
         tlsMode: "letsencrypt-prod",
@@ -83,8 +86,16 @@ createStack({
 
 // Outputs
 export { webUrl, apiUrl };
+export const namespace = "default";
 export const clusterId = cluster.id;
 export const clusterEndpoint = cluster.endpoint;
 export const kubeconfig = pulumi.secret(cluster.kubeConfigs[0].rawConfig);
 export const gatewayName = "nginx-gateway";
 export const gatewayNamespace = "nginx-gateway";
+
+/**
+ * TODO: Add when production uses factory pattern correctly (currently hardcoded in components)
+ */
+export const databaseName = "aphiria_production";
+export const webImageRef = config.require("webImage");
+export const apiImageRef = config.require("apiImage");
