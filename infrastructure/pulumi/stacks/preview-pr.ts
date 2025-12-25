@@ -44,8 +44,8 @@ const stack = createStack({
     namespace: {
         name: namespaceName,
         resourceQuota: {
-            cpu: "1200m",
-            memory: "2Gi",
+            cpu: "2",
+            memory: "4Gi",
             pods: "5",
         },
         networkPolicy: {

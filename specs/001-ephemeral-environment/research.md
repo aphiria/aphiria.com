@@ -161,17 +161,44 @@ spec:
     count/pods: "5"
 ```
 
-**Rationale**:
-- **Pod count**: 1 web + 1 api + 1 db-migration job = ~3 pods (5 allows headroom)
-- **CPU/Memory**: Lightweight preview traffic (1 replica each vs. 2 in production)
-- **Prevents abuse**: Can't spawn 100 pods or request 100 CPU
-- **Not overly restrictive**: Sufficient for normal preview validation
+**Rationale** (based on quantifiable cluster data - 2025-12-25):
+
+**Actual Pod Resource Requirements** (measured from preview-pr-107):
+- **API pod** (nginx + PHP-FPM):
+  - requests: 300m CPU, 576Mi memory
+  - limits: 600m CPU, 1152Mi memory
+- **Web pod** (nginx):
+  - requests: 50m CPU, 128Mi memory
+  - limits: 250m CPU, 512Mi memory
+- **DB Migration Job**:
+  - requests: ~100m CPU, ~256Mi memory
+  - limits: ~200m CPU, ~512Mi memory
+
+**Rolling Update Requirements** (maxSurge=1, maxUnavailable=0):
+- During API update: old API pod + new API pod = 1200m CPU, 2304Mi memory
+- During Web update: old Web pod + new Web pod = 500m CPU, 1024Mi memory
+- **Worst case** (simultaneous API + Web rolling updates):
+  - CPU limits: 1200m + 500m = **1700m**
+  - Memory limits: 2304Mi + 1024Mi = **3328Mi**
+  - Plus DB migration job: +200m CPU, +512Mi memory = **1900m CPU, 3840Mi memory**
+
+**Industry Best Practice**: Add 25% headroom for Kubernetes overhead, evictions, and scheduling flexibility
+- CPU: 1900m × 1.25 = **2375m → 2.4 CPU (rounded to 2.5 CPU for safety)**
+- Memory: 3840Mi × 1.25 = **4800Mi → 4.7Gi (rounded to 5Gi for safety)**
+
+**Final Quota Values**:
+- `limits.cpu: "2"` - Sufficient for API+Web steady state (850m) + db-migration (200m) = 1050m
+- `limits.memory: "4Gi"` - Sufficient for API+Web steady state (1664Mi) + db-migration (512Mi) = 2176Mi
+- **Critical**: Quota accommodates ONE rolling update at a time but NOT simultaneous API+Web updates
+- **Trade-off**: Accepted to minimize cluster costs while maintaining zero-downtime updates per service
+
+**Pod count**: 1 web + 1 api + 1 db-migration job = ~3 pods (5 allows headroom for temporary pods during updates)
 
 **Deployment Replicas** (preview-specific):
 - Web: `replicas: 1` (vs. 2 in production)
 - API: `replicas: 1` (vs. 2 in production)
 
-**Change from original research**: Reduced from 4Gi limits to 2 CPU/4Gi total based on actual deployment analysis showing web+API need minimal resources for preview traffic.
+**Note on Simultaneous Updates**: CI/CD deploys API and Web sequentially, not in parallel, so 2 CPU / 4Gi quota is sufficient. If simultaneous updates are needed in the future, increase to 3 CPU / 5Gi.
 
 **Alternatives Considered**:
 - ❌ **No quotas**: Risk of cluster exhaustion from malicious/buggy PRs

@@ -16,6 +16,11 @@ use Aphiria\Net\Http\HttpStatusCode;
 
 class ApiTest extends IntegrationTestCase
 {
+    public function testCheckingHealthOnEmptyPathReturns200(): void
+    {
+        $this->assertStatusCodeEquals(HttpStatusCode::Ok, $this->get('/'));
+    }
+
     public function testCheckingHealthReturns200(): void
     {
         $this->assertStatusCodeEquals(HttpStatusCode::Ok, $this->get('/health'));
