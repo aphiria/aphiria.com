@@ -52,7 +52,7 @@ jobs:
           script: |
             async function checkStackExists(stackName) {
               try {
-                await exec('pulumi', ['stack', 'select', stackName], {
+                await exec.exec('pulumi', ['stack', 'select', stackName], {
                   silent: true,
                   cwd: 'infrastructure/pulumi'
                 });
@@ -65,7 +65,7 @@ jobs:
             async function checkClusterDeployed(stackName) {
               let output = '';
               try {
-                await exec('pulumi', ['stack', 'output', 'clusterId', '--stack', stackName], {
+                await exec.exec('pulumi', ['stack', 'output', 'clusterId', '--stack', stackName], {
                   silent: true,
                   cwd: 'infrastructure/pulumi',
                   listeners: {
@@ -79,7 +79,7 @@ jobs:
             }
 
             async function pulumiRefresh(stackName) {
-              await exec('pulumi', ['refresh', '--stack', stackName, '--yes'], {
+              await exec.exec('pulumi', ['refresh', '--stack', stackName, '--yes'], {
                 cwd: 'infrastructure/pulumi'
               });
             }
@@ -90,7 +90,7 @@ jobs:
 
               for (let attempt = 0; attempt < maxRetries; attempt++) {
                 try {
-                  await exec('pulumi', ['up', '--stack', stackName, '--yes'], {
+                  await exec.exec('pulumi', ['up', '--stack', stackName, '--yes'], {
                     cwd: 'infrastructure/pulumi'
                   });
                   core.info(`✅ ${stackName} deployed successfully`);
@@ -128,8 +128,8 @@ jobs:
               }
             } else {
               core.info('📦 Creating and deploying base stack "preview-base"...');
-              await exec('pulumi', ['stack', 'init', 'preview-base'], { cwd: 'infrastructure/pulumi' });
-              await exec('pulumi', ['config', 'env', 'add', 'aphiria.com/Preview', '--stack', 'preview-base', '--yes'], { cwd: 'infrastructure/pulumi' });
+              await exec.exec('pulumi', ['stack', 'init', 'preview-base'], { cwd: 'infrastructure/pulumi' });
+              await exec.exec('pulumi', ['config', 'env', 'add', 'aphiria.com/Preview', '--stack', 'preview-base', '--yes'], { cwd: 'infrastructure/pulumi' });
               core.info('🚀 Deploying preview base infrastructure (this will take 5-10 minutes)...');
               await deployWithRetry('preview-base');
             }
