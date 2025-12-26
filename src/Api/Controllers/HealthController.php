@@ -33,4 +33,16 @@ final class HealthController extends Controller
     {
         return $this->ok();
     }
+
+    /**
+     * Checks the health of the API
+     *
+     * @return IResponse The response
+     * @throws Exception Thrown if there was an error negotiating the content
+     */
+    #[Get('')]
+    public function checkHealthEmpty(): IResponse
+    {
+        return $this->ok();
+    }
 }

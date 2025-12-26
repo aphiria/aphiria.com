@@ -1,12 +1,5 @@
-/** Base Infrastructure Stack for Preview Environments
- *
- * Deploys persistent infrastructure for preview environments:
- * - Kubernetes cluster (dedicated preview cluster, separate from production)
- * - Helm charts (cert-manager, nginx-gateway-fabric)
- * - Shared PostgreSQL instance (1 replica, persistent storage)
- * - Gateway with Let's Encrypt production TLS
- * - Wildcard certificate for *.pr.aphiria.com
- *
+/**
+ * Base Infrastructure Stack for Preview Environments
  * This stack creates its own dedicated cluster for complete isolation from production.
  * Stack name: preview-base
  */
@@ -14,97 +7,73 @@
 import * as pulumi from "@pulumi/pulumi";
 import * as digitalocean from "@pulumi/digitalocean";
 import * as k8s from "@pulumi/kubernetes";
-import {
-    installBaseHelmCharts,
-    createPostgreSQL,
-    createGateway,
-} from "../components";
+import { createKubernetesCluster } from "../components";
+import { createStack } from "../shared/factory";
 
-const config = new pulumi.Config();
-
-// 1. Create dedicated preview Kubernetes cluster
-const cluster = new digitalocean.KubernetesCluster("aphiria-com-preview-cluster", {
+// Create a dedicated preview Kubernetes cluster
+const { cluster, kubeconfig: clusterKubeconfig } = createKubernetesCluster({
     name: "aphiria-com-preview-cluster",
-    region: digitalocean.Region.NYC3,
+    region: "nyc3",
     version: "1.34.1-do.2",
-    nodePool: {
-        name: "worker-pool",
-        size: "s-2vcpu-2gb",
-        nodeCount: 1,
-        autoScale: true,
-        minNodes: 1,
-        maxNodes: 3,
-    },
+    nodeSize: "s-2vcpu-2gb",
+    nodeCount: 1,
+    autoScale: true,
+    minNodes: 1,
+    maxNodes: 3,
     vpcUuid: "976f980d-dc84-11e8-80bc-3cfdfea9fba1",
-    maintenancePolicy: {
-        day: "any",
-        startTime: "6:00",
-    },
-}, {
-    protect: true, // Prevents accidental deletion
 });
 
-// Create Kubernetes provider using the cluster's kubeconfig
-// Uses canonical Pulumi pattern - provider validates connection on first resource operation
+// Create a Kubernetes provider using the cluster's kubeconfig
 const k8sProvider = new k8s.Provider("preview-k8s", {
-    kubeconfig: cluster.kubeConfigs[0].rawConfig,
+    kubeconfig: clusterKubeconfig,
     enableServerSideApply: true,
 }, {
     dependsOn: [cluster],
 });
 
-// 3. Install Helm charts (cert-manager, nginx-gateway-fabric)
-const helmCharts = installBaseHelmCharts({
-    env: "preview",
-    provider: k8sProvider,
-});
-
-// 4. Create shared PostgreSQL (1 replica, cloud persistent storage)
-// This single instance is shared by all preview environments with separate databases per PR
+// Get configuration
 const postgresqlConfig = new pulumi.Config("postgresql");
-const postgres = createPostgreSQL({
-    env: "preview",
-    namespace: "default",
-    replicas: 1,
-    persistentStorage: true,
-    storageSize: "20Gi",
-    dbUser: postgresqlConfig.require("user"),
-    dbPassword: postgresqlConfig.requireSecret("password"),
-    provider: k8sProvider,
-});
-
-// 5. Create imagePullSecret for GitHub Container Registry
-// Required for pulling private images from ghcr.io
+const certmanagerConfig = new pulumi.Config("certmanager");
 const ghcrConfig = new pulumi.Config("ghcr");
-const ghcrToken = ghcrConfig.requireSecret("token");
-const ghcrUsername = ghcrConfig.require("username");
 
-const imagePullSecret = new k8s.core.v1.Secret("ghcr-pull-secret", {
+const postgresqlAdminUser = postgresqlConfig.require("user");
+const postgresqlAdminPassword = postgresqlConfig.requireSecret("password");
+
+// Create base infrastructure using factory (no app deployment)
+createStack({
+    env: "preview",
+    database: {
+        replicas: 1,
+        persistentStorage: true,
+        storageSize: "20Gi",
+        dbUser: postgresqlAdminUser,
+        dbPassword: postgresqlAdminPassword,
+    },
+    gateway: {
+        tlsMode: "letsencrypt-prod",
+        domains: [
+            "*.pr.aphiria.com",      // Web preview URLs
+            "*.pr-api.aphiria.com",  // API preview URLs
+        ],
+        dnsToken: certmanagerConfig.requireSecret("digitaloceanDnsToken"),
+    },
+    // No app config - preview-base is infrastructure only
+}, k8sProvider);
+
+// Create imagePullSecret for GitHub Container Registry
+// Required for preview-pr stacks to pull private images from ghcr.io
+new k8s.core.v1.Secret("ghcr-pull-secret", {
     metadata: {
         name: "ghcr-pull-secret",
         namespace: "default",
     },
     type: "kubernetes.io/dockerconfigjson",
     stringData: {
-        ".dockerconfigjson": pulumi.interpolate`{"auths":{"ghcr.io":{"username":"${ghcrUsername}","password":"${ghcrToken}"}}}`,
+        ".dockerconfigjson": pulumi.interpolate`{"auths":{"ghcr.io":{"username":"${ghcrConfig.require("username")}","password":"${ghcrConfig.requireSecret("token")}"}}}`,
     },
 }, { provider: k8sProvider });
 
-// 6. Create Gateway with Let's Encrypt production TLS
-// Wildcard certificate covers all preview subdomains: {PR}.pr.aphiria.com, {PR}.pr-api.aphiria.com
-const gateway = createGateway({
-    env: "preview",
-    namespace: "nginx-gateway",
-    name: "nginx-gateway",
-    tlsMode: "letsencrypt-prod",
-    domains: [
-        "*.pr.aphiria.com",      // Web preview URLs
-        "*.pr-api.aphiria.com",  // API preview URLs
-    ],
-    provider: k8sProvider,
-});
-
-// 7. Get LoadBalancer IP from nginx-gateway Service
+// Get LoadBalancer IP from nginx-gateway Service
 const gatewayService = k8s.core.v1.Service.get(
     "nginx-gateway-svc",
     pulumi.interpolate`nginx-gateway/nginx-gateway-nginx-gateway-fabric`,
@@ -113,8 +82,8 @@ const gatewayService = k8s.core.v1.Service.get(
 
 const loadBalancerIp = gatewayService.status.loadBalancer.ingress[0].ip;
 
-// 8. Create DNS wildcard records for preview environments
-const previewWebDns = new digitalocean.DnsRecord("preview-web-dns", {
+// Create DNS wildcard records for preview environments
+new digitalocean.DnsRecord("preview-web-dns", {
     domain: "aphiria.com",
     type: "A",
     name: "*.pr",
@@ -122,7 +91,7 @@ const previewWebDns = new digitalocean.DnsRecord("preview-web-dns", {
     ttl: 300,
 });
 
-const previewApiDns = new digitalocean.DnsRecord("preview-api-dns", {
+new digitalocean.DnsRecord("preview-api-dns", {
     domain: "aphiria.com",
     type: "A",
     name: "*.pr-api",
@@ -130,12 +99,13 @@ const previewApiDns = new digitalocean.DnsRecord("preview-api-dns", {
     ttl: 300,
 });
 
-// Outputs (used by workflows)
+// Outputs
 export const clusterId = cluster.id;
 export const clusterEndpoint = cluster.endpoint;
-export const kubeconfig = pulumi.secret(cluster.kubeConfigs[0].rawConfig);
-export const postgresqlHost = "db";  // Service name
+export const kubeconfig = pulumi.secret(clusterKubeconfig);
+export const postgresqlHost = "db.default.svc.cluster.local";
 export const postgresqlPort = 5432;
+export { postgresqlAdminUser, postgresqlAdminPassword };
 export const gatewayName = "nginx-gateway";
 export const gatewayNamespace = "nginx-gateway";
 export const namespace = "default";

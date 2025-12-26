@@ -8,6 +8,7 @@ permissions:
   contents: read
   pull-requests: write
   deployments: write
+  packages: write
 
 jobs:
   cleanup:
@@ -92,12 +93,14 @@ jobs:
           PR_NUMBER=${{ steps.pr.outputs.number }}
           NAMESPACE="preview-pr-${PR_NUMBER}"
 
-          # Verify namespace is gone
+          # Verify namespace is gone - FAIL if it still exists
           if kubectl get namespace "${NAMESPACE}" 2>/dev/null; then
-            echo "::warning::Namespace ${NAMESPACE} still exists after stack destroy"
+            echo "::error::Namespace ${NAMESPACE} still exists after Pulumi destroy"
+            echo "::error::This indicates a bug in Pulumi components - resources should be fully deleted"
             kubectl get all -n "${NAMESPACE}"
+            exit 1
           else
-            echo "✅ Namespace ${NAMESPACE} successfully deleted"
+            echo "✅ Namespace ${NAMESPACE} successfully deleted by Pulumi"
           fi
 
       - name: Verify database cleanup
@@ -124,6 +127,70 @@ jobs:
           else
             echo "::notice::PostgreSQL pod not found, skipping database verification"
           fi
+
+      - name: Delete preview images from GHCR
+        if: steps.destroy.outputs.status == 'destroyed'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prNumber = ${{ steps.pr.outputs.number }};
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+
+            // Image names for this repository
+            const imageNames = ['api', 'web', 'build'];
+            const imageBaseName = `${owner}/${repo}`;
+
+            core.info(`🗑️  Deleting preview images for PR #${prNumber}`);
+
+            for (const imageName of imageNames) {
+              const fullImageName = `${imageBaseName}-${imageName}`;
+              const prTag = `pr-${prNumber}`;
+
+              try {
+                // Get package versions (all tags for this image)
+                const { data: versions } = await github.rest.packages.getAllPackageVersionsForPackageOwnedByOrg({
+                  package_type: 'container',
+                  package_name: fullImageName,
+                  org: owner,
+                  per_page: 100,
+                });
+
+                core.info(`Found ${versions.length} total versions for ${fullImageName}`);
+
+                // Filter versions that match this PR
+                const prVersions = versions.filter(v =>
+                  v.metadata?.container?.tags?.some(tag =>
+                    tag.startsWith(prTag)
+                  )
+                );
+
+                core.info(`Found ${prVersions.length} versions for PR #${prNumber}`);
+
+                // Delete each matching version
+                for (const version of prVersions) {
+                  const tags = version.metadata?.container?.tags || [];
+                  core.info(`Deleting version ${version.id} with tags: ${tags.join(', ')}`);
+
+                  await github.rest.packages.deletePackageVersionForOrg({
+                    package_type: 'container',
+                    package_name: fullImageName,
+                    org: owner,
+                    package_version_id: version.id,
+                  });
+
+                  core.info(`✅ Deleted ${fullImageName} version ${version.id}`);
+                }
+              } catch (error) {
+                if (error.status === 404) {
+                  core.info(`Package ${fullImageName} not found (may not have been built)`);
+                } else {
+                  core.warning(`Failed to delete images for ${fullImageName}: ${error.message}`);
+                }
+              }
+            }
+
+            core.info('✅ Preview image cleanup complete')
 
       - name: Mark GitHub Deployment as inactive
         if: steps.destroy.outputs.status == 'destroyed'
@@ -174,6 +241,7 @@ jobs:
               All resources have been cleaned up:
               - ✅ Kubernetes namespace deleted
               - ✅ Database dropped
+              - ✅ Docker images deleted
               - ✅ Pulumi stack removed
 
               The preview environment is no longer accessible.
@@ -196,33 +264,10 @@ jobs:
               `;
             }
 
-            // Find existing deployment comment and update it
-            const { data: comments } = await github.rest.issues.listComments({
+            await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: prNumber,
+              body: body,
             });
-
-            const deployComment = comments.find(comment =>
-              comment.user.type === 'Bot' &&
-              comment.body.includes('Preview Environment Deployed')
-            );
-
-            if (deployComment) {
-              // Update the deployment comment to show it's cleaned up
-              await github.rest.issues.updateComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                comment_id: deployComment.id,
-                body: deployComment.body + '\n\n---\n\n' + body,
-              });
-            } else {
-              // Create new comment
-              await github.rest.issues.createComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: prNumber,
-                body: body,
-              });
-            }
 

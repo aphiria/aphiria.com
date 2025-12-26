@@ -1,35 +1,24 @@
-/** Production Infrastructure Stack
- *
- * Deploys production infrastructure to DigitalOcean:
- * - Kubernetes cluster (auto-scaling, auto-upgrade enabled)
- * - Helm charts (cert-manager, nginx-gateway-fabric)
- * - PostgreSQL with persistent storage (2 replicas)
- * - Gateway with Let's Encrypt production TLS
- * - Web and API deployments (2 replicas each)
- * - Database migrations and search index seeding
- *
+/**
+ * Production Infrastructure Stack (DigitalOcean)
  * This stack creates the Kubernetes cluster itself, unlike preview-base which assumes
  * a pre-existing cluster. The cluster is long-lived infrastructure.
- *
  * Stack name: production
  */
 
 import * as pulumi from "@pulumi/pulumi";
 import * as digitalocean from "@pulumi/digitalocean";
 import * as k8s from "@pulumi/kubernetes";
-import {
-    installBaseHelmCharts,
-    createPostgreSQL,
-    createGateway,
-    createWebDeployment,
-    createAPIDeployment,
-    createDBMigrationJob,
-    createHTTPRoute,
-} from "../components";
+import { createStack } from "../shared/factory";
 
 const config = new pulumi.Config();
 
-// 1. Imported DigitalOcean Kubernetes cluster (existing cluster, not created by Pulumi)
+// TODO (M037a): Replace inline cluster creation with createKubernetesCluster component
+// This requires destroying and recreating the production cluster (acceptable per task M037a)
+// The shared component doesn't support all current options (amdGpuDeviceMetricsExporterPlugin,
+// clusterSubnet, maintenancePolicy, serviceSubnet, routingAgent) - these would need to be
+// added to the component or dropped if not needed.
+//
+// Imported DigitalOcean Kubernetes cluster (existing cluster, not created by Pulumi)
 // This matches the actual cluster configuration from the import
 const cluster = new digitalocean.KubernetesCluster("aphiria-com-cluster", {
     amdGpuDeviceMetricsExporterPlugin: {
@@ -59,118 +48,77 @@ const cluster = new digitalocean.KubernetesCluster("aphiria-com-cluster", {
     protect: true, // Prevents accidental deletion
 });
 
-// 2. Create Kubernetes provider using the cluster's kubeconfig
+// Create Kubernetes provider using the cluster's kubeconfig
 const k8sProvider = new k8s.Provider("production-k8s", {
     kubeconfig: cluster.kubeConfigs[0].rawConfig,
+    enableServerSideApply: true,
+}, {
+    dependsOn: [cluster],
 });
 
-// 3. Install Helm charts (cert-manager, nginx-gateway-fabric)
-const helmCharts = installBaseHelmCharts({
-    env: "production",
-    provider: k8sProvider,
-});
-
-// 4. Create PostgreSQL (2 replicas, cloud persistent storage)
+// Get configuration
 const postgresqlConfig = new pulumi.Config("postgresql");
-const postgres = createPostgreSQL({
-    env: "production",
-    namespace: "default",
-    replicas: 2,
-    persistentStorage: true,
-    storageSize: "20Gi",
-    dbUser: postgresqlConfig.require("user"),
-    dbPassword: postgresqlConfig.requireSecret("password"),
-    provider: k8sProvider,
-});
+const ghcrConfig = new pulumi.Config("ghcr");
+const webImageDigest = config.require("webImageDigest");
+const apiImageDigest = config.require("apiImageDigest");
+const ghcrUsername = ghcrConfig.require("username");
+const ghcrToken = ghcrConfig.requireSecret("token");
+const webImageRef = `ghcr.io/aphiria/aphiria.com-web@${webImageDigest}`;
+const apiImageRef = `ghcr.io/aphiria/aphiria.com-api@${apiImageDigest}`;
 
-// 5. Create Gateway with Let's Encrypt production TLS
-const gateway = createGateway({
-    env: "production",
-    namespace: "nginx-gateway",
-    name: "nginx-gateway",
-    tlsMode: "letsencrypt-prod",
-    domains: [
-        "aphiria.com",
-        "*.aphiria.com",
-    ],
-    provider: k8sProvider,
-});
+const postgresqlUser = postgresqlConfig.require("user");
+const postgresqlPassword = postgresqlConfig.requireSecret("password");
 
-// 6. Create web deployment
-const webImage = config.require("webImage");
-const web = createWebDeployment({
+// Naming conventions
+const webUrl = "https://www.aphiria.com";
+const apiUrl = "https://api.aphiria.com";
+
+// Create all infrastructure using a factory
+createStack({
     env: "production",
-    namespace: "default",
-    replicas: 2,
-    image: webImage,
-    jsConfigData: {
-        apiUri: "https://api.aphiria.com",
-        cookieDomain: ".aphiria.com",
+    namespace: {
+        name: "default",
+        imagePullSecret: {
+            registry: "ghcr.io",
+            username: ghcrUsername,
+            token: ghcrToken,
+        },
     },
-    baseUrl: "https://www.aphiria.com",
-    provider: k8sProvider,
-});
-
-// 7. Create API deployment
-const apiImage = config.require("apiImage");
-const dbPassword = config.requireSecret("dbPassword");
-
-const api = createAPIDeployment({
-    env: "production",
-    namespace: "default",
-    replicas: 2,
-    image: apiImage,
-    dbHost: "db",
-    dbName: "aphiria",
-    dbUser: "aphiria",
-    dbPassword: dbPassword,
-    apiUrl: "https://api.aphiria.com",
-    webUrl: "https://www.aphiria.com",
-    provider: k8sProvider,
-});
-
-// 8. Run database migrations and seeder
-const migration = createDBMigrationJob({
-    namespace: "default",
-    image: apiImage,
-    dbHost: "db",
-    dbName: "aphiria",
-    dbUser: "aphiria",
-    dbPassword: dbPassword,
-    runSeeder: true,
-    provider: k8sProvider,
-});
-
-// 9. Create HTTP routes
-const webRoute = createHTTPRoute({
-    namespace: "default",
-    name: "web",
-    hostname: "www.aphiria.com",
-    serviceName: "web",
-    servicePort: 80,
-    gatewayName: "nginx-gateway",
-    gatewayNamespace: "nginx-gateway",
-    enableRateLimiting: true,
-    provider: k8sProvider,
-});
-
-const apiRoute = createHTTPRoute({
-    namespace: "default",
-    name: "api",
-    hostname: "api.aphiria.com",
-    serviceName: "api",
-    servicePort: 80,
-    gatewayName: "nginx-gateway",
-    gatewayNamespace: "nginx-gateway",
-    enableRateLimiting: true,
-    provider: k8sProvider,
-});
+    database: {
+        replicas: 2,
+        persistentStorage: true,
+        storageSize: "20Gi",
+        dbUser: postgresqlUser,
+        dbPassword: postgresqlPassword,
+    },
+    gateway: {
+        tlsMode: "letsencrypt-prod",
+        domains: ["aphiria.com", "*.aphiria.com"],
+    },
+    app: {
+        webReplicas: 2,
+        apiReplicas: 2,
+        webUrl: "https://www.aphiria.com",
+        apiUrl: "https://api.aphiria.com",
+        webImage: webImageRef,
+        apiImage: apiImageRef,
+        cookieDomain: ".aphiria.com",
+        webPodDisruptionBudget: { minAvailable: 1 },
+        apiPodDisruptionBudget: { minAvailable: 1 },
+    },
+}, k8sProvider);
 
 // Outputs
+export { webUrl, apiUrl };
+export const namespace = "default";
 export const clusterId = cluster.id;
 export const clusterEndpoint = cluster.endpoint;
 export const kubeconfig = pulumi.secret(cluster.kubeConfigs[0].rawConfig);
-export const webUrl = "https://www.aphiria.com";
-export const apiUrl = "https://api.aphiria.com";
 export const gatewayName = "nginx-gateway";
 export const gatewayNamespace = "nginx-gateway";
+
+/**
+ * TODO: Add when production uses factory pattern correctly (currently hardcoded in components)
+ */
+export const databaseName = "aphiria_production";
+export { webImageRef, apiImageRef };

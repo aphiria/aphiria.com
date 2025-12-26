@@ -2,11 +2,12 @@ import * as pulumi from "@pulumi/pulumi";
 import * as k8s from "@pulumi/kubernetes";
 import { GatewayArgs, GatewayResult } from "./types";
 
-/** Creates Gateway with TLS (self-signed/letsencrypt-staging/letsencrypt-prod) and separate listeners for root/subdomains */
+/** Creates Gateway with TLS (self-signed or letsencrypt-prod) and separate listeners for root/subdomains */
 export function createGateway(args: GatewayArgs): GatewayResult {
     // Validate domain requirements based on environment
     const rootDomain = args.domains.find((d) => !d.startsWith("*"));
-    const wildcardDomain = args.domains.find((d) => d.startsWith("*"));
+    const wildcardDomains = args.domains.filter((d) => d.startsWith("*"));
+    const wildcardDomain = wildcardDomains[0]; // Keep for backward compatibility with validation
 
     // Production environments MUST have both root and wildcard domains
     // Preview environments MAY use wildcard-only (e.g., *.pr.aphiria.com for PR previews)
@@ -28,6 +29,15 @@ export function createGateway(args: GatewayArgs): GatewayResult {
         }
     }
 
+    // Validate DNS-01 requirement for wildcard certificates
+    if (wildcardDomain && args.tlsMode !== "self-signed" && !args.dnsToken) {
+        throw new Error(
+            `Wildcard domain "${wildcardDomain}" requires DNS-01 ACME challenge. ` +
+            `You must provide dnsToken for DigitalOcean DNS API access. ` +
+            `HTTP-01 challenge cannot validate wildcard certificates.`
+        );
+    }
+
     const labels = {
         "app.kubernetes.io/name": args.name,
         "app.kubernetes.io/component": "gateway",
@@ -39,17 +49,28 @@ export function createGateway(args: GatewayArgs): GatewayResult {
 
     if (args.tlsMode === "self-signed") {
         // Create self-signed issuer and certificate for dev-local
-        const issuer = createSelfSignedIssuer(args.provider);
+        createSelfSignedIssuer(args.provider);
         certificate = createSelfSignedCert({
             namespace: args.namespace,
             domains: args.domains,
         }, args.provider);
     } else {
-        const issuerName = args.tlsMode === "letsencrypt-prod" ? "letsencrypt-prod" : "letsencrypt-staging";
-        const acmeServer =
-            args.tlsMode === "letsencrypt-prod"
-                ? "https://acme-v02.api.letsencrypt.org/directory"
-                : "https://acme-staging-v02.api.letsencrypt.org/directory";
+        // letsencrypt-prod only (staging removed - not used in any stacks)
+        const issuerName = "letsencrypt-prod";
+        const acmeServer = "https://acme-v02.api.letsencrypt.org/directory";
+
+        // Create Secret for DigitalOcean DNS token if provided (for DNS-01 challenges)
+        if (args.dnsToken) {
+            new k8s.core.v1.Secret("digitalocean-dns-token", {
+                metadata: {
+                    name: "digitalocean-dns-token",
+                    namespace: "cert-manager",
+                },
+                stringData: {
+                    "access-token": args.dnsToken,
+                },
+            }, { provider: args.provider });
+        }
 
         // Create ClusterIssuer for Let's Encrypt
         const clusterIssuer = new k8s.apiextensions.CustomResource("cert-issuer", {
@@ -65,7 +86,18 @@ export function createGateway(args: GatewayArgs): GatewayResult {
                     privateKeySecretRef: {
                         name: `${issuerName}-account-key`,
                     },
-                    solvers: [
+                    solvers: args.dnsToken ? [
+                        {
+                            dns01: {
+                                digitalocean: {
+                                    tokenSecretRef: {
+                                        name: "digitalocean-dns-token",
+                                        key: "access-token",
+                                    },
+                                },
+                            },
+                        },
+                    ] : [
                         {
                             http01: {
                                 gatewayHTTPRoute: {
@@ -84,7 +116,23 @@ export function createGateway(args: GatewayArgs): GatewayResult {
             },
         }, { provider: args.provider });
 
-        certificate = clusterIssuer;
+        // Create Certificate resource for Let's Encrypt
+        certificate = new k8s.apiextensions.CustomResource("tls-cert", {
+            apiVersion: "cert-manager.io/v1",
+            kind: "Certificate",
+            metadata: {
+                name: "tls-cert",
+                namespace: args.namespace,
+            },
+            spec: {
+                secretName: "tls-cert",
+                dnsNames: args.domains,
+                issuerRef: {
+                    name: issuerName,
+                    kind: "ClusterIssuer",
+                },
+            },
+        }, { provider: args.provider, dependsOn: [clusterIssuer] });
     }
 
     // Create Gateway
@@ -100,8 +148,7 @@ export function createGateway(args: GatewayArgs): GatewayResult {
                 annotations:
                     args.tlsMode !== "self-signed"
                         ? {
-                              "cert-manager.io/cluster-issuer":
-                                  args.tlsMode === "letsencrypt-prod" ? "letsencrypt-prod" : "letsencrypt-staging",
+                              "cert-manager.io/cluster-issuer": "letsencrypt-prod",
                           }
                         : undefined,
             },
@@ -124,21 +171,18 @@ export function createGateway(args: GatewayArgs): GatewayResult {
                               },
                           ]
                         : []),
-                    ...(wildcardDomain
-                        ? [
-                              {
-                                  name: "http-subdomains",
-                                  hostname: wildcardDomain,
-                                  port: 80,
-                                  protocol: "HTTP" as const,
-                                  allowedRoutes: {
-                                      namespaces: {
-                                          from: "All" as const,
-                                      },
-                                  },
-                              },
-                          ]
-                        : []),
+                    // Create HTTP listener for EACH wildcard domain
+                    ...wildcardDomains.map((domain, index) => ({
+                        name: wildcardDomains.length === 1 ? "http-subdomains" : `http-subdomains-${index + 1}`,
+                        hostname: domain,
+                        port: 80,
+                        protocol: "HTTP" as const,
+                        allowedRoutes: {
+                            namespaces: {
+                                from: "All" as const,
+                            },
+                        },
+                    })),
                     // HTTPS listeners - conditionally include based on available domains
                     ...(rootDomain
                         ? [
@@ -163,29 +207,26 @@ export function createGateway(args: GatewayArgs): GatewayResult {
                               },
                           ]
                         : []),
-                    ...(wildcardDomain
-                        ? [
-                              {
-                                  name: "https-subdomains",
-                                  hostname: wildcardDomain,
-                                  port: 443,
-                                  protocol: "HTTPS" as const,
-                                  allowedRoutes: {
-                                      namespaces: {
-                                          from: "All" as const,
-                                      },
-                                  },
-                                  tls: {
-                                      mode: "Terminate" as const,
-                                      certificateRefs: [
-                                          {
-                                              name: "tls-cert",
-                                          },
-                                      ],
-                                  },
-                              },
-                          ]
-                        : []),
+                    // Create HTTPS listener for EACH wildcard domain
+                    ...wildcardDomains.map((domain, index) => ({
+                        name: wildcardDomains.length === 1 ? "https-subdomains" : `https-subdomains-${index + 1}`,
+                        hostname: domain,
+                        port: 443,
+                        protocol: "HTTPS" as const,
+                        allowedRoutes: {
+                            namespaces: {
+                                from: "All" as const,
+                            },
+                        },
+                        tls: {
+                            mode: "Terminate" as const,
+                            certificateRefs: [
+                                {
+                                    name: "tls-cert",
+                                },
+                            ],
+                        },
+                    })),
                 ],
             },
         },

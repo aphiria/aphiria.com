@@ -310,6 +310,38 @@ See [tasks.md](./tasks.md) for complete task breakdown with dependencies and par
 - **User Story 2 (P2)**: PR comment updates, URL sharing
 - **User Story 3 (P3)**: Cleanup workflow, resource verification
 - **Polish**: Documentation updates, reusable workflows (planned), secrets audit
+- **Refactoring**: Pulumi stack refactoring (preview-pr.ts component migration)
+
+## Phase 3: Pulumi Stack Refactoring
+
+**Status**: PLANNED (2025-12-24)
+**Priority**: HIGH (Maintainability & Consistency)
+**Detailed Plan**: [pulumi-refactoring-plan.md](./pulumi-refactoring-plan.md)
+
+### Problem
+
+`preview-pr.ts` has grown to 748 lines implementing all resources inline, while other stacks (local.ts, preview-base.ts, production.ts) use the component architecture successfully. This creates maintainability issues and code duplication.
+
+### Solution
+
+Refactor `preview-pr.ts` to use existing components (web-deployment, api-deployment, http-route, etc.) following the same patterns as other stacks. Expected reduction: 748 lines → ~150 lines (80% reduction).
+
+### Implementation Strategy
+
+1. **Use Existing Components** (Phase 1): Migrate to `createWebDeployment`, `createAPIDeployment`, `createHTTPRoute`
+2. **Create Missing Components** (Phase 2): Build `createNamespace` component for ResourceQuota/NetworkPolicy/ImagePullSecret
+3. **Extract Utilities** (Phase 2): Move `configMapChecksum` helper to reusable `components/utils.ts`
+
+### Success Metrics
+
+- Line count reduction: 748 → ~150 lines (80%)
+- Code reuse: 90%+ of resources use components
+- No regressions: All functionality preserved
+- Consistency: All stacks follow component-based pattern
+
+### Tasks
+
+See [tasks.md](./tasks.md) for detailed task breakdown (T-REFACTOR series).
 
 ## Next Steps
 

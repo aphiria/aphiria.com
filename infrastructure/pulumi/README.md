@@ -192,7 +192,7 @@ const gateway = createGateway({
     env: "production",
     namespace: "nginx-gateway",
     name: "nginx-gateway",
-    tlsMode: "letsencrypt-prod", // or "letsencrypt-staging" or "self-signed"
+    tlsMode: "letsencrypt-prod", // or "self-signed"
     domains: ["aphiria.com", "*.aphiria.com"],
 });
 // Returns: { gateway, certificate }
@@ -200,8 +200,7 @@ const gateway = createGateway({
 
 **TLS Modes**:
 - `self-signed`: Local development (Minikube)
-- `letsencrypt-staging`: Testing Let's Encrypt integration
-- `letsencrypt-prod`: Production (real certificates)
+- `letsencrypt-prod`: Production (real Let's Encrypt certificates)
 
 **Listeners**: Separate listeners for root domain vs. subdomains (wildcards don't match root).
 

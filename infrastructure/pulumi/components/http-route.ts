@@ -19,7 +19,7 @@ export function createHTTPRoute(args: HTTPRouteArgs): k8s.apiextensions.CustomRe
         annotations["nginx.org/rate-limit-burst"] = "20"; // Allow bursts up to 20 requests
     }
 
-    const httpRoute = new k8s.apiextensions.CustomResource(
+    return new k8s.apiextensions.CustomResource(
         args.name,
         {
             apiVersion: "gateway.networking.k8s.io/v1",
@@ -36,7 +36,7 @@ export function createHTTPRoute(args: HTTPRouteArgs): k8s.apiextensions.CustomRe
                     {
                         name: args.gatewayName,
                         namespace: args.gatewayNamespace,
-                        sectionName: "https-subdomains", // Matches Gateway listener name
+                        // sectionName omitted - Gateway auto-matches based on hostname
                     },
                 ],
                 rules: [
@@ -44,6 +44,7 @@ export function createHTTPRoute(args: HTTPRouteArgs): k8s.apiextensions.CustomRe
                         backendRefs: [
                             {
                                 name: args.serviceName,
+                                namespace: args.serviceNamespace,
                                 port: args.servicePort,
                             },
                         ],
@@ -65,8 +66,6 @@ export function createHTTPRoute(args: HTTPRouteArgs): k8s.apiextensions.CustomRe
             provider: args.provider,
         }
     );
-
-    return httpRoute;
 }
 
 /** Creates HTTP → HTTPS redirect route */

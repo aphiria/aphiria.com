@@ -10,7 +10,7 @@
 
 ### Session 2025-12-20 (Initial Clarifications)
 
-- Q: What ResourceQuota limits should be enforced per ephemeral namespace? → A: Minimal (2 CPU, 4Gi memory, 5 pods max) with 1 replica for preview deployments
+- Q: What ResourceQuota limits should be enforced per ephemeral namespace? → A: 4 CPU, 8Gi memory, 5 pods max with 1 replica for preview deployments (allows headroom for rolling updates)
 - Q: Should ephemeral environments clone and build the full documentation set or a minimal subset? → A: Full documentation (all versions, all pages)
 - Q: What authentication/authorization should ephemeral preview environments enforce? → A: Public access (no auth)
 - Q: What rate limiting should be applied to preview environment traffic? → A: Kubernetes-level only (connection limits)
@@ -188,7 +188,7 @@ Kubernetes
 - **FR-083**: CD-specific secrets (PostgreSQL passwords, DigitalOcean tokens) MUST be migrated from GitHub Secrets to Pulumi ESC
 - **FR-085**: Stack YAML files MUST import appropriate ESC environments via `environment:` block
 - **FR-086**: Workflows MUST NOT use `pulumi config set --secret` for secrets stored in ESC
-- **FR-087**: CI-specific secrets (GHCR_TOKEN, PULUMI_ACCESS_TOKEN) MUST remain in GitHub Secrets
+- **FR-087**: CI-specific secrets (PULUMI_ACCESS_TOKEN) MUST remain in GitHub Secrets; GITHUB_TOKEN is auto-provided for GHCR pushes
 - **FR-088**: ESC environment `aphiria-com/preview` MUST contain: `postgresql:password`, `digitalocean:token` (preview cluster scoped)
 - **FR-089**: ESC environment `aphiria-com/production` MUST contain: `postgresql:password`, `digitalocean:token` (production cluster scoped)
 - **FR-091**: Local development MUST support `esc run` for Pulumi operations but NOT require ESC access for basic Minikube usage
@@ -339,7 +339,7 @@ const dbPassword = config.requireSecret("password");  // From preview/production
 **After ESC**:
 - Secrets stored once in Pulumi ESC
 - No `pulumi config set --secret` commands needed
-- GitHub Secrets only used for CI-specific operations (GHCR_TOKEN, PULUMI_ACCESS_TOKEN)
+- GitHub Secrets only used for CI-specific operations (PULUMI_ACCESS_TOKEN); GITHUB_TOKEN auto-provided for GHCR pushes
 
 **Removed GitHub Secrets** (moved to ESC):
 - `POSTGRESQL_PREVIEW_PASSWORD` → ESC `aphiria.com/Preview`
@@ -349,7 +349,7 @@ const dbPassword = config.requireSecret("password");  // From preview/production
 
 **Remaining GitHub Secrets** (CI-specific):
 - `PULUMI_ACCESS_TOKEN` - Required for Pulumi Cloud authentication
-- `GHCR_TOKEN` - Required for pushing Docker images to GitHub Container Registry
+- `GITHUB_TOKEN` - Auto-provided by GitHub Actions for pushing Docker images to GHCR
 
 #### Local Development
 
@@ -728,9 +728,9 @@ This feature includes a **comprehensive migration** from Helm/Kustomize to Pulum
 - ✅ Packages automatically linked to repository
 
 **Authentication**:
-- Builds: GitHub Actions uses `secrets.GHCR_TOKEN` (Personal Access Token with `write:packages` scope)
-- Registry username: `davidbyoung` (repository owner)
-- **Why PAT instead of `GITHUB_TOKEN`**: For OSS projects, external contributors' `GITHUB_TOKEN` lacks permission to push to the repository owner's ghcr.io registry. A PAT ensures all builds (internal + external PRs) can push images.
+- Builds: GitHub Actions uses `secrets.GITHUB_TOKEN` (auto-provided with `packages: write` permission)
+- Registry username: `github.actor` (workflow triggering user)
+- Fork PRs require manual approval via workflow_dispatch before images are built
 - **Note**: Cannot use `GITHUB_` prefix for secret names (reserved by GitHub)
 - Image naming:
   - Preview: `ghcr.io/aphiria/aphiria.com-{web|api|build}:pr-{PR_NUMBER}`
@@ -794,7 +794,7 @@ The following infrastructure persists **independently of PR lifecycle** and rema
 - **FR-020**: ✅ **IMPLEMENTED** - PostgreSQL 16 instance runs continuously in `default` namespace of preview cluster
 - **FR-021**: ✅ **IMPLEMENTED** - nginx-gateway-fabric Gateway API with wildcard TLS (`*.pr.aphiria.com`, `*.pr-api.aphiria.com`)
 - **FR-022**: ⚠️ **PENDING** - DNS wildcard records must be manually configured in DigitalOcean DNS (not automated)
-- **FR-023**: ✅ **IMPLEMENTED** - GitHub Container Registry (ghcr.io) accessible with GHCR_TOKEN
+- **FR-023**: ✅ **IMPLEMENTED** - GitHub Container Registry (ghcr.io) accessible with GITHUB_TOKEN
 
 **Architecture Decision: Separate Clusters (2025-12-21):**
 
@@ -820,7 +820,7 @@ Originally planned to share production cluster with namespace isolation, but **p
 - **FR-024**: Ephemeral environments MUST be isolated via Kubernetes namespaces
 - **FR-025**: Each namespace MUST follow the pattern: `preview-pr-{PR_NUMBER}`
 - **FR-026**: NetworkPolicies MUST prevent cross-namespace communication between ephemeral environments
-- **FR-027**: ResourceQuotas MUST be applied to each ephemeral namespace to prevent resource exhaustion (2 CPU, 4Gi memory, 5 pods max)
+- **FR-027**: ResourceQuotas MUST be applied to each ephemeral namespace to prevent resource exhaustion (4 CPU, 8Gi memory, 5 pods max) with sufficient headroom for rolling updates
 - **FR-053**: Gateway/Ingress routes for preview environments MUST include connection limiting annotations to prevent abuse
 - **FR-028**: When a PR closes, its namespace and all contained resources MUST be destroyed
 - **FR-098**: When a PR closes, its database MUST be dropped from the shared PostgreSQL instance
@@ -966,7 +966,7 @@ Originally planned to share production cluster with namespace isolation, but **p
 
 - **NFR-005**: Shared PostgreSQL instance reduces preview environment costs by 70-80% vs. per-PR instances
 - **NFR-006**: Preview environments use minimal replicas (1 web, 1 API) vs. production (2+ replicas)
-- **NFR-007**: ResourceQuotas prevent runaway resource usage (2 CPU, 4Gi memory max per preview)
+- **NFR-007**: ResourceQuotas prevent runaway resource usage (4 CPU, 8Gi memory max per preview with headroom for rolling updates)
 
 ### Reliability
 
@@ -988,6 +988,41 @@ Originally planned to share production cluster with namespace isolation, but **p
 - **NFR-017**: Database initialization MUST use Kubernetes Jobs provisioned by Pulumi, not external providers requiring network workarounds
 
 **Rationale**: Port-forwarding and process management in CI/CD creates race conditions, requires cleanup handling, and is unreliable. Kubernetes Jobs are the standard pattern for cluster-internal setup tasks and are managed declaratively by Pulumi.
+
+### Resource Limits and Component Reusability
+
+- **NFR-019**: Shared Pulumi components MUST accept resource limits as optional parameters, not hardcode them
+  - **Rationale**: Preview environments use ResourceQuota (requiring resource limits on ALL containers), while production has no ResourceQuota (making limits optional)
+  - **Preview context**: ResourceQuota enforces cost control and multi-tenant isolation (4 CPU, 8Gi RAM max per PR with headroom for rolling updates)
+  - **Production context**: No ResourceQuota exists, so hardcoded preview-sized limits (200m CPU, 512Mi RAM) would unnecessarily constrain production workloads
+  - **Design pattern**: Components accept optional `resources?: { requests?, limits? }` parameter
+  - **Preview behavior**: Stacks MUST provide explicit resource limits to satisfy ResourceQuota enforcement
+  - **Production behavior**: Stacks MAY omit limits entirely OR provide generous production-appropriate values (e.g., 4 CPU, 8Gi RAM)
+  - **Default behavior**: If `resources` parameter is undefined, components MUST NOT add a `resources:` block to Kubernetes manifests (let cluster defaults apply)
+- **NFR-020**: ResourceQuota enforcement MUST be environment-specific, not applied universally
+  - **Preview**: ResourceQuota required for cost control and PR isolation
+  - **Production**: No ResourceQuota (single tenant, trusted code, full cluster resources available)
+  - **Local development**: No ResourceQuota (developer's Minikube, no multi-tenant concerns)
+
+### Configuration Management
+
+- **NFR-021**: ConfigMap and Secret updates MUST trigger automatic deployment rollouts
+  - **Rationale**: Pulumi uses replace strategy (not in-place updates) for ConfigMaps/Secrets, which provides enterprise-grade configuration management
+  - **Pulumi replace strategy**:
+    1. Create new ConfigMap/Secret with new name and updated data
+    2. Update Deployment PodTemplate to reference new resource
+    3. Trigger Deployment controller to roll out new pods
+    4. Delete old ConfigMap/Secret after successful rollout
+  - **Benefits**:
+    - Atomic updates: All-or-nothing changes (no partial state)
+    - Zero downtime: Rolling update with surge/unavailability config
+    - Automatic pod restarts: Pods get new config without manual `kubectl rollout restart`
+    - Safe rollback: Old ConfigMap retained until new rollout succeeds
+  - **Contrast with kubectl**: kubectl updates ConfigMaps in-place; pods don't restart until TTL expires or manual intervention
+  - **No additional tools required**: Unlike vanilla Kubernetes (which needs Reloader or custom operators), Pulumi handles this automatically
+  - **References**:
+    - [Pulumi ConfigMap Rollout Guide](https://www.pulumi.com/registry/packages/kubernetes/how-to-guides/configmap-rollout/)
+    - [Kubernetes Automatic Pod Updates](https://www.pulumi.com/ai/answers/7oZd5WbabyfinXwmdeBCxj/kubernetes-automatic-pod-updates-on-configmap-changes)
 
 ---
 
@@ -1071,6 +1106,24 @@ On PR close/merge, Pulumi must:
   - Identify which secrets should be environment-specific vs repository-wide
   - Document environment secret strategy in SECRETS.md
   - Remove deprecated environment secrets safely
+
+### Future Security Enhancement (Team Edition Required)
+
+- **NFR-018** (OIDC Authentication - OPTIONAL): GitHub Actions workflows MAY use OIDC token exchange for Pulumi Cloud authentication instead of static access tokens
+  - **Status**: Deferred - Requires Pulumi Team Edition ($40/month)
+  - **Current Approach**: Use `PULUMI_ACCESS_TOKEN` with documented annual rotation procedures
+  - **Rationale for OIDC**: If Team Edition is adopted, OIDC provides enterprise-grade security benefits:
+    - Zero long-lived secrets stored in GitHub repository secrets
+    - Automatic credential lifecycle with 2-hour token expiration (customizable)
+    - Principle of least privilege with repository/team-scoped tokens
+    - Better audit trail for compliance (SOC 2, ISO 27001)
+    - Leak mitigation (tokens auto-expire vs permanent access)
+  - **Implementation** (if Team Edition adopted): Use `pulumi/auth-actions@v1` instead of static `PULUMI_ACCESS_TOKEN`
+  - **Prerequisites**: Pulumi Team/Enterprise plan with OIDC support ($40/month minimum)
+  - **Configuration**: Register GitHub as OIDC issuer in Pulumi Cloud organization settings
+  - **Subject claim pattern**: `repo:aphiria/aphiria.com:*` (allows all workflows in repository)
+  - **Audience claim**: `urn:pulumi:org:<org-name>`
+  - **Decision Point**: Revisit if project grows to multiple maintainers or budget allows Team edition
 
 ### Workflow Refactoring
 

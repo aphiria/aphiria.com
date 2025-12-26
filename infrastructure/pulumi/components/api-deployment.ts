@@ -1,6 +1,7 @@
 import * as pulumi from "@pulumi/pulumi";
 import * as k8s from "@pulumi/kubernetes";
 import { APIDeploymentArgs, APIDeploymentResult } from "./types";
+import { checksum } from "./utils";
 
 /** Creates nginx + PHP-FPM deployment using initContainer to copy code to shared volume */
 export function createAPIDeployment(args: APIDeploymentArgs): APIDeploymentResult {
@@ -10,6 +11,45 @@ export function createAPIDeployment(args: APIDeploymentArgs): APIDeploymentResul
         "app.kubernetes.io/component": "backend",
         ...(args.labels || {}),
     };
+
+    // Hardcoded constants (same across all environments)
+    const DB_PORT = "5432"; // PostgreSQL standard port
+    const APP_BUILDER_API = "\\Aphiria\\Framework\\Api\\SynchronousApiApplicationBuilder";
+    const APP_BUILDER_CONSOLE = "\\Aphiria\\Framework\\Console\\ConsoleApplicationBuilder";
+
+    // Environment-specific defaults
+    const appEnv = args.envConfig?.appEnv || (args.env === "production" ? "production" : "dev");
+    const logLevel = args.envConfig?.logLevel || (args.env === "production" ? "warning" : "debug");
+    const cookieSecure = args.envConfig?.cookieSecure !== false ? "1" : "0";
+
+    // Build ConfigMap data from parameters + hardcoded constants
+    const configData: Record<string, pulumi.Input<string>> = {
+        DB_HOST: args.dbHost,
+        DB_PORT,
+        DB_NAME: args.dbName,
+        DB_USER: args.dbUser,
+        APP_ENV: appEnv,
+        WEB_URL: args.webUrl,
+        API_URL: args.apiUrl,
+        APP_WEB_URL: args.webUrl,
+        APP_API_URL: args.apiUrl,
+        APP_COOKIE_DOMAIN: args.envConfig?.cookieDomain || ".aphiria.com",
+        APP_COOKIE_SECURE: cookieSecure,
+        APP_BUILDER_API,
+        APP_BUILDER_CONSOLE,
+        LOG_LEVEL: logLevel,
+        ...(args.envConfig?.prNumber && { PR_NUMBER: args.envConfig.prNumber }),
+        ...(args.envConfig?.extraVars || {}),
+    };
+
+    // Build Secret data
+    const secretData: Record<string, pulumi.Input<string>> = {
+        DB_PASSWORD: args.dbPassword,
+    };
+
+    // Calculate checksums for pod annotations (forces restart when config or secrets change)
+    const configChecksum = checksum(configData);
+    const secretChecksum = checksum(secretData);
 
     // Create nginx configuration ConfigMap
     const nginxConfig = new k8s.core.v1.ConfigMap("nginx-config", {
@@ -54,28 +94,17 @@ export function createAPIDeployment(args: APIDeploymentArgs): APIDeploymentResul
             labels,
         },
         type: "Opaque",
-        stringData: {
-            DB_USER: args.dbUser,
-            DB_PASSWORD: args.dbPassword,
-        },
+        stringData: secretData,
     }, { provider: args.provider });
 
-    // Create ConfigMap for environment variables
+    // Create ConfigMap for environment variables (built from parameters)
     const configMap = new k8s.core.v1.ConfigMap("env-vars", {
         metadata: {
             name: "env-vars",
             namespace: args.namespace,
             labels,
         },
-        data: {
-            DB_HOST: args.dbHost,
-            DB_NAME: args.dbName,
-            DB_PORT: "5432",
-            APP_API_URL: args.apiUrl,
-            APP_WEB_URL: args.webUrl,
-            APP_ENV: args.env === "production" ? "production" : "dev",
-            LOG_LEVEL: args.env === "production" ? "warning" : "debug",
-        },
+        data: configData,
     }, { provider: args.provider });
 
     // Create API deployment
@@ -104,8 +133,15 @@ export function createAPIDeployment(args: APIDeploymentArgs): APIDeploymentResul
                     labels: {
                         app: "api",
                     },
+                    annotations: {
+                        "checksum/config": configChecksum,
+                        "checksum/secret": secretChecksum,
+                    },
                 },
                 spec: {
+                    ...(args.imagePullSecrets && {
+                        imagePullSecrets: args.imagePullSecrets.map(name => ({ name })),
+                    }),
                     // initContainer: Copy PHP code from API image to shared volume
                     initContainers: [
                         {
@@ -124,6 +160,9 @@ export function createAPIDeployment(args: APIDeploymentArgs): APIDeploymentResul
                                     mountPath: "/usr/share/nginx/html",
                                 },
                             ],
+                            ...(args.resources?.initContainer && {
+                                resources: args.resources.initContainer,
+                            }),
                         },
                     ],
                     containers: [
@@ -138,6 +177,14 @@ export function createAPIDeployment(args: APIDeploymentArgs): APIDeploymentResul
                                 },
                                 initialDelaySeconds: 10,
                                 periodSeconds: 30,
+                            },
+                            readinessProbe: {
+                                httpGet: {
+                                    path: "/health",
+                                    port: 80,
+                                },
+                                initialDelaySeconds: 5,
+                                periodSeconds: 5,
                             },
                             ports: [
                                 {
@@ -155,6 +202,9 @@ export function createAPIDeployment(args: APIDeploymentArgs): APIDeploymentResul
                                     subPath: "default.conf",
                                 },
                             ],
+                            ...(args.resources?.nginx && {
+                                resources: args.resources.nginx,
+                            }),
                         },
                         // php: PHP-FPM process manager
                         {
@@ -188,6 +238,9 @@ export function createAPIDeployment(args: APIDeploymentArgs): APIDeploymentResul
                                     mountPath: "/usr/share/nginx/html",
                                 },
                             ],
+                            ...(args.resources?.php && {
+                                resources: args.resources.php,
+                            }),
                         },
                     ],
                     volumes: [
@@ -211,7 +264,7 @@ export function createAPIDeployment(args: APIDeploymentArgs): APIDeploymentResul
                 },
             },
         },
-    }, { provider: args.provider });
+    }, { provider: args.provider, dependsOn: [configMap, secret, nginxConfig] });
 
     // Create Service
     const service = new k8s.core.v1.Service("api", {
@@ -234,9 +287,29 @@ export function createAPIDeployment(args: APIDeploymentArgs): APIDeploymentResul
         },
     }, { provider: args.provider });
 
+    // Create PodDisruptionBudget if configured (production HA)
+    let pdb: k8s.policy.v1.PodDisruptionBudget | undefined;
+    if (args.podDisruptionBudget) {
+        pdb = new k8s.policy.v1.PodDisruptionBudget("api-pdb", {
+            metadata: {
+                name: "api",
+                namespace: args.namespace,
+                labels,
+            },
+            spec: {
+                minAvailable: args.podDisruptionBudget.minAvailable,
+                maxUnavailable: args.podDisruptionBudget.maxUnavailable,
+                selector: {
+                    matchLabels: { app: "api" },
+                },
+            },
+        }, { provider: args.provider });
+    }
+
     return {
         deployment: deployment.metadata,
         service: service.metadata,
         secret: secret.metadata,
+        podDisruptionBudget: pdb?.metadata,
     };
 }
