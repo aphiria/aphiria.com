@@ -50,9 +50,6 @@ jobs:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
         with:
           script: |
-            const { exec } = require('@actions/exec');
-            const core = require('@actions/core');
-
             async function checkStackExists(stackName) {
               try {
                 await exec('pulumi', ['stack', 'select', stackName], {
