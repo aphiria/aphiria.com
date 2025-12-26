@@ -58,6 +58,7 @@ const k8sProvider = new k8s.Provider("production-k8s", {
 
 // Get configuration
 const postgresqlConfig = new pulumi.Config("postgresql");
+const certmanagerConfig = new pulumi.Config("certmanager");
 const ghcrConfig = new pulumi.Config("ghcr");
 const webImageDigest = config.require("webImageDigest");
 const apiImageDigest = config.require("apiImageDigest");
@@ -94,6 +95,7 @@ createStack({
     gateway: {
         tlsMode: "letsencrypt-prod",
         domains: ["aphiria.com", "*.aphiria.com"],
+        dnsToken: certmanagerConfig.requireSecret("digitaloceanDnsToken"),
     },
     app: {
         webReplicas: 2,
