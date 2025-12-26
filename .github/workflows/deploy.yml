@@ -143,7 +143,7 @@ jobs:
     name: Preview Infrastructure Changes
     runs-on: ubuntu-latest
     needs: ensure-base-stack
-    if: always() && (needs.ensure-base-stack.result == 'success' || needs.ensure-base-stack.result == 'skipped')
+    if: success() || needs.ensure-base-stack.result == 'skipped'
 
     steps:
       - name: Checkout repository
@@ -256,6 +256,7 @@ jobs:
     name: Deploy
     runs-on: ubuntu-latest
     needs: preview-infra
+    if: success()
 
     environment:
       name: ${{ inputs.environment == 'preview' && format('preview-pr-{0}', inputs.pr_number) || 'production' }}
