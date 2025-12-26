@@ -170,13 +170,9 @@ jobs:
 
           if ! pulumi stack select "${STACK_NAME}" 2>/dev/null; then
             pulumi stack init "${STACK_NAME}"
-            pulumi config env add aphiria.com/Preview --stack "${STACK_NAME}" --yes
-          else
-            if ! pulumi config env ls | grep -q "aphiria.com/Preview"; then
-              pulumi config env add aphiria.com/Preview --stack "${STACK_NAME}" --yes
-            fi
           fi
 
+          pulumi config env add aphiria.com/Preview --stack "${STACK_NAME}" --yes
           pulumi config set prNumber "${PR_NUMBER}" --stack "${STACK_NAME}"
           pulumi config set baseStackReference "davidbyoung/aphiria-com-infrastructure/preview-base" --stack "${STACK_NAME}"
           pulumi config set webImageDigest "sha256:preview" --stack "${STACK_NAME}"
@@ -273,6 +269,9 @@ jobs:
           STACK_NAME="preview-pr-${PR_NUMBER}"
 
           pulumi stack select "${STACK_NAME}"
+
+          # Ensure environment is associated (idempotent)
+          pulumi config env add aphiria.com/Preview --stack "${STACK_NAME}" --yes
 
           pulumi config set prNumber "${PR_NUMBER}" --stack "${STACK_NAME}"
           pulumi config set baseStackReference "davidbyoung/aphiria-com-infrastructure/preview-base" --stack "${STACK_NAME}"
