@@ -188,7 +188,7 @@ Kubernetes
 - **FR-083**: CD-specific secrets (PostgreSQL passwords, DigitalOcean tokens) MUST be migrated from GitHub Secrets to Pulumi ESC
 - **FR-085**: Stack YAML files MUST import appropriate ESC environments via `environment:` block
 - **FR-086**: Workflows MUST NOT use `pulumi config set --secret` for secrets stored in ESC
-- **FR-087**: CI-specific secrets (GHCR_TOKEN, PULUMI_ACCESS_TOKEN) MUST remain in GitHub Secrets
+- **FR-087**: CI-specific secrets (PULUMI_ACCESS_TOKEN) MUST remain in GitHub Secrets; GITHUB_TOKEN is auto-provided for GHCR pushes
 - **FR-088**: ESC environment `aphiria-com/preview` MUST contain: `postgresql:password`, `digitalocean:token` (preview cluster scoped)
 - **FR-089**: ESC environment `aphiria-com/production` MUST contain: `postgresql:password`, `digitalocean:token` (production cluster scoped)
 - **FR-091**: Local development MUST support `esc run` for Pulumi operations but NOT require ESC access for basic Minikube usage
@@ -339,7 +339,7 @@ const dbPassword = config.requireSecret("password");  // From preview/production
 **After ESC**:
 - Secrets stored once in Pulumi ESC
 - No `pulumi config set --secret` commands needed
-- GitHub Secrets only used for CI-specific operations (GHCR_TOKEN, PULUMI_ACCESS_TOKEN)
+- GitHub Secrets only used for CI-specific operations (PULUMI_ACCESS_TOKEN); GITHUB_TOKEN auto-provided for GHCR pushes
 
 **Removed GitHub Secrets** (moved to ESC):
 - `POSTGRESQL_PREVIEW_PASSWORD` → ESC `aphiria.com/Preview`
@@ -349,7 +349,7 @@ const dbPassword = config.requireSecret("password");  // From preview/production
 
 **Remaining GitHub Secrets** (CI-specific):
 - `PULUMI_ACCESS_TOKEN` - Required for Pulumi Cloud authentication
-- `GHCR_TOKEN` - Required for pushing Docker images to GitHub Container Registry
+- `GITHUB_TOKEN` - Auto-provided by GitHub Actions for pushing Docker images to GHCR
 
 #### Local Development
 
@@ -728,9 +728,9 @@ This feature includes a **comprehensive migration** from Helm/Kustomize to Pulum
 - ✅ Packages automatically linked to repository
 
 **Authentication**:
-- Builds: GitHub Actions uses `secrets.GHCR_TOKEN` (Personal Access Token with `write:packages` scope)
-- Registry username: `davidbyoung` (repository owner)
-- **Why PAT instead of `GITHUB_TOKEN`**: For OSS projects, external contributors' `GITHUB_TOKEN` lacks permission to push to the repository owner's ghcr.io registry. A PAT ensures all builds (internal + external PRs) can push images.
+- Builds: GitHub Actions uses `secrets.GITHUB_TOKEN` (auto-provided with `packages: write` permission)
+- Registry username: `github.actor` (workflow triggering user)
+- Fork PRs require manual approval via workflow_dispatch before images are built
 - **Note**: Cannot use `GITHUB_` prefix for secret names (reserved by GitHub)
 - Image naming:
   - Preview: `ghcr.io/aphiria/aphiria.com-{web|api|build}:pr-{PR_NUMBER}`
@@ -794,7 +794,7 @@ The following infrastructure persists **independently of PR lifecycle** and rema
 - **FR-020**: ✅ **IMPLEMENTED** - PostgreSQL 16 instance runs continuously in `default` namespace of preview cluster
 - **FR-021**: ✅ **IMPLEMENTED** - nginx-gateway-fabric Gateway API with wildcard TLS (`*.pr.aphiria.com`, `*.pr-api.aphiria.com`)
 - **FR-022**: ⚠️ **PENDING** - DNS wildcard records must be manually configured in DigitalOcean DNS (not automated)
-- **FR-023**: ✅ **IMPLEMENTED** - GitHub Container Registry (ghcr.io) accessible with GHCR_TOKEN
+- **FR-023**: ✅ **IMPLEMENTED** - GitHub Container Registry (ghcr.io) accessible with GITHUB_TOKEN
 
 **Architecture Decision: Separate Clusters (2025-12-21):**
 

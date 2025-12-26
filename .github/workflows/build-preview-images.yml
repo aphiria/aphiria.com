@@ -42,28 +42,55 @@ jobs:
       commit-sha: ${{ steps.check-safety.outputs.commit-sha }}
 
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
       - name: Check safety for build and deploy
         id: check-safety
-        run: |
-          # Manual trigger - maintainer explicitly approved this commit
-          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
-            echo "is-safe=true" >> $GITHUB_OUTPUT
-            echo "pr-number=${{ inputs.pr_number }}" >> $GITHUB_OUTPUT
-            echo "commit-sha=${{ inputs.commit_sha }}" >> $GITHUB_OUTPUT
-            echo "📋 Manual trigger - PR #${{ inputs.pr_number }}, SHA ${{ inputs.commit_sha }}"
-            echo "📝 Manual trigger - building commit ${{ inputs.commit_sha }}"
-          else
-            # Safe if this PR came from this repo (ie not a fork)
-            if [ "${{ github.event.pull_request.head.repo.full_name }}" == "${{ github.event.pull_request.base.repo.full_name }}" ]; then
-              echo "is-safe=true" >> $GITHUB_OUTPUT
-            else
-              echo "is-safe=false" >> $GITHUB_OUTPUT
-            fi
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const core = require('@actions/core');
 
-            echo "pr-number=${{ github.event.pull_request.number }}" >> $GITHUB_OUTPUT
-            echo "commit-sha=${{ github.event.pull_request.head.sha }}" >> $GITHUB_OUTPUT
-            echo "📋 Automatic trigger - PR #${{ github.event.pull_request.number }}, SHA ${{ github.event.pull_request.head.sha }}"
-          fi
+            if (context.eventName === 'workflow_dispatch') {
+              const prNumber = ${{ inputs.pr_number }};
+              const commitSha = '${{ inputs.commit_sha }}';
+
+              // Validate commit belongs to PR
+              const { data: pr } = await github.rest.pulls.get({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: prNumber
+              });
+
+              const { data: commits } = await github.rest.pulls.listCommits({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: prNumber,
+                per_page: 100
+              });
+
+              const commitExists = commits.some(c => c.sha === commitSha);
+
+              if (!commitExists) {
+                core.setFailed(`❌ Commit ${commitSha} does not belong to PR #${prNumber}`);
+                return;
+              }
+
+              core.info(`✅ Manual trigger - PR #${prNumber}, SHA ${commitSha}`);
+              core.setOutput('is-safe', 'true');
+              core.setOutput('pr-number', String(prNumber));
+              core.setOutput('commit-sha', commitSha);
+            } else {
+              const isSameRepo = context.payload.pull_request.head.repo.full_name ===
+                                 context.payload.pull_request.base.repo.full_name;
+
+              core.setOutput('is-safe', String(isSameRepo));
+              core.setOutput('pr-number', String(context.payload.pull_request.number));
+              core.setOutput('commit-sha', context.payload.pull_request.head.sha);
+
+              core.info(`📋 Automatic trigger - PR #${context.payload.pull_request.number}, SHA ${context.payload.pull_request.head.sha}`);
+            }
 
   build:
     name: Build Docker Images
@@ -103,18 +130,20 @@ jobs:
         uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
-          username: davidbyoung
-          password: ${{ secrets.GHCR_TOKEN }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Generate image tags
         id: meta
         run: |
           PR_NUMBER=${{ needs.safety-check.outputs.pr-number }}
           COMMIT_SHA=${{ needs.safety-check.outputs.commit-sha }}
-          echo "BUILD_TAG=${REGISTRY}/${IMAGE_PREFIX}-build:pr-${PR_NUMBER}" >> $GITHUB_OUTPUT
-          echo "WEB_TAG=${REGISTRY}/${IMAGE_PREFIX}-web:pr-${PR_NUMBER}" >> $GITHUB_OUTPUT
-          echo "API_TAG=${REGISTRY}/${IMAGE_PREFIX}-api:pr-${PR_NUMBER}" >> $GITHUB_OUTPUT
-          echo "COMMIT_SHA_SHORT=${COMMIT_SHA:0:7}" >> $GITHUB_OUTPUT
+          COMMIT_SHA_SHORT="${COMMIT_SHA:0:7}"
+
+          echo "BUILD_TAGS=${REGISTRY}/${IMAGE_PREFIX}-build:pr-${PR_NUMBER},${REGISTRY}/${IMAGE_PREFIX}-build:pr-${PR_NUMBER}-${COMMIT_SHA_SHORT}" >> $GITHUB_OUTPUT
+          echo "WEB_TAGS=${REGISTRY}/${IMAGE_PREFIX}-web:pr-${PR_NUMBER},${REGISTRY}/${IMAGE_PREFIX}-web:pr-${PR_NUMBER}-${COMMIT_SHA_SHORT}" >> $GITHUB_OUTPUT
+          echo "API_TAGS=${REGISTRY}/${IMAGE_PREFIX}-api:pr-${PR_NUMBER},${REGISTRY}/${IMAGE_PREFIX}-api:pr-${PR_NUMBER}-${COMMIT_SHA_SHORT}" >> $GITHUB_OUTPUT
+          echo "COMMIT_SHA_SHORT=${COMMIT_SHA_SHORT}" >> $GITHUB_OUTPUT
 
       # Build stage: Documentation compilation
       - name: Build documentation image
@@ -124,7 +153,7 @@ jobs:
           context: .
           file: ./infrastructure/docker/build/Dockerfile
           push: true
-          tags: ${{ steps.meta.outputs.BUILD_TAG }}
+          tags: ${{ steps.meta.outputs.BUILD_TAGS }}
           cache-from: |
             type=gha,scope=build-${{ needs.safety-check.outputs.pr-number }}
             type=gha,scope=build
@@ -135,7 +164,6 @@ jobs:
           labels: |
             org.opencontainers.image.source=${{ github.event.repository.html_url }}
             org.opencontainers.image.revision=${{ needs.safety-check.outputs.commit-sha }}
-            org.opencontainers.image.created=${{ github.event.head_commit.timestamp }}
             preview.aphiria.com/pr-number=${{ needs.safety-check.outputs.pr-number }}
 
       # Runtime: Web image
@@ -146,9 +174,9 @@ jobs:
           context: .
           file: ./infrastructure/docker/runtime/web/Dockerfile
           build-args: |
-            BUILD_IMAGE=${{ steps.meta.outputs.BUILD_TAG }}
+            BUILD_IMAGE=${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-build:pr-${{ needs.safety-check.outputs.pr-number }}-${{ steps.meta.outputs.COMMIT_SHA_SHORT }}
           push: true
-          tags: ${{ steps.meta.outputs.WEB_TAG }}
+          tags: ${{ steps.meta.outputs.WEB_TAGS }}
           cache-from: |
             type=gha,scope=web-${{ needs.safety-check.outputs.pr-number }}
             type=gha,scope=web
@@ -159,7 +187,6 @@ jobs:
           labels: |
             org.opencontainers.image.source=${{ github.event.repository.html_url }}
             org.opencontainers.image.revision=${{ needs.safety-check.outputs.commit-sha }}
-            org.opencontainers.image.created=${{ github.event.head_commit.timestamp }}
             preview.aphiria.com/pr-number=${{ needs.safety-check.outputs.pr-number }}
 
       # Runtime: API image
@@ -170,9 +197,9 @@ jobs:
           context: .
           file: ./infrastructure/docker/runtime/api/Dockerfile
           build-args: |
-            BUILD_IMAGE=${{ steps.meta.outputs.BUILD_TAG }}
+            BUILD_IMAGE=${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-build:pr-${{ needs.safety-check.outputs.pr-number }}-${{ steps.meta.outputs.COMMIT_SHA_SHORT }}
           push: true
-          tags: ${{ steps.meta.outputs.API_TAG }}
+          tags: ${{ steps.meta.outputs.API_TAGS }}
           cache-from: |
             type=gha,scope=api-${{ needs.safety-check.outputs.pr-number }}
             type=gha,scope=api
@@ -183,7 +210,6 @@ jobs:
           labels: |
             org.opencontainers.image.source=${{ github.event.repository.html_url }}
             org.opencontainers.image.revision=${{ needs.safety-check.outputs.commit-sha }}
-            org.opencontainers.image.created=${{ github.event.head_commit.timestamp }}
             preview.aphiria.com/pr-number=${{ needs.safety-check.outputs.pr-number }}
 
       - name: Output image digests
@@ -218,35 +244,12 @@ jobs:
             Approve the preview deployment to create an ephemeral environment.
             `;
 
-            // Find existing comment
-            const { data: comments } = await github.rest.issues.listComments({
+            await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: prNumber,
+              body: body,
             });
-
-            const botComment = comments.find(comment =>
-              comment.user.type === 'Bot' &&
-              comment.body.includes('Preview Images Built')
-            );
-
-            if (botComment) {
-              // Update existing comment
-              await github.rest.issues.updateComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                comment_id: botComment.id,
-                body: body,
-              });
-            } else {
-              // Create new comment
-              await github.rest.issues.createComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: prNumber,
-                body: body,
-              });
-            }
 
   trigger-deploy:
     name: Trigger Preview Deployment

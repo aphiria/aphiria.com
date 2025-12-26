@@ -12,9 +12,10 @@ This document describes all GitHub repository secrets used by CI/CD workflows an
 
 | Secret Name | Purpose | Rotation Schedule | Used By |
 |-------------|---------|-------------------|---------|
-| `GHCR_TOKEN` | Push Docker images to ghcr.io (CI/CD) | Annually | `build-preview-images.yml` |
 | `PULUMI_ACCESS_TOKEN` | Manage infrastructure state in Pulumi Cloud | Annually | `preview-deploy.yml`, `preview-cleanup.yml` |
 | `WORKFLOW_DISPATCH_TOKEN` | Trigger preview deployment workflow from build workflow | Annually | `build-preview-images.yml` |
+
+**Note**: `GITHUB_TOKEN` is automatically provided by GitHub Actions for pushing Docker images to ghcr.io. No manual secret configuration required.
 
 ### Pulumi ESC Secrets
 
@@ -33,39 +34,11 @@ These secrets are stored in Pulumi ESC environments (`aphiria.com/Preview` and `
 
 ## Rotation Procedures
 
-### GHCR_TOKEN
-
-**Why this is needed**: External contributors' `GITHUB_TOKEN` can't push to your ghcr.io registry. A Personal Access Token ensures all builds work.
-
-**Generate new token**:
-
-1. https://github.com/settings/tokens
-2. "Generate new token (classic)"
-3. Name: `GHCR Package Write (aphiria.com)`
-4. Scopes: `write:packages`, `read:packages`, `delete:packages` (optional)
-5. Expiration: No expiration (or 1 year)
-6. Copy the token
-
-**Update repository secret**:
-
-1. https://github.com/aphiria/aphiria.com/settings/secrets/actions
-2. Click `GHCR_TOKEN` (or "New repository secret")
-3. Paste new token value
-4. Save
-
-**Test**: Push a commit to any PR, verify "Build Preview Images" workflow succeeds
-
-**Cleanup**: Delete old token at https://github.com/settings/tokens
-
----
-
-### GHCR_TOKEN (Pulumi ESC - Kubernetes Image Pulling)
+### GHCR Token (Pulumi ESC - Kubernetes Image Pulling)
 
 **Why this is needed**: Kubernetes clusters need credentials to pull private Docker images from ghcr.io. This token is configured in Pulumi ESC and injected into Kubernetes imagePullSecrets at runtime.
 
-**Note**: This uses the **same token** as the repository secret `GHCR_TOKEN` above, but it must be configured in **both** Pulumi ESC environments (`aphiria.com/Preview` and `aphiria.com/Production`).
-
-**Generate new token** (if not already created):
+**Generate new token**:
 
 1. https://github.com/settings/tokens
 2. "Generate new token (classic)"
@@ -248,7 +221,7 @@ If a secret is compromised:
 
 | Error | Cause | Solution |
 |-------|-------|----------|
-| Authentication failed (build-preview-images.yml) | Invalid `GHCR_TOKEN` repository secret | Rotate token |
+| Authentication failed (build-preview-images.yml) | `GITHUB_TOKEN` permissions issue | Verify `packages: write` permission in workflow |
 | ImagePullBackOff / 401 Unauthorized (Kubernetes pods) | Invalid `ghcr:token` in Pulumi ESC | Add/update token in Pulumi ESC environments |
 | Pulumi login failed | Invalid `PULUMI_ACCESS_TOKEN` | Rotate token |
 | workflow_dispatch trigger fails (403 error) | Invalid `WORKFLOW_DISPATCH_TOKEN` | Rotate token |

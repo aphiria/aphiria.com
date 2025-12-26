@@ -1307,7 +1307,7 @@ await github.rest.actions.createWorkflowDispatch({
 
 ### Gotchas
 
-- **Secret naming**: Cannot use `GITHUB_` prefix (reserved by GitHub system). Use alternatives like `GHCR_TOKEN` instead of `GITHUB_CONTAINER_REGISTRY_TOKEN`.
+- **Secret naming**: Cannot use `GITHUB_` prefix for custom secrets (reserved by GitHub system). Use `GITHUB_TOKEN` (auto-provided) for GHCR authentication instead of custom PATs.
 
 ---
 
