@@ -15,9 +15,9 @@ export function createPostgreSQL(args: PostgreSQLArgs): PostgreSQLResult {
     let pv: k8s.core.v1.PersistentVolume | undefined;
 
     // Create secret for database credentials
-    const secret = new k8s.core.v1.Secret("env-var-secrets", {
+    const secret = new k8s.core.v1.Secret("db-env-var-secrets", {
         metadata: {
-            name: "env-var-secrets",
+            name: "db-env-var-secrets",
             namespace: args.namespace,
             labels,
         },
@@ -133,7 +133,7 @@ export function createPostgreSQL(args: PostgreSQLArgs): PostgreSQLResult {
                                     name: "POSTGRES_USER",
                                     valueFrom: {
                                         secretKeyRef: {
-                                            name: "env-var-secrets",
+                                            name: "db-env-var-secrets",
                                             key: "DB_USER",
                                         },
                                     },
@@ -142,7 +142,7 @@ export function createPostgreSQL(args: PostgreSQLArgs): PostgreSQLResult {
                                     name: "POSTGRES_PASSWORD",
                                     valueFrom: {
                                         secretKeyRef: {
-                                            name: "env-var-secrets",
+                                            name: "db-env-var-secrets",
                                             key: "DB_PASSWORD",
                                         },
                                     },

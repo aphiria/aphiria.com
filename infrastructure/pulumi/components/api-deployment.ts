@@ -87,9 +87,9 @@ export function createAPIDeployment(args: APIDeploymentArgs): APIDeploymentResul
     }, { provider: args.provider });
 
     // Create Secret for database credentials
-    const secret = new k8s.core.v1.Secret("env-var-secrets", {
+    const secret = new k8s.core.v1.Secret("api-env-var-secrets", {
         metadata: {
-            name: "env-var-secrets",
+            name: "api-env-var-secrets",
             namespace: args.namespace,
             labels,
         },
@@ -223,7 +223,7 @@ export function createAPIDeployment(args: APIDeploymentArgs): APIDeploymentResul
                             envFrom: [
                                 {
                                     secretRef: {
-                                        name: "env-var-secrets",
+                                        name: "api-env-var-secrets",
                                     },
                                 },
                                 {
