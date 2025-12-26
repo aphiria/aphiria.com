@@ -342,12 +342,10 @@ jobs:
             console.log(`Web digest: ${webDigest}`);
             console.log(`API digest: ${apiDigest}`);
 
-            // TODO: Change back to 'master' before merging to master
-            // Temporarily using branch ref for testing new workflows
             await github.rest.actions.createWorkflowDispatch({
               owner: context.repo.owner,
               repo: context.repo.repo,
               workflow_id: 'deploy.yml',
-              ref: '001-ephemeral-environments',
+              ref: 'master',
               inputs: inputs
             });

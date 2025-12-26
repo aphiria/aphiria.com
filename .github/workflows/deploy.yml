@@ -1,11 +1,6 @@
 name: Deploy
 
 on:
-  # Temporary: Added pull_request trigger so GitHub indexes this workflow on the branch
-  # Remove this before merging to master (deploy.yml should only be triggered via workflow_dispatch)
-  pull_request:
-    paths:
-      - '.github/workflows/deploy.yml'
   workflow_dispatch:
     inputs:
       environment:
