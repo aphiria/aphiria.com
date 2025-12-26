@@ -50,9 +50,11 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
+            let prNumber, commitSha, isSafe;
+
             if (context.eventName === 'workflow_dispatch') {
-              const prNumber = ${{ inputs.pr_number }};
-              const commitSha = '${{ inputs.commit_sha }}';
+              prNumber = ${{ inputs.pr_number }};
+              commitSha = '${{ inputs.commit_sha }}';
 
               // Validate commit belongs to PR
               const { data: commits } = await github.rest.pulls.listCommits({
@@ -70,19 +72,19 @@ jobs:
               }
 
               core.info(`✅ Manual trigger - PR #${prNumber}, SHA ${commitSha}`);
-              core.setOutput('is-safe', 'true');
-              core.setOutput('pr-number', String(prNumber));
-              core.setOutput('commit-sha', commitSha);
+              isSafe = true;
             } else {
-              const isSameRepo = context.payload.pull_request.head.repo.full_name ===
-                                 context.payload.pull_request.base.repo.full_name;
+              prNumber = context.payload.pull_request.number;
+              commitSha = context.payload.pull_request.head.sha;
+              isSafe = context.payload.pull_request.head.repo.full_name ===
+                       context.payload.pull_request.base.repo.full_name;
 
-              core.setOutput('is-safe', String(isSameRepo));
-              core.setOutput('pr-number', String(context.payload.pull_request.number));
-              core.setOutput('commit-sha', context.payload.pull_request.head.sha);
-
-              core.info(`📋 Automatic trigger - PR #${context.payload.pull_request.number}, SHA ${context.payload.pull_request.head.sha}`);
+              core.info(`📋 Automatic trigger - PR #${prNumber}, SHA ${commitSha}`);
             }
+
+            core.setOutput('is-safe', String(isSafe));
+            core.setOutput('pr-number', String(prNumber));
+            core.setOutput('commit-sha', commitSha);
 
   build:
     name: Build Docker Images

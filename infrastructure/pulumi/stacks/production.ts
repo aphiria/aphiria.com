@@ -8,7 +8,6 @@
 import * as pulumi from "@pulumi/pulumi";
 import * as digitalocean from "@pulumi/digitalocean";
 import * as k8s from "@pulumi/kubernetes";
-import { createKubernetesCluster } from "../components";
 import { createStack } from "../shared/factory";
 
 const config = new pulumi.Config();
@@ -70,7 +69,7 @@ const webUrl = "https://www.aphiria.com";
 const apiUrl = "https://api.aphiria.com";
 
 // Create all infrastructure using a factory
-const stack = createStack({
+createStack({
     env: "production",
     database: {
         replicas: 2,
