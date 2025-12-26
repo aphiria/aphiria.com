@@ -1,0 +1,351 @@
+name: Build Images
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - 'src/**'
+      - 'public-api/**'
+      - 'public-web/**'
+      - 'infrastructure/**'
+      - 'composer.json'
+      - 'composer.lock'
+      - 'package.json'
+      - 'package-lock.json'
+  push:
+    branches:
+      - master
+    paths:
+      - 'src/**'
+      - 'public-api/**'
+      - 'public-web/**'
+      - 'infrastructure/**'
+      - 'composer.json'
+      - 'composer.lock'
+      - 'package.json'
+      - 'package-lock.json'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Target environment'
+        type: choice
+        options: [preview, production]
+        default: preview
+        required: true
+      pr_number:
+        description: 'PR number (preview only, for fork PRs after code review)'
+        type: string
+        required: false
+      commit_sha:
+        description: 'Exact commit SHA you reviewed '
+        type: string
+        required: false
+
+permissions:
+  contents: read
+  packages: write
+  pull-requests: write
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_PREFIX: ${{ github.repository }}
+
+jobs:
+  determine-mode:
+    name: Determine Build Mode
+    runs-on: ubuntu-latest
+    outputs:
+      mode: ${{ steps.detect.outputs.mode }}
+      pr-number: ${{ steps.detect.outputs.pr-number }}
+      commit-sha: ${{ steps.detect.outputs.commit-sha }}
+      is-safe: ${{ steps.detect.outputs.is-safe }}
+
+    steps:
+      - name: Detect build mode and extract metadata
+        id: detect
+        uses: actions/github-script@v7
+        with:
+          script: |
+            let mode, prNumber, commitSha, isSafe;
+
+            if (context.eventName === 'pull_request') {
+              // Preview mode: PR trigger
+              mode = 'preview';
+              prNumber = context.payload.pull_request.number;
+              commitSha = context.payload.pull_request.head.sha;
+              isSafe = context.payload.pull_request.head.repo.full_name ===
+                       context.payload.pull_request.base.repo.full_name;
+
+              core.info(`📋 PR trigger - Preview mode`);
+              core.info(`   PR: #${prNumber}`);
+              core.info(`   Commit: ${commitSha}`);
+              core.info(`   Safe (not from fork): ${isSafe}`);
+            } else if (context.eventName === 'push' && context.ref === 'refs/heads/master') {
+              // Production mode: Push to master
+              mode = 'production';
+              prNumber = '';
+              commitSha = context.sha;
+              isSafe = 'true';
+
+              core.info(`🚀 Push to master - Production mode`);
+              core.info(`   Commit: ${commitSha}`);
+            } else if (context.eventName === 'workflow_dispatch') {
+              // Manual trigger
+              mode = context.payload.inputs.environment;
+
+              if (mode === 'preview') {
+                if (!context.payload.inputs.pr_number || !context.payload.inputs.commit_sha) {
+                  core.setFailed('❌ Preview mode requires pr_number and commit_sha inputs');
+                  return;
+                }
+
+                prNumber = context.payload.inputs.pr_number;
+                commitSha = context.payload.inputs.commit_sha;
+
+                // Validate commit belongs to PR
+                const { data: commits } = await github.rest.pulls.listCommits({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  pull_number: parseInt(prNumber),
+                  per_page: 100
+                });
+
+                const commitExists = commits.some(c => c.sha === commitSha);
+                if (!commitExists) {
+                  core.setFailed(`❌ Commit ${commitSha} does not belong to PR #${prNumber}`);
+                  return;
+                }
+
+                isSafe = 'true';
+                core.info(`✅ Manual trigger - Preview mode`);
+                core.info(`   PR: #${prNumber}`);
+                core.info(`   Commit: ${commitSha}`);
+              } else {
+                // Production manual trigger
+                prNumber = '';
+                commitSha = context.sha;
+                isSafe = 'true';
+
+                core.info(`✅ Manual trigger - Production mode`);
+                core.info(`   Commit: ${commitSha}`);
+              }
+            } else {
+              core.setFailed(`❌ Unsupported event: ${context.eventName}`);
+              return;
+            }
+
+            core.setOutput('mode', mode);
+            core.setOutput('pr-number', String(prNumber));
+            core.setOutput('commit-sha', commitSha);
+            core.setOutput('is-safe', String(isSafe));
+
+  build:
+    name: Build Docker Images
+    runs-on: ubuntu-latest
+    needs: determine-mode
+    if: needs.determine-mode.outputs.is-safe == 'true'
+
+    outputs:
+      build-image-digest: ${{ steps.build-image.outputs.digest }}
+      web-image-digest: ${{ steps.web-image.outputs.digest }}
+      api-image-digest: ${{ steps.api-image.outputs.digest }}
+
+    steps:
+      - name: Checkout exact commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.determine-mode.outputs.commit-sha }}
+
+      - name: Verify correct commit
+        run: |
+          CURRENT_SHA=$(git rev-parse HEAD)
+          EXPECTED_SHA="${{ needs.determine-mode.outputs.commit-sha }}"
+
+          if [ "$CURRENT_SHA" != "$EXPECTED_SHA" ]; then
+            echo "❌ ERROR: Checked out wrong commit!"
+            echo "   Expected: $EXPECTED_SHA"
+            echo "   Got:      $CURRENT_SHA"
+            exit 1
+          fi
+
+          echo "✅ Verified - building commit: $CURRENT_SHA"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Generate image tags
+        id: meta
+        run: |
+          MODE="${{ needs.determine-mode.outputs.mode }}"
+          COMMIT_SHA="${{ needs.determine-mode.outputs.commit-sha }}"
+          COMMIT_SHA_SHORT="${COMMIT_SHA:0:7}"
+
+          if [ "$MODE" == "preview" ]; then
+            PR_NUMBER="${{ needs.determine-mode.outputs.pr-number }}"
+            BUILD_TAGS="${REGISTRY}/${IMAGE_PREFIX}-build:pr-${PR_NUMBER},${REGISTRY}/${IMAGE_PREFIX}-build:pr-${PR_NUMBER}-${COMMIT_SHA_SHORT}"
+            WEB_TAGS="${REGISTRY}/${IMAGE_PREFIX}-web:pr-${PR_NUMBER},${REGISTRY}/${IMAGE_PREFIX}-web:pr-${PR_NUMBER}-${COMMIT_SHA_SHORT}"
+            API_TAGS="${REGISTRY}/${IMAGE_PREFIX}-api:pr-${PR_NUMBER},${REGISTRY}/${IMAGE_PREFIX}-api:pr-${PR_NUMBER}-${COMMIT_SHA_SHORT}"
+            CACHE_SCOPE_SUFFIX="pr-${PR_NUMBER}"
+          else
+            BUILD_TAGS="${REGISTRY}/${IMAGE_PREFIX}-build:latest,${REGISTRY}/${IMAGE_PREFIX}-build:sha-${COMMIT_SHA_SHORT}"
+            WEB_TAGS="${REGISTRY}/${IMAGE_PREFIX}-web:latest,${REGISTRY}/${IMAGE_PREFIX}-web:sha-${COMMIT_SHA_SHORT}"
+            API_TAGS="${REGISTRY}/${IMAGE_PREFIX}-api:latest,${REGISTRY}/${IMAGE_PREFIX}-api:sha-${COMMIT_SHA_SHORT}"
+            CACHE_SCOPE_SUFFIX="master"
+          fi
+
+          echo "BUILD_TAGS=${BUILD_TAGS}" >> $GITHUB_OUTPUT
+          echo "WEB_TAGS=${WEB_TAGS}" >> $GITHUB_OUTPUT
+          echo "API_TAGS=${API_TAGS}" >> $GITHUB_OUTPUT
+          echo "COMMIT_SHA_SHORT=${COMMIT_SHA_SHORT}" >> $GITHUB_OUTPUT
+          echo "CACHE_SCOPE_SUFFIX=${CACHE_SCOPE_SUFFIX}" >> $GITHUB_OUTPUT
+          echo "BUILD_IMAGE_REF=${REGISTRY}/${IMAGE_PREFIX}-build:$([ "$MODE" == "preview" ] && echo "pr-${PR_NUMBER}-${COMMIT_SHA_SHORT}" || echo "sha-${COMMIT_SHA_SHORT}")" >> $GITHUB_OUTPUT
+
+      - name: Build documentation image
+        id: build-image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./infrastructure/docker/build/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.BUILD_TAGS }}
+          cache-from: |
+            type=gha,scope=build-${{ steps.meta.outputs.CACHE_SCOPE_SUFFIX }}
+            type=gha,scope=build
+            type=gha,scope=build-master
+          cache-to: |
+            type=gha,mode=max,scope=build-${{ steps.meta.outputs.CACHE_SCOPE_SUFFIX }}
+            type=gha,mode=max,scope=build
+          labels: |
+            org.opencontainers.image.source=${{ github.event.repository.html_url }}
+            org.opencontainers.image.revision=${{ needs.determine-mode.outputs.commit-sha }}
+
+      - name: Build web image
+        id: web-image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./infrastructure/docker/runtime/web/Dockerfile
+          build-args: |
+            BUILD_IMAGE=${{ steps.meta.outputs.BUILD_IMAGE_REF }}
+          push: true
+          tags: ${{ steps.meta.outputs.WEB_TAGS }}
+          cache-from: |
+            type=gha,scope=web-${{ steps.meta.outputs.CACHE_SCOPE_SUFFIX }}
+            type=gha,scope=web
+            type=gha,scope=web-master
+          cache-to: |
+            type=gha,mode=max,scope=web-${{ steps.meta.outputs.CACHE_SCOPE_SUFFIX }}
+            type=gha,mode=max,scope=web
+          labels: |
+            org.opencontainers.image.source=${{ github.event.repository.html_url }}
+            org.opencontainers.image.revision=${{ needs.determine-mode.outputs.commit-sha }}
+
+      - name: Build API image
+        id: api-image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./infrastructure/docker/runtime/api/Dockerfile
+          build-args: |
+            BUILD_IMAGE=${{ steps.meta.outputs.BUILD_IMAGE_REF }}
+          push: true
+          tags: ${{ steps.meta.outputs.API_TAGS }}
+          cache-from: |
+            type=gha,scope=api-${{ steps.meta.outputs.CACHE_SCOPE_SUFFIX }}
+            type=gha,scope=api
+            type=gha,scope=api-master
+          cache-to: |
+            type=gha,mode=max,scope=api-${{ steps.meta.outputs.CACHE_SCOPE_SUFFIX }}
+            type=gha,mode=max,scope=api
+          labels: |
+            org.opencontainers.image.source=${{ github.event.repository.html_url }}
+            org.opencontainers.image.revision=${{ needs.determine-mode.outputs.commit-sha }}
+
+      - name: Output image digests
+        run: |
+          MODE="${{ needs.determine-mode.outputs.mode }}"
+
+          echo "### 📦 Image Digests ($MODE)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Web Image**: \`${{ steps.web-image.outputs.digest }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**API Image**: \`${{ steps.api-image.outputs.digest }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Build Image**: \`${{ steps.build-image.outputs.digest }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "These digests will be used for $MODE environment deployment." >> $GITHUB_STEP_SUMMARY
+
+      - name: Add comment to PR with image digests
+        if: needs.determine-mode.outputs.mode == 'preview'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prNumber = ${{ needs.determine-mode.outputs.pr-number }};
+            const webDigest = '${{ steps.web-image.outputs.digest }}';
+            const apiDigest = '${{ steps.api-image.outputs.digest }}';
+            const commitSha = '${{ steps.meta.outputs.COMMIT_SHA_SHORT }}';
+            const fullSha = '${{ needs.determine-mode.outputs.commit-sha }}';
+
+            const body = `### 📦 Preview Images Built
+
+            **Commit**: \`${commitSha}\` (\`${fullSha}\`)
+
+            **Image Digests**:
+            - **Web**: \`${webDigest}\`
+            - **API**: \`${apiDigest}\`
+
+            These images are ready for preview environment deployment.
+            Approve the preview deployment to create an ephemeral environment.
+            `;
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+              body: body,
+            });
+
+  trigger-deploy:
+    name: Trigger Deployment
+    needs: [determine-mode, build]
+    if: needs.determine-mode.outputs.is-safe == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger deployment workflow
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.WORKFLOW_DISPATCH_TOKEN }}
+          script: |
+            const mode = '${{ needs.determine-mode.outputs.mode }}';
+            const webDigest = '${{ needs.build.outputs.web-image-digest }}';
+            const apiDigest = '${{ needs.build.outputs.api-image-digest }}';
+
+            const inputs = {
+              environment: mode,
+              web_digest: webDigest,
+              api_digest: apiDigest
+            };
+
+            if (mode === 'preview') {
+              const prNumber = '${{ needs.determine-mode.outputs.pr-number }}';
+              inputs.pr_number = prNumber;
+              console.log(`Triggering preview deployment for PR #${prNumber}`);
+            } else {
+              console.log(`Triggering production deployment`);
+            }
+
+            console.log(`Web digest: ${webDigest}`);
+            console.log(`API digest: ${apiDigest}`);
+
+            await github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'deploy.yml',
+              ref: 'master',
+              inputs: inputs
+            });

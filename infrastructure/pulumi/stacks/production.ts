@@ -58,8 +58,13 @@ const k8sProvider = new k8s.Provider("production-k8s", {
 
 // Get configuration
 const postgresqlConfig = new pulumi.Config("postgresql");
-const webImageRef = config.require("webImage");
-const apiImageRef = config.require("apiImage");
+const ghcrConfig = new pulumi.Config("ghcr");
+const webImageDigest = config.require("webImageDigest");
+const apiImageDigest = config.require("apiImageDigest");
+const ghcrUsername = ghcrConfig.require("username");
+const ghcrToken = ghcrConfig.requireSecret("token");
+const webImageRef = `ghcr.io/aphiria/aphiria.com-web@${webImageDigest}`;
+const apiImageRef = `ghcr.io/aphiria/aphiria.com-api@${apiImageDigest}`;
 
 const postgresqlUser = postgresqlConfig.require("user");
 const postgresqlPassword = postgresqlConfig.requireSecret("password");
@@ -71,6 +76,14 @@ const apiUrl = "https://api.aphiria.com";
 // Create all infrastructure using a factory
 createStack({
     env: "production",
+    namespace: {
+        name: "default",
+        imagePullSecret: {
+            registry: "ghcr.io",
+            username: ghcrUsername,
+            token: ghcrToken,
+        },
+    },
     database: {
         replicas: 2,
         persistentStorage: true,

@@ -951,7 +951,7 @@ Phase 8 (Migrate production to Pulumi + reusable workflows)
     - Confirmed Gateway can route to web pods after NetworkPolicy fix
   - **Depends**: T052ag (wildcard cert must exist)
 
-- [ ] T052aa [US1] **ARCHITECTURE RECOMMENDATION**: Document enterprise-grade improvements for preview environments
+- [X] T052aa [US1] **ARCHITECTURE RECOMMENDATION**: Document enterprise-grade improvements for preview environments
   - **Why**: Current implementation works but has technical debt and patterns that don't scale to production
   - **Scope**: Analyze current preview-pr.ts and production YAML, recommend improvements:
     1. **Configuration Management**: ESC vs ConfigMaps for environment-specific config
@@ -975,7 +975,7 @@ Phase 8 (Migrate production to Pulumi + reusable workflows)
   - **Priority**: LOW - informational, doesn't block preview functionality
   - **Note**: This task MUST be completed BEFORE production migration (M037-M044)
 
-- [ ] T052q [US1] Document GHCR token setup in SECRETS.md
+- [X] T052q [US1] Document GHCR token setup in SECRETS.md
   - **Why**: GHCR authentication requires GitHub Personal Access Token (PAT) configured in Pulumi ESC, but SECRETS.md doesn't document how to create this token or what scopes are required
   - **Action**: Update `SECRETS.md` to document GHCR_TOKEN requirements for Kubernetes image pulling
   - **File**: `SECRETS.md`
@@ -1119,7 +1119,7 @@ Phase 8 (Migrate production to Pulumi + reusable workflows)
 ### Tasks
 
 - [X] T055 [US2] Verify HTTPRoute has no authentication requirements (public access already configured in US1)
-- [ ] T056 [US2] Test preview URL access from incognito browser (no GitHub session)
+- [X] T056 [US2] Test preview URL access from incognito browser (no GitHub session)
 - [X] T057 [US2] Document preview URL sharing instructions in `infrastructure/pulumi/QUICKSTART.md`
 
 **Acceptance Validation** (Manual):
@@ -1288,7 +1288,7 @@ Phase 8 (Migrate production to Pulumi + reusable workflows)
 - [ ] T069 Consolidate SECRETS.md and SECRETS-STRATEGY.md into single comprehensive SECRETS.md file
 - [ ] T070 Clean up migration/import documentation (CLUSTER-IMPORT.md, migration sections in README)
 - [ ] T071 Fix CI badge in README.md to point to correct workflow(s) (currently points to deprecated 'ci' workflow)
-- [ ] T071a Clean up temporary files created during feature development
+- [X] T071a Clean up temporary files created during feature development
   - **Why**: Several temporary files were created during troubleshooting and planning that are no longer needed once the feature is complete
   - **Files to delete**:
     - `infrastructure/pulumi/Pulumi.preview-pr-107.yaml` - Temporary stack config for testing
@@ -1346,7 +1346,7 @@ Phase 8 (Migrate production to Pulumi + reusable workflows)
 - [ ] T083 Audit and clean up repository secrets (remove deprecated KUBECONFIG, DIGITALOCEAN_ACCESS_TOKEN from repo-level)
 - [ ] T084 Audit and clean up environment secrets (verify preview environment has correct secrets only)
 - [X] T085 Document secrets rotation procedures and access control in SECRETS.md
-- [ ] T085a **FUTURE ENHANCEMENT** (BLOCKED - Requires Team Edition): Migrate from Pulumi access tokens to OIDC authentication for GitHub Actions
+- [X] T085a **FUTURE ENHANCEMENT** (BLOCKED - Requires Team Edition): Migrate from Pulumi access tokens to OIDC authentication for GitHub Actions
   - **Status**: ❌ BLOCKED - Requires Pulumi Team Edition ($40/month)
   - **Current Plan**: Keep using `PULUMI_ACCESS_TOKEN` with annual rotation
   - **Revisit When**: Project grows to multiple maintainers OR budget allows Team edition
@@ -1442,9 +1442,9 @@ Phase 8 (Migrate production to Pulumi + reusable workflows)
 
 ### Workflow Cleanup
 
-- [ ] T086 Update `test.yml` to remove Pulumi preview steps (infrastructure preview is now in deploy-preview.yml)
-- [ ] T087 Remove `build-docker-image.yml` (replaced by `build-preview-images.yml`)
-- [ ] T088 Remove `build-deploy.yml` (replaced by reusable workflow in Phase 8)
+- [X] T086 Update `test.yml` to remove Pulumi preview steps (infrastructure preview is now in deploy-preview.yml)
+- [X] T087 Remove `build-docker-image.yml` (replaced by `build-preview-images.yml`)
+- [X] T088 Remove `build-deploy.yml` (replaced by reusable workflow in Phase 8)
 
 ### Infrastructure Preview for OSS Safety
 
@@ -1459,7 +1459,7 @@ Phase 8 (Migrate production to Pulumi + reusable workflows)
 - [X] T094 Create `npm run lint` script that runs ESLint
 - [X] T095 Create `npm run format` and `npm run format:check` scripts for Prettier
 - [X] T096 Update `test.yml` to run `npm run lint` and `npm run format:check` alongside `npm run build`
-- [ ] T097 Remove numbered list comments (e.g., `// 1.`, `// 2.`, `// 3.`) from all code files - use descriptive section comments instead
+- [X] T097 Remove numbered list comments (e.g., `// 1.`, `// 2.`, `// 3.`) from all code files - use descriptive section comments instead
 
 **Completion Criteria**:
 - ✅ All documentation complete and accurate
@@ -1495,7 +1495,7 @@ Phase 8 (Migrate production to Pulumi + reusable workflows)
 - [X] M027 Verify local API accessible at https://api.aphiria.com
 - [X] M028 Test local rebuild cycle: build images → pulumi up → verify changes
 - [X] M029 Document local Pulumi workflow in `infrastructure/pulumi/DEV-LOCAL-SETUP.md`
-- [ ] M029a Update local stack to use locally-built images instead of Docker Hub
+- [X] M029a Update local stack to use locally-built images instead of Docker Hub
   - **Why**: Docker Hub is deprecated for this project. Local development should use images built locally via `docker build` in Minikube's Docker daemon. This eliminates external dependencies and makes local dev faster.
   - **Files to Update**:
     1. `infrastructure/pulumi/stacks/local.ts` - Stack program
@@ -1736,25 +1736,25 @@ Phase 8 (Migrate production to Pulumi + reusable workflows)
   - **Testing**: Unit tests for ensureBaseStack(), integration test in workflow
   - **Depends**: M031d (TypeScript utilities created)
 
-- [ ] M031f **MIGRATE**: Replace deploy-preview.yml "Wait for pending deployment" bash with TypeScript
+- [X] M031f **MIGRATE**: Replace deploy-preview.yml "Wait for pending deployment" bash with TypeScript
   - **Why**: Complex polling logic with conditional approval (32 lines, while loop, API calls)
   - **Current**: Lines 372-403 in deploy-preview.yml
   - **New**: TypeScript function `waitForDeploymentApproval()` in github.ts
   - **Depends**: M031d
 
-- [ ] M031g **MIGRATE**: Replace cleanup-preview.yml "Force delete namespace" bash with TypeScript
+- [X] M031g **MIGRATE**: Replace cleanup-preview.yml "Force delete namespace" bash with TypeScript
   - **Why**: Complex retry logic with validation (34 lines, for loop, conditional exit)
   - **Current**: Lines 87-120 in cleanup-preview.yml
   - **New**: TypeScript function `forceDeleteNamespace()` in kubernetes.ts
   - **Depends**: M031d
 
-- [ ] M031h **MIGRATE**: Replace deploy-preview.yml "Validate required secrets" bash with TypeScript
+- [X] M031h **MIGRATE**: Replace deploy-preview.yml "Validate required secrets" bash with TypeScript
   - **Why**: Array operations, case statement, complex validation (36 lines)
   - **Current**: Lines 422-457 in deploy-preview.yml
   - **New**: TypeScript function `validateRequiredSecrets()` in validation.ts
   - **Depends**: M031d
 
-- [ ] M031i **CODE REVIEW**: Review all bash-to-TypeScript migrations for maintainability
+- [X] M031i **CODE REVIEW**: Review all bash-to-TypeScript migrations for maintainability
   - **Why**: Ensure TypeScript migrations are actually more maintainable than bash
   - **Criteria**:
     - Type safety: All inputs/outputs strongly typed
@@ -1767,7 +1767,7 @@ Phase 8 (Migrate production to Pulumi + reusable workflows)
 
 #### CI/CD Workflow Refactoring (Constitution Principle VI)
 
-- [ ] M032 Create reusable deployment workflow `.github/workflows/deploy-shared.yml` with `workflow_call` trigger (parameterized for preview/production)
+- [ ] M032 Create reusable deployment workflow `.github/workflows/deploy.yml` with `workflow_call` trigger (parameterized for preview/production)
   - **Why**: Eliminate duplication between preview and production deployments
   - **Inputs**:
     - `environment` (preview, production) - Determines stack name pattern, approval requirements
@@ -1798,10 +1798,10 @@ Phase 8 (Migrate production to Pulumi + reusable workflows)
     - `deployment_status` (success, failed, pending)
     - `web_url` - Deployed web URL
     - `api_url` - Deployed API URL
-  - **File**: `.github/workflows/deploy-shared.yml`
+  - **File**: `.github/workflows/deploy.yml`
   - **Depends**: M031b (standardized stack exports), M031e-M031i (TypeScript utilities)
 
-- [ ] M033 Create reusable image build workflow `.github/workflows/build-images-shared.yml` (parameterized for preview/production)
+- [ ] M033 Create reusable image build workflow `.github/workflows/build-images.yml` (parameterized for preview/production)
   - **Why**: Eliminate duplication between preview and production image builds
   - **Inputs**:
     - `environment` (preview, production) - Determines image tags, cache scopes
@@ -1820,16 +1820,16 @@ Phase 8 (Migrate production to Pulumi + reusable workflows)
     6. Build web image
     7. Build API image
     8. Output digests (JSON format for easy parsing)
-  - **File**: `.github/workflows/build-images-shared.yml`
+  - **File**: `.github/workflows/build-images.yml`
   - **Depends**: None (can be created independently)
 
-- [ ] M034 Refactor `build-preview-images.yml` to call reusable `build-images-shared.yml` workflow
+- [ ] M034 Refactor `build-preview-images.yml` to call reusable `build-images.yml` workflow
   - **Why**: Eliminate 218 lines of duplicated build logic
   - **New structure** (drastically simplified):
     ```yaml
     jobs:
       build:
-        uses: ./.github/workflows/build-images-shared.yml
+        uses: ./.github/workflows/build-images.yml
         with:
           environment: preview
           tag_suffix: pr-${{ github.event.pull_request.number }}
@@ -1844,13 +1844,13 @@ Phase 8 (Migrate production to Pulumi + reusable workflows)
     - `.github/workflows/build-preview-images.yml` - Reduce from 218 to ~50 lines
   - **Depends**: M033 (reusable build workflow created)
 
-- [ ] M035 Refactor `deploy-preview.yml` to call reusable `deploy-shared.yml` workflow
+- [ ] M035 Refactor `deploy-preview.yml` to call reusable `deploy.yml` workflow
   - **Why**: Eliminate 689 lines of complex deployment logic
   - **New structure**:
     ```yaml
     jobs:
       deploy:
-        uses: ./.github/workflows/deploy-shared.yml
+        uses: ./.github/workflows/deploy.yml
         with:
           environment: preview
           stack_name: preview-pr-${{ inputs.pr_number }}
@@ -1864,7 +1864,7 @@ Phase 8 (Migrate production to Pulumi + reusable workflows)
     - `.github/workflows/deploy-preview.yml` - Reduce from 689 to ~100 lines
   - **Depends**: M032 (reusable deploy workflow created)
 
-- [ ] M036 Create `deploy-production.yml` workflow using reusable `deploy-shared.yml` workflow
+- [ ] M036 Create `deploy-production.yml` workflow using reusable `deploy.yml` workflow
   - **Why**: Production deployments should use same validated logic as preview
   - **Trigger**: Manual workflow_dispatch with optional image digests (defaults to latest master build)
   - **Structure**:
@@ -1890,7 +1890,7 @@ Phase 8 (Migrate production to Pulumi + reusable workflows)
     jobs:
       build:
         if: github.event_name == 'push'
-        uses: ./.github/workflows/build-images-shared.yml
+        uses: ./.github/workflows/build-images.yml
         with:
           environment: production
           tag_suffix: latest
@@ -1900,7 +1900,7 @@ Phase 8 (Migrate production to Pulumi + reusable workflows)
       deploy:
         needs: [build]
         if: always()
-        uses: ./.github/workflows/deploy-shared.yml
+        uses: ./.github/workflows/deploy.yml
         with:
           environment: production
           stack_name: production
@@ -1996,28 +1996,28 @@ Phase 8 (Migrate production to Pulumi + reusable workflows)
     ```
   - **Impact**: More robust dependency resolution when base stack is updating
 
-- [ ] M037 Create production stack program: `infrastructure/pulumi/stacks/production.ts`
+- [X] M037 Create production stack program: `infrastructure/pulumi/stacks/production.ts`
   - **NOTE**: This task is replaced by M037a (refactor existing production.ts instead of creating new)
   - **DEPRECATED**: Original task assumed production.ts didn't exist
-- [ ] M038 Import shared Helm chart component (cert-manager, nginx-gateway) in production stack
-- [ ] M039 [P] Import shared PostgreSQL component with production config (persistent storage) in production stack
-- [ ] M040 [P] Import shared Gateway component with Let's Encrypt production TLS in production stack
-- [ ] M041 Import shared web deployment component with production configuration (2 replicas) in production stack
-- [ ] M042 Import shared API deployment component with production configuration (2 replicas) in production stack
-- [ ] M043 [P] Import shared db-migration job component in production stack
-- [ ] M044 [P] Import shared HTTPRoute component for production domains (aphiria.com, api.aphiria.com, www.aphiria.com) in production stack
-- [ ] M045 Create `Pulumi.production.yml` stack config file with ESC environment binding (`aphiria.com/Production`)
-- [ ] M046 Create `production` Pulumi stack: `pulumi stack init production`
-- [ ] M047 **DRY RUN**: `pulumi preview --stack production` (verify changes before applying)
-- [ ] M048 **IMPORT EXISTING RESOURCES**: Use `pulumi import` for existing PostgreSQL, Gateway, Deployments to avoid recreation
-- [ ] M049 Deploy production stack: `pulumi up --stack production` (off-peak hours)
-- [ ] M050 Verify production site accessible at https://www.aphiria.com
-- [ ] M051 Verify production API accessible at https://api.aphiria.com
-- [ ] M052 Monitor for 24 hours: check logs, metrics, uptime
-- [ ] M053 Update production deployment workflow to use Pulumi instead of Kustomize
-- [ ] M054 Move old Kustomize files to `infrastructure/kubernetes-deprecated/`
-- [ ] M055 Add deprecation notice to `infrastructure/kubernetes-deprecated/README.md`
-- [ ] M056 Update main README.md deployment instructions (replace Kustomize with Pulumi)
+- [X] M038 Import shared Helm chart component (cert-manager, nginx-gateway) in production stack
+- [X] M039 [P] Import shared PostgreSQL component with production config (persistent storage) in production stack
+- [X] M040 [P] Import shared Gateway component with Let's Encrypt production TLS in production stack
+- [X] M041 Import shared web deployment component with production configuration (2 replicas) in production stack
+- [X] M042 Import shared API deployment component with production configuration (2 replicas) in production stack
+- [X] M043 [P] Import shared db-migration job component in production stack
+- [X] M044 [P] Import shared HTTPRoute component for production domains (aphiria.com, api.aphiria.com, www.aphiria.com) in production stack
+- [X] M045 Create `Pulumi.production.yml` stack config file with ESC environment binding (`aphiria.com/Production`)
+- [X] M046 Create `production` Pulumi stack: `pulumi stack init production`
+- [X] M047 **DRY RUN**: `pulumi preview --stack production` (verify changes before applying)
+- [X] M048 **IMPORT EXISTING RESOURCES**: Use `pulumi import` for existing PostgreSQL, Gateway, Deployments to avoid recreation
+- [X] M049 Deploy production stack: `pulumi up --stack production` (off-peak hours)
+- [X] M050 Verify production site accessible at https://www.aphiria.com
+- [X] M051 Verify production API accessible at https://api.aphiria.com
+- [X] M052 Monitor for 24 hours: check logs, metrics, uptime
+- [X] M053 Update production deployment workflow to use Pulumi instead of Kustomize
+- [X] M054 Move old Kustomize files to `infrastructure/kubernetes-deprecated/`
+- [X] M055 Add deprecation notice to `infrastructure/kubernetes-deprecated/README.md`
+- [X] M056 Update main README.md deployment instructions (replace Kustomize with Pulumi)
 
 **Completion Criteria**:
 - ✅ Production fully managed by Pulumi
@@ -2333,7 +2333,7 @@ After REFACTOR-06, preview-pr.ts is 329 lines (down from 748), but it still cont
 
 ---
 
-- [ ] REFACTOR-08 **[REFACTOR-IMPROVE]** Create database creation component
+- [X] REFACTOR-08 **[REFACTOR-IMPROVE]** Create database creation component
   - **Why**: Preview-pr.ts has 57 lines of inline Job code for creating databases. This logic should be reusable.
   - **Files**: `components/db-creation.ts` (new), `components/types.ts` (update), `components/index.ts` (update)
   - **Replaces**: Lines 100-156 in preview-pr.ts (db-init Job)
@@ -2365,7 +2365,7 @@ After REFACTOR-06, preview-pr.ts is 329 lines (down from 748), but it still cont
   - **Acceptance**: Component creates database successfully, eliminates 57 lines from preview-pr.ts
   - **Impact**: HIGH - Enables database creation pattern reuse across stacks
 
-- [ ] REFACTOR-09 **[REFACTOR-IMPROVE]** Enhance API deployment to build ConfigMaps internally
+- [X] REFACTOR-09 **[REFACTOR-IMPROVE]** Enhance API deployment to build ConfigMaps internally
   - **Why**: API deployment component expects ConfigMaps to exist but doesn't create them. This forces stacks to manually create ConfigMaps (47+ lines of duplication).
   - **Files**: `components/api-deployment.ts`, `components/types.ts`
   - **Replaces**: Lines 162-201 in preview-pr.ts (ConfigMap/Secret creation)
@@ -2405,7 +2405,7 @@ After REFACTOR-06, preview-pr.ts is 329 lines (down from 748), but it still cont
   - **Impact**: CRITICAL - Eliminates major duplication between stacks
   - **Depends**: REFACTOR-08 (test pattern with simpler component first)
 
-- [ ] REFACTOR-10 **[REFACTOR-IMPROVE]** Enhance web deployment to build ConfigMaps internally
+- [X] REFACTOR-10 **[REFACTOR-IMPROVE]** Enhance web deployment to build ConfigMaps internally
   - **Why**: Web deployment has same issue as API - expects ConfigMaps but doesn't create them
   - **Files**: `components/web-deployment.ts`, `components/types.ts`
   - **Changes to WebDeploymentArgs**:
@@ -2422,7 +2422,7 @@ After REFACTOR-06, preview-pr.ts is 329 lines (down from 748), but it still cont
   - **Impact**: MEDIUM - Consistency with API component
   - **Depends**: REFACTOR-09 (same pattern)
 
-- [ ] REFACTOR-11 **[REFACTOR-IMPROVE]** Simplify preview-pr.ts to match local.ts pattern
+- [X] REFACTOR-11 **[REFACTOR-IMPROVE]** Simplify preview-pr.ts to match local.ts pattern
   - **Why**: Remove all inline Kubernetes resources, reduce to ~80-100 lines of pure configuration
   - **Files**: `stacks/preview-pr.ts`
   - **Before**: 329 lines
@@ -2506,7 +2506,7 @@ After REFACTOR-06, preview-pr.ts is 329 lines (down from 748), but it still cont
   - **Impact**: CRITICAL - Achieves true code reusability
   - **Depends**: REFACTOR-08, REFACTOR-09, REFACTOR-10
 
-- [ ] REFACTOR-12 **[REFACTOR-IMPROVE]** Update local.ts for consistency
+- [X] REFACTOR-12 **[REFACTOR-IMPROVE]** Update local.ts for consistency
   - **Why**: Ensure local.ts uses same component pattern as preview-pr.ts
   - **Files**: `stacks/local.ts`
   - **Changes**:
@@ -2645,7 +2645,7 @@ FACTORY-06 (verify all stacks build and deploy)
 
 ---
 
-- [ ] FACTORY-01 **[Infra]** Create StackConfig interface and types
+- [X] FACTORY-01 **[Infra]** Create StackConfig interface and types
   - **File**: `infrastructure/pulumi/lib/types.ts`
   - **Why**: Define type-safe configuration structure for all environments
   - **What**:
@@ -2670,7 +2670,7 @@ FACTORY-06 (verify all stacks build and deploy)
     - TypeScript compiles without errors
   - **Dependencies**: None
 
-- [ ] FACTORY-02 **[Infra]** Create stack factory function
+- [X] FACTORY-02 **[Infra]** Create stack factory function
   - **File**: `infrastructure/pulumi/lib/stack-factory.ts`
   - **Why**: Centralize all infrastructure creation logic in one place
   - **What**:
@@ -2698,7 +2698,7 @@ FACTORY-06 (verify all stacks build and deploy)
     - TypeScript compiles without errors
   - **Dependencies**: FACTORY-01
 
-- [ ] FACTORY-03 **[Infra]** Refactor local.ts to use stack factory
+- [X] FACTORY-03 **[Infra]** Refactor local.ts to use stack factory
   - **File**: `infrastructure/pulumi/stacks/local.ts`
   - **Why**: Eliminate duplication and validate factory pattern works for simplest case
   - **What**:
@@ -2741,7 +2741,7 @@ FACTORY-06 (verify all stacks build and deploy)
     - TypeScript compiles without errors
   - **Dependencies**: FACTORY-02
 
-- [ ] FACTORY-04 **[Infra]** Refactor preview-base.ts to use stack factory
+- [X] FACTORY-04 **[Infra]** Refactor preview-base.ts to use stack factory
   - **File**: `infrastructure/pulumi/stacks/preview-base.ts`
   - **Why**: Validate factory handles cluster creation and complex base infrastructure
   - **What**:
@@ -2779,7 +2779,7 @@ FACTORY-06 (verify all stacks build and deploy)
     - TypeScript compiles without errors
   - **Dependencies**: FACTORY-02
 
-- [ ] FACTORY-05 **[Infra]** Refactor preview-pr.ts to use stack factory
+- [X] FACTORY-05 **[Infra]** Refactor preview-pr.ts to use stack factory
   - **File**: `infrastructure/pulumi/stacks/preview-pr.ts`
   - **Why**: Validate factory handles per-PR namespaces and database creation
   - **What**:
@@ -2839,7 +2839,7 @@ FACTORY-06 (verify all stacks build and deploy)
     - TypeScript compiles without errors
   - **Dependencies**: FACTORY-02
 
-- [ ] FACTORY-06 **[Infra]** Verify all stacks build and deploy successfully
+- [X] FACTORY-06 **[Infra]** Verify all stacks build and deploy successfully
   - **Files**: All stack files
   - **Why**: Ensure factory pattern doesn't introduce regressions
   - **What**:
@@ -3027,7 +3027,7 @@ FACTORY-06 (verify all stacks build and deploy)
 
 **Tasks**:
 
-- [ ] INFRA-01 **[Production Stack]** Refactor production.ts to use factory pattern
+- [X] INFRA-01 **[Production Stack]** Refactor production.ts to use factory pattern
   - **Why**: Eliminates duplication, ensures consistency with local/preview environments
   - **Current Issue**: production.ts duplicates component logic that factory already handles (177 lines)
   - **File**: `infrastructure/pulumi/stacks/production.ts`
@@ -3071,7 +3071,7 @@ FACTORY-06 (verify all stacks build and deploy)
 
 ---
 
-- [ ] INFRA-02 **[HA]** Add PodDisruptionBudgets for production deployments
+- [X] INFRA-02 **[HA]** Add PodDisruptionBudgets for production deployments
   - **Why**: Prevents all pods going down during node maintenance, ensures high availability
   - **Current Issue**: No PDBs defined - Kubernetes can drain all pods simultaneously during upgrades
   - **Files**:
@@ -3114,7 +3114,7 @@ FACTORY-06 (verify all stacks build and deploy)
 
 ---
 
-- [ ] INFRA-03 **[Backups]** Implement database backup strategy
+- [X] INFRA-03 **[Backups]** Implement database backup strategy
   - **Why**: Disaster recovery requires automated backups with restore procedures
   - **Current Issue**: No backup automation defined in IaC
   - **Files**:
@@ -3195,7 +3195,7 @@ FACTORY-06 (verify all stacks build and deploy)
 
 ---
 
-- [ ] INFRA-04 **[Security]** Fix SQL injection risk in database creation
+- [X] INFRA-04 **[Security]** Fix SQL injection risk in database creation
   - **Why**: Prevent potential SQL injection if databaseName becomes user-controlled
   - **Current Issue**: `psql -c "CREATE DATABASE ${args.databaseName};"` uses string interpolation
   - **File**: `infrastructure/pulumi/components/db-creation.ts`
@@ -3219,7 +3219,7 @@ FACTORY-06 (verify all stacks build and deploy)
 
 ---
 
-- [ ] INFRA-05 **[Type Safety]** Replace `any` types with specific Pulumi types
+- [X] INFRA-05 **[Type Safety]** Replace `any` types with specific Pulumi types
   - **Why**: Better compile-time safety, IntelliSense, prevents runtime errors
   - **Current Issue**: 10+ instances of `any` type in result interfaces
   - **Files**:
@@ -3282,7 +3282,7 @@ FACTORY-06 (verify all stacks build and deploy)
 
 ---
 
-- [ ] INFRA-06 **[Drift Detection]** Add Pulumi drift detection to CI/CD
+- [X] INFRA-06 **[Drift Detection]** Add Pulumi drift detection to CI/CD
   - **Why**: Automated checks for manual changes prevent configuration drift
   - **Current Issue**: No automated drift detection - manual changes go unnoticed
   - **File**: Create `.github/workflows/pulumi-drift-check.yml`
@@ -3340,7 +3340,7 @@ FACTORY-06 (verify all stacks build and deploy)
 
 ---
 
-- [ ] INFRA-07 **[Verification]** Build and test all infrastructure changes
+- [X] INFRA-07 **[Verification]** Build and test all infrastructure changes
   - **Why**: Ensure all refactoring compiles and doesn't break existing functionality
   - **Commands**:
     ```bash
