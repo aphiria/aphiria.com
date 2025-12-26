@@ -8,10 +8,17 @@
 import * as pulumi from "@pulumi/pulumi";
 import * as digitalocean from "@pulumi/digitalocean";
 import * as k8s from "@pulumi/kubernetes";
+import { createKubernetesCluster } from "../components";
 import { createStack } from "../shared/factory";
 
 const config = new pulumi.Config();
 
+// TODO (M037a): Replace inline cluster creation with createKubernetesCluster component
+// This requires destroying and recreating the production cluster (acceptable per task M037a)
+// The shared component doesn't support all current options (amdGpuDeviceMetricsExporterPlugin,
+// clusterSubnet, maintenancePolicy, serviceSubnet, routingAgent) - these would need to be
+// added to the component or dropped if not needed.
+//
 // Imported DigitalOcean Kubernetes cluster (existing cluster, not created by Pulumi)
 // This matches the actual cluster configuration from the import
 const cluster = new digitalocean.KubernetesCluster("aphiria-com-cluster", {
@@ -45,6 +52,9 @@ const cluster = new digitalocean.KubernetesCluster("aphiria-com-cluster", {
 // Create Kubernetes provider using the cluster's kubeconfig
 const k8sProvider = new k8s.Provider("production-k8s", {
     kubeconfig: cluster.kubeConfigs[0].rawConfig,
+    enableServerSideApply: true,
+}, {
+    dependsOn: [cluster],
 });
 
 // Get configuration

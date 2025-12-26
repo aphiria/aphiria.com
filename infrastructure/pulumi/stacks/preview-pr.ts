@@ -31,6 +31,8 @@ const kubeconfig = baseStack.requireOutput("kubeconfig");
 const k8sProvider = new k8s.Provider("preview-pr-k8s", {
     kubeconfig: kubeconfig,
     enableServerSideApply: true,
+}, {
+    dependsOn: [baseStack],
 });
 
 // Naming conventions

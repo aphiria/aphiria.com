@@ -1709,7 +1709,7 @@ Phase 8 (Migrate production to Pulumi + reusable workflows)
   - **Testing**: Unit tests for retry logic, validation functions
   - **Depends**: M031c (audit complete, know what utilities are needed)
 
-- [ ] M031e **MIGRATE**: Replace deploy-preview.yml "Ensure preview-base stack" bash with TypeScript
+- [X] M031e **MIGRATE**: Replace deploy-preview.yml "Ensure preview-base stack" bash with inline TypeScript (github-script)
   - **Why**: Most complex bash block (82 lines, retry loops, conditional logic, state validation)
   - **Current**: Lines 47-128 in deploy-preview.yml (bash script with retry logic, state checks)
   - **New approach**:
@@ -1914,7 +1914,7 @@ Phase 8 (Migrate production to Pulumi + reusable workflows)
 
 #### Production Stack Implementation
 
-- [ ] M037a Refactor production.ts to match standardized stack structure and use shared components
+- [ ] M037a Refactor production.ts to match standardized stack structure and use shared components (PARTIAL: k8sProvider fixed, cluster refactor pending user decision)
   - **Why**: Current production.ts creates cluster inline instead of using shared `createKubernetesCluster` component (inconsistent with preview-base)
   - **Goal**: Make production.ts structure identical to preview-base.ts (different config values only)
   - **Files to modify**: `infrastructure/pulumi/stacks/production.ts`
@@ -1970,7 +1970,7 @@ Phase 8 (Migrate production to Pulumi + reusable workflows)
     export const apiImageRef = `ghcr.io/aphiria/aphiria.com-api@${apiImageDigest}`;
     ```
 
-- [ ] M037b Fix missing dependsOn in preview-pr.ts k8sProvider
+- [X] M037b Fix missing dependsOn in preview-pr.ts k8sProvider
   - **Why**: Stack references should have explicit dependencies to avoid race conditions during concurrent updates
   - **File**: `infrastructure/pulumi/stacks/preview-pr.ts`
   - **Change**: Add `dependsOn: [baseStack]` to k8sProvider resource options
