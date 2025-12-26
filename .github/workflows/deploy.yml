@@ -192,10 +192,14 @@ jobs:
           if [ "$ENV" == "preview" ]; then
             pulumi config set prNumber "${PR_NUMBER}" --stack "${STACK_NAME}"
             pulumi config set baseStackReference "${BASE_STACK_REF}" --stack "${STACK_NAME}"
+            # Use placeholder digests for preview (actual digests set in deploy job)
+            pulumi config set webImageDigest "sha256:preview" --stack "${STACK_NAME}"
+            pulumi config set apiImageDigest "sha256:preview" --stack "${STACK_NAME}"
+          else
+            # Use actual digests for production preview
+            pulumi config set webImageDigest "${{ inputs.web_digest }}" --stack "${STACK_NAME}"
+            pulumi config set apiImageDigest "${{ inputs.api_digest }}" --stack "${STACK_NAME}"
           fi
-
-          pulumi config set webImageDigest "sha256:preview" --stack "${STACK_NAME}"
-          pulumi config set apiImageDigest "sha256:preview" --stack "${STACK_NAME}"
 
           set +e
           pulumi preview --stack "${STACK_NAME}" --non-interactive 2>&1 | tee preview.txt

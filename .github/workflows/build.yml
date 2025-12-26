@@ -1,29 +1,9 @@
 name: Build
 
 on:
-  pull_request:
-    types: [opened, synchronize, reopened]
-    paths:
-      - 'src/**'
-      - 'public-api/**'
-      - 'public-web/**'
-      - 'infrastructure/**'
-      - 'composer.json'
-      - 'composer.lock'
-      - 'package.json'
-      - 'package-lock.json'
-  push:
-    branches:
-      - master
-    paths:
-      - 'src/**'
-      - 'public-api/**'
-      - 'public-web/**'
-      - 'infrastructure/**'
-      - 'composer.json'
-      - 'composer.lock'
-      - 'package.json'
-      - 'package-lock.json'
+  workflow_run:
+    workflows: ["Test"]
+    types: [completed]
   workflow_dispatch:
     inputs:
       environment:
@@ -37,7 +17,7 @@ on:
         type: string
         required: false
       commit_sha:
-        description: 'Exact commit SHA you reviewed '
+        description: 'Exact commit SHA you reviewed'
         type: string
         required: false
 
@@ -45,6 +25,7 @@ permissions:
   contents: read
   packages: write
   pull-requests: write
+  actions: read
 
 env:
   REGISTRY: ghcr.io
@@ -54,6 +35,9 @@ jobs:
   determine-mode:
     name: Determine Build Mode
     runs-on: ubuntu-latest
+    if: >
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success')
     outputs:
       mode: ${{ steps.detect.outputs.mode }}
       pr-number: ${{ steps.detect.outputs.pr-number }}
@@ -68,27 +52,65 @@ jobs:
           script: |
             let mode, prNumber, commitSha, isSafe;
 
-            if (context.eventName === 'pull_request') {
-              // Preview mode: PR trigger
-              mode = 'preview';
-              prNumber = context.payload.pull_request.number;
-              commitSha = context.payload.pull_request.head.sha;
-              isSafe = context.payload.pull_request.head.repo.full_name ===
-                       context.payload.pull_request.base.repo.full_name;
+            if (context.eventName === 'workflow_run') {
+              // Triggered by Test workflow completion
+              const workflowRun = context.payload.workflow_run;
 
-              core.info(`📋 PR trigger - Preview mode`);
-              core.info(`   PR: #${prNumber}`);
-              core.info(`   Commit: ${commitSha}`);
-              core.info(`   Safe (not from fork): ${isSafe}`);
-            } else if (context.eventName === 'push' && context.ref === 'refs/heads/master') {
-              // Production mode: Push to master
-              mode = 'production';
-              prNumber = '';
-              commitSha = context.sha;
-              isSafe = 'true';
+              // Check if this is from a fork
+              const isFromFork = workflowRun.head_repository.full_name !== context.payload.repository.full_name;
 
-              core.info(`🚀 Push to master - Production mode`);
-              core.info(`   Commit: ${commitSha}`);
+              if (isFromFork) {
+                core.warning(`🚫 Skipping build - workflow triggered from fork: ${workflowRun.head_repository.full_name}`);
+                isSafe = 'false';
+                core.setOutput('mode', '');
+                core.setOutput('pr-number', '');
+                core.setOutput('commit-sha', '');
+                core.setOutput('is-safe', 'false');
+                return;
+              }
+
+              commitSha = workflowRun.head_sha;
+
+              if (workflowRun.event === 'pull_request') {
+                // Preview mode: Test completed on PR
+                mode = 'preview';
+
+                // Get PR number from the workflow run
+                const { data: prs } = await github.rest.pulls.list({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  state: 'open',
+                  head: `${context.repo.owner}:${workflowRun.head_branch}`
+                });
+
+                if (prs.length === 0) {
+                  core.setFailed('Could not find PR for this workflow run');
+                  return;
+                }
+
+                prNumber = prs[0].number;
+                isSafe = 'true';
+
+                core.info(`📋 Test passed on PR - Preview mode`);
+                core.info(`   PR: #${prNumber}`);
+                core.info(`   Commit: ${commitSha}`);
+              } else if (workflowRun.event === 'push' && workflowRun.head_branch === 'master') {
+                // Production mode: Test completed on master push
+                mode = 'production';
+                prNumber = '';
+                isSafe = 'true';
+
+                core.info(`🚀 Test passed on master - Production mode`);
+                core.info(`   Commit: ${commitSha}`);
+              } else {
+                core.info(`ℹ️  Test completed on branch ${workflowRun.head_branch} - Skipping build`);
+                isSafe = 'false';
+                core.setOutput('mode', '');
+                core.setOutput('pr-number', '');
+                core.setOutput('commit-sha', '');
+                core.setOutput('is-safe', 'false');
+                return;
+              }
             } else if (context.eventName === 'workflow_dispatch') {
               // Manual trigger
               mode = context.payload.inputs.environment;
