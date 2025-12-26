@@ -10,6 +10,15 @@ import { DatabaseCreationJobArgs } from "./types";
  * The Job is idempotent - it will not fail if the database already exists.
  */
 export function createDatabaseCreationJob(args: DatabaseCreationJobArgs): k8s.batch.v1.Job {
+    // Validate database name to prevent SQL injection
+    // PostgreSQL database names: alphanumeric, underscores, max 63 chars
+    if (!/^[a-zA-Z0-9_]+$/.test(args.databaseName)) {
+        throw new Error(`Invalid database name: ${args.databaseName}. Only alphanumeric characters and underscores are allowed.`);
+    }
+    if (args.databaseName.length > 63) {
+        throw new Error(`Database name too long: ${args.databaseName}. Maximum 63 characters.`);
+    }
+
     // Hardcoded defaults (same across all environments)
     const DEFAULT_IMAGE = "postgres:16-alpine";
     const DEFAULT_TTL_SECONDS = 300;
@@ -73,7 +82,7 @@ export function createDatabaseCreationJob(args: DatabaseCreationJobArgs): k8s.ba
                             command: [
                                 "sh",
                                 "-c",
-                                `psql -v dbname="${args.databaseName}" -c 'CREATE DATABASE :"dbname";' || echo "Database already exists (this is normal on re-runs)"`,
+                                `psql -c "CREATE DATABASE ${args.databaseName};" || echo "Database already exists (this is normal on re-runs)"`,
                             ],
                             resources: DEFAULT_RESOURCES,
                         },
