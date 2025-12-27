@@ -1,5 +1,2 @@
 environment:
-  - aphiria.com/Production
-config:
-  aphiria-com-infrastructure:webImageDigest: sha256:a4fc6b89d8d19d0b12e617265c7f44df1d07a15d2f683b70596ac82cfa567d66
-  aphiria-com-infrastructure:apiImageDigest: sha256:6129ab3358d44a2ef1d8fb48f729dc79b47e1bd841e3488d94fadb16060ff0f3
+    - aphiria.com/Production

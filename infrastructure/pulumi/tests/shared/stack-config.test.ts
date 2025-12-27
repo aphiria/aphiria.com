@@ -111,7 +111,10 @@ describe("StackConfig", () => {
 
     describe("baseStackReference", () => {
         it("should load base stack reference string", () => {
-            pulumi.runtime.setConfig("project:baseStackReference", "organization/project/preview-base");
+            pulumi.runtime.setConfig(
+                "project:baseStackReference",
+                "organization/project/preview-base"
+            );
 
             const config = new StackConfig("https://example.com", "https://api.example.com");
             const ref = config.baseStackReference;
