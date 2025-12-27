@@ -2,7 +2,7 @@
     "name": "aphiria-com-infrastructure",
     "version": "1.0.0",
     "description": "Aphiria.com infrastructure - shared components and stacks for local, preview, and production",
-    "main": "dist/index.js",
+    "main": "dist/src/index.js",
     "scripts": {
         "build": "tsc",
         "watch": "tsc --watch",
