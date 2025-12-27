@@ -4,7 +4,15 @@ import prettier from "eslint-config-prettier";
 
 export default [
     {
-        ignores: ["node_modules/", "bin/", ".pulumi/", "*.config.js", "*.config.mjs"],
+        ignores: [
+            "node_modules/",
+            "bin/",
+            ".pulumi/",
+            "dist/",
+            "coverage/",
+            "*.config.js",
+            "*.config.mjs",
+        ],
     },
     eslint.configs.recommended,
     ...tseslint.configs.recommended,
@@ -22,8 +30,15 @@ export default [
             "@typescript-eslint/explicit-function-return-type": "off",
             "@typescript-eslint/no-unused-vars": [
                 "error",
-                { argsIgnorePattern: "^_" },
+                { argsIgnorePattern: "^_", varsIgnorePattern: "^_" },
             ],
+            "@typescript-eslint/no-require-imports": "off", // Pulumi uses dynamic requires for stack loading
+        },
+    },
+    {
+        files: ["tests/**/*.ts"],
+        rules: {
+            "@typescript-eslint/no-explicit-any": "off", // Allow any in test files for mocking/callbacks
         },
     },
 ];

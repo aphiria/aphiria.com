@@ -1,10 +1,63 @@
 # Secrets Management
 
-This document describes all GitHub repository secrets used by CI/CD workflows and their rotation procedures.
+This document describes the secrets management strategy for aphiria.com, including GitHub repository secrets, Pulumi ESC environments, and rotation procedures.
 
 **Audience**: Repository maintainers only
 
----
+## Table of Contents
+
+1. [Architecture Overview](#architecture-overview)
+2. [Required Secrets](#required-secrets)
+3. [Rotation Procedures](#rotation-procedures)
+4. [Emergency Rotation](#emergency-rotation)
+5. [Troubleshooting](#troubleshooting)
+
+## Architecture Overview
+
+### Three-Tier Secrets Management
+
+This project uses a **three-tier secrets architecture**:
+
+```
+GitHub Secrets (CI/CD) → Pulumi ESC (Infrastructure Config) → Kubernetes Secrets (Runtime)
+```
+
+1. **GitHub Secrets**: CI/CD workflow authentication
+   - `PULUMI_ACCESS_TOKEN` - Authenticate to Pulumi Cloud
+   - `WORKFLOW_DISPATCH_TOKEN` - Trigger workflows from other workflows
+
+2. **Pulumi ESC Environments**: Infrastructure configuration secrets
+   - Environment: `aphiria.com/Preview` (preview-base, preview-pr-*)
+   - Environment: `aphiria.com/Production` (production)
+   - Stores: DigitalOcean tokens, GHCR credentials, PostgreSQL passwords, cert-manager DNS tokens
+
+3. **Kubernetes Secrets**: Application runtime secrets
+   - Created by Pulumi components
+   - Populated from Pulumi ESC values
+   - Scoped to namespaces (preview-pr-123, default)
+
+**Data Flow Example**:
+```
+postgresql:password (Pulumi ESC)
+  ↓ (accessed by Pulumi TypeScript)
+db-env-var-secrets (Kubernetes Secret)
+  ↓ (mounted as env var)
+PostgreSQL container
+```
+
+### Why Pulumi ESC?
+
+**Benefits**:
+- ✅ Centralized infrastructure secret management
+- ✅ Automatic injection into Pulumi stacks (`pulumi config env add`)
+- ✅ Encrypted at rest in Pulumi Cloud
+- ✅ Environment composition (Preview and Production can inherit from base)
+- ✅ Secret versioning and audit logs
+
+**Free Tier Limitations**:
+- 5 environments max
+- 1 team member
+- Current usage: 2 environments (`aphiria.com/Preview`, `aphiria.com/Production`)
 
 ## Required Secrets
 
@@ -17,20 +70,29 @@ This document describes all GitHub repository secrets used by CI/CD workflows an
 
 **Note**: `GITHUB_TOKEN` is automatically provided by GitHub Actions for pushing Docker images to ghcr.io. No manual secret configuration required.
 
-### Pulumi ESC Secrets
+### Pulumi ESC Environments
 
-These secrets are stored in Pulumi ESC environments (`aphiria.com/Preview` and `aphiria.com/Production`) and used at runtime by infrastructure and Kubernetes clusters.
+These secrets are stored in Pulumi ESC and automatically injected into Pulumi stacks when you run `pulumi config env add <environment>`.
 
-| Secret Name | Purpose | Rotation Schedule |
-|-------------|---------|-------------------|
-| `digitalocean:token` | DigitalOcean API access for cluster management (Kubernetes cluster creation) | Annually |
-| `certmanager:digitaloceanDnsToken` | DigitalOcean API access for DNS management (cert-manager DNS-01 ACME challenges for wildcard TLS) | Annually |
-| `ghcr:token` | Pull Docker images from ghcr.io (Kubernetes imagePullSecret) | Annually |
-| `ghcr:username` | GitHub username for GHCR authentication | N/A (only update if username changes) |
-| `postgresql:user` | PostgreSQL admin user | N/A |
-| `postgresql:password` | PostgreSQL admin password | Quarterly |
+**Environments**:
+- `aphiria.com/Preview` - Used by preview-base and preview-pr-* stacks
+- `aphiria.com/Production` - Used by production stack
 
----
+| Secret Name | Purpose | Rotation Schedule | Environment |
+|-------------|---------|-------------------|-------------|
+| `digitalocean:token` | DigitalOcean API access for cluster management | Annually | Both |
+| `certmanager:digitaloceanDnsToken` | DNS API access for cert-manager wildcard TLS (DNS-01 challenges) | Annually | Both |
+| `ghcr:token` | Pull private Docker images from ghcr.io (Kubernetes imagePullSecrets) | Annually | Both |
+| `ghcr:username` | GitHub username for GHCR authentication | N/A | Both |
+| `postgresql:user` | PostgreSQL admin user | N/A | Both |
+| `postgresql:password` | PostgreSQL admin password | Quarterly | Both |
+
+**How Pulumi ESC works**:
+1. Secrets are stored in Pulumi Cloud at https://app.pulumi.com/[org]/settings/environments
+2. Stack config files reference the environment: `pulumi config env add aphiria.com/Preview`
+3. When you run `pulumi up`, Pulumi automatically injects ESC secrets as stack config
+4. TypeScript code accesses them: `new pulumi.Config("postgresql").requireSecret("password")`
+5. Values are passed to Kubernetes resources (Secrets, ConfigMaps, Deployments)
 
 ## Rotation Procedures
 
@@ -49,37 +111,35 @@ These secrets are stored in Pulumi ESC environments (`aphiria.com/Preview` and `
 
 **Configure in Pulumi ESC environments**:
 
-```bash
-# Configure for Preview environment
-pulumi config set ghcr:token --secret --stack preview-base
-# When prompted, paste the GHCR_TOKEN value
-
-pulumi config set ghcr:username <your-github-username> --stack preview-base
-
-# Configure for Production environment (when production stack is created)
-pulumi config set ghcr:token --secret --stack production
-pulumi config set ghcr:username <your-github-username> --stack production
-```
-
-**Alternative: Configure via Pulumi ESC UI**:
+**Option 1: Via Pulumi ESC UI (Recommended)**:
 
 1. Navigate to https://app.pulumi.com/[your-org]/settings/environments
 2. Select `aphiria.com/Preview` environment
-3. Add/update values:
-   - `ghcr:token` (mark as secret)
-   - `ghcr:username`
-4. Repeat for `aphiria.com/Production` environment
+3. Click "Edit"
+4. Update the `pulumiConfig` section:
+   ```yaml
+   values:
+     pulumiConfig:
+       "ghcr:token":
+         fn::secret: "ghp_YOUR_NEW_TOKEN_HERE"
+       "ghcr:username": "your-github-username"
+   ```
+5. Save
+6. Repeat for `aphiria.com/Production` environment
 
-**Test**: Deploy a preview environment, verify pods successfully pull images from ghcr.io
+**Option 2: Via Pulumi CLI**:
 
 ```bash
-kubectl get pods -n preview-pr-XXX
-# Pods should be Running, not ImagePullBackOff
+# Configure for Preview environment
+pulumi env set aphiria.com/Preview pulumiConfig."ghcr:token" "ghp_YOUR_TOKEN" --secret
+pulumi env set aphiria.com/Preview pulumiConfig."ghcr:username" "your-github-username"
+
+# Configure for Production environment
+pulumi env set aphiria.com/Production pulumiConfig."ghcr:token" "ghp_YOUR_TOKEN" --secret
+pulumi env set aphiria.com/Production pulumiConfig."ghcr:username" "your-github-username"
 ```
 
 **Cleanup**: Delete old token at https://github.com/settings/tokens (ensure new token works first)
-
----
 
 ### WORKFLOW_DISPATCH_TOKEN
 
@@ -101,11 +161,7 @@ kubectl get pods -n preview-pr-XXX
 3. Paste new token value
 4. Save
 
-**Test**: Push a commit to any PR, verify "Build Preview Images" workflow triggers "Deploy Preview Environment" workflow
-
 **Cleanup**: Delete old token at https://github.com/settings/tokens
-
----
 
 ### PULUMI_ACCESS_TOKEN
 
@@ -123,11 +179,7 @@ kubectl get pods -n preview-pr-XXX
 3. Paste new token value
 4. Save
 
-**Test**: Trigger preview deployment workflow manually or merge a PR
-
 **Cleanup**: Delete old token at https://app.pulumi.com/settings/tokens
-
----
 
 ### certmanager:digitaloceanDnsToken
 
@@ -160,40 +212,20 @@ kubectl get pods -n preview-pr-XXX
 cd infrastructure/pulumi
 
 # Configure for Preview environment
-pulumi env set aphiria.com/Preview certmanager:digitaloceanDnsToken "dop_v1_YOUR_TOKEN_HERE" --secret
+pulumi env set aphiria.com/Preview pulumiConfig."certmanager:digitaloceanDnsToken" "dop_v1_YOUR_TOKEN_HERE" --secret
 
 # Verify it's set
 pulumi env get aphiria.com/Preview
 # Should show: certmanager:digitaloceanDnsToken: [secret]
 
-# Configure for Production environment (when ready)
-pulumi env set aphiria.com/Production certmanager:digitaloceanDnsToken "dop_v1_YOUR_TOKEN_HERE" --secret
+# Configure for Production environment
+pulumi env set aphiria.com/Production pulumiConfig."certmanager:digitaloceanDnsToken" "dop_v1_YOUR_TOKEN_HERE" --secret
 ```
 
-**Test**:
-
-1. Deploy preview-base stack:
-   ```bash
-   cd infrastructure/pulumi
-   pulumi up --stack preview-base
-   ```
-
-2. Verify cert-manager can access DNS API:
-   ```bash
-   # Get kubeconfig
-   pulumi stack output kubeconfig --stack preview-base --show-secrets > /tmp/preview-kubeconfig.yaml
-
-   # Check Secret exists
-   kubectl --kubeconfig=/tmp/preview-kubeconfig.yaml get secret -n cert-manager digitalocean-dns-token
-
-   # Check Certificate status (should transition to Ready within 2-5 minutes)
-   kubectl --kubeconfig=/tmp/preview-kubeconfig.yaml get certificate -n nginx-gateway
-
-   # Check cert-manager logs if issues
-   kubectl --kubeconfig=/tmp/preview-kubeconfig.yaml logs -n cert-manager -l app=cert-manager --tail=50
-   ```
-
-3. Expected result: Certificate shows `READY: True`, wildcard cert Secret created
+**Alternative: Via Pulumi ESC UI**:
+1. Navigate to https://app.pulumi.com/[your-org]/settings/environments
+2. Edit `aphiria.com/Preview` and `aphiria.com/Production`
+3. Update `pulumiConfig."certmanager:digitaloceanDnsToken"` with new token (mark as secret)
 
 **Security Notes**:
 - Minimum required scopes: `domain:read`, `domain:create`, `domain:delete`
@@ -202,8 +234,6 @@ pulumi env set aphiria.com/Production certmanager:digitaloceanDnsToken "dop_v1_Y
 - Rotate annually or if compromised
 
 **Cleanup**: Delete old token at https://cloud.digitalocean.com/account/api/tokens
-
----
 
 ## Emergency Rotation
 
@@ -215,8 +245,6 @@ If a secret is compromised:
 4. Test workflows still function
 5. Audit logs for unauthorized access
 
----
-
 ## Troubleshooting
 
 | Error | Cause | Solution |
@@ -226,7 +254,5 @@ If a secret is compromised:
 | Pulumi login failed | Invalid `PULUMI_ACCESS_TOKEN` | Rotate token |
 | workflow_dispatch trigger fails (403 error) | Invalid `WORKFLOW_DISPATCH_TOKEN` | Rotate token |
 | DNS records not created | Invalid `digitalocean:token` in Pulumi ESC | Add/update token in Pulumi ESC environments |
-
----
 
 **Last Updated**: 2025-12-23

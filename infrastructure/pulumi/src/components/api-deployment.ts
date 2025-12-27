@@ -1,0 +1,341 @@
+import * as pulumi from "@pulumi/pulumi";
+import * as k8s from "@pulumi/kubernetes";
+import { APIDeploymentArgs, APIDeploymentResult } from "./types";
+import { checksum } from "./utils";
+
+/** Creates nginx + PHP-FPM deployment using initContainer to copy code to shared volume */
+export function createAPIDeployment(args: APIDeploymentArgs): APIDeploymentResult {
+    const labels = {
+        app: "api",
+        "app.kubernetes.io/name": "aphiria-api",
+        "app.kubernetes.io/component": "backend",
+        ...(args.labels || {}),
+    };
+
+    // Hardcoded constants (same across all environments)
+    const DB_PORT = "5432"; // PostgreSQL standard port
+    const APP_BUILDER_API = "\\Aphiria\\Framework\\Api\\SynchronousApiApplicationBuilder";
+    const APP_BUILDER_CONSOLE = "\\Aphiria\\Framework\\Console\\ConsoleApplicationBuilder";
+
+    // Environment-specific defaults
+    const appEnv = args.envConfig?.appEnv || (args.env === "production" ? "production" : "dev");
+    const logLevel = args.envConfig?.logLevel || (args.env === "production" ? "warning" : "debug");
+    const cookieSecure = args.envConfig?.cookieSecure !== false ? "1" : "0";
+
+    // Build ConfigMap data from parameters + hardcoded constants
+    const configData: Record<string, pulumi.Input<string>> = {
+        DB_HOST: args.dbHost,
+        DB_PORT,
+        DB_NAME: args.dbName,
+        DB_USER: args.dbUser,
+        APP_ENV: appEnv,
+        WEB_URL: args.webUrl,
+        API_URL: args.apiUrl,
+        APP_WEB_URL: args.webUrl,
+        APP_API_URL: args.apiUrl,
+        APP_COOKIE_DOMAIN: args.envConfig?.cookieDomain || ".aphiria.com",
+        APP_COOKIE_SECURE: cookieSecure,
+        APP_BUILDER_API,
+        APP_BUILDER_CONSOLE,
+        LOG_LEVEL: logLevel,
+        ...(args.envConfig?.prNumber && { PR_NUMBER: args.envConfig.prNumber }),
+        ...(args.envConfig?.extraVars || {}),
+    };
+
+    // Build Secret data
+    const secretData: Record<string, pulumi.Input<string>> = {
+        DB_PASSWORD: args.dbPassword,
+    };
+
+    // Calculate checksums for pod annotations (forces restart when config or secrets change)
+    const configChecksum = checksum(configData);
+    const secretChecksum = checksum(secretData);
+
+    // Create nginx configuration ConfigMap
+    const nginxConfig = new k8s.core.v1.ConfigMap(
+        "nginx-config",
+        {
+            metadata: {
+                name: "nginx-config",
+                namespace: args.namespace,
+                labels,
+            },
+            data: {
+                "default.conf": `server {
+    index index.php index.html;
+    error_log  /var/log/nginx/error.log;
+    access_log /var/log/nginx/access.log;
+    root /usr/share/nginx/html/public;
+    add_header X-Frame-Options "SAMEORIGIN";
+    add_header X-XSS-Protection "1; mode=block";
+    add_header X-Content-Type-Options "nosniff";
+
+    location / {
+        try_files $uri $uri/ /index.php$is_args$args;
+    }
+
+    location ~ \\.php$ {
+        fastcgi_split_path_info ^(.+\\.php)(/.+)$;
+        # Pass this through to the PHP image running in this pod on port 9000
+        fastcgi_pass 127.0.0.1:9000;
+        fastcgi_index index.php;
+        include fastcgi_params;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+        fastcgi_param PATH_INFO $fastcgi_path_info;
+        fastcgi_hide_header X-Powered-By;
+    }
+}`,
+            },
+        },
+        { provider: args.provider }
+    );
+
+    // Create Secret for database credentials
+    const secret = new k8s.core.v1.Secret(
+        "api-env-var-secrets",
+        {
+            metadata: {
+                name: "api-env-var-secrets",
+                namespace: args.namespace,
+                labels,
+            },
+            type: "Opaque",
+            stringData: secretData,
+        },
+        { provider: args.provider }
+    );
+
+    // Create ConfigMap for environment variables (built from parameters)
+    const configMap = new k8s.core.v1.ConfigMap(
+        "env-vars",
+        {
+            metadata: {
+                name: "env-vars",
+                namespace: args.namespace,
+                labels,
+            },
+            data: configData,
+        },
+        { provider: args.provider }
+    );
+
+    // Create API deployment
+    const deployment = new k8s.apps.v1.Deployment(
+        "api",
+        {
+            metadata: {
+                name: "api",
+                namespace: args.namespace,
+                labels,
+            },
+            spec: {
+                replicas: args.replicas,
+                selector: {
+                    matchLabels: {
+                        app: "api",
+                    },
+                },
+                strategy: {
+                    type: "RollingUpdate",
+                    rollingUpdate: {
+                        maxUnavailable: 0,
+                        maxSurge: 1,
+                    },
+                },
+                template: {
+                    metadata: {
+                        labels: {
+                            app: "api",
+                        },
+                        annotations: {
+                            "checksum/config": configChecksum,
+                            "checksum/secret": secretChecksum,
+                        },
+                    },
+                    spec: {
+                        ...(args.imagePullSecrets && {
+                            imagePullSecrets: args.imagePullSecrets.map((name) => ({ name })),
+                        }),
+                        // initContainer: Copy PHP code from API image to shared volume
+                        initContainers: [
+                            {
+                                name: "copy-api-code",
+                                image: args.image,
+                                imagePullPolicy:
+                                    args.env === "local"
+                                        ? "Never" // Local images only
+                                        : args.image.includes("@sha256:")
+                                          ? "IfNotPresent"
+                                          : "Always",
+                                // Preserve permissions so nginx can access tmp directory
+                                command: ["sh", "-c", "cp -Rp /app/api/. /usr/share/nginx/html"],
+                                volumeMounts: [
+                                    {
+                                        name: "api-code",
+                                        mountPath: "/usr/share/nginx/html",
+                                    },
+                                ],
+                                ...(args.resources?.initContainer && {
+                                    resources: args.resources.initContainer,
+                                }),
+                            },
+                        ],
+                        containers: [
+                            // nginx: HTTP server and PHP proxy
+                            {
+                                name: "nginx",
+                                image: "nginx:alpine",
+                                livenessProbe: {
+                                    httpGet: {
+                                        path: "/health",
+                                        port: 80,
+                                    },
+                                    initialDelaySeconds: 10,
+                                    periodSeconds: 30,
+                                },
+                                readinessProbe: {
+                                    httpGet: {
+                                        path: "/health",
+                                        port: 80,
+                                    },
+                                    initialDelaySeconds: 5,
+                                    periodSeconds: 5,
+                                },
+                                ports: [
+                                    {
+                                        containerPort: 80,
+                                    },
+                                ],
+                                volumeMounts: [
+                                    {
+                                        name: "api-code",
+                                        mountPath: "/usr/share/nginx/html",
+                                    },
+                                    {
+                                        name: "nginx-config",
+                                        mountPath: "/etc/nginx/conf.d/default.conf",
+                                        subPath: "default.conf",
+                                    },
+                                ],
+                                ...(args.resources?.nginx && {
+                                    resources: args.resources.nginx,
+                                }),
+                            },
+                            // php: PHP-FPM process manager
+                            {
+                                name: "php",
+                                image: args.image,
+                                imagePullPolicy:
+                                    args.env === "local"
+                                        ? "Never" // Local images only
+                                        : args.image.includes("@sha256:")
+                                          ? "IfNotPresent"
+                                          : "Always",
+                                ports: [
+                                    {
+                                        containerPort: 9000,
+                                    },
+                                ],
+                                envFrom: [
+                                    {
+                                        secretRef: {
+                                            name: "api-env-var-secrets",
+                                        },
+                                    },
+                                    {
+                                        configMapRef: {
+                                            name: "env-vars",
+                                        },
+                                    },
+                                ],
+                                volumeMounts: [
+                                    {
+                                        name: "api-code",
+                                        mountPath: "/usr/share/nginx/html",
+                                    },
+                                ],
+                                ...(args.resources?.php && {
+                                    resources: args.resources.php,
+                                }),
+                            },
+                        ],
+                        volumes: [
+                            {
+                                name: "api-code",
+                                emptyDir: {},
+                            },
+                            {
+                                name: "nginx-config",
+                                configMap: {
+                                    name: "nginx-config",
+                                    items: [
+                                        {
+                                            key: "default.conf",
+                                            path: "default.conf",
+                                        },
+                                    ],
+                                },
+                            },
+                        ],
+                    },
+                },
+            },
+        },
+        { provider: args.provider, dependsOn: [configMap, secret, nginxConfig] }
+    );
+
+    // Create Service
+    const service = new k8s.core.v1.Service(
+        "api",
+        {
+            metadata: {
+                name: "api",
+                namespace: args.namespace,
+                labels,
+            },
+            spec: {
+                selector: {
+                    app: "api",
+                },
+                ports: [
+                    {
+                        port: 80,
+                        targetPort: 80,
+                    },
+                ],
+                type: "ClusterIP",
+            },
+        },
+        { provider: args.provider }
+    );
+
+    // Create PodDisruptionBudget if configured (production HA)
+    let pdb: k8s.policy.v1.PodDisruptionBudget | undefined;
+    if (args.podDisruptionBudget) {
+        pdb = new k8s.policy.v1.PodDisruptionBudget(
+            "api-pdb",
+            {
+                metadata: {
+                    name: "api",
+                    namespace: args.namespace,
+                    labels,
+                },
+                spec: {
+                    minAvailable: args.podDisruptionBudget.minAvailable,
+                    maxUnavailable: args.podDisruptionBudget.maxUnavailable,
+                    selector: {
+                        matchLabels: { app: "api" },
+                    },
+                },
+            },
+            { provider: args.provider }
+        );
+    }
+
+    return {
+        deployment: deployment.metadata,
+        service: service.metadata,
+        secret: secret.metadata,
+        podDisruptionBudget: pdb?.metadata,
+    };
+}
