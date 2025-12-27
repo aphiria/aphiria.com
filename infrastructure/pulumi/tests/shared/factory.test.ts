@@ -25,7 +25,7 @@ describe("createStack factory", () => {
     });
 
     describe("namespace creation", () => {
-        it("should create namespace with ResourceQuota when configured", () => {
+        it("should create namespace with ResourceQuota when configured", (done) => {
             const stack = createStack(
                 {
                     env: "preview",
@@ -60,6 +60,15 @@ describe("createStack factory", () => {
 
             expect(stack.namespace).toBeDefined();
             expect(stack.namespace?.resourceQuota).toBeDefined();
+
+            pulumi.all([
+                stack.namespace!.namespace.metadata.name,
+                stack.namespace!.resourceQuota!.metadata.name
+            ]).apply(([nsName, quotaName]) => {
+                expect(nsName).toBe("preview-pr-123");
+                expect(quotaName).toBe("preview-pr-123-quota");
+                done();
+            });
         });
 
         it("should not create namespace when not configured", () => {
@@ -140,7 +149,7 @@ describe("createStack factory", () => {
     });
 
     describe("application deployment", () => {
-        it("should deploy applications when app config provided", () => {
+        it("should deploy applications when app config provided", (done) => {
             const stack = createStack(
                 {
                     env: "local",
@@ -173,6 +182,17 @@ describe("createStack factory", () => {
             expect(stack.migration).toBeDefined();
             expect(stack.webRoute).toBeDefined();
             expect(stack.apiRoute).toBeDefined();
+
+            pulumi.all([
+                stack.web!.deployment.name,
+                stack.api!.deployment.name,
+                stack.migration!.metadata.name
+            ]).apply(([webName, apiName, migrationName]) => {
+                expect(webName).toBe("web");
+                expect(apiName).toBe("api");
+                expect(migrationName).toBe("db-migration");
+                done();
+            });
         });
 
         it("should not deploy applications when app config not provided", () => {
@@ -458,7 +478,7 @@ describe("createStack factory", () => {
     });
 
     describe("base infrastructure", () => {
-        it("should install Helm charts when skipBaseInfrastructure is false", () => {
+        it("should install Helm charts when skipBaseInfrastructure is false", (done) => {
             const stack = createStack(
                 {
                     env: "preview",
@@ -481,6 +501,17 @@ describe("createStack factory", () => {
 
             expect(stack.helmCharts).toBeDefined();
             expect(stack.gateway).toBeDefined();
+
+            pulumi.all([
+                stack.helmCharts!.certManager.urn,
+                stack.helmCharts!.nginxGateway.urn,
+                stack.gateway!.gateway
+            ]).apply(([certUrn, nginxUrn, gwUrn]) => {
+                expect(certUrn).toContain("cert-manager");
+                expect(nginxUrn).toContain("nginx-gateway");
+                expect(gwUrn).toContain("gateway");
+                done();
+            });
         });
 
         it("should skip Helm charts when skipBaseInfrastructure is true", () => {

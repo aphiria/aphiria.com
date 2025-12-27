@@ -24,10 +24,10 @@ describe("createWebDeployment", () => {
         k8sProvider = new k8s.Provider("test", {});
     });
 
-    it("should create deployment with required resources", () => {
+    it("should create deployment with required resources", (done) => {
         const result = createWebDeployment({
             env: "local",
-            namespace: "default",
+            namespace: "web-ns",
             replicas: 1,
             image: "ghcr.io/aphiria/aphiria.com-web:latest",
             baseUrl: "https://www.aphiria.com",
@@ -40,12 +40,20 @@ describe("createWebDeployment", () => {
         expect(result.deployment).toBeDefined();
         expect(result.service).toBeDefined();
         expect(result.configMap).toBeDefined();
+
+        pulumi.all([result.deployment.name, result.service.name, result.configMap.name, result.deployment.namespace]).apply(([deploymentName, serviceName, configMapName, namespace]) => {
+            expect(deploymentName).toBe("web");
+            expect(serviceName).toBe("web");
+            expect(configMapName).toBe("js-config");
+            expect(namespace).toBe("web-ns");
+            done();
+        });
     });
 
-    it("should create PodDisruptionBudget when configured", () => {
+    it("should create PodDisruptionBudget when configured", (done) => {
         const result = createWebDeployment({
             env: "production",
-            namespace: "default",
+            namespace: "prod-web",
             replicas: 2,
             image: "ghcr.io/aphiria/aphiria.com-web@sha256:abc123",
             baseUrl: "https://www.aphiria.com",
@@ -59,6 +67,12 @@ describe("createWebDeployment", () => {
         });
 
         expect(result.podDisruptionBudget).toBeDefined();
+
+        pulumi.all([result.podDisruptionBudget!.name, result.podDisruptionBudget!.namespace]).apply(([pdbName, pdbNamespace]) => {
+            expect(pdbName).toBe("web");
+            expect(pdbNamespace).toBe("prod-web");
+            done();
+        });
     });
 
     it("should not create PodDisruptionBudget when not configured", () => {
@@ -77,7 +91,7 @@ describe("createWebDeployment", () => {
         expect(result.podDisruptionBudget).toBeUndefined();
     });
 
-    it("should handle envConfig when provided", () => {
+    it("should handle envConfig when provided", (done) => {
         const result = createWebDeployment({
             env: "preview",
             namespace: "preview-pr-123",
@@ -96,6 +110,11 @@ describe("createWebDeployment", () => {
         });
 
         expect(result.deployment).toBeDefined();
+
+        result.deployment.namespace.apply((namespace: string) => {
+            expect(namespace).toBe("preview-pr-123");
+            done();
+        });
     });
 
     it("should handle custom resource limits", () => {
@@ -135,10 +154,10 @@ describe("createWebDeployment", () => {
         expect(result.deployment).toBeDefined();
     });
 
-    it("should handle custom labels", () => {
+    it("should merge custom labels with default labels", (done) => {
         const result = createWebDeployment({
             env: "local",
-            namespace: "default",
+            namespace: "custom-web",
             replicas: 1,
             image: "ghcr.io/aphiria/aphiria.com-web:latest",
             baseUrl: "https://www.aphiria.com",
@@ -147,17 +166,29 @@ describe("createWebDeployment", () => {
             },
             labels: {
                 "custom-label": "custom-value",
+                "environment": "testing",
             },
             provider: k8sProvider,
         });
 
         expect(result.deployment).toBeDefined();
+
+        result.deployment.labels.apply((deploymentLabels: any) => {
+            expect(deploymentLabels).toMatchObject({
+                "app": "web",
+                "app.kubernetes.io/name": "aphiria-web",
+                "app.kubernetes.io/component": "frontend",
+                "custom-label": "custom-value",
+                "environment": "testing",
+            });
+            done();
+        });
     });
 
-    it("should handle production environment defaults", () => {
+    it("should handle production environment defaults", (done) => {
         const result = createWebDeployment({
             env: "production",
-            namespace: "default",
+            namespace: "prod",
             replicas: 2,
             image: "ghcr.io/aphiria/aphiria.com-web@sha256:abc123",
             baseUrl: "https://www.aphiria.com",
@@ -169,9 +200,14 @@ describe("createWebDeployment", () => {
         });
 
         expect(result.deployment).toBeDefined();
+
+        result.deployment.namespace.apply((namespace: string) => {
+            expect(namespace).toBe("prod");
+            done();
+        });
     });
 
-    it("should handle extra vars in envConfig", () => {
+    it("should handle extra vars in envConfig", (done) => {
         const result = createWebDeployment({
             env: "preview",
             namespace: "preview-pr-123",
@@ -190,5 +226,10 @@ describe("createWebDeployment", () => {
         });
 
         expect(result.deployment).toBeDefined();
+
+        result.deployment.namespace.apply((namespace: string) => {
+            expect(namespace).toBe("preview-pr-123");
+            done();
+        });
     });
 });

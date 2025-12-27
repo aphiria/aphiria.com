@@ -24,10 +24,10 @@ describe("createAPIDeployment", () => {
         k8sProvider = new k8s.Provider("test", {});
     });
 
-    it("should create deployment with required resources", () => {
+    it("should create deployment with required resources", (done) => {
         const result = createAPIDeployment({
             env: "local",
-            namespace: "default",
+            namespace: "test-ns",
             replicas: 1,
             image: "ghcr.io/aphiria/aphiria.com-api:latest",
             dbHost: "db.default.svc.cluster.local",
@@ -42,12 +42,20 @@ describe("createAPIDeployment", () => {
         expect(result.deployment).toBeDefined();
         expect(result.service).toBeDefined();
         expect(result.secret).toBeDefined();
+
+        pulumi.all([result.deployment.name, result.service.name, result.secret.name, result.deployment.namespace]).apply(([deploymentName, serviceName, secretName, namespace]) => {
+            expect(deploymentName).toBe("api");
+            expect(serviceName).toBe("api");
+            expect(secretName).toBe("api-env-var-secrets");
+            expect(namespace).toBe("test-ns");
+            done();
+        });
     });
 
-    it("should create PodDisruptionBudget when configured", () => {
+    it("should create PodDisruptionBudget when configured", (done) => {
         const result = createAPIDeployment({
             env: "production",
-            namespace: "default",
+            namespace: "prod-ns",
             replicas: 2,
             image: "ghcr.io/aphiria/aphiria.com-api@sha256:abc123",
             dbHost: "db.default.svc.cluster.local",
@@ -63,6 +71,12 @@ describe("createAPIDeployment", () => {
         });
 
         expect(result.podDisruptionBudget).toBeDefined();
+
+        pulumi.all([result.podDisruptionBudget!.name, result.podDisruptionBudget!.namespace]).apply(([pdbName, pdbNamespace]) => {
+            expect(pdbName).toBe("api");
+            expect(pdbNamespace).toBe("prod-ns");
+            done();
+        });
     });
 
     it("should not create PodDisruptionBudget when not configured", () => {
@@ -101,7 +115,7 @@ describe("createAPIDeployment", () => {
         expect(result.deployment).toBeDefined();
     });
 
-    it("should include PR_NUMBER when provided in envConfig", () => {
+    it("should include PR_NUMBER when provided in envConfig", (done) => {
         const result = createAPIDeployment({
             env: "preview",
             namespace: "preview-pr-123",
@@ -121,6 +135,11 @@ describe("createAPIDeployment", () => {
         });
 
         expect(result.deployment).toBeDefined();
+
+        result.deployment.namespace.apply((namespace: string) => {
+            expect(namespace).toBe("preview-pr-123");
+            done();
+        });
     });
 
     it("should handle custom resource limits", () => {
@@ -155,10 +174,10 @@ describe("createAPIDeployment", () => {
         expect(result.deployment).toBeDefined();
     });
 
-    it("should handle imagePullSecrets", () => {
+    it("should handle imagePullSecrets", (done) => {
         const result = createAPIDeployment({
             env: "production",
-            namespace: "default",
+            namespace: "secure-ns",
             replicas: 2,
             image: "ghcr.io/aphiria/aphiria.com-api@sha256:abc123",
             dbHost: "db.default.svc.cluster.local",
@@ -172,12 +191,17 @@ describe("createAPIDeployment", () => {
         });
 
         expect(result.deployment).toBeDefined();
+
+        result.deployment.namespace.apply((namespace: string) => {
+            expect(namespace).toBe("secure-ns");
+            done();
+        });
     });
 
-    it("should set cookieSecure to 0 when explicitly disabled", () => {
+    it("should set cookieSecure to 0 when explicitly disabled", (done) => {
         const result = createAPIDeployment({
             env: "local",
-            namespace: "default",
+            namespace: "local-ns",
             replicas: 1,
             image: "ghcr.io/aphiria/aphiria.com-api:latest",
             dbHost: "db.default.svc.cluster.local",
@@ -194,12 +218,17 @@ describe("createAPIDeployment", () => {
         });
 
         expect(result.deployment).toBeDefined();
+
+        result.deployment.namespace.apply((namespace: string) => {
+            expect(namespace).toBe("local-ns");
+            done();
+        });
     });
 
-    it("should default cookieSecure to 1 when not specified", () => {
+    it("should default cookieSecure to 1 when not specified", (done) => {
         const result = createAPIDeployment({
             env: "production",
-            namespace: "default",
+            namespace: "prod-ns",
             replicas: 2,
             image: "ghcr.io/aphiria/aphiria.com-api@sha256:abc123",
             dbHost: "db.default.svc.cluster.local",
@@ -215,5 +244,10 @@ describe("createAPIDeployment", () => {
         });
 
         expect(result.deployment).toBeDefined();
+
+        result.deployment.namespace.apply((namespace: string) => {
+            expect(namespace).toBe("prod-ns");
+            done();
+        });
     });
 });

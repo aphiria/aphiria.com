@@ -44,7 +44,7 @@ describe("createPostgreSQL", () => {
     it("should create deployment with persistent storage for local environment", () => {
         const result = createPostgreSQL({
             env: "local",
-            namespace: "default",
+            namespace: "test-namespace",
             replicas: 1,
             persistentStorage: true,
             storageSize: "5Gi",
@@ -61,7 +61,7 @@ describe("createPostgreSQL", () => {
     it("should create deployment with persistent storage for production environment", () => {
         const result = createPostgreSQL({
             env: "production",
-            namespace: "default",
+            namespace: "prod-namespace",
             replicas: 2,
             persistentStorage: true,
             storageSize: "50Gi",
@@ -75,7 +75,7 @@ describe("createPostgreSQL", () => {
         expect(result.pvc).toBeDefined();
     });
 
-    it("should handle custom labels", () => {
+    it("should merge custom labels with default labels", () => {
         const result = createPostgreSQL({
             env: "local",
             namespace: "default",
@@ -86,6 +86,7 @@ describe("createPostgreSQL", () => {
             dbPassword: pulumi.output("password"),
             labels: {
                 "custom-label": "custom-value",
+                "environment": "test",
             },
             provider: k8sProvider,
         });
@@ -93,7 +94,7 @@ describe("createPostgreSQL", () => {
         expect(result.deployment).toBeDefined();
     });
 
-    it("should use default storage size when not specified for local", () => {
+    it("should use default storage size 5Gi when not specified for local", () => {
         const result = createPostgreSQL({
             env: "local",
             namespace: "default",
@@ -108,7 +109,7 @@ describe("createPostgreSQL", () => {
         expect(result.pvc).toBeDefined();
     });
 
-    it("should use default storage size when not specified for cloud", () => {
+    it("should use default storage size 10Gi when not specified for cloud", () => {
         const result = createPostgreSQL({
             env: "production",
             namespace: "default",

@@ -24,7 +24,7 @@ describe("installBaseHelmCharts", () => {
         k8sProvider = new k8s.Provider("test", {});
     });
 
-    it("should install cert-manager and nginx-gateway for local environment", () => {
+    it("should install cert-manager and nginx-gateway for local environment", (done) => {
         const result = installBaseHelmCharts({
             env: "local",
             provider: k8sProvider,
@@ -32,9 +32,15 @@ describe("installBaseHelmCharts", () => {
 
         expect(result.certManager).toBeDefined();
         expect(result.nginxGateway).toBeDefined();
+
+        pulumi.all([result.certManager.urn, result.nginxGateway.urn]).apply(([certUrn, nginxUrn]) => {
+            expect(certUrn).toContain("cert-manager");
+            expect(nginxUrn).toContain("nginx-gateway");
+            done();
+        });
     });
 
-    it("should install cert-manager and nginx-gateway for production environment", () => {
+    it("should install cert-manager and nginx-gateway for production environment", (done) => {
         const result = installBaseHelmCharts({
             env: "production",
             provider: k8sProvider,
@@ -42,9 +48,15 @@ describe("installBaseHelmCharts", () => {
 
         expect(result.certManager).toBeDefined();
         expect(result.nginxGateway).toBeDefined();
+
+        pulumi.all([result.certManager.urn, result.nginxGateway.urn]).apply(([certUrn, nginxUrn]) => {
+            expect(certUrn).toContain("cert-manager");
+            expect(nginxUrn).toContain("nginx-gateway");
+            done();
+        });
     });
 
-    it("should install cert-manager and nginx-gateway for preview environment", () => {
+    it("should install cert-manager and nginx-gateway for preview environment", (done) => {
         const result = installBaseHelmCharts({
             env: "preview",
             provider: k8sProvider,
@@ -52,6 +64,12 @@ describe("installBaseHelmCharts", () => {
 
         expect(result.certManager).toBeDefined();
         expect(result.nginxGateway).toBeDefined();
+
+        pulumi.all([result.certManager.urn, result.nginxGateway.urn]).apply(([certUrn, nginxUrn]) => {
+            expect(certUrn).toContain("cert-manager");
+            expect(nginxUrn).toContain("nginx-gateway");
+            done();
+        });
     });
 });
 

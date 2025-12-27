@@ -24,7 +24,7 @@ describe("createDatabaseCreationJob", () => {
         k8sProvider = new k8s.Provider("test", {});
     });
 
-    it("should create database creation job with valid database name", () => {
+    it("should create database creation job with valid database name", (done) => {
         const job = createDatabaseCreationJob({
             env: "preview",
             namespace: "preview-pr-123",
@@ -36,6 +36,12 @@ describe("createDatabaseCreationJob", () => {
         });
 
         expect(job).toBeDefined();
+
+        pulumi.all([job.metadata.name, job.metadata.namespace]).apply(([jobName, namespace]) => {
+            expect(jobName).toBe("db-init-aphiria-pr-123");
+            expect(namespace).toBe("preview-pr-123");
+            done();
+        });
     });
 
     it("should reject invalid database name with special characters", () => {
@@ -67,10 +73,10 @@ describe("createDatabaseCreationJob", () => {
         }).toThrow("Database name too long");
     });
 
-    it("should accept database name with underscores and alphanumeric characters", () => {
+    it("should accept database name with underscores and alphanumeric characters", (done) => {
         const job = createDatabaseCreationJob({
             env: "preview",
-            namespace: "preview-pr-123",
+            namespace: "preview-pr-456",
             databaseName: "aphiria_pr_123_test",
             dbHost: "db.default.svc.cluster.local",
             dbAdminUser: pulumi.output("postgres"),
@@ -79,12 +85,17 @@ describe("createDatabaseCreationJob", () => {
         });
 
         expect(job).toBeDefined();
+
+        job.metadata.namespace.apply((namespace: string) => {
+            expect(namespace).toBe("preview-pr-456");
+            done();
+        });
     });
 
-    it("should handle custom labels", () => {
+    it("should merge custom labels with default labels", (done) => {
         const job = createDatabaseCreationJob({
             env: "preview",
-            namespace: "preview-pr-123",
+            namespace: "preview-pr-789",
             databaseName: "aphiria_pr_123",
             dbHost: "db.default.svc.cluster.local",
             dbAdminUser: pulumi.output("postgres"),
@@ -96,5 +107,15 @@ describe("createDatabaseCreationJob", () => {
         });
 
         expect(job).toBeDefined();
+
+        job.metadata.labels.apply((jobLabels: any) => {
+            expect(jobLabels).toMatchObject({
+                "app": "db-init",
+                "app.kubernetes.io/name": "database-creation",
+                "app.kubernetes.io/component": "database",
+                "custom-label": "custom-value",
+            });
+            done();
+        });
     });
 });

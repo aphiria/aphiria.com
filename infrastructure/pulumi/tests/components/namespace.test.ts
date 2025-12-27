@@ -24,7 +24,7 @@ describe("createNamespace", () => {
         k8sProvider = new k8s.Provider("test", {});
     });
 
-    it("should create namespace with basic configuration", () => {
+    it("should create namespace with basic configuration", (done) => {
         const result = createNamespace({
             name: "test-namespace",
             env: "preview",
@@ -35,11 +35,20 @@ describe("createNamespace", () => {
         expect(result.resourceQuota).toBeUndefined();
         expect(result.networkPolicy).toBeUndefined();
         expect(result.imagePullSecret).toBeUndefined();
+
+        pulumi.all([result.namespace.metadata.name, result.namespace.metadata.labels]).apply(([name, labels]) => {
+            expect(name).toBe("test-namespace");
+            expect(labels).toMatchObject({
+                "app.kubernetes.io/name": "aphiria",
+                "app.kubernetes.io/environment": "preview",
+            });
+            done();
+        });
     });
 
-    it("should create namespace with ResourceQuota", () => {
+    it("should create namespace with ResourceQuota", (done) => {
         const result = createNamespace({
-            name: "test-namespace",
+            name: "quota-namespace",
             env: "preview",
             resourceQuota: {
                 cpu: "2",
@@ -51,11 +60,28 @@ describe("createNamespace", () => {
 
         expect(result.namespace).toBeDefined();
         expect(result.resourceQuota).toBeDefined();
+
+        pulumi.all([
+            result.resourceQuota!.metadata.name,
+            result.resourceQuota!.metadata.namespace,
+            result.resourceQuota!.spec.hard
+        ]).apply(([quotaName, namespace, hard]) => {
+            expect(quotaName).toBe("quota-namespace-quota");
+            expect(namespace).toBe("quota-namespace");
+            expect(hard).toMatchObject({
+                "requests.cpu": "2",
+                "requests.memory": "4Gi",
+                "limits.cpu": "2",
+                "limits.memory": "4Gi",
+                "pods": "10",
+            });
+            done();
+        });
     });
 
-    it("should create namespace with NetworkPolicy", () => {
+    it("should create namespace with NetworkPolicy", (done) => {
         const result = createNamespace({
-            name: "test-namespace",
+            name: "netpol-namespace",
             env: "preview",
             networkPolicy: {
                 allowDNS: true,
@@ -70,11 +96,20 @@ describe("createNamespace", () => {
 
         expect(result.namespace).toBeDefined();
         expect(result.networkPolicy).toBeDefined();
+
+        pulumi.all([
+            result.networkPolicy!.metadata.name,
+            result.networkPolicy!.metadata.namespace
+        ]).apply(([policyName, namespace]) => {
+            expect(policyName).toBe("netpol-namespace-network-policy");
+            expect(namespace).toBe("netpol-namespace");
+            done();
+        });
     });
 
-    it("should create namespace with imagePullSecret", () => {
+    it("should create namespace with imagePullSecret", (done) => {
         const result = createNamespace({
-            name: "test-namespace",
+            name: "secret-namespace",
             env: "preview",
             imagePullSecret: {
                 registry: "ghcr.io",
@@ -86,9 +121,20 @@ describe("createNamespace", () => {
 
         expect(result.namespace).toBeDefined();
         expect(result.imagePullSecret).toBeDefined();
+
+        pulumi.all([
+            result.imagePullSecret!.metadata.name,
+            result.imagePullSecret!.metadata.namespace,
+            result.imagePullSecret!.type
+        ]).apply(([secretName, namespace, type]) => {
+            expect(secretName).toBe("ghcr-pull-secret");
+            expect(namespace).toBe("secret-namespace");
+            expect(type).toBe("kubernetes.io/dockerconfigjson");
+            done();
+        });
     });
 
-    it("should create namespace with all features", () => {
+    it("should merge custom labels with default labels", (done) => {
         const result = createNamespace({
             name: "preview-pr-123",
             env: "preview",
@@ -112,6 +158,7 @@ describe("createNamespace", () => {
             },
             labels: {
                 "pr-number": "123",
+                "team": "platform",
             },
             provider: k8sProvider,
         });
@@ -120,5 +167,25 @@ describe("createNamespace", () => {
         expect(result.resourceQuota).toBeDefined();
         expect(result.networkPolicy).toBeDefined();
         expect(result.imagePullSecret).toBeDefined();
+
+        pulumi.all([
+            result.namespace.metadata.name,
+            result.namespace.metadata.labels,
+            result.resourceQuota!.metadata.name,
+            result.networkPolicy!.metadata.name,
+            result.imagePullSecret!.metadata.name
+        ]).apply(([nsName, nsLabels, quotaName, policyName, secretName]) => {
+            expect(nsName).toBe("preview-pr-123");
+            expect(nsLabels).toMatchObject({
+                "app.kubernetes.io/name": "aphiria",
+                "app.kubernetes.io/environment": "preview",
+                "pr-number": "123",
+                "team": "platform",
+            });
+            expect(quotaName).toBe("preview-pr-123-quota");
+            expect(policyName).toBe("preview-pr-123-network-policy");
+            expect(secretName).toBe("ghcr-pull-secret");
+            done();
+        });
     });
 });
