@@ -9,8 +9,8 @@ import * as k8s from "@pulumi/kubernetes";
 import { createKubernetesCluster } from "../components";
 import { createStack } from "../shared/factory";
 
-// Create a dedicated preview Kubernetes cluster
-const { cluster, kubeconfig: clusterKubeconfig } = createKubernetesCluster({
+// Create the preview Kubernetes cluster (includes provider)
+const { cluster, kubeconfig: clusterKubeconfig, provider: k8sProvider } = createKubernetesCluster({
     name: "aphiria-com-preview-cluster",
     region: "nyc3",
     version: "1.34.1-do.2",
@@ -21,18 +21,6 @@ const { cluster, kubeconfig: clusterKubeconfig } = createKubernetesCluster({
     maxNodes: 3,
     vpcUuid: "976f980d-dc84-11e8-80bc-3cfdfea9fba1",
 });
-
-// Create a Kubernetes provider using the cluster's kubeconfig
-const k8sProvider = new k8s.Provider(
-    "preview-k8s",
-    {
-        kubeconfig: clusterKubeconfig,
-        enableServerSideApply: true,
-    },
-    {
-        dependsOn: [cluster],
-    }
-);
 
 // Get configuration
 const postgresqlConfig = new pulumi.Config("postgresql");

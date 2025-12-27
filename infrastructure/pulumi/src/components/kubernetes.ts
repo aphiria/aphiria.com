@@ -1,4 +1,5 @@
 import * as digitalocean from "@pulumi/digitalocean";
+import * as k8s from "@pulumi/kubernetes";
 import { KubernetesClusterArgs, KubernetesClusterResult } from "./types";
 
 /** Creates DigitalOcean Kubernetes cluster with auto-scaling node pool */
@@ -24,11 +25,26 @@ export function createKubernetesCluster(args: KubernetesClusterArgs): Kubernetes
         tags: args.tags || [],
     });
 
+    const kubeconfig = cluster.kubeConfigs[0].rawConfig;
+
+    // Create Kubernetes provider for this cluster
+    const provider = new k8s.Provider(
+        `${args.name}-k8s`,
+        {
+            kubeconfig: kubeconfig,
+            enableServerSideApply: true,
+        },
+        {
+            dependsOn: [cluster],
+        }
+    );
+
     return {
         cluster,
         clusterId: cluster.id,
         endpoint: cluster.endpoint,
-        kubeconfig: cluster.kubeConfigs[0].rawConfig,
+        kubeconfig: kubeconfig,
         clusterCaCertificate: cluster.kubeConfigs[0].clusterCaCertificate,
+        provider: provider,
     };
 }

@@ -27,7 +27,7 @@ const postgresqlAdminUser = baseStack.getOutput("postgresqlAdminUser");
 const postgresqlAdminPassword = baseStack.requireOutput("postgresqlAdminPassword");
 const kubeconfig = baseStack.requireOutput("kubeconfig");
 
-// Create Kubernetes provider using kubeconfig from base stack
+// Create the Kubernetes provider using kubeconfig from the base stack
 const k8sProvider = new k8s.Provider(
     "preview-pr-k8s",
     {

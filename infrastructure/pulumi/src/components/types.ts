@@ -422,4 +422,5 @@ export interface KubernetesClusterResult {
     endpoint: pulumi.Output<string>;
     kubeconfig: pulumi.Output<string>;
     clusterCaCertificate: pulumi.Output<string>;
+    provider: k8s.Provider;
 }
