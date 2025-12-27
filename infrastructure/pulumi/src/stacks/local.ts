@@ -21,8 +21,7 @@ const postgresqlPassword = postgresqlConfig.get("password") || "postgres";
 const webUrl = "https://www.aphiria.com";
 const apiUrl = "https://api.aphiria.com";
 
-// Create all infrastructure using a factory
-const stack = createStack(
+createStack(
     {
         env: "local",
         skipBaseInfrastructure: true, // Helm charts already installed via minikube setup
@@ -48,12 +47,3 @@ const stack = createStack(
     },
     k8sProvider
 );
-
-// Validate expected resources exist
-if (!stack.postgres) throw new Error("Local stack must create PostgreSQL");
-
-// Outputs
-export { webUrl, apiUrl };
-export const namespace = "default"; // Local uses default namespace (no custom namespace created)
-export const postgresqlHost = "db"; // Local uses short service name
-export const postgresqlPort = 5432;

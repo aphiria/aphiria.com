@@ -45,8 +45,7 @@ const databaseName = `aphiria_pr_${prNumber}`;
 const webUrl = `https://${prNumber}.pr.aphiria.com`;
 const apiUrl = `https://${prNumber}.pr-api.aphiria.com`;
 
-// Create all infrastructure using a factory
-const stack = createStack(
+createStack(
     {
         env: "preview",
         skipBaseInfrastructure: true, // Uses shared Helm charts and Gateway from preview-base
@@ -126,16 +125,3 @@ const stack = createStack(
     },
     k8sProvider
 );
-
-// Validate expected resources exist
-if (!stack.namespace) throw new Error("Preview-pr stack must create namespace");
-
-// Outputs
-export { webUrl, apiUrl };
-export const namespace = stack.namespace.namespace.metadata.name;
-export { databaseName };
-/**
- * @internal Used for Pulumi dependency tracking
- */
-export const namespaceResourceName = stack.namespace.namespace.metadata.name;
-export { webImageRef, apiImageRef };

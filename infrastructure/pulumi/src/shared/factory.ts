@@ -31,8 +31,6 @@ export interface StackResources {
     helmCharts?: { certManager: k8s.helm.v3.Chart; nginxGateway: k8s.helm.v3.Chart };
     postgres?: PostgreSQLResult;
     gateway?: GatewayResult;
-    gatewayIP?: pulumi.Output<string>;
-    dnsRecords?: digitalocean.DnsRecord[];
     namespace?: NamespaceResult;
     dbInitJob?: k8s.batch.v1.Job;
     web?: WebDeploymentResult;
@@ -137,17 +135,17 @@ export function createStack(config: StackConfig, k8sProvider: k8s.Provider): Sta
             { provider: k8sProvider }
         );
 
-        resources.gatewayIP = gatewayService.status.loadBalancer.ingress[0].ip;
+        resources.gateway.ip = gatewayService.status.loadBalancer.ingress[0].ip;
 
         // Create DNS records if configured
         if (config.gateway.dns) {
             const dnsResult = createDNSRecords({
                 domain: config.gateway.dns.domain,
-                loadBalancerIp: resources.gatewayIP,
+                loadBalancerIp: resources.gateway.ip,
                 records: config.gateway.dns.records,
                 ttl: config.gateway.dns.ttl,
             });
-            resources.dnsRecords = dnsResult.records;
+            resources.gateway.dnsRecords = dnsResult.records;
         }
     }
 

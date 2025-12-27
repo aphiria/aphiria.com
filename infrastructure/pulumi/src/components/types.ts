@@ -1,5 +1,6 @@
 import * as pulumi from "@pulumi/pulumi";
 import * as k8s from "@pulumi/kubernetes";
+import * as digitalocean from "@pulumi/digitalocean";
 
 /**
  * Environment type for stack configuration
@@ -373,6 +374,8 @@ export interface GatewayResult {
     namespace: pulumi.Output<string>;
     urn: pulumi.Output<string>;
     certificate?: pulumi.Output<string>; // Only present for non-self-signed
+    ip?: pulumi.Output<string>; // LoadBalancer IP (populated by factory after gateway creation)
+    dnsRecords?: digitalocean.DnsRecord[]; // DNS records pointing to gateway IP (populated by factory if configured)
 }
 
 /**

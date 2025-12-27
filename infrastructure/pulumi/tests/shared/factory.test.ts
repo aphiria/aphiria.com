@@ -538,9 +538,9 @@ describe("createStack factory", () => {
             );
 
             expect(stack.gateway).toBeDefined();
-            expect(stack.gatewayIP).toBeDefined();
-            expect(stack.dnsRecords).toBeDefined();
-            expect(stack.dnsRecords?.length).toBe(3);
+            expect(stack.gateway?.ip).toBeDefined();
+            expect(stack.gateway?.dnsRecords).toBeDefined();
+            expect(stack.gateway?.dnsRecords?.length).toBe(3);
         });
 
         it("should skip Helm charts when skipBaseInfrastructure is true", () => {
