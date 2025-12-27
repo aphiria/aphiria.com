@@ -369,7 +369,9 @@ export interface PostgreSQLResult {
  * Return type for Gateway component
  */
 export interface GatewayResult {
-    gateway: pulumi.Output<string>;
+    name: pulumi.Output<string>;
+    namespace: pulumi.Output<string>;
+    urn: pulumi.Output<string>;
     certificate?: pulumi.Output<string>; // Only present for non-self-signed
 }
 

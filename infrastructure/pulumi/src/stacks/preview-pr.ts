@@ -127,12 +127,15 @@ const stack = createStack(
     k8sProvider
 );
 
+// Validate expected resources exist
+if (!stack.namespace) throw new Error("Preview-pr stack must create namespace");
+
 // Outputs
 export { webUrl, apiUrl };
-export const namespace = namespaceName;
+export const namespace = stack.namespace.namespace.metadata.name;
 export { databaseName };
 /**
  * @internal Used for Pulumi dependency tracking
  */
-export const namespaceResourceName = stack.namespace?.namespace.metadata.name;
+export const namespaceResourceName = stack.namespace.namespace.metadata.name;
 export { webImageRef, apiImageRef };

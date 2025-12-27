@@ -498,7 +498,7 @@ describe("createStack factory", () => {
                 .all([
                     stack.helmCharts!.certManager.urn,
                     stack.helmCharts!.nginxGateway.urn,
-                    stack.gateway!.gateway,
+                    stack.gateway!.urn,
                 ])
                 .apply(([certUrn, nginxUrn, gwUrn]) => {
                     expect(certUrn).toContain("cert-manager");

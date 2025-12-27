@@ -260,7 +260,9 @@ export function createGateway(args: GatewayArgs): GatewayResult {
     );
 
     return {
-        gateway: gateway.urn,
+        name: gateway.metadata.name,
+        namespace: gateway.metadata.namespace,
+        urn: gateway.urn,
         certificate: certificate ? certificate.urn : undefined,
     };
 }

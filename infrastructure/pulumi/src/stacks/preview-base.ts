@@ -83,14 +83,19 @@ const stack = createStack(
     k8sProvider
 );
 
+// Validate expected resources exist
+if (!stack.namespace) throw new Error("Preview-base stack must create namespace");
+if (!stack.gateway) throw new Error("Preview-base stack must create gateway");
+if (!stack.postgres) throw new Error("Preview-base stack must create PostgreSQL");
+
 // Outputs
+export const namespace = stack.namespace.namespace.metadata.name;
 export const clusterId = cluster.id;
 export const clusterEndpoint = cluster.endpoint;
 export const kubeconfig = pulumi.secret(clusterKubeconfig);
-export const postgresqlHost = "db.default.svc.cluster.local";
+export const postgresqlHost = pulumi.interpolate`db.${namespace}.svc.cluster.local`;
 export const postgresqlPort = 5432;
 export { postgresqlAdminUser, postgresqlAdminPassword };
-export const gatewayName = "nginx-gateway";
-export const gatewayNamespace = "nginx-gateway";
+export const gatewayName = stack.gateway.name;
+export const gatewayNamespace = stack.gateway.namespace;
 export const gatewayIP = stack.gatewayIP;
-export const namespace = "default";

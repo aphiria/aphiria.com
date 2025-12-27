@@ -36,10 +36,10 @@ describe("createGateway", () => {
             provider: k8sProvider,
         });
 
-        expect(result.gateway).toBeDefined();
+        expect(result.urn).toBeDefined();
         expect(result.certificate).toBeDefined();
 
-        pulumi.all([result.gateway, result.certificate]).apply(([gatewayUrn, certUrn]) => {
+        pulumi.all([result.urn, result.certificate]).apply(([gatewayUrn, certUrn]) => {
             expect(gatewayUrn).toContain("test-gateway");
             expect(certUrn).toBeDefined();
             done();
@@ -57,10 +57,10 @@ describe("createGateway", () => {
             provider: k8sProvider,
         });
 
-        expect(result.gateway).toBeDefined();
+        expect(result.urn).toBeDefined();
         expect(result.certificate).toBeDefined();
 
-        result.gateway.apply((gatewayUrn: string) => {
+        result.urn.apply((gatewayUrn: string) => {
             expect(gatewayUrn).toContain("prod-gateway");
             done();
         });
@@ -117,9 +117,9 @@ describe("createGateway", () => {
             provider: k8sProvider,
         });
 
-        expect(result.gateway).toBeDefined();
+        expect(result.urn).toBeDefined();
 
-        result.gateway.apply((gatewayUrn: string) => {
+        result.urn.apply((gatewayUrn: string) => {
             expect(gatewayUrn).toContain("preview-gateway");
             done();
         });
@@ -139,9 +139,9 @@ describe("createGateway", () => {
             provider: k8sProvider,
         });
 
-        expect(result.gateway).toBeDefined();
+        expect(result.urn).toBeDefined();
 
-        result.gateway.apply((gatewayUrn: string) => {
+        result.urn.apply((gatewayUrn: string) => {
             expect(gatewayUrn).toContain("custom-gateway");
             done();
         });
@@ -158,9 +158,9 @@ describe("createGateway", () => {
             provider: k8sProvider,
         });
 
-        expect(result.gateway).toBeDefined();
+        expect(result.urn).toBeDefined();
 
-        result.gateway.apply((gatewayUrn: string) => {
+        result.urn.apply((gatewayUrn: string) => {
             expect(gatewayUrn).toContain("multi-domain-gateway");
             done();
         });
@@ -189,10 +189,10 @@ describe("createGateway", () => {
             provider: k8sProvider,
         });
 
-        expect(result.gateway).toBeDefined();
+        expect(result.urn).toBeDefined();
         expect(result.certificate).toBeDefined();
 
-        result.gateway.apply((gatewayUrn: string) => {
+        result.urn.apply((gatewayUrn: string) => {
             expect(gatewayUrn).toContain("http01-gateway");
             done();
         });
@@ -209,10 +209,10 @@ describe("createGateway", () => {
             provider: k8sProvider,
         });
 
-        expect(result.gateway).toBeDefined();
+        expect(result.urn).toBeDefined();
         expect(result.certificate).toBeDefined();
 
-        result.gateway.apply((gatewayUrn: string) => {
+        result.urn.apply((gatewayUrn: string) => {
             expect(gatewayUrn).toContain("dns01-gateway");
             done();
         });
