@@ -1283,11 +1283,11 @@ Phase 8 (Migrate production to Pulumi + reusable workflows)
 - [X] T064 [P] Create maintainer quickstart guide in `infrastructure/pulumi/QUICKSTART.md`
 - [X] T065 [P] Document approval workflow in `.github/CONTRIBUTING.md`
 - [X] T066 [P] Update project README with preview environment section in `README.md`
-- [ ] T067 Migrate DEV-LOCAL-SETUP.md content into main README.md
-- [ ] T068 Add local database connection, hosts file, and minikube dashboard instructions to README.md
-- [ ] T069 Consolidate SECRETS.md and SECRETS-STRATEGY.md into single comprehensive SECRETS.md file
-- [ ] T070 Clean up migration/import documentation (CLUSTER-IMPORT.md, migration sections in README)
-- [ ] T071 Fix CI badge in README.md to point to correct workflow(s) (currently points to deprecated 'ci' workflow)
+- [X] T067 Migrate DEV-LOCAL-SETUP.md content into main README.md
+- [X] T068 Add local database connection, hosts file, and minikube dashboard instructions to README.md
+- [X] T069 Consolidate SECRETS.md and SECRETS-STRATEGY.md into single comprehensive SECRETS.md file
+- [X] T070 Clean up migration/import documentation (CLUSTER-IMPORT.md, migration sections in README)
+- [X] T071 Fix CI badge in README.md to point to correct workflow(s) (currently points to deprecated 'ci' workflow)
 - [X] T071a Clean up temporary files created during feature development
   - **Why**: Several temporary files were created during troubleshooting and planning that are no longer needed once the feature is complete
   - **Files to delete**:
@@ -1343,8 +1343,8 @@ Phase 8 (Migrate production to Pulumi + reusable workflows)
 - [X] T080 Bind preview-base stack to ESC via `Pulumi.preview-base.yml`
 - [X] T081 Bind preview-pr stacks to ESC via stack YAML files
 - [X] T082 Document PAT (Personal Access Token) management strategy in SECRETS.md
-- [ ] T083 Audit and clean up repository secrets (remove deprecated KUBECONFIG, DIGITALOCEAN_ACCESS_TOKEN from repo-level)
-- [ ] T084 Audit and clean up environment secrets (verify preview environment has correct secrets only)
+- [X] T083 Audit and clean up repository secrets (remove deprecated KUBECONFIG, DIGITALOCEAN_ACCESS_TOKEN from repo-level)
+- [X] T084 Audit and clean up environment secrets (verify preview environment has correct secrets only)
 - [X] T085 Document secrets rotation procedures and access control in SECRETS.md
 - [X] T085a **FUTURE ENHANCEMENT** (BLOCKED - Requires Team Edition): Migrate from Pulumi access tokens to OIDC authentication for GitHub Actions
   - **Status**: ❌ BLOCKED - Requires Pulumi Team Edition ($40/month)
@@ -1767,7 +1767,7 @@ Phase 8 (Migrate production to Pulumi + reusable workflows)
 
 #### CI/CD Workflow Refactoring (Constitution Principle VI)
 
-- [ ] M032 Create reusable deployment workflow `.github/workflows/deploy.yml` with `workflow_call` trigger (parameterized for preview/production)
+- [X] M032 Create reusable deployment workflow `.github/workflows/deploy.yml` with `workflow_call` trigger (parameterized for preview/production)
   - **Why**: Eliminate duplication between preview and production deployments
   - **Inputs**:
     - `environment` (preview, production) - Determines stack name pattern, approval requirements
@@ -1801,7 +1801,7 @@ Phase 8 (Migrate production to Pulumi + reusable workflows)
   - **File**: `.github/workflows/deploy.yml`
   - **Depends**: M031b (standardized stack exports), M031e-M031i (TypeScript utilities)
 
-- [ ] M033 Create reusable image build workflow `.github/workflows/build-images.yml` (parameterized for preview/production)
+- [X] M033 Create reusable image build workflow `.github/workflows/build-images.yml` (parameterized for preview/production)
   - **Why**: Eliminate duplication between preview and production image builds
   - **Inputs**:
     - `environment` (preview, production) - Determines image tags, cache scopes
@@ -1823,7 +1823,7 @@ Phase 8 (Migrate production to Pulumi + reusable workflows)
   - **File**: `.github/workflows/build-images.yml`
   - **Depends**: None (can be created independently)
 
-- [ ] M034 Refactor `build-preview-images.yml` to call reusable `build-images.yml` workflow
+- [X] M034 Refactor `build-preview-images.yml` to call reusable `build-images.yml` workflow
   - **Why**: Eliminate 218 lines of duplicated build logic
   - **New structure** (drastically simplified):
     ```yaml
@@ -1844,7 +1844,7 @@ Phase 8 (Migrate production to Pulumi + reusable workflows)
     - `.github/workflows/build-preview-images.yml` - Reduce from 218 to ~50 lines
   - **Depends**: M033 (reusable build workflow created)
 
-- [ ] M035 Refactor `deploy-preview.yml` to call reusable `deploy.yml` workflow
+- [X] M035 Refactor `deploy-preview.yml` to call reusable `deploy.yml` workflow
   - **Why**: Eliminate 689 lines of complex deployment logic
   - **New structure**:
     ```yaml
@@ -1864,7 +1864,7 @@ Phase 8 (Migrate production to Pulumi + reusable workflows)
     - `.github/workflows/deploy-preview.yml` - Reduce from 689 to ~100 lines
   - **Depends**: M032 (reusable deploy workflow created)
 
-- [ ] M036 Create `deploy-production.yml` workflow using reusable `deploy.yml` workflow
+- [X] M036 Create `deploy-production.yml` workflow using reusable `deploy.yml` workflow
   - **Why**: Production deployments should use same validated logic as preview
   - **Trigger**: Manual workflow_dispatch with optional image digests (defaults to latest master build)
   - **Structure**:

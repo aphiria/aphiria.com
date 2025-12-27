@@ -50,7 +50,6 @@ jobs:
         working-directory: infrastructure/pulumi/stacks
         env:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
-          DIGITALOCEAN_TOKEN: ${{ secrets.DIGITALOCEAN_TOKEN }}
         run: |
           pulumi refresh --yes --diff > refresh-output.txt 2>&1 || true
 
