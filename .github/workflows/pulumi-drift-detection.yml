@@ -52,7 +52,7 @@ jobs:
         env:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
         run: |
-          pulumi refresh --yes --diff > refresh-output.txt 2>&1 || true
+          timeout 600 pulumi refresh --yes --diff > refresh-output.txt 2>&1 || true
 
           if grep -q "Resources:" refresh-output.txt; then
             echo "drift_detected=true" >> $GITHUB_OUTPUT

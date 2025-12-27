@@ -74,7 +74,7 @@ jobs:
             echo "Stack ${STACK_NAME} found, destroying..."
 
             # Destroy stack with timeout
-            timeout 300 pulumi destroy --stack "${STACK_NAME}" --yes
+            timeout 600 pulumi destroy --stack "${STACK_NAME}" --yes
 
             # Remove stack
             pulumi stack rm "${STACK_NAME}" --yes

@@ -87,7 +87,8 @@ jobs:
 
             async function pulumiRefresh(stackName) {
               await exec.exec('pulumi', ['refresh', '--stack', stackName, '--yes'], {
-                cwd: 'infrastructure/pulumi'
+                cwd: 'infrastructure/pulumi',
+                timeout: 600000  // 10 minutes
               });
             }
 
@@ -98,7 +99,8 @@ jobs:
               for (let attempt = 0; attempt < maxRetries; attempt++) {
                 try {
                   await exec.exec('pulumi', ['up', '--stack', stackName, '--yes'], {
-                    cwd: 'infrastructure/pulumi'
+                    cwd: 'infrastructure/pulumi',
+                    timeout: 1200000  // 20 minutes
                   });
                   core.info(`✅ ${stackName} deployed successfully`);
                   return;
@@ -205,7 +207,7 @@ jobs:
           fi
 
           set +e
-          pulumi preview --stack "${STACK_NAME}" --non-interactive 2>&1 | tee preview.txt
+          timeout 600 pulumi preview --stack "${STACK_NAME}" --non-interactive 2>&1 | tee preview.txt
           PREVIEW_EXIT_CODE=${PIPESTATUS[0]}
           set -e
 
@@ -318,7 +320,7 @@ jobs:
           pulumi config set webImageDigest "${{ inputs.web_digest }}" --stack "${STACK_NAME}"
           pulumi config set apiImageDigest "${{ inputs.api_digest }}" --stack "${STACK_NAME}"
 
-          pulumi up --stack "${STACK_NAME}" --yes
+          timeout 1200 pulumi up --stack "${STACK_NAME}" --yes
 
       - name: Post deployment success comment (preview)
         if: success() && inputs.environment == 'preview'
