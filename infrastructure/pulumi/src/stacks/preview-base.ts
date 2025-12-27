@@ -6,8 +6,8 @@
 
 import * as pulumi from "@pulumi/pulumi";
 import { createKubernetesCluster } from "../components";
-import { createStack } from "../shared/factory";
-import { StackConfig } from "../shared/stack-config";
+import { createStack } from "./lib/stack-factory";
+import { StackConfig } from "./lib/stack-config";
 
 // Create the preview Kubernetes cluster (includes provider)
 const { kubeconfig: clusterKubeconfig, provider: k8sProvider } = createKubernetesCluster({

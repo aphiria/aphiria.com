@@ -13,7 +13,7 @@ import {
     createHTTPSRedirectRoute,
     createWWWRedirectRoute,
     createDNSRecords,
-} from "../components";
+} from "../../components";
 import { StackConfig } from "./types";
 import {
     WebDeploymentResult,
@@ -21,7 +21,7 @@ import {
     PostgreSQLResult,
     GatewayResult,
     NamespaceResult,
-} from "../components/types";
+} from "../../components/types";
 
 /**
  * Stack resources returned by createStack factory

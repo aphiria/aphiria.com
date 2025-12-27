@@ -5,8 +5,8 @@
  */
 
 import { createKubernetesCluster } from "../components";
-import { createStack } from "../shared/factory";
-import { StackConfig } from "../shared/stack-config";
+import { createStack } from "./lib/stack-factory";
+import { StackConfig } from "./lib/stack-config";
 
 // Create the production Kubernetes cluster
 const { provider: k8sProvider } = createKubernetesCluster({

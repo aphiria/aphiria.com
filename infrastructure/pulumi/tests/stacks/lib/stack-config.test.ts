@@ -1,6 +1,6 @@
 import { describe, it, expect } from "@jest/globals";
 import * as pulumi from "@pulumi/pulumi";
-import { StackConfig } from "../../src/shared/stack-config";
+import { StackConfig } from "../../../src/stacks/lib/stack-config";
 
 // Mock Pulumi Config
 pulumi.runtime.setMocks({

@@ -8,7 +8,7 @@ import type {
     AppConfig,
     NamespaceConfig,
     StackConfig,
-} from "../../src/shared/types";
+} from "../../../src/stacks/lib/types";
 
 describe("Types", () => {
     describe("KubernetesClusterConfig", () => {

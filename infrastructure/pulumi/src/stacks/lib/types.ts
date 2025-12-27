@@ -1,5 +1,5 @@
 import * as pulumi from "@pulumi/pulumi";
-import { Environment } from "../components/types";
+import { Environment } from "../../components/types";
 
 /**
  * Kubernetes cluster configuration for cloud providers (DigitalOcean, AWS, etc.)

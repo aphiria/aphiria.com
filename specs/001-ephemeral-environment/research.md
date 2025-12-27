@@ -591,7 +591,7 @@ infrastructure/pulumi/aphiria.com/
 **Shared Component Pattern Example**:
 
 ```typescript
-// src/shared/web-deployment.ts
+// src/stacks/lib/web-deployment.ts
 export interface WebDeploymentArgs {
     namespace: pulumi.Input<string>;
     replicas: number;
@@ -637,7 +637,7 @@ export function createWebDeployment(args: WebDeploymentArgs) {
 
 ```typescript
 // production-stack.ts
-import { createWebDeployment } from "./shared/web-deployment";
+import { createWebDeployment } from "./lib/web-deployment";
 
 createWebDeployment({
     namespace: "default",

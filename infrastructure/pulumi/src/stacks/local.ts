@@ -4,8 +4,8 @@
  */
 
 import * as k8s from "@pulumi/kubernetes";
-import { createStack } from "../shared/factory";
-import { StackConfig } from "../shared/stack-config";
+import { createStack } from "./lib/stack-factory";
+import { StackConfig } from "./lib/stack-config";
 
 // Minikube provider (default kubeconfig)
 const k8sProvider = new k8s.Provider("aphiria-com-local-k8s", {

@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll } from "@jest/globals";
 import * as pulumi from "@pulumi/pulumi";
 import * as k8s from "@pulumi/kubernetes";
-import { createStack } from "../../src/shared/factory";
+import { createStack } from "../../../src/stacks/lib/stack-factory";
 
 describe("createStack factory", () => {
     let k8sProvider: k8s.Provider;
