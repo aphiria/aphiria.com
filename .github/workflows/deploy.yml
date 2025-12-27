@@ -309,7 +309,6 @@ jobs:
           fi
 
           pulumi stack select "${STACK_NAME}"
-
           pulumi config env add "${PULUMI_ENV}" --stack "${STACK_NAME}" --yes
 
           if [ "$ENV" == "preview" ]; then

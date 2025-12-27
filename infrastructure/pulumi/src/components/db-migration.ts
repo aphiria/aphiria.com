@@ -22,6 +22,11 @@ export function createDBMigrationJob(args: DBMigrationJobArgs): k8s.batch.v1.Job
                 name: "db-migration",
                 namespace: args.namespace,
                 labels,
+                annotations: {
+                    // Force override Server-Side Apply conflicts when recreating Job
+                    // Needed because ttlSecondsAfterFinished=0 deletes the Job but SSA metadata persists
+                    "pulumi.com/patchForce": "true",
+                },
             },
             spec: {
                 // Clean up job after completion (don't leave completed pods around)

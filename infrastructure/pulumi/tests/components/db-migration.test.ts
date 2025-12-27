@@ -180,4 +180,26 @@ describe("createDBMigrationJob", () => {
 
         expect(job).toBeDefined();
     });
+
+    it("should have patchForce annotation to prevent SSA conflicts", (done) => {
+        const job = createDBMigrationJob({
+            env: "production",
+            namespace: "default",
+            image: "ghcr.io/aphiria/aphiria.com-api@sha256:abc123",
+            dbHost: "db.default.svc.cluster.local",
+            dbName: "aphiria",
+            dbUser: pulumi.output("postgres"),
+            dbPassword: pulumi.output("password"),
+            runSeeder: true,
+            provider: k8sProvider,
+        });
+
+        expect(job).toBeDefined();
+
+        job.metadata.annotations.apply((annotations: any) => {
+            expect(annotations).toBeDefined();
+            expect(annotations["pulumi.com/patchForce"]).toBe("true");
+            done();
+        });
+    });
 });
