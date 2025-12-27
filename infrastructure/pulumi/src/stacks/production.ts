@@ -21,7 +21,6 @@ const { provider: k8sProvider } = createKubernetesCluster({
     vpcUuid: "976f980d-dc84-11e8-80bc-3cfdfea9fba1",
 });
 
-// Load configuration
 const stackConfig = new StackConfig("https://www.aphiria.com", "https://api.aphiria.com");
 
 createStack(

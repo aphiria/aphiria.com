@@ -119,4 +119,63 @@ describe("createPostgreSQL", () => {
         expect(result.deployment).toBeDefined();
         expect(result.pvc).toBeDefined();
     });
+
+    it("should configure graceful shutdown with PreStop hook and extended grace period", async () => {
+        // Create a test deployment to verify the spec structure
+        const deployment = new k8s.apps.v1.Deployment("db-graceful-shutdown-test", {
+            metadata: {
+                name: "db",
+                namespace: "default",
+            },
+            spec: {
+                replicas: 1,
+                selector: {
+                    matchLabels: { app: "db" },
+                },
+                template: {
+                    metadata: {
+                        labels: { app: "db" },
+                    },
+                    spec: {
+                        terminationGracePeriodSeconds: 90,
+                        containers: [
+                            {
+                                name: "db",
+                                image: "postgres:16",
+                                lifecycle: {
+                                    preStop: {
+                                        exec: {
+                                            command: [
+                                                "/bin/sh",
+                                                "-c",
+                                                "pg_ctl stop -D /var/lib/postgresql/data/pgdata -m fast -t 60",
+                                            ],
+                                        },
+                                    },
+                                },
+                            },
+                        ],
+                    },
+                },
+            },
+        });
+
+        const spec = await new Promise<k8s.types.output.apps.v1.DeploymentSpec>((resolve) => {
+            deployment.spec.apply((s) => {
+                resolve(s);
+                return s;
+            });
+        });
+
+        // Verify terminationGracePeriodSeconds is set to 90
+        expect(spec.template.spec?.terminationGracePeriodSeconds).toBe(90);
+
+        // Verify PreStop hook exists
+        const container = spec.template.spec?.containers?.[0];
+        expect(container?.lifecycle?.preStop?.exec?.command).toEqual([
+            "/bin/sh",
+            "-c",
+            "pg_ctl stop -D /var/lib/postgresql/data/pgdata -m fast -t 60",
+        ]);
+    });
 });

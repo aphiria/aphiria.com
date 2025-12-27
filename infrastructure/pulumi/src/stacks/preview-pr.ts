@@ -9,7 +9,6 @@ import * as k8s from "@pulumi/kubernetes";
 import { createStack } from "../shared/factory";
 import { StackConfig } from "../shared/stack-config";
 
-// Load configuration
 const prNumber = new pulumi.Config().requireNumber("prNumber");
 const stackConfig = new StackConfig(
     `https://${prNumber}.pr.aphiria.com`,

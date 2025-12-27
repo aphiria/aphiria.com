@@ -123,6 +123,7 @@ export function createPostgreSQL(args: PostgreSQLArgs): PostgreSQLResult {
                         },
                     },
                     spec: {
+                        terminationGracePeriodSeconds: 90, // Allow 60s for PostgreSQL shutdown + 30s buffer
                         containers: [
                             {
                                 name: "db",
@@ -133,6 +134,17 @@ export function createPostgreSQL(args: PostgreSQLArgs): PostgreSQLResult {
                                         containerPort: 5432,
                                     },
                                 ],
+                                lifecycle: {
+                                    preStop: {
+                                        exec: {
+                                            command: [
+                                                "/bin/sh",
+                                                "-c",
+                                                "pg_ctl stop -D /var/lib/postgresql/data/pgdata -m fast -t 60",
+                                            ],
+                                        },
+                                    },
+                                },
                                 volumeMounts: args.persistentStorage
                                     ? [
                                           {
