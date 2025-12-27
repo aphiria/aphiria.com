@@ -1,62 +1,34 @@
 /**
  * Production Infrastructure Stack (DigitalOcean)
- * This stack creates the Kubernetes cluster itself, unlike preview-base which assumes
- * a pre-existing cluster. The cluster is long-lived infrastructure.
+ * Single stack containing cluster + base infrastructure + applications (all long-lived).
  * Stack name: production
  */
 
 import * as pulumi from "@pulumi/pulumi";
-import * as digitalocean from "@pulumi/digitalocean";
 import * as k8s from "@pulumi/kubernetes";
+import { createKubernetesCluster } from "../components";
 import { createStack } from "../shared/factory";
 
 const config = new pulumi.Config();
 
-// TODO (M037a): Replace inline cluster creation with createKubernetesCluster component
-// This requires destroying and recreating the production cluster (acceptable per task M037a)
-// The shared component doesn't support all current options (amdGpuDeviceMetricsExporterPlugin,
-// clusterSubnet, maintenancePolicy, serviceSubnet, routingAgent) - these would need to be
-// added to the component or dropped if not needed.
-//
-// Imported DigitalOcean Kubernetes cluster (existing cluster, not created by Pulumi)
-// This matches the actual cluster configuration from the import
-const cluster = new digitalocean.KubernetesCluster(
-    "aphiria-com-cluster",
-    {
-        amdGpuDeviceMetricsExporterPlugin: {
-            enabled: false,
-        },
-        amdGpuDevicePlugin: {
-            enabled: false,
-        },
-        clusterSubnet: "10.244.0.0/16",
-        maintenancePolicy: {
-            day: "any",
-            startTime: "6:00",
-        },
-        name: "aphiria-com-cluster",
-        nodePool: {
-            name: "worker-pool",
-            size: "s-2vcpu-2gb",
-        },
-        region: digitalocean.Region.NYC3,
-        routingAgent: {
-            enabled: false,
-        },
-        serviceSubnet: "10.245.0.0/16",
-        version: "1.34.1-do.0",
-        vpcUuid: "976f980d-dc84-11e8-80bc-3cfdfea9fba1",
-    },
-    {
-        protect: true, // Prevents accidental deletion
-    }
-);
+// Create production Kubernetes cluster
+const { cluster, kubeconfig: clusterKubeconfig } = createKubernetesCluster({
+    name: "aphiria-com-cluster",
+    region: "nyc3",
+    version: "1.34.1-do.0",
+    nodeSize: "s-2vcpu-2gb",
+    nodeCount: 1,
+    autoScale: true,
+    minNodes: 1,
+    maxNodes: 3,
+    vpcUuid: "976f980d-dc84-11e8-80bc-3cfdfea9fba1",
+});
 
 // Create Kubernetes provider using the cluster's kubeconfig
 const k8sProvider = new k8s.Provider(
     "production-k8s",
     {
-        kubeconfig: cluster.kubeConfigs[0].rawConfig,
+        kubeconfig: clusterKubeconfig,
         enableServerSideApply: true,
     },
     {
@@ -83,7 +55,7 @@ const webUrl = "https://www.aphiria.com";
 const apiUrl = "https://api.aphiria.com";
 
 // Create all infrastructure using a factory
-createStack(
+const stack = createStack(
     {
         env: "production",
         namespace: {
@@ -95,7 +67,6 @@ createStack(
             },
         },
         database: {
-            replicas: 2,
             persistentStorage: true,
             storageSize: "20Gi",
             dbUser: postgresqlUser,
@@ -105,12 +76,21 @@ createStack(
             tlsMode: "letsencrypt-prod",
             domains: ["aphiria.com", "*.aphiria.com"],
             dnsToken: certmanagerConfig.requireSecret("digitaloceanDnsToken"),
+            dns: {
+                domain: "aphiria.com",
+                records: [
+                    { name: "@", resourceName: "production-root-dns" },
+                    { name: "www", resourceName: "production-www-dns" },
+                    { name: "api", resourceName: "production-api-dns" },
+                ],
+                ttl: 300,
+            },
         },
         app: {
             webReplicas: 2,
             apiReplicas: 2,
-            webUrl: "https://www.aphiria.com",
-            apiUrl: "https://api.aphiria.com",
+            webUrl: webUrl,
+            apiUrl: apiUrl,
             webImage: webImageRef,
             apiImage: apiImageRef,
             cookieDomain: ".aphiria.com",
@@ -126,12 +106,9 @@ export { webUrl, apiUrl };
 export const namespace = "default";
 export const clusterId = cluster.id;
 export const clusterEndpoint = cluster.endpoint;
-export const kubeconfig = pulumi.secret(cluster.kubeConfigs[0].rawConfig);
+export const kubeconfig = pulumi.secret(clusterKubeconfig);
 export const gatewayName = "nginx-gateway";
 export const gatewayNamespace = "nginx-gateway";
-
-/**
- * TODO: Add when production uses factory pattern correctly (currently hardcoded in components)
- */
+export const gatewayIP = stack.gatewayIP;
 export const databaseName = "aphiria_production";
 export { webImageRef, apiImageRef };

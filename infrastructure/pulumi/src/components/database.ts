@@ -110,7 +110,7 @@ export function createPostgreSQL(args: PostgreSQLArgs): PostgreSQLResult {
                 labels,
             },
             spec: {
-                replicas: args.replicas,
+                replicas: 1, // Single replica - multi-replica requires StatefulSet + replication
                 selector: {
                     matchLabels: {
                         app: "db",

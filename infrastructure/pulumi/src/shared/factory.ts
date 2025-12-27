@@ -1,3 +1,5 @@
+import * as pulumi from "@pulumi/pulumi";
+import * as digitalocean from "@pulumi/digitalocean";
 import * as k8s from "@pulumi/kubernetes";
 import {
     installBaseHelmCharts,
@@ -11,6 +13,7 @@ import {
     createHTTPRoute,
     createHTTPSRedirectRoute,
     createWWWRedirectRoute,
+    createDNSRecords,
 } from "../components";
 import { StackConfig } from "./types";
 import {
@@ -28,6 +31,8 @@ export interface StackResources {
     helmCharts?: { certManager: k8s.helm.v3.Chart; nginxGateway: k8s.helm.v3.Chart };
     postgres?: PostgreSQLResult;
     gateway?: GatewayResult;
+    gatewayIP?: pulumi.Output<string>;
+    dnsRecords?: digitalocean.DnsRecord[];
     namespace?: NamespaceResult;
     dbInitJob?: k8s.batch.v1.Job;
     web?: WebDeploymentResult;
@@ -105,7 +110,6 @@ export function createStack(config: StackConfig, k8sProvider: k8s.Provider): Sta
         resources.postgres = createPostgreSQL({
             env: config.env,
             namespace,
-            replicas: config.database.replicas,
             persistentStorage: config.database.persistentStorage,
             storageSize: config.database.storageSize,
             dbUser: String(config.database.dbUser),
@@ -125,6 +129,26 @@ export function createStack(config: StackConfig, k8sProvider: k8s.Provider): Sta
             dnsToken: config.gateway.dnsToken,
             provider: k8sProvider,
         });
+
+        // Get LoadBalancer IP from nginx-gateway Service
+        const gatewayService = k8s.core.v1.Service.get(
+            "nginx-gateway-svc",
+            pulumi.interpolate`${gatewayNamespace}/nginx-gateway-nginx-gateway-fabric`,
+            { provider: k8sProvider }
+        );
+
+        resources.gatewayIP = gatewayService.status.loadBalancer.ingress[0].ip;
+
+        // Create DNS records if configured
+        if (config.gateway.dns) {
+            const dnsResult = createDNSRecords({
+                domain: config.gateway.dns.domain,
+                loadBalancerIp: resources.gatewayIP,
+                records: config.gateway.dns.records,
+                ttl: config.gateway.dns.ttl,
+            });
+            resources.dnsRecords = dnsResult.records;
+        }
     }
 
     // Deploy applications (skip for preview-base)

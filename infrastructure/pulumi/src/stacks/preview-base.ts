@@ -5,7 +5,6 @@
  */
 
 import * as pulumi from "@pulumi/pulumi";
-import * as digitalocean from "@pulumi/digitalocean";
 import * as k8s from "@pulumi/kubernetes";
 import { createKubernetesCluster } from "../components";
 import { createStack } from "../shared/factory";
@@ -42,13 +41,22 @@ const ghcrConfig = new pulumi.Config("ghcr");
 
 const postgresqlAdminUser = postgresqlConfig.require("user");
 const postgresqlAdminPassword = postgresqlConfig.requireSecret("password");
+const ghcrUsername = ghcrConfig.require("username");
+const ghcrToken = ghcrConfig.requireSecret("token");
 
 // Create base infrastructure using factory (no app deployment)
-createStack(
+const stack = createStack(
     {
         env: "preview",
+        namespace: {
+            name: "default",
+            imagePullSecret: {
+                registry: "ghcr.io",
+                username: ghcrUsername,
+                token: ghcrToken,
+            },
+        },
         database: {
-            replicas: 1,
             persistentStorage: true,
             storageSize: "20Gi",
             dbUser: postgresqlAdminUser,
@@ -61,54 +69,19 @@ createStack(
                 "*.pr-api.aphiria.com", // API preview URLs
             ],
             dnsToken: certmanagerConfig.requireSecret("digitaloceanDnsToken"),
+            dns: {
+                domain: "aphiria.com",
+                records: [
+                    { name: "*.pr", resourceName: "preview-web-dns" },
+                    { name: "*.pr-api", resourceName: "preview-api-dns" },
+                ],
+                ttl: 300,
+            },
         },
         // No app config - preview-base is infrastructure only
     },
     k8sProvider
 );
-
-// Create imagePullSecret for GitHub Container Registry
-// Required for preview-pr stacks to pull private images from ghcr.io
-new k8s.core.v1.Secret(
-    "ghcr-pull-secret",
-    {
-        metadata: {
-            name: "ghcr-pull-secret",
-            namespace: "default",
-        },
-        type: "kubernetes.io/dockerconfigjson",
-        stringData: {
-            ".dockerconfigjson": pulumi.interpolate`{"auths":{"ghcr.io":{"username":"${ghcrConfig.require("username")}","password":"${ghcrConfig.requireSecret("token")}"}}}`,
-        },
-    },
-    { provider: k8sProvider }
-);
-
-// Get LoadBalancer IP from nginx-gateway Service
-const gatewayService = k8s.core.v1.Service.get(
-    "nginx-gateway-svc",
-    pulumi.interpolate`nginx-gateway/nginx-gateway-nginx-gateway-fabric`,
-    { provider: k8sProvider }
-);
-
-const loadBalancerIp = gatewayService.status.loadBalancer.ingress[0].ip;
-
-// Create DNS wildcard records for preview environments
-new digitalocean.DnsRecord("preview-web-dns", {
-    domain: "aphiria.com",
-    type: "A",
-    name: "*.pr",
-    value: loadBalancerIp,
-    ttl: 300,
-});
-
-new digitalocean.DnsRecord("preview-api-dns", {
-    domain: "aphiria.com",
-    type: "A",
-    name: "*.pr-api",
-    value: loadBalancerIp,
-    ttl: 300,
-});
 
 // Outputs
 export const clusterId = cluster.id;
@@ -119,4 +92,5 @@ export const postgresqlPort = 5432;
 export { postgresqlAdminUser, postgresqlAdminPassword };
 export const gatewayName = "nginx-gateway";
 export const gatewayNamespace = "nginx-gateway";
+export const gatewayIP = stack.gatewayIP;
 export const namespace = "default";

@@ -33,20 +33,18 @@ describe("Types", () => {
     describe("DatabaseConfig", () => {
         it("should accept standard database configuration", () => {
             const config: DatabaseConfig = {
-                replicas: 2,
                 persistentStorage: true,
                 storageSize: "20Gi",
                 dbUser: "postgres",
                 dbPassword: "secret",
             };
 
-            expect(config.replicas).toBe(2);
             expect(config.persistentStorage).toBe(true);
+            expect(config.storageSize).toBe("20Gi");
         });
 
         it("should accept preview-pr database configuration", () => {
             const config: DatabaseConfig = {
-                replicas: 1,
                 persistentStorage: false,
                 storageSize: "1Gi",
                 dbUser: "postgres",
@@ -197,7 +195,6 @@ describe("Types", () => {
             const config: StackConfig = {
                 env: "local",
                 database: {
-                    replicas: 1,
                     persistentStorage: false,
                     storageSize: "1Gi",
                     dbUser: "postgres",
@@ -235,7 +232,6 @@ describe("Types", () => {
                     maxNodes: 5,
                 },
                 database: {
-                    replicas: 1,
                     persistentStorage: true,
                     storageSize: "10Gi",
                     dbUser: "postgres",
@@ -271,7 +267,6 @@ describe("Types", () => {
                     dbHost: "db.default.svc.cluster.local",
                     dbAdminUser: "postgres",
                     dbAdminPassword: "admin_secret",
-                    replicas: 1,
                     persistentStorage: false,
                     storageSize: "1Gi",
                     dbUser: "postgres",
@@ -310,7 +305,6 @@ describe("Types", () => {
                     maxNodes: 10,
                 },
                 database: {
-                    replicas: 2,
                     persistentStorage: true,
                     storageSize: "50Gi",
                     dbUser: "postgres",

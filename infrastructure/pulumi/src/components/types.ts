@@ -147,8 +147,6 @@ export interface PostgreSQLArgs {
     env: Environment;
     /** Kubernetes namespace */
     namespace: pulumi.Input<string>;
-    /** Number of replicas (1 for dev-local/preview, 2 for production) */
-    replicas: number;
     /** Enable persistent storage (false for dev-local, true for preview/production) */
     persistentStorage: boolean;
     /** Storage size (e.g., "10Gi") - only used if persistentStorage=true */

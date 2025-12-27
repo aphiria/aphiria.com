@@ -11,4 +11,5 @@ export * from "./api-deployment";
 export * from "./db-migration";
 export * from "./http-route";
 export * from "./gateway";
+export * from "./dns";
 export * from "./kubernetes";

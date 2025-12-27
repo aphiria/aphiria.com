@@ -72,7 +72,6 @@ const stack = createStack(
             },
         },
         database: {
-            replicas: 1,
             persistentStorage: false,
             storageSize: "1Gi",
             dbUser: postgresqlAdminUser,

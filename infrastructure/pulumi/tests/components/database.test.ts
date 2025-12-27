@@ -30,7 +30,6 @@ describe("createPostgreSQL", () => {
         const result = createPostgreSQL({
             env: "local",
             namespace: "default",
-            replicas: 1,
             persistentStorage: false,
             storageSize: "5Gi",
             dbUser: "postgres",
@@ -47,7 +46,6 @@ describe("createPostgreSQL", () => {
         const result = createPostgreSQL({
             env: "local",
             namespace: "test-namespace",
-            replicas: 1,
             persistentStorage: true,
             storageSize: "5Gi",
             dbUser: "postgres",
@@ -64,7 +62,6 @@ describe("createPostgreSQL", () => {
         const result = createPostgreSQL({
             env: "production",
             namespace: "prod-namespace",
-            replicas: 2,
             persistentStorage: true,
             storageSize: "50Gi",
             dbUser: "postgres",
@@ -81,7 +78,6 @@ describe("createPostgreSQL", () => {
         const result = createPostgreSQL({
             env: "local",
             namespace: "default",
-            replicas: 1,
             persistentStorage: false,
             storageSize: "5Gi",
             dbUser: "postgres",
@@ -100,7 +96,6 @@ describe("createPostgreSQL", () => {
         const result = createPostgreSQL({
             env: "local",
             namespace: "default",
-            replicas: 1,
             persistentStorage: true,
             dbUser: "postgres",
             dbPassword: pulumi.output("password"),
@@ -115,7 +110,6 @@ describe("createPostgreSQL", () => {
         const result = createPostgreSQL({
             env: "production",
             namespace: "default",
-            replicas: 2,
             persistentStorage: true,
             dbUser: "postgres",
             dbPassword: pulumi.output("password"),

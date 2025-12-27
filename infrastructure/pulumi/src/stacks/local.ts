@@ -14,7 +14,6 @@ const k8sProvider = new k8s.Provider("minikube", {
 
 // Get PostgreSQL credentials from config
 const postgresqlConfig = new pulumi.Config("postgresql");
-
 const postgresqlUser = postgresqlConfig.get("user") || "postgres";
 const postgresqlPassword = postgresqlConfig.get("password") || "postgres";
 
@@ -28,7 +27,6 @@ createStack(
         env: "local",
         skipBaseInfrastructure: true, // Helm charts already installed via minikube setup
         database: {
-            replicas: 1,
             persistentStorage: true,
             storageSize: "5Gi",
             dbUser: postgresqlUser,

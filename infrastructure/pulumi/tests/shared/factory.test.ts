@@ -46,7 +46,6 @@ describe("createStack factory", () => {
                         dbHost: pulumi.output("db.default.svc.cluster.local"),
                         dbAdminUser: pulumi.output("postgres"),
                         dbAdminPassword: pulumi.output("password"),
-                        replicas: 1,
                         persistentStorage: false,
                         storageSize: "1Gi",
                         dbUser: pulumi.output("postgres"),
@@ -80,7 +79,6 @@ describe("createStack factory", () => {
                 {
                     env: "local",
                     database: {
-                        replicas: 1,
                         persistentStorage: false,
                         storageSize: "1Gi",
                         dbUser: pulumi.output("postgres"),
@@ -104,7 +102,6 @@ describe("createStack factory", () => {
                 {
                     env: "local",
                     database: {
-                        replicas: 1,
                         persistentStorage: false,
                         storageSize: "1Gi",
                         dbUser: pulumi.output("postgres"),
@@ -133,7 +130,6 @@ describe("createStack factory", () => {
                         dbHost: pulumi.output("db.default.svc.cluster.local"),
                         dbAdminUser: pulumi.output("postgres"),
                         dbAdminPassword: pulumi.output("password"),
-                        replicas: 1,
                         persistentStorage: false,
                         storageSize: "1Gi",
                         dbUser: pulumi.output("postgres"),
@@ -158,7 +154,6 @@ describe("createStack factory", () => {
                 {
                     env: "local",
                     database: {
-                        replicas: 1,
                         persistentStorage: false,
                         storageSize: "1Gi",
                         dbUser: pulumi.output("postgres"),
@@ -206,7 +201,6 @@ describe("createStack factory", () => {
                 {
                     env: "preview",
                     database: {
-                        replicas: 1,
                         persistentStorage: true,
                         storageSize: "10Gi",
                         dbUser: pulumi.output("postgres"),
@@ -231,7 +225,6 @@ describe("createStack factory", () => {
                 {
                     env: "local",
                     database: {
-                        replicas: 1,
                         persistentStorage: false,
                         storageSize: "1Gi",
                         dbUser: pulumi.output("postgres"),
@@ -272,7 +265,6 @@ describe("createStack factory", () => {
                         dbHost: pulumi.output("db.default.svc.cluster.local"),
                         dbAdminUser: pulumi.output("admin"),
                         dbAdminPassword: pulumi.output("admin-password"),
-                        replicas: 1,
                         persistentStorage: false,
                         storageSize: "1Gi",
                         dbUser: pulumi.output("app-user"),
@@ -304,7 +296,6 @@ describe("createStack factory", () => {
                 {
                     env: "local",
                     database: {
-                        replicas: 1,
                         persistentStorage: false,
                         storageSize: "1Gi",
                         dbUser: pulumi.output("postgres"),
@@ -349,7 +340,6 @@ describe("createStack factory", () => {
                         dbHost: pulumi.output("db.default.svc.cluster.local"),
                         dbAdminUser: pulumi.output("admin"),
                         dbAdminPassword: pulumi.output("admin-password"),
-                        replicas: 1,
                         persistentStorage: false,
                         storageSize: "1Gi",
                         dbUser: pulumi.output("postgres"),
@@ -391,7 +381,6 @@ describe("createStack factory", () => {
                         dbHost: pulumi.output("db.default.svc.cluster.local"),
                         dbAdminUser: pulumi.output("admin"),
                         dbAdminPassword: pulumi.output("admin-password"),
-                        replicas: 1,
                         persistentStorage: false,
                         storageSize: "1Gi",
                         dbUser: pulumi.output("postgres"),
@@ -423,7 +412,6 @@ describe("createStack factory", () => {
                 {
                     env: "local",
                     database: {
-                        replicas: 1,
                         persistentStorage: false,
                         storageSize: "1Gi",
                         dbUser: pulumi.output("postgres"),
@@ -454,7 +442,6 @@ describe("createStack factory", () => {
                 {
                     env: "production",
                     database: {
-                        replicas: 2,
                         persistentStorage: true,
                         storageSize: "50Gi",
                         dbUser: pulumi.output("postgres"),
@@ -490,7 +477,6 @@ describe("createStack factory", () => {
                     env: "preview",
                     skipBaseInfrastructure: false,
                     database: {
-                        replicas: 1,
                         persistentStorage: true,
                         storageSize: "10Gi",
                         dbUser: pulumi.output("postgres"),
@@ -522,6 +508,41 @@ describe("createStack factory", () => {
                 });
         });
 
+        it("should create DNS records when gateway.dns is configured", () => {
+            const stack = createStack(
+                {
+                    env: "production",
+                    skipBaseInfrastructure: false,
+                    database: {
+                        persistentStorage: true,
+                        storageSize: "20Gi",
+                        dbUser: pulumi.output("postgres"),
+                        dbPassword: pulumi.output("password"),
+                    },
+                    gateway: {
+                        tlsMode: "letsencrypt-prod",
+                        domains: ["aphiria.com", "*.aphiria.com"],
+                        dnsToken: pulumi.output("fake-dns-token"),
+                        dns: {
+                            domain: "aphiria.com",
+                            records: [
+                                { name: "@", resourceName: "production-root-dns" },
+                                { name: "www", resourceName: "production-www-dns" },
+                                { name: "api", resourceName: "production-api-dns" },
+                            ],
+                            ttl: 300,
+                        },
+                    },
+                },
+                k8sProvider
+            );
+
+            expect(stack.gateway).toBeDefined();
+            expect(stack.gatewayIP).toBeDefined();
+            expect(stack.dnsRecords).toBeDefined();
+            expect(stack.dnsRecords?.length).toBe(3);
+        });
+
         it("should skip Helm charts when skipBaseInfrastructure is true", () => {
             const stack = createStack(
                 {
@@ -536,7 +557,6 @@ describe("createStack factory", () => {
                         dbHost: pulumi.output("db.default.svc.cluster.local"),
                         dbAdminUser: pulumi.output("postgres"),
                         dbAdminPassword: pulumi.output("password"),
-                        replicas: 1,
                         persistentStorage: false,
                         storageSize: "1Gi",
                         dbUser: pulumi.output("postgres"),

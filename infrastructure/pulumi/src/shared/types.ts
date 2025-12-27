@@ -30,8 +30,6 @@ export interface KubernetesClusterConfig {
  * Database configuration for PostgreSQL
  */
 export interface DatabaseConfig {
-    /** Number of replicas (1 for dev/preview, 2+ for production) */
-    replicas: number;
     /** Enable persistent storage (false for ephemeral dev, true for preview/production) */
     persistentStorage: boolean;
     /** Storage size (e.g., "5Gi", "20Gi") */
@@ -63,6 +61,20 @@ export interface GatewayConfig {
     domains: string[];
     /** DigitalOcean DNS API token for DNS-01 ACME challenges (required for wildcard certs) */
     dnsToken?: pulumi.Input<string>;
+    /** DNS records to create pointing to gateway LoadBalancer IP (optional) */
+    dns?: {
+        /** Domain name (e.g., "aphiria.com") */
+        domain: string;
+        /** DNS records to create */
+        records: Array<{
+            /** Subdomain or wildcard (e.g., "@", "www", "api", "*.pr") */
+            name: string;
+            /** Pulumi resource name (e.g., "production-www-dns") */
+            resourceName: string;
+        }>;
+        /** TTL in seconds (default: 300) */
+        ttl?: number;
+    };
 }
 
 /**
