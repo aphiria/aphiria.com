@@ -8,7 +8,9 @@ describe("createDBMigrationJob", () => {
 
     beforeAll(() => {
         pulumi.runtime.setMocks({
-            newResource: (args: pulumi.runtime.MockResourceArgs): { id: string; state: Record<string, unknown> } => {
+            newResource: (
+                args: pulumi.runtime.MockResourceArgs
+            ): { id: string; state: Record<string, unknown> } => {
                 return {
                     id: args.inputs.name ? `${args.name}-id` : `${args.type}-id`,
                     state: {
@@ -128,7 +130,7 @@ describe("createDBMigrationJob", () => {
             runSeeder: false,
             labels: {
                 "custom-label": "custom-value",
-                "environment": "testing",
+                environment: "testing",
             },
             provider: k8sProvider,
         });
@@ -137,11 +139,11 @@ describe("createDBMigrationJob", () => {
 
         job.metadata.labels.apply((labels: any) => {
             expect(labels).toMatchObject({
-                "app": "db-migration",
+                app: "db-migration",
                 "app.kubernetes.io/name": "aphiria-db-migration",
                 "app.kubernetes.io/component": "database",
                 "custom-label": "custom-value",
-                "environment": "testing",
+                environment: "testing",
             });
             done();
         });

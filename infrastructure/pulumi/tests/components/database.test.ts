@@ -8,7 +8,9 @@ describe("createPostgreSQL", () => {
 
     beforeAll(() => {
         pulumi.runtime.setMocks({
-            newResource: (args: pulumi.runtime.MockResourceArgs): { id: string; state: Record<string, unknown> } => {
+            newResource: (
+                args: pulumi.runtime.MockResourceArgs
+            ): { id: string; state: Record<string, unknown> } => {
                 return {
                     id: args.inputs.name ? `${args.name}-id` : `${args.type}-id`,
                     state: {
@@ -86,7 +88,7 @@ describe("createPostgreSQL", () => {
             dbPassword: pulumi.output("password"),
             labels: {
                 "custom-label": "custom-value",
-                "environment": "test",
+                environment: "test",
             },
             provider: k8sProvider,
         });

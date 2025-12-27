@@ -8,7 +8,9 @@ describe("createDatabaseCreationJob", () => {
 
     beforeAll(() => {
         pulumi.runtime.setMocks({
-            newResource: (args: pulumi.runtime.MockResourceArgs): { id: string; state: Record<string, unknown> } => {
+            newResource: (
+                args: pulumi.runtime.MockResourceArgs
+            ): { id: string; state: Record<string, unknown> } => {
                 return {
                     id: args.inputs.name ? `${args.name}-id` : `${args.type}-id`,
                     state: {
@@ -110,7 +112,7 @@ describe("createDatabaseCreationJob", () => {
 
         job.metadata.labels.apply((jobLabels: any) => {
             expect(jobLabels).toMatchObject({
-                "app": "db-init",
+                app: "db-init",
                 "app.kubernetes.io/name": "database-creation",
                 "app.kubernetes.io/component": "database",
                 "custom-label": "custom-value",

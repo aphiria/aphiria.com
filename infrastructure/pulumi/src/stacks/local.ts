@@ -23,30 +23,33 @@ const webUrl = "https://www.aphiria.com";
 const apiUrl = "https://api.aphiria.com";
 
 // Create all infrastructure using a factory
-createStack({
-    env: "local",
-    skipBaseInfrastructure: true, // Helm charts already installed via minikube setup
-    database: {
-        replicas: 1,
-        persistentStorage: true,
-        storageSize: "5Gi",
-        dbUser: postgresqlUser,
-        dbPassword: postgresqlPassword,
+createStack(
+    {
+        env: "local",
+        skipBaseInfrastructure: true, // Helm charts already installed via minikube setup
+        database: {
+            replicas: 1,
+            persistentStorage: true,
+            storageSize: "5Gi",
+            dbUser: postgresqlUser,
+            dbPassword: postgresqlPassword,
+        },
+        gateway: {
+            tlsMode: "self-signed",
+            domains: ["aphiria.com", "*.aphiria.com"],
+        },
+        app: {
+            webReplicas: 1,
+            apiReplicas: 1,
+            webUrl: webUrl,
+            apiUrl: apiUrl,
+            webImage: "aphiria.com-web:latest",
+            apiImage: "aphiria.com-api:latest",
+            cookieDomain: ".aphiria.com",
+        },
     },
-    gateway: {
-        tlsMode: "self-signed",
-        domains: ["aphiria.com", "*.aphiria.com"],
-    },
-    app: {
-        webReplicas: 1,
-        apiReplicas: 1,
-        webUrl: webUrl,
-        apiUrl: apiUrl,
-        webImage: "aphiria.com-web:latest",
-        apiImage: "aphiria.com-api:latest",
-        cookieDomain: ".aphiria.com",
-    },
-}, k8sProvider);
+    k8sProvider
+);
 
 // Outputs
 export { webUrl, apiUrl };

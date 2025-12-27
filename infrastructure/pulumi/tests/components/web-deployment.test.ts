@@ -8,7 +8,9 @@ describe("createWebDeployment", () => {
 
     beforeAll(() => {
         pulumi.runtime.setMocks({
-            newResource: (args: pulumi.runtime.MockResourceArgs): { id: string; state: Record<string, unknown> } => {
+            newResource: (
+                args: pulumi.runtime.MockResourceArgs
+            ): { id: string; state: Record<string, unknown> } => {
                 return {
                     id: args.inputs.name ? `${args.name}-id` : `${args.type}-id`,
                     state: {
@@ -41,13 +43,20 @@ describe("createWebDeployment", () => {
         expect(result.service).toBeDefined();
         expect(result.configMap).toBeDefined();
 
-        pulumi.all([result.deployment.name, result.service.name, result.configMap.name, result.deployment.namespace]).apply(([deploymentName, serviceName, configMapName, namespace]) => {
-            expect(deploymentName).toBe("web");
-            expect(serviceName).toBe("web");
-            expect(configMapName).toBe("js-config");
-            expect(namespace).toBe("web-ns");
-            done();
-        });
+        pulumi
+            .all([
+                result.deployment.name,
+                result.service.name,
+                result.configMap.name,
+                result.deployment.namespace,
+            ])
+            .apply(([deploymentName, serviceName, configMapName, namespace]) => {
+                expect(deploymentName).toBe("web");
+                expect(serviceName).toBe("web");
+                expect(configMapName).toBe("js-config");
+                expect(namespace).toBe("web-ns");
+                done();
+            });
     });
 
     it("should create PodDisruptionBudget when configured", (done) => {
@@ -68,11 +77,13 @@ describe("createWebDeployment", () => {
 
         expect(result.podDisruptionBudget).toBeDefined();
 
-        pulumi.all([result.podDisruptionBudget!.name, result.podDisruptionBudget!.namespace]).apply(([pdbName, pdbNamespace]) => {
-            expect(pdbName).toBe("web");
-            expect(pdbNamespace).toBe("prod-web");
-            done();
-        });
+        pulumi
+            .all([result.podDisruptionBudget!.name, result.podDisruptionBudget!.namespace])
+            .apply(([pdbName, pdbNamespace]) => {
+                expect(pdbName).toBe("web");
+                expect(pdbNamespace).toBe("prod-web");
+                done();
+            });
     });
 
     it("should not create PodDisruptionBudget when not configured", () => {
@@ -166,7 +177,7 @@ describe("createWebDeployment", () => {
             },
             labels: {
                 "custom-label": "custom-value",
-                "environment": "testing",
+                environment: "testing",
             },
             provider: k8sProvider,
         });
@@ -175,11 +186,11 @@ describe("createWebDeployment", () => {
 
         result.deployment.labels.apply((deploymentLabels: any) => {
             expect(deploymentLabels).toMatchObject({
-                "app": "web",
+                app: "web",
                 "app.kubernetes.io/name": "aphiria-web",
                 "app.kubernetes.io/component": "frontend",
                 "custom-label": "custom-value",
-                "environment": "testing",
+                environment: "testing",
             });
             done();
         });

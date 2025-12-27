@@ -8,7 +8,9 @@ describe("createStack factory", () => {
 
     beforeAll(() => {
         pulumi.runtime.setMocks({
-            newResource: (args: pulumi.runtime.MockResourceArgs): { id: string; state: Record<string, unknown> } => {
+            newResource: (
+                args: pulumi.runtime.MockResourceArgs
+            ): { id: string; state: Record<string, unknown> } => {
                 return {
                     id: args.inputs.name ? `${args.name}-id` : `${args.type}-id`,
                     state: {
@@ -61,14 +63,16 @@ describe("createStack factory", () => {
             expect(stack.namespace).toBeDefined();
             expect(stack.namespace?.resourceQuota).toBeDefined();
 
-            pulumi.all([
-                stack.namespace!.namespace.metadata.name,
-                stack.namespace!.resourceQuota!.metadata.name
-            ]).apply(([nsName, quotaName]) => {
-                expect(nsName).toBe("preview-pr-123");
-                expect(quotaName).toBe("preview-pr-123-quota");
-                done();
-            });
+            pulumi
+                .all([
+                    stack.namespace!.namespace.metadata.name,
+                    stack.namespace!.resourceQuota!.metadata.name,
+                ])
+                .apply(([nsName, quotaName]) => {
+                    expect(nsName).toBe("preview-pr-123");
+                    expect(quotaName).toBe("preview-pr-123-quota");
+                    done();
+                });
         });
 
         it("should not create namespace when not configured", () => {
@@ -183,16 +187,18 @@ describe("createStack factory", () => {
             expect(stack.webRoute).toBeDefined();
             expect(stack.apiRoute).toBeDefined();
 
-            pulumi.all([
-                stack.web!.deployment.name,
-                stack.api!.deployment.name,
-                stack.migration!.metadata.name
-            ]).apply(([webName, apiName, migrationName]) => {
-                expect(webName).toBe("web");
-                expect(apiName).toBe("api");
-                expect(migrationName).toBe("db-migration");
-                done();
-            });
+            pulumi
+                .all([
+                    stack.web!.deployment.name,
+                    stack.api!.deployment.name,
+                    stack.migration!.metadata.name,
+                ])
+                .apply(([webName, apiName, migrationName]) => {
+                    expect(webName).toBe("web");
+                    expect(apiName).toBe("api");
+                    expect(migrationName).toBe("db-migration");
+                    done();
+                });
         });
 
         it("should not deploy applications when app config not provided", () => {
@@ -502,16 +508,18 @@ describe("createStack factory", () => {
             expect(stack.helmCharts).toBeDefined();
             expect(stack.gateway).toBeDefined();
 
-            pulumi.all([
-                stack.helmCharts!.certManager.urn,
-                stack.helmCharts!.nginxGateway.urn,
-                stack.gateway!.gateway
-            ]).apply(([certUrn, nginxUrn, gwUrn]) => {
-                expect(certUrn).toContain("cert-manager");
-                expect(nginxUrn).toContain("nginx-gateway");
-                expect(gwUrn).toContain("gateway");
-                done();
-            });
+            pulumi
+                .all([
+                    stack.helmCharts!.certManager.urn,
+                    stack.helmCharts!.nginxGateway.urn,
+                    stack.gateway!.gateway,
+                ])
+                .apply(([certUrn, nginxUrn, gwUrn]) => {
+                    expect(certUrn).toContain("cert-manager");
+                    expect(nginxUrn).toContain("nginx-gateway");
+                    expect(gwUrn).toContain("gateway");
+                    done();
+                });
         });
 
         it("should skip Helm charts when skipBaseInfrastructure is true", () => {

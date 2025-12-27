@@ -132,7 +132,9 @@ export function createStack(config: StackConfig, k8sProvider: k8s.Provider): Sta
         // Determine database connection details
         const dbHost = config.database.createDatabase
             ? config.database.dbHost!
-            : (config.env === "local" ? "db" : "db.default.svc.cluster.local");
+            : config.env === "local"
+              ? "db"
+              : "db.default.svc.cluster.local";
 
         const dbName = config.database.databaseName || "postgres";
         const dbUser = config.database.createDatabase
@@ -153,11 +155,14 @@ export function createStack(config: StackConfig, k8sProvider: k8s.Provider): Sta
                 cookieDomain: config.app.cookieDomain,
             },
             baseUrl: config.app.webUrl,
-            envConfig: config.env === "preview" && config.namespace ? {
-                appEnv: "preview",
-                logLevel: "debug",
-                prNumber: config.namespace.name.replace("preview-pr-", ""),
-            } : undefined,
+            envConfig:
+                config.env === "preview" && config.namespace
+                    ? {
+                          appEnv: "preview",
+                          logLevel: "debug",
+                          prNumber: config.namespace.name.replace("preview-pr-", ""),
+                      }
+                    : undefined,
             imagePullSecrets: config.namespace?.imagePullSecret ? ["ghcr-pull-secret"] : undefined,
             resources: config.app.webResources,
             podDisruptionBudget: config.app.webPodDisruptionBudget,
@@ -176,12 +181,15 @@ export function createStack(config: StackConfig, k8sProvider: k8s.Provider): Sta
             dbPassword,
             apiUrl: config.app.apiUrl,
             webUrl: config.app.webUrl,
-            envConfig: config.env === "preview" && config.namespace ? {
-                appEnv: "preview",
-                logLevel: "debug",
-                cookieDomain: config.app.cookieDomain,
-                prNumber: config.namespace.name.replace("preview-pr-", ""),
-            } : undefined,
+            envConfig:
+                config.env === "preview" && config.namespace
+                    ? {
+                          appEnv: "preview",
+                          logLevel: "debug",
+                          cookieDomain: config.app.cookieDomain,
+                          prNumber: config.namespace.name.replace("preview-pr-", ""),
+                      }
+                    : undefined,
             imagePullSecrets: config.namespace?.imagePullSecret ? ["ghcr-pull-secret"] : undefined,
             resources: config.app.apiResources,
             podDisruptionBudget: config.app.apiPodDisruptionBudget,

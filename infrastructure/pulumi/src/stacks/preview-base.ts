@@ -24,12 +24,16 @@ const { cluster, kubeconfig: clusterKubeconfig } = createKubernetesCluster({
 });
 
 // Create a Kubernetes provider using the cluster's kubeconfig
-const k8sProvider = new k8s.Provider("preview-k8s", {
-    kubeconfig: clusterKubeconfig,
-    enableServerSideApply: true,
-}, {
-    dependsOn: [cluster],
-});
+const k8sProvider = new k8s.Provider(
+    "preview-k8s",
+    {
+        kubeconfig: clusterKubeconfig,
+        enableServerSideApply: true,
+    },
+    {
+        dependsOn: [cluster],
+    }
+);
 
 // Get configuration
 const postgresqlConfig = new pulumi.Config("postgresql");
@@ -40,38 +44,45 @@ const postgresqlAdminUser = postgresqlConfig.require("user");
 const postgresqlAdminPassword = postgresqlConfig.requireSecret("password");
 
 // Create base infrastructure using factory (no app deployment)
-createStack({
-    env: "preview",
-    database: {
-        replicas: 1,
-        persistentStorage: true,
-        storageSize: "20Gi",
-        dbUser: postgresqlAdminUser,
-        dbPassword: postgresqlAdminPassword,
+createStack(
+    {
+        env: "preview",
+        database: {
+            replicas: 1,
+            persistentStorage: true,
+            storageSize: "20Gi",
+            dbUser: postgresqlAdminUser,
+            dbPassword: postgresqlAdminPassword,
+        },
+        gateway: {
+            tlsMode: "letsencrypt-prod",
+            domains: [
+                "*.pr.aphiria.com", // Web preview URLs
+                "*.pr-api.aphiria.com", // API preview URLs
+            ],
+            dnsToken: certmanagerConfig.requireSecret("digitaloceanDnsToken"),
+        },
+        // No app config - preview-base is infrastructure only
     },
-    gateway: {
-        tlsMode: "letsencrypt-prod",
-        domains: [
-            "*.pr.aphiria.com",      // Web preview URLs
-            "*.pr-api.aphiria.com",  // API preview URLs
-        ],
-        dnsToken: certmanagerConfig.requireSecret("digitaloceanDnsToken"),
-    },
-    // No app config - preview-base is infrastructure only
-}, k8sProvider);
+    k8sProvider
+);
 
 // Create imagePullSecret for GitHub Container Registry
 // Required for preview-pr stacks to pull private images from ghcr.io
-new k8s.core.v1.Secret("ghcr-pull-secret", {
-    metadata: {
-        name: "ghcr-pull-secret",
-        namespace: "default",
+new k8s.core.v1.Secret(
+    "ghcr-pull-secret",
+    {
+        metadata: {
+            name: "ghcr-pull-secret",
+            namespace: "default",
+        },
+        type: "kubernetes.io/dockerconfigjson",
+        stringData: {
+            ".dockerconfigjson": pulumi.interpolate`{"auths":{"ghcr.io":{"username":"${ghcrConfig.require("username")}","password":"${ghcrConfig.requireSecret("token")}"}}}`,
+        },
     },
-    type: "kubernetes.io/dockerconfigjson",
-    stringData: {
-        ".dockerconfigjson": pulumi.interpolate`{"auths":{"ghcr.io":{"username":"${ghcrConfig.require("username")}","password":"${ghcrConfig.requireSecret("token")}"}}}`,
-    },
-}, { provider: k8sProvider });
+    { provider: k8sProvider }
+);
 
 // Get LoadBalancer IP from nginx-gateway Service
 const gatewayService = k8s.core.v1.Service.get(

@@ -8,7 +8,9 @@ describe("createGateway", () => {
 
     beforeAll(() => {
         pulumi.runtime.setMocks({
-            newResource: (args: pulumi.runtime.MockResourceArgs): { id: string; state: Record<string, unknown> } => {
+            newResource: (
+                args: pulumi.runtime.MockResourceArgs
+            ): { id: string; state: Record<string, unknown> } => {
                 return {
                     id: args.inputs.name ? `${args.name}-id` : `${args.type}-id`,
                     state: {
@@ -132,7 +134,7 @@ describe("createGateway", () => {
             domains: ["*.aphiria.com"],
             labels: {
                 "custom-label": "custom-value",
-                "environment": "testing",
+                environment: "testing",
             },
             provider: k8sProvider,
         });

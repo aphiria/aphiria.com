@@ -30,9 +30,7 @@ export function installCertManager(
                 crds: {
                     enabled: true,
                 },
-                extraArgs: [
-                    "--feature-gates=ExperimentalGatewayAPISupport=true",
-                ],
+                extraArgs: ["--feature-gates=ExperimentalGatewayAPISupport=true"],
                 ...(args.values || {}),
             },
         },
@@ -43,7 +41,6 @@ export function installCertManager(
         }
     );
 }
-
 
 /** Installs nginx-gateway-fabric (Gateway API implementation) */
 export function installNginxGateway(

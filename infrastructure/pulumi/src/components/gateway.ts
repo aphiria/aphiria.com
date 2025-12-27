@@ -33,8 +33,8 @@ export function createGateway(args: GatewayArgs): GatewayResult {
     if (wildcardDomain && args.tlsMode !== "self-signed" && !args.dnsToken) {
         throw new Error(
             `Wildcard domain "${wildcardDomain}" requires DNS-01 ACME challenge. ` +
-            `You must provide dnsToken for DigitalOcean DNS API access. ` +
-            `HTTP-01 challenge cannot validate wildcard certificates.`
+                `You must provide dnsToken for DigitalOcean DNS API access. ` +
+                `HTTP-01 challenge cannot validate wildcard certificates.`
         );
     }
 
@@ -50,10 +50,13 @@ export function createGateway(args: GatewayArgs): GatewayResult {
     if (args.tlsMode === "self-signed") {
         // Create self-signed issuer and certificate for dev-local
         createSelfSignedIssuer(args.provider);
-        certificate = createSelfSignedCert({
-            namespace: args.namespace,
-            domains: args.domains,
-        }, args.provider);
+        certificate = createSelfSignedCert(
+            {
+                namespace: args.namespace,
+                domains: args.domains,
+            },
+            args.provider
+        );
     } else {
         // letsencrypt-prod only (staging removed - not used in any stacks)
         const issuerName = "letsencrypt-prod";
@@ -61,78 +64,92 @@ export function createGateway(args: GatewayArgs): GatewayResult {
 
         // Create Secret for DigitalOcean DNS token if provided (for DNS-01 challenges)
         if (args.dnsToken) {
-            new k8s.core.v1.Secret("digitalocean-dns-token", {
-                metadata: {
-                    name: "digitalocean-dns-token",
-                    namespace: "cert-manager",
+            new k8s.core.v1.Secret(
+                "digitalocean-dns-token",
+                {
+                    metadata: {
+                        name: "digitalocean-dns-token",
+                        namespace: "cert-manager",
+                    },
+                    stringData: {
+                        "access-token": args.dnsToken,
+                    },
                 },
-                stringData: {
-                    "access-token": args.dnsToken,
-                },
-            }, { provider: args.provider });
+                { provider: args.provider }
+            );
         }
 
         // Create ClusterIssuer for Let's Encrypt
-        const clusterIssuer = new k8s.apiextensions.CustomResource("cert-issuer", {
-            apiVersion: "cert-manager.io/v1",
-            kind: "ClusterIssuer",
-            metadata: {
-                name: issuerName,
-            },
-            spec: {
-                acme: {
-                    server: acmeServer,
-                    email: "admin@aphiria.com", // Update this email
-                    privateKeySecretRef: {
-                        name: `${issuerName}-account-key`,
+        const clusterIssuer = new k8s.apiextensions.CustomResource(
+            "cert-issuer",
+            {
+                apiVersion: "cert-manager.io/v1",
+                kind: "ClusterIssuer",
+                metadata: {
+                    name: issuerName,
+                },
+                spec: {
+                    acme: {
+                        server: acmeServer,
+                        email: "admin@aphiria.com", // Update this email
+                        privateKeySecretRef: {
+                            name: `${issuerName}-account-key`,
+                        },
+                        solvers: args.dnsToken
+                            ? [
+                                  {
+                                      dns01: {
+                                          digitalocean: {
+                                              tokenSecretRef: {
+                                                  name: "digitalocean-dns-token",
+                                                  key: "access-token",
+                                              },
+                                          },
+                                      },
+                                  },
+                              ]
+                            : [
+                                  {
+                                      http01: {
+                                          gatewayHTTPRoute: {
+                                              parentRefs: [
+                                                  {
+                                                      name: args.name,
+                                                      namespace: args.namespace,
+                                                      kind: "Gateway",
+                                                  },
+                                              ],
+                                          },
+                                      },
+                                  },
+                              ],
                     },
-                    solvers: args.dnsToken ? [
-                        {
-                            dns01: {
-                                digitalocean: {
-                                    tokenSecretRef: {
-                                        name: "digitalocean-dns-token",
-                                        key: "access-token",
-                                    },
-                                },
-                            },
-                        },
-                    ] : [
-                        {
-                            http01: {
-                                gatewayHTTPRoute: {
-                                    parentRefs: [
-                                        {
-                                            name: args.name,
-                                            namespace: args.namespace,
-                                            kind: "Gateway",
-                                        },
-                                    ],
-                                },
-                            },
-                        },
-                    ],
                 },
             },
-        }, { provider: args.provider });
+            { provider: args.provider }
+        );
 
         // Create Certificate resource for Let's Encrypt
-        certificate = new k8s.apiextensions.CustomResource("tls-cert", {
-            apiVersion: "cert-manager.io/v1",
-            kind: "Certificate",
-            metadata: {
-                name: "tls-cert",
-                namespace: args.namespace,
-            },
-            spec: {
-                secretName: "tls-cert",
-                dnsNames: args.domains,
-                issuerRef: {
-                    name: issuerName,
-                    kind: "ClusterIssuer",
+        certificate = new k8s.apiextensions.CustomResource(
+            "tls-cert",
+            {
+                apiVersion: "cert-manager.io/v1",
+                kind: "Certificate",
+                metadata: {
+                    name: "tls-cert",
+                    namespace: args.namespace,
+                },
+                spec: {
+                    secretName: "tls-cert",
+                    dnsNames: args.domains,
+                    issuerRef: {
+                        name: issuerName,
+                        kind: "ClusterIssuer",
+                    },
                 },
             },
-        }, { provider: args.provider, dependsOn: [clusterIssuer] });
+            { provider: args.provider, dependsOn: [clusterIssuer] }
+        );
     }
 
     // Create Gateway
@@ -173,7 +190,10 @@ export function createGateway(args: GatewayArgs): GatewayResult {
                         : []),
                     // Create HTTP listener for EACH wildcard domain
                     ...wildcardDomains.map((domain, index) => ({
-                        name: wildcardDomains.length === 1 ? "http-subdomains" : `http-subdomains-${index + 1}`,
+                        name:
+                            wildcardDomains.length === 1
+                                ? "http-subdomains"
+                                : `http-subdomains-${index + 1}`,
                         hostname: domain,
                         port: 80,
                         protocol: "HTTP" as const,
@@ -209,7 +229,10 @@ export function createGateway(args: GatewayArgs): GatewayResult {
                         : []),
                     // Create HTTPS listener for EACH wildcard domain
                     ...wildcardDomains.map((domain, index) => ({
-                        name: wildcardDomains.length === 1 ? "https-subdomains" : `https-subdomains-${index + 1}`,
+                        name:
+                            wildcardDomains.length === 1
+                                ? "https-subdomains"
+                                : `https-subdomains-${index + 1}`,
                         hostname: domain,
                         port: 443,
                         protocol: "HTTPS" as const,
@@ -248,35 +271,46 @@ export interface SelfSignedCertArgs {
     domains: string[];
 }
 
-export function createSelfSignedCert(args: SelfSignedCertArgs, provider: k8s.Provider): k8s.apiextensions.CustomResource {
-    return new k8s.apiextensions.CustomResource("tls-cert", {
-        apiVersion: "cert-manager.io/v1",
-        kind: "Certificate",
-        metadata: {
-            name: "tls-cert",
-            namespace: args.namespace,
-        },
-        spec: {
-            secretName: "tls-cert",
-            dnsNames: args.domains,
-            issuerRef: {
-                name: "selfsigned-issuer",
-                kind: "ClusterIssuer",
+export function createSelfSignedCert(
+    args: SelfSignedCertArgs,
+    provider: k8s.Provider
+): k8s.apiextensions.CustomResource {
+    return new k8s.apiextensions.CustomResource(
+        "tls-cert",
+        {
+            apiVersion: "cert-manager.io/v1",
+            kind: "Certificate",
+            metadata: {
+                name: "tls-cert",
+                namespace: args.namespace,
+            },
+            spec: {
+                secretName: "tls-cert",
+                dnsNames: args.domains,
+                issuerRef: {
+                    name: "selfsigned-issuer",
+                    kind: "ClusterIssuer",
+                },
             },
         },
-    }, { provider });
+        { provider }
+    );
 }
 
 /** Creates self-signed ClusterIssuer (required for self-signed certs) */
 export function createSelfSignedIssuer(provider: k8s.Provider): k8s.apiextensions.CustomResource {
-    return new k8s.apiextensions.CustomResource("selfsigned-issuer", {
-        apiVersion: "cert-manager.io/v1",
-        kind: "ClusterIssuer",
-        metadata: {
-            name: "selfsigned-issuer",
+    return new k8s.apiextensions.CustomResource(
+        "selfsigned-issuer",
+        {
+            apiVersion: "cert-manager.io/v1",
+            kind: "ClusterIssuer",
+            metadata: {
+                name: "selfsigned-issuer",
+            },
+            spec: {
+                selfSigned: {},
+            },
         },
-        spec: {
-            selfSigned: {},
-        },
-    }, { provider });
+        { provider }
+    );
 }

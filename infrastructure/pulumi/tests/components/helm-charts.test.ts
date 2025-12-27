@@ -8,7 +8,9 @@ describe("installBaseHelmCharts", () => {
 
     beforeAll(() => {
         pulumi.runtime.setMocks({
-            newResource: (args: pulumi.runtime.MockResourceArgs): { id: string; state: Record<string, unknown> } => {
+            newResource: (
+                args: pulumi.runtime.MockResourceArgs
+            ): { id: string; state: Record<string, unknown> } => {
                 return {
                     id: args.inputs.name ? `${args.name}-id` : `${args.type}-id`,
                     state: {
@@ -33,11 +35,13 @@ describe("installBaseHelmCharts", () => {
         expect(result.certManager).toBeDefined();
         expect(result.nginxGateway).toBeDefined();
 
-        pulumi.all([result.certManager.urn, result.nginxGateway.urn]).apply(([certUrn, nginxUrn]) => {
-            expect(certUrn).toContain("cert-manager");
-            expect(nginxUrn).toContain("nginx-gateway");
-            done();
-        });
+        pulumi
+            .all([result.certManager.urn, result.nginxGateway.urn])
+            .apply(([certUrn, nginxUrn]) => {
+                expect(certUrn).toContain("cert-manager");
+                expect(nginxUrn).toContain("nginx-gateway");
+                done();
+            });
     });
 
     it("should install cert-manager and nginx-gateway for production environment", (done) => {
@@ -49,11 +53,13 @@ describe("installBaseHelmCharts", () => {
         expect(result.certManager).toBeDefined();
         expect(result.nginxGateway).toBeDefined();
 
-        pulumi.all([result.certManager.urn, result.nginxGateway.urn]).apply(([certUrn, nginxUrn]) => {
-            expect(certUrn).toContain("cert-manager");
-            expect(nginxUrn).toContain("nginx-gateway");
-            done();
-        });
+        pulumi
+            .all([result.certManager.urn, result.nginxGateway.urn])
+            .apply(([certUrn, nginxUrn]) => {
+                expect(certUrn).toContain("cert-manager");
+                expect(nginxUrn).toContain("nginx-gateway");
+                done();
+            });
     });
 
     it("should install cert-manager and nginx-gateway for preview environment", (done) => {
@@ -65,11 +71,13 @@ describe("installBaseHelmCharts", () => {
         expect(result.certManager).toBeDefined();
         expect(result.nginxGateway).toBeDefined();
 
-        pulumi.all([result.certManager.urn, result.nginxGateway.urn]).apply(([certUrn, nginxUrn]) => {
-            expect(certUrn).toContain("cert-manager");
-            expect(nginxUrn).toContain("nginx-gateway");
-            done();
-        });
+        pulumi
+            .all([result.certManager.urn, result.nginxGateway.urn])
+            .apply(([certUrn, nginxUrn]) => {
+                expect(certUrn).toContain("cert-manager");
+                expect(nginxUrn).toContain("nginx-gateway");
+                done();
+            });
     });
 });
 
@@ -123,4 +131,3 @@ describe("namespaceTransformation", () => {
         expect(result).toBeUndefined();
     });
 });
-

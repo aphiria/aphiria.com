@@ -8,7 +8,9 @@ describe("createAPIDeployment", () => {
 
     beforeAll(() => {
         pulumi.runtime.setMocks({
-            newResource: (args: pulumi.runtime.MockResourceArgs): { id: string; state: Record<string, unknown> } => {
+            newResource: (
+                args: pulumi.runtime.MockResourceArgs
+            ): { id: string; state: Record<string, unknown> } => {
                 return {
                     id: args.inputs.name ? `${args.name}-id` : `${args.type}-id`,
                     state: {
@@ -43,13 +45,20 @@ describe("createAPIDeployment", () => {
         expect(result.service).toBeDefined();
         expect(result.secret).toBeDefined();
 
-        pulumi.all([result.deployment.name, result.service.name, result.secret.name, result.deployment.namespace]).apply(([deploymentName, serviceName, secretName, namespace]) => {
-            expect(deploymentName).toBe("api");
-            expect(serviceName).toBe("api");
-            expect(secretName).toBe("api-env-var-secrets");
-            expect(namespace).toBe("test-ns");
-            done();
-        });
+        pulumi
+            .all([
+                result.deployment.name,
+                result.service.name,
+                result.secret.name,
+                result.deployment.namespace,
+            ])
+            .apply(([deploymentName, serviceName, secretName, namespace]) => {
+                expect(deploymentName).toBe("api");
+                expect(serviceName).toBe("api");
+                expect(secretName).toBe("api-env-var-secrets");
+                expect(namespace).toBe("test-ns");
+                done();
+            });
     });
 
     it("should create PodDisruptionBudget when configured", (done) => {
@@ -72,11 +81,13 @@ describe("createAPIDeployment", () => {
 
         expect(result.podDisruptionBudget).toBeDefined();
 
-        pulumi.all([result.podDisruptionBudget!.name, result.podDisruptionBudget!.namespace]).apply(([pdbName, pdbNamespace]) => {
-            expect(pdbName).toBe("api");
-            expect(pdbNamespace).toBe("prod-ns");
-            done();
-        });
+        pulumi
+            .all([result.podDisruptionBudget!.name, result.podDisruptionBudget!.namespace])
+            .apply(([pdbName, pdbNamespace]) => {
+                expect(pdbName).toBe("api");
+                expect(pdbNamespace).toBe("prod-ns");
+                done();
+            });
     });
 
     it("should not create PodDisruptionBudget when not configured", () => {

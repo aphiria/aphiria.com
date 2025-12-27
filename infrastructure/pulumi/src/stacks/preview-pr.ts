@@ -28,12 +28,16 @@ const postgresqlAdminPassword = baseStack.requireOutput("postgresqlAdminPassword
 const kubeconfig = baseStack.requireOutput("kubeconfig");
 
 // Create Kubernetes provider using kubeconfig from base stack
-const k8sProvider = new k8s.Provider("preview-pr-k8s", {
-    kubeconfig: kubeconfig,
-    enableServerSideApply: true,
-}, {
-    dependsOn: [baseStack],
-});
+const k8sProvider = new k8s.Provider(
+    "preview-pr-k8s",
+    {
+        kubeconfig: kubeconfig,
+        enableServerSideApply: true,
+    },
+    {
+        dependsOn: [baseStack],
+    }
+);
 
 // Naming conventions
 const namespaceName = `preview-pr-${prNumber}`;
@@ -42,90 +46,90 @@ const webUrl = `https://${prNumber}.pr.aphiria.com`;
 const apiUrl = `https://${prNumber}.pr-api.aphiria.com`;
 
 // Create all infrastructure using a factory
-const stack = createStack({
-    env: "preview",
-    skipBaseInfrastructure: true, // Uses shared Helm charts and Gateway from preview-base
-    namespace: {
-        name: namespaceName,
-        resourceQuota: {
-            cpu: "2",
-            memory: "4Gi",
-            pods: "5",
-        },
-        networkPolicy: {
-            allowDNS: true,
-            allowHTTPS: true,
-            allowPostgreSQL: {
-                host: "db.default.svc.cluster.local",
-                port: 5432,
+const stack = createStack(
+    {
+        env: "preview",
+        skipBaseInfrastructure: true, // Uses shared Helm charts and Gateway from preview-base
+        namespace: {
+            name: namespaceName,
+            resourceQuota: {
+                cpu: "2",
+                memory: "4Gi",
+                pods: "5",
+            },
+            networkPolicy: {
+                allowDNS: true,
+                allowHTTPS: true,
+                allowPostgreSQL: {
+                    host: "db.default.svc.cluster.local",
+                    port: 5432,
+                },
+            },
+            imagePullSecret: {
+                registry: "ghcr.io",
+                username: ghcrUsername,
+                token: ghcrToken,
             },
         },
-        imagePullSecret: {
-            registry: "ghcr.io",
-            username: ghcrUsername,
-            token: ghcrToken,
+        database: {
+            replicas: 1,
+            persistentStorage: false,
+            storageSize: "1Gi",
+            dbUser: postgresqlAdminUser,
+            dbPassword: postgresqlAdminPassword,
+            createDatabase: true,
+            databaseName: databaseName,
+            dbHost: postgresqlHost,
+            dbAdminUser: postgresqlAdminUser,
+            dbAdminPassword: postgresqlAdminPassword,
         },
-    },
-    database: {
-        replicas: 1,
-        persistentStorage: false,
-        storageSize: "1Gi",
-        dbUser: postgresqlAdminUser,
-        dbPassword: postgresqlAdminPassword,
-        createDatabase: true,
-        databaseName: databaseName,
-        dbHost: postgresqlHost,
-        dbAdminUser: postgresqlAdminUser,
-        dbAdminPassword: postgresqlAdminPassword,
-    },
-    gateway: {
-        tlsMode: "letsencrypt-prod",
-        domains: [
-            "*.pr.aphiria.com",
-            "*.pr-api.aphiria.com",
-        ],
-    },
-    app: {
-        webReplicas: 1,
-        apiReplicas: 1,
-        webUrl: webUrl,
-        apiUrl: apiUrl,
-        webImage: webImageRef,
-        apiImage: apiImageRef,
-        cookieDomain: ".pr.aphiria.com",
-        webResources: {
-            requests: { cpu: "50m", memory: "128Mi" },
-            limits: { cpu: "250m", memory: "512Mi" },
+        gateway: {
+            tlsMode: "letsencrypt-prod",
+            domains: ["*.pr.aphiria.com", "*.pr-api.aphiria.com"],
         },
-        apiResources: {
-            nginx: {
-                requests: { cpu: "50m", memory: "64Mi" },
-                limits: { cpu: "100m", memory: "128Mi" },
-            },
-            php: {
-                requests: { cpu: "250m", memory: "512Mi" },
-                limits: { cpu: "500m", memory: "1Gi" },
-            },
-            initContainer: {
-                requests: { cpu: "50m", memory: "64Mi" },
-                limits: { cpu: "100m", memory: "128Mi" },
-            },
-        },
-        migrationResources: {
-            migration: {
+        app: {
+            webReplicas: 1,
+            apiReplicas: 1,
+            webUrl: webUrl,
+            apiUrl: apiUrl,
+            webImage: webImageRef,
+            apiImage: apiImageRef,
+            cookieDomain: ".pr.aphiria.com",
+            webResources: {
                 requests: { cpu: "50m", memory: "128Mi" },
-                limits: { cpu: "200m", memory: "256Mi" },
+                limits: { cpu: "250m", memory: "512Mi" },
             },
-            initContainer: {
-                requests: { cpu: "10m", memory: "32Mi" },
-                limits: { cpu: "50m", memory: "64Mi" },
+            apiResources: {
+                nginx: {
+                    requests: { cpu: "50m", memory: "64Mi" },
+                    limits: { cpu: "100m", memory: "128Mi" },
+                },
+                php: {
+                    requests: { cpu: "250m", memory: "512Mi" },
+                    limits: { cpu: "500m", memory: "1Gi" },
+                },
+                initContainer: {
+                    requests: { cpu: "50m", memory: "64Mi" },
+                    limits: { cpu: "100m", memory: "128Mi" },
+                },
+            },
+            migrationResources: {
+                migration: {
+                    requests: { cpu: "50m", memory: "128Mi" },
+                    limits: { cpu: "200m", memory: "256Mi" },
+                },
+                initContainer: {
+                    requests: { cpu: "10m", memory: "32Mi" },
+                    limits: { cpu: "50m", memory: "64Mi" },
+                },
             },
         },
     },
-}, k8sProvider);
+    k8sProvider
+);
 
 // Outputs
-export { webUrl , apiUrl };
+export { webUrl, apiUrl };
 export const namespace = namespaceName;
 export { databaseName };
 /**

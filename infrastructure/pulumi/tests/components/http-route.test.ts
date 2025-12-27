@@ -1,14 +1,20 @@
 import { describe, it, expect, beforeAll } from "@jest/globals";
 import * as pulumi from "@pulumi/pulumi";
 import * as k8s from "@pulumi/kubernetes";
-import { createHTTPRoute, createHTTPSRedirectRoute, createWWWRedirectRoute } from "../../src/components/http-route";
+import {
+    createHTTPRoute,
+    createHTTPSRedirectRoute,
+    createWWWRedirectRoute,
+} from "../../src/components/http-route";
 
 describe("http-route components", () => {
     let k8sProvider: k8s.Provider;
 
     beforeAll(() => {
         pulumi.runtime.setMocks({
-            newResource: (args: pulumi.runtime.MockResourceArgs): { id: string; state: Record<string, unknown> } => {
+            newResource: (
+                args: pulumi.runtime.MockResourceArgs
+            ): { id: string; state: Record<string, unknown> } => {
                 return {
                     id: args.inputs.name ? `${args.name}-id` : `${args.type}-id`,
                     state: {
@@ -41,12 +47,14 @@ describe("http-route components", () => {
 
             expect(route).toBeDefined();
 
-            pulumi.all([route.metadata.name, route.metadata.namespace, route.metadata.annotations]).apply(([name, namespace, annotations]) => {
-                expect(name).toBe("web-route");
-                expect(namespace).toBe("web-ns");
-                expect(annotations).toBeUndefined(); // No rate limiting = no annotations
-                done();
-            });
+            pulumi
+                .all([route.metadata.name, route.metadata.namespace, route.metadata.annotations])
+                .apply(([name, namespace, annotations]) => {
+                    expect(name).toBe("web-route");
+                    expect(namespace).toBe("web-ns");
+                    expect(annotations).toBeUndefined(); // No rate limiting = no annotations
+                    done();
+                });
         });
 
         it("should create HTTPRoute with rate limiting annotations", (done) => {
@@ -65,15 +73,17 @@ describe("http-route components", () => {
 
             expect(route).toBeDefined();
 
-            pulumi.all([route.metadata.name, route.metadata.annotations]).apply(([name, annotations]) => {
-                expect(name).toBe("api-route");
-                expect(annotations).toBeDefined();
-                expect(annotations).toMatchObject({
-                    "nginx.org/rate-limit": "10r/s",
-                    "nginx.org/rate-limit-burst": "20",
+            pulumi
+                .all([route.metadata.name, route.metadata.annotations])
+                .apply(([name, annotations]) => {
+                    expect(name).toBe("api-route");
+                    expect(annotations).toBeDefined();
+                    expect(annotations).toMatchObject({
+                        "nginx.org/rate-limit": "10r/s",
+                        "nginx.org/rate-limit-burst": "20",
+                    });
+                    done();
                 });
-                done();
-            });
         });
 
         it("should merge custom labels with default labels", (done) => {
@@ -89,7 +99,7 @@ describe("http-route components", () => {
                 enableRateLimiting: false,
                 labels: {
                     "custom-label": "custom-value",
-                    "environment": "testing",
+                    environment: "testing",
                 },
                 provider: k8sProvider,
             });
@@ -101,7 +111,7 @@ describe("http-route components", () => {
                     "app.kubernetes.io/name": "httproute-custom-route",
                     "app.kubernetes.io/component": "routing",
                     "custom-label": "custom-value",
-                    "environment": "testing",
+                    environment: "testing",
                 });
                 done();
             });
@@ -119,11 +129,13 @@ describe("http-route components", () => {
 
             expect(route).toBeDefined();
 
-            pulumi.all([route.metadata.name, route.metadata.namespace]).apply(([name, namespace]) => {
-                expect(name).toBe("https-redirect");
-                expect(namespace).toBe("redirect-ns");
-                done();
-            });
+            pulumi
+                .all([route.metadata.name, route.metadata.namespace])
+                .apply(([name, namespace]) => {
+                    expect(name).toBe("https-redirect");
+                    expect(namespace).toBe("redirect-ns");
+                    done();
+                });
         });
 
         it("should create HTTPS redirect route with default gateway namespace", (done) => {
@@ -135,11 +147,13 @@ describe("http-route components", () => {
 
             expect(route).toBeDefined();
 
-            pulumi.all([route.metadata.name, route.metadata.namespace]).apply(([name, namespace]) => {
-                expect(name).toBe("https-redirect");
-                expect(namespace).toBe("default");
-                done();
-            });
+            pulumi
+                .all([route.metadata.name, route.metadata.namespace])
+                .apply(([name, namespace]) => {
+                    expect(name).toBe("https-redirect");
+                    expect(namespace).toBe("default");
+                    done();
+                });
         });
     });
 
@@ -156,11 +170,13 @@ describe("http-route components", () => {
 
             expect(route).toBeDefined();
 
-            pulumi.all([route.metadata.name, route.metadata.namespace]).apply(([name, namespace]) => {
-                expect(name).toBe("www-redirect");
-                expect(namespace).toBe("redirect-ns");
-                done();
-            });
+            pulumi
+                .all([route.metadata.name, route.metadata.namespace])
+                .apply(([name, namespace]) => {
+                    expect(name).toBe("www-redirect");
+                    expect(namespace).toBe("redirect-ns");
+                    done();
+                });
         });
 
         it("should create WWW redirect route with default gateway namespace", (done) => {
@@ -174,11 +190,13 @@ describe("http-route components", () => {
 
             expect(route).toBeDefined();
 
-            pulumi.all([route.metadata.name, route.metadata.namespace]).apply(([name, namespace]) => {
-                expect(name).toBe("www-redirect");
-                expect(namespace).toBe("default");
-                done();
-            });
+            pulumi
+                .all([route.metadata.name, route.metadata.namespace])
+                .apply(([name, namespace]) => {
+                    expect(name).toBe("www-redirect");
+                    expect(namespace).toBe("default");
+                    done();
+                });
         });
     });
 });

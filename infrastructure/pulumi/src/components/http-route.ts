@@ -76,37 +76,43 @@ export interface HTTPSRedirectArgs {
     provider: k8s.Provider;
 }
 
-export function createHTTPSRedirectRoute(args: HTTPSRedirectArgs): k8s.apiextensions.CustomResource {
-    return new k8s.apiextensions.CustomResource("https-redirect", {
-        apiVersion: "gateway.networking.k8s.io/v1",
-        kind: "HTTPRoute",
-        metadata: {
-            name: "https-redirect",
-            namespace: args.namespace,
-        },
-        spec: {
-            parentRefs: [
-                {
-                    name: args.gatewayName,
-                    namespace: args.gatewayNamespace || args.namespace,
-                    sectionName: "http-subdomains",
-                },
-            ],
-            rules: [
-                {
-                    filters: [
-                        {
-                            type: "RequestRedirect",
-                            requestRedirect: {
-                                scheme: "https",
-                                port: 443,
+export function createHTTPSRedirectRoute(
+    args: HTTPSRedirectArgs
+): k8s.apiextensions.CustomResource {
+    return new k8s.apiextensions.CustomResource(
+        "https-redirect",
+        {
+            apiVersion: "gateway.networking.k8s.io/v1",
+            kind: "HTTPRoute",
+            metadata: {
+                name: "https-redirect",
+                namespace: args.namespace,
+            },
+            spec: {
+                parentRefs: [
+                    {
+                        name: args.gatewayName,
+                        namespace: args.gatewayNamespace || args.namespace,
+                        sectionName: "http-subdomains",
+                    },
+                ],
+                rules: [
+                    {
+                        filters: [
+                            {
+                                type: "RequestRedirect",
+                                requestRedirect: {
+                                    scheme: "https",
+                                    port: 443,
+                                },
                             },
-                        },
-                    ],
-                },
-            ],
+                        ],
+                    },
+                ],
+            },
         },
-    }, { provider: args.provider });
+        { provider: args.provider }
+    );
 }
 
 /** Creates root → www redirect route (e.g., aphiria.com → www.aphiria.com) */
@@ -120,41 +126,45 @@ export interface WWWRedirectArgs {
 }
 
 export function createWWWRedirectRoute(args: WWWRedirectArgs): k8s.apiextensions.CustomResource {
-    return new k8s.apiextensions.CustomResource("www-redirect", {
-        apiVersion: "gateway.networking.k8s.io/v1",
-        kind: "HTTPRoute",
-        metadata: {
-            name: "www-redirect",
-            namespace: args.namespace,
-        },
-        spec: {
-            parentRefs: [
-                {
-                    name: args.gatewayName,
-                    namespace: args.gatewayNamespace || args.namespace,
-                    sectionName: "https-root",
-                },
-                {
-                    name: args.gatewayName,
-                    namespace: args.gatewayNamespace || args.namespace,
-                    sectionName: "http-root",
-                },
-            ],
-            hostnames: [args.rootDomain],
-            rules: [
-                {
-                    filters: [
-                        {
-                            type: "RequestRedirect",
-                            requestRedirect: {
-                                scheme: "https",
-                                hostname: args.wwwDomain,
-                                port: 443,
+    return new k8s.apiextensions.CustomResource(
+        "www-redirect",
+        {
+            apiVersion: "gateway.networking.k8s.io/v1",
+            kind: "HTTPRoute",
+            metadata: {
+                name: "www-redirect",
+                namespace: args.namespace,
+            },
+            spec: {
+                parentRefs: [
+                    {
+                        name: args.gatewayName,
+                        namespace: args.gatewayNamespace || args.namespace,
+                        sectionName: "https-root",
+                    },
+                    {
+                        name: args.gatewayName,
+                        namespace: args.gatewayNamespace || args.namespace,
+                        sectionName: "http-root",
+                    },
+                ],
+                hostnames: [args.rootDomain],
+                rules: [
+                    {
+                        filters: [
+                            {
+                                type: "RequestRedirect",
+                                requestRedirect: {
+                                    scheme: "https",
+                                    hostname: args.wwwDomain,
+                                    port: 443,
+                                },
                             },
-                        },
-                    ],
-                },
-            ],
+                        ],
+                    },
+                ],
+            },
         },
-    }, { provider: args.provider });
+        { provider: args.provider }
+    );
 }

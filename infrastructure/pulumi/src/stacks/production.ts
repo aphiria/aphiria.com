@@ -20,41 +20,49 @@ const config = new pulumi.Config();
 //
 // Imported DigitalOcean Kubernetes cluster (existing cluster, not created by Pulumi)
 // This matches the actual cluster configuration from the import
-const cluster = new digitalocean.KubernetesCluster("aphiria-com-cluster", {
-    amdGpuDeviceMetricsExporterPlugin: {
-        enabled: false,
+const cluster = new digitalocean.KubernetesCluster(
+    "aphiria-com-cluster",
+    {
+        amdGpuDeviceMetricsExporterPlugin: {
+            enabled: false,
+        },
+        amdGpuDevicePlugin: {
+            enabled: false,
+        },
+        clusterSubnet: "10.244.0.0/16",
+        maintenancePolicy: {
+            day: "any",
+            startTime: "6:00",
+        },
+        name: "aphiria-com-cluster",
+        nodePool: {
+            name: "worker-pool",
+            size: "s-2vcpu-2gb",
+        },
+        region: digitalocean.Region.NYC3,
+        routingAgent: {
+            enabled: false,
+        },
+        serviceSubnet: "10.245.0.0/16",
+        version: "1.34.1-do.0",
+        vpcUuid: "976f980d-dc84-11e8-80bc-3cfdfea9fba1",
     },
-    amdGpuDevicePlugin: {
-        enabled: false,
-    },
-    clusterSubnet: "10.244.0.0/16",
-    maintenancePolicy: {
-        day: "any",
-        startTime: "6:00",
-    },
-    name: "aphiria-com-cluster",
-    nodePool: {
-        name: "worker-pool",
-        size: "s-2vcpu-2gb",
-    },
-    region: digitalocean.Region.NYC3,
-    routingAgent: {
-        enabled: false,
-    },
-    serviceSubnet: "10.245.0.0/16",
-    version: "1.34.1-do.0",
-    vpcUuid: "976f980d-dc84-11e8-80bc-3cfdfea9fba1",
-}, {
-    protect: true, // Prevents accidental deletion
-});
+    {
+        protect: true, // Prevents accidental deletion
+    }
+);
 
 // Create Kubernetes provider using the cluster's kubeconfig
-const k8sProvider = new k8s.Provider("production-k8s", {
-    kubeconfig: cluster.kubeConfigs[0].rawConfig,
-    enableServerSideApply: true,
-}, {
-    dependsOn: [cluster],
-});
+const k8sProvider = new k8s.Provider(
+    "production-k8s",
+    {
+        kubeconfig: cluster.kubeConfigs[0].rawConfig,
+        enableServerSideApply: true,
+    },
+    {
+        dependsOn: [cluster],
+    }
+);
 
 // Get configuration
 const postgresqlConfig = new pulumi.Config("postgresql");
@@ -75,40 +83,43 @@ const webUrl = "https://www.aphiria.com";
 const apiUrl = "https://api.aphiria.com";
 
 // Create all infrastructure using a factory
-createStack({
-    env: "production",
-    namespace: {
-        name: "default",
-        imagePullSecret: {
-            registry: "ghcr.io",
-            username: ghcrUsername,
-            token: ghcrToken,
+createStack(
+    {
+        env: "production",
+        namespace: {
+            name: "default",
+            imagePullSecret: {
+                registry: "ghcr.io",
+                username: ghcrUsername,
+                token: ghcrToken,
+            },
+        },
+        database: {
+            replicas: 2,
+            persistentStorage: true,
+            storageSize: "20Gi",
+            dbUser: postgresqlUser,
+            dbPassword: postgresqlPassword,
+        },
+        gateway: {
+            tlsMode: "letsencrypt-prod",
+            domains: ["aphiria.com", "*.aphiria.com"],
+            dnsToken: certmanagerConfig.requireSecret("digitaloceanDnsToken"),
+        },
+        app: {
+            webReplicas: 2,
+            apiReplicas: 2,
+            webUrl: "https://www.aphiria.com",
+            apiUrl: "https://api.aphiria.com",
+            webImage: webImageRef,
+            apiImage: apiImageRef,
+            cookieDomain: ".aphiria.com",
+            webPodDisruptionBudget: { minAvailable: 1 },
+            apiPodDisruptionBudget: { minAvailable: 1 },
         },
     },
-    database: {
-        replicas: 2,
-        persistentStorage: true,
-        storageSize: "20Gi",
-        dbUser: postgresqlUser,
-        dbPassword: postgresqlPassword,
-    },
-    gateway: {
-        tlsMode: "letsencrypt-prod",
-        domains: ["aphiria.com", "*.aphiria.com"],
-        dnsToken: certmanagerConfig.requireSecret("digitaloceanDnsToken"),
-    },
-    app: {
-        webReplicas: 2,
-        apiReplicas: 2,
-        webUrl: "https://www.aphiria.com",
-        apiUrl: "https://api.aphiria.com",
-        webImage: webImageRef,
-        apiImage: apiImageRef,
-        cookieDomain: ".aphiria.com",
-        webPodDisruptionBudget: { minAvailable: 1 },
-        apiPodDisruptionBudget: { minAvailable: 1 },
-    },
-}, k8sProvider);
+    k8sProvider
+);
 
 // Outputs
 export { webUrl, apiUrl };

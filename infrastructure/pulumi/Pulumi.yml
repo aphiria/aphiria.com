@@ -1,6 +1,6 @@
 name: aphiria-com-infrastructure
 runtime:
-  name: nodejs
-  options:
-    typescript: true
+    name: nodejs
+    options:
+        typescript: true
 description: Aphiria.com infrastructure - shared components and stacks for local, preview, and production

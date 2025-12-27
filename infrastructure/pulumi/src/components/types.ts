@@ -117,16 +117,16 @@ export interface APIDeploymentArgs extends CommonDeploymentArgs {
     /** Optional resource limits for containers */
     resources?: {
         nginx?: {
-            requests?: { cpu?: string; memory?: string; };
-            limits?: { cpu?: string; memory?: string; };
+            requests?: { cpu?: string; memory?: string };
+            limits?: { cpu?: string; memory?: string };
         };
         php?: {
-            requests?: { cpu?: string; memory?: string; };
-            limits?: { cpu?: string; memory?: string; };
+            requests?: { cpu?: string; memory?: string };
+            limits?: { cpu?: string; memory?: string };
         };
         initContainer?: {
-            requests?: { cpu?: string; memory?: string; };
-            limits?: { cpu?: string; memory?: string; };
+            requests?: { cpu?: string; memory?: string };
+            limits?: { cpu?: string; memory?: string };
         };
     };
     /** Optional PodDisruptionBudget for high availability (production only) */
@@ -259,12 +259,12 @@ export interface DBMigrationJobArgs {
     /** Optional resource limits for containers */
     resources?: {
         migration?: {
-            requests?: { cpu?: string; memory?: string; };
-            limits?: { cpu?: string; memory?: string; };
+            requests?: { cpu?: string; memory?: string };
+            limits?: { cpu?: string; memory?: string };
         };
         initContainer?: {
-            requests?: { cpu?: string; memory?: string; };
-            limits?: { cpu?: string; memory?: string; };
+            requests?: { cpu?: string; memory?: string };
+            limits?: { cpu?: string; memory?: string };
         };
     };
     /** Resource labels */

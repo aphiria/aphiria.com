@@ -13,7 +13,9 @@ export function createDatabaseCreationJob(args: DatabaseCreationJobArgs): k8s.ba
     // Validate database name to prevent SQL injection
     // PostgreSQL database names: alphanumeric, underscores, max 63 chars
     if (!/^[a-zA-Z0-9_]+$/.test(args.databaseName)) {
-        throw new Error(`Invalid database name: ${args.databaseName}. Only alphanumeric characters and underscores are allowed.`);
+        throw new Error(
+            `Invalid database name: ${args.databaseName}. Only alphanumeric characters and underscores are allowed.`
+        );
     }
     if (args.databaseName.length > 63) {
         throw new Error(`Database name too long: ${args.databaseName}. Maximum 63 characters.`);
@@ -43,52 +45,56 @@ export function createDatabaseCreationJob(args: DatabaseCreationJobArgs): k8s.ba
 
     const jobName = `db-init-${args.databaseName.replace(/_/g, "-")}`;
 
-    return new k8s.batch.v1.Job(jobName, {
-        metadata: {
-            name: jobName,
-            namespace: args.namespace,
-            labels,
-        },
-        spec: {
-            ttlSecondsAfterFinished: DEFAULT_TTL_SECONDS,
-            template: {
-                metadata: {
-                    labels,
-                },
-                spec: {
-                    restartPolicy: "Never",
-                    containers: [
-                        {
-                            name: "db-init",
-                            image: DEFAULT_IMAGE,
-                            env: [
-                                {
-                                    name: "PGHOST",
-                                    value: args.dbHost,
-                                },
-                                {
-                                    name: "PGUSER",
-                                    value: args.dbAdminUser,
-                                },
-                                {
-                                    name: "PGPASSWORD",
-                                    value: args.dbAdminPassword,
-                                },
-                                {
-                                    name: "PGDATABASE",
-                                    value: DEFAULT_PGDATABASE,
-                                },
-                            ],
-                            command: [
-                                "sh",
-                                "-c",
-                                `psql -c "CREATE DATABASE ${args.databaseName};" || echo "Database already exists (this is normal on re-runs)"`,
-                            ],
-                            resources: DEFAULT_RESOURCES,
-                        },
-                    ],
+    return new k8s.batch.v1.Job(
+        jobName,
+        {
+            metadata: {
+                name: jobName,
+                namespace: args.namespace,
+                labels,
+            },
+            spec: {
+                ttlSecondsAfterFinished: DEFAULT_TTL_SECONDS,
+                template: {
+                    metadata: {
+                        labels,
+                    },
+                    spec: {
+                        restartPolicy: "Never",
+                        containers: [
+                            {
+                                name: "db-init",
+                                image: DEFAULT_IMAGE,
+                                env: [
+                                    {
+                                        name: "PGHOST",
+                                        value: args.dbHost,
+                                    },
+                                    {
+                                        name: "PGUSER",
+                                        value: args.dbAdminUser,
+                                    },
+                                    {
+                                        name: "PGPASSWORD",
+                                        value: args.dbAdminPassword,
+                                    },
+                                    {
+                                        name: "PGDATABASE",
+                                        value: DEFAULT_PGDATABASE,
+                                    },
+                                ],
+                                command: [
+                                    "sh",
+                                    "-c",
+                                    `psql -c "CREATE DATABASE ${args.databaseName};" || echo "Database already exists (this is normal on re-runs)"`,
+                                ],
+                                resources: DEFAULT_RESOURCES,
+                            },
+                        ],
+                    },
                 },
             },
         },
-    }, { provider: args.provider });
+        { provider: args.provider }
+    );
 }

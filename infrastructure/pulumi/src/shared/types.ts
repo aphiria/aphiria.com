@@ -115,18 +115,18 @@ export interface AppConfig {
     /** Database migration job resource limits (optional - for namespaces with ResourceQuotas) */
     migrationResources?: {
         migration?: {
-            requests?: { cpu?: string; memory?: string; };
-            limits?: { cpu?: string; memory?: string; };
+            requests?: { cpu?: string; memory?: string };
+            limits?: { cpu?: string; memory?: string };
         };
         initContainer?: {
-            requests?: { cpu?: string; memory?: string; };
-            limits?: { cpu?: string; memory?: string; };
+            requests?: { cpu?: string; memory?: string };
+            limits?: { cpu?: string; memory?: string };
         };
     };
     /** Web PodDisruptionBudget (optional - production only) */
-    webPodDisruptionBudget?: { minAvailable?: number; maxUnavailable?: number; };
+    webPodDisruptionBudget?: { minAvailable?: number; maxUnavailable?: number };
     /** API PodDisruptionBudget (optional - production only) */
-    apiPodDisruptionBudget?: { minAvailable?: number; maxUnavailable?: number; };
+    apiPodDisruptionBudget?: { minAvailable?: number; maxUnavailable?: number };
 }
 
 /**
