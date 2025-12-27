@@ -4,6 +4,7 @@ import { HelmChartArgs } from "./types";
 
 /** Transformation function to validate namespace resources match expected namespace */
 export function namespaceTransformation(namespace: pulumi.Input<string>) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Required by Pulumi Kubernetes Helm transformation API
     return (obj: any) => {
         // Ensure namespace exists and matches
         if (obj.kind === "Namespace" && obj.metadata?.name === namespace) {

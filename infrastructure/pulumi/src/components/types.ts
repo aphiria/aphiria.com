@@ -323,7 +323,7 @@ export interface HelmChartArgs {
     /** Kubernetes namespace */
     namespace: pulumi.Input<string>;
     /** Helm values */
-    values?: Record<string, any>;
+    values?: Record<string, unknown>;
     /** Kubernetes provider */
     provider: k8s.Provider;
 }
@@ -413,6 +413,7 @@ export interface KubernetesClusterArgs {
  * Return type for Kubernetes cluster component
  */
 export interface KubernetesClusterResult {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- DigitalOcean cluster type
     cluster: any;
     clusterId: pulumi.Output<string>;
     endpoint: pulumi.Output<string>;

@@ -52,7 +52,7 @@ export function createNamespace(args: NamespaceArgs): NamespaceResult {
     // Create NetworkPolicy (if specified)
     let networkPolicy: k8s.networking.v1.NetworkPolicy | undefined;
     if (args.networkPolicy) {
-        const egressRules: any[] = [];
+        const egressRules: k8s.types.input.networking.v1.NetworkPolicyEgressRule[] = [];
 
         // DNS egress (always required)
         if (args.networkPolicy.allowDNS) {
