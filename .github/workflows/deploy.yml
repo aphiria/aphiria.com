@@ -30,6 +30,7 @@ jobs:
   ensure-base-stack:
     name: Ensure Base Infrastructure
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     if: inputs.environment == 'preview'
 
     steps:
@@ -142,6 +143,7 @@ jobs:
   preview-infra:
     name: Preview Infrastructure Changes
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     needs: ensure-base-stack
     # If the previous job was skipped, we still need to run this (likewise if it was successful)
     if: ${{ always() && (needs.ensure-base-stack.result == 'success' || needs.ensure-base-stack.result == 'skipped') }}
@@ -256,6 +258,7 @@ jobs:
   deploy:
     name: Deploy
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     needs: preview-infra
     # If the previous job was successful, run this job (the skipped first job causes issues with using success())
     if: ${{ always() && needs.preview-infra.result == 'success' }}

@@ -10,6 +10,7 @@ jobs:
   detect-drift:
     name: Detect Infrastructure Drift
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     strategy:
       matrix:
         stack:
@@ -42,12 +43,12 @@ jobs:
         run: pulumi login
 
       - name: Select stack
-        working-directory: infrastructure/pulumi/stacks
+        working-directory: infrastructure/pulumi
         run: pulumi stack select davidbyoung/aphiria-com-infrastructure/${{ matrix.stack }}
 
       - name: Run drift detection (refresh)
         id: refresh
-        working-directory: infrastructure/pulumi/stacks
+        working-directory: infrastructure/pulumi
         env:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
         run: |
@@ -65,7 +66,7 @@ jobs:
         with:
           script: |
             const fs = require('fs');
-            const output = fs.readFileSync('infrastructure/pulumi/stacks/refresh-output.txt', 'utf8');
+            const output = fs.readFileSync('infrastructure/pulumi/refresh-output.txt', 'utf8');
 
             // Check if issue already exists
             const issues = await github.rest.issues.listForRepo({

@@ -35,6 +35,7 @@ jobs:
   determine-mode:
     name: Determine Build Mode
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     if: >
       github.event_name == 'workflow_dispatch' ||
       (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success')
@@ -164,6 +165,7 @@ jobs:
   build:
     name: Build
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     needs: determine-mode
     if: needs.determine-mode.outputs.is-safe == 'true'
 
@@ -337,6 +339,7 @@ jobs:
     needs: [determine-mode, build]
     if: needs.determine-mode.outputs.is-safe == 'true'
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       - name: Trigger deployment workflow
         uses: actions/github-script@v7

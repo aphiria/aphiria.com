@@ -220,6 +220,36 @@ composer psalm      # Static analysis
 
 **NEVER** skip these. If they fail, fix before proceeding.
 
+### Quality Gates (TypeScript/Pulumi)
+
+Before completing ANY TypeScript/infrastructure task:
+```bash
+cd infrastructure/pulumi
+npm run build   # Compile TypeScript
+npm run lint    # ESLint (must pass with 0 errors, 0 warnings)
+npm test        # Jest tests with coverage thresholds
+```
+
+**NON-NEGOTIABLE**:
+- **Linting**: MUST pass with 0 errors and 0 warnings
+- **Tests**: MUST pass 100% (all suites)
+- **Coverage**: MUST meet jest.config.js thresholds (100% for all metrics)
+- **Build**: TypeScript compilation MUST succeed with no errors
+
+**Jest Coverage Thresholds** (from `jest.config.js`):
+```javascript
+coverageThreshold: {
+    global: {
+        branches: 100,
+        functions: 100,
+        lines: 100,
+        statements: 100
+    }
+}
+```
+
+If any quality gate fails, fix before proceeding. NO exceptions.
+
 ### Test Coverage (Mandatory)
 
 For every feature/bug fix:
@@ -288,6 +318,13 @@ Write tests FIRST (TDD).
 - [ ] Sensitive files in `.gitignore`
 - [ ] Tests written
 - [ ] No TODOs without issue tracking
+
+**TypeScript/Pulumi**:
+- [ ] `npm run build` (in `infrastructure/pulumi/`)
+- [ ] `npm run lint` (0 errors, 0 warnings)
+- [ ] `npm test` (100% pass rate, meets coverage thresholds)
+- [ ] New files staged
+- [ ] `dist/` and `coverage/` NOT committed (gitignored)
 
 **GitHub Actions**:
 - [ ] Secrets documented in `SECRETS.md`
