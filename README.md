@@ -28,12 +28,27 @@ Pull requests automatically generate ephemeral preview environments for testing 
 
 ### Install Dependencies
 
-First, [install Docker](https://docs.docker.com/engine/install/). Then, install the other dependencies:
+First, [install Docker](https://docs.docker.com/engine/install/). Then, run the following command to install dependencies (kubectl, Minikube, Pulumi, and Node.js):
 
-* kubectl
-* Minikube
-* Pulumi
-* Node.js
+```bash
+./install.sh
+```
+
+> **Note:** You may have to run `chmod +x ./install.sh` to make the script executable.
+
+After installing Pulumi, add it to your PATH for future sessions:
+
+```bash
+echo 'export PATH=$PATH:$HOME/.pulumi/bin' >> ~/.bashrc
+source ~/.bashrc
+```
+
+Or for zsh:
+
+```bash
+echo 'export PATH=$PATH:$HOME/.pulumi/bin' >> ~/.zshrc
+source ~/.zshrc
+```
 
 ### Update Your Host File
 
