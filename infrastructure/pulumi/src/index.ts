@@ -1,4 +1,4 @@
-/** Shared Pulumi components for local, preview, and production environments. See README.md for usage. */
+/** Shared Pulumi components for local, preview, and production environments */
 
 import * as pulumi from "@pulumi/pulumi";
 

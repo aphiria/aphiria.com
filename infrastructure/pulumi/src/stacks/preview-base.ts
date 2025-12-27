@@ -1,5 +1,5 @@
 /**
- * Base Infrastructure Stack for Preview Environments
+ * Base Infrastructure Stack for Preview Environments (DigitalOcean)
  * This stack creates its own dedicated cluster for complete isolation from production.
  * Stack name: preview-base
  */

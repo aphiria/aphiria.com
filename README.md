@@ -74,6 +74,7 @@ Running this site locally uses Pulumi to provision a Kubernetes cluster. To crea
 ```bash
 cd infrastructure/pulumi
 npm install
+npm run build
 pulumi login --local
 pulumi stack init local
 pulumi config set --secret dbPassword password
@@ -117,11 +118,30 @@ pulumi refresh --stack local
 pulumi cancel --stack local
 ```
 
+## Testing
+
+### PHP
+
+```bash
+composer phpunit
+```
+
+### TypeScript
+
+```bash
+cd ./infrastructure/pulumi && npm test
+```
+
 ## Linting
 
-Run the PHP and TypeScript linters:
+### PHP
 
 ```bash
 composer phpcs-fix
+```
+
+### TypeScript
+
+```bash
 cd ./infrastructure/pulumi && npm install && npm run lint:fix && npm run format && cd ../../
 ```

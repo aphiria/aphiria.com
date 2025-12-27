@@ -2,6 +2,16 @@ import * as pulumi from "@pulumi/pulumi";
 import * as k8s from "@pulumi/kubernetes";
 import { HelmChartArgs } from "./types";
 
+/** Transformation function to validate namespace resources match expected namespace */
+export function namespaceTransformation(namespace: pulumi.Input<string>) {
+    return (obj: any) => {
+        // Ensure namespace exists and matches
+        if (obj.kind === "Namespace" && obj.metadata?.name === namespace) {
+            return obj;
+        }
+    };
+}
+
 /** Installs cert-manager with Gateway API support */
 export function installCertManager(
     args: HelmChartArgs,
@@ -29,14 +39,7 @@ export function installCertManager(
         {
             provider: args.provider,
             dependsOn,
-            transformations: [
-                (obj: any) => {
-                    // Ensure namespace exists
-                    if (obj.kind === "Namespace" && obj.metadata?.name === args.namespace) {
-                        return obj;
-                    }
-                },
-            ],
+            transformations: [namespaceTransformation(args.namespace)],
         }
     );
 }

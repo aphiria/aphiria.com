@@ -98,7 +98,7 @@ const newLabels = [...existingLabels.filter(l => l !== 'my-label'), 'my-label'];
 ### Pulumi TypeScript Build Requirement
 
 ❌ **NEVER** run Pulumi without compiling TypeScript first
-- Pulumi executes compiled JavaScript in `bin/`, not `.ts` source
+- Pulumi executes compiled JavaScript in `dist/`, not `.ts` source
 - Changes to `.ts` have NO EFFECT until `npm run build`
 
 **Required before EVERY Pulumi command**:
@@ -106,7 +106,20 @@ const newLabels = [...existingLabels.filter(l => l !== 'my-label'), 'my-label'];
 cd infrastructure/pulumi && npm run build
 ```
 
-**Git commits**: ALWAYS commit both `.ts` AND compiled `.js` files
+**Directory structure**:
+```
+infrastructure/pulumi/
+├── src/              # TypeScript source
+│   ├── components/
+│   ├── shared/
+│   ├── stacks/
+│   └── index.ts
+├── tests/            # Jest tests
+├── dist/             # Compiled JavaScript (gitignored)
+└── coverage/         # Test coverage (gitignored)
+```
+
+**Git commits**: NEVER commit `dist/` or `coverage/` (gitignored). Only commit `src/` and `tests/`
 
 ### kubectl Usage Policy
 

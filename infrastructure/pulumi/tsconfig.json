@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "strict": true,
-    "outDir": "bin",
+    "outDir": "dist",
     "target": "es2020",
     "module": "commonjs",
     "moduleResolution": "node",
@@ -12,11 +12,15 @@
     "noImplicitReturns": true,
     "forceConsistentCasingInFileNames": true,
     "esModuleInterop": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "types": ["node", "jest"]
   },
   "include": [
-    "index.ts",
-    "components/**/*",
-    "stacks/**/*"
+    "src/**/*",
+    "tests/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist"
   ]
 }
