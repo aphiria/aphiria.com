@@ -5,12 +5,12 @@
  */
 
 import * as pulumi from "@pulumi/pulumi";
-import * as k8s from "@pulumi/kubernetes";
 import { createKubernetesCluster } from "../components";
 import { createStack } from "../shared/factory";
+import { StackConfig } from "../shared/stack-config";
 
 // Create the preview Kubernetes cluster (includes provider)
-const { cluster, kubeconfig: clusterKubeconfig, provider: k8sProvider } = createKubernetesCluster({
+const { kubeconfig: clusterKubeconfig, provider: k8sProvider } = createKubernetesCluster({
     name: "aphiria-com-preview-cluster",
     region: "nyc3",
     version: "1.34.1-do.2",
@@ -22,15 +22,12 @@ const { cluster, kubeconfig: clusterKubeconfig, provider: k8sProvider } = create
     vpcUuid: "976f980d-dc84-11e8-80bc-3cfdfea9fba1",
 });
 
-// Get configuration
-const postgresqlConfig = new pulumi.Config("postgresql");
-const certmanagerConfig = new pulumi.Config("certmanager");
-const ghcrConfig = new pulumi.Config("ghcr");
+// Load configuration
+const stackConfig = new StackConfig("", ""); // No URLs needed for preview-base
 
-const postgresqlAdminUser = postgresqlConfig.require("user");
-const postgresqlAdminPassword = postgresqlConfig.requireSecret("password");
-const ghcrUsername = ghcrConfig.require("username");
-const ghcrToken = ghcrConfig.requireSecret("token");
+// Export these for preview-pr consumption
+const postgresqlAdminUser = stackConfig.postgresql.user;
+const postgresqlAdminPassword = stackConfig.postgresql.password;
 
 const stack = createStack(
     {
@@ -39,15 +36,15 @@ const stack = createStack(
             name: "default",
             imagePullSecret: {
                 registry: "ghcr.io",
-                username: ghcrUsername,
-                token: ghcrToken,
+                username: stackConfig.ghcr.username,
+                token: stackConfig.ghcr.token,
             },
         },
         database: {
             persistentStorage: true,
             storageSize: "20Gi",
-            dbUser: postgresqlAdminUser,
-            dbPassword: postgresqlAdminPassword,
+            dbUser: stackConfig.postgresql.user,
+            dbPassword: stackConfig.postgresql.password,
         },
         gateway: {
             tlsMode: "letsencrypt-prod",
@@ -55,7 +52,7 @@ const stack = createStack(
                 "*.pr.aphiria.com", // Web preview URLs
                 "*.pr-api.aphiria.com", // API preview URLs
             ],
-            dnsToken: certmanagerConfig.requireSecret("digitaloceanDnsToken"),
+            dnsToken: stackConfig.certManager.dnsToken,
             dns: {
                 domain: "aphiria.com",
                 records: [

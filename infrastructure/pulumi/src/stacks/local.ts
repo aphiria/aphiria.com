@@ -3,23 +3,16 @@
  * Stack name: local
  */
 
-import * as pulumi from "@pulumi/pulumi";
 import * as k8s from "@pulumi/kubernetes";
 import { createStack } from "../shared/factory";
+import { StackConfig } from "../shared/stack-config";
 
 // Minikube provider (default kubeconfig)
-const k8sProvider = new k8s.Provider("minikube", {
+const k8sProvider = new k8s.Provider("aphiria-com-local-k8s", {
     context: "minikube",
 });
 
-// Get PostgreSQL credentials from config
-const postgresqlConfig = new pulumi.Config("postgresql");
-const postgresqlUser = postgresqlConfig.get("user") || "postgres";
-const postgresqlPassword = postgresqlConfig.get("password") || "postgres";
-
-// Naming conventions
-const webUrl = "https://www.aphiria.com";
-const apiUrl = "https://api.aphiria.com";
+const stackConfig = new StackConfig("https://www.aphiria.com", "https://api.aphiria.com");
 
 createStack(
     {
@@ -28,8 +21,8 @@ createStack(
         database: {
             persistentStorage: true,
             storageSize: "5Gi",
-            dbUser: postgresqlUser,
-            dbPassword: postgresqlPassword,
+            dbUser: "postgres",
+            dbPassword: "postgres",
         },
         gateway: {
             tlsMode: "self-signed",
@@ -38,8 +31,8 @@ createStack(
         app: {
             webReplicas: 1,
             apiReplicas: 1,
-            webUrl: webUrl,
-            apiUrl: apiUrl,
+            webUrl: stackConfig.urls.web,
+            apiUrl: stackConfig.urls.api,
             webImage: "aphiria.com-web:latest",
             apiImage: "aphiria.com-api:latest",
             cookieDomain: ".aphiria.com",

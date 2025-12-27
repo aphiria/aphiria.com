@@ -4,11 +4,9 @@
  * Stack name: production
  */
 
-import * as pulumi from "@pulumi/pulumi";
 import { createKubernetesCluster } from "../components";
 import { createStack } from "../shared/factory";
-
-const config = new pulumi.Config();
+import { StackConfig } from "../shared/stack-config";
 
 // Create the production Kubernetes cluster (includes provider)
 const { provider: k8sProvider } = createKubernetesCluster({
@@ -23,23 +21,8 @@ const { provider: k8sProvider } = createKubernetesCluster({
     vpcUuid: "976f980d-dc84-11e8-80bc-3cfdfea9fba1",
 });
 
-// Get configuration
-const postgresqlConfig = new pulumi.Config("postgresql");
-const certmanagerConfig = new pulumi.Config("certmanager");
-const ghcrConfig = new pulumi.Config("ghcr");
-const webImageDigest = config.require("webImageDigest");
-const apiImageDigest = config.require("apiImageDigest");
-const ghcrUsername = ghcrConfig.require("username");
-const ghcrToken = ghcrConfig.requireSecret("token");
-const webImageRef = `ghcr.io/aphiria/aphiria.com-web@${webImageDigest}`;
-const apiImageRef = `ghcr.io/aphiria/aphiria.com-api@${apiImageDigest}`;
-
-const postgresqlUser = postgresqlConfig.require("user");
-const postgresqlPassword = postgresqlConfig.requireSecret("password");
-
-// Naming conventions
-const webUrl = "https://www.aphiria.com";
-const apiUrl = "https://api.aphiria.com";
+// Load configuration
+const stackConfig = new StackConfig("https://www.aphiria.com", "https://api.aphiria.com");
 
 createStack(
     {
@@ -48,20 +31,20 @@ createStack(
             name: "default",
             imagePullSecret: {
                 registry: "ghcr.io",
-                username: ghcrUsername,
-                token: ghcrToken,
+                username: stackConfig.ghcr.username,
+                token: stackConfig.ghcr.token,
             },
         },
         database: {
             persistentStorage: true,
             storageSize: "20Gi",
-            dbUser: postgresqlUser,
-            dbPassword: postgresqlPassword,
+            dbUser: stackConfig.postgresql.user,
+            dbPassword: stackConfig.postgresql.password,
         },
         gateway: {
             tlsMode: "letsencrypt-prod",
             domains: ["aphiria.com", "*.aphiria.com"],
-            dnsToken: certmanagerConfig.requireSecret("digitaloceanDnsToken"),
+            dnsToken: stackConfig.certManager.dnsToken,
             dns: {
                 domain: "aphiria.com",
                 records: [
@@ -75,10 +58,10 @@ createStack(
         app: {
             webReplicas: 2,
             apiReplicas: 2,
-            webUrl: webUrl,
-            apiUrl: apiUrl,
-            webImage: webImageRef,
-            apiImage: apiImageRef,
+            webUrl: stackConfig.urls.web,
+            apiUrl: stackConfig.urls.api,
+            webImage: stackConfig.images.web,
+            apiImage: stackConfig.images.api,
             cookieDomain: ".aphiria.com",
             webPodDisruptionBudget: { minAvailable: 1 },
             apiPodDisruptionBudget: { minAvailable: 1 },

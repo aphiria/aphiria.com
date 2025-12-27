@@ -7,29 +7,29 @@
 import * as pulumi from "@pulumi/pulumi";
 import * as k8s from "@pulumi/kubernetes";
 import { createStack } from "../shared/factory";
+import { StackConfig } from "../shared/stack-config";
 
-// Configuration
-const config = new pulumi.Config();
-const ghcrConfig = new pulumi.Config("ghcr");
-const prNumber = config.requireNumber("prNumber");
-const webImageDigest = config.require("webImageDigest");
-const apiImageDigest = config.require("apiImageDigest");
-const baseStackRef = config.require("baseStackReference");
-const ghcrUsername = ghcrConfig.require("username");
-const ghcrToken = ghcrConfig.requireSecret("token");
-const webImageRef = `ghcr.io/aphiria/aphiria.com-web@${webImageDigest}`;
-const apiImageRef = `ghcr.io/aphiria/aphiria.com-api@${apiImageDigest}`;
+// Load configuration
+const prNumber = new pulumi.Config().requireNumber("prNumber");
+const stackConfig = new StackConfig(
+    `https://${prNumber}.pr.aphiria.com`,
+    `https://${prNumber}.pr-api.aphiria.com`
+);
 
 // Reference base stack outputs
-const baseStack = new pulumi.StackReference(baseStackRef);
+const baseStack = new pulumi.StackReference(stackConfig.baseStackReference);
 const postgresqlHost = baseStack.getOutput("postgresqlHost");
 const postgresqlAdminUser = baseStack.getOutput("postgresqlAdminUser");
 const postgresqlAdminPassword = baseStack.requireOutput("postgresqlAdminPassword");
 const kubeconfig = baseStack.requireOutput("kubeconfig");
 
+// Naming conventions
+const namespaceName = `preview-pr-${prNumber}`;
+const databaseName = `aphiria_pr_${prNumber}`;
+
 // Create the Kubernetes provider using kubeconfig from the base stack
 const k8sProvider = new k8s.Provider(
-    "preview-pr-k8s",
+    `${namespaceName}-k8s`,
     {
         kubeconfig: kubeconfig,
         enableServerSideApply: true,
@@ -38,12 +38,6 @@ const k8sProvider = new k8s.Provider(
         dependsOn: [baseStack],
     }
 );
-
-// Naming conventions
-const namespaceName = `preview-pr-${prNumber}`;
-const databaseName = `aphiria_pr_${prNumber}`;
-const webUrl = `https://${prNumber}.pr.aphiria.com`;
-const apiUrl = `https://${prNumber}.pr-api.aphiria.com`;
 
 createStack(
     {
@@ -66,8 +60,8 @@ createStack(
             },
             imagePullSecret: {
                 registry: "ghcr.io",
-                username: ghcrUsername,
-                token: ghcrToken,
+                username: stackConfig.ghcr.username,
+                token: stackConfig.ghcr.token,
             },
         },
         database: {
@@ -88,10 +82,10 @@ createStack(
         app: {
             webReplicas: 1,
             apiReplicas: 1,
-            webUrl: webUrl,
-            apiUrl: apiUrl,
-            webImage: webImageRef,
-            apiImage: apiImageRef,
+            webUrl: stackConfig.urls.web,
+            apiUrl: stackConfig.urls.api,
+            webImage: stackConfig.images.web,
+            apiImage: stackConfig.images.api,
             cookieDomain: ".pr.aphiria.com",
             webResources: {
                 requests: { cpu: "50m", memory: "128Mi" },
