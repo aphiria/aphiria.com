@@ -8,11 +8,11 @@ import { createKubernetesCluster } from "../components";
 import { createStack } from "../shared/factory";
 import { StackConfig } from "../shared/stack-config";
 
-// Create the production Kubernetes cluster (includes provider)
+// Create the production Kubernetes cluster
 const { provider: k8sProvider } = createKubernetesCluster({
     name: "aphiria-com-cluster",
     region: "nyc3",
-    version: "1.34.1-do.0",
+    version: "1.34.1-do.2",
     nodeSize: "s-2vcpu-2gb",
     nodeCount: 1,
     autoScale: true,

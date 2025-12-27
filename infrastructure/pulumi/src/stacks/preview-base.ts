@@ -22,7 +22,7 @@ const { kubeconfig: clusterKubeconfig, provider: k8sProvider } = createKubernete
     vpcUuid: "976f980d-dc84-11e8-80bc-3cfdfea9fba1",
 });
 
-const stackConfig = new StackConfig("", ""); // No URLs needed for preview-base
+const stackConfig = new StackConfig("", "");
 
 // Export these for preview-pr consumption
 const postgresqlAdminUser = stackConfig.postgresql.user;

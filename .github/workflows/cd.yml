@@ -176,7 +176,7 @@ jobs:
       api-digest: ${{ steps.api-image.outputs.digest }}
 
     steps:
-      - name: Checkout exact commit
+      - name: Check out exact commit
         uses: actions/checkout@v4
         with:
           ref: ${{ needs.determine-mode.outputs.commit-sha }}
@@ -346,7 +346,7 @@ jobs:
       needs.determine-mode.outputs.mode == 'preview'
 
     steps:
-      - name: Checkout repository
+      - name: Check out repository
         uses: actions/checkout@v4
 
       - name: Set up Node.js
@@ -465,7 +465,7 @@ jobs:
       (needs.ensure-base-stack.result == 'success' || needs.ensure-base-stack.result == 'skipped')
 
     steps:
-      - name: Checkout repository
+      - name: Check out repository
         uses: actions/checkout@v4
 
       - name: Set up Node.js
@@ -586,7 +586,7 @@ jobs:
       cancel-in-progress: false
 
     steps:
-      - name: Checkout repository
+      - name: Check out repository
         uses: actions/checkout@v4
 
       - name: Set up Node.js

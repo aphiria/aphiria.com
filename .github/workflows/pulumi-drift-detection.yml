@@ -19,7 +19,7 @@ jobs:
       fail-fast: false # Continue checking other stacks even if one fails
 
     steps:
-      - name: Checkout code
+      - name: Check out code
         uses: actions/checkout@v4
 
       - name: Set up Node.js
