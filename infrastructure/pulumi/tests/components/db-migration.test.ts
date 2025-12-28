@@ -202,4 +202,45 @@ describe("createDBMigrationJob", () => {
             done();
         });
     });
+
+    /**
+     * Integration test: Verifies Job is created with ttlSecondsAfterFinished for auto-cleanup
+     * IMPORTANT: This Job uses ignoreChanges: ["*"] to prevent drift detection when the Job
+     * completes and gets auto-deleted by Kubernetes TTL controller.
+     *
+     * Behavior:
+     * 1. Pulumi creates Job during deployment
+     * 2. Job runs migrations/seeder and completes
+     * 3. Kubernetes deletes Job after ttlSecondsAfterFinished (0 seconds = immediate)
+     * 4. Drift detection ignores the deletion (no false positives)
+     * 5. Next deployment recreates Job if needed
+     *
+     * Manual verification: Run `pulumi preview --stack production` after Job completes
+     * and confirm no drift is reported for the missing Job resource.
+     */
+    it("should create ephemeral Job with auto-cleanup configuration", (done) => {
+        const job = createDBMigrationJob({
+            env: "production",
+            namespace: "default",
+            image: "ghcr.io/aphiria/aphiria.com-api@sha256:abc123",
+            dbHost: "db.default.svc.cluster.local",
+            dbName: "aphiria",
+            dbUser: pulumi.output("postgres"),
+            dbPassword: pulumi.output("password"),
+            runSeeder: true,
+            provider: k8sProvider,
+        });
+
+        expect(job).toBeDefined();
+
+        // Verify Job has ttlSecondsAfterFinished set for auto-cleanup
+        pulumi.all([job.metadata.name, job.spec.ttlSecondsAfterFinished]).apply(([name, ttl]) => {
+            expect(name).toBe("db-migration");
+            expect(ttl).toBe(0); // Immediate cleanup after completion
+            done();
+        });
+
+        // NOTE: ignoreChanges: ["*"] is set in db-migration.ts:111
+        // This prevents drift detection from reporting Job deletion as drift
+    });
 });

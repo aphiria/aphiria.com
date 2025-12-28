@@ -103,6 +103,12 @@ export function createDBMigrationJob(args: DBMigrationJobArgs): k8s.batch.v1.Job
                 },
             },
         },
-        { provider: args.provider }
+        {
+            provider: args.provider,
+            // Ignore all changes to this Job after creation - it's ephemeral and gets auto-deleted
+            // by ttlSecondsAfterFinished. This prevents drift detection from reporting the Job
+            // as missing when it completes and gets cleaned up.
+            ignoreChanges: ["*"],
+        }
     );
 }

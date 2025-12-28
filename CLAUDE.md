@@ -222,6 +222,8 @@ composer psalm      # Static analysis
 
 ### Quality Gates (TypeScript/Pulumi)
 
+Any changes to our infrastructure MUST have corresponding unit tests added.  NEVER just update the infrastructure without writing unit tests to cover the changes..
+
 Before completing ANY TypeScript/infrastructure task:
 ```bash
 cd infrastructure/pulumi

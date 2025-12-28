@@ -23,6 +23,9 @@ export function createKubernetesCluster(args: KubernetesClusterArgs): Kubernetes
             labels: args.labels || {},
         },
         tags: args.tags || [],
+    }, {
+        // Ignore node count change if auto scaling is enabled so we don't get alerts about drift detection
+        ignoreChanges: args.autoScale ? ["nodePool.nodeCount"] : [],
     });
 
     const kubeconfig = cluster.kubeConfigs[0].rawConfig;
