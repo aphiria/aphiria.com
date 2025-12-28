@@ -324,6 +324,7 @@ Write tests FIRST (TDD).
 **TypeScript/Pulumi**:
 - [ ] `npm run build` (in `infrastructure/pulumi/`)
 - [ ] `npm run lint` (0 errors, 0 warnings)
+- [ ] `npm run format:check` (0 errors, 0 warnings)
 - [ ] `npm test` (100% pass rate, meets coverage thresholds)
 - [ ] New files staged
 - [ ] `dist/` and `coverage/` NOT committed (gitignored)
