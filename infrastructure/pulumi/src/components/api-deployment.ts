@@ -13,29 +13,24 @@ export function createAPIDeployment(args: APIDeploymentArgs): APIDeploymentResul
     const APP_BUILDER_API = "\\Aphiria\\Framework\\Api\\SynchronousApiApplicationBuilder";
     const APP_BUILDER_CONSOLE = "\\Aphiria\\Framework\\Console\\ConsoleApplicationBuilder";
 
-    // Environment-specific defaults
-    const appEnv = args.envConfig?.appEnv || (args.env === "production" ? "production" : "dev");
-    const logLevel = args.envConfig?.logLevel || (args.env === "production" ? "warning" : "debug");
-    const cookieSecure = args.envConfig?.cookieSecure !== false ? "1" : "0";
-
-    // Build ConfigMap data from parameters + hardcoded constants
+    // Build ConfigMap data from parameters
     const configData: Record<string, pulumi.Input<string>> = {
         DB_HOST: args.dbHost,
         DB_PORT: String(POSTGRES_PORT),
         DB_NAME: args.dbName,
         DB_USER: args.dbUser,
-        APP_ENV: appEnv,
+        APP_ENV: args.env,
         WEB_URL: args.webUrl,
         API_URL: args.apiUrl,
         APP_WEB_URL: args.webUrl,
         APP_API_URL: args.apiUrl,
-        APP_COOKIE_DOMAIN: args.envConfig?.cookieDomain || ".aphiria.com",
-        APP_COOKIE_SECURE: cookieSecure,
+        APP_COOKIE_DOMAIN: args.cookieDomain,
+        APP_COOKIE_SECURE: args.cookieSecure ? "1" : "0",
         APP_BUILDER_API,
         APP_BUILDER_CONSOLE,
-        LOG_LEVEL: logLevel,
-        ...(args.envConfig?.prNumber && { PR_NUMBER: args.envConfig.prNumber }),
-        ...(args.envConfig?.extraVars || {}),
+        LOG_LEVEL: args.logLevel,
+        ...(args.prNumber && { PR_NUMBER: args.prNumber }),
+        ...(args.extraVars || {}),
     };
 
     // Build Secret data

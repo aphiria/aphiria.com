@@ -36,6 +36,7 @@ describe("createWebDeployment", () => {
             jsConfigData: {
                 apiBaseUrl: "https://api.aphiria.com",
             },
+            logLevel: "debug",
             provider: k8sProvider,
         });
 
@@ -69,6 +70,7 @@ describe("createWebDeployment", () => {
             jsConfigData: {
                 apiBaseUrl: "https://api.aphiria.com",
             },
+            logLevel: "warning",
             podDisruptionBudget: {
                 minAvailable: 1,
             },
@@ -96,13 +98,14 @@ describe("createWebDeployment", () => {
             jsConfigData: {
                 apiBaseUrl: "https://api.aphiria.com",
             },
+            logLevel: "debug",
             provider: k8sProvider,
         });
 
         expect(result.podDisruptionBudget).toBeUndefined();
     });
 
-    it("should handle envConfig when provided", (done) => {
+    it("should handle preview environment with PR number", (done) => {
         const result = createWebDeployment({
             env: "preview",
             namespace: "preview-pr-123",
@@ -112,11 +115,8 @@ describe("createWebDeployment", () => {
             jsConfigData: {
                 apiBaseUrl: "https://pr-123.pr-api.aphiria.com",
             },
-            envConfig: {
-                appEnv: "preview",
-                logLevel: "debug",
-                prNumber: "123",
-            },
+            logLevel: "debug",
+            prNumber: "123",
             provider: k8sProvider,
         });
 
@@ -138,6 +138,7 @@ describe("createWebDeployment", () => {
             jsConfigData: {
                 apiBaseUrl: "https://api.aphiria.com",
             },
+            logLevel: "warning",
             resources: {
                 requests: { cpu: "100m", memory: "256Mi" },
                 limits: { cpu: "200m", memory: "512Mi" },
@@ -158,6 +159,7 @@ describe("createWebDeployment", () => {
             jsConfigData: {
                 apiBaseUrl: "https://api.aphiria.com",
             },
+            logLevel: "warning",
             imagePullSecrets: ["ghcr-pull-secret"],
             provider: k8sProvider,
         });
@@ -175,6 +177,7 @@ describe("createWebDeployment", () => {
             jsConfigData: {
                 apiBaseUrl: "https://api.aphiria.com",
             },
+            logLevel: "debug",
             labels: {
                 "custom-label": "custom-value",
                 environment: "testing",
@@ -196,7 +199,7 @@ describe("createWebDeployment", () => {
         });
     });
 
-    it("should handle production environment defaults", (done) => {
+    it("should handle production environment", (done) => {
         const result = createWebDeployment({
             env: "production",
             namespace: "prod",
@@ -206,7 +209,7 @@ describe("createWebDeployment", () => {
             jsConfigData: {
                 apiBaseUrl: "https://api.aphiria.com",
             },
-            envConfig: {},
+            logLevel: "warning",
             provider: k8sProvider,
         });
 
@@ -218,7 +221,7 @@ describe("createWebDeployment", () => {
         });
     });
 
-    it("should handle extra vars in envConfig", (done) => {
+    it("should handle extra vars", (done) => {
         const result = createWebDeployment({
             env: "preview",
             namespace: "preview-pr-123",
@@ -228,10 +231,9 @@ describe("createWebDeployment", () => {
             jsConfigData: {
                 apiBaseUrl: "https://pr-123.pr-api.aphiria.com",
             },
-            envConfig: {
-                extraVars: {
-                    CUSTOM_VAR: "custom-value",
-                },
+            logLevel: "debug",
+            extraVars: {
+                CUSTOM_VAR: "custom-value",
             },
             provider: k8sProvider,
         });

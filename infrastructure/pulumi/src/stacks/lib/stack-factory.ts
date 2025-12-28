@@ -176,13 +176,10 @@ export function createStack(config: StackConfig, k8sProvider: k8s.Provider): Sta
                 cookieDomain: config.app.cookieDomain,
             },
             baseUrl: config.app.webUrl,
-            envConfig:
+            logLevel: config.env === "production" ? "warning" : "debug",
+            prNumber:
                 config.env === "preview" && config.namespace
-                    ? {
-                          appEnv: "preview",
-                          logLevel: "debug",
-                          prNumber: config.namespace.name.replace("preview-pr-", ""),
-                      }
+                    ? config.namespace.name.replace("preview-pr-", "")
                     : undefined,
             imagePullSecrets: config.namespace?.imagePullSecret ? ["ghcr-pull-secret"] : undefined,
             resources: config.app.webResources,
@@ -202,14 +199,12 @@ export function createStack(config: StackConfig, k8sProvider: k8s.Provider): Sta
             dbPassword,
             apiUrl: config.app.apiUrl,
             webUrl: config.app.webUrl,
-            envConfig:
+            logLevel: config.env === "production" ? "warning" : "debug",
+            cookieDomain: config.app.cookieDomain,
+            cookieSecure: config.env !== "local",
+            prNumber:
                 config.env === "preview" && config.namespace
-                    ? {
-                          appEnv: "preview",
-                          logLevel: "debug",
-                          cookieDomain: config.app.cookieDomain,
-                          prNumber: config.namespace.name.replace("preview-pr-", ""),
-                      }
+                    ? config.namespace.name.replace("preview-pr-", "")
                     : undefined,
             imagePullSecrets: config.namespace?.imagePullSecret ? ["ghcr-pull-secret"] : undefined,
             resources: config.app.apiResources,

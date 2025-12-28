@@ -38,6 +38,9 @@ describe("createAPIDeployment", () => {
             dbPassword: pulumi.output("password"),
             webUrl: "https://www.aphiria.com",
             apiUrl: "https://api.aphiria.com",
+            logLevel: "debug",
+            cookieDomain: ".aphiria.com",
+            cookieSecure: false,
             provider: k8sProvider,
         });
 
@@ -73,6 +76,9 @@ describe("createAPIDeployment", () => {
             dbPassword: pulumi.output("password"),
             webUrl: "https://www.aphiria.com",
             apiUrl: "https://api.aphiria.com",
+            logLevel: "warning",
+            cookieDomain: ".aphiria.com",
+            cookieSecure: true,
             podDisruptionBudget: {
                 minAvailable: 1,
             },
@@ -102,13 +108,16 @@ describe("createAPIDeployment", () => {
             dbPassword: pulumi.output("password"),
             webUrl: "https://www.aphiria.com",
             apiUrl: "https://api.aphiria.com",
+            logLevel: "debug",
+            cookieDomain: ".aphiria.com",
+            cookieSecure: false,
             provider: k8sProvider,
         });
 
         expect(result.podDisruptionBudget).toBeUndefined();
     });
 
-    it("should use production defaults for production environment", () => {
+    it("should handle production environment", () => {
         const result = createAPIDeployment({
             env: "production",
             namespace: "default",
@@ -120,13 +129,16 @@ describe("createAPIDeployment", () => {
             dbPassword: pulumi.output("password"),
             webUrl: "https://www.aphiria.com",
             apiUrl: "https://api.aphiria.com",
+            logLevel: "warning",
+            cookieDomain: ".aphiria.com",
+            cookieSecure: true,
             provider: k8sProvider,
         });
 
         expect(result.deployment).toBeDefined();
     });
 
-    it("should include PR_NUMBER when provided in envConfig", (done) => {
+    it("should include PR_NUMBER when provided", (done) => {
         const result = createAPIDeployment({
             env: "preview",
             namespace: "preview-pr-123",
@@ -138,10 +150,10 @@ describe("createAPIDeployment", () => {
             dbPassword: pulumi.output("password"),
             webUrl: "https://pr-123.pr.aphiria.com",
             apiUrl: "https://pr-123.pr-api.aphiria.com",
-            envConfig: {
-                cookieDomain: ".pr.aphiria.com",
-                prNumber: "123",
-            },
+            logLevel: "debug",
+            cookieDomain: ".pr.aphiria.com",
+            cookieSecure: true,
+            prNumber: "123",
             provider: k8sProvider,
         });
 
@@ -165,6 +177,9 @@ describe("createAPIDeployment", () => {
             dbPassword: pulumi.output("password"),
             webUrl: "https://www.aphiria.com",
             apiUrl: "https://api.aphiria.com",
+            logLevel: "warning",
+            cookieDomain: ".aphiria.com",
+            cookieSecure: true,
             resources: {
                 nginx: {
                     requests: { cpu: "100m", memory: "128Mi" },
@@ -197,6 +212,9 @@ describe("createAPIDeployment", () => {
             dbPassword: pulumi.output("password"),
             webUrl: "https://www.aphiria.com",
             apiUrl: "https://api.aphiria.com",
+            logLevel: "warning",
+            cookieDomain: ".aphiria.com",
+            cookieSecure: true,
             imagePullSecrets: ["ghcr-pull-secret"],
             provider: k8sProvider,
         });
@@ -221,10 +239,9 @@ describe("createAPIDeployment", () => {
             dbPassword: pulumi.output("password"),
             webUrl: "https://www.aphiria.com",
             apiUrl: "https://api.aphiria.com",
-            envConfig: {
-                cookieDomain: ".aphiria.com",
-                cookieSecure: false,
-            },
+            logLevel: "debug",
+            cookieDomain: ".aphiria.com",
+            cookieSecure: false,
             provider: k8sProvider,
         });
 
@@ -236,7 +253,7 @@ describe("createAPIDeployment", () => {
         });
     });
 
-    it("should default cookieSecure to 1 when not specified", (done) => {
+    it("should set cookieSecure to 1 when explicitly enabled", (done) => {
         const result = createAPIDeployment({
             env: "production",
             namespace: "prod-ns",
@@ -248,9 +265,9 @@ describe("createAPIDeployment", () => {
             dbPassword: pulumi.output("password"),
             webUrl: "https://www.aphiria.com",
             apiUrl: "https://api.aphiria.com",
-            envConfig: {
-                cookieDomain: ".aphiria.com",
-            },
+            logLevel: "warning",
+            cookieDomain: ".aphiria.com",
+            cookieSecure: true,
             provider: k8sProvider,
         });
 
