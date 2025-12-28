@@ -50,17 +50,6 @@ export interface StackResources {
  * @param config Stack configuration (environment-specific parameters)
  * @param k8sProvider Kubernetes provider for resource creation
  * @returns Object containing all created resources
- *
- * @example Local environment
- * ```typescript
- * const k8sProvider = new k8s.Provider("minikube", { context: "minikube" });
- * const stack = createStack({
- *   env: "local",
- *   database: { replicas: 1, persistentStorage: true, storageSize: "5Gi", dbUser: "postgres", dbPassword: "postgres" },
- *   gateway: { tlsMode: "self-signed", domains: ["*.aphiria.com"] },
- *   app: { webReplicas: 1, apiReplicas: 1, webUrl: "https://www.aphiria.com", apiUrl: "https://api.aphiria.com", ... }
- * }, k8sProvider);
- * ```
  */
 export function createStack(config: StackConfig, k8sProvider: k8s.Provider): StackResources {
     const resources: StackResources = {};
@@ -251,6 +240,21 @@ export function createStack(config: StackConfig, k8sProvider: k8s.Provider): Sta
             gatewayNamespace: gatewayNamespace,
             provider: k8sProvider,
         });
+
+        // HTTP→HTTPS redirect for preview-pr (specific hostnames beat wildcard redirects)
+        // This ensures http://123.pr.aphiria.com redirects to https://123.pr.aphiria.com
+        if (config.env === "preview" && config.namespace) {
+            const webHostname = new URL(config.app.webUrl).hostname;
+            const apiHostname = new URL(config.app.apiUrl).hostname;
+
+            resources.httpsRedirect = createHTTPSRedirectRoute({
+                namespace: namespace,
+                gatewayName: "nginx-gateway",
+                gatewayNamespace: gatewayNamespace,
+                domains: [webHostname, apiHostname],
+                provider: k8sProvider,
+            });
+        }
     }
 
     // HTTP→HTTPS redirect (all Gateway-creating stacks)

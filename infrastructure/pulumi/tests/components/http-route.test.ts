@@ -196,6 +196,25 @@ describe("http-route components", () => {
                     done();
                 });
         });
+
+        it("should create hostname-based redirect for preview PR domains", (done) => {
+            const route = createHTTPSRedirectRoute({
+                namespace: "preview-pr-117",
+                gatewayName: "nginx-gateway",
+                domains: ["117.pr.aphiria.com", "117.pr-api.aphiria.com"],
+                provider: k8sProvider,
+            });
+
+            expect(route).toBeDefined();
+
+            pulumi
+                .all([route.metadata.name, route.metadata.namespace])
+                .apply(([name, namespace]) => {
+                    expect(name).toBe("https-redirect");
+                    expect(namespace).toBe("preview-pr-117");
+                    done();
+                });
+        });
     });
 
     describe("createWWWRedirectRoute", () => {

@@ -88,10 +88,52 @@ export interface HTTPSRedirectArgs {
 export function createHTTPSRedirectRoute(
     args: HTTPSRedirectArgs
 ): k8s.apiextensions.CustomResource {
-    // Build parentRefs for all HTTP listeners (must match gateway.ts listener naming)
-    const rootDomain = args.domains.find((d) => !d.startsWith("*"));
+    // Separate wildcard domains from specific hostnames
+    const rootDomain = args.domains.find((d) => !d.startsWith("*") && !d.includes(".pr."));
     const wildcardDomains = args.domains.filter((d) => d.startsWith("*"));
+    const specificHostnames = args.domains.filter((d) => !d.startsWith("*") && d.includes(".pr."));
 
+    // If we have specific hostnames (e.g., "117.pr.aphiria.com"), use hostname-based matching
+    // instead of sectionName - let Gateway auto-match based on hostname
+    if (specificHostnames.length > 0) {
+        return new k8s.apiextensions.CustomResource(
+            "https-redirect",
+            {
+                apiVersion: "gateway.networking.k8s.io/v1",
+                kind: "HTTPRoute",
+                metadata: {
+                    name: "https-redirect",
+                    namespace: args.namespace,
+                },
+                spec: {
+                    parentRefs: [
+                        {
+                            name: args.gatewayName,
+                            namespace: args.gatewayNamespace || args.namespace,
+                            // No sectionName - let Gateway auto-match based on hostnames
+                        },
+                    ],
+                    hostnames: specificHostnames,
+                    rules: [
+                        {
+                            filters: [
+                                {
+                                    type: "RequestRedirect",
+                                    requestRedirect: {
+                                        scheme: "https",
+                                        port: 443,
+                                    },
+                                },
+                            ],
+                        },
+                    ],
+                },
+            },
+            { provider: args.provider }
+        );
+    }
+
+    // Build parentRefs for all HTTP listeners (for wildcard/root domains)
     const parentRefs: Array<{
         name: string;
         namespace: pulumi.Input<string>;

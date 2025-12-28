@@ -289,6 +289,7 @@ describe("createStack factory", () => {
 
             expect(stack.api).toBeDefined();
             expect(stack.migration).toBeDefined();
+            expect(stack.httpsRedirect).toBeDefined();
         });
 
         it("should use default database credentials when createDatabase is false", () => {
@@ -529,7 +530,7 @@ describe("createStack factory", () => {
                 k8sProvider
             );
 
-            expect(stack.httpsRedirect).toBeUndefined();
+            expect(stack.httpsRedirect).toBeDefined(); // Preview-PR creates its own redirect
             expect(stack.wwwRedirect).toBeUndefined();
         });
     });
