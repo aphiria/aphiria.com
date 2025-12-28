@@ -116,6 +116,30 @@ describe("http-route components", () => {
                 done();
             });
         });
+
+        it("should attach to HTTPS listener only (port 443)", (done) => {
+            const route = createHTTPRoute({
+                name: "web-route",
+                namespace: "default",
+                hostname: "www.aphiria.com",
+                gatewayName: "nginx-gateway",
+                gatewayNamespace: "nginx-gateway",
+                serviceName: "web",
+                serviceNamespace: "default",
+                servicePort: 80,
+                enableRateLimiting: false,
+                provider: k8sProvider,
+            });
+
+            expect(route).toBeDefined();
+
+            // Cast to any to access spec property (not in mock types)
+            (route as any).spec.apply((spec: any) => {
+                expect(spec.parentRefs).toBeDefined();
+                expect(spec.parentRefs[0].port).toBe(443);
+                done();
+            });
+        });
     });
 
     describe("createHTTPSRedirectRoute", () => {
@@ -214,6 +238,24 @@ describe("http-route components", () => {
                     expect(namespace).toBe("preview-pr-117");
                     done();
                 });
+        });
+
+        it("should attach to HTTP listener only (port 80) for specific hostnames", (done) => {
+            const route = createHTTPSRedirectRoute({
+                namespace: "preview-pr-117",
+                gatewayName: "nginx-gateway",
+                domains: ["117.pr.aphiria.com", "117.pr-api.aphiria.com"],
+                provider: k8sProvider,
+            });
+
+            expect(route).toBeDefined();
+
+            // Cast to any to access spec property (not in mock types)
+            (route as any).spec.apply((spec: any) => {
+                expect(spec.parentRefs).toBeDefined();
+                expect(spec.parentRefs[0].port).toBe(80);
+                done();
+            });
         });
     });
 
