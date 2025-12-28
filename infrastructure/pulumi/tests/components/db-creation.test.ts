@@ -113,7 +113,7 @@ describe("createDatabaseCreationJob", () => {
         job.metadata.labels.apply((jobLabels: any) => {
             expect(jobLabels).toMatchObject({
                 app: "db-init",
-                "app.kubernetes.io/name": "database-creation",
+                "app.kubernetes.io/name": "db-init",
                 "app.kubernetes.io/component": "database",
                 "custom-label": "custom-value",
             });

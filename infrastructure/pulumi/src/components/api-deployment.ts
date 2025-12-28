@@ -2,18 +2,14 @@ import * as pulumi from "@pulumi/pulumi";
 import * as k8s from "@pulumi/kubernetes";
 import { APIDeploymentArgs, APIDeploymentResult } from "./types";
 import { checksum } from "./utils";
+import { POSTGRES_PORT } from "./constants";
+import { buildLabels } from "./labels";
 
 /** Creates nginx + PHP-FPM deployment using initContainer to copy code to shared volume */
 export function createAPIDeployment(args: APIDeploymentArgs): APIDeploymentResult {
-    const labels = {
-        app: "api",
-        "app.kubernetes.io/name": "aphiria-api",
-        "app.kubernetes.io/component": "backend",
-        ...(args.labels || {}),
-    };
+    const labels = buildLabels("api", "backend", args.labels);
 
     // Hardcoded constants (same across all environments)
-    const DB_PORT = "5432"; // PostgreSQL standard port
     const APP_BUILDER_API = "\\Aphiria\\Framework\\Api\\SynchronousApiApplicationBuilder";
     const APP_BUILDER_CONSOLE = "\\Aphiria\\Framework\\Console\\ConsoleApplicationBuilder";
 
@@ -25,7 +21,7 @@ export function createAPIDeployment(args: APIDeploymentArgs): APIDeploymentResul
     // Build ConfigMap data from parameters + hardcoded constants
     const configData: Record<string, pulumi.Input<string>> = {
         DB_HOST: args.dbHost,
-        DB_PORT,
+        DB_PORT: String(POSTGRES_PORT),
         DB_NAME: args.dbName,
         DB_USER: args.dbUser,
         APP_ENV: appEnv,
@@ -161,9 +157,13 @@ export function createAPIDeployment(args: APIDeploymentArgs): APIDeploymentResul
                             {
                                 name: "copy-api-code",
                                 image: args.image,
+                                // imagePullPolicy rules (Kubernetes-specific requirements):
+                                // - Local: Use "Never" (images loaded via minikube/docker load)
+                                // - SHA256 digest: Use "IfNotPresent" (immutable, safe to cache)
+                                // - Tag: Use "Always" (mutable, must pull to check for updates)
                                 imagePullPolicy:
                                     args.env === "local"
-                                        ? "Never" // Local images only
+                                        ? "Never"
                                         : args.image.includes("@sha256:")
                                           ? "IfNotPresent"
                                           : "Always",
@@ -225,9 +225,10 @@ export function createAPIDeployment(args: APIDeploymentArgs): APIDeploymentResul
                             {
                                 name: "php",
                                 image: args.image,
+                                // imagePullPolicy rules (same as initContainer - see above)
                                 imagePullPolicy:
                                     args.env === "local"
-                                        ? "Never" // Local images only
+                                        ? "Never"
                                         : args.image.includes("@sha256:")
                                           ? "IfNotPresent"
                                           : "Always",

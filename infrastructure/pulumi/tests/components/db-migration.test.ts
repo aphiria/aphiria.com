@@ -140,7 +140,7 @@ describe("createDBMigrationJob", () => {
         job.metadata.labels.apply((labels: any) => {
             expect(labels).toMatchObject({
                 app: "db-migration",
-                "app.kubernetes.io/name": "aphiria-db-migration",
+                "app.kubernetes.io/name": "db-migration",
                 "app.kubernetes.io/component": "database",
                 "custom-label": "custom-value",
                 environment: "testing",

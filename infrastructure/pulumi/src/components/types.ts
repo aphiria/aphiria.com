@@ -416,8 +416,7 @@ export interface KubernetesClusterArgs {
  * Return type for Kubernetes cluster component
  */
 export interface KubernetesClusterResult {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- DigitalOcean cluster type
-    cluster: any;
+    cluster: digitalocean.KubernetesCluster;
     clusterId: pulumi.Output<string>;
     endpoint: pulumi.Output<string>;
     kubeconfig: pulumi.Output<string>;

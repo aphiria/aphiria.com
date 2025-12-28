@@ -187,7 +187,7 @@ describe("createWebDeployment", () => {
         result.deployment.labels.apply((deploymentLabels: any) => {
             expect(deploymentLabels).toMatchObject({
                 app: "web",
-                "app.kubernetes.io/name": "aphiria-web",
+                "app.kubernetes.io/name": "web",
                 "app.kubernetes.io/component": "frontend",
                 "custom-label": "custom-value",
                 environment: "testing",

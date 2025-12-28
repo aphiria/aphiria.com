@@ -1,5 +1,6 @@
 import * as k8s from "@pulumi/kubernetes";
 import { DatabaseCreationJobArgs } from "./types";
+import { buildLabels } from "./labels";
 
 /**
  * Creates a Kubernetes Job to create a PostgreSQL database.
@@ -36,12 +37,7 @@ export function createDatabaseCreationJob(args: DatabaseCreationJobArgs): k8s.ba
     };
     const DEFAULT_PGDATABASE = "postgres"; // Connect to default database to create new one
 
-    const labels = {
-        app: "db-init",
-        "app.kubernetes.io/name": "database-creation",
-        "app.kubernetes.io/component": "database",
-        ...(args.labels || {}),
-    };
+    const labels = buildLabels("db-init", "database", args.labels);
 
     const jobName = `db-init-${args.databaseName.replace(/_/g, "-")}`;
 
