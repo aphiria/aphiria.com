@@ -437,8 +437,8 @@ jobs:
               const clusterDeployed = await checkClusterDeployed('preview-base');
 
               if (clusterDeployed) {
-                core.info('✅ Base infrastructure already deployed');
-                await pulumiRefresh('preview-base');
+                core.info('✅ Base infrastructure exists - deploying latest changes');
+                await deployWithRetry('preview-base');
               } else {
                 core.warning('⚠️  Base stack exists but cluster not deployed - deploying now...');
                 core.info('   This likely means a previous deployment failed partway through.');
