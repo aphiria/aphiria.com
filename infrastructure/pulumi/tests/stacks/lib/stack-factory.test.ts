@@ -437,7 +437,7 @@ describe("createStack factory", () => {
             expect(stack.api).toBeDefined();
         });
 
-        it("should not create HTTP redirect routes for non-local environments", () => {
+        it("should create HTTP redirect routes for production environment", () => {
             const stack = createStack(
                 {
                     env: "production",
@@ -460,6 +460,70 @@ describe("createStack factory", () => {
                         webImage: "ghcr.io/aphiria/aphiria.com-web@sha256:abc123",
                         apiImage: "ghcr.io/aphiria/aphiria.com-api@sha256:def456",
                         cookieDomain: ".aphiria.com",
+                    },
+                },
+                k8sProvider
+            );
+
+            expect(stack.httpsRedirect).toBeDefined();
+            expect(stack.wwwRedirect).toBeDefined();
+        });
+
+        it("should create HTTPS redirect but not WWW redirect for preview-base", () => {
+            const stack = createStack(
+                {
+                    env: "preview",
+                    skipBaseInfrastructure: false,
+                    database: {
+                        persistentStorage: true,
+                        storageSize: "20Gi",
+                        dbUser: pulumi.output("postgres"),
+                        dbPassword: pulumi.output("password"),
+                    },
+                    gateway: {
+                        tlsMode: "letsencrypt-prod",
+                        domains: ["*.pr.aphiria.com", "*.pr-api.aphiria.com"],
+                        dnsToken: pulumi.output("fake-dns-token"),
+                    },
+                },
+                k8sProvider
+            );
+
+            expect(stack.httpsRedirect).toBeDefined();
+            expect(stack.wwwRedirect).toBeUndefined();
+        });
+
+        it("should not create HTTP redirect routes when skipBaseInfrastructure is true", () => {
+            const stack = createStack(
+                {
+                    env: "preview",
+                    skipBaseInfrastructure: true,
+                    namespace: {
+                        name: "preview-pr-123",
+                    },
+                    database: {
+                        createDatabase: true,
+                        databaseName: "aphiria_pr_123",
+                        dbHost: pulumi.output("db.default.svc.cluster.local"),
+                        dbAdminUser: pulumi.output("admin"),
+                        dbAdminPassword: pulumi.output("admin-password"),
+                        persistentStorage: false,
+                        storageSize: "1Gi",
+                        dbUser: pulumi.output("app-user"),
+                        dbPassword: pulumi.output("app-password"),
+                    },
+                    gateway: {
+                        tlsMode: "letsencrypt-prod",
+                        domains: ["*.pr.aphiria.com"],
+                    },
+                    app: {
+                        webReplicas: 1,
+                        apiReplicas: 1,
+                        webUrl: "https://123.pr.aphiria.com",
+                        apiUrl: "https://123.pr-api.aphiria.com",
+                        webImage: "ghcr.io/aphiria/aphiria.com-web@sha256:abc123",
+                        apiImage: "ghcr.io/aphiria/aphiria.com-api@sha256:def456",
+                        cookieDomain: ".pr.aphiria.com",
                     },
                 },
                 k8sProvider

@@ -251,16 +251,26 @@ export function createStack(config: StackConfig, k8sProvider: k8s.Provider): Sta
             gatewayNamespace: gatewayNamespace,
             provider: k8sProvider,
         });
+    }
 
-        // HTTP/HTTPS redirect routes (local only)
-        if (config.env === "local") {
-            resources.httpsRedirect = createHTTPSRedirectRoute({
-                namespace: gatewayNamespace,
-                gatewayName: "nginx-gateway",
-                gatewayNamespace: gatewayNamespace,
-                provider: k8sProvider,
-            });
+    // HTTP→HTTPS redirect (all Gateway-creating stacks)
+    if (!config.skipBaseInfrastructure) {
+        // Determine if WWW redirect will be created (local and production only)
+        const hasWWWRedirect = config.env !== "preview";
 
+        resources.httpsRedirect = createHTTPSRedirectRoute({
+            namespace: gatewayNamespace,
+            gatewayName: "nginx-gateway",
+            gatewayNamespace: gatewayNamespace,
+            domains: config.gateway.domains,
+            // Skip http-root listener when WWW redirect exists to avoid conflicts
+            // WWW redirect handles: http://aphiria.com → https://www.aphiria.com (single hop)
+            skipRootListener: hasWWWRedirect,
+            provider: k8sProvider,
+        });
+
+        // Root domain → www redirect (only for environments using aphiria.com root domain)
+        if (hasWWWRedirect) {
             resources.wwwRedirect = createWWWRedirectRoute({
                 namespace: gatewayNamespace,
                 gatewayName: "nginx-gateway",

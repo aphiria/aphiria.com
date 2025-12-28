@@ -119,11 +119,12 @@ describe("http-route components", () => {
     });
 
     describe("createHTTPSRedirectRoute", () => {
-        it("should create HTTPS redirect route with explicit gateway namespace", (done) => {
+        it("should create HTTPS redirect route for root and wildcard domains", (done) => {
             const route = createHTTPSRedirectRoute({
                 namespace: "redirect-ns",
                 gatewayName: "gateway",
                 gatewayNamespace: "gateway-ns",
+                domains: ["aphiria.com", "*.aphiria.com"],
                 provider: k8sProvider,
             });
 
@@ -138,10 +139,50 @@ describe("http-route components", () => {
                 });
         });
 
-        it("should create HTTPS redirect route with default gateway namespace", (done) => {
+        it("should create HTTPS redirect route for multiple wildcard domains", (done) => {
             const route = createHTTPSRedirectRoute({
                 namespace: "default",
                 gatewayName: "gateway",
+                domains: ["*.pr.aphiria.com", "*.pr-api.aphiria.com"],
+                provider: k8sProvider,
+            });
+
+            expect(route).toBeDefined();
+
+            pulumi
+                .all([route.metadata.name, route.metadata.namespace])
+                .apply(([name, namespace]) => {
+                    expect(name).toBe("https-redirect");
+                    expect(namespace).toBe("default");
+                    done();
+                });
+        });
+
+        it("should create HTTPS redirect route for wildcard-only domain", (done) => {
+            const route = createHTTPSRedirectRoute({
+                namespace: "default",
+                gatewayName: "gateway",
+                domains: ["*.example.com"],
+                provider: k8sProvider,
+            });
+
+            expect(route).toBeDefined();
+
+            pulumi
+                .all([route.metadata.name, route.metadata.namespace])
+                .apply(([name, namespace]) => {
+                    expect(name).toBe("https-redirect");
+                    expect(namespace).toBe("default");
+                    done();
+                });
+        });
+
+        it("should skip http-root listener when skipRootListener is true", (done) => {
+            const route = createHTTPSRedirectRoute({
+                namespace: "default",
+                gatewayName: "gateway",
+                domains: ["aphiria.com", "*.aphiria.com"],
+                skipRootListener: true,
                 provider: k8sProvider,
             });
 

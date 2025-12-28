@@ -68,17 +68,56 @@ export function createHTTPRoute(args: HTTPRouteArgs): k8s.apiextensions.CustomRe
     );
 }
 
-/** Creates HTTP → HTTPS redirect route */
+/**
+ * Creates HTTP → HTTPS redirect route for all domains
+ *
+ * When skipRootListener is true (typically when WWW redirect is enabled), this route
+ * will NOT attach to the http-root listener, allowing the WWW redirect to handle
+ * http://example.com → https://www.example.com in a single hop.
+ */
 export interface HTTPSRedirectArgs {
     namespace: pulumi.Input<string>;
     gatewayName: string;
     gatewayNamespace?: pulumi.Input<string>;
+    domains: string[];
+    /** Skip http-root listener (used when WWW redirect handles root domain) */
+    skipRootListener?: boolean;
     provider: k8s.Provider;
 }
 
 export function createHTTPSRedirectRoute(
     args: HTTPSRedirectArgs
 ): k8s.apiextensions.CustomResource {
+    // Build parentRefs for all HTTP listeners (must match gateway.ts listener naming)
+    const rootDomain = args.domains.find((d) => !d.startsWith("*"));
+    const wildcardDomains = args.domains.filter((d) => d.startsWith("*"));
+
+    const parentRefs: Array<{
+        name: string;
+        namespace: pulumi.Input<string>;
+        sectionName: string;
+    }> = [];
+
+    // Add root domain HTTP listener if exists and not skipped
+    // (Skip when WWW redirect is enabled to avoid conflicts)
+    if (rootDomain && !args.skipRootListener) {
+        parentRefs.push({
+            name: args.gatewayName,
+            namespace: args.gatewayNamespace || args.namespace,
+            sectionName: "http-root",
+        });
+    }
+
+    // Add wildcard domain HTTP listeners
+    wildcardDomains.forEach((_, index) => {
+        parentRefs.push({
+            name: args.gatewayName,
+            namespace: args.gatewayNamespace || args.namespace,
+            sectionName:
+                wildcardDomains.length === 1 ? "http-subdomains" : `http-subdomains-${index + 1}`,
+        });
+    });
+
     return new k8s.apiextensions.CustomResource(
         "https-redirect",
         {
@@ -89,13 +128,7 @@ export function createHTTPSRedirectRoute(
                 namespace: args.namespace,
             },
             spec: {
-                parentRefs: [
-                    {
-                        name: args.gatewayName,
-                        namespace: args.gatewayNamespace || args.namespace,
-                        sectionName: "http-subdomains",
-                    },
-                ],
+                parentRefs,
                 rules: [
                     {
                         filters: [
