@@ -108,6 +108,9 @@ export function createPostgreSQL(args: PostgreSQLArgs): PostgreSQLResult {
             },
             spec: {
                 replicas: 1, // Single replica - multi-replica requires StatefulSet + replication
+                strategy: {
+                    type: "Recreate", // Avoid Multi-Attach errors with ReadWriteOnce PVC
+                },
                 selector: {
                     matchLabels: {
                         app: "db",

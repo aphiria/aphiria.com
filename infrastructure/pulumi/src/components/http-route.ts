@@ -36,7 +36,7 @@ export function createHTTPRoute(args: HTTPRouteArgs): k8s.apiextensions.CustomRe
                     {
                         name: args.gatewayName,
                         namespace: args.gatewayNamespace,
-                        // sectionName omitted - Gateway auto-matches based on hostname
+                        port: 443, // HTTPS only - HTTP listeners are reserved for redirects
                     },
                 ],
                 rules: [
@@ -110,7 +110,7 @@ export function createHTTPSRedirectRoute(
                         {
                             name: args.gatewayName,
                             namespace: args.gatewayNamespace || args.namespace,
-                            // No sectionName - let Gateway auto-match based on hostnames
+                            port: 80, // HTTP only - redirect to HTTPS
                         },
                     ],
                     hostnames: specificHostnames,

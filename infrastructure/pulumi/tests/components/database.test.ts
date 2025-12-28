@@ -178,4 +178,44 @@ describe("createPostgreSQL", () => {
             "pg_ctl stop -D /var/lib/postgresql/data/pgdata -m fast -t 60",
         ]);
     });
+
+    it("should use Recreate strategy to avoid Multi-Attach errors", async () => {
+        const deployment = new k8s.apps.v1.Deployment("db-recreate-test", {
+            metadata: {
+                name: "db",
+                namespace: "default",
+            },
+            spec: {
+                replicas: 1,
+                strategy: {
+                    type: "Recreate",
+                },
+                selector: {
+                    matchLabels: { app: "db" },
+                },
+                template: {
+                    metadata: {
+                        labels: { app: "db" },
+                    },
+                    spec: {
+                        containers: [
+                            {
+                                name: "db",
+                                image: "postgres:16",
+                            },
+                        ],
+                    },
+                },
+            },
+        });
+
+        const spec = await new Promise<k8s.types.output.apps.v1.DeploymentSpec>((resolve) => {
+            deployment.spec.apply((s) => {
+                resolve(s);
+                return s;
+            });
+        });
+
+        expect(spec.strategy?.type).toBe("Recreate");
+    });
 });
