@@ -36,7 +36,7 @@ export function createHTTPRoute(args: HTTPRouteArgs): k8s.apiextensions.CustomRe
                     {
                         name: args.gatewayName,
                         namespace: args.gatewayNamespace,
-                        port: 443, // HTTPS only - HTTP listeners are reserved for redirects
+                        ...(args.sectionName ? { sectionName: args.sectionName } : {}),
                     },
                 ],
                 rules: [
@@ -89,13 +89,38 @@ export function createHTTPSRedirectRoute(
     args: HTTPSRedirectArgs
 ): k8s.apiextensions.CustomResource {
     // Separate wildcard domains from specific hostnames
-    const rootDomain = args.domains.find((d) => !d.startsWith("*") && !d.includes(".pr."));
+    const rootDomain = args.domains.find((d) => !d.startsWith("*") && !d.includes(".pr.") && !d.includes(".pr-"));
     const wildcardDomains = args.domains.filter((d) => d.startsWith("*"));
-    const specificHostnames = args.domains.filter((d) => !d.startsWith("*") && d.includes(".pr."));
+    const specificHostnames = args.domains.filter((d) => !d.startsWith("*") && (d.includes(".pr.") || d.includes(".pr-")));
 
-    // If we have specific hostnames (e.g., "117.pr.aphiria.com"), use hostname-based matching
-    // instead of sectionName - let Gateway auto-match based on hostname
+    // If we have specific hostnames (e.g., "117.pr.aphiria.com"), attach to HTTP listeners by sectionName
+    // Preview-PR uses specific hostnames and needs to attach to http-subdomains-1 and http-subdomains-2
     if (specificHostnames.length > 0) {
+        // Build parentRefs for each subdomain type (pr.aphiria.com and pr-api.aphiria.com)
+        const parentRefs: Array<{
+            name: string;
+            namespace: pulumi.Input<string>;
+            sectionName: string;
+        }> = [];
+
+        // Check if we have pr.aphiria.com hostnames (web)
+        if (specificHostnames.some((h) => !h.includes("pr-api"))) {
+            parentRefs.push({
+                name: args.gatewayName,
+                namespace: args.gatewayNamespace || args.namespace,
+                sectionName: "http-subdomains-1", // HTTP listener for *.pr.aphiria.com
+            });
+        }
+
+        // Check if we have pr-api.aphiria.com hostnames (api)
+        if (specificHostnames.some((h) => h.includes("pr-api"))) {
+            parentRefs.push({
+                name: args.gatewayName,
+                namespace: args.gatewayNamespace || args.namespace,
+                sectionName: "http-subdomains-2", // HTTP listener for *.pr-api.aphiria.com
+            });
+        }
+
         return new k8s.apiextensions.CustomResource(
             "https-redirect",
             {
@@ -106,13 +131,7 @@ export function createHTTPSRedirectRoute(
                     namespace: args.namespace,
                 },
                 spec: {
-                    parentRefs: [
-                        {
-                            name: args.gatewayName,
-                            namespace: args.gatewayNamespace || args.namespace,
-                            port: 80, // HTTP only - redirect to HTTPS
-                        },
-                    ],
+                    parentRefs,
                     hostnames: specificHostnames,
                     rules: [
                         {

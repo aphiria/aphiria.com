@@ -193,6 +193,8 @@ export interface HTTPRouteArgs {
     /** Gateway reference */
     gatewayName: pulumi.Input<string>;
     gatewayNamespace: pulumi.Input<string>;
+    /** Gateway listener sectionName (e.g., "https-subdomains-1") to attach to specific listener */
+    sectionName?: string;
     /** Enable connection-level rate limiting */
     enableRateLimiting?: boolean;
     /** Resource labels */

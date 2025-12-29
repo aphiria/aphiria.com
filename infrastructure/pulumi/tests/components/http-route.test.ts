@@ -117,7 +117,32 @@ describe("http-route components", () => {
             });
         });
 
-        it("should attach to HTTPS listener only (port 443)", (done) => {
+        it("should attach to specific listener using sectionName when provided", (done) => {
+            const route = createHTTPRoute({
+                name: "web-route",
+                namespace: "default",
+                hostname: "117.pr.aphiria.com",
+                gatewayName: "nginx-gateway",
+                gatewayNamespace: "nginx-gateway",
+                serviceName: "web",
+                serviceNamespace: "default",
+                servicePort: 80,
+                sectionName: "https-subdomains-1",
+                enableRateLimiting: false,
+                provider: k8sProvider,
+            });
+
+            expect(route).toBeDefined();
+
+            // Cast to any to access spec property (not in mock types)
+            (route as any).spec.apply((spec: any) => {
+                expect(spec.parentRefs).toBeDefined();
+                expect(spec.parentRefs[0].sectionName).toBe("https-subdomains-1");
+                done();
+            });
+        });
+
+        it("should not include sectionName when not provided", (done) => {
             const route = createHTTPRoute({
                 name: "web-route",
                 namespace: "default",
@@ -136,7 +161,7 @@ describe("http-route components", () => {
             // Cast to any to access spec property (not in mock types)
             (route as any).spec.apply((spec: any) => {
                 expect(spec.parentRefs).toBeDefined();
-                expect(spec.parentRefs[0].port).toBe(443);
+                expect(spec.parentRefs[0].sectionName).toBeUndefined();
                 done();
             });
         });
@@ -240,7 +265,7 @@ describe("http-route components", () => {
                 });
         });
 
-        it("should attach to HTTP listener only (port 80) for specific hostnames", (done) => {
+        it("should attach to HTTP listeners using sectionName for specific hostnames", (done) => {
             const route = createHTTPSRedirectRoute({
                 namespace: "preview-pr-117",
                 gatewayName: "nginx-gateway",
@@ -253,7 +278,9 @@ describe("http-route components", () => {
             // Cast to any to access spec property (not in mock types)
             (route as any).spec.apply((spec: any) => {
                 expect(spec.parentRefs).toBeDefined();
-                expect(spec.parentRefs[0].port).toBe(80);
+                expect(spec.parentRefs.length).toBe(2); // Both web and api listeners
+                expect(spec.parentRefs[0].sectionName).toBe("http-subdomains-1");
+                expect(spec.parentRefs[1].sectionName).toBe("http-subdomains-2");
                 done();
             });
         });

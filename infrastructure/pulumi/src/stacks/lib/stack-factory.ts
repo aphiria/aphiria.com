@@ -217,6 +217,9 @@ export function createStack(config: StackConfig, k8sProvider: k8s.Provider): Sta
         });
 
         // HTTPRoutes (always in same namespace as services to avoid cross-namespace ReferenceGrant)
+        // For preview-PR, explicitly attach to HTTPS listeners using sectionName
+        const isPreviewPR = config.env === "preview" && config.namespace;
+
         resources.webRoute = createHTTPRoute({
             namespace: namespace,
             name: "web",
@@ -226,6 +229,7 @@ export function createStack(config: StackConfig, k8sProvider: k8s.Provider): Sta
             servicePort: 80,
             gatewayName: "nginx-gateway",
             gatewayNamespace: gatewayNamespace,
+            sectionName: isPreviewPR ? "https-subdomains-1" : undefined,
             provider: k8sProvider,
         });
 
@@ -238,6 +242,7 @@ export function createStack(config: StackConfig, k8sProvider: k8s.Provider): Sta
             servicePort: 80,
             gatewayName: "nginx-gateway",
             gatewayNamespace: gatewayNamespace,
+            sectionName: isPreviewPR ? "https-subdomains-2" : undefined,
             provider: k8sProvider,
         });
 
