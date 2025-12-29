@@ -11,8 +11,9 @@ export function createGrafana(args: GrafanaArgs): GrafanaResult {
     const isProduction = args.env === "production";
 
     // Build Alertmanager configuration based on environment
-    const alertmanagerConfig = isProduction && args.smtpHost
-        ? `
+    const alertmanagerConfig =
+        isProduction && args.smtpHost
+            ? `
 alerting:
   contactpoints.yaml:
     apiVersion: 1
@@ -50,7 +51,7 @@ alerting:
         matchers:
           - environment =~ "preview|local"
 `
-        : `
+            : `
 alerting:
   contactpoints.yaml:
     apiVersion: 1

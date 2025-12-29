@@ -54,8 +54,8 @@ export function ignoreDigitalOceanServiceAnnotations(obj: any) {
             props: obj.props,
             opts: pulumi.mergeOptions(obj.opts, {
                 ignoreChanges: [
-                    "metadata.annotations[\"kubernetes.digitalocean.com/load-balancer-id\"]",
-                    "metadata.annotations[\"service.beta.kubernetes.io/do-loadbalancer-type\"]",
+                    'metadata.annotations["kubernetes.digitalocean.com/load-balancer-id"]',
+                    'metadata.annotations["service.beta.kubernetes.io/do-loadbalancer-type"]',
                 ],
             }),
         };
