@@ -89,9 +89,13 @@ export function createHTTPSRedirectRoute(
     args: HTTPSRedirectArgs
 ): k8s.apiextensions.CustomResource {
     // Separate wildcard domains from specific hostnames
-    const rootDomain = args.domains.find((d) => !d.startsWith("*") && !d.includes(".pr.") && !d.includes(".pr-"));
+    const rootDomain = args.domains.find(
+        (d) => !d.startsWith("*") && !d.includes(".pr.") && !d.includes(".pr-")
+    );
     const wildcardDomains = args.domains.filter((d) => d.startsWith("*"));
-    const specificHostnames = args.domains.filter((d) => !d.startsWith("*") && (d.includes(".pr.") || d.includes(".pr-")));
+    const specificHostnames = args.domains.filter(
+        (d) => !d.startsWith("*") && (d.includes(".pr.") || d.includes(".pr-"))
+    );
 
     // If we have specific hostnames (e.g., "117.pr.aphiria.com"), attach to HTTP listeners by sectionName
     // Preview-PR uses specific hostnames and needs to attach to http-subdomains-1 and http-subdomains-2
