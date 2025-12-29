@@ -14,6 +14,9 @@ import {
     createWWWRedirectRoute,
     createDNSRecords,
 } from "../../components";
+import { createPrometheus } from "../../components/monitoring/prometheus";
+import { createGrafana } from "../../components/monitoring/grafana";
+import { createGrafanaIngress } from "../../components/monitoring/grafana-ingress";
 import { StackConfig } from "./types";
 import {
     WebDeploymentResult,
@@ -21,6 +24,9 @@ import {
     PostgreSQLResult,
     GatewayResult,
     NamespaceResult,
+    PrometheusResult,
+    GrafanaResult,
+    GrafanaIngressResult,
 } from "../../components/types";
 
 /**
@@ -39,6 +45,12 @@ export interface StackResources {
     apiRoute?: k8s.apiextensions.CustomResource;
     httpsRedirect?: k8s.apiextensions.CustomResource;
     wwwRedirect?: k8s.apiextensions.CustomResource;
+    monitoring?: {
+        namespace: NamespaceResult;
+        prometheus: PrometheusResult;
+        grafana: GrafanaResult;
+        grafanaIngress: GrafanaIngressResult;
+    };
 }
 
 /**
@@ -71,12 +83,116 @@ export function createStack(config: StackConfig, k8sProvider: k8s.Provider): Sta
     // Determine namespace (use created namespace or default)
     const namespace = resources.namespace?.namespace.metadata.name || "default";
 
-    // Install Helm charts (cert-manager, nginx-gateway) if not skipped
+    // Install base infrastructure (cert-manager, nginx-gateway) if not skipped
     if (!config.skipBaseInfrastructure) {
-        resources.helmCharts = installBaseHelmCharts({
+        // For local environment: Install Gateway API CRDs and GatewayClass first
+        // DigitalOcean Kubernetes (preview/production) pre-installs these via Cilium
+        if (config.env === "local") {
+            const gatewayApiCrds = new k8s.yaml.ConfigFile(
+                "gateway-api-crds",
+                {
+                    file: "https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.0.0/standard-install.yaml",
+                },
+                {
+                    provider: k8sProvider,
+                }
+            );
+
+            // Create GatewayClass for nginx-gateway-fabric
+            // NOTE: nginx-gateway-fabric Helm chart does NOT create the GatewayClass
+            // The controller expects it to exist and will manage Gateway resources that reference it
+            const gatewayClass = new k8s.apiextensions.CustomResource(
+                "nginx-gatewayclass",
+                {
+                    apiVersion: "gateway.networking.k8s.io/v1",
+                    kind: "GatewayClass",
+                    metadata: {
+                        name: "nginx",
+                    },
+                    spec: {
+                        controllerName: "gateway.nginx.org/nginx-gateway-controller",
+                    },
+                },
+                {
+                    provider: k8sProvider,
+                    dependsOn: [gatewayApiCrds],
+                }
+            );
+
+            // Install Helm charts with nginx-gateway depending on CRDs and GatewayClass
+            resources.helmCharts = installBaseHelmCharts({
+                env: config.env,
+                provider: k8sProvider,
+                nginxGatewayDependencies: [gatewayApiCrds, gatewayClass],
+            });
+        } else {
+            // Preview/Production: No CRDs needed, just install Helm charts
+            resources.helmCharts = installBaseHelmCharts({
+                env: config.env,
+                provider: k8sProvider,
+            });
+        }
+    }
+
+    // Create monitoring namespace and components (if enabled)
+    if (config.monitoring) {
+        const monitoringNamespace = createNamespace({
+            name: "monitoring",
             env: config.env,
+            resourceQuota: {
+                cpu: "2",
+                memory: "8Gi",
+                pods: "20",
+            },
+            labels: {
+                "app.kubernetes.io/component": "monitoring",
+            },
             provider: k8sProvider,
         });
+
+        const prometheus = createPrometheus({
+            env: config.env,
+            namespace: "monitoring",
+            storageSize: config.monitoring.prometheus.storageSize,
+            scrapeInterval: config.monitoring.prometheus.scrapeInterval || "15s",
+            retentionTime: config.monitoring.prometheus.retentionTime || "7d",
+            provider: k8sProvider,
+        });
+
+        const grafana = createGrafana({
+            env: config.env,
+            namespace: "monitoring",
+            prometheusUrl: "http://prometheus.monitoring.svc.cluster.local:9090",
+            storageSize: config.monitoring.grafana.storageSize,
+            githubClientId: config.monitoring.grafana.githubOAuth.clientId,
+            githubClientSecret: config.monitoring.grafana.githubOAuth.clientSecret,
+            githubOrg: config.monitoring.grafana.githubOAuth.org,
+            adminUser: config.monitoring.grafana.githubOAuth.adminUser,
+            smtpHost: config.monitoring.grafana.smtp?.host,
+            smtpPort: config.monitoring.grafana.smtp?.port,
+            smtpUser: config.monitoring.grafana.smtp?.user,
+            smtpPassword: config.monitoring.grafana.smtp?.password,
+            smtpFromAddress: config.monitoring.grafana.smtp?.fromAddress,
+            alertEmail: config.monitoring.grafana.smtp?.alertEmail,
+            provider: k8sProvider,
+        });
+
+        const grafanaIngress = createGrafanaIngress({
+            namespace: "monitoring",
+            serviceName: "grafana",
+            servicePort: 80,
+            gatewayName: "nginx-gateway",
+            gatewayNamespace: gatewayNamespace,
+            hostname: config.monitoring.grafana.hostname,
+            provider: k8sProvider,
+        });
+
+        resources.monitoring = {
+            namespace: monitoringNamespace,
+            prometheus,
+            grafana,
+            grafanaIngress,
+        };
     }
 
     // Create database (shared PostgreSQL instance OR per-PR database)
@@ -114,19 +230,21 @@ export function createStack(config: StackConfig, k8sProvider: k8s.Provider): Sta
             domains: config.gateway.domains,
             dnsToken: config.gateway.dnsToken,
             provider: k8sProvider,
+            // Ensure cert-manager CRDs are ready before creating ClusterIssuer/Certificate
+            certManagerDependency: resources.helmCharts?.certManager,
         });
 
-        // Get LoadBalancer IP from nginx-gateway Service
-        const gatewayService = k8s.core.v1.Service.get(
-            "nginx-gateway-svc",
-            pulumi.interpolate`${gatewayNamespace}/nginx-gateway-nginx-gateway-fabric`,
-            { provider: k8sProvider }
-        );
-
-        resources.gateway.ip = gatewayService.status.loadBalancer.ingress[0].ip;
-
         // Create DNS records if configured
+        // Only fetch LoadBalancer IP if we need it for DNS
         if (config.gateway.dns) {
+            const gatewayService = k8s.core.v1.Service.get(
+                "nginx-gateway-svc",
+                pulumi.interpolate`${gatewayNamespace}/nginx-gateway-nginx-gateway-fabric`,
+                { provider: k8sProvider }
+            );
+
+            resources.gateway.ip = gatewayService.status.loadBalancer.ingress[0].ip;
+
             const dnsResult = createDNSRecords({
                 domain: config.gateway.dns.domain,
                 loadBalancerIp: resources.gateway.ip,

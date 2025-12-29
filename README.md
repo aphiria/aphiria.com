@@ -65,8 +65,8 @@ minikube tunnel
 ```bash
 eval $(minikube -p minikube docker-env)
 docker build -t aphiria.com-build -f ./infrastructure/docker/build/Dockerfile .
-docker build -t davidbyoung/aphiria.com-api:latest -f ./infrastructure/docker/runtime/api/Dockerfile . --build-arg BUILD_IMAGE=aphiria.com-build
-docker build -t davidbyoung/aphiria.com-web:latest -f ./infrastructure/docker/runtime/web/Dockerfile . --build-arg BUILD_IMAGE=aphiria.com-build
+docker build -t aphiria.com-api:latest -f ./infrastructure/docker/runtime/api/Dockerfile . --build-arg BUILD_IMAGE=aphiria.com-build
+docker build -t aphiria.com-web:latest -f ./infrastructure/docker/runtime/web/Dockerfile . --build-arg BUILD_IMAGE=aphiria.com-build
 ```
 
 ### Deploy with Pulumi
@@ -78,12 +78,11 @@ cd infrastructure/pulumi
 npm install
 npm run build
 pulumi login --local
-pulumi stack init local
-pulumi config set --secret dbPassword password
+export PULUMI_CONFIG_PASSPHRASE="password"
 pulumi up --stack local
 ```
 
-> **Note:** `pulumi login --local` stores state on your machine in `~/.pulumi` and doesn't require a Pulumi Cloud account.
+> **Note:** `pulumi login --local` stores state on your machine in `~/.pulumi` and doesn't require a Pulumi Cloud account.  The local stack uses passphrase `"password"` for encryption (safe to share - no actual secrets in local stack).
 
 ### Access the Site
 
@@ -111,6 +110,9 @@ minikube dashboard
 ### Common Pulumi Commands
 
 ```bash
+# Set passphrase for Pulumi commands (required for local stack)
+export PULUMI_CONFIG_PASSPHRASE="password"
+
 # Tear down the local environment
 pulumi destroy --stack local
 
@@ -132,7 +134,7 @@ composer phpunit
 ### TypeScript
 
 ```bash
-cd ./infrastructure/pulumi && npm test
+cd ./infrastructure/pulumi && npm test && cd ../../
 ```
 
 ## Linting

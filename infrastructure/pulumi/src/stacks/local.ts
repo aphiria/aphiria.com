@@ -17,7 +17,6 @@ const stackConfig = new StackConfig("https://www.aphiria.com", "https://api.aphi
 createStack(
     {
         env: "local",
-        skipBaseInfrastructure: true, // Helm charts already installed via minikube setup
         database: {
             persistentStorage: true,
             storageSize: "5Gi",

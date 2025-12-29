@@ -49,13 +49,15 @@ export function createGateway(args: GatewayArgs): GatewayResult {
 
     if (args.tlsMode === "self-signed") {
         // Create self-signed issuer and certificate for dev-local
-        createSelfSignedIssuer(args.provider);
+        const dependencies = args.certManagerDependency ? [args.certManagerDependency] : undefined;
+        const issuer = createSelfSignedIssuer(args.provider, dependencies);
         certificate = createSelfSignedCert(
             {
                 namespace: args.namespace,
                 domains: args.domains,
             },
-            args.provider
+            args.provider,
+            [issuer, ...(dependencies || [])]
         );
     } else {
         // letsencrypt-prod only (staging removed - not used in any stacks)
@@ -80,6 +82,7 @@ export function createGateway(args: GatewayArgs): GatewayResult {
         }
 
         // Create ClusterIssuer for Let's Encrypt
+        const dependencies = args.certManagerDependency ? [args.certManagerDependency] : undefined;
         const clusterIssuer = new k8s.apiextensions.CustomResource(
             "cert-issuer",
             {
@@ -126,7 +129,7 @@ export function createGateway(args: GatewayArgs): GatewayResult {
                     },
                 },
             },
-            { provider: args.provider }
+            { provider: args.provider, dependsOn: dependencies }
         );
 
         // Create Certificate resource for Let's Encrypt
@@ -275,7 +278,8 @@ export interface SelfSignedCertArgs {
 
 export function createSelfSignedCert(
     args: SelfSignedCertArgs,
-    provider: k8s.Provider
+    provider: k8s.Provider,
+    dependsOn?: pulumi.Resource[]
 ): k8s.apiextensions.CustomResource {
     return new k8s.apiextensions.CustomResource(
         "tls-cert",
@@ -295,12 +299,15 @@ export function createSelfSignedCert(
                 },
             },
         },
-        { provider }
+        { provider, dependsOn }
     );
 }
 
 /** Creates self-signed ClusterIssuer (required for self-signed certs) */
-export function createSelfSignedIssuer(provider: k8s.Provider): k8s.apiextensions.CustomResource {
+export function createSelfSignedIssuer(
+    provider: k8s.Provider,
+    dependsOn?: pulumi.Resource[]
+): k8s.apiextensions.CustomResource {
     return new k8s.apiextensions.CustomResource(
         "selfsigned-issuer",
         {
@@ -313,6 +320,6 @@ export function createSelfSignedIssuer(provider: k8s.Provider): k8s.apiextension
                 selfSigned: {},
             },
         },
-        { provider }
+        { provider, dependsOn }
     );
 }

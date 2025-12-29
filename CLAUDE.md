@@ -133,11 +133,33 @@ infrastructure/pulumi/
 
 ### Pulumi Component Reusability
 
-**CRITICAL**: All reusable infrastructure logic MUST be in components, not stacks.
+**CRITICAL**: Components MUST be environment-agnostic and reusable. Stacks contain environment-specific logic.
 
-- ✅ Components: Shared patterns, ConfigMaps, hardcoded constants
-- ✅ Stacks: Configuration parameters only
-- ❌ Never duplicate infrastructure code across stacks
+**Components (environment-agnostic)**:
+- ✅ Shared infrastructure patterns (Deployments, Services, ConfigMaps)
+- ✅ Accept configuration via function parameters
+- ✅ No hardcoded environment names ("local", "preview", "production")
+- ✅ No conditional logic based on environment (`if (env === "local")`)
+- ❌ Never put environment-specific decisions in components
+
+**Stacks (environment-specific)**:
+- ✅ Configuration parameters and secrets
+- ✅ Environment-specific resource creation (e.g., install CRDs for local only)
+- ✅ Conditional logic based on environment needs
+- ✅ Pass environment-agnostic components the data they need
+
+**Example**:
+```typescript
+// ❌ BAD: Environment logic in component
+export function createDeployment(args: DeploymentArgs) {
+    const replicas = args.env === "local" ? 1 : 3; // NO!
+}
+
+// ✅ GOOD: Environment logic in stack, component accepts parameter
+export function createDeployment(args: DeploymentArgs) {
+    const replicas = args.replicas; // YES!
+}
+```
 
 ### Kubernetes Resource Management
 
@@ -352,6 +374,18 @@ Write tests FIRST (TDD).
 3. Test: `phinx migrate` + `phinx rollback`
 
 ### Debugging
+
+**Local (Minikube)**:
+- **FIRST**: Check minikube tunnel is running: `ps aux | grep "minikube tunnel"`
+  - If not running: `minikube tunnel` (requires sudo password)
+  - Without tunnel, LoadBalancer services won't be accessible at 127.0.0.1
+- Logs: `kubectl logs -f deployment/api`
+- DB: `kubectl port-forward service/db 5432:5432`
+- Shell: `kubectl exec -it deployment/api -- /bin/bash`
+- Check Gateway: `kubectl get gateway -A`
+- Check HTTPRoutes: `kubectl get httproute -A`
+
+**Remote (Preview/Production)**:
 - Logs: `kubectl logs -f deployment/api`
 - DB: `kubectl port-forward service/db 5432:5432`
 - Shell: `kubectl exec -it deployment/api -- /bin/bash`

@@ -172,6 +172,8 @@ export interface GatewayArgs {
     labels?: Record<string, string>;
     /** Kubernetes provider */
     provider: k8s.Provider;
+    /** Optional cert-manager dependency to ensure CRDs are ready */
+    certManagerDependency?: pulumi.Resource;
 }
 
 /**
@@ -496,4 +498,12 @@ export interface GrafanaResult {
     pvc: pulumi.Output<k8s.types.output.meta.v1.ObjectMeta>;
     configMap: pulumi.Output<k8s.types.output.meta.v1.ObjectMeta>;
     secret: pulumi.Output<k8s.types.output.meta.v1.ObjectMeta>;
+}
+
+/**
+ * Return type for Grafana Ingress component
+ */
+export interface GrafanaIngressResult {
+    httpsRoute: k8s.apiextensions.CustomResource;
+    httpRedirectRoute: k8s.apiextensions.CustomResource;
 }

@@ -43,6 +43,26 @@ export function installCertManager(
     );
 }
 
+/**
+ * Transformation function to ignore DigitalOcean-managed annotations on LoadBalancer Service
+ * DO cloud controller adds these annotations after deployment, causing drift
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- Required by Pulumi Kubernetes Helm transformation API
+export function ignoreDigitalOceanServiceAnnotations(obj: any) {
+    if (obj.type === "kubernetes:core/v1:Service") {
+        return {
+            props: obj.props,
+            opts: pulumi.mergeOptions(obj.opts, {
+                ignoreChanges: [
+                    "metadata.annotations[\"kubernetes.digitalocean.com/load-balancer-id\"]",
+                    "metadata.annotations[\"service.beta.kubernetes.io/do-loadbalancer-type\"]",
+                ],
+            }),
+        };
+    }
+    return undefined;
+}
+
 /** Installs nginx-gateway-fabric (Gateway API implementation) */
 export function installNginxGateway(
     args: HelmChartArgs,
@@ -59,6 +79,7 @@ export function installNginxGateway(
         {
             provider: args.provider,
             dependsOn: dependsOn || [],
+            transformations: [ignoreDigitalOceanServiceAnnotations],
         }
     );
 }
@@ -69,6 +90,8 @@ export interface BaseHelmChartsArgs {
     env: "local" | "preview" | "production";
     /** Kubernetes provider */
     provider: k8s.Provider;
+    /** Additional dependencies for nginx-gateway (e.g., Gateway API CRDs for local) */
+    nginxGatewayDependencies?: pulumi.Resource[];
 }
 
 export interface BaseHelmChartsResult {
@@ -111,7 +134,14 @@ export function installBaseHelmCharts(args: BaseHelmChartsArgs): BaseHelmChartsR
         [certManagerNamespace]
     );
 
-    // Install nginx-gateway-fabric (installs Gateway API CRDs automatically)
+    // Install nginx-gateway-fabric
+    // NOTE: Chart does NOT install Gateway API CRDs - they must be installed separately
+    // - Local: Stack passes CRDs via nginxGatewayDependencies
+    // - Preview/Production: DigitalOcean Kubernetes pre-installs them via Cilium
+    const nginxGatewayDependencies = [
+        nginxGatewayNamespace,
+        ...(args.nginxGatewayDependencies || []),
+    ];
     const nginxGateway = installNginxGateway(
         {
             env: args.env,
@@ -121,7 +151,7 @@ export function installBaseHelmCharts(args: BaseHelmChartsArgs): BaseHelmChartsR
             namespace: "nginx-gateway",
             provider: args.provider,
         },
-        [nginxGatewayNamespace]
+        nginxGatewayDependencies
     );
 
     return {

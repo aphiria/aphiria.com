@@ -639,4 +639,206 @@ describe("createStack factory", () => {
             expect(stack.gateway).toBeUndefined();
         });
     });
+
+    describe("monitoring", () => {
+        it("should create monitoring namespace and components when monitoring config provided", (done) => {
+            const stack = createStack(
+                {
+                    env: "production",
+                    database: {
+                        persistentStorage: true,
+                        storageSize: "20Gi",
+                        dbUser: pulumi.output("postgres"),
+                        dbPassword: pulumi.output("password"),
+                    },
+                    gateway: {
+                        tlsMode: "letsencrypt-prod",
+                        domains: ["aphiria.com", "*.aphiria.com"],
+                        dnsToken: pulumi.output("fake-dns-token"),
+                    },
+                    monitoring: {
+                        prometheus: {
+                            storageSize: "10Gi",
+                            scrapeInterval: "15s",
+                            retentionTime: "7d",
+                        },
+                        grafana: {
+                            storageSize: "5Gi",
+                            hostname: "grafana.aphiria.com",
+                            githubOAuth: {
+                                clientId: pulumi.output("test-client-id"),
+                                clientSecret: pulumi.output("test-client-secret"),
+                                org: "aphiria",
+                                adminUser: "davidbyoung",
+                            },
+                            smtp: {
+                                host: pulumi.output("smtp.example.com"),
+                                port: 587,
+                                user: pulumi.output("user@example.com"),
+                                password: pulumi.output("password"),
+                                fromAddress: "admin@aphiria.com",
+                                alertEmail: "admin@aphiria.com",
+                            },
+                        },
+                    },
+                },
+                k8sProvider
+            );
+
+            expect(stack.monitoring).toBeDefined();
+            expect(stack.monitoring?.namespace).toBeDefined();
+            expect(stack.monitoring?.prometheus).toBeDefined();
+            expect(stack.monitoring?.grafana).toBeDefined();
+            expect(stack.monitoring?.grafanaIngress).toBeDefined();
+
+            pulumi
+                .all([
+                    stack.monitoring!.namespace.namespace.metadata.name,
+                    stack.monitoring!.namespace.resourceQuota!.metadata.name,
+                ])
+                .apply(([nsName, quotaName]) => {
+                    expect(nsName).toBe("monitoring");
+                    expect(quotaName).toBe("monitoring-quota");
+                    done();
+                });
+        });
+
+        it("should not create monitoring when monitoring config not provided", () => {
+            const stack = createStack(
+                {
+                    env: "local",
+                    database: {
+                        persistentStorage: false,
+                        storageSize: "1Gi",
+                        dbUser: pulumi.output("postgres"),
+                        dbPassword: pulumi.output("password"),
+                    },
+                    gateway: {
+                        tlsMode: "self-signed",
+                        domains: ["*.aphiria.com"],
+                    },
+                },
+                k8sProvider
+            );
+
+            expect(stack.monitoring).toBeUndefined();
+        });
+
+        it("should use default scrapeInterval and retentionTime when not provided", () => {
+            const stack = createStack(
+                {
+                    env: "local",
+                    database: {
+                        persistentStorage: false,
+                        storageSize: "1Gi",
+                        dbUser: pulumi.output("postgres"),
+                        dbPassword: pulumi.output("password"),
+                    },
+                    gateway: {
+                        tlsMode: "self-signed",
+                        domains: ["*.aphiria.com"],
+                    },
+                    monitoring: {
+                        prometheus: {
+                            storageSize: "5Gi",
+                        },
+                        grafana: {
+                            storageSize: "2Gi",
+                            hostname: "grafana.aphiria.com",
+                            githubOAuth: {
+                                clientId: pulumi.output("client-id"),
+                                clientSecret: pulumi.output("client-secret"),
+                                org: "aphiria",
+                                adminUser: "davidbyoung",
+                            },
+                        },
+                    },
+                },
+                k8sProvider
+            );
+
+            expect(stack.monitoring).toBeDefined();
+            expect(stack.monitoring?.prometheus).toBeDefined();
+        });
+    });
+
+    describe("Gateway API CRD and GatewayClass installation", () => {
+        it("should install Gateway API CRDs and GatewayClass for local environment", () => {
+            const stack = createStack(
+                {
+                    env: "local",
+                    database: {
+                        persistentStorage: true,
+                        storageSize: "5Gi",
+                        dbUser: "postgres",
+                        dbPassword: "postgres",
+                    },
+                    gateway: {
+                        tlsMode: "self-signed",
+                        domains: ["aphiria.com", "*.aphiria.com"],
+                    },
+                    app: {
+                        webReplicas: 1,
+                        apiReplicas: 1,
+                        webUrl: "https://www.aphiria.com",
+                        apiUrl: "https://api.aphiria.com",
+                        webImage: "aphiria.com-web:latest",
+                        apiImage: "aphiria.com-api:latest",
+                        cookieDomain: ".aphiria.com",
+                    },
+                },
+                k8sProvider
+            );
+
+            // Verify Helm charts were installed (which includes CRD and GatewayClass dependencies for local)
+            expect(stack.helmCharts).toBeDefined();
+            expect(stack.helmCharts?.certManager).toBeDefined();
+            expect(stack.helmCharts?.nginxGateway).toBeDefined();
+        });
+
+        it("should NOT install Gateway API CRDs for preview environment", () => {
+            const stack = createStack(
+                {
+                    env: "preview",
+                    skipBaseInfrastructure: true,
+                    namespace: {
+                        name: "preview-pr-123",
+                        resourceQuota: {
+                            cpu: "2",
+                            memory: "4Gi",
+                            pods: "10",
+                        },
+                    },
+                    database: {
+                        createDatabase: true,
+                        databaseName: "aphiria_pr_123",
+                        dbHost: pulumi.output("db.default.svc.cluster.local"),
+                        dbAdminUser: pulumi.output("postgres"),
+                        dbAdminPassword: pulumi.output("password"),
+                        persistentStorage: false,
+                        storageSize: "1Gi",
+                        dbUser: "postgres",
+                        dbPassword: "postgres",
+                    },
+                    gateway: {
+                        tlsMode: "letsencrypt-prod",
+                        domains: ["*.pr.aphiria.com"],
+                    },
+                    app: {
+                        webReplicas: 1,
+                        apiReplicas: 1,
+                        webUrl: "https://123.pr.aphiria.com",
+                        apiUrl: "https://123.pr-api.aphiria.com",
+                        webImage: "ghcr.io/aphiria/aphiria.com-web@sha256:abc123",
+                        apiImage: "ghcr.io/aphiria/aphiria.com-api@sha256:def456",
+                        cookieDomain: ".pr.aphiria.com",
+                    },
+                },
+                k8sProvider
+            );
+
+            // skipBaseInfrastructure means no Helm charts (and no CRDs)
+            expect(stack.helmCharts).toBeUndefined();
+        });
+    });
 });
