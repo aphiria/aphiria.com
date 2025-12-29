@@ -21,7 +21,6 @@ Pull requests automatically generate ephemeral preview environments for testing 
 **For contributors**: Preview deployments happen automatically after maintainer approval. No setup required!
 
 **For maintainers**:
-- Preview deployment workflow: [`infrastructure/pulumi/ephemeral/QUICKSTART.md`](infrastructure/pulumi/ephemeral/QUICKSTART.md)
 - Secrets management: [`SECRETS.md`](SECRETS.md)
 
 ## Local Development Setup
@@ -44,6 +43,7 @@ Add the following to your host file:
 127.0.0.1 aphiria.com
 127.0.0.1 api.aphiria.com
 127.0.0.1 www.aphiria.com
+127.0.0.1 grafana.aphiria.com
 ```
 
 ### Start Minikube
@@ -89,6 +89,7 @@ pulumi up --stack local
 
 * https://www.aphiria.com (web)
 * https://api.aphiria.com/docs (API documentation)
+* https://grafana.aphiria.com (monitoring dashboards)
 
 > **Note:** You'll see a certificate warning (self-signed cert). In Chrome, type `thisisunsafe` (there is no input - just type that phrase with the page displayed) to bypass. In other browsers, click advanced and accept the certificate.
 
