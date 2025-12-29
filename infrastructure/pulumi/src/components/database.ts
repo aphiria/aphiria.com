@@ -1,14 +1,11 @@
 import * as k8s from "@pulumi/kubernetes";
 import { PostgreSQLArgs, PostgreSQLResult } from "./types";
+import { POSTGRES_PORT } from "./constants";
+import { buildLabels } from "./labels";
 
 /** Creates PostgreSQL deployment with environment-specific storage (hostPath for dev-local, cloud for preview/production) */
 export function createPostgreSQL(args: PostgreSQLArgs): PostgreSQLResult {
-    const labels = {
-        app: "db",
-        "app.kubernetes.io/name": "postgresql",
-        "app.kubernetes.io/component": "database",
-        ...(args.labels || {}),
-    };
+    const labels = buildLabels("db", "database", args.labels);
 
     let pvc: k8s.core.v1.PersistentVolumeClaim | undefined;
     let pv: k8s.core.v1.PersistentVolume | undefined;
@@ -131,9 +128,13 @@ export function createPostgreSQL(args: PostgreSQLArgs): PostgreSQLResult {
                                 imagePullPolicy: "IfNotPresent",
                                 ports: [
                                     {
-                                        containerPort: 5432,
+                                        containerPort: POSTGRES_PORT,
                                     },
                                 ],
+                                // Graceful shutdown to prevent data corruption.
+                                // preStop hook ensures PostgreSQL shuts down cleanly before pod termination.
+                                // Without this, Kubernetes sends SIGTERM then SIGKILL after grace period,
+                                // potentially causing data corruption or incomplete writes.
                                 lifecycle: {
                                     preStop: {
                                         exec: {
@@ -186,7 +187,7 @@ export function createPostgreSQL(args: PostgreSQLArgs): PostgreSQLResult {
                                             "-h",
                                             "127.0.0.1",
                                             "-p",
-                                            "5432",
+                                            String(POSTGRES_PORT),
                                         ],
                                     },
                                     initialDelaySeconds: 5,
@@ -232,8 +233,8 @@ export function createPostgreSQL(args: PostgreSQLArgs): PostgreSQLResult {
                 },
                 ports: [
                     {
-                        port: 5432,
-                        targetPort: 5432,
+                        port: POSTGRES_PORT,
+                        targetPort: POSTGRES_PORT,
                     },
                 ],
             },

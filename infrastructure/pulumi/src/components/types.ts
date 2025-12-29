@@ -44,17 +44,12 @@ export interface WebDeploymentArgs extends CommonDeploymentArgs {
     jsConfigData: Record<string, string>;
     /** Base URL for the web application */
     baseUrl: string;
-    /** Environment-specific configuration (component builds ConfigMaps from this) */
-    envConfig?: {
-        /** Application environment (defaults: "production" for prod, "dev" for local/preview) */
-        appEnv?: string;
-        /** Log level (defaults: "warning" for prod, "debug" for local/preview) */
-        logLevel?: string;
-        /** PR number (optional, preview only) */
-        prNumber?: string;
-        /** Additional custom environment variables */
-        extraVars?: Record<string, pulumi.Input<string>>;
-    };
+    /** Log level (e.g., "warning", "debug", "info") */
+    logLevel: string;
+    /** PR number (optional, preview environments only) */
+    prNumber?: string;
+    /** Additional custom environment variables */
+    extraVars?: Record<string, pulumi.Input<string>>;
     /** Optional image pull secrets for private registries */
     imagePullSecrets?: pulumi.Input<string>[];
     /** Optional resource limits */
@@ -98,21 +93,16 @@ export interface APIDeploymentArgs extends CommonDeploymentArgs {
     apiUrl: string;
     /** Base URL for the web app (for CORS) */
     webUrl: string;
-    /** Environment-specific configuration (component builds ConfigMaps from this) */
-    envConfig?: {
-        /** Application environment (defaults: "production" for prod, "dev" for local/preview) */
-        appEnv?: string;
-        /** Log level (defaults: "warning" for prod, "debug" for local/preview) */
-        logLevel?: string;
-        /** Cookie domain (required) */
-        cookieDomain: string;
-        /** Enable secure cookies (default: true) */
-        cookieSecure?: boolean;
-        /** PR number (optional, preview only) */
-        prNumber?: string;
-        /** Additional custom environment variables */
-        extraVars?: Record<string, pulumi.Input<string>>;
-    };
+    /** Log level (e.g., "warning", "debug", "info") */
+    logLevel: string;
+    /** Cookie domain (e.g., ".aphiria.com") */
+    cookieDomain: string;
+    /** Enable secure cookies (true for HTTPS, false for local HTTP) */
+    cookieSecure: boolean;
+    /** PR number (optional, preview environments only) */
+    prNumber?: string;
+    /** Additional custom environment variables */
+    extraVars?: Record<string, pulumi.Input<string>>;
     /** Optional image pull secrets for private registries */
     imagePullSecrets?: pulumi.Input<string>[];
     /** Optional resource limits for containers */
@@ -203,6 +193,8 @@ export interface HTTPRouteArgs {
     /** Gateway reference */
     gatewayName: pulumi.Input<string>;
     gatewayNamespace: pulumi.Input<string>;
+    /** Gateway listener sectionName (e.g., "https-subdomains-1") to attach to specific listener */
+    sectionName?: string;
     /** Enable connection-level rate limiting */
     enableRateLimiting?: boolean;
     /** Resource labels */
@@ -416,8 +408,7 @@ export interface KubernetesClusterArgs {
  * Return type for Kubernetes cluster component
  */
 export interface KubernetesClusterResult {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- DigitalOcean cluster type
-    cluster: any;
+    cluster: digitalocean.KubernetesCluster;
     clusterId: pulumi.Output<string>;
     endpoint: pulumi.Output<string>;
     kubeconfig: pulumi.Output<string>;

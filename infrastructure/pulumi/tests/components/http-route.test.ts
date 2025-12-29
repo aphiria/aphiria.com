@@ -116,14 +116,64 @@ describe("http-route components", () => {
                 done();
             });
         });
+
+        it("should attach to specific listener using sectionName when provided", (done) => {
+            const route = createHTTPRoute({
+                name: "web-route",
+                namespace: "default",
+                hostname: "117.pr.aphiria.com",
+                gatewayName: "nginx-gateway",
+                gatewayNamespace: "nginx-gateway",
+                serviceName: "web",
+                serviceNamespace: "default",
+                servicePort: 80,
+                sectionName: "https-subdomains-1",
+                enableRateLimiting: false,
+                provider: k8sProvider,
+            });
+
+            expect(route).toBeDefined();
+
+            // Cast to any to access spec property (not in mock types)
+            (route as any).spec.apply((spec: any) => {
+                expect(spec.parentRefs).toBeDefined();
+                expect(spec.parentRefs[0].sectionName).toBe("https-subdomains-1");
+                done();
+            });
+        });
+
+        it("should not include sectionName when not provided", (done) => {
+            const route = createHTTPRoute({
+                name: "web-route",
+                namespace: "default",
+                hostname: "www.aphiria.com",
+                gatewayName: "nginx-gateway",
+                gatewayNamespace: "nginx-gateway",
+                serviceName: "web",
+                serviceNamespace: "default",
+                servicePort: 80,
+                enableRateLimiting: false,
+                provider: k8sProvider,
+            });
+
+            expect(route).toBeDefined();
+
+            // Cast to any to access spec property (not in mock types)
+            (route as any).spec.apply((spec: any) => {
+                expect(spec.parentRefs).toBeDefined();
+                expect(spec.parentRefs[0].sectionName).toBeUndefined();
+                done();
+            });
+        });
     });
 
     describe("createHTTPSRedirectRoute", () => {
-        it("should create HTTPS redirect route with explicit gateway namespace", (done) => {
+        it("should create HTTPS redirect route for root and wildcard domains", (done) => {
             const route = createHTTPSRedirectRoute({
                 namespace: "redirect-ns",
                 gatewayName: "gateway",
                 gatewayNamespace: "gateway-ns",
+                domains: ["aphiria.com", "*.aphiria.com"],
                 provider: k8sProvider,
             });
 
@@ -138,10 +188,11 @@ describe("http-route components", () => {
                 });
         });
 
-        it("should create HTTPS redirect route with default gateway namespace", (done) => {
+        it("should create HTTPS redirect route for multiple wildcard domains", (done) => {
             const route = createHTTPSRedirectRoute({
                 namespace: "default",
                 gatewayName: "gateway",
+                domains: ["*.pr.aphiria.com", "*.pr-api.aphiria.com"],
                 provider: k8sProvider,
             });
 
@@ -154,6 +205,84 @@ describe("http-route components", () => {
                     expect(namespace).toBe("default");
                     done();
                 });
+        });
+
+        it("should create HTTPS redirect route for wildcard-only domain", (done) => {
+            const route = createHTTPSRedirectRoute({
+                namespace: "default",
+                gatewayName: "gateway",
+                domains: ["*.example.com"],
+                provider: k8sProvider,
+            });
+
+            expect(route).toBeDefined();
+
+            pulumi
+                .all([route.metadata.name, route.metadata.namespace])
+                .apply(([name, namespace]) => {
+                    expect(name).toBe("https-redirect");
+                    expect(namespace).toBe("default");
+                    done();
+                });
+        });
+
+        it("should skip http-root listener when skipRootListener is true", (done) => {
+            const route = createHTTPSRedirectRoute({
+                namespace: "default",
+                gatewayName: "gateway",
+                domains: ["aphiria.com", "*.aphiria.com"],
+                skipRootListener: true,
+                provider: k8sProvider,
+            });
+
+            expect(route).toBeDefined();
+
+            pulumi
+                .all([route.metadata.name, route.metadata.namespace])
+                .apply(([name, namespace]) => {
+                    expect(name).toBe("https-redirect");
+                    expect(namespace).toBe("default");
+                    done();
+                });
+        });
+
+        it("should create hostname-based redirect for preview PR domains", (done) => {
+            const route = createHTTPSRedirectRoute({
+                namespace: "preview-pr-117",
+                gatewayName: "nginx-gateway",
+                domains: ["117.pr.aphiria.com", "117.pr-api.aphiria.com"],
+                provider: k8sProvider,
+            });
+
+            expect(route).toBeDefined();
+
+            pulumi
+                .all([route.metadata.name, route.metadata.namespace])
+                .apply(([name, namespace]) => {
+                    expect(name).toBe("https-redirect");
+                    expect(namespace).toBe("preview-pr-117");
+                    done();
+                });
+        });
+
+        it("should attach to HTTP listeners using sectionName for specific hostnames", (done) => {
+            const route = createHTTPSRedirectRoute({
+                namespace: "preview-pr-117",
+                gatewayName: "nginx-gateway",
+                domains: ["117.pr.aphiria.com", "117.pr-api.aphiria.com"],
+                provider: k8sProvider,
+            });
+
+            expect(route).toBeDefined();
+
+            // Cast to any to access spec property (not in mock types)
+            (route as any).spec.apply((spec: any) => {
+                expect(spec.parentRefs).toBeDefined();
+                expect(spec.parentRefs.length).toBe(2); // Both web and api listeners
+                expect(spec.parentRefs[0].sectionName).toBe("http-subdomains-1");
+                expect(spec.parentRefs[1].sectionName).toBe("http-subdomains-2");
+                done();
+            });
         });
     });
 

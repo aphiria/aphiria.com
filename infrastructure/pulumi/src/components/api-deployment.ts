@@ -2,44 +2,35 @@ import * as pulumi from "@pulumi/pulumi";
 import * as k8s from "@pulumi/kubernetes";
 import { APIDeploymentArgs, APIDeploymentResult } from "./types";
 import { checksum } from "./utils";
+import { POSTGRES_PORT } from "./constants";
+import { buildLabels } from "./labels";
 
 /** Creates nginx + PHP-FPM deployment using initContainer to copy code to shared volume */
 export function createAPIDeployment(args: APIDeploymentArgs): APIDeploymentResult {
-    const labels = {
-        app: "api",
-        "app.kubernetes.io/name": "aphiria-api",
-        "app.kubernetes.io/component": "backend",
-        ...(args.labels || {}),
-    };
+    const labels = buildLabels("api", "backend", args.labels);
 
     // Hardcoded constants (same across all environments)
-    const DB_PORT = "5432"; // PostgreSQL standard port
     const APP_BUILDER_API = "\\Aphiria\\Framework\\Api\\SynchronousApiApplicationBuilder";
     const APP_BUILDER_CONSOLE = "\\Aphiria\\Framework\\Console\\ConsoleApplicationBuilder";
 
-    // Environment-specific defaults
-    const appEnv = args.envConfig?.appEnv || (args.env === "production" ? "production" : "dev");
-    const logLevel = args.envConfig?.logLevel || (args.env === "production" ? "warning" : "debug");
-    const cookieSecure = args.envConfig?.cookieSecure !== false ? "1" : "0";
-
-    // Build ConfigMap data from parameters + hardcoded constants
+    // Build ConfigMap data from parameters
     const configData: Record<string, pulumi.Input<string>> = {
         DB_HOST: args.dbHost,
-        DB_PORT,
+        DB_PORT: String(POSTGRES_PORT),
         DB_NAME: args.dbName,
         DB_USER: args.dbUser,
-        APP_ENV: appEnv,
+        APP_ENV: args.env,
         WEB_URL: args.webUrl,
         API_URL: args.apiUrl,
         APP_WEB_URL: args.webUrl,
         APP_API_URL: args.apiUrl,
-        APP_COOKIE_DOMAIN: args.envConfig?.cookieDomain || ".aphiria.com",
-        APP_COOKIE_SECURE: cookieSecure,
+        APP_COOKIE_DOMAIN: args.cookieDomain,
+        APP_COOKIE_SECURE: args.cookieSecure ? "1" : "0",
         APP_BUILDER_API,
         APP_BUILDER_CONSOLE,
-        LOG_LEVEL: logLevel,
-        ...(args.envConfig?.prNumber && { PR_NUMBER: args.envConfig.prNumber }),
-        ...(args.envConfig?.extraVars || {}),
+        LOG_LEVEL: args.logLevel,
+        ...(args.prNumber && { PR_NUMBER: args.prNumber }),
+        ...(args.extraVars || {}),
     };
 
     // Build Secret data
@@ -161,9 +152,13 @@ export function createAPIDeployment(args: APIDeploymentArgs): APIDeploymentResul
                             {
                                 name: "copy-api-code",
                                 image: args.image,
+                                // imagePullPolicy rules (Kubernetes-specific requirements):
+                                // - Local: Use "Never" (images loaded via minikube/docker load)
+                                // - SHA256 digest: Use "IfNotPresent" (immutable, safe to cache)
+                                // - Tag: Use "Always" (mutable, must pull to check for updates)
                                 imagePullPolicy:
                                     args.env === "local"
-                                        ? "Never" // Local images only
+                                        ? "Never"
                                         : args.image.includes("@sha256:")
                                           ? "IfNotPresent"
                                           : "Always",
@@ -225,9 +220,10 @@ export function createAPIDeployment(args: APIDeploymentArgs): APIDeploymentResul
                             {
                                 name: "php",
                                 image: args.image,
+                                // imagePullPolicy rules (same as initContainer - see above)
                                 imagePullPolicy:
                                     args.env === "local"
-                                        ? "Never" // Local images only
+                                        ? "Never"
                                         : args.image.includes("@sha256:")
                                           ? "IfNotPresent"
                                           : "Always",

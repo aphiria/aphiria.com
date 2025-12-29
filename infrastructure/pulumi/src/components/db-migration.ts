@@ -1,14 +1,11 @@
 import * as k8s from "@pulumi/kubernetes";
 import { DBMigrationJobArgs } from "./types";
+import { POSTGRES_PORT } from "./constants";
+import { buildLabels } from "./labels";
 
 /** Creates Phinx migration job (waits for DB, runs migrations, optionally runs LexemeSeeder) */
 export function createDBMigrationJob(args: DBMigrationJobArgs): k8s.batch.v1.Job {
-    const labels = {
-        app: "db-migration",
-        "app.kubernetes.io/name": "aphiria-db-migration",
-        "app.kubernetes.io/component": "database",
-        ...(args.labels || {}),
-    };
+    const labels = buildLabels("db-migration", "database", args.labels);
 
     // Build command based on whether seeder should run
     const command = args.runSeeder
@@ -23,13 +20,17 @@ export function createDBMigrationJob(args: DBMigrationJobArgs): k8s.batch.v1.Job
                 namespace: args.namespace,
                 labels,
                 annotations: {
-                    // Force override Server-Side Apply conflicts when recreating Job
-                    // Needed because ttlSecondsAfterFinished=0 deletes the Job but SSA metadata persists
+                    // Force override Server-Side Apply conflicts when recreating Job.
+                    // Required because ttlSecondsAfterFinished=0 auto-deletes the Job after completion,
+                    // but Kubernetes Server-Side Apply (SSA) metadata persists, causing conflicts
+                    // on the next `pulumi up`. This annotation tells Pulumi to force the update.
                     "pulumi.com/patchForce": "true",
                 },
             },
             spec: {
-                // Clean up job after completion (don't leave completed pods around)
+                // Auto-delete Job after completion to avoid clutter.
+                // Note: Combined with ignoreChanges below, this creates a fire-and-forget pattern
+                // where the Job runs once, auto-deletes, and won't be recreated on subsequent runs.
                 ttlSecondsAfterFinished: 0,
                 template: {
                     metadata: {
@@ -44,7 +45,7 @@ export function createDBMigrationJob(args: DBMigrationJobArgs): k8s.batch.v1.Job
                                 command: [
                                     "sh",
                                     "-c",
-                                    "until nc -z $DB_HOST 5432; do echo 'Waiting for db...'; sleep 2; done",
+                                    `until nc -z $DB_HOST ${POSTGRES_PORT}; do echo 'Waiting for db...'; sleep 2; done`,
                                 ],
                                 env: [
                                     {
@@ -61,9 +62,13 @@ export function createDBMigrationJob(args: DBMigrationJobArgs): k8s.batch.v1.Job
                             {
                                 name: "db-migration",
                                 image: args.image,
+                                // imagePullPolicy rules (Kubernetes-specific requirements):
+                                // - Local: Use "Never" (images loaded via minikube/docker load)
+                                // - SHA256 digest: Use "IfNotPresent" (immutable, safe to cache)
+                                // - Tag: Use "Always" (mutable, must pull to check for updates)
                                 imagePullPolicy:
                                     args.env === "local"
-                                        ? "Never" // Local images only
+                                        ? "Never"
                                         : args.image.includes("@sha256:")
                                           ? "IfNotPresent"
                                           : "Always",
@@ -79,7 +84,7 @@ export function createDBMigrationJob(args: DBMigrationJobArgs): k8s.batch.v1.Job
                                     },
                                     {
                                         name: "DB_PORT",
-                                        value: "5432",
+                                        value: String(POSTGRES_PORT),
                                     },
                                     {
                                         name: "DB_USER",
@@ -105,9 +110,10 @@ export function createDBMigrationJob(args: DBMigrationJobArgs): k8s.batch.v1.Job
         },
         {
             provider: args.provider,
-            // Ignore all changes to this Job after creation - it's ephemeral and gets auto-deleted
-            // by ttlSecondsAfterFinished. This prevents drift detection from reporting the Job
-            // as missing when it completes and gets cleaned up.
+            // Ignore all changes to prevent drift detection errors.
+            // This Job auto-deletes after completion (ttlSecondsAfterFinished=0), so Pulumi
+            // would normally report it as "missing" and try to recreate it on every run.
+            // ignoreChanges tells Pulumi: "Job is ephemeral, don't track changes after creation."
             ignoreChanges: ["*"],
         }
     );

@@ -50,17 +50,6 @@ export interface StackResources {
  * @param config Stack configuration (environment-specific parameters)
  * @param k8sProvider Kubernetes provider for resource creation
  * @returns Object containing all created resources
- *
- * @example Local environment
- * ```typescript
- * const k8sProvider = new k8s.Provider("minikube", { context: "minikube" });
- * const stack = createStack({
- *   env: "local",
- *   database: { replicas: 1, persistentStorage: true, storageSize: "5Gi", dbUser: "postgres", dbPassword: "postgres" },
- *   gateway: { tlsMode: "self-signed", domains: ["*.aphiria.com"] },
- *   app: { webReplicas: 1, apiReplicas: 1, webUrl: "https://www.aphiria.com", apiUrl: "https://api.aphiria.com", ... }
- * }, k8sProvider);
- * ```
  */
 export function createStack(config: StackConfig, k8sProvider: k8s.Provider): StackResources {
     const resources: StackResources = {};
@@ -176,13 +165,10 @@ export function createStack(config: StackConfig, k8sProvider: k8s.Provider): Sta
                 cookieDomain: config.app.cookieDomain,
             },
             baseUrl: config.app.webUrl,
-            envConfig:
+            logLevel: config.env === "production" ? "warning" : "debug",
+            prNumber:
                 config.env === "preview" && config.namespace
-                    ? {
-                          appEnv: "preview",
-                          logLevel: "debug",
-                          prNumber: config.namespace.name.replace("preview-pr-", ""),
-                      }
+                    ? config.namespace.name.replace("preview-pr-", "")
                     : undefined,
             imagePullSecrets: config.namespace?.imagePullSecret ? ["ghcr-pull-secret"] : undefined,
             resources: config.app.webResources,
@@ -202,14 +188,12 @@ export function createStack(config: StackConfig, k8sProvider: k8s.Provider): Sta
             dbPassword,
             apiUrl: config.app.apiUrl,
             webUrl: config.app.webUrl,
-            envConfig:
+            logLevel: config.env === "production" ? "warning" : "debug",
+            cookieDomain: config.app.cookieDomain,
+            cookieSecure: config.env !== "local",
+            prNumber:
                 config.env === "preview" && config.namespace
-                    ? {
-                          appEnv: "preview",
-                          logLevel: "debug",
-                          cookieDomain: config.app.cookieDomain,
-                          prNumber: config.namespace.name.replace("preview-pr-", ""),
-                      }
+                    ? config.namespace.name.replace("preview-pr-", "")
                     : undefined,
             imagePullSecrets: config.namespace?.imagePullSecret ? ["ghcr-pull-secret"] : undefined,
             resources: config.app.apiResources,
@@ -233,6 +217,9 @@ export function createStack(config: StackConfig, k8sProvider: k8s.Provider): Sta
         });
 
         // HTTPRoutes (always in same namespace as services to avoid cross-namespace ReferenceGrant)
+        // For preview-PR, explicitly attach to HTTPS listeners using sectionName
+        const isPreviewPR = config.env === "preview" && config.namespace;
+
         resources.webRoute = createHTTPRoute({
             namespace: namespace,
             name: "web",
@@ -242,6 +229,7 @@ export function createStack(config: StackConfig, k8sProvider: k8s.Provider): Sta
             servicePort: 80,
             gatewayName: "nginx-gateway",
             gatewayNamespace: gatewayNamespace,
+            sectionName: isPreviewPR ? "https-subdomains-1" : undefined,
             provider: k8sProvider,
         });
 
@@ -254,18 +242,44 @@ export function createStack(config: StackConfig, k8sProvider: k8s.Provider): Sta
             servicePort: 80,
             gatewayName: "nginx-gateway",
             gatewayNamespace: gatewayNamespace,
+            sectionName: isPreviewPR ? "https-subdomains-2" : undefined,
             provider: k8sProvider,
         });
 
-        // HTTP/HTTPS redirect routes (local only)
-        if (config.env === "local") {
+        // HTTP→HTTPS redirect for preview-pr (specific hostnames beat wildcard redirects)
+        // This ensures http://123.pr.aphiria.com redirects to https://123.pr.aphiria.com
+        if (config.env === "preview" && config.namespace) {
+            const webHostname = new URL(config.app.webUrl).hostname;
+            const apiHostname = new URL(config.app.apiUrl).hostname;
+
             resources.httpsRedirect = createHTTPSRedirectRoute({
-                namespace: gatewayNamespace,
+                namespace: namespace,
                 gatewayName: "nginx-gateway",
                 gatewayNamespace: gatewayNamespace,
+                domains: [webHostname, apiHostname],
                 provider: k8sProvider,
             });
+        }
+    }
 
+    // HTTP→HTTPS redirect (all Gateway-creating stacks)
+    if (!config.skipBaseInfrastructure) {
+        // Determine if WWW redirect will be created (local and production only)
+        const hasWWWRedirect = config.env !== "preview";
+
+        resources.httpsRedirect = createHTTPSRedirectRoute({
+            namespace: gatewayNamespace,
+            gatewayName: "nginx-gateway",
+            gatewayNamespace: gatewayNamespace,
+            domains: config.gateway.domains,
+            // Skip http-root listener when WWW redirect exists to avoid conflicts
+            // WWW redirect handles: http://aphiria.com → https://www.aphiria.com (single hop)
+            skipRootListener: hasWWWRedirect,
+            provider: k8sProvider,
+        });
+
+        // Root domain → www redirect (only for environments using aphiria.com root domain)
+        if (hasWWWRedirect) {
             resources.wwwRedirect = createWWWRedirectRoute({
                 namespace: gatewayNamespace,
                 gatewayName: "nginx-gateway",

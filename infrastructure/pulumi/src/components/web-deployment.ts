@@ -2,15 +2,11 @@ import * as pulumi from "@pulumi/pulumi";
 import * as k8s from "@pulumi/kubernetes";
 import { WebDeploymentArgs, WebDeploymentResult } from "./types";
 import { checksum } from "./utils";
+import { buildLabels } from "./labels";
 
 /** Creates nginx deployment for static site with js-config ConfigMap */
 export function createWebDeployment(args: WebDeploymentArgs): WebDeploymentResult {
-    const labels = {
-        app: "web",
-        "app.kubernetes.io/name": "aphiria-web",
-        "app.kubernetes.io/component": "frontend",
-        ...(args.labels || {}),
-    };
+    const labels = buildLabels("web", "frontend", args.labels);
 
     // Create js-config ConfigMap
     const jsConfigData = Object.entries(args.jsConfigData)
@@ -32,33 +28,27 @@ export function createWebDeployment(args: WebDeploymentArgs): WebDeploymentResul
         { provider: args.provider }
     );
 
-    // Build environment variables from envConfig (if provided)
-    const envConfigData: Record<string, pulumi.Input<string>> = args.envConfig
-        ? {
-              APP_ENV: args.envConfig.appEnv || (args.env === "production" ? "production" : "dev"),
-              LOG_LEVEL:
-                  args.envConfig.logLevel || (args.env === "production" ? "warning" : "debug"),
-              ...(args.envConfig.prNumber && { PR_NUMBER: args.envConfig.prNumber }),
-              ...(args.envConfig.extraVars || {}),
-          }
-        : ({} as Record<string, pulumi.Input<string>>);
+    // Build environment variables from parameters
+    const envConfigData: Record<string, pulumi.Input<string>> = {
+        APP_ENV: args.env,
+        LOG_LEVEL: args.logLevel,
+        ...(args.prNumber && { PR_NUMBER: args.prNumber }),
+        ...(args.extraVars || {}),
+    };
 
-    // Create env-config ConfigMap (only if envConfig provided)
-    const envConfigMap =
-        Object.keys(envConfigData).length > 0
-            ? new k8s.core.v1.ConfigMap(
-                  "env-config",
-                  {
-                      metadata: {
-                          name: "env-config",
-                          namespace: args.namespace,
-                          labels,
-                      },
-                      data: envConfigData,
-                  },
-                  { provider: args.provider }
-              )
-            : undefined;
+    // Create env-config ConfigMap
+    const envConfigMap = new k8s.core.v1.ConfigMap(
+        "env-config",
+        {
+            metadata: {
+                name: "env-config",
+                namespace: args.namespace,
+                labels,
+            },
+            data: envConfigData,
+        },
+        { provider: args.provider }
+    );
 
     // Calculate checksum for pod annotations (forces restart when config changes)
     const configChecksum = checksum({
@@ -106,27 +96,27 @@ export function createWebDeployment(args: WebDeploymentArgs): WebDeploymentResul
                             {
                                 name: "web",
                                 image: args.image,
+                                // imagePullPolicy rules (Kubernetes-specific requirements):
+                                // - Local: Use "Never" (images loaded via minikube/docker load)
+                                // - SHA256 digest: Use "IfNotPresent" (immutable, safe to cache)
+                                // - Tag: Use "Always" (mutable, must pull to check for updates)
                                 imagePullPolicy:
                                     args.env === "local"
-                                        ? "Never" // Local images only
+                                        ? "Never"
                                         : args.image.includes("@sha256:")
-                                          ? "IfNotPresent" // Use digest - don't pull if present
-                                          : "Always", // Use tag - always pull latest
+                                          ? "IfNotPresent"
+                                          : "Always",
                                 volumeMounts: [
                                     {
                                         name: "js-config",
                                         mountPath: "/usr/share/nginx/html/js/config",
                                     },
                                 ],
-                                ...(envConfigMap
-                                    ? {
-                                          envFrom: [
-                                              {
-                                                  configMapRef: { name: "env-config" },
-                                              },
-                                          ],
-                                      }
-                                    : {}),
+                                envFrom: [
+                                    {
+                                        configMapRef: { name: envConfigMap.metadata.name },
+                                    },
+                                ],
                                 ...(args.resources && {
                                     resources: args.resources,
                                 }),
