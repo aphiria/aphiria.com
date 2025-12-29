@@ -110,6 +110,9 @@ export function createPostgreSQL(args: PostgreSQLArgs): PostgreSQLResult {
                 replicas: 1, // Single replica - multi-replica requires StatefulSet + replication
                 strategy: {
                     type: "Recreate", // Avoid Multi-Attach errors with ReadWriteOnce PVC
+                    // TODO: Remove rollingUpdate: undefined after successful deployment to preview-base and production
+                    // This is a one-time migration fix for SSA field clearing when changing from RollingUpdate to Recreate
+                    rollingUpdate: undefined,
                 },
                 selector: {
                     matchLabels: {
