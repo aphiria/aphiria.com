@@ -415,3 +415,85 @@ export interface KubernetesClusterResult {
     clusterCaCertificate: pulumi.Output<string>;
     provider: k8s.Provider;
 }
+
+/**
+ * Arguments for Prometheus component
+ */
+export interface PrometheusArgs {
+    /** Environment this Prometheus instance targets */
+    env: Environment;
+    /** Kubernetes namespace */
+    namespace: pulumi.Input<string>;
+    /** Metrics retention period (e.g., "7d") */
+    retentionTime: string;
+    /** Storage size for metrics (e.g., "10Gi") */
+    storageSize: string;
+    /** Scrape interval for metrics collection (e.g., "15s") */
+    scrapeInterval?: string;
+    /** Resource labels */
+    labels?: Record<string, string>;
+    /** Kubernetes provider */
+    provider: k8s.Provider;
+}
+
+/**
+ * Return type for Prometheus component
+ */
+export interface PrometheusResult {
+    serviceAccount: pulumi.Output<k8s.types.output.meta.v1.ObjectMeta>;
+    clusterRole: pulumi.Output<k8s.types.output.meta.v1.ObjectMeta>;
+    clusterRoleBinding: pulumi.Output<k8s.types.output.meta.v1.ObjectMeta>;
+    statefulSet: pulumi.Output<k8s.types.output.meta.v1.ObjectMeta>;
+    service: pulumi.Output<k8s.types.output.meta.v1.ObjectMeta>;
+    pvc: pulumi.Output<k8s.types.output.meta.v1.ObjectMeta>;
+    configMap: pulumi.Output<k8s.types.output.meta.v1.ObjectMeta>;
+}
+
+/**
+ * Arguments for Grafana component
+ */
+export interface GrafanaArgs {
+    /** Environment this Grafana instance targets */
+    env: Environment;
+    /** Kubernetes namespace */
+    namespace: pulumi.Input<string>;
+    /** Prometheus service URL for datasource */
+    prometheusUrl: pulumi.Input<string>;
+    /** Storage size for dashboards (e.g., "5Gi") */
+    storageSize: string;
+    /** GitHub OAuth client ID */
+    githubClientId: pulumi.Input<string>;
+    /** GitHub OAuth client secret */
+    githubClientSecret: pulumi.Input<string>;
+    /** GitHub organization for access control */
+    githubOrg: string;
+    /** GitHub user with admin privileges */
+    adminUser: string;
+    /** SMTP host for email alerts (optional, only for production) */
+    smtpHost?: pulumi.Input<string>;
+    /** SMTP port */
+    smtpPort?: number;
+    /** SMTP username */
+    smtpUser?: pulumi.Input<string>;
+    /** SMTP password */
+    smtpPassword?: pulumi.Input<string>;
+    /** Email sender address */
+    smtpFromAddress?: string;
+    /** Email recipient for alerts */
+    alertEmail?: string;
+    /** Resource labels */
+    labels?: Record<string, string>;
+    /** Kubernetes provider */
+    provider: k8s.Provider;
+}
+
+/**
+ * Return type for Grafana component
+ */
+export interface GrafanaResult {
+    deployment: pulumi.Output<k8s.types.output.meta.v1.ObjectMeta>;
+    service: pulumi.Output<k8s.types.output.meta.v1.ObjectMeta>;
+    pvc: pulumi.Output<k8s.types.output.meta.v1.ObjectMeta>;
+    configMap: pulumi.Output<k8s.types.output.meta.v1.ObjectMeta>;
+    secret: pulumi.Output<k8s.types.output.meta.v1.ObjectMeta>;
+}
