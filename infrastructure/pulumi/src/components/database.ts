@@ -108,13 +108,6 @@ export function createPostgreSQL(args: PostgreSQLArgs): PostgreSQLResult {
             },
             spec: {
                 replicas: 1, // Single replica - multi-replica requires StatefulSet + replication
-                strategy: {
-                    type: "Recreate", // Avoid Multi-Attach errors with ReadWriteOnce PVC
-                    // TODO: Remove rollingUpdate: null after successful deployment to preview-base and production
-                    // This is a one-time migration fix for SSA field clearing when changing from RollingUpdate to Recreate
-                    // SSA requires explicit null to delete fields; TypeScript requires type assertion
-                    rollingUpdate: null as any,
-                },
                 selector: {
                     matchLabels: {
                         app: "db",
