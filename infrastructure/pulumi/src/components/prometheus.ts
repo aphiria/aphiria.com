@@ -1,6 +1,32 @@
+import * as pulumi from "@pulumi/pulumi";
 import * as k8s from "@pulumi/kubernetes";
-import { PrometheusArgs, PrometheusResult } from "../types";
-import { buildLabels } from "../labels";
+import { Environment, PrometheusResult } from "./types";
+import { buildLabels } from "./labels";
+
+/**
+ * Arguments for Prometheus component
+ */
+export interface PrometheusArgs {
+    /** Environment this Prometheus instance targets */
+    env: Environment;
+    /** Kubernetes namespace */
+    namespace: pulumi.Input<string>;
+    /** Metrics retention period (e.g., "7d") */
+    retentionTime: string;
+    /** Storage size for metrics (e.g., "10Gi") */
+    storageSize: string;
+    /** Scrape interval for metrics collection (e.g., "15s") */
+    scrapeInterval?: string;
+    /** Optional resource limits for containers */
+    resources?: {
+        requests?: { cpu?: string; memory?: string };
+        limits?: { cpu?: string; memory?: string };
+    };
+    /** Resource labels */
+    labels?: Record<string, string>;
+    /** Kubernetes provider */
+    provider: k8s.Provider;
+}
 
 /** Creates Prometheus StatefulSet with PersistentVolumeClaim for metrics storage */
 export function createPrometheus(args: PrometheusArgs): PrometheusResult {

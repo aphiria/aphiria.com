@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeAll } from "@jest/globals";
 import * as pulumi from "@pulumi/pulumi";
 import * as k8s from "@pulumi/kubernetes";
-import { createGrafana } from "../../../src/components/monitoring/grafana";
-import { checksum } from "../../../src/components/utils";
+import { createGrafana } from "../../src/components/grafana";
+import { checksum } from "../../src/components/utils";
 
 describe("createGrafana", () => {
     let k8sProvider: k8s.Provider;

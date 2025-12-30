@@ -1,6 +1,34 @@
 import * as pulumi from "@pulumi/pulumi";
 import * as k8s from "@pulumi/kubernetes";
-import { HTTPRouteArgs } from "./types";
+
+/**
+ * Arguments for HTTPRoute component
+ */
+export interface HTTPRouteArgs {
+    /** Kubernetes namespace */
+    namespace: pulumi.Input<string>;
+    /** Route name */
+    name: string;
+    /** Hostname to match (e.g., "www.aphiria.com", "123.pr.aphiria.com") */
+    hostname: string;
+    /** Backend service name */
+    serviceName: string;
+    /** Backend service namespace (for cross-namespace routing) */
+    serviceNamespace: pulumi.Input<string>;
+    /** Backend service port */
+    servicePort: number;
+    /** Gateway reference */
+    gatewayName: pulumi.Input<string>;
+    gatewayNamespace: pulumi.Input<string>;
+    /** Gateway listener sectionName (e.g., "https-subdomains-1") to attach to specific listener */
+    sectionName?: string;
+    /** Enable connection-level rate limiting */
+    enableRateLimiting?: boolean;
+    /** Resource labels */
+    labels?: Record<string, string>;
+    /** Kubernetes provider */
+    provider: k8s.Provider;
+}
 
 /** Creates Gateway API HTTPRoute with optional rate limiting */
 export function createHTTPRoute(args: HTTPRouteArgs): k8s.apiextensions.CustomResource {

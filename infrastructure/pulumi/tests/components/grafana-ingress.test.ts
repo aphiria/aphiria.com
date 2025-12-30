@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll } from "@jest/globals";
 import * as pulumi from "@pulumi/pulumi";
 import * as k8s from "@pulumi/kubernetes";
-import { createGrafanaIngress } from "../../../src/components/monitoring/grafana-ingress";
+import { createGrafanaIngress } from "../../src/components/grafana-ingress";
 
 describe("createGrafanaIngress", () => {
     let k8sProvider: k8s.Provider;

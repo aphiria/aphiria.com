@@ -1,9 +1,66 @@
 import * as pulumi from "@pulumi/pulumi";
 import * as k8s from "@pulumi/kubernetes";
-import { APIDeploymentArgs, APIDeploymentResult } from "./types";
+import { CommonDeploymentArgs, PodDisruptionBudgetConfig, APIDeploymentResult } from "./types";
 import { checksum } from "./utils";
 import { POSTGRES_PORT } from "./constants";
 import { buildLabels } from "./labels";
+
+/**
+ * Arguments for API deployment component
+ */
+export interface APIDeploymentArgs extends CommonDeploymentArgs {
+    /** Number of replicas (1 for dev-local/preview, 2 for production) */
+    replicas: number;
+    /** Docker image reference (can be tag or digest) */
+    image: string;
+    /** Database host */
+    dbHost: pulumi.Input<string>;
+    /** Database name */
+    dbName: string;
+    /** Database user */
+    dbUser: pulumi.Input<string>;
+    /** Database password (sensitive) */
+    dbPassword: pulumi.Input<string>;
+    /** Base URL for the API */
+    apiUrl: string;
+    /** Base URL for the web app (for CORS) */
+    webUrl: string;
+    /** Log level (e.g., "warning", "debug", "info") */
+    logLevel: string;
+    /** Cookie domain (e.g., ".aphiria.com") */
+    cookieDomain: string;
+    /** Enable secure cookies (true for HTTPS, false for local HTTP) */
+    cookieSecure: boolean;
+    /** PR number (optional, preview environments only) */
+    prNumber?: string;
+    /** Additional custom environment variables */
+    extraVars?: Record<string, pulumi.Input<string>>;
+    /** Optional image pull secrets for private registries */
+    imagePullSecrets?: pulumi.Input<string>[];
+    /** Optional resource limits for containers */
+    resources?: {
+        nginx?: {
+            requests?: { cpu?: string; memory?: string };
+            limits?: { cpu?: string; memory?: string };
+        };
+        php?: {
+            requests?: { cpu?: string; memory?: string };
+            limits?: { cpu?: string; memory?: string };
+        };
+        initContainer?: {
+            requests?: { cpu?: string; memory?: string };
+            limits?: { cpu?: string; memory?: string };
+        };
+    };
+    /** Optional PodDisruptionBudget for high availability (production only) */
+    podDisruptionBudget?: PodDisruptionBudgetConfig;
+    /** @deprecated Use envConfig instead. ConfigMap references to load as environment variables */
+    configMapRefs?: pulumi.Input<string>[];
+    /** @deprecated Use envConfig instead. Secret references to load as environment variables */
+    secretRefs?: pulumi.Input<string>[];
+    /** @deprecated Component calculates checksum internally. ConfigMap checksum for pod annotations */
+    configChecksum?: string;
+}
 
 /** Creates nginx + PHP-FPM deployment using initContainer to copy code to shared volume */
 export function createAPIDeployment(args: APIDeploymentArgs): APIDeploymentResult {

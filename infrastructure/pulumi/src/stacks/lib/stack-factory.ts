@@ -15,9 +15,9 @@ import {
     createWWWRedirectRoute,
     createDNSRecords,
 } from "../../components";
-import { createGrafana } from "../../components/monitoring/grafana";
-import { createGrafanaIngress } from "../../components/monitoring/grafana-ingress";
-import { createDashboards } from "../../components/monitoring/dashboards";
+import { createGrafana } from "../../components/grafana";
+import { createGrafanaIngress, GrafanaIngressResult } from "../../components/grafana-ingress";
+import { createDashboards } from "../../components/dashboards";
 import * as path from "path";
 import { StackConfig } from "./types";
 import {
@@ -27,7 +27,6 @@ import {
     GatewayResult,
     NamespaceResult,
     GrafanaResult,
-    GrafanaIngressResult,
 } from "../../components/types";
 
 /**

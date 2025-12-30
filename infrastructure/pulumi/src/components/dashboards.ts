@@ -2,7 +2,7 @@ import * as k8s from "@pulumi/kubernetes";
 import * as pulumi from "@pulumi/pulumi";
 import * as fs from "fs";
 import * as path from "path";
-import { buildLabels } from "../labels";
+import { buildLabels } from "./labels";
 
 export interface DashboardsArgs {
     /** Kubernetes namespace */

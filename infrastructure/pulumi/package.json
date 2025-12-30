@@ -6,9 +6,9 @@
     "scripts": {
         "build": "tsc",
         "watch": "tsc --watch",
-        "test": "jest --coverage",
+        "test": "jest --coverage --runInBand",
         "test:watch": "jest --watch",
-        "test:ci": "jest --ci --coverage --maxWorkers=2",
+        "test:ci": "jest --ci --coverage --maxWorkers=1",
         "lint": "eslint .",
         "lint:fix": "eslint . --fix",
         "format": "prettier --write .",

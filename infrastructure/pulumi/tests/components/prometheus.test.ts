@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll } from "@jest/globals";
 import * as pulumi from "@pulumi/pulumi";
 import * as k8s from "@pulumi/kubernetes";
-import { createPrometheus } from "../../../src/components/monitoring/prometheus";
+import { createPrometheus } from "../../src/components/prometheus";
 
 describe("createPrometheus", () => {
     let k8sProvider: k8s.Provider;

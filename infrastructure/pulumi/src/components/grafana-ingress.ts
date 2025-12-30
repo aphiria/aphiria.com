@@ -1,6 +1,6 @@
 import * as pulumi from "@pulumi/pulumi";
 import * as k8s from "@pulumi/kubernetes";
-import { createHTTPRoute } from "../http-route";
+import { createHTTPRoute } from "./http-route";
 
 export interface GrafanaIngressArgs {
     /** Kubernetes namespace */

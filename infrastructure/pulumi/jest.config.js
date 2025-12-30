@@ -28,4 +28,6 @@ module.exports = {
             },
         ],
     },
+    // Run Pulumi cleanup after all tests complete to prevent worker hangs
+    setupFilesAfterEnv: ["<rootDir>/tests/setup.ts"],
 };

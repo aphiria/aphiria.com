@@ -1,6 +1,30 @@
 import * as pulumi from "@pulumi/pulumi";
 import * as k8s from "@pulumi/kubernetes";
-import { GatewayArgs, GatewayResult } from "./types";
+import { Environment, GatewayResult } from "./types";
+
+/**
+ * Arguments for Gateway component
+ */
+export interface GatewayArgs {
+    /** Environment this gateway targets */
+    env: Environment;
+    /** Kubernetes namespace */
+    namespace: pulumi.Input<string>;
+    /** Gateway name */
+    name: string;
+    /** TLS certificate type */
+    tlsMode: "self-signed" | "letsencrypt-prod";
+    /** Domains to secure with TLS */
+    domains: string[];
+    /** DigitalOcean DNS API token for DNS-01 ACME challenges (required for wildcard certs) */
+    dnsToken?: pulumi.Input<string>;
+    /** Resource labels */
+    labels?: Record<string, string>;
+    /** Kubernetes provider */
+    provider: k8s.Provider;
+    /** Optional cert-manager dependency to ensure CRDs are ready */
+    certManagerDependency?: pulumi.Resource;
+}
 
 /** Creates Gateway with TLS (self-signed or letsencrypt-prod) and separate listeners for root/subdomains */
 export function createGateway(args: GatewayArgs): GatewayResult {

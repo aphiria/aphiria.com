@@ -15,3 +15,8 @@ export * from "./http-route";
 export * from "./gateway";
 export * from "./dns";
 export * from "./kubernetes";
+export * from "./prometheus";
+export * from "./grafana";
+export * from "./kube-state-metrics";
+export * from "./dashboards";
+export * from "./grafana-ingress";

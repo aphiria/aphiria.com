@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll } from "@jest/globals";
 import * as pulumi from "@pulumi/pulumi";
 import * as k8s from "@pulumi/kubernetes";
-import { createDashboards } from "../../../src/components/monitoring/dashboards";
+import { createDashboards } from "../../src/components/dashboards";
 import * as path from "path";
 
 describe("createDashboards", () => {
@@ -28,7 +28,7 @@ describe("createDashboards", () => {
     });
 
     it("should create ConfigMap with name grafana-dashboards", (done) => {
-        const dashboardDir = path.join(__dirname, "../../../dashboards");
+        const dashboardDir = path.join(__dirname, "../../dashboards");
         const result = createDashboards({
             namespace: "monitoring",
             dashboardDir,
@@ -45,7 +45,7 @@ describe("createDashboards", () => {
     });
 
     it("should create ConfigMap in monitoring namespace", (done) => {
-        const dashboardDir = path.join(__dirname, "../../../dashboards");
+        const dashboardDir = path.join(__dirname, "../../dashboards");
         const result = createDashboards({
             namespace: "monitoring",
             dashboardDir,
@@ -59,7 +59,7 @@ describe("createDashboards", () => {
     });
 
     it("should include grafana_dashboard label for provisioning discovery", (done) => {
-        const dashboardDir = path.join(__dirname, "../../../dashboards");
+        const dashboardDir = path.join(__dirname, "../../dashboards");
         const result = createDashboards({
             namespace: "monitoring",
             dashboardDir,
@@ -74,7 +74,7 @@ describe("createDashboards", () => {
     });
 
     it("should include all dashboard JSON files as data entries", (done) => {
-        const dashboardDir = path.join(__dirname, "../../../dashboards");
+        const dashboardDir = path.join(__dirname, "../../dashboards");
         const result = createDashboards({
             namespace: "monitoring",
             dashboardDir,
@@ -94,7 +94,7 @@ describe("createDashboards", () => {
     });
 
     it("should contain valid JSON content for dashboards", (done) => {
-        const dashboardDir = path.join(__dirname, "../../../dashboards");
+        const dashboardDir = path.join(__dirname, "../../dashboards");
         const result = createDashboards({
             namespace: "monitoring",
             dashboardDir,
@@ -121,7 +121,7 @@ describe("createDashboards", () => {
     });
 
     it("should handle custom namespace", (done) => {
-        const dashboardDir = path.join(__dirname, "../../../dashboards");
+        const dashboardDir = path.join(__dirname, "../../dashboards");
         const result = createDashboards({
             namespace: "custom-monitoring",
             dashboardDir,
@@ -135,7 +135,7 @@ describe("createDashboards", () => {
     });
 
     it("should include component labels", (done) => {
-        const dashboardDir = path.join(__dirname, "../../../dashboards");
+        const dashboardDir = path.join(__dirname, "../../dashboards");
         const result = createDashboards({
             namespace: "monitoring",
             dashboardDir,

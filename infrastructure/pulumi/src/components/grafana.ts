@@ -1,8 +1,53 @@
 import * as k8s from "@pulumi/kubernetes";
 import * as pulumi from "@pulumi/pulumi";
-import { GrafanaArgs, GrafanaResult } from "../types";
-import { buildLabels } from "../labels";
-import { checksum } from "../utils";
+import { Environment, GrafanaResult } from "./types";
+import { buildLabels } from "./labels";
+import { checksum } from "./utils";
+
+/**
+ * Arguments for Grafana component
+ */
+export interface GrafanaArgs {
+    /** Environment this Grafana instance targets */
+    env: Environment;
+    /** Kubernetes namespace */
+    namespace: pulumi.Input<string>;
+    /** Prometheus service URL for datasource */
+    prometheusUrl: pulumi.Input<string>;
+    /** Storage size for dashboards (e.g., "5Gi") */
+    storageSize: string;
+    /** GitHub OAuth client ID */
+    githubClientId: pulumi.Input<string>;
+    /** GitHub OAuth client secret */
+    githubClientSecret: pulumi.Input<string>;
+    /** GitHub organization for access control */
+    githubOrg: string;
+    /** GitHub user with admin privileges */
+    adminUser: string;
+    /** SMTP host for email alerts (optional, only for production) */
+    smtpHost?: pulumi.Input<string>;
+    /** SMTP port */
+    smtpPort?: number;
+    /** SMTP username */
+    smtpUser?: pulumi.Input<string>;
+    /** SMTP password */
+    smtpPassword?: pulumi.Input<string>;
+    /** Email sender address */
+    smtpFromAddress?: string;
+    /** Email recipient for alerts */
+    alertEmail?: string;
+    /** Dashboards ConfigMap for auto-provisioning */
+    dashboardsConfigMap?: k8s.core.v1.ConfigMap;
+    /** Optional resource limits for containers */
+    resources?: {
+        requests?: { cpu?: string; memory?: string };
+        limits?: { cpu?: string; memory?: string };
+    };
+    /** Resource labels */
+    labels?: Record<string, string>;
+    /** Kubernetes provider */
+    provider: k8s.Provider;
+}
 
 /** Creates Grafana Deployment with GitHub OAuth and environment-specific alerting */
 export function createGrafana(args: GrafanaArgs): GrafanaResult {

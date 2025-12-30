@@ -1,6 +1,41 @@
 import * as pulumi from "@pulumi/pulumi";
 import * as k8s from "@pulumi/kubernetes";
-import { NamespaceArgs, NamespaceResult } from "./types";
+import { Environment, NamespaceResult } from "./types";
+
+/**
+ * Arguments for namespace component
+ */
+export interface NamespaceArgs {
+    /** Namespace name */
+    name: string;
+    /** Environment this namespace targets */
+    env: Environment;
+    /** Optional ResourceQuota for the namespace */
+    resourceQuota?: {
+        cpu: string;
+        memory: string;
+        pods: string;
+    };
+    /** Optional NetworkPolicy configuration */
+    networkPolicy?: {
+        allowDNS: boolean;
+        allowHTTPS: boolean;
+        allowPostgreSQL?: {
+            host: string;
+            port: number;
+        };
+    };
+    /** Optional ImagePullSecret for private registries */
+    imagePullSecret?: {
+        registry: string;
+        username: pulumi.Input<string>;
+        token: pulumi.Input<string>;
+    };
+    /** Resource labels */
+    labels?: Record<string, string>;
+    /** Kubernetes provider */
+    provider: k8s.Provider;
+}
 
 /**
  * Creates a Kubernetes namespace with optional ResourceQuota, NetworkPolicy, and ImagePullSecret
