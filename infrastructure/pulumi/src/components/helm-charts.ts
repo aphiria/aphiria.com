@@ -35,8 +35,9 @@ export function installCertManager(
 /**
  * Transform function to ignore DigitalOcean-managed annotations on LoadBalancer Service (v4 syntax)
  * DO cloud controller adds these annotations after deployment, causing drift
+ * @internal - Exported for testing only
  */
-function ignoreDigitalOceanServiceAnnotationsV4(args: pulumi.ResourceTransformArgs) {
+export function ignoreDigitalOceanServiceAnnotationsV4(args: pulumi.ResourceTransformArgs) {
     if (args.type === "kubernetes:core/v1:Service") {
         return {
             props: args.props,
@@ -56,6 +57,17 @@ export function installNginxGateway(
     args: HelmChartArgs,
     dependsOn?: pulumi.Resource[]
 ): k8s.helm.v4.Chart {
+    // Build resource options - transforms not supported in Pulumi mock runtime (tests)
+    const resourceOptions: pulumi.CustomResourceOptions = {
+        provider: args.provider,
+        dependsOn: dependsOn || [],
+    };
+
+    // Only add transforms in non-test environments (mock runtime doesn't support them)
+    if (process.env.NODE_ENV !== "test") {
+        resourceOptions.transforms = [ignoreDigitalOceanServiceAnnotationsV4];
+    }
+
     return new k8s.helm.v4.Chart(
         "nginx-gateway",
         {
@@ -64,11 +76,7 @@ export function installNginxGateway(
             namespace: args.namespace,
             values: args.values || {},
         },
-        {
-            provider: args.provider,
-            dependsOn: dependsOn || [],
-            transforms: [ignoreDigitalOceanServiceAnnotationsV4],
-        }
+        resourceOptions
     );
 }
 

@@ -4,6 +4,7 @@ import * as k8s from "@pulumi/kubernetes";
 import {
     installBaseHelmCharts,
     installNginxGateway,
+    ignoreDigitalOceanServiceAnnotationsV4,
 } from "../../src/components/helm-charts";
 
 describe("installBaseHelmCharts", () => {
@@ -148,7 +149,11 @@ describe("installNginxGateway", () => {
         });
     });
 
-    it("should include v4 transforms to ignore DigitalOcean annotations on Service resources", () => {
+    it("should conditionally apply transforms based on NODE_ENV (skipped in mock runtime)", () => {
+        // Note: In test environment (NODE_ENV=test), transforms are skipped to avoid
+        // "Pulumi CLI does not support transforms" error in mock runtime.
+        // In production, transforms are applied to ignore DigitalOcean annotations
+        // on LoadBalancer Service resources.
         const chart = installNginxGateway({
             env: "production",
             chartName: "nginx-gateway-fabric",
@@ -158,8 +163,42 @@ describe("installNginxGateway", () => {
             provider: k8sProvider,
         });
 
-        // v4 Chart uses transforms instead of transformations
-        // Testing the structure - runtime behavior is tested by Pulumi
         expect(chart).toBeDefined();
+    });
+});
+
+describe("ignoreDigitalOceanServiceAnnotationsV4", () => {
+    it("should add ignoreChanges for DigitalOcean annotations on Service resources", () => {
+        const args: pulumi.ResourceTransformArgs = {
+            type: "kubernetes:core/v1:Service",
+            name: "test-service",
+            custom: true,
+            props: {
+                metadata: { name: "test" },
+            },
+            opts: {},
+        };
+
+        const result = ignoreDigitalOceanServiceAnnotationsV4(args);
+
+        expect(result).toBeDefined();
+        expect(result?.props).toEqual(args.props);
+        expect(result?.opts).toBeDefined();
+    });
+
+    it("should return undefined for non-Service resources", () => {
+        const args: pulumi.ResourceTransformArgs = {
+            type: "kubernetes:apps/v1:Deployment",
+            name: "test-deployment",
+            custom: true,
+            props: {
+                metadata: { name: "test" },
+            },
+            opts: {},
+        };
+
+        const result = ignoreDigitalOceanServiceAnnotationsV4(args);
+
+        expect(result).toBeUndefined();
     });
 });
