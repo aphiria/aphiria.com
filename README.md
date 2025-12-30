@@ -84,6 +84,8 @@ pulumi up --stack local
 
 > **Note:** `pulumi login --local` stores state on your machine in `~/.pulumi` and doesn't require a Pulumi Cloud account.  The local stack uses passphrase `"password"` for encryption (safe to share - no actual secrets in local stack).
 
+> **Note:** If you need to log back into the cloud instance, run `pulumi logout`, then `pulumi login`.
+
 #### Configure Grafana (Optional)
 
 The local stack includes Grafana monitoring. Before running `pulumi up`, configure these values:

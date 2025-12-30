@@ -23,6 +23,20 @@ describe("createKubernetesCluster", () => {
                 };
             },
             call: (args: pulumi.runtime.MockCallArgs): Record<string, unknown> => {
+                // Mock digitalocean.getKubernetesCluster() call
+                if (args.token === "digitalocean:index/getKubernetesCluster:getKubernetesCluster") {
+                    return {
+                        kubeConfigs: [
+                            {
+                                rawConfig: "mock-kubeconfig-from-get",
+                                clusterCaCertificate: "mock-ca-cert",
+                                token: "mock-token",
+                            },
+                        ],
+                        endpoint: "https://mock-endpoint.k8s.ondigitalocean.com",
+                        status: "running",
+                    };
+                }
                 return args.inputs;
             },
         });
@@ -41,7 +55,8 @@ describe("createKubernetesCluster", () => {
 
         pulumi.all([result.endpoint, result.kubeconfig]).apply(([endpoint, kubeconfig]) => {
             expect(endpoint).toBe("https://mock-endpoint.k8s.ondigitalocean.com");
-            expect(kubeconfig).toBe("mock-kubeconfig");
+            // Kubeconfig now comes from getKubernetesCluster() call
+            expect(kubeconfig).toBe("mock-kubeconfig-from-get");
             done();
         });
     });
