@@ -59,6 +59,35 @@ const newLabels = [...existingLabels.filter(l => l !== 'my-label'), 'my-label'];
 - ✅ Explain WHY you think it's safe to delete
 - ❌ Never run `gh secret remove` or `gh api -X DELETE` without asking
 
+### Infrastructure Health Checks
+
+**Before modifying infrastructure that depends on other stacks:**
+
+1. **Verify stack exists and is healthy**:
+   ```bash
+   pulumi stack ls  # Check stack exists
+   pulumi refresh --stack <stack-name>  # Verify connectivity
+   ```
+
+2. **Check stack outputs are accessible**:
+   ```bash
+   pulumi stack output --stack <stack-name>
+   ```
+
+3. **For cross-stack references**: Ensure base stack is reachable before adding dependencies
+
+**For API changes:**
+- Always verify interface/type definitions before implementing
+- Check official docs for parameter names and types
+- Don't assume - validate with `grep` or type checking
+
+**Decision Framework for Infrastructure Issues:**
+1. Research official solutions first (docs, GitHub issues)
+2. Verify the problem exists (reproduce, check logs)
+3. Test proposed fix in isolation before applying
+4. **Never** claim infrastructure needs destruction without evidence
+5. Check if a simple credential refresh or config update can fix the issue
+
 ---
 
 ## Architecture Overview
