@@ -33,7 +33,7 @@
                 "name": "deployment",
                 "type": "query",
                 "label": "Deployment",
-                "query": "label_values(kube_deployment_labels{namespace=\"$namespace\"}, deployment)",
+                "query": "label_values(kube_deployment_spec_replicas{namespace=\"$namespace\"}, deployment)",
                 "datasource": {
                     "type": "prometheus",
                     "uid": "prometheus"
@@ -201,7 +201,7 @@
             },
             "targets": [
                 {
-                    "expr": "sum(kube_pod_container_status_terminated_reason{namespace=\"$namespace\", reason=\"OOMKilled\"})",
+                    "expr": "sum(kube_pod_container_status_last_terminated_reason{namespace=\"$namespace\", reason=\"OOMKilled\"}) OR on() vector(0)",
                     "refId": "A",
                     "datasource": {
                         "type": "prometheus",
@@ -249,7 +249,7 @@
             },
             "targets": [
                 {
-                    "expr": "sum(rate(container_cpu_usage_seconds_total{namespace=\"$namespace\", container!=\"\", pod=~\"$deployment.*\"}[5m])) by (pod)",
+                    "expr": "sum(rate(container_cpu_usage_seconds_total{namespace=\"$namespace\", pod=~\"$deployment.*\", pod!=\"\"}[5m])) by (pod)",
                     "refId": "A",
                     "legendFormat": "{{pod}}",
                     "datasource": {
@@ -286,7 +286,7 @@
             },
             "targets": [
                 {
-                    "expr": "sum(container_memory_working_set_bytes{namespace=\"$namespace\", container!=\"\", pod=~\"$deployment.*\"}) by (pod)",
+                    "expr": "sum(container_memory_working_set_bytes{namespace=\"$namespace\", pod=~\"$deployment.*\", pod!=\"\"}) by (pod)",
                     "refId": "A",
                     "legendFormat": "{{pod}}",
                     "datasource": {
@@ -360,7 +360,7 @@
             },
             "targets": [
                 {
-                    "expr": "sum(rate(container_cpu_usage_seconds_total{namespace=\"$namespace\", container!=\"\", pod=~\"$deployment.*\"}[5m])) by (pod)",
+                    "expr": "sum(rate(container_cpu_usage_seconds_total{namespace=\"$namespace\", pod=~\"$deployment.*\", pod!=\"\"}[5m])) by (pod)",
                     "refId": "A",
                     "format": "table",
                     "instant": true,
@@ -370,7 +370,7 @@
                     }
                 },
                 {
-                    "expr": "sum(container_memory_working_set_bytes{namespace=\"$namespace\", container!=\"\", pod=~\"$deployment.*\"}) by (pod)",
+                    "expr": "sum(container_memory_working_set_bytes{namespace=\"$namespace\", pod=~\"$deployment.*\", pod!=\"\"}) by (pod)",
                     "refId": "B",
                     "format": "table",
                     "instant": true,

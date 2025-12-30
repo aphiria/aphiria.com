@@ -134,7 +134,7 @@
             },
             "targets": [
                 {
-                    "expr": "sum(rate(container_cpu_usage_seconds_total{namespace=~\"$namespace\", container!=\"\"}[5m])) / sum(kube_pod_container_resource_requests{resource=\"cpu\", namespace=~\"$namespace\"}) * 100",
+                    "expr": "sum(rate(container_cpu_usage_seconds_total{namespace=~\"$namespace\", pod!=\"\"}[5m])) / sum(kube_pod_container_resource_requests{resource=\"cpu\", namespace=~\"$namespace\"}) * 100",
                     "refId": "A",
                     "datasource": {
                         "type": "prometheus",
@@ -187,7 +187,7 @@
             },
             "targets": [
                 {
-                    "expr": "sum(container_memory_working_set_bytes{namespace=~\"$namespace\", container!=\"\"}) / sum(kube_pod_container_resource_requests{resource=\"memory\", namespace=~\"$namespace\"}) * 100",
+                    "expr": "sum(container_memory_working_set_bytes{namespace=~\"$namespace\", pod!=\"\"}) / sum(kube_pod_container_resource_requests{resource=\"memory\", namespace=~\"$namespace\"}) * 100",
                     "refId": "A",
                     "datasource": {
                         "type": "prometheus",
@@ -240,7 +240,7 @@
             },
             "targets": [
                 {
-                    "expr": "sum(rate(container_cpu_usage_seconds_total{namespace=~\"$namespace\", container!=\"\"}[5m])) by (namespace)",
+                    "expr": "sum(rate(container_cpu_usage_seconds_total{namespace=~\"$namespace\", pod!=\"\"}[5m])) by (namespace)",
                     "refId": "A",
                     "legendFormat": "{{namespace}}",
                     "datasource": {
@@ -280,7 +280,7 @@
             },
             "targets": [
                 {
-                    "expr": "sum(container_memory_working_set_bytes{namespace=~\"$namespace\", container!=\"\"}) by (namespace)",
+                    "expr": "sum(container_memory_working_set_bytes{namespace=~\"$namespace\", pod!=\"\"}) by (namespace)",
                     "refId": "A",
                     "legendFormat": "{{namespace}}",
                     "datasource": {
@@ -330,7 +330,7 @@
                     }
                 },
                 {
-                    "expr": "sum(rate(container_cpu_usage_seconds_total{namespace=~\"$namespace\", container!=\"\"}[5m])) by (namespace, pod)",
+                    "expr": "sum(rate(container_cpu_usage_seconds_total{namespace=~\"$namespace\", pod!=\"\"}[5m])) by (namespace, pod)",
                     "refId": "B",
                     "format": "table",
                     "instant": true,
@@ -350,7 +350,7 @@
                     }
                 },
                 {
-                    "expr": "sum(container_memory_working_set_bytes{namespace=~\"$namespace\", container!=\"\"}) by (namespace, pod)",
+                    "expr": "sum(container_memory_working_set_bytes{namespace=~\"$namespace\", pod!=\"\"}) by (namespace, pod)",
                     "refId": "D",
                     "format": "table",
                     "instant": true,
