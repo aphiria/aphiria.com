@@ -2,6 +2,7 @@ import { describe, it, expect, beforeAll } from "@jest/globals";
 import * as pulumi from "@pulumi/pulumi";
 import * as k8s from "@pulumi/kubernetes";
 import { createGrafana } from "../../../src/components/monitoring/grafana";
+import { checksum } from "../../../src/components/utils";
 
 describe("createGrafana", () => {
     let k8sProvider: k8s.Provider;
@@ -262,6 +263,90 @@ describe("createGrafana", () => {
         pulumi.all([result.secret, result.configMap]).apply(([secret, configMap]) => {
             expect(secret.name).toBe("grafana-secrets");
             expect(configMap.name).toBe("grafana-config");
+            done();
+        });
+    });
+
+    it("should mount dashboards ConfigMap when provided", () => {
+        const dashboardsConfigMap = new k8s.core.v1.ConfigMap("test-dashboards", {
+            metadata: {
+                name: "grafana-dashboards",
+                namespace: "monitoring",
+            },
+            data: {
+                "dashboard1.json": '{"uid":"dash1","title":"Test Dashboard 1","panels":[]}',
+                "dashboard2.json": '{"uid":"dash2","title":"Test Dashboard 2","panels":[]}',
+            },
+        });
+
+        const result = createGrafana({
+            env: "production",
+            namespace: "monitoring",
+            prometheusUrl: "http://prometheus:9090",
+            storageSize: "5Gi",
+            githubClientId: "client-id",
+            githubClientSecret: "client-secret",
+            githubOrg: "aphiria",
+            adminUser: "davidbyoung",
+            dashboardsConfigMap,
+            provider: k8sProvider,
+        });
+
+        expect(result.deployment).toBeDefined();
+    });
+
+    it("should add checksum annotation when dashboards ConfigMap provided", (done) => {
+        const dashboardData = {
+            "dashboard1.json": '{"uid":"dash1","title":"Test Dashboard 1","panels":[]}',
+            "dashboard2.json": '{"uid":"dash2","title":"Test Dashboard 2","panels":[]}',
+        };
+
+        const dashboardsConfigMap = new k8s.core.v1.ConfigMap("test-dashboards", {
+            metadata: {
+                name: "grafana-dashboards",
+                namespace: "monitoring",
+            },
+            data: dashboardData,
+        });
+
+        const result = createGrafana({
+            env: "production",
+            namespace: "monitoring",
+            prometheusUrl: "http://prometheus:9090",
+            storageSize: "5Gi",
+            githubClientId: "client-id",
+            githubClientSecret: "client-secret",
+            githubOrg: "aphiria",
+            adminUser: "davidbyoung",
+            dashboardsConfigMap,
+            provider: k8sProvider,
+        });
+
+        const expectedChecksum = checksum(dashboardData);
+
+        pulumi.all([result.deployment]).apply(([deployment]) => {
+            expect(deployment.name).toBe("grafana");
+            expect(expectedChecksum).toBeDefined();
+            expect(expectedChecksum.length).toBe(64);
+            done();
+        });
+    });
+
+    it("should not add checksum annotation when dashboards ConfigMap not provided", (done) => {
+        const result = createGrafana({
+            env: "production",
+            namespace: "monitoring",
+            prometheusUrl: "http://prometheus:9090",
+            storageSize: "5Gi",
+            githubClientId: "client-id",
+            githubClientSecret: "client-secret",
+            githubOrg: "aphiria",
+            adminUser: "davidbyoung",
+            provider: k8sProvider,
+        });
+
+        pulumi.all([result.deployment]).apply(([deployment]) => {
+            expect(deployment.name).toBe("grafana");
             done();
         });
     });

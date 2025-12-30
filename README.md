@@ -50,7 +50,10 @@ Add the following to your host file:
 
 ```bash
 minikube start
+minikube addons enable metrics-server
 ```
+
+> **Note:** The `metrics-server` addon is required for Grafana dashboards to display CPU/memory metrics.
 
 In a separate terminal, run Minikube tunnel (required for LoadBalancer access):
 
@@ -115,6 +118,16 @@ pulumi config set grafana:alertEmail "admin@example.com" --stack local
 * https://grafana.aphiria.com (monitoring dashboards)
 
 > **Note:** You'll see a certificate warning (self-signed cert). In Chrome, type `thisisunsafe` (there is no input - just type that phrase with the page displayed) to bypass. In other browsers, click advanced and accept the certificate.
+
+### Prometheus
+
+To view the Prometheus dashboard, you'll need to configure port forwarding in a separate console:
+
+```
+kubectl port-forward -n monitoring svc/prometheus 9090
+```
+
+Then, visit http://localhost:9090/ in your browser.
 
 ### Connecting to the Database
 

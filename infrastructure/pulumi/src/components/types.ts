@@ -457,6 +457,29 @@ export interface PrometheusResult {
 }
 
 /**
+ * Arguments for kube-state-metrics component
+ */
+export interface KubeStateMetricsArgs {
+    /** Kubernetes namespace */
+    namespace: pulumi.Input<string>;
+    /** Resource labels */
+    labels?: Record<string, string>;
+    /** Kubernetes provider */
+    provider: k8s.Provider;
+}
+
+/**
+ * Return type for kube-state-metrics component
+ */
+export interface KubeStateMetricsResult {
+    serviceAccount: pulumi.Output<k8s.types.output.meta.v1.ObjectMeta>;
+    clusterRole: pulumi.Output<k8s.types.output.meta.v1.ObjectMeta>;
+    clusterRoleBinding: pulumi.Output<k8s.types.output.meta.v1.ObjectMeta>;
+    deployment: pulumi.Output<k8s.types.output.meta.v1.ObjectMeta>;
+    service: pulumi.Output<k8s.types.output.meta.v1.ObjectMeta>;
+}
+
+/**
  * Arguments for Grafana component
  */
 export interface GrafanaArgs {
@@ -488,6 +511,8 @@ export interface GrafanaArgs {
     smtpFromAddress?: string;
     /** Email recipient for alerts */
     alertEmail?: string;
+    /** Dashboards ConfigMap for auto-provisioning */
+    dashboardsConfigMap?: k8s.core.v1.ConfigMap;
     /** Optional resource limits for containers */
     resources?: {
         requests?: { cpu?: string; memory?: string };

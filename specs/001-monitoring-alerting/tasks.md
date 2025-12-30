@@ -293,7 +293,16 @@ Phase 2 (Foundation) ← BLOCKS ALL USER STORIES
 
 ### Application Metrics Dashboards
 
-- [ ] [US3-001] [P] Create API performance dashboard JSON: `specs/001-monitoring-alerting/contracts/dashboards/api-performance.json`
+**IMPORTANT - Prerequisites for Dashboards**:
+
+1. **kube-state-metrics** (deployed via Pulumi): Exports cluster state metrics (`kube_node_info`, `kube_pod_info`, etc.). Component implemented in `infrastructure/pulumi/src/components/monitoring/kube-state-metrics.ts` and integrated in stack-factory.ts.
+
+2. **Metrics Server** (cluster prerequisite): Exports resource usage metrics (`container_cpu_usage_seconds_total`, `container_memory_working_set_bytes`, etc.) required for CPU/memory dashboards.
+   - **Local (minikube)**: Enable via `minikube addons enable metrics-server`
+   - **Preview/Production (DigitalOcean)**: Pre-installed by default in DOKS clusters (no action needed)
+   - Without metrics-server: Resource utilization dashboards show "No data"
+
+- [X] [US3-001] [P] Create API performance dashboard JSON: `specs/001-monitoring-alerting/contracts/dashboards/api-performance.json`
   - Dashboard UID: `api-performance`, title: "API Performance"
   - Panel 1: Graph - Request latency p50/p95/p99 (PromQL: `histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m]))`)
   - Panel 2: Stat - Average latency (PromQL: `rate(http_request_duration_seconds_sum[5m]) / rate(http_request_duration_seconds_count[5m])`)
@@ -302,7 +311,7 @@ Phase 2 (Foundation) ← BLOCKS ALL USER STORIES
   - Refresh: `30s`, time range: `now-6h` to `now`
   - Note: Assumes application exposes `http_request_duration_seconds` histogram metric (verify in API instrumentation)
 
-- [ ] [US3-002] [P] Create error rates dashboard JSON: `specs/001-monitoring-alerting/contracts/dashboards/error-rates.json`
+- [X] [US3-002] [P] Create error rates dashboard JSON: `specs/001-monitoring-alerting/contracts/dashboards/error-rates.json`
   - Dashboard UID: `error-rates`, title: "Error Rates"
   - Panel 1: Graph - Error rate % (PromQL: `rate(http_requests_total{status=~"5.."}[5m]) / rate(http_requests_total[5m]) * 100`)
   - Panel 2: Stat - Total errors in last hour (PromQL: `increase(http_requests_total{status=~"5.."}[1h])`)
@@ -313,32 +322,37 @@ Phase 2 (Foundation) ← BLOCKS ALL USER STORIES
 
 ### Dashboard Provisioning Component
 
-- [ ] [US3-003] Write tests for dashboards component: `infrastructure/pulumi/tests/components/monitoring/dashboards.test.ts`
+- [X] [US3-003] Write tests for dashboards component: `infrastructure/pulumi/tests/components/monitoring/dashboards.test.ts`
   - Test: ConfigMap created with name "grafana-dashboards" in "monitoring" namespace
   - Test: ConfigMap data includes all dashboard JSON files (cluster-overview.json, resource-utilization.json, api-performance.json, error-rates.json, namespace-service.json)
   - Test: ConfigMap has label `grafana_dashboard: "1"` (for Grafana provisioning discovery)
   - Test: Dashboard JSON is valid (basic JSON parse check, doesn't need full schema validation)
 
-- [ ] [US3-004] Implement dashboards component: `infrastructure/pulumi/src/components/monitoring/dashboards.ts`
+- [X] [US3-004] Implement dashboards component: `infrastructure/pulumi/src/components/monitoring/dashboards.ts`
   - Export function: `createDashboards(config: { namespace: pulumi.Input<string>, dashboardDir: string, provider: k8s.Provider })`
   - Read all .json files from `dashboardDir` (use Node.js `fs.readdirSync` and `fs.readFileSync`)
   - Create k8s.core.v1.ConfigMap with dashboard JSON as data entries (key: filename, value: file content)
   - Add label `grafana_dashboard: "1"` for Grafana sidecar/provisioning
   - Return `{ configMap }`
 
-- [ ] [US3-005] Run tests and validate coverage: `cd infrastructure/pulumi && npm test -- dashboards.test.ts`
+- [X] [US3-005] Run tests and validate coverage: `cd infrastructure/pulumi && npm test -- dashboards.test.ts`
 
 ### Integration
 
 - [ ] [US3-006] Update Grafana component to mount dashboards ConfigMap: Modify `infrastructure/pulumi/src/components/monitoring/grafana.ts`
+  - Accept dashboards ConfigMap as input parameter to component
+  - Calculate checksum of dashboard ConfigMap data (use `checksum()` from `utils.ts`)
+  - Add checksum annotation to pod template: `annotations: { "checksum/dashboards": dashboardChecksum }`
   - Add volumeMount in Grafana container: `mountPath: /var/lib/grafana/dashboards`, `name: dashboards`
   - Add volume referencing dashboards ConfigMap: `name: dashboards`, `configMap.name: grafana-dashboards`
-  - Update tests in `grafana.test.ts` to verify volume mount
+  - When dashboard JSON files change → checksum changes → pod restarts automatically to reload dashboards
+  - Update tests in `grafana.test.ts` to verify volume mount and checksum annotation
 
 - [ ] [US3-007] Integrate dashboards into production stack: `infrastructure/pulumi/src/stacks/production.ts`
   - Import `createDashboards`
-  - Call with `dashboardDir: path.join(__dirname, "../../specs/001-monitoring-alerting/contracts/dashboards")` (use relative path from stack file)
+  - Call with `dashboardDir: path.join(__dirname, "../../dashboards")` (use relative path from stack file to infrastructure/pulumi/dashboards/)
   - Must be called BEFORE `createGrafana` (ConfigMap must exist for Grafana to mount)
+  - Pass dashboards ConfigMap to createGrafana for checksum calculation
 
 - [ ] [US3-008] Integrate dashboards into preview stack: `infrastructure/pulumi/src/stacks/preview.ts`
 
@@ -676,6 +690,140 @@ Phase 2 (Foundation) ← BLOCKS ALL USER STORIES
 - [ ] SC-009: Unauthorized users denied within 10 seconds (test: login with non-aphiria GitHub account)
 - [ ] SC-010: Dashboard changes deploy in < 5 minutes (test: modify cluster-overview.json, run `pulumi up`, measure time)
 - [ ] SC-011: Local environment accessible via /etc/hosts (test: verify https://grafana.aphiria.com resolves to 127.0.0.1 in local environment)
+
+---
+
+---
+
+## Phase 10: Helm Chart v4 Migration (Future-Proofing)
+
+**Goal**: Migrate from Pulumi Kubernetes Helm Chart v3 to v4 before v3 deprecation, taking advantage of improved CRD handling and multi-language support.
+
+**Pre-requisite Research Completed**:
+- ✅ Verified no Helm charts create Namespace resources (namespaceTransformation is redundant)
+- ✅ Confirmed v4 `skipCrds: false` (default) installs CRDs automatically
+- ✅ Validated `transforms` can handle `ignoreChanges` for DigitalOcean annotations
+- ✅ Documented v4 limitation: cannot discard resources (not needed - charts don't create namespaces)
+
+**Critical Dependencies**:
+- Phase 2 MUST be complete and stable (current v3 implementation working)
+- All tests passing with 100% coverage
+- Production deployment verified and monitoring data flowing
+
+**Tasks**:
+
+- [ ] HV4-001 [P] Write unit tests for helm-charts.ts v4 migration (test that transforms work correctly for DO annotations)
+  - **File**: `infrastructure/pulumi/tests/components/helm-charts-v4.test.ts`
+  - **Validates**: transforms option correctly adds ignoreChanges for DO LoadBalancer annotations
+  - **Coverage**: Test all three charts (cert-manager, nginx-gateway, kube-prometheus-stack)
+
+- [ ] HV4-002 Create backup branch before migration
+  - **Command**: `git checkout -b backup/helm-v3-stable-$(date +%Y%m%d)`
+  - **Push**: `git push -u origin backup/helm-v3-stable-$(date +%Y%m%d)`
+  - **Verify**: Confirm branch exists in GitHub UI
+
+- [ ] HV4-003 Migrate installCertManager to v4 Chart
+  - **File**: `infrastructure/pulumi/src/components/helm-charts.ts`
+  - **Changes**:
+    - Import: `import * as k8s from "@pulumi/kubernetes"` → add `helm.v4`
+    - Change: `new k8s.helm.v3.Chart` → `new k8s.helm.v4.Chart`
+    - Remove: `transformations: [namespaceTransformation(args.namespace)]` (not needed)
+    - Keep: `skipCrds: false` in chart args (default, but explicit is better)
+  - **Test**: Run HV4-001 tests to verify
+
+- [ ] HV4-004 Migrate installNginxGateway to v4 Chart with transforms for DO annotations
+  - **File**: `infrastructure/pulumi/src/components/helm-charts.ts`
+  - **Changes**:
+    - Change: `new k8s.helm.v3.Chart` → `new k8s.helm.v4.Chart`
+    - Replace: `transformations: [ignoreDigitalOceanServiceAnnotations]`
+    - With: `transforms: [ignoreDigitalOceanServiceAnnotationsV4]` (new function)
+  - **Add**: New transform function using v4 syntax:
+    ```typescript
+    const ignoreDigitalOceanServiceAnnotationsV4 = (args: pulumi.ResourceTransformArgs) => {
+        if (args.type === "kubernetes:core/v1:Service") {
+            return {
+                props: args.props,
+                opts: pulumi.mergeOptions(args.opts, {
+                    ignoreChanges: [
+                        'metadata.annotations["kubernetes.digitalocean.com/load-balancer-id"]',
+                        'metadata.annotations["service.beta.kubernetes.io/do-loadbalancer-type"]',
+                    ],
+                }),
+            };
+        }
+        return undefined;
+    };
+    ```
+  - **Test**: Verify DO annotations ignored in local deployment
+
+- [ ] HV4-005 Migrate installKubePrometheusStack to v4 Chart
+  - **File**: `infrastructure/pulumi/src/components/helm-charts.ts`
+  - **Changes**:
+    - Change: `new k8s.helm.v3.Chart` → `new k8s.helm.v4.Chart`
+    - Remove: `transformations: [namespaceTransformation(args.namespace)]`
+    - Explicit: `skipCrds: false` (ensures CRDs install)
+  - **Critical**: This fixes the CRD installation issue from main implementation
+  - **Test**: Verify PrometheusRule and ServiceMonitor CRDs created
+
+- [ ] HV4-006 Remove obsolete namespaceTransformation function
+  - **File**: `infrastructure/pulumi/src/components/helm-charts.ts`
+  - **Remove**: Lines 5-14 (namespaceTransformation function and comment)
+  - **Remove**: Export of `namespaceTransformation` if exported
+  - **Verify**: No other files reference this function (grep codebase)
+
+- [ ] HV4-007 Update helm-charts.test.ts for v4 API changes
+  - **File**: `infrastructure/pulumi/tests/components/helm-charts.test.ts`
+  - **Changes**: Update mocks to expect v4 Chart instead of v3
+  - **Add**: Tests for transforms behavior (ignoreChanges on DO annotations)
+  - **Coverage**: Ensure 100% coverage maintained
+
+- [ ] HV4-008 Run full quality gate suite
+  - **Commands**:
+    ```bash
+    cd infrastructure/pulumi
+    npm run build    # TypeScript compilation
+    npm run lint     # ESLint (0 errors, 0 warnings)
+    npm test         # Jest (100% coverage)
+    ```
+  - **Verify**: All gates pass before proceeding
+
+- [ ] HV4-009 Deploy to local environment and verify Helm v4 works
+  - **Command**: `cd infrastructure/pulumi && npm run build && pulumi up --stack local`
+  - **Verify**:
+    - All 3 Helm charts deploy successfully
+    - Prometheus Operator CRDs created (kubectl get crd | grep monitoring.coreos.com)
+    - DigitalOcean annotations NOT causing drift (pulumi preview shows no changes)
+    - Grafana accessible at https://grafana.aphiria.com (local)
+  - **Rollback Plan**: If fails, `git checkout backup/helm-v3-stable-YYYYMMDD && pulumi up`
+
+- [ ] HV4-010 Update CLAUDE.md with v4 migration notes
+  - **File**: `CLAUDE.md`
+  - **Section**: Infrastructure Anti-Patterns → Add "Helm Chart v4 Migration"
+  - **Document**:
+    - v3 vs v4 key differences (transforms vs transformations)
+    - Why namespaceTransformation was removed (charts don't create namespaces)
+    - CRD handling improvement in v4 (skipCrds: false default)
+  - **Cross-reference**: Link to this task list for migration details
+
+- [ ] HV4-011 Deploy to preview environment (if exists) and verify
+  - **Command**: `pulumi up --stack preview`
+  - **Verify**: Same checks as HV4-009 but in preview environment
+  - **Monitor**: Check for 24 hours to ensure no drift or issues
+
+- [ ] HV4-012 Deploy to production and monitor
+  - **Command**: `pulumi up --stack production`
+  - **Verify**: Same checks as HV4-009 but in production
+  - **Monitor**: Grafana dashboards show metrics flowing, no alerts firing
+  - **Duration**: Monitor for 7 days before marking complete
+
+- [ ] HV4-013 Document migration completion
+  - **File**: `specs/001-monitoring-alerting/research.md`
+  - **Section**: Add "Helm v3 to v4 Migration"
+  - **Document**:
+    - Migration date
+    - Issues encountered and resolutions
+    - Performance improvements observed (if any)
+    - Lessons learned for future migrations
 
 ---
 

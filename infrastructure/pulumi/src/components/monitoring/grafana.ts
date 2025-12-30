@@ -2,6 +2,7 @@ import * as k8s from "@pulumi/kubernetes";
 import * as pulumi from "@pulumi/pulumi";
 import { GrafanaArgs, GrafanaResult } from "../types";
 import { buildLabels } from "../labels";
+import { checksum } from "../utils";
 
 /** Creates Grafana Deployment with GitHub OAuth and environment-specific alerting */
 export function createGrafana(args: GrafanaArgs): GrafanaResult {
@@ -99,6 +100,13 @@ alerting:
         { provider: args.provider }
     );
 
+    // Calculate checksums for ConfigMap data to trigger pod restarts on changes
+    const dashboardChecksum = args.dashboardsConfigMap
+        ? pulumi
+              .output(args.dashboardsConfigMap.data)
+              .apply((data) => checksum(data as Record<string, pulumi.Input<string>>))
+        : undefined;
+
     // Create ConfigMap for Grafana configuration
     const configMap = new k8s.core.v1.ConfigMap(
         "grafana-config",
@@ -153,6 +161,19 @@ datasources:
     jsonData:
       timeInterval: 15s
 `,
+                "dashboards.yaml": `
+apiVersion: 1
+providers:
+  - name: 'default'
+    orgId: 1
+    folder: ''
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 10
+    allowUiUpdates: true
+    options:
+      path: /var/lib/grafana/dashboards
+`,
                 "alertmanager.yaml": alertmanagerConfig,
             },
         },
@@ -203,6 +224,11 @@ datasources:
                             "app.kubernetes.io/name": "grafana",
                             "app.kubernetes.io/component": "monitoring",
                         },
+                        annotations: dashboardChecksum
+                            ? {
+                                  "checksum/dashboards": dashboardChecksum,
+                              }
+                            : undefined,
                     },
                     spec: {
                         securityContext: {
@@ -303,9 +329,21 @@ datasources:
                                         mountPath: "/etc/grafana/provisioning/alerting",
                                     },
                                     {
+                                        name: "dashboard-provisioning",
+                                        mountPath: "/etc/grafana/provisioning/dashboards",
+                                    },
+                                    {
                                         name: "storage",
                                         mountPath: "/var/lib/grafana",
                                     },
+                                    ...(args.dashboardsConfigMap
+                                        ? [
+                                              {
+                                                  name: "dashboards",
+                                                  mountPath: "/var/lib/grafana/dashboards",
+                                              },
+                                          ]
+                                        : []),
                                 ],
                                 resources: {
                                     requests: {
@@ -322,16 +360,18 @@ datasources:
                                         path: "/api/health",
                                         port: "http",
                                     },
-                                    initialDelaySeconds: 30,
+                                    initialDelaySeconds: 60,
                                     periodSeconds: 10,
+                                    timeoutSeconds: 5,
                                 },
                                 readinessProbe: {
                                     httpGet: {
                                         path: "/api/health",
                                         port: "http",
                                     },
-                                    initialDelaySeconds: 5,
+                                    initialDelaySeconds: 10,
                                     periodSeconds: 5,
+                                    timeoutSeconds: 3,
                                 },
                             },
                         ],
@@ -373,11 +413,33 @@ datasources:
                                 },
                             },
                             {
+                                name: "dashboard-provisioning",
+                                configMap: {
+                                    name: configMap.metadata.name,
+                                    items: [
+                                        {
+                                            key: "dashboards.yaml",
+                                            path: "dashboards.yaml",
+                                        },
+                                    ],
+                                },
+                            },
+                            {
                                 name: "storage",
                                 persistentVolumeClaim: {
                                     claimName: pvc.metadata.name,
                                 },
                             },
+                            ...(args.dashboardsConfigMap
+                                ? [
+                                      {
+                                          name: "dashboards",
+                                          configMap: {
+                                              name: args.dashboardsConfigMap.metadata.name,
+                                          },
+                                      },
+                                  ]
+                                : []),
                         ],
                     },
                 },

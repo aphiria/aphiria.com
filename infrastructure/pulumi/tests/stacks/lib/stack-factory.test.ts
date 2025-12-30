@@ -687,7 +687,7 @@ describe("createStack factory", () => {
 
             expect(stack.monitoring).toBeDefined();
             expect(stack.monitoring?.namespace).toBeDefined();
-            expect(stack.monitoring?.prometheus).toBeDefined();
+            expect(stack.monitoring?.kubePrometheusStack).toBeDefined();
             expect(stack.monitoring?.grafana).toBeDefined();
             expect(stack.monitoring?.grafanaIngress).toBeDefined();
 
@@ -758,7 +758,7 @@ describe("createStack factory", () => {
             );
 
             expect(stack.monitoring).toBeDefined();
-            expect(stack.monitoring?.prometheus).toBeDefined();
+            expect(stack.monitoring?.kubePrometheusStack).toBeDefined();
         });
     });
 

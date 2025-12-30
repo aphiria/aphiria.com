@@ -2,6 +2,7 @@ import * as pulumi from "@pulumi/pulumi";
 import * as k8s from "@pulumi/kubernetes";
 import {
     installBaseHelmCharts,
+    installKubePrometheusStack,
     createPostgreSQL,
     createGateway,
     createNamespace,
@@ -14,9 +15,10 @@ import {
     createWWWRedirectRoute,
     createDNSRecords,
 } from "../../components";
-import { createPrometheus } from "../../components/monitoring/prometheus";
 import { createGrafana } from "../../components/monitoring/grafana";
 import { createGrafanaIngress } from "../../components/monitoring/grafana-ingress";
+import { createDashboards } from "../../components/monitoring/dashboards";
+import * as path from "path";
 import { StackConfig } from "./types";
 import {
     WebDeploymentResult,
@@ -24,7 +26,6 @@ import {
     PostgreSQLResult,
     GatewayResult,
     NamespaceResult,
-    PrometheusResult,
     GrafanaResult,
     GrafanaIngressResult,
 } from "../../components/types";
@@ -47,7 +48,7 @@ export interface StackResources {
     wwwRedirect?: k8s.apiextensions.CustomResource;
     monitoring?: {
         namespace: NamespaceResult;
-        prometheus: PrometheusResult;
+        kubePrometheusStack: k8s.helm.v3.Chart;
         grafana: GrafanaResult;
         grafanaIngress: GrafanaIngressResult;
     };
@@ -143,9 +144,9 @@ export function createStack(config: StackConfig, k8sProvider: k8s.Provider): Sta
             name: "monitoring",
             env: config.env,
             resourceQuota: {
-                cpu: "2",
-                memory: "8Gi",
-                pods: "20",
+                cpu: "4",
+                memory: "16Gi",
+                pods: "30",
             },
             labels: {
                 "app.kubernetes.io/component": "monitoring",
@@ -153,19 +154,107 @@ export function createStack(config: StackConfig, k8sProvider: k8s.Provider): Sta
             provider: k8sProvider,
         });
 
-        const prometheus = createPrometheus({
-            env: config.env,
+        // Install kube-prometheus-stack (Prometheus Operator + Prometheus + kube-state-metrics + Alertmanager)
+        const kubePrometheusStack = installKubePrometheusStack(
+            {
+                env: config.env,
+                chartName: "kube-prometheus-stack",
+                repository: "https://prometheus-community.github.io/helm-charts",
+                version: "70.10.0",
+                namespace: "monitoring",
+                provider: k8sProvider,
+                values: {
+                    prometheus: {
+                        prometheusSpec: {
+                            retention: config.monitoring.prometheus.retentionTime || "7d",
+                            scrapeInterval: config.monitoring.prometheus.scrapeInterval || "15s",
+                            storageSpec: {
+                                volumeClaimTemplate: {
+                                    spec: {
+                                        accessModes: ["ReadWriteOnce"],
+                                        resources: {
+                                            requests: {
+                                                storage: config.monitoring.prometheus.storageSize,
+                                            },
+                                        },
+                                    },
+                                },
+                            },
+                            externalLabels: {
+                                environment: config.env,
+                            },
+                        },
+                    },
+                    // Prometheus Operator resource limits (required by ResourceQuota)
+                    prometheusOperator: {
+                        resources: {
+                            requests: {
+                                cpu: "100m",
+                                memory: "128Mi",
+                            },
+                            limits: {
+                                cpu: "200m",
+                                memory: "256Mi",
+                            },
+                        },
+                        admissionWebhooks: {
+                            patch: {
+                                resources: {
+                                    requests: {
+                                        cpu: "50m",
+                                        memory: "64Mi",
+                                    },
+                                    limits: {
+                                        cpu: "100m",
+                                        memory: "128Mi",
+                                    },
+                                },
+                            },
+                        },
+                    },
+                    // Node exporter resource limits (required by ResourceQuota)
+                    "prometheus-node-exporter": {
+                        resources: {
+                            requests: {
+                                cpu: "50m",
+                                memory: "64Mi",
+                            },
+                            limits: {
+                                cpu: "100m",
+                                memory: "128Mi",
+                            },
+                        },
+                    },
+                    // Disable kube-state-metrics (we manage it separately)
+                    "kube-state-metrics": {
+                        enabled: false,
+                    },
+                    // Disable Grafana (we manage it separately)
+                    grafana: {
+                        enabled: false,
+                    },
+                    // Disable Alertmanager (using Grafana Unified Alerting instead)
+                    alertmanager: {
+                        enabled: false,
+                    },
+                },
+            },
+            [monitoringNamespace.namespace]
+        );
+
+        const dashboards = createDashboards({
             namespace: "monitoring",
-            storageSize: config.monitoring.prometheus.storageSize,
-            scrapeInterval: config.monitoring.prometheus.scrapeInterval || "15s",
-            retentionTime: config.monitoring.prometheus.retentionTime || "7d",
+            // Use process.cwd() which is the pulumi project root (infrastructure/pulumi)
+            dashboardDir: path.join(process.cwd(), "dashboards"),
             provider: k8sProvider,
         });
 
         const grafana = createGrafana({
             env: config.env,
             namespace: "monitoring",
-            prometheusUrl: "http://prometheus.monitoring.svc.cluster.local:9090",
+            // kube-prometheus-stack creates Prometheus with name kube-prometheus-stack-prometheus
+            prometheusUrl:
+                "http://kube-prometheus-stack-prometheus.monitoring.svc.cluster.local:9090",
             storageSize: config.monitoring.grafana.storageSize,
             githubClientId: config.monitoring.grafana.githubOAuth.clientId,
             githubClientSecret: config.monitoring.grafana.githubOAuth.clientSecret,
@@ -177,6 +266,7 @@ export function createStack(config: StackConfig, k8sProvider: k8s.Provider): Sta
             smtpPassword: config.monitoring.grafana.smtp?.password,
             smtpFromAddress: config.monitoring.grafana.smtp?.fromAddress,
             alertEmail: config.monitoring.grafana.smtp?.alertEmail,
+            dashboardsConfigMap: dashboards.configMap,
             provider: k8sProvider,
         });
 
@@ -195,7 +285,7 @@ export function createStack(config: StackConfig, k8sProvider: k8s.Provider): Sta
 
         resources.monitoring = {
             namespace: monitoringNamespace,
-            prometheus,
+            kubePrometheusStack,
             grafana,
             grafanaIngress,
         };

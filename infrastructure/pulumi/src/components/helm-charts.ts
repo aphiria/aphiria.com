@@ -99,6 +99,40 @@ export interface BaseHelmChartsResult {
     nginxGateway: k8s.helm.v3.Chart;
 }
 
+/** Installs kube-prometheus-stack (Prometheus Operator + Prometheus + kube-state-metrics) */
+export function installKubePrometheusStack(
+    args: HelmChartArgs,
+    dependsOn?: pulumi.Resource[]
+): k8s.helm.v3.Chart {
+    return new k8s.helm.v3.Chart(
+        "kube-prometheus-stack",
+        {
+            chart: "kube-prometheus-stack",
+            version: args.version,
+            namespace: args.namespace,
+            fetchOpts: {
+                repo: args.repository,
+            },
+            // Explicitly enable CRD rendering (default is false, but explicit is better)
+            // This renders Prometheus Operator CRDs from the chart's crds/ directory
+            skipCRDRendering: false,
+            values: {
+                // Enable CRD subchart dependency (required for kube-prometheus-stack)
+                // The chart has a "crds" subchart that is conditionally included
+                crds: {
+                    enabled: true,
+                },
+                ...(args.values || {}),
+            },
+        },
+        {
+            provider: args.provider,
+            dependsOn,
+            transformations: [namespaceTransformation(args.namespace)],
+        }
+    );
+}
+
 export function installBaseHelmCharts(args: BaseHelmChartsArgs): BaseHelmChartsResult {
     // Create namespaces
     const certManagerNamespace = new k8s.core.v1.Namespace(
