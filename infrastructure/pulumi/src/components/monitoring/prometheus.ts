@@ -227,10 +227,10 @@ scrape_configs:
                         // Matches official prometheus-community/prometheus Helm chart defaults
                         // See: https://github.com/prometheus-community/helm-charts/blob/main/charts/prometheus/values.yaml
                         securityContext: {
-                            runAsUser: 65534,      // Run as 'nobody' user
-                            runAsNonRoot: true,    // Prevent running as root
-                            runAsGroup: 65534,     // Run as 'nobody' group
-                            fsGroup: 65534,        // Set volume ownership to GID 65534
+                            runAsUser: 65534, // Run as 'nobody' user
+                            runAsNonRoot: true, // Prevent running as root
+                            runAsGroup: 65534, // Run as 'nobody' group
+                            fsGroup: 65534, // Set volume ownership to GID 65534
                         },
                         containers: [
                             {
