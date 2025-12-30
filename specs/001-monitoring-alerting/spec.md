@@ -142,7 +142,7 @@ As a developer, I need all dashboard definitions stored in source control (not c
 - **FR-002**: System MUST isolate monitoring resources in a dedicated namespace called "monitoring"
 - **FR-003**: System MUST provide identical monitoring capabilities across all environments (production, preview, and local)
 - **FR-003a**: System MUST support local development environment where grafana.aphiria.com (configured via /etc/hosts) routes to local Kubernetes cluster for testing changes before production deployment
-- **FR-004**: Dashboard MUST be accessible via HTTPS at https://grafana.aphiria.com
+- **FR-004**: Dashboard MUST be accessible via HTTPS at https://grafana.aphiria.com (production) and https://{PR}.pr-grafana.aphiria.com (preview)
 - **FR-005**: System MUST enforce authentication via GitHub OAuth for all dashboard access
 - **FR-006**: System MUST restrict dashboard access to users in the "aphiria" GitHub organization
 - **FR-006a**: System MUST assign Viewer (read-only) role by default to all authenticated aphiria organization members
@@ -195,7 +195,7 @@ As a developer, I need all dashboard definitions stored in source control (not c
 - The NGINX Gateway infrastructure is already deployed and operational (as referenced in the requirements)
 - The application pods expose Prometheus-compatible metrics endpoints (or will be instrumented to do so)
 - Email delivery infrastructure (SMTP server or equivalent) is available for alert notifications
-- DNS configuration for grafana.aphiria.com can be managed through existing infrastructure automation
+- DNS configuration for grafana.aphiria.com (production) and *.pr-grafana.aphiria.com (preview) can be managed through existing infrastructure automation
 - Let's Encrypt is already integrated with the NGINX Gateway for certificate issuance
 - GitHub OAuth application credentials will be provided or can be created in the aphiria organization
 - Pulumi ESC is already configured and accessible for secret storage

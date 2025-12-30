@@ -84,6 +84,28 @@ pulumi up --stack local
 
 > **Note:** `pulumi login --local` stores state on your machine in `~/.pulumi` and doesn't require a Pulumi Cloud account.  The local stack uses passphrase `"password"` for encryption (safe to share - no actual secrets in local stack).
 
+#### Configure Grafana (Optional)
+
+The local stack includes Grafana monitoring. Before running `pulumi up`, configure these values:
+
+```bash
+# GitHub OAuth (for authentication)
+pulumi config set grafana:githubClientId "YOUR_CLIENT_ID" --stack local
+pulumi config set grafana:githubClientSecret "local-dev-client-secret" --secret --stack local
+pulumi config set grafana:githubOrg "aphiria" --stack local
+pulumi config set grafana:adminUser "your-github-username" --stack local
+
+# SMTP (for alerts - can use dummy values for local)
+pulumi config set grafana:smtpHost "smtp.example.com" --secret --stack local
+pulumi config set grafana:smtpPort "587" --stack local
+pulumi config set grafana:smtpUser "noreply@example.com" --secret --stack local
+pulumi config set grafana:smtpPassword "dummy-password" --secret --stack local
+pulumi config set grafana:smtpFromAddress "noreply@example.com" --stack local
+pulumi config set grafana:alertEmail "admin@example.com" --stack local
+```
+
+> **Note:** For local development, you can use placeholder values. GitHub OAuth won't work with dummy credentials, but Grafana will still deploy. For production setup, see [SECRETS.md](SECRETS.md).
+
 ### Access the Site
 
 * https://www.aphiria.com (web)

@@ -79,4 +79,23 @@ export class StackConfig {
     get baseStackReference() {
         return this.config.require("baseStackReference");
     }
+
+    /**
+     * Load Grafana configuration
+     */
+    get grafana() {
+        const cfg = new pulumi.Config("grafana");
+        return {
+            githubClientId: cfg.requireSecret("githubClientId"),
+            githubClientSecret: cfg.requireSecret("githubClientSecret"),
+            githubOrg: cfg.require("githubOrg"),
+            adminUser: cfg.require("adminUser"),
+            smtpHost: cfg.requireSecret("smtpHost"),
+            smtpPort: cfg.requireNumber("smtpPort"),
+            smtpUser: cfg.requireSecret("smtpUser"),
+            smtpPassword: cfg.requireSecret("smtpPassword"),
+            smtpFromAddress: cfg.require("smtpFromAddress"),
+            alertEmail: cfg.require("alertEmail"),
+        };
+    }
 }

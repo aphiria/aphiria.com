@@ -50,6 +50,7 @@ createStack(
                     { name: "@", resourceName: "production-root-dns" },
                     { name: "www", resourceName: "production-www-dns" },
                     { name: "api", resourceName: "production-api-dns" },
+                    { name: "grafana", resourceName: "production-grafana-dns" },
                 ],
                 ttl: 300,
             },

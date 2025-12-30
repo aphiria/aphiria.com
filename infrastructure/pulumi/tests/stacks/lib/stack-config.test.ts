@@ -122,4 +122,33 @@ describe("StackConfig", () => {
             expect(ref).toBe("organization/project/preview-base");
         });
     });
+
+    describe("grafana", () => {
+        it("should load Grafana configuration", () => {
+            pulumi.runtime.setConfig("grafana:githubClientId", "test-client-id");
+            pulumi.runtime.setConfig("grafana:githubClientSecret", "test-client-secret");
+            pulumi.runtime.setConfig("grafana:githubOrg", "aphiria");
+            pulumi.runtime.setConfig("grafana:adminUser", "test-admin");
+            pulumi.runtime.setConfig("grafana:smtpHost", "smtp.example.com");
+            pulumi.runtime.setConfig("grafana:smtpPort", "587");
+            pulumi.runtime.setConfig("grafana:smtpUser", "test@example.com");
+            pulumi.runtime.setConfig("grafana:smtpPassword", "test-smtp-password");
+            pulumi.runtime.setConfig("grafana:smtpFromAddress", "admin@aphiria.com");
+            pulumi.runtime.setConfig("grafana:alertEmail", "admin@aphiria.com");
+
+            const config = new StackConfig("https://example.com", "https://api.example.com");
+            const grafana = config.grafana;
+
+            expect(grafana.githubClientId).toBeDefined();
+            expect(grafana.githubClientSecret).toBeDefined();
+            expect(grafana.githubOrg).toBe("aphiria");
+            expect(grafana.adminUser).toBe("test-admin");
+            expect(grafana.smtpHost).toBeDefined();
+            expect(grafana.smtpPort).toBe(587);
+            expect(grafana.smtpUser).toBeDefined();
+            expect(grafana.smtpPassword).toBeDefined();
+            expect(grafana.smtpFromAddress).toBe("admin@aphiria.com");
+            expect(grafana.alertEmail).toBe("admin@aphiria.com");
+        });
+    });
 });

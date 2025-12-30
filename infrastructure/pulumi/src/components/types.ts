@@ -432,6 +432,11 @@ export interface PrometheusArgs {
     storageSize: string;
     /** Scrape interval for metrics collection (e.g., "15s") */
     scrapeInterval?: string;
+    /** Optional resource limits for containers */
+    resources?: {
+        requests?: { cpu?: string; memory?: string };
+        limits?: { cpu?: string; memory?: string };
+    };
     /** Resource labels */
     labels?: Record<string, string>;
     /** Kubernetes provider */
@@ -483,6 +488,11 @@ export interface GrafanaArgs {
     smtpFromAddress?: string;
     /** Email recipient for alerts */
     alertEmail?: string;
+    /** Optional resource limits for containers */
+    resources?: {
+        requests?: { cpu?: string; memory?: string };
+        limits?: { cpu?: string; memory?: string };
+    };
     /** Resource labels */
     labels?: Record<string, string>;
     /** Kubernetes provider */

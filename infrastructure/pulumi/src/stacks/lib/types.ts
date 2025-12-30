@@ -243,6 +243,10 @@ export interface StackConfig {
             storageSize: string;
             scrapeInterval?: string;
             retentionTime?: string;
+            resources?: {
+                requests?: { cpu?: string; memory?: string };
+                limits?: { cpu?: string; memory?: string };
+            };
         };
         /** Grafana configuration */
         grafana: {
@@ -261,6 +265,10 @@ export interface StackConfig {
                 password: pulumi.Input<string>;
                 fromAddress: string;
                 alertEmail: string;
+            };
+            resources?: {
+                requests?: { cpu?: string; memory?: string };
+                limits?: { cpu?: string; memory?: string };
             };
         };
     };

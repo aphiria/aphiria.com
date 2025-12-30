@@ -1,6 +1,6 @@
 import * as pulumi from "@pulumi/pulumi";
 import * as k8s from "@pulumi/kubernetes";
-import { createHTTPRoute, createHTTPSRedirectRoute } from "../http-route";
+import { createHTTPRoute } from "../http-route";
 
 export interface GrafanaIngressArgs {
     /** Kubernetes namespace */
@@ -27,7 +27,7 @@ export interface GrafanaIngressResult {
 }
 
 /**
- * Creates HTTPRoute for Grafana with HTTP → HTTPS redirect
+ * Creates HTTPRoute for Grafana (HTTPS only, relies on stack-wide HTTP→HTTPS redirect)
  */
 export function createGrafanaIngress(args: GrafanaIngressArgs): GrafanaIngressResult {
     // Create HTTPS route for Grafana
@@ -40,24 +40,18 @@ export function createGrafanaIngress(args: GrafanaIngressArgs): GrafanaIngressRe
         servicePort: args.servicePort,
         gatewayName: args.gatewayName,
         gatewayNamespace: args.gatewayNamespace,
-        sectionName: "https",
+        sectionName: "https-subdomains",
         enableRateLimiting: false,
         labels: args.labels,
         provider: args.provider,
     });
 
-    // Create HTTP → HTTPS redirect for Grafana
-    const httpRedirectRoute = createHTTPSRedirectRoute({
-        namespace: args.namespace,
-        gatewayName: args.gatewayName,
-        gatewayNamespace: args.gatewayNamespace,
-        domains: [args.hostname],
-        skipRootListener: false,
-        provider: args.provider,
-    });
+    // Note: HTTP → HTTPS redirect is handled by the stack-wide redirect route
+    // created in stack-factory.ts. We don't create a separate redirect here
+    // to avoid duplicate resource URNs.
 
     return {
         httpsRoute,
-        httpRedirectRoute,
+        httpRedirectRoute: httpsRoute, // Return same route for backward compatibility
     };
 }
