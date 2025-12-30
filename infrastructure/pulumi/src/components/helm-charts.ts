@@ -2,31 +2,21 @@ import * as pulumi from "@pulumi/pulumi";
 import * as k8s from "@pulumi/kubernetes";
 import { HelmChartArgs } from "./types";
 
-/** Transformation function to validate namespace resources match expected namespace */
-export function namespaceTransformation(namespace: pulumi.Input<string>) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Required by Pulumi Kubernetes Helm transformation API
-    return (obj: any) => {
-        // Ensure namespace exists and matches
-        if (obj.kind === "Namespace" && obj.metadata?.name === namespace) {
-            return obj;
-        }
-    };
-}
-
 /** Installs cert-manager with Gateway API support */
 export function installCertManager(
     args: HelmChartArgs,
     dependsOn?: pulumi.Resource[]
-): k8s.helm.v3.Chart {
-    return new k8s.helm.v3.Chart(
+): k8s.helm.v4.Chart {
+    return new k8s.helm.v4.Chart(
         "cert-manager",
         {
             chart: "cert-manager",
             version: args.version,
             namespace: args.namespace,
-            fetchOpts: {
+            repositoryOpts: {
                 repo: args.repository,
             },
+            // v4 Chart installs CRDs by default (skipCrds: false is default)
             values: {
                 crds: {
                     enabled: true,
@@ -38,21 +28,19 @@ export function installCertManager(
         {
             provider: args.provider,
             dependsOn,
-            transformations: [namespaceTransformation(args.namespace)],
         }
     );
 }
 
 /**
- * Transformation function to ignore DigitalOcean-managed annotations on LoadBalancer Service
+ * Transform function to ignore DigitalOcean-managed annotations on LoadBalancer Service (v4 syntax)
  * DO cloud controller adds these annotations after deployment, causing drift
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- Required by Pulumi Kubernetes Helm transformation API
-export function ignoreDigitalOceanServiceAnnotations(obj: any) {
-    if (obj.type === "kubernetes:core/v1:Service") {
+function ignoreDigitalOceanServiceAnnotationsV4(args: pulumi.ResourceTransformArgs) {
+    if (args.type === "kubernetes:core/v1:Service") {
         return {
-            props: obj.props,
-            opts: pulumi.mergeOptions(obj.opts, {
+            props: args.props,
+            opts: pulumi.mergeOptions(args.opts, {
                 ignoreChanges: [
                     'metadata.annotations["kubernetes.digitalocean.com/load-balancer-id"]',
                     'metadata.annotations["service.beta.kubernetes.io/do-loadbalancer-type"]',
@@ -67,8 +55,8 @@ export function ignoreDigitalOceanServiceAnnotations(obj: any) {
 export function installNginxGateway(
     args: HelmChartArgs,
     dependsOn?: pulumi.Resource[]
-): k8s.helm.v3.Chart {
-    return new k8s.helm.v3.Chart(
+): k8s.helm.v4.Chart {
+    return new k8s.helm.v4.Chart(
         "nginx-gateway",
         {
             chart: "oci://ghcr.io/nginxinc/charts/nginx-gateway-fabric",
@@ -79,7 +67,7 @@ export function installNginxGateway(
         {
             provider: args.provider,
             dependsOn: dependsOn || [],
-            transformations: [ignoreDigitalOceanServiceAnnotations],
+            transforms: [ignoreDigitalOceanServiceAnnotationsV4],
         }
     );
 }
@@ -95,27 +83,30 @@ export interface BaseHelmChartsArgs {
 }
 
 export interface BaseHelmChartsResult {
-    certManager: k8s.helm.v3.Chart;
-    nginxGateway: k8s.helm.v3.Chart;
+    certManager: k8s.helm.v4.Chart;
+    nginxGateway: k8s.helm.v4.Chart;
 }
 
 /** Installs kube-prometheus-stack (Prometheus Operator + Prometheus + kube-state-metrics) */
 export function installKubePrometheusStack(
     args: HelmChartArgs,
     dependsOn?: pulumi.Resource[]
-): k8s.helm.v3.Chart {
-    return new k8s.helm.v3.Chart(
+): k8s.helm.v4.Chart {
+    return new k8s.helm.v4.Chart(
         "kube-prometheus-stack",
         {
             chart: "kube-prometheus-stack",
             version: args.version,
             namespace: args.namespace,
-            fetchOpts: {
+            repositoryOpts: {
                 repo: args.repository,
             },
-            // Explicitly enable CRD rendering (default is false, but explicit is better)
-            // This renders Prometheus Operator CRDs from the chart's crds/ directory
-            skipCRDRendering: false,
+            // Skip waiting for resources to be ready to avoid deadlock:
+            // Operator Deployment needs Secret from webhook Jobs, but Jobs run via Helm hooks
+            // which only execute after chart upgrade completes. Setting skipAwait breaks this cycle.
+            skipAwait: true,
+            // v4 Chart installs CRDs by default (skipCrds: false is default)
+            // This properly handles the CRD subchart dependency
             values: {
                 // Enable CRD subchart dependency (required for kube-prometheus-stack)
                 // The chart has a "crds" subchart that is conditionally included
@@ -128,7 +119,6 @@ export function installKubePrometheusStack(
         {
             provider: args.provider,
             dependsOn,
-            transformations: [namespaceTransformation(args.namespace)],
         }
     );
 }

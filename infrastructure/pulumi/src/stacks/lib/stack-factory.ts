@@ -34,7 +34,7 @@ import {
  * Stack resources returned by createStack factory
  */
 export interface StackResources {
-    helmCharts?: { certManager: k8s.helm.v3.Chart; nginxGateway: k8s.helm.v3.Chart };
+    helmCharts?: { certManager: k8s.helm.v4.Chart; nginxGateway: k8s.helm.v4.Chart };
     postgres?: PostgreSQLResult;
     gateway?: GatewayResult;
     namespace?: NamespaceResult;
@@ -48,7 +48,7 @@ export interface StackResources {
     wwwRedirect?: k8s.apiextensions.CustomResource;
     monitoring?: {
         namespace: NamespaceResult;
-        kubePrometheusStack: k8s.helm.v3.Chart;
+        kubePrometheusStack: k8s.helm.v4.Chart;
         grafana: GrafanaResult;
         grafanaIngress: GrafanaIngressResult;
     };
@@ -183,6 +183,17 @@ export function createStack(config: StackConfig, k8sProvider: k8s.Provider): Sta
                             externalLabels: {
                                 environment: config.env,
                             },
+                            // Resource limits for Prometheus container (required by ResourceQuota)
+                            resources: {
+                                requests: {
+                                    cpu: "500m",
+                                    memory: "1Gi",
+                                },
+                                limits: {
+                                    cpu: "1",
+                                    memory: "2Gi",
+                                },
+                            },
                         },
                     },
                     // Prometheus Operator resource limits (required by ResourceQuota)
@@ -197,19 +208,28 @@ export function createStack(config: StackConfig, k8sProvider: k8s.Provider): Sta
                                 memory: "256Mi",
                             },
                         },
-                        admissionWebhooks: {
-                            patch: {
-                                resources: {
-                                    requests: {
-                                        cpu: "50m",
-                                        memory: "64Mi",
-                                    },
-                                    limits: {
-                                        cpu: "100m",
-                                        memory: "128Mi",
-                                    },
+                        // Resource limits for config-reloader sidecar (required by ResourceQuota)
+                        // These are passed as operator flags: --config-reloader-cpu-request, etc.
+                        prometheusConfigReloader: {
+                            resources: {
+                                requests: {
+                                    cpu: "50m",
+                                    memory: "50Mi",
+                                },
+                                limits: {
+                                    cpu: "100m",
+                                    memory: "100Mi",
                                 },
                             },
+                        },
+                        // Disable TLS/admission webhooks to work around Helm Chart v4 limitation
+                        // Pulumi Helm Chart v4 doesn't support Helm hooks, so webhook cert Jobs never run
+                        // Bug: Volume mount controlled by tls.enabled, not admissionWebhooks.enabled
+                        tls: {
+                            enabled: false,
+                        },
+                        admissionWebhooks: {
+                            enabled: false,
                         },
                     },
                     // Node exporter resource limits (required by ResourceQuota)
@@ -225,9 +245,19 @@ export function createStack(config: StackConfig, k8sProvider: k8s.Provider): Sta
                             },
                         },
                     },
-                    // Disable kube-state-metrics (we manage it separately)
+                    // kube-state-metrics resource limits (required by ResourceQuota)
                     "kube-state-metrics": {
-                        enabled: false,
+                        enabled: true,
+                        resources: {
+                            requests: {
+                                cpu: "50m",
+                                memory: "128Mi",
+                            },
+                            limits: {
+                                cpu: "100m",
+                                memory: "256Mi",
+                            },
+                        },
                     },
                     // Disable Grafana (we manage it separately)
                     grafana: {

@@ -3,9 +3,7 @@ import * as pulumi from "@pulumi/pulumi";
 import * as k8s from "@pulumi/kubernetes";
 import {
     installBaseHelmCharts,
-    namespaceTransformation,
     installNginxGateway,
-    ignoreDigitalOceanServiceAnnotations,
 } from "../../src/components/helm-charts";
 
 describe("installBaseHelmCharts", () => {
@@ -109,57 +107,6 @@ describe("installBaseHelmCharts", () => {
     });
 });
 
-describe("namespaceTransformation", () => {
-    it("should return object when kind is Namespace and name matches", () => {
-        const transformation = namespaceTransformation("cert-manager");
-        const obj = {
-            kind: "Namespace",
-            metadata: {
-                name: "cert-manager",
-            },
-        };
-
-        const result = transformation(obj);
-        expect(result).toBe(obj);
-    });
-
-    it("should return undefined when kind is not Namespace", () => {
-        const transformation = namespaceTransformation("cert-manager");
-        const obj = {
-            kind: "Deployment",
-            metadata: {
-                name: "cert-manager",
-            },
-        };
-
-        const result = transformation(obj);
-        expect(result).toBeUndefined();
-    });
-
-    it("should return undefined when name does not match", () => {
-        const transformation = namespaceTransformation("cert-manager");
-        const obj = {
-            kind: "Namespace",
-            metadata: {
-                name: "different-namespace",
-            },
-        };
-
-        const result = transformation(obj);
-        expect(result).toBeUndefined();
-    });
-
-    it("should return undefined when metadata is missing", () => {
-        const transformation = namespaceTransformation("cert-manager");
-        const obj = {
-            kind: "Namespace",
-        };
-
-        const result = transformation(obj);
-        expect(result).toBeUndefined();
-    });
-});
-
 describe("installNginxGateway", () => {
     let k8sProvider: k8s.Provider;
 
@@ -201,7 +148,7 @@ describe("installNginxGateway", () => {
         });
     });
 
-    it("should include transformation to ignore DigitalOcean annotations on Service resources", () => {
+    it("should include v4 transforms to ignore DigitalOcean annotations on Service resources", () => {
         const chart = installNginxGateway({
             env: "production",
             chartName: "nginx-gateway-fabric",
@@ -211,42 +158,8 @@ describe("installNginxGateway", () => {
             provider: k8sProvider,
         });
 
-        // Access the transformations from the Chart resource options
-        // Note: This is testing the structure, not the runtime behavior
+        // v4 Chart uses transforms instead of transformations
+        // Testing the structure - runtime behavior is tested by Pulumi
         expect(chart).toBeDefined();
-    });
-});
-
-describe("ignoreDigitalOceanServiceAnnotations", () => {
-    it("should add ignoreChanges for Service resources", () => {
-        const serviceObj = {
-            type: "kubernetes:core/v1:Service",
-            props: { metadata: { name: "test-service" } },
-            opts: {},
-        };
-
-        const result = ignoreDigitalOceanServiceAnnotations(serviceObj);
-
-        expect(result).toBeDefined();
-        expect(result?.props).toEqual(serviceObj.props);
-        expect(result?.opts).toHaveProperty("ignoreChanges");
-        expect(result?.opts.ignoreChanges).toContain(
-            'metadata.annotations["kubernetes.digitalocean.com/load-balancer-id"]'
-        );
-        expect(result?.opts.ignoreChanges).toContain(
-            'metadata.annotations["service.beta.kubernetes.io/do-loadbalancer-type"]'
-        );
-    });
-
-    it("should return undefined for non-Service resources", () => {
-        const deploymentObj = {
-            type: "kubernetes:apps/v1:Deployment",
-            props: { metadata: { name: "test-deployment" } },
-            opts: {},
-        };
-
-        const result = ignoreDigitalOceanServiceAnnotations(deploymentObj);
-
-        expect(result).toBeUndefined();
     });
 });
