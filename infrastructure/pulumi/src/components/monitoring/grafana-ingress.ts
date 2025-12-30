@@ -15,6 +15,8 @@ export interface GrafanaIngressArgs {
     gatewayNamespace: pulumi.Input<string>;
     /** Hostname for Grafana (e.g., "grafana.aphiria.com") */
     hostname: string;
+    /** Gateway listener sectionName (e.g., "https-subdomains-1" for preview-pr, "https-subdomains" for production) */
+    sectionName: string;
     /** Resource labels */
     labels?: Record<string, string>;
     /** Kubernetes provider */
@@ -40,7 +42,7 @@ export function createGrafanaIngress(args: GrafanaIngressArgs): GrafanaIngressRe
         servicePort: args.servicePort,
         gatewayName: args.gatewayName,
         gatewayNamespace: args.gatewayNamespace,
-        sectionName: "https-subdomains",
+        sectionName: args.sectionName,
         enableRateLimiting: false,
         labels: args.labels,
         provider: args.provider,

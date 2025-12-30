@@ -83,6 +83,9 @@ export function createStack(config: StackConfig, k8sProvider: k8s.Provider): Sta
     // Determine namespace (use created namespace or default)
     const namespace = resources.namespace?.namespace.metadata.name || "default";
 
+    // Determine if this is a preview-pr environment (used for Gateway listener sectionName routing)
+    const isPreviewPR = config.env === "preview" && config.namespace;
+
     // Install base infrastructure (cert-manager, nginx-gateway) if not skipped
     if (!config.skipBaseInfrastructure) {
         // For local environment: Install Gateway API CRDs and GatewayClass first
@@ -184,6 +187,9 @@ export function createStack(config: StackConfig, k8sProvider: k8s.Provider): Sta
             gatewayName: "nginx-gateway",
             gatewayNamespace: gatewayNamespace,
             hostname: config.monitoring.grafana.hostname,
+            // Use numbered listener for preview-pr, unnumbered for production/preview-base
+            // https-subdomains-3 is for *.pr-grafana.aphiria.com
+            sectionName: isPreviewPR ? "https-subdomains-3" : "https-subdomains",
             provider: k8sProvider,
         });
 
@@ -337,8 +343,6 @@ export function createStack(config: StackConfig, k8sProvider: k8s.Provider): Sta
         // HTTPRoutes (always in same namespace as services to avoid cross-namespace ReferenceGrant)
         // Explicitly attach to HTTPS listeners using sectionName to prevent attaching to HTTP listeners
         // (which would prevent HTTP→HTTPS redirects from working)
-        const isPreviewPR = config.env === "preview" && config.namespace;
-
         resources.webRoute = createHTTPRoute({
             namespace: namespace,
             name: "web",

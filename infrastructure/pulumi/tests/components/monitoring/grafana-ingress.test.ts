@@ -34,6 +34,7 @@ describe("createGrafanaIngress", () => {
             gatewayName: "gateway",
             gatewayNamespace: "nginx-gateway",
             hostname: "grafana.aphiria.com",
+            sectionName: "https-subdomains",
             provider: k8sProvider,
         });
 
@@ -51,6 +52,7 @@ describe("createGrafanaIngress", () => {
             gatewayName: "gateway",
             gatewayNamespace: "nginx-gateway",
             hostname: "grafana.example.com",
+            sectionName: "https-subdomains",
             provider: k8sProvider,
         });
 
@@ -66,6 +68,7 @@ describe("createGrafanaIngress", () => {
             gatewayName: "preview-gateway",
             gatewayNamespace: pulumi.output("nginx-gateway"),
             hostname: "grafana-preview-123.aphiria.com",
+            sectionName: "https-subdomains-3",
             provider: k8sProvider,
         });
 
@@ -82,6 +85,7 @@ describe("createGrafanaIngress", () => {
             gatewayName: "gateway",
             gatewayNamespace: "nginx-gateway",
             hostname: "grafana.aphiria.com",
+            sectionName: "https-subdomains",
             labels: {
                 environment: "local",
             },
@@ -100,6 +104,7 @@ describe("createGrafanaIngress", () => {
             gatewayName: "gateway",
             gatewayNamespace: "nginx-gateway",
             hostname: "grafana.aphiria.com",
+            sectionName: "https-subdomains",
             labels: {
                 team: "platform",
                 component: "monitoring",
@@ -120,6 +125,7 @@ describe("createGrafanaIngress", () => {
             gatewayName: "gateway",
             gatewayNamespace: "nginx-gateway",
             hostname: "grafana.aphiria.com",
+            sectionName: "https-subdomains",
             provider: k8sProvider,
         });
 

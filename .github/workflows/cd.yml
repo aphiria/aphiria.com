@@ -640,10 +640,12 @@ jobs:
           script: |
             const prNumber = ${{ needs.determine-mode.outputs.pr-number }};
             const previewUrl = `https://${prNumber}.pr.aphiria.com`;
+            const grafanaUrl = `https://${prNumber}.pr-grafana.aphiria.com`;
 
             const body = `## ✅ Preview Environment Deployed
 
             🌐 **Preview URL**: ${previewUrl}
+            📊 **Grafana Dashboard**: ${grafanaUrl}
 
             The preview environment has been successfully deployed and is ready for testing.
 
