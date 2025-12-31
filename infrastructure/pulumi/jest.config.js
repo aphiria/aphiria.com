@@ -28,6 +28,8 @@ module.exports = {
             },
         ],
     },
-    // Run Pulumi cleanup after all tests complete to prevent worker hangs
+    // Run Pulumi setup before each test file
     setupFilesAfterEnv: ["<rootDir>/tests/setup.ts"],
+    // Run Pulumi cleanup once after all tests complete (not per-file)
+    globalTeardown: "<rootDir>/tests/globalTeardown.ts",
 };

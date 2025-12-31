@@ -1,5 +1,5 @@
 /**
- * Jest setup file - configures Pulumi mocking and ensures proper cleanup
+ * Jest setup file - configures Pulumi mocking
  *
  * CRITICAL: This file runs BEFORE any test files are loaded.
  * Mocks must be set before any Pulumi resources are imported.
@@ -66,9 +66,3 @@ pulumi.runtime.setMocks(
     "test-stack", // stack name
     false // Use false for unit tests (not preview mode)
 );
-
-afterAll(async () => {
-    // CRITICAL: Disconnect Pulumi runtime to clean up pending async work
-    // Without this, worker processes hang waiting for unresolved promises/outputs
-    await pulumi.runtime.disconnect();
-});
