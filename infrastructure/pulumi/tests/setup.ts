@@ -14,6 +14,27 @@ beforeAll(() => {
     pulumi.runtime.setMocks(
         {
             newResource: (args: pulumi.runtime.MockResourceArgs): { id: string; state: Record<string, unknown> } => {
+                // Special handling for DigitalOcean Kubernetes Cluster
+                // The kubeConfigs property is an output, not an input, so we must mock it explicitly
+                if (args.type === "digitalocean:index/kubernetesCluster:KubernetesCluster") {
+                    return {
+                        id: args.inputs.name ? `${args.name}_id` : `${args.type}_id`,
+                        state: {
+                            ...args.inputs,
+                            endpoint: "https://mock-endpoint.k8s.ondigitalocean.com",
+                            kubeConfigs: [
+                                {
+                                    rawConfig: "mock-kubeconfig-static",
+                                    clusterCaCertificate: "mock-ca-cert",
+                                    clientCertificate: "mock-client-cert",
+                                    clientKey: "mock-client-key",
+                                    host: "https://mock-endpoint.k8s.ondigitalocean.com",
+                                },
+                            ],
+                        },
+                    };
+                }
+
                 return {
                     id: args.inputs.name ? `${args.name}_id` : `${args.type}_id`,
                     state: {

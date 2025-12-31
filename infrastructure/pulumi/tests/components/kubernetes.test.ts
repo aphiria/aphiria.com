@@ -8,6 +8,7 @@ describe("createKubernetesCluster", () => {
     it("should create cluster with default settings", async () => {
         const result = createKubernetesCluster({
             name: "test-cluster",
+            useStaticKubeconfig: true,
         });
 
         expect(result.cluster).toBeDefined();
@@ -19,10 +20,8 @@ describe("createKubernetesCluster", () => {
         const endpoint = await promiseOf(result.endpoint);
         expect(endpoint).toBe("https://mock-endpoint.k8s.ondigitalocean.com");
 
-        // NOTE: We don't await result.kubeconfig here because it triggers a real
-        // network call to digitalocean.getKubernetesCluster() that can't be mocked
-        // in the Pulumi testing environment. The kubeconfig Output is tested
-        // indirectly by ensuring it's defined and by the production stack tests.
+        const kubeconfig = await promiseOf(result.kubeconfig);
+        expect(kubeconfig).toBeDefined();
     });
 
     it("should create cluster with custom settings", async () => {
@@ -78,23 +77,22 @@ describe("createKubernetesCluster", () => {
     it("should use default values when not specified", async () => {
         const result = createKubernetesCluster({
             name: "minimal-cluster",
+            useStaticKubeconfig: true,
         });
 
         expect(result.cluster).toBeDefined();
         expect(result.endpoint).toBeDefined();
         expect(result.kubeconfig).toBeDefined();
 
-        const [name, endpoint] = await Promise.all([
+        const [name, endpoint, kubeconfig] = await Promise.all([
             promiseOf(result.cluster.name),
             promiseOf(result.endpoint),
+            promiseOf(result.kubeconfig),
         ]);
 
         expect(name).toBe("minimal-cluster");
         expect(endpoint).toBe("https://mock-endpoint.k8s.ondigitalocean.com");
-
-        // NOTE: We don't await result.kubeconfig here because it triggers a real
-        // network call to digitalocean.getKubernetesCluster() that can't be mocked
-        // in the Pulumi testing environment.
+        expect(kubeconfig).toBeDefined();
     });
 
     /**
