@@ -89,6 +89,15 @@ pulumi up --stack local
 
 > **Note:** If you need to log back into the cloud instance, run `pulumi logout`, then `pulumi login`.
 
+#### Updating The Kubernetes Cluster
+
+To get your Minikube cluster to pick up changes you've made locally (after re-building the Docker images), run the following commands:
+
+```
+kubectl rollout restart deployment api \
+&& kubectl rollout restart deployment web
+```
+
 #### Configure Grafana (Optional)
 
 The local stack includes Grafana monitoring. Before running `pulumi up`, configure these values:

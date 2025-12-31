@@ -96,6 +96,7 @@ These secrets are stored in Pulumi ESC and automatically injected into Pulumi st
 | `grafana:smtpPassword` | SMTP authentication password | Quarterly | Both (unused in preview) |
 | `grafana:smtpFromAddress` | Email "From" address for alerts | N/A | Both (unused in preview) |
 | `grafana:alertEmail` | Email address to receive Grafana alerts | N/A | Both (unused in preview) |
+| `prometheus:authToken` | Bearer token for authenticating Prometheus to scrape /metrics endpoint | Annually | Both |
 
 **How Pulumi ESC works**:
 1. Secrets are stored in Pulumi Cloud at https://app.pulumi.com/[org]/settings/environments
@@ -365,6 +366,58 @@ pulumi env set aphiria.com/Production pulumiConfig."grafana:alertEmail" "admin@a
 - Rotate app password quarterly or if compromised
 
 **Cleanup**: Revoke old app password at https://myaccount.google.com/apppasswords
+
+### prometheus:authToken
+
+**Why this is needed**: Prometheus needs to authenticate to the API's `/metrics` endpoint using Bearer token authentication. This prevents unauthorized access to application metrics.
+
+**Generate new token**:
+
+```bash
+# Generate a secure random token (32 bytes = 64 hex characters)
+openssl rand -hex 32
+# Example output: a1b2c3d4e5f6...
+
+# Alternative: Use base64 encoding (43 characters)
+openssl rand -base64 32
+# Example output: Xy9ZaBc...==
+```
+
+**Configure in Pulumi ESC**:
+
+```bash
+# Navigate to Pulumi directory
+cd infrastructure/pulumi
+
+# Configure for Preview environment
+pulumi env set aphiria.com/Preview pulumiConfig."prometheus:authToken" "YOUR_GENERATED_TOKEN" --secret
+
+# Verify it's set (shows [secret])
+pulumi env get aphiria.com/Preview
+
+# Configure for Production environment
+pulumi env set aphiria.com/Production pulumiConfig."prometheus:authToken" "YOUR_GENERATED_TOKEN" --secret
+```
+
+**Alternative: Via Pulumi ESC UI**:
+1. Navigate to https://app.pulumi.com/[your-org]/settings/environments
+2. Edit `aphiria.com/Preview` and `aphiria.com/Production`
+3. Update `pulumiConfig."prometheus:authToken"` with new token (mark as secret)
+
+**How it's used**:
+1. Pulumi injects token into Kubernetes Secret `PROMETHEUS_AUTH_TOKEN` (API environment variable)
+2. API's `PrometheusTokenHandler` validates Bearer token from `Authorization` header
+3. Prometheus ServiceMonitor configured with `bearerToken` from same Secret
+4. Only Prometheus can scrape `/metrics` endpoint with valid token
+
+**Security Notes**:
+- Token is NOT hashed - stored as plaintext in Pulumi ESC, injected as-is into Kubernetes Secret
+- API compares token using `hash_equals()` for timing-attack protection
+- Use minimum 32 bytes (256 bits) of entropy for cryptographic strength
+- Token transmitted over HTTPS only (TLS encryption in cluster)
+- Rotate annually or if compromised
+
+**Cleanup**: No cleanup needed (token is just a random value, not tied to external service)
 
 ## Emergency Rotation
 

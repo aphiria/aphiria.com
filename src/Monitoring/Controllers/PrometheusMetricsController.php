@@ -21,6 +21,7 @@ use Aphiria\Net\Http\StringBody;
 use Aphiria\Routing\Attributes\Get;
 use Prometheus\RegistryInterface;
 use Prometheus\RenderTextFormat;
+use Throwable;
 
 /**
  * Defines the controller for exposing Prometheus metrics
@@ -36,6 +37,7 @@ final class PrometheusMetricsController extends Controller
      * Exposes Prometheus metrics in text format
      *
      * @return IResponse The response containing metrics
+     * @throws Throwable Thrown if there was an issue grabbing the metrics
      */
     #[Get('metrics')]
     #[Authenticate('prometheus')]

@@ -29,6 +29,7 @@ use Aphiria\Framework\Api\Binders\ControllerBinder;
 use Aphiria\Framework\Api\Binders\RequestHandlerBinder;
 use Aphiria\Framework\Api\Exceptions\ExceptionHandler;
 use Aphiria\Framework\Application\AphiriaModule;
+use Aphiria\Framework\Authentication\Binders\AuthenticationBinder;
 use Aphiria\Framework\Console\Binders\CommandBinder;
 use Aphiria\Framework\Console\Binders\CommandHandlerBinder;
 use Aphiria\Framework\ContentNegotiation\Binders\ContentNegotiationBinder;
@@ -99,6 +100,7 @@ final class GlobalModule extends AphiriaModule implements IBootstrapper
                 new SymfonySerializerBinder(),
                 new ValidationBinder(),
                 new ContentNegotiationBinder(),
+                new AuthenticationBinder(),
                 new ControllerBinder(),
                 new ResponseWriterBinder(),
                 new RoutingBinder(),

@@ -1025,6 +1025,179 @@ describe("createStack factory", () => {
             // Grafana and Alertmanager are disabled in Helm values
             // We verify both custom Grafana and kube-prometheus-stack coexist
         });
+
+        it("should create ServiceMonitor when monitoring and app configs are provided", async () => {
+            const stack = createStack(
+                {
+                    env: "production",
+                    database: {
+                        persistentStorage: true,
+                        storageSize: "20Gi",
+                        dbUser: pulumi.output("postgres"),
+                        dbPassword: pulumi.output("password"),
+                    },
+                    gateway: {
+                        tlsMode: "letsencrypt-prod",
+                        domains: ["aphiria.com", "*.aphiria.com"],
+                        dnsToken: pulumi.output("fake-dns-token"),
+                    },
+                    app: {
+                        webReplicas: 2,
+                        apiReplicas: 2,
+                        webUrl: "https://www.aphiria.com",
+                        apiUrl: "https://api.aphiria.com",
+                        webImage: "ghcr.io/aphiria/aphiria.com-web@sha256:abc123",
+                        apiImage: "ghcr.io/aphiria/aphiria.com-api@sha256:def456",
+                        cookieDomain: ".aphiria.com",
+                    },
+                    monitoring: {
+                        prometheus: {
+                            authToken: pulumi.output("test-token-123"),
+                            storageSize: "10Gi",
+                            scrapeInterval: "30s",
+                        },
+                        grafana: {
+                            storageSize: "5Gi",
+                            hostname: "grafana.aphiria.com",
+                            githubOAuth: {
+                                clientId: pulumi.output("client-id"),
+                                clientSecret: pulumi.output("client-secret"),
+                                org: "aphiria",
+                                adminUser: "davidbyoung",
+                            },
+                        },
+                    },
+                },
+                k8sProvider
+            );
+
+            expect(stack.apiServiceMonitor).toBeDefined();
+            expect(stack.apiServiceMonitor?.secret).toBeDefined();
+            expect(stack.apiServiceMonitor?.serviceMonitor).toBeDefined();
+
+            const [secretName, smApiVersion, smKind] = await Promise.all([
+                promiseOf(stack.apiServiceMonitor!.secret.metadata.name),
+                promiseOf(stack.apiServiceMonitor!.serviceMonitor.apiVersion),
+                promiseOf(stack.apiServiceMonitor!.serviceMonitor.kind),
+            ]);
+
+            expect(secretName).toBe("prometheus-api-auth");
+            expect(smApiVersion).toBe("monitoring.coreos.com/v1");
+            expect(smKind).toBe("ServiceMonitor");
+        });
+
+        it("should use custom scrape interval for ServiceMonitor", async () => {
+            const stack = createStack(
+                {
+                    env: "local",
+                    skipBaseInfrastructure: true,
+                    database: {
+                        persistentStorage: false,
+                        storageSize: "1Gi",
+                        dbUser: pulumi.output("postgres"),
+                        dbPassword: pulumi.output("password"),
+                    },
+                    gateway: {
+                        tlsMode: "self-signed",
+                        domains: ["*.aphiria.com"],
+                    },
+                    app: {
+                        webReplicas: 1,
+                        apiReplicas: 1,
+                        webUrl: "https://www.aphiria.com",
+                        apiUrl: "https://api.aphiria.com",
+                        webImage: "ghcr.io/aphiria/aphiria.com-web:latest",
+                        apiImage: "ghcr.io/aphiria/aphiria.com-api:latest",
+                        cookieDomain: ".aphiria.com",
+                    },
+                    monitoring: {
+                        prometheus: {
+                            authToken: pulumi.output("test-token"),
+                            storageSize: "5Gi",
+                            scrapeInterval: "60s",
+                        },
+                        grafana: {
+                            storageSize: "2Gi",
+                            hostname: "grafana.aphiria.com",
+                            githubOAuth: {
+                                clientId: pulumi.output("client-id"),
+                                clientSecret: pulumi.output("client-secret"),
+                                org: "aphiria",
+                                adminUser: "davidbyoung",
+                            },
+                        },
+                    },
+                },
+                k8sProvider
+            );
+
+            expect(stack.apiServiceMonitor).toBeDefined();
+
+            // Verify ServiceMonitor was created (spec not directly accessible in CustomResource)
+            const kind = await promiseOf(stack.apiServiceMonitor!.serviceMonitor.kind);
+            expect(kind).toBe("ServiceMonitor");
+        });
+
+        it("should not create ServiceMonitor when monitoring config not provided", () => {
+            const stack = createStack(
+                {
+                    env: "local",
+                    skipBaseInfrastructure: true,
+                    database: {
+                        persistentStorage: false,
+                        storageSize: "1Gi",
+                        dbUser: pulumi.output("postgres"),
+                        dbPassword: pulumi.output("password"),
+                    },
+                    gateway: {
+                        tlsMode: "self-signed",
+                        domains: ["*.aphiria.com"],
+                    },
+                    // No app config - so no API deployment, and no ServiceMonitor
+                },
+                k8sProvider
+            );
+
+            expect(stack.apiServiceMonitor).toBeUndefined();
+        });
+
+        it("should not create ServiceMonitor when app config not provided", () => {
+            const stack = createStack(
+                {
+                    env: "production",
+                    database: {
+                        persistentStorage: true,
+                        storageSize: "20Gi",
+                        dbUser: pulumi.output("postgres"),
+                        dbPassword: pulumi.output("password"),
+                    },
+                    gateway: {
+                        tlsMode: "letsencrypt-prod",
+                        domains: ["aphiria.com", "*.aphiria.com"],
+                        dnsToken: pulumi.output("fake-dns-token"),
+                    },
+                    monitoring: {
+                        prometheus: {
+                            authToken: pulumi.output("test-token"),
+                            storageSize: "10Gi",
+                        },
+                        grafana: {
+                            storageSize: "5Gi",
+                            hostname: "grafana.aphiria.com",
+                            githubOAuth: {
+                                clientId: pulumi.output("client-id"),
+                                clientSecret: pulumi.output("client-secret"),
+                                org: "aphiria",
+                                adminUser: "davidbyoung",
+                            },
+                        },
+                    },
+                },
+                k8sProvider
+            );
+
+            expect(stack.apiServiceMonitor).toBeUndefined();
+        });
     });
 
     describe("Gateway API CRD and GatewayClass installation", () => {

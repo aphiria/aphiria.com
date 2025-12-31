@@ -20,3 +20,4 @@ export * from "./grafana";
 export * from "./kube-state-metrics";
 export * from "./dashboards";
 export * from "./grafana-ingress";
+export * from "./api-service-monitor";

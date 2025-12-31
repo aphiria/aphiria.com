@@ -18,6 +18,10 @@ import {
 import { createGrafana } from "../../components/grafana";
 import { createGrafanaIngress, GrafanaIngressResult } from "../../components/grafana-ingress";
 import { createDashboards } from "../../components/dashboards";
+import {
+    createApiServiceMonitor,
+    ApiServiceMonitorResult,
+} from "../../components/api-service-monitor";
 import * as path from "path";
 import { StackConfig } from "./types";
 import {
@@ -43,6 +47,7 @@ export interface StackResources {
     migration?: k8s.batch.v1.Job;
     webRoute?: k8s.apiextensions.CustomResource;
     apiRoute?: k8s.apiextensions.CustomResource;
+    apiServiceMonitor?: ApiServiceMonitorResult;
     httpsRedirect?: k8s.apiextensions.CustomResource;
     wwwRedirect?: k8s.apiextensions.CustomResource;
     monitoring?: {
@@ -494,6 +499,19 @@ export function createStack(config: StackConfig, k8sProvider: k8s.Provider): Sta
             sectionName: isPreviewPR ? "https-subdomains-2" : "https-subdomains",
             provider: k8sProvider,
         });
+
+        // ServiceMonitor for API metrics (if monitoring is configured)
+        if (config.monitoring) {
+            resources.apiServiceMonitor = createApiServiceMonitor({
+                namespace: namespace,
+                serviceName: "api",
+                portName: "http",
+                metricsPath: "/metrics",
+                scrapeInterval: config.monitoring.prometheus.scrapeInterval || "15s",
+                authToken: config.monitoring.prometheus.authToken,
+                provider: k8sProvider,
+            });
+        }
 
         // HTTP→HTTPS redirect for preview-pr (specific hostnames beat wildcard redirects)
         // This ensures http://123.pr.aphiria.com redirects to https://123.pr.aphiria.com
