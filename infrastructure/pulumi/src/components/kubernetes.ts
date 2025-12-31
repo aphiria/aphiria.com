@@ -1,3 +1,4 @@
+import * as pulumi from "@pulumi/pulumi";
 import * as digitalocean from "@pulumi/digitalocean";
 import * as k8s from "@pulumi/kubernetes";
 import { KubernetesClusterArgs, KubernetesClusterResult } from "./types";
@@ -36,8 +37,10 @@ export function createKubernetesCluster(args: KubernetesClusterArgs): Kubernetes
     // DigitalOcean tokens expire after 7 days by default
     // This approach ensures we always get fresh credentials on every pulumi operation
     // See: https://github.com/pulumi/pulumi-digitalocean/issues/77
+    // Wrapped with pulumi.output() to ensure proper mocking in unit tests
+    // See: https://github.com/pulumi/pulumi/issues/4364
     const kubeconfig = cluster.name.apply((name) =>
-        digitalocean.getKubernetesCluster({ name }).then((c) => c.kubeConfigs[0].rawConfig)
+        pulumi.output(digitalocean.getKubernetesCluster({ name })).apply((c: digitalocean.GetKubernetesClusterResult) => c.kubeConfigs[0].rawConfig)
     );
 
     // Create Kubernetes provider for this cluster
