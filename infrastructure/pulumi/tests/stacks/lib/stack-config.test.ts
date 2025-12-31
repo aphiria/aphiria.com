@@ -110,6 +110,17 @@ describe("StackConfig", () => {
         });
     });
 
+    describe("prometheus", () => {
+        it("should load Prometheus configuration", () => {
+            pulumi.runtime.setConfig("prometheus:authToken", "test-prometheus-token");
+
+            const config = new StackConfig("https://example.com", "https://api.example.com");
+            const prometheus = config.prometheus;
+
+            expect(prometheus.authToken).toBeDefined();
+        });
+    });
+
     describe("grafana", () => {
         it("should load Grafana configuration", () => {
             pulumi.runtime.setConfig("grafana:githubClientId", "test-client-id");

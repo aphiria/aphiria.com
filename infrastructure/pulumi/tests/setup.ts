@@ -5,12 +5,11 @@
  * Mocks must be set before any Pulumi resources are imported.
  *
  * Cleanup is handled by globalTeardown.ts, not here.
+ *
+ * Note: PULUMI_SKIP_UPDATE_CHECK and PULUMI_AUTOMATION_API_SKIP_VERSION_CHECK
+ * are set in package.json scripts to ensure they're active before Node starts.
  */
 import * as pulumi from "@pulumi/pulumi";
-
-// Disable Pulumi's automatic behaviors that might trigger network calls
-process.env.PULUMI_SKIP_UPDATE_CHECK = "true";
-process.env.PULUMI_AUTOMATION_API_SKIP_VERSION_CHECK = "true";
 
 // Suppress console output during tests to prevent "Cannot log after tests are done" errors
 // Pulumi's YAML provider logs info messages during async cleanup which Jest flags as an error

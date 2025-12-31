@@ -6,9 +6,9 @@
     "scripts": {
         "build": "tsc",
         "watch": "tsc --watch",
-        "test": "jest --coverage --runInBand",
-        "test:watch": "jest --watch",
-        "test:ci": "jest --ci --coverage --maxWorkers=1",
+        "test": "PULUMI_SKIP_UPDATE_CHECK=1 PULUMI_AUTOMATION_API_SKIP_VERSION_CHECK=1 jest --coverage --runInBand",
+        "test:watch": "PULUMI_SKIP_UPDATE_CHECK=1 PULUMI_AUTOMATION_API_SKIP_VERSION_CHECK=1 jest --watch",
+        "test:ci": "PULUMI_SKIP_UPDATE_CHECK=1 PULUMI_AUTOMATION_API_SKIP_VERSION_CHECK=1 jest --ci --coverage --maxWorkers=1",
         "lint": "eslint .",
         "lint:fix": "eslint . --fix",
         "format": "prettier --write .",
