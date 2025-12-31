@@ -2,27 +2,12 @@ import { describe, it, expect, beforeAll } from "@jest/globals";
 import * as pulumi from "@pulumi/pulumi";
 import * as k8s from "@pulumi/kubernetes";
 import { createPrometheus } from "../../src/components/prometheus";
+import { promiseOf } from "../test-utils";
 
 describe("createPrometheus", () => {
     let k8sProvider: k8s.Provider;
 
     beforeAll(() => {
-        pulumi.runtime.setMocks({
-            newResource: (
-                args: pulumi.runtime.MockResourceArgs
-            ): { id: string; state: Record<string, unknown> } => {
-                return {
-                    id: args.inputs.name ? `${args.name}-id` : `${args.type}-id`,
-                    state: {
-                        ...args.inputs,
-                    },
-                };
-            },
-            call: (args: pulumi.runtime.MockCallArgs): Record<string, unknown> => {
-                return args.inputs;
-            },
-        });
-
         k8sProvider = new k8s.Provider("test", {});
     });
 
@@ -47,7 +32,7 @@ describe("createPrometheus", () => {
         done();
     });
 
-    it("should create ServiceAccount with correct namespace", (done) => {
+    it("should create ServiceAccount with correct namespace", async () => {
         const result = createPrometheus({
             env: "preview",
             namespace: "monitoring",
@@ -56,14 +41,12 @@ describe("createPrometheus", () => {
             provider: k8sProvider,
         });
 
-        pulumi.all([result.serviceAccount]).apply(([sa]) => {
-            expect(sa.name).toBe("prometheus");
-            expect(sa.namespace).toBe("monitoring");
-            done();
-        });
+        const sa = await promiseOf(result.serviceAccount);
+        expect(sa.name).toBe("prometheus");
+        expect(sa.namespace).toBe("monitoring");
     });
 
-    it("should create PVC with correct storage size", (done) => {
+    it("should create PVC with correct storage size", async () => {
         const result = createPrometheus({
             env: "local",
             namespace: "monitoring",
@@ -72,11 +55,9 @@ describe("createPrometheus", () => {
             provider: k8sProvider,
         });
 
-        pulumi.all([result.pvc]).apply(([pvc]) => {
-            expect(pvc.name).toBe("prometheus-pvc");
-            expect(pvc.namespace).toBe("monitoring");
-            done();
-        });
+        const pvc = await promiseOf(result.pvc);
+        expect(pvc.name).toBe("prometheus-pvc");
+        expect(pvc.namespace).toBe("monitoring");
     });
 
     it("should use default scrape interval when not specified", (done) => {
@@ -92,7 +73,7 @@ describe("createPrometheus", () => {
         done();
     });
 
-    it("should apply custom labels to resources", (done) => {
+    it("should apply custom labels to resources", async () => {
         const result = createPrometheus({
             env: "production",
             namespace: "monitoring",
@@ -105,13 +86,11 @@ describe("createPrometheus", () => {
             provider: k8sProvider,
         });
 
-        pulumi.all([result.statefulSet]).apply(([sts]) => {
-            expect(sts.name).toBe("prometheus");
-            done();
-        });
+        const sts = await promiseOf(result.statefulSet);
+        expect(sts.name).toBe("prometheus");
     });
 
-    it("should create ClusterRole with read-only permissions", (done) => {
+    it("should create ClusterRole with read-only permissions", async () => {
         const result = createPrometheus({
             env: "production",
             namespace: "monitoring",
@@ -120,13 +99,11 @@ describe("createPrometheus", () => {
             provider: k8sProvider,
         });
 
-        pulumi.all([result.clusterRole]).apply(([cr]) => {
-            expect(cr.name).toBe("prometheus");
-            done();
-        });
+        const cr = await promiseOf(result.clusterRole);
+        expect(cr.name).toBe("prometheus");
     });
 
-    it("should create Service with correct port", (done) => {
+    it("should create Service with correct port", async () => {
         const result = createPrometheus({
             env: "preview",
             namespace: "monitoring",
@@ -135,11 +112,9 @@ describe("createPrometheus", () => {
             provider: k8sProvider,
         });
 
-        pulumi.all([result.service]).apply(([svc]) => {
-            expect(svc.name).toBe("prometheus");
-            expect(svc.namespace).toBe("monitoring");
-            done();
-        });
+        const svc = await promiseOf(result.service);
+        expect(svc.name).toBe("prometheus");
+        expect(svc.namespace).toBe("monitoring");
     });
 
     it("should tag metrics with environment label", (done) => {

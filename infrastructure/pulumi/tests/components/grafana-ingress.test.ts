@@ -7,22 +7,6 @@ describe("createGrafanaIngress", () => {
     let k8sProvider: k8s.Provider;
 
     beforeAll(() => {
-        pulumi.runtime.setMocks({
-            newResource: (
-                args: pulumi.runtime.MockResourceArgs
-            ): { id: string; state: Record<string, unknown> } => {
-                return {
-                    id: args.inputs.name ? `${args.name}-id` : `${args.type}-id`,
-                    state: {
-                        ...args.inputs,
-                    },
-                };
-            },
-            call: (args: pulumi.runtime.MockCallArgs): Record<string, unknown> => {
-                return args.inputs;
-            },
-        });
-
         k8sProvider = new k8s.Provider("test", {});
     });
 

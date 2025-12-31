@@ -3,31 +3,16 @@ import * as pulumi from "@pulumi/pulumi";
 import * as k8s from "@pulumi/kubernetes";
 import { createGrafana } from "../../src/components/grafana";
 import { checksum } from "../../src/components/utils";
+import { promiseOf } from "../test-utils";
 
 describe("createGrafana", () => {
     let k8sProvider: k8s.Provider;
 
     beforeAll(() => {
-        pulumi.runtime.setMocks({
-            newResource: (
-                args: pulumi.runtime.MockResourceArgs
-            ): { id: string; state: Record<string, unknown> } => {
-                return {
-                    id: args.inputs.name ? `${args.name}-id` : `${args.type}-id`,
-                    state: {
-                        ...args.inputs,
-                    },
-                };
-            },
-            call: (args: pulumi.runtime.MockCallArgs): Record<string, unknown> => {
-                return args.inputs;
-            },
-        });
-
         k8sProvider = new k8s.Provider("test", {});
     });
 
-    it("should create all required Grafana resources", (done) => {
+    it("should create all required Grafana resources", async () => {
         const result = createGrafana({
             env: "production",
             namespace: "monitoring",
@@ -52,10 +37,9 @@ describe("createGrafana", () => {
         expect(result.configMap).toBeDefined();
         expect(result.secret).toBeDefined();
 
-        done();
     });
 
-    it("should create production environment with email alerting", (done) => {
+    it("should create production environment with email alerting", async () => {
         const result = createGrafana({
             env: "production",
             namespace: "monitoring",
@@ -74,14 +58,12 @@ describe("createGrafana", () => {
             provider: k8sProvider,
         });
 
-        pulumi.all([result.deployment]).apply(([deployment]) => {
-            expect(deployment.name).toBe("grafana");
-            expect(deployment.namespace).toBe("monitoring");
-            done();
-        });
+        const deployment = await promiseOf(result.deployment);
+        expect(deployment.name).toBe("grafana");
+        expect(deployment.namespace).toBe("monitoring");
     });
 
-    it("should create preview environment without email alerting", (done) => {
+    it("should create preview environment without email alerting", async () => {
         const result = createGrafana({
             env: "preview",
             namespace: "monitoring",
@@ -94,13 +76,11 @@ describe("createGrafana", () => {
             provider: k8sProvider,
         });
 
-        pulumi.all([result.configMap]).apply(([cm]) => {
-            expect(cm.name).toBe("grafana-config");
-            done();
-        });
+        const cm = await promiseOf(result.configMap);
+        expect(cm.name).toBe("grafana-config");
     });
 
-    it("should create local environment without email alerting", (done) => {
+    it("should create local environment without email alerting", async () => {
         const result = createGrafana({
             env: "local",
             namespace: "monitoring",
@@ -113,13 +93,11 @@ describe("createGrafana", () => {
             provider: k8sProvider,
         });
 
-        pulumi.all([result.secret]).apply(([secret]) => {
-            expect(secret.name).toBe("grafana-secrets");
-            done();
-        });
+        const secret = await promiseOf(result.secret);
+        expect(secret.name).toBe("grafana-secrets");
     });
 
-    it("should create PVC with correct storage size", (done) => {
+    it("should create PVC with correct storage size", async () => {
         const result = createGrafana({
             env: "production",
             namespace: "monitoring",
@@ -132,14 +110,12 @@ describe("createGrafana", () => {
             provider: k8sProvider,
         });
 
-        pulumi.all([result.pvc]).apply(([pvc]) => {
-            expect(pvc.name).toBe("grafana-pvc");
-            expect(pvc.namespace).toBe("monitoring");
-            done();
-        });
+        const pvc = await promiseOf(result.pvc);
+        expect(pvc.name).toBe("grafana-pvc");
+        expect(pvc.namespace).toBe("monitoring");
     });
 
-    it("should configure GitHub OAuth with correct organization", (done) => {
+    it("should configure GitHub OAuth with correct organization", async () => {
         const result = createGrafana({
             env: "production",
             namespace: "monitoring",
@@ -154,10 +130,9 @@ describe("createGrafana", () => {
 
         expect(result.secret).toBeDefined();
         expect(result.configMap).toBeDefined();
-        done();
     });
 
-    it("should apply custom labels to resources", (done) => {
+    it("should apply custom labels to resources", async () => {
         const result = createGrafana({
             env: "preview",
             namespace: "monitoring",
@@ -174,13 +149,11 @@ describe("createGrafana", () => {
             provider: k8sProvider,
         });
 
-        pulumi.all([result.service]).apply(([svc]) => {
-            expect(svc.name).toBe("grafana");
-            done();
-        });
+        const svc = await promiseOf(result.service);
+        expect(svc.name).toBe("grafana");
     });
 
-    it("should configure service with port 80", (done) => {
+    it("should configure service with port 80", async () => {
         const result = createGrafana({
             env: "local",
             namespace: "monitoring",
@@ -193,13 +166,11 @@ describe("createGrafana", () => {
             provider: k8sProvider,
         });
 
-        pulumi.all([result.service]).apply(([svc]) => {
-            expect(svc.namespace).toBe("monitoring");
-            done();
-        });
+        const svc = await promiseOf(result.service);
+        expect(svc.namespace).toBe("monitoring");
     });
 
-    it("should configure production with SMTP but no email if smtpHost missing", (done) => {
+    it("should configure production with SMTP but no email if smtpHost missing", async () => {
         const result = createGrafana({
             env: "production",
             namespace: "monitoring",
@@ -215,10 +186,9 @@ describe("createGrafana", () => {
 
         expect(result.secret).toBeDefined();
         expect(result.configMap).toBeDefined();
-        done();
     });
 
-    it("should handle production with full SMTP configuration", (done) => {
+    it("should handle production with full SMTP configuration", async () => {
         const result = createGrafana({
             env: "production",
             namespace: "monitoring",
@@ -237,14 +207,12 @@ describe("createGrafana", () => {
             provider: k8sProvider,
         });
 
-        pulumi.all([result.secret]).apply(([secret]) => {
-            expect(secret.name).toBe("grafana-secrets");
-            expect(secret.namespace).toBe("monitoring");
-            done();
-        });
+        const secret = await promiseOf(result.secret);
+        expect(secret.name).toBe("grafana-secrets");
+        expect(secret.namespace).toBe("monitoring");
     });
 
-    it("should handle production with partial SMTP configuration (missing optional fields)", (done) => {
+    it("should handle production with partial SMTP configuration (missing optional fields)", async () => {
         const result = createGrafana({
             env: "production",
             namespace: "monitoring",
@@ -260,11 +228,12 @@ describe("createGrafana", () => {
             provider: k8sProvider,
         });
 
-        pulumi.all([result.secret, result.configMap]).apply(([secret, configMap]) => {
-            expect(secret.name).toBe("grafana-secrets");
-            expect(configMap.name).toBe("grafana-config");
-            done();
-        });
+        const [secret, configMap] = await Promise.all([
+            promiseOf(result.secret),
+            promiseOf(result.configMap),
+        ]);
+        expect(secret.name).toBe("grafana-secrets");
+        expect(configMap.name).toBe("grafana-config");
     });
 
     it("should mount dashboards ConfigMap when provided", () => {
@@ -295,7 +264,7 @@ describe("createGrafana", () => {
         expect(result.deployment).toBeDefined();
     });
 
-    it("should add checksum annotation when dashboards ConfigMap provided", (done) => {
+    it("should add checksum annotation when dashboards ConfigMap provided", async () => {
         const dashboardData = {
             "dashboard1.json": '{"uid":"dash1","title":"Test Dashboard 1","panels":[]}',
             "dashboard2.json": '{"uid":"dash2","title":"Test Dashboard 2","panels":[]}',
@@ -324,15 +293,13 @@ describe("createGrafana", () => {
 
         const expectedChecksum = checksum(dashboardData);
 
-        pulumi.all([result.deployment]).apply(([deployment]) => {
-            expect(deployment.name).toBe("grafana");
-            expect(expectedChecksum).toBeDefined();
-            expect(expectedChecksum.length).toBe(64);
-            done();
-        });
+        const deployment = await promiseOf(result.deployment);
+        expect(deployment.name).toBe("grafana");
+        expect(expectedChecksum).toBeDefined();
+        expect(expectedChecksum.length).toBe(64);
     });
 
-    it("should not add checksum annotation when dashboards ConfigMap not provided", (done) => {
+    it("should not add checksum annotation when dashboards ConfigMap not provided", async () => {
         const result = createGrafana({
             env: "production",
             namespace: "monitoring",
@@ -345,9 +312,7 @@ describe("createGrafana", () => {
             provider: k8sProvider,
         });
 
-        pulumi.all([result.deployment]).apply(([deployment]) => {
-            expect(deployment.name).toBe("grafana");
-            done();
-        });
+        const deployment = await promiseOf(result.deployment);
+        expect(deployment.name).toBe("grafana");
     });
 });

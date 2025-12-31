@@ -2,19 +2,6 @@ import { describe, it, expect } from "@jest/globals";
 import * as pulumi from "@pulumi/pulumi";
 import { StackConfig } from "../../../src/stacks/lib/stack-config";
 
-// Mock Pulumi Config
-pulumi.runtime.setMocks({
-    newResource: function (args: pulumi.runtime.MockResourceArgs): { id: string; state: any } {
-        return {
-            id: args.name + "_id",
-            state: args.inputs,
-        };
-    },
-    call: function (args: pulumi.runtime.MockCallArgs) {
-        return args.inputs;
-    },
-});
-
 describe("StackConfig", () => {
     describe("urls", () => {
         it("should store and return web and API URLs", () => {
@@ -78,11 +65,11 @@ describe("StackConfig", () => {
     describe("images", () => {
         it("should build image references with SHA256 digests", () => {
             pulumi.runtime.setConfig(
-                "project:webImageDigest",
+                "test-project:webImageDigest",
                 "sha256:abc123def456abc123def456abc123def456abc123def456abc123def456abc1"
             );
             pulumi.runtime.setConfig(
-                "project:apiImageDigest",
+                "test-project:apiImageDigest",
                 "sha256:def456abc123def456abc123def456abc123def456abc123def456abc123def4"
             );
 
@@ -100,7 +87,7 @@ describe("StackConfig", () => {
 
     describe("prNumber", () => {
         it("should load PR number as integer", () => {
-            pulumi.runtime.setConfig("project:prNumber", "123");
+            pulumi.runtime.setConfig("test-project:prNumber", "123");
 
             const config = new StackConfig("https://example.com", "https://api.example.com");
             const prNumber = config.prNumber;
@@ -112,7 +99,7 @@ describe("StackConfig", () => {
     describe("baseStackReference", () => {
         it("should load base stack reference string", () => {
             pulumi.runtime.setConfig(
-                "project:baseStackReference",
+                "test-project:baseStackReference",
                 "organization/project/preview-base"
             );
 

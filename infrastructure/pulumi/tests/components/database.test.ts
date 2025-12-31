@@ -2,27 +2,12 @@ import { describe, it, expect, beforeAll } from "@jest/globals";
 import * as pulumi from "@pulumi/pulumi";
 import * as k8s from "@pulumi/kubernetes";
 import { createPostgreSQL } from "../../src/components/database";
+import { promiseOf } from "../test-utils";
 
 describe("createPostgreSQL", () => {
     let k8sProvider: k8s.Provider;
 
     beforeAll(() => {
-        pulumi.runtime.setMocks({
-            newResource: (
-                args: pulumi.runtime.MockResourceArgs
-            ): { id: string; state: Record<string, unknown> } => {
-                return {
-                    id: args.inputs.name ? `${args.name}-id` : `${args.type}-id`,
-                    state: {
-                        ...args.inputs,
-                    },
-                };
-            },
-            call: (args: pulumi.runtime.MockCallArgs): Record<string, unknown> => {
-                return args.inputs;
-            },
-        });
-
         k8sProvider = new k8s.Provider("test", {});
     });
 
@@ -160,12 +145,7 @@ describe("createPostgreSQL", () => {
             },
         });
 
-        const spec = await new Promise<k8s.types.output.apps.v1.DeploymentSpec>((resolve) => {
-            deployment.spec.apply((s) => {
-                resolve(s);
-                return s;
-            });
-        });
+        const spec = await promiseOf(deployment.spec);
 
         // Verify terminationGracePeriodSeconds is set to 90
         expect(spec.template.spec?.terminationGracePeriodSeconds).toBe(90);

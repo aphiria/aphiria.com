@@ -21,7 +21,20 @@ beforeAll(() => {
                     },
                 };
             },
-            call: (args: pulumi.runtime.MockCallArgs): Record<string, unknown> => {
+            call: (args: pulumi.runtime.MockCallArgs) => {
+                // Handle digitalocean:getKubernetesCluster function call
+                if (args.token === "digitalocean:index/getKubernetesCluster:getKubernetesCluster") {
+                    return Promise.resolve({
+                        ...args.inputs,
+                        endpoint: "https://mock-endpoint.k8s.ondigitalocean.com",
+                        kubeConfigs: [
+                            {
+                                rawConfig: "mock-kubeconfig-from-get",
+                            },
+                        ],
+                    });
+                }
+                // Default: return inputs as-is
                 return args.inputs;
             },
         },

@@ -6,31 +6,16 @@ import {
     installNginxGateway,
     ignoreDigitalOceanServiceAnnotationsV4,
 } from "../../src/components/helm-charts";
+import { promiseOf } from "../test-utils";
 
 describe("installBaseHelmCharts", () => {
     let k8sProvider: k8s.Provider;
 
     beforeAll(() => {
-        pulumi.runtime.setMocks({
-            newResource: (
-                args: pulumi.runtime.MockResourceArgs
-            ): { id: string; state: Record<string, unknown> } => {
-                return {
-                    id: args.inputs.name ? `${args.name}-id` : `${args.type}-id`,
-                    state: {
-                        ...args.inputs,
-                    },
-                };
-            },
-            call: (args: pulumi.runtime.MockCallArgs): Record<string, unknown> => {
-                return args.inputs;
-            },
-        });
-
         k8sProvider = new k8s.Provider("test", {});
     });
 
-    it("should install cert-manager and nginx-gateway for local environment", (done) => {
+    it("should install cert-manager and nginx-gateway for local environment", async () => {
         const result = installBaseHelmCharts({
             env: "local",
             provider: k8sProvider,
@@ -39,16 +24,16 @@ describe("installBaseHelmCharts", () => {
         expect(result.certManager).toBeDefined();
         expect(result.nginxGateway).toBeDefined();
 
-        pulumi
-            .all([result.certManager.urn, result.nginxGateway.urn])
-            .apply(([certUrn, nginxUrn]) => {
-                expect(certUrn).toContain("cert-manager");
-                expect(nginxUrn).toContain("nginx-gateway");
-                done();
-            });
+        const [certUrn, nginxUrn] = await Promise.all([
+            promiseOf(result.certManager.urn),
+            promiseOf(result.nginxGateway.urn),
+        ]);
+
+        expect(certUrn).toContain("cert-manager");
+        expect(nginxUrn).toContain("nginx-gateway");
     });
 
-    it("should install cert-manager and nginx-gateway for production environment", (done) => {
+    it("should install cert-manager and nginx-gateway for production environment", async () => {
         const result = installBaseHelmCharts({
             env: "production",
             provider: k8sProvider,
@@ -57,16 +42,16 @@ describe("installBaseHelmCharts", () => {
         expect(result.certManager).toBeDefined();
         expect(result.nginxGateway).toBeDefined();
 
-        pulumi
-            .all([result.certManager.urn, result.nginxGateway.urn])
-            .apply(([certUrn, nginxUrn]) => {
-                expect(certUrn).toContain("cert-manager");
-                expect(nginxUrn).toContain("nginx-gateway");
-                done();
-            });
+        const [certUrn, nginxUrn] = await Promise.all([
+            promiseOf(result.certManager.urn),
+            promiseOf(result.nginxGateway.urn),
+        ]);
+
+        expect(certUrn).toContain("cert-manager");
+        expect(nginxUrn).toContain("nginx-gateway");
     });
 
-    it("should install cert-manager and nginx-gateway for preview environment", (done) => {
+    it("should install cert-manager and nginx-gateway for preview environment", async () => {
         const result = installBaseHelmCharts({
             env: "preview",
             provider: k8sProvider,
@@ -75,16 +60,16 @@ describe("installBaseHelmCharts", () => {
         expect(result.certManager).toBeDefined();
         expect(result.nginxGateway).toBeDefined();
 
-        pulumi
-            .all([result.certManager.urn, result.nginxGateway.urn])
-            .apply(([certUrn, nginxUrn]) => {
-                expect(certUrn).toContain("cert-manager");
-                expect(nginxUrn).toContain("nginx-gateway");
-                done();
-            });
+        const [certUrn, nginxUrn] = await Promise.all([
+            promiseOf(result.certManager.urn),
+            promiseOf(result.nginxGateway.urn),
+        ]);
+
+        expect(certUrn).toContain("cert-manager");
+        expect(nginxUrn).toContain("nginx-gateway");
     });
 
-    it("should accept optional nginxGatewayDependencies parameter", (done) => {
+    it("should accept optional nginxGatewayDependencies parameter", async () => {
         const mockDependency = new k8s.yaml.ConfigFile("test-dependency", {
             file: "https://example.com/test.yaml",
         });
@@ -98,13 +83,13 @@ describe("installBaseHelmCharts", () => {
         expect(result.certManager).toBeDefined();
         expect(result.nginxGateway).toBeDefined();
 
-        pulumi
-            .all([result.certManager.urn, result.nginxGateway.urn])
-            .apply(([certUrn, nginxUrn]) => {
-                expect(certUrn).toContain("cert-manager");
-                expect(nginxUrn).toContain("nginx-gateway");
-                done();
-            });
+        const [certUrn, nginxUrn] = await Promise.all([
+            promiseOf(result.certManager.urn),
+            promiseOf(result.nginxGateway.urn),
+        ]);
+
+        expect(certUrn).toContain("cert-manager");
+        expect(nginxUrn).toContain("nginx-gateway");
     });
 });
 
@@ -112,26 +97,10 @@ describe("installNginxGateway", () => {
     let k8sProvider: k8s.Provider;
 
     beforeAll(() => {
-        pulumi.runtime.setMocks({
-            newResource: (
-                args: pulumi.runtime.MockResourceArgs
-            ): { id: string; state: Record<string, unknown> } => {
-                return {
-                    id: args.inputs.name ? `${args.name}-id` : `${args.type}-id`,
-                    state: {
-                        ...args.inputs,
-                    },
-                };
-            },
-            call: (args: pulumi.runtime.MockCallArgs): Record<string, unknown> => {
-                return args.inputs;
-            },
-        });
-
         k8sProvider = new k8s.Provider("test", {});
     });
 
-    it("should install nginx-gateway-fabric chart", (done) => {
+    it("should install nginx-gateway-fabric chart", async () => {
         const result = installNginxGateway({
             env: "production",
             chartName: "nginx-gateway-fabric",
@@ -143,10 +112,8 @@ describe("installNginxGateway", () => {
 
         expect(result).toBeDefined();
 
-        pulumi.output(result.urn).apply((urn) => {
-            expect(urn).toContain("nginx-gateway");
-            done();
-        });
+        const urn = await promiseOf(result.urn);
+        expect(urn).toContain("nginx-gateway");
     });
 
     it("should conditionally apply transforms based on NODE_ENV (skipped in mock runtime)", () => {

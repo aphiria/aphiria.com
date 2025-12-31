@@ -2,31 +2,16 @@ import { describe, it, expect, beforeAll } from "@jest/globals";
 import * as pulumi from "@pulumi/pulumi";
 import * as k8s from "@pulumi/kubernetes";
 import { createWebDeployment } from "../../src/components/web-deployment";
+import { promiseOf } from "../test-utils";
 
 describe("createWebDeployment", () => {
     let k8sProvider: k8s.Provider;
 
     beforeAll(() => {
-        pulumi.runtime.setMocks({
-            newResource: (
-                args: pulumi.runtime.MockResourceArgs
-            ): { id: string; state: Record<string, unknown> } => {
-                return {
-                    id: args.inputs.name ? `${args.name}-id` : `${args.type}-id`,
-                    state: {
-                        ...args.inputs,
-                    },
-                };
-            },
-            call: (args: pulumi.runtime.MockCallArgs): Record<string, unknown> => {
-                return args.inputs;
-            },
-        });
-
         k8sProvider = new k8s.Provider("test", {});
     });
 
-    it("should create deployment with required resources", (done) => {
+    it("should create deployment with required resources", async () => {
         const result = createWebDeployment({
             env: "local",
             namespace: "web-ns",
@@ -44,23 +29,19 @@ describe("createWebDeployment", () => {
         expect(result.service).toBeDefined();
         expect(result.configMap).toBeDefined();
 
-        pulumi
-            .all([
-                result.deployment.name,
-                result.service.name,
-                result.configMap.name,
-                result.deployment.namespace,
-            ])
-            .apply(([deploymentName, serviceName, configMapName, namespace]) => {
-                expect(deploymentName).toBe("web");
-                expect(serviceName).toBe("web");
-                expect(configMapName).toBe("js-config");
-                expect(namespace).toBe("web-ns");
-                done();
-            });
+        const [deploymentName, serviceName, configMapName, namespace] = await Promise.all([
+            promiseOf(result.deployment.name),
+            promiseOf(result.service.name),
+            promiseOf(result.configMap.name),
+            promiseOf(result.deployment.namespace),
+        ]);
+        expect(deploymentName).toBe("web");
+        expect(serviceName).toBe("web");
+        expect(configMapName).toBe("js-config");
+        expect(namespace).toBe("web-ns");
     });
 
-    it("should create PodDisruptionBudget when configured", (done) => {
+    it("should create PodDisruptionBudget when configured", async () => {
         const result = createWebDeployment({
             env: "production",
             namespace: "prod-web",
@@ -79,13 +60,12 @@ describe("createWebDeployment", () => {
 
         expect(result.podDisruptionBudget).toBeDefined();
 
-        pulumi
-            .all([result.podDisruptionBudget!.name, result.podDisruptionBudget!.namespace])
-            .apply(([pdbName, pdbNamespace]) => {
-                expect(pdbName).toBe("web");
-                expect(pdbNamespace).toBe("prod-web");
-                done();
-            });
+        const [pdbName, pdbNamespace] = await Promise.all([
+            promiseOf(result.podDisruptionBudget!.name),
+            promiseOf(result.podDisruptionBudget!.namespace),
+        ]);
+        expect(pdbName).toBe("web");
+        expect(pdbNamespace).toBe("prod-web");
     });
 
     it("should not create PodDisruptionBudget when not configured", () => {
@@ -105,7 +85,7 @@ describe("createWebDeployment", () => {
         expect(result.podDisruptionBudget).toBeUndefined();
     });
 
-    it("should handle preview environment with PR number", (done) => {
+    it("should handle preview environment with PR number", async () => {
         const result = createWebDeployment({
             env: "preview",
             namespace: "preview-pr-123",
@@ -122,10 +102,8 @@ describe("createWebDeployment", () => {
 
         expect(result.deployment).toBeDefined();
 
-        result.deployment.namespace.apply((namespace: string) => {
-            expect(namespace).toBe("preview-pr-123");
-            done();
-        });
+        const namespace = await promiseOf(result.deployment.namespace);
+        expect(namespace).toBe("preview-pr-123");
     });
 
     it("should handle custom resource limits", () => {
@@ -167,7 +145,7 @@ describe("createWebDeployment", () => {
         expect(result.deployment).toBeDefined();
     });
 
-    it("should merge custom labels with default labels", (done) => {
+    it("should merge custom labels with default labels", async () => {
         const result = createWebDeployment({
             env: "local",
             namespace: "custom-web",
@@ -187,19 +165,17 @@ describe("createWebDeployment", () => {
 
         expect(result.deployment).toBeDefined();
 
-        result.deployment.labels.apply((deploymentLabels: any) => {
-            expect(deploymentLabels).toMatchObject({
-                app: "web",
-                "app.kubernetes.io/name": "web",
-                "app.kubernetes.io/component": "frontend",
-                "custom-label": "custom-value",
-                environment: "testing",
-            });
-            done();
+        const deploymentLabels = await promiseOf(result.deployment.labels);
+        expect(deploymentLabels).toMatchObject({
+            app: "web",
+            "app.kubernetes.io/name": "web",
+            "app.kubernetes.io/component": "frontend",
+            "custom-label": "custom-value",
+            environment: "testing",
         });
     });
 
-    it("should handle production environment", (done) => {
+    it("should handle production environment", async () => {
         const result = createWebDeployment({
             env: "production",
             namespace: "prod",
@@ -215,13 +191,11 @@ describe("createWebDeployment", () => {
 
         expect(result.deployment).toBeDefined();
 
-        result.deployment.namespace.apply((namespace: string) => {
-            expect(namespace).toBe("prod");
-            done();
-        });
+        const namespace = await promiseOf(result.deployment.namespace);
+        expect(namespace).toBe("prod");
     });
 
-    it("should handle extra vars", (done) => {
+    it("should handle extra vars", async () => {
         const result = createWebDeployment({
             env: "preview",
             namespace: "preview-pr-123",
@@ -240,9 +214,7 @@ describe("createWebDeployment", () => {
 
         expect(result.deployment).toBeDefined();
 
-        result.deployment.namespace.apply((namespace: string) => {
-            expect(namespace).toBe("preview-pr-123");
-            done();
-        });
+        const namespace = await promiseOf(result.deployment.namespace);
+        expect(namespace).toBe("preview-pr-123");
     });
 });
