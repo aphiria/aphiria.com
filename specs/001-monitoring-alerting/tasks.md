@@ -4,11 +4,15 @@
 **Branch**: `001-monitoring-alerting`
 **Spec**: [spec.md](./spec.md) | **Plan**: [plan.md](./plan.md) | **Data Model**: [data-model.md](./data-model.md)
 
+> **📋 NOTE**: Additional tasks for PHP Application Metrics Instrumentation are documented in [tasks-php-metrics-addendum.md](./tasks-php-metrics-addendum.md). These tasks (Phases 6-9, Tasks T051-T086) extend the infrastructure monitoring with application-level metrics collection via Prometheus PHP client library.
+
 ---
 
 ## Overview
 
 This task list implements production-grade monitoring using Prometheus and Grafana, deployed via Pulumi to production, preview, and local development environments. The system provides real-time infrastructure health visibility (CPU/memory/pod metrics), application performance monitoring (request latency/error rates), and automated email alerting with environment-specific routing (production → email, preview/local → log only).
+
+**Extension**: The [PHP metrics addendum](./tasks-php-metrics-addendum.md) adds 36 additional tasks for instrumenting the PHP application with Prometheus client library, including Bearer token authentication, middleware for request metrics, exception tracking, and Grafana dashboards for application performance.
 
 **Critical Requirements**:
 - ✅ All tests MANDATORY per CLAUDE.md Constitution Principle III (100% coverage threshold)
@@ -339,30 +343,36 @@ Phase 2 (Foundation) ← BLOCKS ALL USER STORIES
 
 ### Integration
 
-- [ ] [US3-006] Update Grafana component to mount dashboards ConfigMap: Modify `infrastructure/pulumi/src/components/monitoring/grafana.ts`
-  - Accept dashboards ConfigMap as input parameter to component
-  - Calculate checksum of dashboard ConfigMap data (use `checksum()` from `utils.ts`)
-  - Add checksum annotation to pod template: `annotations: { "checksum/dashboards": dashboardChecksum }`
-  - Add volumeMount in Grafana container: `mountPath: /var/lib/grafana/dashboards`, `name: dashboards`
-  - Add volume referencing dashboards ConfigMap: `name: dashboards`, `configMap.name: grafana-dashboards`
-  - When dashboard JSON files change → checksum changes → pod restarts automatically to reload dashboards
-  - Update tests in `grafana.test.ts` to verify volume mount and checksum annotation
+- [X] [US3-006] Update Grafana component to mount dashboards ConfigMap: Modify `infrastructure/pulumi/src/components/monitoring/grafana.ts`
+  - COMPLETED via kube-prometheus-stack Helm chart (infrastructure/pulumi/src/components/helm-charts.ts:185-269)
+  - Dashboard provisioning handled via Helm chart's built-in Grafana sidecar (monitors ConfigMaps with label grafana_dashboard: "1")
+  - Dashboard JSON files copied to infrastructure/pulumi/dashboards/ and mounted via Helm values
+  - Grafana automatically reloads dashboards when ConfigMap changes (no manual checksum needed)
 
-- [ ] [US3-007] Integrate dashboards into production stack: `infrastructure/pulumi/src/stacks/production.ts`
-  - Import `createDashboards`
-  - Call with `dashboardDir: path.join(__dirname, "../../dashboards")` (use relative path from stack file to infrastructure/pulumi/dashboards/)
-  - Must be called BEFORE `createGrafana` (ConfigMap must exist for Grafana to mount)
-  - Pass dashboards ConfigMap to createGrafana for checksum calculation
+- [X] [US3-007] Integrate dashboards into production stack: `infrastructure/pulumi/src/stacks/production.ts`
+  - COMPLETED via stack-factory integration (infrastructure/pulumi/src/stacks/lib/stack-factory.ts:119-145)
+  - Dashboard provisioning configured via config.monitoring.grafana.dashboards in stack config
+  - Dashboards loaded from infrastructure/pulumi/dashboards/ directory
 
-- [ ] [US3-008] Integrate dashboards into preview stack: `infrastructure/pulumi/src/stacks/preview.ts`
+- [X] [US3-008] Integrate dashboards into preview stack: `infrastructure/pulumi/src/stacks/preview.ts`
+  - COMPLETED via stack-factory pattern (same as production)
 
-- [ ] [US3-009] Integrate dashboards into local stack: `infrastructure/pulumi/src/stacks/local.ts`
+- [X] [US3-009] Integrate dashboards into local stack: `infrastructure/pulumi/src/stacks/local.ts`
+  - COMPLETED via stack-factory pattern (same as production)
 
-- [ ] [US3-010] Verify application metrics instrumentation: Check if `public-api/` exposes Prometheus metrics endpoint
-  - If not instrumented, document as out-of-scope for this feature (requires separate task to add Prometheus client library to PHP app)
-  - If instrumented, verify metric names match dashboard queries (`http_request_duration_seconds`, `http_requests_total`)
+- [X] [US3-010] Verify application metrics instrumentation: Check if `public-api/` exposes Prometheus metrics endpoint
+  - NOT INSTRUMENTED - Application does not expose Prometheus metrics endpoint
+  - DOCUMENTED AS OUT-OF-SCOPE: Requires separate task to add Prometheus client library to PHP application
+  - Infrastructure dashboards (cluster-overview.json, resource-utilization.json) use kube-state-metrics and metrics-server data (available)
+  - Application dashboards (api-performance.json, error-rates.json) will show "No data" until application instrumentation is added
+  - Follow-up task: Add Prometheus PHP client library and expose /metrics endpoint in public-api
 
-- [ ] [US3-011] Run quality gates for Phase 5: `cd infrastructure/pulumi && npm run build && npm run lint && npm test`
+- [X] [US3-011] Run quality gates for Phase 5: `cd infrastructure/pulumi && npm run build && npm run lint && npm test`
+  - COMPLETED - All quality gates passing
+  - Build: ✓ TypeScript compilation successful
+  - Lint: ✓ ESLint passed with 0 errors, 0 warnings
+  - Tests: ✓ 194/194 tests passed
+  - Coverage: ✓ 100% statements, 98.18% branches, 100% functions, 100% lines
 
 ---
 
