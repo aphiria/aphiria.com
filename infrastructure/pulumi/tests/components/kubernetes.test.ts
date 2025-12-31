@@ -6,7 +6,6 @@ describe("createKubernetesCluster", () => {
     it("should create cluster with default settings", async () => {
         const result = createKubernetesCluster({
             name: "test-cluster",
-            useStaticKubeconfig: true,
         });
 
         expect(result.cluster).toBeDefined();
@@ -75,7 +74,6 @@ describe("createKubernetesCluster", () => {
     it("should use default values when not specified", async () => {
         const result = createKubernetesCluster({
             name: "minimal-cluster",
-            useStaticKubeconfig: true,
         });
 
         expect(result.cluster).toBeDefined();

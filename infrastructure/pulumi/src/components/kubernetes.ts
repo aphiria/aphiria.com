@@ -32,19 +32,11 @@ export function createKubernetesCluster(args: KubernetesClusterArgs): Kubernetes
         }
     );
 
-    // Conditionally use static or dynamic kubeconfig
-    // Production: Dynamically fetch fresh kubeconfig to avoid token expiration issues
-    //   - DigitalOcean tokens expire after 7 days by default
-    //   - This ensures we always get fresh credentials on every pulumi operation
-    //   - See: https://github.com/pulumi/pulumi-digitalocean/issues/77
-    // Tests: Use static kubeconfig to avoid network calls
-    //   - Pulumi's call mock doesn't prevent network requests
-    //   - See: https://github.com/pulumi/pulumi/issues/11037
-    const kubeconfig = args.useStaticKubeconfig
-        ? cluster.kubeConfigs[0].rawConfig
-        : cluster.name.apply((name) =>
-              digitalocean.getKubernetesCluster({ name }).then((c) => c.kubeConfigs[0].rawConfig)
-          );
+    // Use kubeconfig directly from cluster resource
+    // The cluster resource already fetches fresh kubeconfig on every pulumi operation
+    // Previous approach using getKubernetesCluster() during .apply() caused preview failures
+    // when cluster didn't exist yet (e.g., after destroy or initial deployment)
+    const kubeconfig = cluster.kubeConfigs[0].rawConfig;
 
     // Create Kubernetes provider for this cluster
     const provider = new k8s.Provider(

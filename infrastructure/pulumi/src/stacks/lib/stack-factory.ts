@@ -366,7 +366,12 @@ export function createStack(config: StackConfig, k8sProvider: k8s.Provider): Sta
             const gatewayService = k8s.core.v1.Service.get(
                 "nginx-gateway-svc",
                 pulumi.interpolate`${gatewayNamespace}/nginx-gateway-nginx-gateway-fabric`,
-                { provider: k8sProvider }
+                {
+                    provider: k8sProvider,
+                    dependsOn: resources.helmCharts?.nginxGateway
+                        ? [resources.helmCharts.nginxGateway]
+                        : [],
+                }
             );
 
             resources.gateway.ip = gatewayService.status.loadBalancer.ingress[0].ip;

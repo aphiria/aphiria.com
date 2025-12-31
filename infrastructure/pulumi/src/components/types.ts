@@ -138,12 +138,6 @@ export interface KubernetesClusterArgs {
     tags?: string[];
     /** Node labels */
     labels?: Record<string, string>;
-    /**
-     * Use static kubeconfig from cluster resource instead of dynamic fetch.
-     * Set to true in unit tests to avoid network calls.
-     * @internal
-     */
-    useStaticKubeconfig?: boolean;
 }
 
 /**

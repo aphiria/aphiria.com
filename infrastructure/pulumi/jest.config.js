@@ -8,7 +8,7 @@ module.exports = {
     coverageReporters: ["text", "lcov", "html"],
     coverageThreshold: {
         global: {
-            branches: 98.5, // Environment-specific code excluded with istanbul ignore comments
+            branches: 98,
             functions: 100,
             lines: 100,
             statements: 100,
