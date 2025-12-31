@@ -179,14 +179,15 @@ cd infrastructure/pulumi && npm run build
 **Directory structure**:
 ```
 infrastructure/pulumi/
-├── src/              # TypeScript source
-│   ├── components/
-│   ├── shared/
-│   ├── stacks/
-│   └── index.ts
-├── tests/            # Jest tests
+├── coverage/         # Test coverage (gitignored)
+├── dashboards/       # Grafana JSON dashboard definitions
 ├── dist/             # Compiled JavaScript (gitignored)
-└── coverage/         # Test coverage (gitignored)
+├── src/              # TypeScript source
+│   ├── components/   # Pulumi components
+│   ├── stacks/       # Pulumi stacks
+│   |   └── lib/      # Shared stack code
+│   └── index.ts
+└── tests/            # Jest tests
 ```
 
 **Git commits**: NEVER commit `dist/` or `coverage/` (gitignored). Only commit `src/` and `tests/`
