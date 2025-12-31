@@ -94,6 +94,9 @@ pulumi up --stack local
 The local stack includes Grafana monitoring. Before running `pulumi up`, configure these values:
 
 ```bash
+# Prometheus monitoring
+pulumi config set prometheus:authToken "dummy-password" --secret local
+
 # GitHub OAuth (for authentication)
 pulumi config set grafana:githubClientId "YOUR_CLIENT_ID" --stack local
 pulumi config set grafana:githubClientSecret "local-dev-client-secret" --secret --stack local

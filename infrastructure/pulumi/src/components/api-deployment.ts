@@ -33,8 +33,8 @@ export interface APIDeploymentArgs extends CommonDeploymentArgs {
     cookieSecure: boolean;
     /** PR number (optional, preview environments only) */
     prNumber?: string;
-    /** Additional custom environment variables */
-    extraVars?: Record<string, pulumi.Input<string>>;
+    /** Prometheus Bearer token for /metrics endpoint authentication */
+    prometheusAuthToken: pulumi.Input<string>;
     /** Optional image pull secrets for private registries */
     imagePullSecrets?: pulumi.Input<string>[];
     /** Optional resource limits for containers */
@@ -87,12 +87,12 @@ export function createAPIDeployment(args: APIDeploymentArgs): APIDeploymentResul
         APP_BUILDER_CONSOLE,
         LOG_LEVEL: args.logLevel,
         ...(args.prNumber && { PR_NUMBER: args.prNumber }),
-        ...(args.extraVars || {}),
     };
 
     // Build Secret data
     const secretData: Record<string, pulumi.Input<string>> = {
         DB_PASSWORD: args.dbPassword,
+        PROMETHEUS_AUTH_TOKEN: args.prometheusAuthToken,
     };
 
     // Calculate checksums for pod annotations (forces restart when config or secrets change)

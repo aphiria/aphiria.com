@@ -240,6 +240,8 @@ export interface StackConfig {
     monitoring?: {
         /** Prometheus configuration */
         prometheus: {
+            /** Bearer token for authenticating to API /metrics endpoint */
+            authToken: pulumi.Input<string>;
             storageSize: string;
             scrapeInterval?: string;
             retentionTime?: string;

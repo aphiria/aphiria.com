@@ -7,6 +7,31 @@ import { promiseOf } from "../../test-utils";
 describe("createStack factory", () => {
     let k8sProvider: k8s.Provider;
 
+    const minimalMonitoringConfig = {
+        prometheus: {
+            authToken: pulumi.output("test-token"),
+            storageSize: "2Gi",
+        },
+        grafana: {
+            storageSize: "1Gi",
+            hostname: "grafana.test.aphiria.com",
+            githubOAuth: {
+                clientId: pulumi.output("test-client-id"),
+                clientSecret: pulumi.output("test-client-secret"),
+                org: "aphiria",
+                adminUser: "test",
+            },
+            smtp: {
+                host: pulumi.output("smtp.test.com"),
+                port: 587,
+                user: pulumi.output("test@test.com"),
+                password: pulumi.output("test-password"),
+                fromAddress: "test@aphiria.com",
+                alertEmail: "test@aphiria.com",
+            },
+        },
+    };
+
     beforeAll(() => {
         k8sProvider = new k8s.Provider("test", {});
     });
@@ -156,6 +181,7 @@ describe("createStack factory", () => {
                         apiImage: "ghcr.io/aphiria/aphiria.com-api:latest",
                         cookieDomain: ".aphiria.com",
                     },
+                    monitoring: minimalMonitoringConfig,
                 },
                 k8sProvider
             );
@@ -224,6 +250,7 @@ describe("createStack factory", () => {
                         apiImage: "ghcr.io/aphiria/aphiria.com-api:latest",
                         cookieDomain: ".aphiria.com",
                     },
+                    monitoring: minimalMonitoringConfig,
                 },
                 k8sProvider
             );
@@ -264,6 +291,7 @@ describe("createStack factory", () => {
                         apiImage: "ghcr.io/aphiria/aphiria.com-api:latest",
                         cookieDomain: ".pr.aphiria.com",
                     },
+                    monitoring: minimalMonitoringConfig,
                 },
                 k8sProvider
             );
@@ -297,6 +325,7 @@ describe("createStack factory", () => {
                         apiImage: "ghcr.io/aphiria/aphiria.com-api:latest",
                         cookieDomain: ".aphiria.com",
                     },
+                    monitoring: minimalMonitoringConfig,
                 },
                 k8sProvider
             );
@@ -341,6 +370,7 @@ describe("createStack factory", () => {
                         apiImage: "ghcr.io/aphiria/aphiria.com-api:latest",
                         cookieDomain: ".pr.aphiria.com",
                     },
+                    monitoring: minimalMonitoringConfig,
                 },
                 k8sProvider
             );
@@ -382,6 +412,7 @@ describe("createStack factory", () => {
                         apiImage: "ghcr.io/aphiria/aphiria.com-api:latest",
                         cookieDomain: ".pr.aphiria.com",
                     },
+                    monitoring: minimalMonitoringConfig,
                 },
                 k8sProvider
             );
@@ -414,6 +445,7 @@ describe("createStack factory", () => {
                         apiImage: "ghcr.io/aphiria/aphiria.com-api:latest",
                         cookieDomain: ".aphiria.com",
                     },
+                    monitoring: minimalMonitoringConfig,
                 },
                 k8sProvider
             );
@@ -445,6 +477,7 @@ describe("createStack factory", () => {
                         apiImage: "ghcr.io/aphiria/aphiria.com-api@sha256:def456",
                         cookieDomain: ".aphiria.com",
                     },
+                    monitoring: minimalMonitoringConfig,
                 },
                 k8sProvider
             );
@@ -509,6 +542,7 @@ describe("createStack factory", () => {
                         apiImage: "ghcr.io/aphiria/aphiria.com-api@sha256:def456",
                         cookieDomain: ".pr.aphiria.com",
                     },
+                    monitoring: minimalMonitoringConfig,
                 },
                 k8sProvider
             );
@@ -637,6 +671,7 @@ describe("createStack factory", () => {
                     },
                     monitoring: {
                         prometheus: {
+                            authToken: pulumi.output("test-token"),
                             storageSize: "10Gi",
                             scrapeInterval: "15s",
                             retentionTime: "7d",
@@ -717,6 +752,7 @@ describe("createStack factory", () => {
                     },
                     monitoring: {
                         prometheus: {
+                            authToken: pulumi.output("test-token"),
                             storageSize: "5Gi",
                         },
                         grafana: {
@@ -755,6 +791,7 @@ describe("createStack factory", () => {
                     },
                     monitoring: {
                         prometheus: {
+                            authToken: pulumi.output("test-token"),
                             storageSize: "10Gi",
                         },
                         grafana: {
@@ -797,6 +834,7 @@ describe("createStack factory", () => {
                     },
                     monitoring: {
                         prometheus: {
+                            authToken: pulumi.output("test-token"),
                             storageSize: "10Gi",
                             scrapeInterval: "30s",
                             retentionTime: "14d",
@@ -840,6 +878,7 @@ describe("createStack factory", () => {
                     },
                     monitoring: {
                         prometheus: {
+                            authToken: pulumi.output("test-token"),
                             storageSize: "5Gi",
                         },
                         grafana: {
@@ -881,6 +920,7 @@ describe("createStack factory", () => {
                     },
                     monitoring: {
                         prometheus: {
+                            authToken: pulumi.output("test-token"),
                             storageSize: "5Gi",
                         },
                         grafana: {
@@ -920,6 +960,7 @@ describe("createStack factory", () => {
                     },
                     monitoring: {
                         prometheus: {
+                            authToken: pulumi.output("test-token"),
                             storageSize: "10Gi",
                         },
                         grafana: {
@@ -959,6 +1000,7 @@ describe("createStack factory", () => {
                     },
                     monitoring: {
                         prometheus: {
+                            authToken: pulumi.output("test-token"),
                             storageSize: "5Gi",
                         },
                         grafana: {
@@ -1010,6 +1052,7 @@ describe("createStack factory", () => {
                         apiImage: "aphiria.com-api:latest",
                         cookieDomain: ".aphiria.com",
                     },
+                    monitoring: minimalMonitoringConfig,
                 },
                 k8sProvider
             );
@@ -1057,6 +1100,7 @@ describe("createStack factory", () => {
                         apiImage: "ghcr.io/aphiria/aphiria.com-api@sha256:def456",
                         cookieDomain: ".pr.aphiria.com",
                     },
+                    monitoring: minimalMonitoringConfig,
                 },
                 k8sProvider
             );

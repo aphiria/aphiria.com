@@ -117,6 +117,7 @@ createStack(
         },
         monitoring: {
             prometheus: {
+                authToken: stackConfig.prometheus.authToken,
                 storageSize: "5Gi",
                 scrapeInterval: "15s",
                 retentionTime: "7d",

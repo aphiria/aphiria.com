@@ -81,6 +81,16 @@ export class StackConfig {
     }
 
     /**
+     * Load Prometheus configuration
+     */
+    get prometheus() {
+        const cfg = new pulumi.Config("prometheus");
+        return {
+            authToken: cfg.requireSecret("authToken"),
+        };
+    }
+
+    /**
      * Load Grafana configuration
      */
     get grafana() {

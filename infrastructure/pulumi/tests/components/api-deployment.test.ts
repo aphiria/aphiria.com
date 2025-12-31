@@ -26,6 +26,7 @@ describe("createAPIDeployment", () => {
             logLevel: "debug",
             cookieDomain: ".aphiria.com",
             cookieSecure: false,
+            prometheusAuthToken: pulumi.output("test-token"),
             provider: k8sProvider,
         });
 
@@ -60,6 +61,7 @@ describe("createAPIDeployment", () => {
             logLevel: "warning",
             cookieDomain: ".aphiria.com",
             cookieSecure: true,
+            prometheusAuthToken: pulumi.output("test-token"),
             podDisruptionBudget: {
                 minAvailable: 1,
             },
@@ -91,6 +93,7 @@ describe("createAPIDeployment", () => {
             logLevel: "debug",
             cookieDomain: ".aphiria.com",
             cookieSecure: false,
+            prometheusAuthToken: pulumi.output("test-token"),
             provider: k8sProvider,
         });
 
@@ -112,6 +115,7 @@ describe("createAPIDeployment", () => {
             logLevel: "warning",
             cookieDomain: ".aphiria.com",
             cookieSecure: true,
+            prometheusAuthToken: pulumi.output("test-token"),
             provider: k8sProvider,
         });
 
@@ -133,6 +137,7 @@ describe("createAPIDeployment", () => {
             logLevel: "debug",
             cookieDomain: ".pr.aphiria.com",
             cookieSecure: true,
+            prometheusAuthToken: pulumi.output("test-token"),
             prNumber: "123",
             provider: k8sProvider,
         });
@@ -158,6 +163,7 @@ describe("createAPIDeployment", () => {
             logLevel: "warning",
             cookieDomain: ".aphiria.com",
             cookieSecure: true,
+            prometheusAuthToken: pulumi.output("test-token"),
             resources: {
                 nginx: {
                     requests: { cpu: "100m", memory: "128Mi" },
@@ -193,6 +199,7 @@ describe("createAPIDeployment", () => {
             logLevel: "warning",
             cookieDomain: ".aphiria.com",
             cookieSecure: true,
+            prometheusAuthToken: pulumi.output("test-token"),
             imagePullSecrets: ["ghcr-pull-secret"],
             provider: k8sProvider,
         });
@@ -218,6 +225,7 @@ describe("createAPIDeployment", () => {
             logLevel: "debug",
             cookieDomain: ".aphiria.com",
             cookieSecure: false,
+            prometheusAuthToken: pulumi.output("test-token"),
             provider: k8sProvider,
         });
 
@@ -242,6 +250,7 @@ describe("createAPIDeployment", () => {
             logLevel: "warning",
             cookieDomain: ".aphiria.com",
             cookieSecure: true,
+            prometheusAuthToken: pulumi.output("test-token"),
             provider: k8sProvider,
         });
 

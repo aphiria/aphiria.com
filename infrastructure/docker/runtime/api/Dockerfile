@@ -20,6 +20,13 @@ ENV CPPFLAGS="-I/usr/src/php"
 RUN docker-php-ext-install -j"$(nproc)" \
     dom intl opcache zip pdo pdo_pgsql pgsql
 
+# Install APCu for Prometheus metrics storage
+RUN pecl install apcu && docker-php-ext-enable apcu
+
+# Configure APCu with sufficient shared memory for metrics (64MB)
+RUN echo "apc.shm_size=64M" >> /usr/local/etc/php/conf.d/docker-php-ext-apcu.ini \
+ && echo "apc.enable_cli=1" >> /usr/local/etc/php/conf.d/docker-php-ext-apcu.ini
+
 # Stage 3: Copy over files
 FROM base
 

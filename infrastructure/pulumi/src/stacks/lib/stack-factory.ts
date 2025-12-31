@@ -447,6 +447,7 @@ export function createStack(config: StackConfig, k8sProvider: k8s.Provider): Sta
             imagePullSecrets: config.namespace?.imagePullSecret ? ["ghcr-pull-secret"] : undefined,
             resources: config.app.apiResources,
             podDisruptionBudget: config.app.apiPodDisruptionBudget,
+            prometheusAuthToken: config.monitoring!.prometheus.authToken,
             provider: k8sProvider,
         });
 
