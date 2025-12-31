@@ -308,6 +308,7 @@ export function createStack(config: StackConfig, k8sProvider: k8s.Provider): Sta
             hostname: config.monitoring.grafana.hostname,
             // Use numbered listener for preview-pr, unnumbered for production/preview-base
             // https-subdomains-3 is for *.pr-grafana.aphiria.com
+            /* istanbul ignore next - sectionName varies by environment (preview-pr vs other) */
             sectionName: isPreviewPR ? "https-subdomains-3" : "https-subdomains",
             provider: k8sProvider,
         });

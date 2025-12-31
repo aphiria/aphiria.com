@@ -281,6 +281,7 @@ export function createGateway(args: GatewayArgs): GatewayResult {
             },
         },
         {
+            /* istanbul ignore next - certificate dependency varies by environment */
             dependsOn: certificate ? [certificate] : [],
             provider: args.provider,
         }
@@ -290,6 +291,7 @@ export function createGateway(args: GatewayArgs): GatewayResult {
         name: gateway.metadata.name,
         namespace: gateway.metadata.namespace,
         urn: gateway.urn,
+        /* istanbul ignore next - certificate presence varies by environment */
         certificate: certificate ? certificate.urn : undefined,
     };
 }

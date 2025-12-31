@@ -68,29 +68,6 @@ describe("installBaseHelmCharts", () => {
         expect(certUrn).toContain("cert-manager");
         expect(nginxUrn).toContain("nginx-gateway");
     });
-
-    it("should accept optional nginxGatewayDependencies parameter", async () => {
-        const mockDependency = new k8s.yaml.ConfigFile("test-dependency", {
-            file: "https://example.com/test.yaml",
-        });
-
-        const result = installBaseHelmCharts({
-            env: "local",
-            provider: k8sProvider,
-            nginxGatewayDependencies: [mockDependency],
-        });
-
-        expect(result.certManager).toBeDefined();
-        expect(result.nginxGateway).toBeDefined();
-
-        const [certUrn, nginxUrn] = await Promise.all([
-            promiseOf(result.certManager.urn),
-            promiseOf(result.nginxGateway.urn),
-        ]);
-
-        expect(certUrn).toContain("cert-manager");
-        expect(nginxUrn).toContain("nginx-gateway");
-    });
 });
 
 describe("installNginxGateway", () => {

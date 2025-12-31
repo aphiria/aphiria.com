@@ -59,6 +59,7 @@ describe("createStack factory", () => {
             const stack = createStack(
                 {
                     env: "local",
+                    skipBaseInfrastructure: true,
                     database: {
                         persistentStorage: false,
                         storageSize: "1Gi",
@@ -82,6 +83,7 @@ describe("createStack factory", () => {
             const stack = createStack(
                 {
                     env: "local",
+                    skipBaseInfrastructure: true,
                     database: {
                         persistentStorage: false,
                         storageSize: "1Gi",
@@ -134,6 +136,7 @@ describe("createStack factory", () => {
             const stack = createStack(
                 {
                     env: "local",
+                    skipBaseInfrastructure: true,
                     database: {
                         persistentStorage: false,
                         storageSize: "1Gi",
@@ -201,6 +204,7 @@ describe("createStack factory", () => {
             const stack = createStack(
                 {
                     env: "local",
+                    skipBaseInfrastructure: false,
                     database: {
                         persistentStorage: false,
                         storageSize: "1Gi",
@@ -273,6 +277,7 @@ describe("createStack factory", () => {
             const stack = createStack(
                 {
                     env: "local",
+                    skipBaseInfrastructure: true,
                     database: {
                         persistentStorage: false,
                         storageSize: "1Gi",
@@ -389,6 +394,7 @@ describe("createStack factory", () => {
             const stack = createStack(
                 {
                     env: "local",
+                    skipBaseInfrastructure: true,
                     database: {
                         persistentStorage: false,
                         storageSize: "1Gi",
@@ -676,6 +682,7 @@ describe("createStack factory", () => {
             const stack = createStack(
                 {
                     env: "local",
+                    skipBaseInfrastructure: true,
                     database: {
                         persistentStorage: false,
                         storageSize: "1Gi",
@@ -697,6 +704,7 @@ describe("createStack factory", () => {
             const stack = createStack(
                 {
                     env: "local",
+                    skipBaseInfrastructure: true,
                     database: {
                         persistentStorage: false,
                         storageSize: "1Gi",
@@ -819,6 +827,7 @@ describe("createStack factory", () => {
             const stack = createStack(
                 {
                     env: "local",
+                    skipBaseInfrastructure: true,
                     database: {
                         persistentStorage: false,
                         storageSize: "1Gi",
@@ -937,6 +946,7 @@ describe("createStack factory", () => {
             const stack = createStack(
                 {
                     env: "local",
+                    skipBaseInfrastructure: true,
                     database: {
                         persistentStorage: false,
                         storageSize: "1Gi",
@@ -980,6 +990,7 @@ describe("createStack factory", () => {
             const stack = createStack(
                 {
                     env: "local",
+                    skipBaseInfrastructure: false,
                     database: {
                         persistentStorage: true,
                         storageSize: "5Gi",

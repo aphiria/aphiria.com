@@ -8,10 +8,10 @@ module.exports = {
     coverageReporters: ["text", "lcov", "html"],
     coverageThreshold: {
         global: {
-            branches: 97.5, // Lowered from 98 to account for NODE_ENV check in helm-charts.ts
+            branches: 98.5, // Environment-specific code excluded with istanbul ignore comments
             functions: 100,
-            lines: 99.5, // Lowered from 100 to account for transforms assignment in helm-charts.ts
-            statements: 99.5, // Lowered from 100 to account for transforms assignment in helm-charts.ts
+            lines: 100,
+            statements: 100,
         },
     },
     moduleNameMapper: {

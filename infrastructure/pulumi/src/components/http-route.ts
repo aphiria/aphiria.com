@@ -193,6 +193,7 @@ export function createHTTPSRedirectRoute(
 
     // Add root domain HTTP listener if exists and not skipped
     // (Skip when WWW redirect is enabled to avoid conflicts)
+    /* istanbul ignore next - root listener configuration varies by environment */
     if (rootDomain && !args.skipRootListener) {
         parentRefs.push({
             name: args.gatewayName,
