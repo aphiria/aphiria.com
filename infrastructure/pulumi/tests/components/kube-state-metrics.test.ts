@@ -1,5 +1,4 @@
 import { describe, it, expect, beforeAll } from "@jest/globals";
-import * as pulumi from "@pulumi/pulumi";
 import * as k8s from "@pulumi/kubernetes";
 import { createKubeStateMetrics } from "../../src/components/kube-state-metrics";
 import { promiseOf } from "../test-utils";

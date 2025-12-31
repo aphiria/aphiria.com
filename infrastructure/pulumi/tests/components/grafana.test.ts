@@ -36,7 +36,6 @@ describe("createGrafana", () => {
         expect(result.pvc).toBeDefined();
         expect(result.configMap).toBeDefined();
         expect(result.secret).toBeDefined();
-
     });
 
     it("should create production environment with email alerting", async () => {

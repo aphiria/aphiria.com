@@ -13,7 +13,9 @@ import * as pulumi from "@pulumi/pulumi";
 beforeAll(() => {
     pulumi.runtime.setMocks(
         {
-            newResource: (args: pulumi.runtime.MockResourceArgs): { id: string; state: Record<string, unknown> } => {
+            newResource: (
+                args: pulumi.runtime.MockResourceArgs
+            ): { id: string; state: Record<string, unknown> } => {
                 // Special handling for DigitalOcean Kubernetes Cluster
                 // The kubeConfigs property is an output, not an input, so we must mock it explicitly
                 if (args.type === "digitalocean:index/kubernetesCluster:KubernetesCluster") {
@@ -60,8 +62,8 @@ beforeAll(() => {
             },
         },
         "test-project", // project name
-        "test-stack",   // stack name
-        true            // preview mode - prevents real provider behavior
+        "test-stack", // stack name
+        true // preview mode - prevents real provider behavior
     );
 });
 

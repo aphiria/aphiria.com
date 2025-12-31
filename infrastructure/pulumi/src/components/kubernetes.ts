@@ -1,4 +1,3 @@
-import * as pulumi from "@pulumi/pulumi";
 import * as digitalocean from "@pulumi/digitalocean";
 import * as k8s from "@pulumi/kubernetes";
 import { KubernetesClusterArgs, KubernetesClusterResult } from "./types";
@@ -44,8 +43,8 @@ export function createKubernetesCluster(args: KubernetesClusterArgs): Kubernetes
     const kubeconfig = args.useStaticKubeconfig
         ? cluster.kubeConfigs[0].rawConfig
         : cluster.name.apply((name) =>
-            digitalocean.getKubernetesCluster({ name }).then((c) => c.kubeConfigs[0].rawConfig)
-        );
+              digitalocean.getKubernetesCluster({ name }).then((c) => c.kubeConfigs[0].rawConfig)
+          );
 
     // Create Kubernetes provider for this cluster
     const provider = new k8s.Provider(

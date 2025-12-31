@@ -1,10 +1,8 @@
 import { describe, it, expect } from "@jest/globals";
-import * as pulumi from "@pulumi/pulumi";
 import { promiseOf } from "../test-utils";
 import { createKubernetesCluster } from "../../src/components/kubernetes";
 
 describe("createKubernetesCluster", () => {
-
     it("should create cluster with default settings", async () => {
         const result = createKubernetesCluster({
             name: "test-cluster",

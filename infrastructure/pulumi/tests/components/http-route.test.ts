@@ -110,11 +110,11 @@ describe("http-route components", () => {
 
             const labels = await promiseOf(route.metadata.labels);
             expect(labels).toMatchObject({
-                    "app.kubernetes.io/name": "httproute-custom-route",
-                    "app.kubernetes.io/component": "routing",
-                    "custom-label": "custom-value",
-                    environment: "testing",
-                });
+                "app.kubernetes.io/name": "httproute-custom-route",
+                "app.kubernetes.io/component": "routing",
+                "custom-label": "custom-value",
+                environment: "testing",
+            });
         });
 
         it("should attach to specific listener using sectionName when provided", async () => {

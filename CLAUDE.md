@@ -88,6 +88,47 @@ const newLabels = [...existingLabels.filter(l => l !== 'my-label'), 'my-label'];
 4. **Never** claim infrastructure needs destruction without evidence
 5. Check if a simple credential refresh or config update can fix the issue
 
+### Testing Philosophy: Design for Testability
+
+**CRITICAL**: When testing is hard, it's almost always a code design problem, not a testing framework problem.
+
+**Core Principle**: Don't fight the framework - fix the code design.
+
+**Testability Patterns**:
+- ✅ **Dependency Injection**: Accept dependencies as parameters rather than creating them internally
+- ✅ **Configuration Flags**: Add optional parameters (marked `@internal`) that allow tests to bypass external dependencies
+- ✅ **Separation of Concerns**: Separate I/O operations from business logic
+- ✅ **Pure Functions**: Maximize pure functions that are easy to test
+
+**Anti-Patterns to Avoid**:
+- ❌ Don't spend excessive time trying to mock external APIs - make code testable instead
+- ❌ Don't assume testing framework limitations can always be worked around
+- ❌ Don't try multiple workarounds without understanding the root cause
+- ❌ Don't write code that requires network calls, file I/O, or external services to test
+
+**When Stuck on Testing**:
+1. **Step back**: Ask "Is the code designed to be testable?"
+2. **Consider design**: "Can I add a parameter to make this testable?"
+3. **Research limitations**: "Are there known limitations in the testing framework?"
+4. **Root cause**: "What's the fundamental problem here?"
+
+**Example - Network Calls in Tests**:
+```typescript
+// ❌ BAD: Hard to test - requires real network call
+const kubeconfig = cluster.name.apply((name) =>
+    digitalocean.getKubernetesCluster({ name }).then((c) => c.kubeConfigs[0].rawConfig)
+);
+
+// ✅ GOOD: Testable - accepts flag to use static config
+const kubeconfig = args.useStaticKubeconfig
+    ? cluster.kubeConfigs[0].rawConfig  // Tests use this
+    : cluster.name.apply((name) =>       // Production uses this
+        digitalocean.getKubernetesCluster({ name }).then((c) => c.kubeConfigs[0].rawConfig)
+    );
+```
+
+**Key Insight**: If you find yourself fighting the testing framework, you're solving the wrong problem. The real problem is code that wasn't designed for testability.
+
 ---
 
 ## Architecture Overview
