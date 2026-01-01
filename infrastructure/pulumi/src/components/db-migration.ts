@@ -65,6 +65,10 @@ export function createDBMigrationJob(args: DBMigrationJobArgs): k8s.batch.v1.Job
                     // but Kubernetes Server-Side Apply (SSA) metadata persists, causing conflicts
                     // on the next `pulumi up`. This annotation tells Pulumi to force the update.
                     "pulumi.com/patchForce": "true",
+                    // Skip await logic to prevent "Job not found" errors during preview/refresh.
+                    // The Job auto-deletes after completion (ttlSecondsAfterFinished=0), so Pulumi's
+                    // default await logic fails when trying to check Job status on subsequent runs.
+                    "pulumi.com/skipAwait": "true",
                 },
             },
             spec: {

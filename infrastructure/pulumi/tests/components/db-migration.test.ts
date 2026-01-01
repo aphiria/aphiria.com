@@ -164,7 +164,7 @@ describe("createDBMigrationJob", () => {
         expect(job).toBeDefined();
     });
 
-    it("should have patchForce annotation to prevent SSA conflicts", async () => {
+    it("should have patchForce and skipAwait annotations for ephemeral Job pattern", async () => {
         const job = createDBMigrationJob({
             env: "production",
             namespace: "default",
@@ -181,7 +181,10 @@ describe("createDBMigrationJob", () => {
 
         const annotations = await promiseOf(job.metadata.annotations);
         expect(annotations).toBeDefined();
+        // patchForce: Handle SSA conflicts when Job is recreated
         expect(annotations["pulumi.com/patchForce"]).toBe("true");
+        // skipAwait: Prevent "Job not found" errors when Job auto-deletes
+        expect(annotations["pulumi.com/skipAwait"]).toBe("true");
     });
 
     /**
