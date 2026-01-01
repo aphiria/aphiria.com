@@ -38,6 +38,12 @@ export interface GrafanaArgs {
     alertEmail?: string;
     /** Dashboards ConfigMap for auto-provisioning */
     dashboardsConfigMap?: k8s.core.v1.ConfigMap;
+    /** Alert rules ConfigMap for Grafana Unified Alerting */
+    alertRulesConfigMap?: k8s.core.v1.ConfigMap;
+    /** Contact points ConfigMap for Grafana Unified Alerting */
+    contactPointsConfigMap?: k8s.core.v1.ConfigMap;
+    /** Notification policies ConfigMap for Grafana Unified Alerting */
+    notificationPoliciesConfigMap?: k8s.core.v1.ConfigMap;
     /** Basic auth username (optional, for preview environments) */
     basicAuthUser?: pulumi.Input<string>;
     /** Basic auth password (optional, for preview environments) */
@@ -59,68 +65,6 @@ export function createGrafana(args: GrafanaArgs): GrafanaResult {
 
     // Determine if this is production (email alerts) or non-production (no emails)
     const isProduction = args.env === "production";
-
-    // Build Alertmanager configuration based on environment
-    const alertmanagerConfig =
-        isProduction && args.smtpHost
-            ? `
-alerting:
-  contactpoints.yaml:
-    apiVersion: 1
-    contactPoints:
-      - orgId: 1
-        name: email
-        receivers:
-          - uid: email-receiver
-            type: email
-            settings:
-              addresses: ${args.alertEmail}
-              singleEmail: true
-      - orgId: 1
-        name: blackhole
-        receivers:
-          - uid: blackhole-receiver
-            type: webhook
-            settings:
-              url: http://localhost:9999/blackhole
-
-  policies.yaml:
-    apiVersion: 1
-    policies:
-      - orgId: 1
-        receiver: email
-        group_by: ['alertname', 'cluster', 'service']
-        group_wait: 10s
-        group_interval: 10s
-        repeat_interval: 12h
-        matchers:
-          - environment = production
-      - orgId: 1
-        receiver: blackhole
-        group_by: ['alertname']
-        matchers:
-          - environment =~ "preview|local"
-`
-            : `
-alerting:
-  contactpoints.yaml:
-    apiVersion: 1
-    contactPoints:
-      - orgId: 1
-        name: blackhole
-        receivers:
-          - uid: blackhole-receiver
-            type: webhook
-            settings:
-              url: http://localhost:9999/blackhole
-
-  policies.yaml:
-    apiVersion: 1
-    policies:
-      - orgId: 1
-        receiver: blackhole
-        group_by: ['alertname']
-`;
 
     // Determine auth mode: basic auth for preview (if configured), otherwise GitHub OAuth
     const useBasicAuth = args.basicAuthUser !== undefined && args.basicAuthPassword !== undefined;
@@ -161,6 +105,24 @@ alerting:
     const dashboardChecksum = args.dashboardsConfigMap
         ? pulumi
               .output(args.dashboardsConfigMap.data)
+              .apply((data) => checksum(data as Record<string, pulumi.Input<string>>))
+        : undefined;
+
+    const alertRulesChecksum = args.alertRulesConfigMap
+        ? pulumi
+              .output(args.alertRulesConfigMap.data)
+              .apply((data) => checksum(data as Record<string, pulumi.Input<string>>))
+        : undefined;
+
+    const contactPointsChecksum = args.contactPointsConfigMap
+        ? pulumi
+              .output(args.contactPointsConfigMap.data)
+              .apply((data) => checksum(data as Record<string, pulumi.Input<string>>))
+        : undefined;
+
+    const notificationPoliciesChecksum = args.notificationPoliciesConfigMap
+        ? pulumi
+              .output(args.notificationPoliciesConfigMap.data)
               .apply((data) => checksum(data as Record<string, pulumi.Input<string>>))
         : undefined;
 
@@ -243,7 +205,6 @@ providers:
     options:
       path: /var/lib/grafana/dashboards
 `,
-                "alertmanager.yaml": alertmanagerConfig,
             },
         },
         { provider: args.provider }
@@ -293,11 +254,20 @@ providers:
                             "app.kubernetes.io/name": "grafana",
                             "app.kubernetes.io/component": "monitoring",
                         },
-                        annotations: dashboardChecksum
-                            ? {
-                                  "checksum/dashboards": dashboardChecksum,
-                              }
-                            : undefined,
+                        annotations: {
+                            ...(dashboardChecksum
+                                ? { "checksum/dashboards": dashboardChecksum }
+                                : {}),
+                            ...(alertRulesChecksum
+                                ? { "checksum/alert-rules": alertRulesChecksum }
+                                : {}),
+                            ...(contactPointsChecksum
+                                ? { "checksum/contact-points": contactPointsChecksum }
+                                : {}),
+                            ...(notificationPoliciesChecksum
+                                ? { "checksum/notification-policies": notificationPoliciesChecksum }
+                                : {}),
+                        },
                     },
                     spec: {
                         securityContext: {
@@ -416,10 +386,16 @@ providers:
                                         name: "datasources",
                                         mountPath: "/etc/grafana/provisioning/datasources",
                                     },
-                                    {
-                                        name: "alerting",
-                                        mountPath: "/etc/grafana/provisioning/alerting",
-                                    },
+                                    ...(args.alertRulesConfigMap ||
+                                    args.contactPointsConfigMap ||
+                                    args.notificationPoliciesConfigMap
+                                        ? [
+                                              {
+                                                  name: "alerting",
+                                                  mountPath: "/etc/grafana/provisioning/alerting",
+                                              },
+                                          ]
+                                        : []),
                                     {
                                         name: "dashboard-provisioning",
                                         mountPath: "/etc/grafana/provisioning/dashboards",
@@ -492,18 +468,51 @@ providers:
                                     ],
                                 },
                             },
-                            {
-                                name: "alerting",
-                                configMap: {
-                                    name: configMap.metadata.name,
-                                    items: [
-                                        {
-                                            key: "alertmanager.yaml",
-                                            path: "alertmanager.yaml",
-                                        },
-                                    ],
-                                },
-                            },
+                            ...(args.alertRulesConfigMap ||
+                            args.contactPointsConfigMap ||
+                            args.notificationPoliciesConfigMap
+                                ? [
+                                      {
+                                          name: "alerting",
+                                          projected: {
+                                              sources: [
+                                                  ...(args.alertRulesConfigMap
+                                                      ? [
+                                                            {
+                                                                configMap: {
+                                                                    name: args.alertRulesConfigMap
+                                                                        .metadata.name,
+                                                                },
+                                                            },
+                                                        ]
+                                                      : []),
+                                                  ...(args.contactPointsConfigMap
+                                                      ? [
+                                                            {
+                                                                configMap: {
+                                                                    name: args
+                                                                        .contactPointsConfigMap
+                                                                        .metadata.name,
+                                                                },
+                                                            },
+                                                        ]
+                                                      : []),
+                                                  ...(args.notificationPoliciesConfigMap
+                                                      ? [
+                                                            {
+                                                                configMap: {
+                                                                    name: args
+                                                                        .notificationPoliciesConfigMap
+                                                                        .metadata.name,
+                                                                },
+                                                            },
+                                                        ]
+                                                      : []),
+                                              ],
+                                          },
+                                      },
+                                  ]
+                                : []),
                             {
                                 name: "dashboard-provisioning",
                                 configMap: {

@@ -388,4 +388,83 @@ describe("createGrafana", () => {
         expect(deployment.name).toBe("grafana");
         expect(deployment.namespace).toBe("monitoring");
     });
+
+    it("should mount alert provisioning ConfigMaps when provided", async () => {
+        const alertRulesConfigMap = new k8s.core.v1.ConfigMap("alert-rules", {
+            metadata: { name: "alert-rules", namespace: "monitoring" },
+            data: { "alert-rules.yaml": "test" },
+        });
+        const contactPointsConfigMap = new k8s.core.v1.ConfigMap("contact-points", {
+            metadata: { name: "contact-points", namespace: "monitoring" },
+            data: { "contact-points.yaml": "test" },
+        });
+        const notificationPoliciesConfigMap = new k8s.core.v1.ConfigMap("notification-policies", {
+            metadata: { name: "notification-policies", namespace: "monitoring" },
+            data: { "notification-policies.yaml": "test" },
+        });
+
+        const result = createGrafana({
+            env: "production",
+            namespace: "monitoring",
+            prometheusUrl: "http://prometheus:9090",
+            storageSize: "5Gi",
+            githubClientId: "client-id",
+            githubClientSecret: "client-secret",
+            githubOrg: "aphiria",
+            adminUser: "davidbyoung",
+            alertRulesConfigMap,
+            contactPointsConfigMap,
+            notificationPoliciesConfigMap,
+            provider: k8sProvider,
+        });
+
+        expect(result.deployment).toBeDefined();
+    });
+
+    it("should add checksum annotations for alert ConfigMaps", async () => {
+        const alertRulesData = { "alert-rules.yaml": "test-rules" };
+        const contactPointsData = { "contact-points.yaml": "test-contacts" };
+        const notificationPoliciesData = { "notification-policies.yaml": "test-policies" };
+
+        const alertRulesConfigMap = new k8s.core.v1.ConfigMap("alert-rules", {
+            metadata: { name: "alert-rules", namespace: "monitoring" },
+            data: alertRulesData,
+        });
+        const contactPointsConfigMap = new k8s.core.v1.ConfigMap("contact-points", {
+            metadata: { name: "contact-points", namespace: "monitoring" },
+            data: contactPointsData,
+        });
+        const notificationPoliciesConfigMap = new k8s.core.v1.ConfigMap("notification-policies", {
+            metadata: { name: "notification-policies", namespace: "monitoring" },
+            data: notificationPoliciesData,
+        });
+
+        const result = createGrafana({
+            env: "production",
+            namespace: "monitoring",
+            prometheusUrl: "http://prometheus:9090",
+            storageSize: "5Gi",
+            githubClientId: "client-id",
+            githubClientSecret: "client-secret",
+            githubOrg: "aphiria",
+            adminUser: "davidbyoung",
+            alertRulesConfigMap,
+            contactPointsConfigMap,
+            notificationPoliciesConfigMap,
+            provider: k8sProvider,
+        });
+
+        const expectedAlertRulesChecksum = checksum(alertRulesData);
+        const expectedContactPointsChecksum = checksum(contactPointsData);
+        const expectedNotificationPoliciesChecksum = checksum(notificationPoliciesData);
+
+        const deployment = await promiseOf(result.deployment);
+        expect(deployment.name).toBe("grafana");
+        expect(expectedAlertRulesChecksum).toBeDefined();
+        expect(expectedContactPointsChecksum).toBeDefined();
+        expect(expectedNotificationPoliciesChecksum).toBeDefined();
+        expect(expectedAlertRulesChecksum.length).toBe(64);
+        expect(expectedContactPointsChecksum.length).toBe(64);
+        expect(expectedNotificationPoliciesChecksum.length).toBe(64);
+    });
 });

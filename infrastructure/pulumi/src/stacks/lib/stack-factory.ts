@@ -17,6 +17,7 @@ import {
 } from "../../components";
 import { createGrafana } from "../../components/grafana";
 import { createGrafanaIngress, GrafanaIngressResult } from "../../components/grafana-ingress";
+import { createGrafanaAlerts } from "../../components/monitoring/grafana-alerts";
 import { createDashboards } from "../../components/dashboards";
 import {
     createApiServiceMonitor,
@@ -283,6 +284,54 @@ export function createStack(config: StackConfig, k8sProvider: k8s.Provider): Sta
             provider: k8sProvider,
         });
 
+        // Create Grafana Unified Alerting provisioning ConfigMaps
+        // Environment-specific contact point configuration
+        // Production: email contact point for real alerts
+        // Preview/Local: use Grafana's default contact point (won't send without SMTP)
+        const contactPoints =
+            config.env === "production"
+                ? [
+                      {
+                          name: "email-admin",
+                          receivers: [
+                              {
+                                  uid: "email-admin",
+                                  type: "email",
+                                  settings: {
+                                      addresses:
+                                          config.monitoring.grafana.smtp?.alertEmail ||
+                                          "admin@aphiria.com",
+                                      singleEmail: true,
+                                  },
+                                  disableResolveMessage: false,
+                              },
+                          ],
+                      },
+                  ]
+                : [
+                      {
+                          name: "local-notifications",
+                          receivers: [
+                              {
+                                  uid: "local-notifications",
+                                  type: "email",
+                                  settings: {
+                                      addresses: "devnull@localhost",
+                                  },
+                                  disableResolveMessage: true,
+                              },
+                          ],
+                      },
+                  ];
+
+        const alerts = createGrafanaAlerts({
+            namespace: "monitoring",
+            environment: config.env,
+            contactPoints,
+            defaultReceiver: config.env === "production" ? "email-admin" : "local-notifications",
+            provider: k8sProvider,
+        });
+
         const grafana = createGrafana({
             env: config.env,
             namespace: "monitoring",
@@ -303,6 +352,9 @@ export function createStack(config: StackConfig, k8sProvider: k8s.Provider): Sta
             basicAuthUser: config.monitoring.grafana.basicAuth?.user,
             basicAuthPassword: config.monitoring.grafana.basicAuth?.password,
             dashboardsConfigMap: dashboards.configMap,
+            alertRulesConfigMap: alerts.alertRulesConfigMap,
+            contactPointsConfigMap: alerts.contactPointsConfigMap,
+            notificationPoliciesConfigMap: alerts.notificationPoliciesConfigMap,
             provider: k8sProvider,
         });
 
