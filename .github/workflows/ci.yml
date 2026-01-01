@@ -48,11 +48,10 @@ jobs:
           coverage: xdebug
           ini-values: apc.enable_cli=1
       - name: Install dependencies
-        working-directory: apps
         run: |
           chmod +x ./install.sh
           ./install.sh --install-pulumi
-          cd ./api
+          cd ./apps/api
           composer install --ignore-platform-reqs
           composer dump-autoload -o
           chmod -R 755 resources
