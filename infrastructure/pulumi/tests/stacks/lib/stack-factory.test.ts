@@ -713,6 +713,91 @@ describe("createStack factory", () => {
             expect(quotaName).toBe("monitoring-quota");
         });
 
+        it("should use custom Prometheus resources when provided", async () => {
+            const stack = createStack(
+                {
+                    env: "preview",
+                    skipBaseInfrastructure: true,
+                    database: {
+                        persistentStorage: true,
+                        storageSize: "5Gi",
+                        dbUser: pulumi.output("postgres"),
+                        dbPassword: pulumi.output("password"),
+                    },
+                    gateway: {
+                        tlsMode: "letsencrypt-prod",
+                        domains: ["*.pr.aphiria.com"],
+                    },
+                    monitoring: {
+                        prometheus: {
+                            authToken: pulumi.output("test-token"),
+                            storageSize: "5Gi",
+                            scrapeInterval: "15s",
+                            retentionTime: "7d",
+                            resources: {
+                                requests: { cpu: "100m", memory: "256Mi" },
+                                limits: { cpu: "500m", memory: "512Mi" },
+                            },
+                        },
+                        grafana: {
+                            storageSize: "2Gi",
+                            hostname: "grafana.pr.aphiria.com",
+                            githubOAuth: {
+                                clientId: pulumi.output("test-client-id"),
+                                clientSecret: pulumi.output("test-client-secret"),
+                                org: "aphiria",
+                                adminUser: "test",
+                            },
+                        },
+                    },
+                },
+                k8sProvider
+            );
+
+            expect(stack.monitoring).toBeDefined();
+            expect(stack.monitoring?.kubePrometheusStack).toBeDefined();
+        });
+
+        it("should use default Prometheus resources when not provided", async () => {
+            const stack = createStack(
+                {
+                    env: "preview",
+                    skipBaseInfrastructure: true,
+                    database: {
+                        persistentStorage: true,
+                        storageSize: "5Gi",
+                        dbUser: pulumi.output("postgres"),
+                        dbPassword: pulumi.output("password"),
+                    },
+                    gateway: {
+                        tlsMode: "letsencrypt-prod",
+                        domains: ["*.pr.aphiria.com"],
+                    },
+                    monitoring: {
+                        prometheus: {
+                            authToken: pulumi.output("test-token"),
+                            storageSize: "5Gi",
+                            // No resources specified - should use defaults
+                        },
+                        grafana: {
+                            storageSize: "2Gi",
+                            hostname: "grafana.pr.aphiria.com",
+                            githubOAuth: {
+                                clientId: pulumi.output("test-client-id"),
+                                clientSecret: pulumi.output("test-client-secret"),
+                                org: "aphiria",
+                                adminUser: "test",
+                            },
+                        },
+                    },
+                },
+                k8sProvider
+            );
+
+            expect(stack.monitoring).toBeDefined();
+            expect(stack.monitoring?.kubePrometheusStack).toBeDefined();
+        });
+
         it("should not create monitoring when monitoring config not provided", () => {
             const stack = createStack(
                 {

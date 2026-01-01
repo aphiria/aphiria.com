@@ -25,8 +25,10 @@ export interface ApiServiceMonitorArgs {
  * Result from creating API ServiceMonitor
  */
 export interface ApiServiceMonitorResult {
-    /** Secret containing the auth token */
+    /** Secret containing the auth token in the app namespace */
     secret: k8s.core.v1.Secret;
+    /** Secret containing the auth token in the monitoring namespace (for Prometheus) */
+    monitoringSecret: k8s.core.v1.Secret;
     /** ServiceMonitor resource */
     serviceMonitor: k8s.apiextensions.CustomResource;
 }
@@ -38,13 +40,30 @@ export interface ApiServiceMonitorResult {
  * Prometheus to scrape the specified endpoints.
  */
 export function createApiServiceMonitor(args: ApiServiceMonitorArgs): ApiServiceMonitorResult {
-    // Create Secret for auth token
+    // Create Secret for auth token in the app namespace
     const secret = new k8s.core.v1.Secret(
         "prometheus-api-auth",
         {
             metadata: {
                 name: "prometheus-api-auth",
                 namespace: args.namespace,
+            },
+            type: "Opaque",
+            stringData: {
+                token: args.authToken,
+            },
+        },
+        { provider: args.provider }
+    );
+
+    // Create copy of secret in monitoring namespace for Prometheus Operator
+    // Prometheus can only access secrets in its own namespace (monitoring)
+    const monitoringSecret = new k8s.core.v1.Secret(
+        "prometheus-api-auth-monitoring",
+        {
+            metadata: {
+                name: "prometheus-api-auth",
+                namespace: "monitoring",
             },
             type: "Opaque",
             stringData: {
@@ -92,5 +111,5 @@ export function createApiServiceMonitor(args: ApiServiceMonitorArgs): ApiService
         { provider: args.provider, dependsOn: [secret] }
     );
 
-    return { secret, serviceMonitor };
+    return { secret, monitoringSecret, serviceMonitor };
 }

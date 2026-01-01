@@ -168,6 +168,13 @@ export function createNamespace(args: NamespaceArgs): NamespaceResult {
                                         },
                                     },
                                 },
+                                {
+                                    namespaceSelector: {
+                                        matchLabels: {
+                                            "kubernetes.io/metadata.name": "monitoring",
+                                        },
+                                    },
+                                },
                             ],
                         },
                     ],

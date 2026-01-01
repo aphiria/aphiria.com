@@ -180,6 +180,10 @@ domain = grafana.aphiria.com
 root_url = https://grafana.aphiria.com
 serve_from_sub_path = false
 
+[security]
+admin_user = \${GF_SECURITY_ADMIN_USER}
+admin_password = \${GF_SECURITY_ADMIN_PASSWORD}
+
 [auth]
 disable_login_form = ${useBasicAuth ? "false" : "true"}
 disable_signout_menu = false

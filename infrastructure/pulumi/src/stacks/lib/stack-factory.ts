@@ -188,7 +188,7 @@ export function createStack(config: StackConfig, k8sProvider: k8s.Provider): Sta
                                 environment: config.env,
                             },
                             // Resource limits for Prometheus container (required by ResourceQuota)
-                            resources: {
+                            resources: config.monitoring.prometheus.resources || {
                                 requests: {
                                     cpu: "500m",
                                     memory: "1Gi",

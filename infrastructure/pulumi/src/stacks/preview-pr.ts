@@ -122,8 +122,8 @@ createStack(
                 scrapeInterval: "15s",
                 retentionTime: "7d",
                 resources: {
-                    requests: { cpu: "100m", memory: "512Mi" },
-                    limits: { cpu: "500m", memory: "2Gi" },
+                    requests: { cpu: "100m", memory: "128Mi" },
+                    limits: { cpu: "500m", memory: "256Mi" },
                 },
             },
             grafana: {
