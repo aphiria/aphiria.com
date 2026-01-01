@@ -43,49 +43,56 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
-          extensions: curl, dom, libxml, mbstring, pcntl, pgsql, xdebug, zip
+          extensions: apcu, curl, dom, libxml, mbstring, pcntl, pgsql, xdebug, zip
           tools: composer:v2
           coverage: xdebug
+          ini-values: apc.enable_cli=1
       - name: Install dependencies
         run: |
           chmod +x ./install.sh
           ./install.sh --install-pulumi
+          cd ./apps/api
           composer install --ignore-platform-reqs
           composer dump-autoload -o
           chmod -R 755 resources
           chmod -R 755 tmp
+          cd ../web
           yarn install
           yarn global add gulp
           gulp build
       - name: Index documentation
+        working-directory: apps/api
         run: |
           vendor/bin/phinx migrate
           vendor/bin/phinx seed:run
       - name: Lint PHP code
+        working-directory: apps/api
         run: composer phpcs-test
       - name: Run PHP tests
+        working-directory: apps/api
         run: composer phpunit
       - name: Run PHP static analysis
         if: matrix.php == '8.4'
+        working-directory: apps/api
         run: composer psalm -- --shepherd
       - name: Build TypeScript code
         if: matrix.php == '8.4'
+        working-directory: infrastructure/pulumi
         run: |
-          cd infrastructure/pulumi
           npm install
           npm run build
       - name: Lint TypeScript code
         if: matrix.php == '8.4'
+        working-directory: infrastructure/pulumi
         run: |
-          cd infrastructure/pulumi
           npm run lint
           npm run format:check
       - name: Test TypeScript code
         if: matrix.php == '8.4'
-        run: |
-          cd infrastructure/pulumi
-          npm run test:ci
+        working-directory: infrastructure/pulumi
+        run: npm run test:ci
       - name: Upload coverage results to Coveralls
+        working-directory: apps/api
         env:
           COVERALLS_REPO_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |

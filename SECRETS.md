@@ -86,6 +86,17 @@ These secrets are stored in Pulumi ESC and automatically injected into Pulumi st
 | `ghcr:username` | GitHub username for GHCR authentication | N/A | Both |
 | `postgresql:user` | PostgreSQL admin user | N/A | Both |
 | `postgresql:password` | PostgreSQL admin password | Quarterly | Both |
+| `grafana:githubClientId` | GitHub OAuth App Client ID for Grafana authentication | When OAuth app is rotated | Both |
+| `grafana:githubClientSecret` | GitHub OAuth App Client Secret for Grafana authentication | Annually | Both |
+| `grafana:githubOrg` | GitHub organization for access control (e.g., "aphiria") | N/A | Both |
+| `grafana:adminUser` | GitHub username with Grafana admin privileges | N/A | Both |
+| `grafana:smtpHost` | SMTP server hostname for alert emails | When SMTP provider changes | Both (unused in preview) |
+| `grafana:smtpPort` | SMTP server port (typically 587) | N/A | Both (unused in preview) |
+| `grafana:smtpUser` | SMTP authentication username | When SMTP credentials rotate | Both (unused in preview) |
+| `grafana:smtpPassword` | SMTP authentication password | Quarterly | Both (unused in preview) |
+| `grafana:smtpFromAddress` | Email "From" address for alerts | N/A | Both (unused in preview) |
+| `grafana:alertEmail` | Email address to receive Grafana alerts | N/A | Both (unused in preview) |
+| `prometheus:authToken` | Bearer token for authenticating Prometheus to scrape /metrics endpoint | Annually | Both |
 
 **How Pulumi ESC works**:
 1. Secrets are stored in Pulumi Cloud at https://app.pulumi.com/[org]/settings/environments
@@ -234,6 +245,179 @@ pulumi env set aphiria.com/Production pulumiConfig."certmanager:digitaloceanDnsT
 - Rotate annually or if compromised
 
 **Cleanup**: Delete old token at https://cloud.digitalocean.com/account/api/tokens
+
+### grafana:githubClientId and grafana:githubClientSecret
+
+**Why this is needed**: Grafana uses GitHub OAuth for authentication, restricting access to members of the `aphiria` GitHub organization. This eliminates the need for separate username/password management.
+
+**Generate new OAuth App**:
+
+1. Navigate to https://github.com/organizations/aphiria/settings/applications
+2. Click "New OAuth App"
+3. Application name: `Grafana - aphiria.com`
+4. Homepage URL: `https://grafana.aphiria.com`
+5. Authorization callback URL: `https://grafana.aphiria.com/login/github`
+6. Click "Register application"
+7. Copy the **Client ID** (visible immediately)
+8. Click "Generate a new client secret"
+9. Copy the **Client Secret** (only shown once)
+
+**Configure in Pulumi ESC**:
+
+```bash
+# Navigate to Pulumi directory
+cd infrastructure/pulumi
+
+# Configure for Preview environment
+pulumi env set aphiria.com/Preview pulumiConfig."grafana:githubClientId" "YOUR_CLIENT_ID" --secret
+pulumi env set aphiria.com/Preview pulumiConfig."grafana:githubClientSecret" "YOUR_CLIENT_SECRET" --secret
+
+# Configure for Production environment
+pulumi env set aphiria.com/Production pulumiConfig."grafana:githubClientId" "YOUR_CLIENT_ID" --secret
+pulumi env set aphiria.com/Production pulumiConfig."grafana:githubClientSecret" "YOUR_CLIENT_SECRET" --secret
+```
+
+**Alternative: Via Pulumi ESC UI**:
+1. Navigate to https://app.pulumi.com/[your-org]/settings/environments
+2. Edit `aphiria.com/Preview` and `aphiria.com/Production`
+3. Update `pulumiConfig."grafana:githubClientId"` and `pulumiConfig."grafana:githubClientSecret"` (mark as secret)
+
+**Security Notes**:
+- Callback URL must match exactly (including `https://` and domain)
+- For preview environments, the callback URL pattern is `https://{PR}.pr-grafana.aphiria.com/login/github` (wildcard not supported, each PR gets unique Grafana instance)
+- Client secret only shown once - store securely in Pulumi ESC
+- Rotate annually or if compromised
+
+**Cleanup**: Delete old OAuth App at https://github.com/organizations/aphiria/settings/applications
+
+### grafana:githubOrg and grafana:adminUser
+
+**Why this is needed**: `githubOrg` restricts Grafana access to organization members only. `adminUser` grants one GitHub user full admin privileges (manage dashboards, users, data sources).
+
+**Configure in Pulumi ESC**:
+
+```bash
+# Navigate to Pulumi directory
+cd infrastructure/pulumi
+
+# Configure for Preview environment
+pulumi env set aphiria.com/Preview pulumiConfig."grafana:githubOrg" "aphiria"
+pulumi env set aphiria.com/Preview pulumiConfig."grafana:adminUser" "your-github-username"
+
+# Configure for Production environment
+pulumi env set aphiria.com/Production pulumiConfig."grafana:githubOrg" "aphiria"
+pulumi env set aphiria.com/Production pulumiConfig."grafana:adminUser" "your-github-username"
+```
+
+**Security Notes**:
+- Organization name is case-sensitive (must match GitHub exactly)
+- Admin user must be a member of the specified organization
+- These are not secrets (plain text values)
+
+### grafana:smtpHost, grafana:smtpPort, grafana:smtpUser, grafana:smtpPassword
+
+**Why this is needed**: Grafana sends email alerts when metrics exceed thresholds (e.g., high CPU usage, pod crashes). Uses Google Workspace SMTP with app-specific password for production monitoring.
+
+**Note**: SMTP is configured in preview environments but alerts are disabled (preview uses short-lived infrastructure).
+
+**Generate Google Workspace App Password**:
+
+1. Navigate to https://myaccount.google.com/apppasswords
+2. Sign in with your `admin@aphiria.com` Google Workspace account
+3. App name: `Grafana Alerts - aphiria.com`
+4. Click "Create"
+5. Copy the 16-character app password (shown once)
+   - Google displays it with spaces (e.g., `abcd efgh ijkl mnop`)
+   - Remove all spaces when using it (e.g., `abcdefghijklmnop`)
+
+**Configure in Pulumi ESC**:
+
+```bash
+# Navigate to Pulumi directory
+cd infrastructure/pulumi
+
+# Configure for Preview environment (SMTP configured but unused)
+pulumi env set aphiria.com/Preview pulumiConfig."grafana:smtpHost" "smtp.gmail.com" --secret
+pulumi env set aphiria.com/Preview pulumiConfig."grafana:smtpPort" "587"
+pulumi env set aphiria.com/Preview pulumiConfig."grafana:smtpUser" "admin@aphiria.com" --secret
+pulumi env set aphiria.com/Preview pulumiConfig."grafana:smtpPassword" "YOUR_APP_PASSWORD" --secret
+pulumi env set aphiria.com/Preview pulumiConfig."grafana:smtpFromAddress" "admin@aphiria.com"
+pulumi env set aphiria.com/Preview pulumiConfig."grafana:alertEmail" "admin@aphiria.com"
+
+# Configure for Production environment
+pulumi env set aphiria.com/Production pulumiConfig."grafana:smtpHost" "smtp.gmail.com" --secret
+pulumi env set aphiria.com/Production pulumiConfig."grafana:smtpPort" "587"
+pulumi env set aphiria.com/Production pulumiConfig."grafana:smtpUser" "admin@aphiria.com" --secret
+pulumi env set aphiria.com/Production pulumiConfig."grafana:smtpPassword" "YOUR_APP_PASSWORD" --secret
+pulumi env set aphiria.com/Production pulumiConfig."grafana:smtpFromAddress" "admin@aphiria.com"
+pulumi env set aphiria.com/Production pulumiConfig."grafana:alertEmail" "admin@aphiria.com"
+```
+
+**Alternative: Via Pulumi ESC UI**:
+1. Navigate to https://app.pulumi.com/[your-org]/settings/environments
+2. Edit `aphiria.com/Preview` and `aphiria.com/Production`
+3. Update SMTP configuration values (mark `smtpHost`, `smtpUser`, `smtpPassword` as secret)
+
+**Security Notes**:
+- Use Google Workspace app password (not main account password)
+- App passwords bypass 2FA (revoke immediately if compromised)
+- SMTP port 587 uses STARTTLS encryption
+- Gmail SMTP rate limits: 100 emails/day for free accounts, 2000/day for Workspace
+- Rotate app password quarterly or if compromised
+
+**Cleanup**: Revoke old app password at https://myaccount.google.com/apppasswords
+
+### prometheus:authToken
+
+**Why this is needed**: Prometheus needs to authenticate to the API's `/metrics` endpoint using Bearer token authentication. This prevents unauthorized access to application metrics.
+
+**Generate new token**:
+
+```bash
+# Generate a secure random token (32 bytes = 64 hex characters)
+openssl rand -hex 32
+# Example output: a1b2c3d4e5f6...
+
+# Alternative: Use base64 encoding (43 characters)
+openssl rand -base64 32
+# Example output: Xy9ZaBc...==
+```
+
+**Configure in Pulumi ESC**:
+
+```bash
+# Navigate to Pulumi directory
+cd infrastructure/pulumi
+
+# Configure for Preview environment
+pulumi env set aphiria.com/Preview pulumiConfig."prometheus:authToken" "YOUR_GENERATED_TOKEN" --secret
+
+# Verify it's set (shows [secret])
+pulumi env get aphiria.com/Preview
+
+# Configure for Production environment
+pulumi env set aphiria.com/Production pulumiConfig."prometheus:authToken" "YOUR_GENERATED_TOKEN" --secret
+```
+
+**Alternative: Via Pulumi ESC UI**:
+1. Navigate to https://app.pulumi.com/[your-org]/settings/environments
+2. Edit `aphiria.com/Preview` and `aphiria.com/Production`
+3. Update `pulumiConfig."prometheus:authToken"` with new token (mark as secret)
+
+**How it's used**:
+1. Pulumi injects token into Kubernetes Secret `PROMETHEUS_AUTH_TOKEN` (API environment variable)
+2. API's `PrometheusTokenHandler` validates Bearer token from `Authorization` header
+3. Prometheus ServiceMonitor configured with `bearerToken` from same Secret
+4. Only Prometheus can scrape `/metrics` endpoint with valid token
+
+**Security Notes**:
+- Token is NOT hashed - stored as plaintext in Pulumi ESC, injected as-is into Kubernetes Secret
+- API compares token using `hash_equals()` for timing-attack protection
+- Use minimum 32 bytes (256 bits) of entropy for cryptographic strength
+- Token transmitted over HTTPS only (TLS encryption in cluster)
+- Rotate annually or if compromised
+
+**Cleanup**: No cleanup needed (token is just a random value, not tied to external service)
 
 ## Emergency Rotation
 

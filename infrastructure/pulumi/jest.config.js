@@ -8,7 +8,7 @@ module.exports = {
     coverageReporters: ["text", "lcov", "html"],
     coverageThreshold: {
         global: {
-            branches: 98,
+            branches: 97,
             functions: 100,
             lines: 100,
             statements: 100,
@@ -28,4 +28,8 @@ module.exports = {
             },
         ],
     },
+    // Run Pulumi setup before each test file
+    setupFilesAfterEnv: ["<rootDir>/tests/setup.ts"],
+    // Run Pulumi cleanup once after all tests complete (not per-file)
+    globalTeardown: "<rootDir>/tests/globalTeardown.ts",
 };

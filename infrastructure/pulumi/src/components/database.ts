@@ -1,7 +1,30 @@
+import * as pulumi from "@pulumi/pulumi";
 import * as k8s from "@pulumi/kubernetes";
-import { PostgreSQLArgs, PostgreSQLResult } from "./types";
+import { Environment, PostgreSQLResult } from "./types";
 import { POSTGRES_PORT } from "./constants";
 import { buildLabels } from "./labels";
+
+/**
+ * Arguments for PostgreSQL component
+ */
+export interface PostgreSQLArgs {
+    /** Environment this database targets */
+    env: Environment;
+    /** Kubernetes namespace */
+    namespace: pulumi.Input<string>;
+    /** Enable persistent storage (false for dev-local, true for preview/production) */
+    persistentStorage: boolean;
+    /** Storage size (e.g., "10Gi") - only used if persistentStorage=true */
+    storageSize?: string;
+    /** Database user */
+    dbUser: string;
+    /** Database password (sensitive) */
+    dbPassword: pulumi.Input<string>;
+    /** Resource labels */
+    labels?: Record<string, string>;
+    /** Kubernetes provider */
+    provider: k8s.Provider;
+}
 
 /** Creates PostgreSQL deployment with environment-specific storage (hostPath for dev-local, cloud for preview/production) */
 export function createPostgreSQL(args: PostgreSQLArgs): PostgreSQLResult {

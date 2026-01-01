@@ -2,31 +2,16 @@ import { describe, it, expect, beforeAll } from "@jest/globals";
 import * as pulumi from "@pulumi/pulumi";
 import * as k8s from "@pulumi/kubernetes";
 import { createDBMigrationJob } from "../../src/components/db-migration";
+import { promiseOf } from "../test-utils";
 
 describe("createDBMigrationJob", () => {
     let k8sProvider: k8s.Provider;
 
     beforeAll(() => {
-        pulumi.runtime.setMocks({
-            newResource: (
-                args: pulumi.runtime.MockResourceArgs
-            ): { id: string; state: Record<string, unknown> } => {
-                return {
-                    id: args.inputs.name ? `${args.name}-id` : `${args.type}-id`,
-                    state: {
-                        ...args.inputs,
-                    },
-                };
-            },
-            call: (args: pulumi.runtime.MockCallArgs): Record<string, unknown> => {
-                return args.inputs;
-            },
-        });
-
         k8sProvider = new k8s.Provider("test", {});
     });
 
-    it("should create migration job without seeder", (done) => {
+    it("should create migration job without seeder", async () => {
         const job = createDBMigrationJob({
             env: "local",
             namespace: "migration-ns",
@@ -41,14 +26,15 @@ describe("createDBMigrationJob", () => {
 
         expect(job).toBeDefined();
 
-        pulumi.all([job.metadata.name, job.metadata.namespace]).apply(([name, namespace]) => {
-            expect(name).toBe("db-migration");
-            expect(namespace).toBe("migration-ns");
-            done();
-        });
+        const [name, namespace] = await Promise.all([
+            promiseOf(job.metadata.name),
+            promiseOf(job.metadata.namespace),
+        ]);
+        expect(name).toBe("db-migration");
+        expect(namespace).toBe("migration-ns");
     });
 
-    it("should create migration job with seeder", (done) => {
+    it("should create migration job with seeder", async () => {
         const job = createDBMigrationJob({
             env: "production",
             namespace: "prod-migration",
@@ -63,11 +49,12 @@ describe("createDBMigrationJob", () => {
 
         expect(job).toBeDefined();
 
-        pulumi.all([job.metadata.name, job.metadata.namespace]).apply(([name, namespace]) => {
-            expect(name).toBe("db-migration");
-            expect(namespace).toBe("prod-migration");
-            done();
-        });
+        const [name, namespace] = await Promise.all([
+            promiseOf(job.metadata.name),
+            promiseOf(job.metadata.namespace),
+        ]);
+        expect(name).toBe("db-migration");
+        expect(namespace).toBe("prod-migration");
     });
 
     it("should handle custom resource limits", () => {
@@ -96,7 +83,7 @@ describe("createDBMigrationJob", () => {
         expect(job).toBeDefined();
     });
 
-    it("should handle imagePullSecrets", (done) => {
+    it("should handle imagePullSecrets", async () => {
         const job = createDBMigrationJob({
             env: "production",
             namespace: "secure-ns",
@@ -112,13 +99,11 @@ describe("createDBMigrationJob", () => {
 
         expect(job).toBeDefined();
 
-        job.metadata.namespace.apply((namespace: string) => {
-            expect(namespace).toBe("secure-ns");
-            done();
-        });
+        const namespace = await promiseOf(job.metadata.namespace);
+        expect(namespace).toBe("secure-ns");
     });
 
-    it("should merge custom labels with default labels", (done) => {
+    it("should merge custom labels with default labels", async () => {
         const job = createDBMigrationJob({
             env: "local",
             namespace: "custom-migration",
@@ -137,15 +122,13 @@ describe("createDBMigrationJob", () => {
 
         expect(job).toBeDefined();
 
-        job.metadata.labels.apply((labels: any) => {
-            expect(labels).toMatchObject({
-                app: "db-migration",
-                "app.kubernetes.io/name": "db-migration",
-                "app.kubernetes.io/component": "database",
-                "custom-label": "custom-value",
-                environment: "testing",
-            });
-            done();
+        const labels = await promiseOf(job.metadata.labels);
+        expect(labels).toMatchObject({
+            app: "db-migration",
+            "app.kubernetes.io/name": "db-migration",
+            "app.kubernetes.io/component": "database",
+            "custom-label": "custom-value",
+            environment: "testing",
         });
     });
 
@@ -181,7 +164,7 @@ describe("createDBMigrationJob", () => {
         expect(job).toBeDefined();
     });
 
-    it("should have patchForce annotation to prevent SSA conflicts", (done) => {
+    it("should have patchForce annotation to prevent SSA conflicts", async () => {
         const job = createDBMigrationJob({
             env: "production",
             namespace: "default",
@@ -196,11 +179,9 @@ describe("createDBMigrationJob", () => {
 
         expect(job).toBeDefined();
 
-        job.metadata.annotations.apply((annotations: any) => {
-            expect(annotations).toBeDefined();
-            expect(annotations["pulumi.com/patchForce"]).toBe("true");
-            done();
-        });
+        const annotations = await promiseOf(job.metadata.annotations);
+        expect(annotations).toBeDefined();
+        expect(annotations["pulumi.com/patchForce"]).toBe("true");
     });
 
     /**
@@ -218,7 +199,7 @@ describe("createDBMigrationJob", () => {
      * Manual verification: Run `pulumi preview --stack production` after Job completes
      * and confirm no drift is reported for the missing Job resource.
      */
-    it("should create ephemeral Job with auto-cleanup configuration", (done) => {
+    it("should create ephemeral Job with auto-cleanup configuration", async () => {
         const job = createDBMigrationJob({
             env: "production",
             namespace: "default",
@@ -234,11 +215,12 @@ describe("createDBMigrationJob", () => {
         expect(job).toBeDefined();
 
         // Verify Job has ttlSecondsAfterFinished set for auto-cleanup
-        pulumi.all([job.metadata.name, job.spec.ttlSecondsAfterFinished]).apply(([name, ttl]) => {
-            expect(name).toBe("db-migration");
-            expect(ttl).toBe(0); // Immediate cleanup after completion
-            done();
-        });
+        const [name, ttl] = await Promise.all([
+            promiseOf(job.metadata.name),
+            promiseOf(job.spec.ttlSecondsAfterFinished),
+        ]);
+        expect(name).toBe("db-migration");
+        expect(ttl).toBe(0); // Immediate cleanup after completion
 
         // NOTE: ignoreChanges: ["*"] is set in db-migration.ts:111
         // This prevents drift detection from reporting Job deletion as drift

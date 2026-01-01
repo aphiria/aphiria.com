@@ -1,7 +1,47 @@
+import * as pulumi from "@pulumi/pulumi";
 import * as k8s from "@pulumi/kubernetes";
-import { DBMigrationJobArgs } from "./types";
+import { Environment } from "./types";
 import { POSTGRES_PORT } from "./constants";
 import { buildLabels } from "./labels";
+
+/**
+ * Arguments for database migration job component
+ */
+export interface DBMigrationJobArgs {
+    /** Environment this migration targets */
+    env?: Environment;
+    /** Kubernetes namespace */
+    namespace: pulumi.Input<string>;
+    /** Docker image containing migrations */
+    image: string;
+    /** Database host */
+    dbHost: pulumi.Input<string>;
+    /** Database name */
+    dbName: string;
+    /** Database user */
+    dbUser: pulumi.Input<string>;
+    /** Database password (sensitive) */
+    dbPassword: pulumi.Input<string>;
+    /** Run LexemeSeeder after migrations */
+    runSeeder: boolean;
+    /** Optional image pull secrets for private registries */
+    imagePullSecrets?: pulumi.Input<string>[];
+    /** Optional resource limits for containers */
+    resources?: {
+        migration?: {
+            requests?: { cpu?: string; memory?: string };
+            limits?: { cpu?: string; memory?: string };
+        };
+        initContainer?: {
+            requests?: { cpu?: string; memory?: string };
+            limits?: { cpu?: string; memory?: string };
+        };
+    };
+    /** Resource labels */
+    labels?: Record<string, string>;
+    /** Kubernetes provider */
+    provider: k8s.Provider;
+}
 
 /** Creates Phinx migration job (waits for DB, runs migrations, optionally runs LexemeSeeder) */
 export function createDBMigrationJob(args: DBMigrationJobArgs): k8s.batch.v1.Job {

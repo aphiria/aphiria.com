@@ -1,0 +1,49 @@
+<?xml version="1.0"?>
+<psalm
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns="https://getpsalm.org/schema/config"
+    xsi:schemaLocation="https://getpsalm.org/schema/config vendor/vimeo/psalm/config.xsd"
+    errorLevel="1"
+    resolveFromConfigFile="true"
+    findUnusedBaselineEntry="true"
+    findUnusedCode="false"
+    findUnusedPsalmSuppress="true"
+>
+    <projectFiles>
+        <directory name="src" />
+        <directory name="tests" />
+        <file name="aphiria" />
+        <file name="config.php" />
+        <file name="localhost-router.php" />
+        <file name="public/index.php" />
+        <ignoreFiles>
+            <directory name="vendor" />
+        </ignoreFiles>
+    </projectFiles>
+    <issueHandlers>
+        <ClassMustBeFinal>
+            <errorLevel type="suppress">
+                <directory name="src" />
+                <directory name="tests" />
+            </errorLevel>
+        </ClassMustBeFinal>
+        <MissingOverrideAttribute>
+            <errorLevel type="suppress">
+                <directory name="src" />
+                <directory name="tests" />
+            </errorLevel>
+        </MissingOverrideAttribute>
+        <NoInterfaceProperties>
+            <errorLevel type="suppress">
+                <directory name="src" />
+                <directory name="tests" />
+            </errorLevel>
+        </NoInterfaceProperties>
+        <PropertyNotSetInConstructor>
+            <errorLevel type="suppress">
+                <directory name="src" />
+                <directory name="tests" />
+            </errorLevel>
+        </PropertyNotSetInConstructor>
+    </issueHandlers>
+</psalm>

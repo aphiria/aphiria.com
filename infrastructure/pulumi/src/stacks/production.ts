@@ -50,6 +50,7 @@ createStack(
                     { name: "@", resourceName: "production-root-dns" },
                     { name: "www", resourceName: "production-www-dns" },
                     { name: "api", resourceName: "production-api-dns" },
+                    { name: "grafana", resourceName: "production-grafana-dns" },
                 ],
                 ttl: 300,
             },
@@ -64,6 +65,36 @@ createStack(
             cookieDomain: ".aphiria.com",
             webPodDisruptionBudget: { minAvailable: 1 },
             apiPodDisruptionBudget: { minAvailable: 1 },
+        },
+        monitoring: {
+            prometheus: {
+                authToken: stackConfig.prometheus.authToken,
+                storageSize: "10Gi",
+                scrapeInterval: "15s",
+                retentionTime: "7d",
+                resources: {
+                    requests: { cpu: "500m", memory: "1Gi" },
+                    limits: { cpu: "1", memory: "2Gi" },
+                },
+            },
+            grafana: {
+                storageSize: "5Gi",
+                hostname: "grafana.aphiria.com",
+                githubOAuth: {
+                    clientId: stackConfig.grafana.githubClientId,
+                    clientSecret: stackConfig.grafana.githubClientSecret,
+                    org: stackConfig.grafana.githubOrg,
+                    adminUser: stackConfig.grafana.adminUser,
+                },
+                smtp: {
+                    host: stackConfig.grafana.smtpHost,
+                    port: stackConfig.grafana.smtpPort,
+                    user: stackConfig.grafana.smtpUser,
+                    password: stackConfig.grafana.smtpPassword,
+                    fromAddress: stackConfig.grafana.smtpFromAddress,
+                    alertEmail: stackConfig.grafana.alertEmail,
+                },
+            },
         },
     },
     k8sProvider

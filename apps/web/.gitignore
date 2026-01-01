@@ -1,0 +1,5 @@
+node_modules/
+public/docs/
+public/index.html
+public/rev-manifest.json
+yarn-error.log

@@ -11,4 +11,4 @@ WORKDIR /usr/share/nginx/html
 RUN rm -rf /usr/share/nginx/html/*
 
 # Copy the web source files from the build image
-COPY --from=build /app/public-web .
+COPY --from=build /app/apps/web/public .

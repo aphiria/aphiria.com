@@ -1,0 +1,86 @@
+{
+    "name": "aphiria/aphiria.com",
+    "description": "The Aphiria website",
+    "keywords": [
+        "PHP",
+        "Aphiria"
+    ],
+    "authors": [
+        {
+            "name": "David Young",
+            "email": "dave@aphiria.com",
+            "role": "Architect"
+        }
+    ],
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "App\\": "src"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "App\\Tests\\": "tests"
+        }
+    },
+    "require": {
+        "aphiria/aphiria": "1.x-dev",
+        "ext-apcu": "*",
+        "ext-dom": "*",
+        "ext-libxml": "*",
+        "ext-mbstring": "*",
+        "ext-pdo": "*",
+        "ext-pgsql": "*",
+        "league/commonmark": "^2.6",
+        "league/flysystem": "^3.0",
+        "php": ">=8.4",
+        "promphp/prometheus_client_php": "^2.14",
+        "robmorgan/phinx": "0.x-dev",
+        "symfony/dotenv": "^8.0"
+    },
+    "require-dev": {
+        "friendsofphp/php-cs-fixer": "^3.5",
+        "phpunit/phpunit": "^11.5-dev",
+        "vimeo/psalm": "6.x-dev"
+    },
+    "scripts": {
+        "phpcs-test": "@phpcs-fix --dry-run",
+        "phpcs-fix": "php-cs-fixer fix --config=.php-cs-fixer.dist.php -v --diff",
+        "phpunit": "php vendor/phpunit/phpunit/phpunit --coverage-clover ./.coverage/clover.xml",
+        "post-root-package-install": [
+            "php -r \"file_exists('.env') || copy('.env.dist', '.env');\""
+        ],
+        "post-create-project-cmd": [
+            "php -r \"echo 'Important: make ' . __DIR__ . DIRECTORY_SEPARATOR . 'tmp writable' . PHP_EOL;\""
+        ],
+        "post-install-cmd": [
+            "php -r \"shell_exec((file_exists(getcwd() . '/composer.phar') ? PHP_BINARY . ' composer.phar' : 'composer') . ' dump-autoload -o');\"",
+            "php -r \"file_exists('.env') || copy('.env.dist', '.env');\""
+        ],
+        "post-update-cmd": [
+            "php -r \"shell_exec((file_exists(getcwd() . '/composer.phar') ? PHP_BINARY . ' composer.phar' : 'composer') . ' dump-autoload -o');\"",
+            "php -r \"file_exists('.env') || copy('.env.dist', '.env');\""
+        ],
+        "psalm": [
+            "Composer\\Config::disableProcessTimeout",
+            "php vendor/vimeo/psalm/psalm"
+        ],
+        "test": [
+            "@phpunit",
+            "@phpcs-test",
+            "@psalm"
+        ]
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-master": "1.0.x-dev"
+        }
+    },
+    "prefer-stable": true,
+    "minimum-stability": "dev",
+    "config": {
+        "allow-plugins": {
+            "composer/package-versions-deprecated": false
+        }
+    }
+}

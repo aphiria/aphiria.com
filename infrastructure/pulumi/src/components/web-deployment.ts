@@ -1,8 +1,49 @@
 import * as pulumi from "@pulumi/pulumi";
 import * as k8s from "@pulumi/kubernetes";
-import { WebDeploymentArgs, WebDeploymentResult } from "./types";
+import { CommonDeploymentArgs, PodDisruptionBudgetConfig, WebDeploymentResult } from "./types";
 import { checksum } from "./utils";
 import { buildLabels } from "./labels";
+
+/**
+ * Arguments for web deployment component
+ */
+export interface WebDeploymentArgs extends CommonDeploymentArgs {
+    /** Number of replicas (1 for dev-local/preview, 2 for production) */
+    replicas: number;
+    /** Docker image reference (can be tag or digest) */
+    image: string;
+    /** JavaScript configuration data for js-config ConfigMap */
+    jsConfigData: Record<string, string>;
+    /** Base URL for the web application */
+    baseUrl: string;
+    /** Log level (e.g., "warning", "debug", "info") */
+    logLevel: string;
+    /** PR number (optional, preview environments only) */
+    prNumber?: string;
+    /** Additional custom environment variables */
+    extraVars?: Record<string, pulumi.Input<string>>;
+    /** Optional image pull secrets for private registries */
+    imagePullSecrets?: pulumi.Input<string>[];
+    /** Optional resource limits */
+    resources?: {
+        requests?: {
+            cpu?: string;
+            memory?: string;
+        };
+        limits?: {
+            cpu?: string;
+            memory?: string;
+        };
+    };
+    /** Optional PodDisruptionBudget for high availability (production only) */
+    podDisruptionBudget?: PodDisruptionBudgetConfig;
+    /** @deprecated Component calculates checksum internally. ConfigMap checksum for pod annotations */
+    configChecksum?: string;
+    /** @deprecated Use envConfig instead. ConfigMap references to load as environment variables */
+    configMapRefs?: pulumi.Input<string>[];
+    /** @deprecated Use envConfig instead. Secret references to load as environment variables */
+    secretRefs?: pulumi.Input<string>[];
+}
 
 /** Creates nginx deployment for static site with js-config ConfigMap */
 export function createWebDeployment(args: WebDeploymentArgs): WebDeploymentResult {

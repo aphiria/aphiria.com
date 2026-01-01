@@ -1,6 +1,29 @@
+import * as pulumi from "@pulumi/pulumi";
 import * as k8s from "@pulumi/kubernetes";
-import { DatabaseCreationJobArgs } from "./types";
+import { Environment } from "./types";
 import { buildLabels } from "./labels";
+
+/**
+ * Arguments for database creation job component
+ */
+export interface DatabaseCreationJobArgs {
+    /** Environment this job targets */
+    env: Environment;
+    /** Kubernetes namespace */
+    namespace: pulumi.Input<string>;
+    /** Database name to create */
+    databaseName: string;
+    /** PostgreSQL host */
+    dbHost: pulumi.Input<string>;
+    /** PostgreSQL admin user (must have CREATE DATABASE privilege) */
+    dbAdminUser: pulumi.Input<string>;
+    /** PostgreSQL admin password (sensitive) */
+    dbAdminPassword: pulumi.Input<string>;
+    /** Resource labels */
+    labels?: Record<string, string>;
+    /** Kubernetes provider */
+    provider: k8s.Provider;
+}
 
 /**
  * Creates a Kubernetes Job to create a PostgreSQL database.

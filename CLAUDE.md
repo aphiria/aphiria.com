@@ -59,6 +59,76 @@ const newLabels = [...existingLabels.filter(l => l !== 'my-label'), 'my-label'];
 - ✅ Explain WHY you think it's safe to delete
 - ❌ Never run `gh secret remove` or `gh api -X DELETE` without asking
 
+### Infrastructure Health Checks
+
+**Before modifying infrastructure that depends on other stacks:**
+
+1. **Verify stack exists and is healthy**:
+   ```bash
+   pulumi stack ls  # Check stack exists
+   pulumi refresh --stack <stack-name>  # Verify connectivity
+   ```
+
+2. **Check stack outputs are accessible**:
+   ```bash
+   pulumi stack output --stack <stack-name>
+   ```
+
+3. **For cross-stack references**: Ensure base stack is reachable before adding dependencies
+
+**For API changes:**
+- Always verify interface/type definitions before implementing
+- Check official docs for parameter names and types
+- Don't assume - validate with `grep` or type checking
+
+**Decision Framework for Infrastructure Issues:**
+1. Research official solutions first (docs, GitHub issues)
+2. Verify the problem exists (reproduce, check logs)
+3. Test proposed fix in isolation before applying
+4. **Never** claim infrastructure needs destruction without evidence
+5. Check if a simple credential refresh or config update can fix the issue
+
+### Testing Philosophy: Design for Testability
+
+**CRITICAL**: When testing is hard, it's almost always a code design problem, not a testing framework problem.
+
+**Core Principle**: Don't fight the framework - fix the code design.
+
+**Testability Patterns**:
+- ✅ **Dependency Injection**: Accept dependencies as parameters rather than creating them internally
+- ✅ **Configuration Flags**: Add optional parameters (marked `@internal`) that allow tests to bypass external dependencies
+- ✅ **Separation of Concerns**: Separate I/O operations from business logic
+- ✅ **Pure Functions**: Maximize pure functions that are easy to test
+
+**Anti-Patterns to Avoid**:
+- ❌ Don't spend excessive time trying to mock external APIs - make code testable instead
+- ❌ Don't assume testing framework limitations can always be worked around
+- ❌ Don't try multiple workarounds without understanding the root cause
+- ❌ Don't write code that requires network calls, file I/O, or external services to test
+
+**When Stuck on Testing**:
+1. **Step back**: Ask "Is the code designed to be testable?"
+2. **Consider design**: "Can I add a parameter to make this testable?"
+3. **Research limitations**: "Are there known limitations in the testing framework?"
+4. **Root cause**: "What's the fundamental problem here?"
+
+**Example - Network Calls in Tests**:
+```typescript
+// ❌ BAD: Hard to test - requires real network call
+const kubeconfig = cluster.name.apply((name) =>
+    digitalocean.getKubernetesCluster({ name }).then((c) => c.kubeConfigs[0].rawConfig)
+);
+
+// ✅ GOOD: Testable - accepts flag to use static config
+const kubeconfig = args.useStaticKubeconfig
+    ? cluster.kubeConfigs[0].rawConfig  // Tests use this
+    : cluster.name.apply((name) =>       // Production uses this
+        digitalocean.getKubernetesCluster({ name }).then((c) => c.kubeConfigs[0].rawConfig)
+    );
+```
+
+**Key Insight**: If you find yourself fighting the testing framework, you're solving the wrong problem. The real problem is code that wasn't designed for testability.
+
 ---
 
 ## Architecture Overview
@@ -109,14 +179,15 @@ cd infrastructure/pulumi && npm run build
 **Directory structure**:
 ```
 infrastructure/pulumi/
-├── src/              # TypeScript source
-│   ├── components/
-│   ├── shared/
-│   ├── stacks/
-│   └── index.ts
-├── tests/            # Jest tests
+├── coverage/         # Test coverage (gitignored)
+├── dashboards/       # Grafana JSON dashboard definitions
 ├── dist/             # Compiled JavaScript (gitignored)
-└── coverage/         # Test coverage (gitignored)
+├── src/              # TypeScript source
+│   ├── components/   # Pulumi components
+│   ├── stacks/       # Pulumi stacks
+│   |   └── lib/      # Shared stack code
+│   └── index.ts
+└── tests/            # Jest tests
 ```
 
 **Git commits**: NEVER commit `dist/` or `coverage/` (gitignored). Only commit `src/` and `tests/`
@@ -133,11 +204,33 @@ infrastructure/pulumi/
 
 ### Pulumi Component Reusability
 
-**CRITICAL**: All reusable infrastructure logic MUST be in components, not stacks.
+**CRITICAL**: Components MUST be environment-agnostic and reusable. Stacks contain environment-specific logic.
 
-- ✅ Components: Shared patterns, ConfigMaps, hardcoded constants
-- ✅ Stacks: Configuration parameters only
-- ❌ Never duplicate infrastructure code across stacks
+**Components (environment-agnostic)**:
+- ✅ Shared infrastructure patterns (Deployments, Services, ConfigMaps)
+- ✅ Accept configuration via function parameters
+- ✅ No hardcoded environment names ("local", "preview", "production")
+- ✅ No conditional logic based on environment (`if (env === "local")`)
+- ❌ Never put environment-specific decisions in components
+
+**Stacks (environment-specific)**:
+- ✅ Configuration parameters and secrets
+- ✅ Environment-specific resource creation (e.g., install CRDs for local only)
+- ✅ Conditional logic based on environment needs
+- ✅ Pass environment-agnostic components the data they need
+
+**Example**:
+```typescript
+// ❌ BAD: Environment logic in component
+export function createDeployment(args: DeploymentArgs) {
+    const replicas = args.env === "local" ? 1 : 3; // NO!
+}
+
+// ✅ GOOD: Environment logic in stack, component accepts parameter
+export function createDeployment(args: DeploymentArgs) {
+    const replicas = args.replicas; // YES!
+}
+```
 
 ### Kubernetes Resource Management
 
@@ -279,7 +372,7 @@ Write tests FIRST (TDD).
 
 ### PHP
 
-- PSR-4: `App\` → `src/`
+- PSR-4: `App\` → `apps/api/src/`
 - PSR-12 coding style
 - `declare(strict_types=1);` in EVERY file
 - Use `readonly` properties, value objects, enums
@@ -352,6 +445,18 @@ Write tests FIRST (TDD).
 3. Test: `phinx migrate` + `phinx rollback`
 
 ### Debugging
+
+**Local (Minikube)**:
+- **FIRST**: Check minikube tunnel is running: `ps aux | grep "minikube tunnel"`
+  - If not running: `minikube tunnel` (requires sudo password)
+  - Without tunnel, LoadBalancer services won't be accessible at 127.0.0.1
+- Logs: `kubectl logs -f deployment/api`
+- DB: `kubectl port-forward service/db 5432:5432`
+- Shell: `kubectl exec -it deployment/api -- /bin/bash`
+- Check Gateway: `kubectl get gateway -A`
+- Check HTTPRoutes: `kubectl get httproute -A`
+
+**Remote (Preview/Production)**:
 - Logs: `kubectl logs -f deployment/api`
 - DB: `kubectl port-forward service/db 5432:5432`
 - Shell: `kubectl exec -it deployment/api -- /bin/bash`

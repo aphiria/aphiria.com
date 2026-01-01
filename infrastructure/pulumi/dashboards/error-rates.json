@@ -1,0 +1,496 @@
+{
+    "uid": "error-rates",
+    "title": "Error Rates & Tracking",
+    "tags": ["api", "errors", "http"],
+    "timezone": "browser",
+    "schemaVersion": 38,
+    "version": 1,
+    "refresh": "30s",
+    "time": {
+        "from": "now-1h",
+        "to": "now"
+    },
+    "templating": {
+        "list": [
+            {
+                "name": "namespace",
+                "type": "query",
+                "label": "Namespace",
+                "query": "label_values(app_http_request_duration_seconds_count, namespace)",
+                "datasource": {
+                    "type": "prometheus",
+                    "uid": "prometheus"
+                },
+                "current": {
+                    "text": "default",
+                    "value": "default"
+                },
+                "refresh": 1,
+                "multi": false,
+                "includeAll": false
+            }
+        ]
+    },
+    "panels": [
+        {
+            "id": 1,
+            "type": "stat",
+            "title": "Error Rate (5xx)",
+            "gridPos": {
+                "x": 0,
+                "y": 0,
+                "w": 8,
+                "h": 4
+            },
+            "targets": [
+                {
+                    "expr": "(sum(rate(app_http_request_duration_seconds_count{namespace=\"$namespace\", status=~\"5..\"}[5m])) or vector(0)) / sum(rate(app_http_request_duration_seconds_count{namespace=\"$namespace\"}[5m])) * 100",
+                    "refId": "A",
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "prometheus"
+                    }
+                }
+            ],
+            "options": {
+                "graphMode": "area",
+                "colorMode": "value",
+                "justifyMode": "center",
+                "textMode": "auto"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "unit": "percent",
+                    "decimals": 2,
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "value": null,
+                                "color": "green"
+                            },
+                            {
+                                "value": 0.1,
+                                "color": "yellow"
+                            },
+                            {
+                                "value": 1,
+                                "color": "orange"
+                            },
+                            {
+                                "value": 5,
+                                "color": "red"
+                            }
+                        ]
+                    }
+                }
+            }
+        },
+        {
+            "id": 2,
+            "type": "stat",
+            "title": "Client Error Rate (4xx)",
+            "gridPos": {
+                "x": 8,
+                "y": 0,
+                "w": 8,
+                "h": 4
+            },
+            "targets": [
+                {
+                    "expr": "(sum(rate(app_http_request_duration_seconds_count{namespace=\"$namespace\", status=~\"4..\"}[5m])) or vector(0)) / sum(rate(app_http_request_duration_seconds_count{namespace=\"$namespace\"}[5m])) * 100",
+                    "refId": "A",
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "prometheus"
+                    }
+                }
+            ],
+            "options": {
+                "graphMode": "area",
+                "colorMode": "value",
+                "justifyMode": "center",
+                "textMode": "auto"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "unit": "percent",
+                    "decimals": 2,
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "value": null,
+                                "color": "green"
+                            },
+                            {
+                                "value": 5,
+                                "color": "yellow"
+                            },
+                            {
+                                "value": 10,
+                                "color": "orange"
+                            }
+                        ]
+                    }
+                }
+            }
+        },
+        {
+            "id": 3,
+            "type": "stat",
+            "title": "Success Rate",
+            "gridPos": {
+                "x": 16,
+                "y": 0,
+                "w": 8,
+                "h": 4
+            },
+            "targets": [
+                {
+                    "expr": "sum(rate(app_http_request_duration_seconds_count{namespace=\"$namespace\", status=~\"2..\"}[5m])) / sum(rate(app_http_request_duration_seconds_count{namespace=\"$namespace\"}[5m])) * 100",
+                    "refId": "A",
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "prometheus"
+                    }
+                }
+            ],
+            "options": {
+                "graphMode": "area",
+                "colorMode": "value",
+                "justifyMode": "center",
+                "textMode": "auto"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "unit": "percent",
+                    "decimals": 2,
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "value": null,
+                                "color": "red"
+                            },
+                            {
+                                "value": 95,
+                                "color": "yellow"
+                            },
+                            {
+                                "value": 99,
+                                "color": "green"
+                            }
+                        ]
+                    }
+                }
+            }
+        },
+        {
+            "id": 4,
+            "type": "timeseries",
+            "title": "Error Rate Over Time",
+            "gridPos": {
+                "x": 0,
+                "y": 4,
+                "w": 12,
+                "h": 8
+            },
+            "targets": [
+                {
+                    "expr": "(sum(rate(app_http_request_duration_seconds_count{namespace=\"$namespace\", status=~\"5..\"}[5m])) or vector(0)) / sum(rate(app_http_request_duration_seconds_count{namespace=\"$namespace\"}[5m])) * 100",
+                    "refId": "A",
+                    "legendFormat": "5xx errors",
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "prometheus"
+                    }
+                },
+                {
+                    "expr": "(sum(rate(app_http_request_duration_seconds_count{namespace=\"$namespace\", status=~\"4..\"}[5m])) or vector(0)) / sum(rate(app_http_request_duration_seconds_count{namespace=\"$namespace\"}[5m])) * 100",
+                    "refId": "B",
+                    "legendFormat": "4xx errors",
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "prometheus"
+                    }
+                }
+            ],
+            "fieldConfig": {
+                "defaults": {
+                    "unit": "percent",
+                    "color": {
+                        "mode": "palette-classic"
+                    },
+                    "custom": {
+                        "drawStyle": "line",
+                        "lineInterpolation": "smooth",
+                        "fillOpacity": 20,
+                        "showPoints": "never",
+                        "axisPlacement": "auto"
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "5xx errors"
+                        },
+                        "properties": [
+                            {
+                                "id": "color",
+                                "value": {
+                                    "mode": "fixed",
+                                    "fixedColor": "red"
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "4xx errors"
+                        },
+                        "properties": [
+                            {
+                                "id": "color",
+                                "value": {
+                                    "mode": "fixed",
+                                    "fixedColor": "orange"
+                                }
+                            }
+                        ]
+                    }
+                ]
+            }
+        },
+        {
+            "id": 5,
+            "type": "timeseries",
+            "title": "Requests by Status Code",
+            "gridPos": {
+                "x": 12,
+                "y": 4,
+                "w": 12,
+                "h": 8
+            },
+            "targets": [
+                {
+                    "expr": "sum(rate(app_http_request_duration_seconds_count{namespace=\"$namespace\"}[5m])) by (status)",
+                    "refId": "A",
+                    "legendFormat": "{{status}}",
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "prometheus"
+                    }
+                }
+            ],
+            "fieldConfig": {
+                "defaults": {
+                    "unit": "reqps",
+                    "color": {
+                        "mode": "palette-classic"
+                    },
+                    "custom": {
+                        "drawStyle": "line",
+                        "lineInterpolation": "smooth",
+                        "fillOpacity": 20,
+                        "showPoints": "never",
+                        "axisPlacement": "auto"
+                    }
+                }
+            }
+        },
+        {
+            "id": 6,
+            "type": "table",
+            "title": "Error Breakdown by Endpoint",
+            "gridPos": {
+                "x": 0,
+                "y": 12,
+                "w": 12,
+                "h": 8
+            },
+            "targets": [
+                {
+                    "expr": "(sum(rate(app_http_request_duration_seconds_count{namespace=\"$namespace\", status=~\"5..\"}[5m])) by (exported_endpoint)) or vector(0)",
+                    "refId": "A",
+                    "format": "table",
+                    "instant": true,
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "prometheus"
+                    }
+                },
+                {
+                    "expr": "(sum(rate(app_http_request_duration_seconds_count{namespace=\"$namespace\", status=~\"4..\"}[5m])) by (exported_endpoint)) or vector(0)",
+                    "refId": "B",
+                    "format": "table",
+                    "instant": true,
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "prometheus"
+                    }
+                },
+                {
+                    "expr": "sum(rate(app_http_request_duration_seconds_count{namespace=\"$namespace\"}[5m])) by (exported_endpoint)",
+                    "refId": "C",
+                    "format": "table",
+                    "instant": true,
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "prometheus"
+                    }
+                }
+            ],
+            "transformations": [
+                {
+                    "id": "merge"
+                },
+                {
+                    "id": "organize",
+                    "options": {
+                        "renameByName": {
+                            "exported_endpoint": "Path",
+                            "Value #A": "5xx/s",
+                            "Value #B": "4xx/s",
+                            "Value #C": "Total/s"
+                        }
+                    }
+                }
+            ],
+            "options": {
+                "showHeader": true,
+                "sortBy": [
+                    {
+                        "displayName": "5xx/s",
+                        "desc": true
+                    }
+                ]
+            },
+            "fieldConfig": {
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byRegexp",
+                            "options": ".*xx/s|Total/s"
+                        },
+                        "properties": [
+                            {
+                                "id": "unit",
+                                "value": "reqps"
+                            },
+                            {
+                                "id": "decimals",
+                                "value": 3
+                            }
+                        ]
+                    }
+                ]
+            }
+        },
+        {
+            "id": 7,
+            "type": "table",
+            "title": "Error Breakdown by Status Code",
+            "gridPos": {
+                "x": 12,
+                "y": 12,
+                "w": 12,
+                "h": 8
+            },
+            "targets": [
+                {
+                    "expr": "sum(rate(app_http_request_duration_seconds_count{namespace=\"$namespace\"}[5m])) by (status, exported_endpoint)",
+                    "refId": "A",
+                    "format": "table",
+                    "instant": true,
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "prometheus"
+                    }
+                },
+                {
+                    "expr": "sum(increase(app_http_request_duration_seconds_count{namespace=\"$namespace\"}[1h])) by (status, exported_endpoint)",
+                    "refId": "B",
+                    "format": "table",
+                    "instant": true,
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "prometheus"
+                    }
+                }
+            ],
+            "transformations": [
+                {
+                    "id": "merge"
+                },
+                {
+                    "id": "organize",
+                    "options": {
+                        "renameByName": {
+                            "exported_endpoint": "Path",
+                            "status": "Status",
+                            "Value #A": "Rate (req/s)",
+                            "Value #B": "Count (1h)"
+                        }
+                    }
+                }
+            ],
+            "options": {
+                "showHeader": true,
+                "sortBy": [
+                    {
+                        "displayName": "Count (1h)",
+                        "desc": true
+                    }
+                ]
+            },
+            "fieldConfig": {
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "Rate (req/s)"
+                        },
+                        "properties": [
+                            {
+                                "id": "unit",
+                                "value": "reqps"
+                            },
+                            {
+                                "id": "decimals",
+                                "value": 3
+                            }
+                        ]
+                    },
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "Count (1h)"
+                        },
+                        "properties": [
+                            {
+                                "id": "unit",
+                                "value": "short"
+                            },
+                            {
+                                "id": "decimals",
+                                "value": 0
+                            }
+                        ]
+                    }
+                ]
+            }
+        }
+    ]
+}

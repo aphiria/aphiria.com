@@ -32,6 +32,10 @@ export function createKubernetesCluster(args: KubernetesClusterArgs): Kubernetes
         }
     );
 
+    // Use kubeconfig directly from cluster resource
+    // The cluster resource already fetches fresh kubeconfig on every pulumi operation
+    // Previous approach using getKubernetesCluster() during .apply() caused preview failures
+    // when cluster didn't exist yet (e.g., after destroy or initial deployment)
     const kubeconfig = cluster.kubeConfigs[0].rawConfig;
 
     // Create Kubernetes provider for this cluster

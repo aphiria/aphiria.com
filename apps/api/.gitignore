@@ -1,0 +1,8 @@
+.env
+!.env.dist
+.coverage/
+.php-cs-fixer.cache
+.phpunit.result.cache
+composer.phar
+phpunit.phar
+vendor/

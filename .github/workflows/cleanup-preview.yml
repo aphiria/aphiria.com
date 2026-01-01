@@ -36,9 +36,8 @@ jobs:
         uses: pulumi/actions@v5
 
       - name: Install Pulumi dependencies
-        run: |
-          cd infrastructure/pulumi
-          npm install
+        working-directory: infrastructure/pulumi
+        run: npm install
 
       - name: Configure kubeconfig from preview-base stack
         id: kubeconfig

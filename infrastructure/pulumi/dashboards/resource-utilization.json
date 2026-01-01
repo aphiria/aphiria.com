@@ -1,0 +1,422 @@
+{
+    "uid": "resource-utilization",
+    "title": "Resource Utilization",
+    "tags": ["kubernetes", "resources", "capacity"],
+    "timezone": "browser",
+    "schemaVersion": 38,
+    "version": 1,
+    "refresh": "30s",
+    "time": {
+        "from": "now-1h",
+        "to": "now"
+    },
+    "templating": {
+        "list": [
+            {
+                "name": "namespace",
+                "type": "query",
+                "label": "Namespace",
+                "query": "label_values(kube_pod_info, namespace)",
+                "datasource": {
+                    "type": "prometheus",
+                    "uid": "prometheus"
+                },
+                "current": {
+                    "text": "All",
+                    "value": "$__all"
+                },
+                "refresh": 1,
+                "multi": false,
+                "includeAll": true
+            }
+        ]
+    },
+    "panels": [
+        {
+            "id": 1,
+            "type": "stat",
+            "title": "Total CPU Requests",
+            "gridPos": {
+                "x": 0,
+                "y": 0,
+                "w": 6,
+                "h": 4
+            },
+            "targets": [
+                {
+                    "expr": "sum(kube_pod_container_resource_requests{resource=\"cpu\", namespace=~\"$namespace\"})",
+                    "refId": "A",
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "prometheus"
+                    }
+                }
+            ],
+            "options": {
+                "graphMode": "none",
+                "colorMode": "value",
+                "justifyMode": "center",
+                "textMode": "auto"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "unit": "short",
+                    "decimals": 2,
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "value": null,
+                                "color": "blue"
+                            }
+                        ]
+                    }
+                }
+            }
+        },
+        {
+            "id": 2,
+            "type": "stat",
+            "title": "Total Memory Requests",
+            "gridPos": {
+                "x": 6,
+                "y": 0,
+                "w": 6,
+                "h": 4
+            },
+            "targets": [
+                {
+                    "expr": "sum(kube_pod_container_resource_requests{resource=\"memory\", namespace=~\"$namespace\"})",
+                    "refId": "A",
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "prometheus"
+                    }
+                }
+            ],
+            "options": {
+                "graphMode": "none",
+                "colorMode": "value",
+                "justifyMode": "center",
+                "textMode": "auto"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "unit": "bytes",
+                    "decimals": 2,
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "value": null,
+                                "color": "blue"
+                            }
+                        ]
+                    }
+                }
+            }
+        },
+        {
+            "id": 3,
+            "type": "stat",
+            "title": "CPU Utilization",
+            "gridPos": {
+                "x": 12,
+                "y": 0,
+                "w": 6,
+                "h": 4
+            },
+            "targets": [
+                {
+                    "expr": "sum(rate(container_cpu_usage_seconds_total{namespace=~\"$namespace\", pod!=\"\"}[5m])) / sum(kube_pod_container_resource_requests{resource=\"cpu\", namespace=~\"$namespace\"}) * 100",
+                    "refId": "A",
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "prometheus"
+                    }
+                }
+            ],
+            "options": {
+                "graphMode": "area",
+                "colorMode": "value",
+                "justifyMode": "center",
+                "textMode": "auto"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "unit": "percent",
+                    "decimals": 1,
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "value": null,
+                                "color": "green"
+                            },
+                            {
+                                "value": 70,
+                                "color": "yellow"
+                            },
+                            {
+                                "value": 85,
+                                "color": "red"
+                            }
+                        ]
+                    }
+                }
+            }
+        },
+        {
+            "id": 4,
+            "type": "stat",
+            "title": "Memory Utilization",
+            "gridPos": {
+                "x": 18,
+                "y": 0,
+                "w": 6,
+                "h": 4
+            },
+            "targets": [
+                {
+                    "expr": "sum(container_memory_working_set_bytes{namespace=~\"$namespace\", pod!=\"\"}) / sum(kube_pod_container_resource_requests{resource=\"memory\", namespace=~\"$namespace\"}) * 100",
+                    "refId": "A",
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "prometheus"
+                    }
+                }
+            ],
+            "options": {
+                "graphMode": "area",
+                "colorMode": "value",
+                "justifyMode": "center",
+                "textMode": "auto"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "unit": "percent",
+                    "decimals": 1,
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "value": null,
+                                "color": "green"
+                            },
+                            {
+                                "value": 75,
+                                "color": "yellow"
+                            },
+                            {
+                                "value": 90,
+                                "color": "red"
+                            }
+                        ]
+                    }
+                }
+            }
+        },
+        {
+            "id": 5,
+            "type": "timeseries",
+            "title": "CPU Usage by Namespace",
+            "gridPos": {
+                "x": 0,
+                "y": 4,
+                "w": 12,
+                "h": 8
+            },
+            "targets": [
+                {
+                    "expr": "sum(rate(container_cpu_usage_seconds_total{namespace=~\"$namespace\", pod!=\"\"}[5m])) by (namespace)",
+                    "refId": "A",
+                    "legendFormat": "{{namespace}}",
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "prometheus"
+                    }
+                }
+            ],
+            "fieldConfig": {
+                "defaults": {
+                    "unit": "short",
+                    "color": {
+                        "mode": "palette-classic"
+                    },
+                    "custom": {
+                        "drawStyle": "line",
+                        "lineInterpolation": "smooth",
+                        "fillOpacity": 20,
+                        "showPoints": "never",
+                        "axisPlacement": "auto",
+                        "stacking": {
+                            "mode": "normal"
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "id": 6,
+            "type": "timeseries",
+            "title": "Memory Usage by Namespace",
+            "gridPos": {
+                "x": 12,
+                "y": 4,
+                "w": 12,
+                "h": 8
+            },
+            "targets": [
+                {
+                    "expr": "sum(container_memory_working_set_bytes{namespace=~\"$namespace\", pod!=\"\"}) by (namespace)",
+                    "refId": "A",
+                    "legendFormat": "{{namespace}}",
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "prometheus"
+                    }
+                }
+            ],
+            "fieldConfig": {
+                "defaults": {
+                    "unit": "bytes",
+                    "color": {
+                        "mode": "palette-classic"
+                    },
+                    "custom": {
+                        "drawStyle": "line",
+                        "lineInterpolation": "smooth",
+                        "fillOpacity": 20,
+                        "showPoints": "never",
+                        "axisPlacement": "auto",
+                        "stacking": {
+                            "mode": "normal"
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "id": 7,
+            "type": "table",
+            "title": "Resource Requests vs Usage by Pod",
+            "gridPos": {
+                "x": 0,
+                "y": 12,
+                "w": 24,
+                "h": 8
+            },
+            "targets": [
+                {
+                    "expr": "sum(kube_pod_container_resource_requests{resource=\"cpu\", namespace=~\"$namespace\"}) by (namespace, pod)",
+                    "refId": "A",
+                    "format": "table",
+                    "instant": true,
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "prometheus"
+                    }
+                },
+                {
+                    "expr": "sum(rate(container_cpu_usage_seconds_total{namespace=~\"$namespace\", pod!=\"\"}[5m])) by (namespace, pod)",
+                    "refId": "B",
+                    "format": "table",
+                    "instant": true,
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "prometheus"
+                    }
+                },
+                {
+                    "expr": "sum(kube_pod_container_resource_requests{resource=\"memory\", namespace=~\"$namespace\"}) by (namespace, pod)",
+                    "refId": "C",
+                    "format": "table",
+                    "instant": true,
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "prometheus"
+                    }
+                },
+                {
+                    "expr": "sum(container_memory_working_set_bytes{namespace=~\"$namespace\", pod!=\"\"}) by (namespace, pod)",
+                    "refId": "D",
+                    "format": "table",
+                    "instant": true,
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "prometheus"
+                    }
+                }
+            ],
+            "transformations": [
+                {
+                    "id": "merge"
+                },
+                {
+                    "id": "organize",
+                    "options": {
+                        "renameByName": {
+                            "Value #A": "CPU Request",
+                            "Value #B": "CPU Usage",
+                            "Value #C": "Memory Request",
+                            "Value #D": "Memory Usage"
+                        }
+                    }
+                }
+            ],
+            "options": {
+                "showHeader": true,
+                "sortBy": [
+                    {
+                        "displayName": "CPU Usage",
+                        "desc": true
+                    }
+                ]
+            },
+            "fieldConfig": {
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byRegexp",
+                            "options": "Memory.*"
+                        },
+                        "properties": [
+                            {
+                                "id": "unit",
+                                "value": "bytes"
+                            }
+                        ]
+                    },
+                    {
+                        "matcher": {
+                            "id": "byRegexp",
+                            "options": "CPU.*"
+                        },
+                        "properties": [
+                            {
+                                "id": "unit",
+                                "value": "short"
+                            },
+                            {
+                                "id": "decimals",
+                                "value": 3
+                            }
+                        ]
+                    }
+                ]
+            }
+        }
+    ]
+}

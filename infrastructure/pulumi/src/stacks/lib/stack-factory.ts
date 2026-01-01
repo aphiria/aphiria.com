@@ -2,6 +2,7 @@ import * as pulumi from "@pulumi/pulumi";
 import * as k8s from "@pulumi/kubernetes";
 import {
     installBaseHelmCharts,
+    installKubePrometheusStack,
     createPostgreSQL,
     createGateway,
     createNamespace,
@@ -14,6 +15,15 @@ import {
     createWWWRedirectRoute,
     createDNSRecords,
 } from "../../components";
+import { createGrafana } from "../../components/grafana";
+import { createGrafanaIngress, GrafanaIngressResult } from "../../components/grafana-ingress";
+import { createGrafanaAlerts } from "../../components/monitoring/grafana-alerts";
+import { createDashboards } from "../../components/dashboards";
+import {
+    createApiServiceMonitor,
+    ApiServiceMonitorResult,
+} from "../../components/api-service-monitor";
+import * as path from "path";
 import { StackConfig } from "./types";
 import {
     WebDeploymentResult,
@@ -21,13 +31,14 @@ import {
     PostgreSQLResult,
     GatewayResult,
     NamespaceResult,
+    GrafanaResult,
 } from "../../components/types";
 
 /**
  * Stack resources returned by createStack factory
  */
 export interface StackResources {
-    helmCharts?: { certManager: k8s.helm.v3.Chart; nginxGateway: k8s.helm.v3.Chart };
+    helmCharts?: { certManager: k8s.helm.v4.Chart; nginxGateway: k8s.helm.v4.Chart };
     postgres?: PostgreSQLResult;
     gateway?: GatewayResult;
     namespace?: NamespaceResult;
@@ -37,8 +48,15 @@ export interface StackResources {
     migration?: k8s.batch.v1.Job;
     webRoute?: k8s.apiextensions.CustomResource;
     apiRoute?: k8s.apiextensions.CustomResource;
+    apiServiceMonitor?: ApiServiceMonitorResult;
     httpsRedirect?: k8s.apiextensions.CustomResource;
     wwwRedirect?: k8s.apiextensions.CustomResource;
+    monitoring?: {
+        namespace: NamespaceResult;
+        kubePrometheusStack: k8s.helm.v4.Chart;
+        grafana: GrafanaResult;
+        grafanaIngress: GrafanaIngressResult;
+    };
 }
 
 /**
@@ -71,12 +89,295 @@ export function createStack(config: StackConfig, k8sProvider: k8s.Provider): Sta
     // Determine namespace (use created namespace or default)
     const namespace = resources.namespace?.namespace.metadata.name || "default";
 
-    // Install Helm charts (cert-manager, nginx-gateway) if not skipped
+    // Determine if this is a preview-pr environment (used for Gateway listener sectionName routing)
+    const isPreviewPR = config.env === "preview" && config.namespace;
+
+    // Install base infrastructure (cert-manager, nginx-gateway) if not skipped
     if (!config.skipBaseInfrastructure) {
-        resources.helmCharts = installBaseHelmCharts({
+        // For local environment: Install Gateway API CRDs and GatewayClass first
+        // DigitalOcean Kubernetes (preview/production) pre-installs these via Cilium
+        if (config.env === "local") {
+            const gatewayApiCrds = new k8s.yaml.ConfigFile(
+                "gateway-api-crds",
+                {
+                    file: "https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.0.0/standard-install.yaml",
+                },
+                {
+                    provider: k8sProvider,
+                }
+            );
+
+            // Create GatewayClass for nginx-gateway-fabric
+            // NOTE: nginx-gateway-fabric Helm chart does NOT create the GatewayClass
+            // The controller expects it to exist and will manage Gateway resources that reference it
+            const gatewayClass = new k8s.apiextensions.CustomResource(
+                "nginx-gatewayclass",
+                {
+                    apiVersion: "gateway.networking.k8s.io/v1",
+                    kind: "GatewayClass",
+                    metadata: {
+                        name: "nginx",
+                    },
+                    spec: {
+                        controllerName: "gateway.nginx.org/nginx-gateway-controller",
+                    },
+                },
+                {
+                    provider: k8sProvider,
+                    dependsOn: [gatewayApiCrds],
+                }
+            );
+
+            // Install Helm charts with nginx-gateway depending on CRDs and GatewayClass
+            resources.helmCharts = installBaseHelmCharts({
+                env: config.env,
+                provider: k8sProvider,
+                nginxGatewayDependencies: [gatewayApiCrds, gatewayClass],
+            });
+        } else {
+            // Preview/Production: No CRDs needed, just install Helm charts
+            resources.helmCharts = installBaseHelmCharts({
+                env: config.env,
+                provider: k8sProvider,
+            });
+        }
+    }
+
+    // Create monitoring namespace and components (if enabled)
+    if (config.monitoring) {
+        const monitoringNamespace = createNamespace({
+            name: "monitoring",
             env: config.env,
+            resourceQuota: {
+                cpu: "4",
+                memory: "16Gi",
+                pods: "30",
+            },
+            labels: {
+                "app.kubernetes.io/component": "monitoring",
+            },
             provider: k8sProvider,
         });
+
+        // Install kube-prometheus-stack (Prometheus Operator + Prometheus + kube-state-metrics + Alertmanager)
+        const kubePrometheusStack = installKubePrometheusStack(
+            {
+                env: config.env,
+                chartName: "kube-prometheus-stack",
+                repository: "https://prometheus-community.github.io/helm-charts",
+                version: "70.10.0",
+                namespace: "monitoring",
+                provider: k8sProvider,
+                values: {
+                    prometheus: {
+                        prometheusSpec: {
+                            retention: config.monitoring.prometheus.retentionTime || "7d",
+                            scrapeInterval: config.monitoring.prometheus.scrapeInterval || "15s",
+                            storageSpec: {
+                                volumeClaimTemplate: {
+                                    spec: {
+                                        accessModes: ["ReadWriteOnce"],
+                                        resources: {
+                                            requests: {
+                                                storage: config.monitoring.prometheus.storageSize,
+                                            },
+                                        },
+                                    },
+                                },
+                            },
+                            externalLabels: {
+                                environment: config.env,
+                            },
+                            // Resource limits for Prometheus container (required by ResourceQuota)
+                            resources: config.monitoring.prometheus.resources || {
+                                requests: {
+                                    cpu: "500m",
+                                    memory: "1Gi",
+                                },
+                                limits: {
+                                    cpu: "1",
+                                    memory: "2Gi",
+                                },
+                            },
+                        },
+                    },
+                    // Prometheus Operator resource limits (required by ResourceQuota)
+                    prometheusOperator: {
+                        resources: {
+                            requests: {
+                                cpu: "100m",
+                                memory: "128Mi",
+                            },
+                            limits: {
+                                cpu: "200m",
+                                memory: "256Mi",
+                            },
+                        },
+                        // Resource limits for config-reloader sidecar (required by ResourceQuota)
+                        // These are passed as operator flags: --config-reloader-cpu-request, etc.
+                        prometheusConfigReloader: {
+                            resources: {
+                                requests: {
+                                    cpu: "50m",
+                                    memory: "50Mi",
+                                },
+                                limits: {
+                                    cpu: "100m",
+                                    memory: "100Mi",
+                                },
+                            },
+                        },
+                        // Disable TLS/admission webhooks to work around Helm Chart v4 limitation
+                        // Pulumi Helm Chart v4 doesn't support Helm hooks, so webhook cert Jobs never run
+                        // Bug: Volume mount controlled by tls.enabled, not admissionWebhooks.enabled
+                        tls: {
+                            enabled: false,
+                        },
+                        admissionWebhooks: {
+                            enabled: false,
+                        },
+                    },
+                    // Node exporter resource limits (required by ResourceQuota)
+                    "prometheus-node-exporter": {
+                        resources: {
+                            requests: {
+                                cpu: "50m",
+                                memory: "64Mi",
+                            },
+                            limits: {
+                                cpu: "100m",
+                                memory: "128Mi",
+                            },
+                        },
+                    },
+                    // kube-state-metrics resource limits (required by ResourceQuota)
+                    "kube-state-metrics": {
+                        enabled: true,
+                        resources: {
+                            requests: {
+                                cpu: "50m",
+                                memory: "128Mi",
+                            },
+                            limits: {
+                                cpu: "100m",
+                                memory: "256Mi",
+                            },
+                        },
+                    },
+                    // Disable Grafana (we manage it separately)
+                    grafana: {
+                        enabled: false,
+                    },
+                    // Disable Alertmanager (using Grafana Unified Alerting instead)
+                    alertmanager: {
+                        enabled: false,
+                    },
+                },
+            },
+            [monitoringNamespace.namespace]
+        );
+
+        const dashboards = createDashboards({
+            namespace: "monitoring",
+            // Use process.cwd() which is the pulumi project root (infrastructure/pulumi)
+            dashboardDir: path.join(process.cwd(), "dashboards"),
+            provider: k8sProvider,
+        });
+
+        // Create Grafana Unified Alerting provisioning ConfigMaps
+        // Environment-specific contact point configuration
+        // Production: email contact point for real alerts
+        // Preview/Local: use Grafana's default contact point (won't send without SMTP)
+        const contactPoints =
+            config.env === "production"
+                ? [
+                      {
+                          name: "email-admin",
+                          receivers: [
+                              {
+                                  uid: "email-admin",
+                                  type: "email",
+                                  settings: {
+                                      addresses:
+                                          config.monitoring.grafana.smtp?.alertEmail ||
+                                          "admin@aphiria.com",
+                                      singleEmail: true,
+                                  },
+                                  disableResolveMessage: false,
+                              },
+                          ],
+                      },
+                  ]
+                : [
+                      {
+                          name: "local-notifications",
+                          receivers: [
+                              {
+                                  uid: "local-notifications",
+                                  type: "email",
+                                  settings: {
+                                      addresses: "devnull@localhost",
+                                  },
+                                  disableResolveMessage: true,
+                              },
+                          ],
+                      },
+                  ];
+
+        const alerts = createGrafanaAlerts({
+            namespace: "monitoring",
+            environment: config.env,
+            contactPoints,
+            defaultReceiver: config.env === "production" ? "email-admin" : "local-notifications",
+            provider: k8sProvider,
+        });
+
+        const grafana = createGrafana({
+            env: config.env,
+            namespace: "monitoring",
+            // kube-prometheus-stack creates Prometheus with name kube-prometheus-stack-prometheus
+            prometheusUrl:
+                "http://kube-prometheus-stack-prometheus.monitoring.svc.cluster.local:9090",
+            storageSize: config.monitoring.grafana.storageSize,
+            githubClientId: config.monitoring.grafana.githubOAuth.clientId,
+            githubClientSecret: config.monitoring.grafana.githubOAuth.clientSecret,
+            githubOrg: config.monitoring.grafana.githubOAuth.org,
+            adminUser: config.monitoring.grafana.githubOAuth.adminUser,
+            smtpHost: config.monitoring.grafana.smtp?.host,
+            smtpPort: config.monitoring.grafana.smtp?.port,
+            smtpUser: config.monitoring.grafana.smtp?.user,
+            smtpPassword: config.monitoring.grafana.smtp?.password,
+            smtpFromAddress: config.monitoring.grafana.smtp?.fromAddress,
+            alertEmail: config.monitoring.grafana.smtp?.alertEmail,
+            basicAuthUser: config.monitoring.grafana.basicAuth?.user,
+            basicAuthPassword: config.monitoring.grafana.basicAuth?.password,
+            dashboardsConfigMap: dashboards.configMap,
+            alertRulesConfigMap: alerts.alertRulesConfigMap,
+            contactPointsConfigMap: alerts.contactPointsConfigMap,
+            notificationPoliciesConfigMap: alerts.notificationPoliciesConfigMap,
+            provider: k8sProvider,
+        });
+
+        const grafanaIngress = createGrafanaIngress({
+            namespace: "monitoring",
+            serviceName: "grafana",
+            servicePort: 80,
+            gatewayName: "nginx-gateway",
+            gatewayNamespace: gatewayNamespace,
+            hostname: config.monitoring.grafana.hostname,
+            // Use numbered listener for preview-pr, unnumbered for production/preview-base
+            // https-subdomains-3 is for *.pr-grafana.aphiria.com
+            /* istanbul ignore next - sectionName varies by environment (preview-pr vs other) */
+            sectionName: isPreviewPR ? "https-subdomains-3" : "https-subdomains",
+            provider: k8sProvider,
+        });
+
+        resources.monitoring = {
+            namespace: monitoringNamespace,
+            kubePrometheusStack,
+            grafana,
+            grafanaIngress,
+        };
     }
 
     // Create database (shared PostgreSQL instance OR per-PR database)
@@ -114,19 +415,26 @@ export function createStack(config: StackConfig, k8sProvider: k8s.Provider): Sta
             domains: config.gateway.domains,
             dnsToken: config.gateway.dnsToken,
             provider: k8sProvider,
+            // Ensure cert-manager CRDs are ready before creating ClusterIssuer/Certificate
+            certManagerDependency: resources.helmCharts?.certManager,
         });
 
-        // Get LoadBalancer IP from nginx-gateway Service
-        const gatewayService = k8s.core.v1.Service.get(
-            "nginx-gateway-svc",
-            pulumi.interpolate`${gatewayNamespace}/nginx-gateway-nginx-gateway-fabric`,
-            { provider: k8sProvider }
-        );
-
-        resources.gateway.ip = gatewayService.status.loadBalancer.ingress[0].ip;
-
         // Create DNS records if configured
+        // Only fetch LoadBalancer IP if we need it for DNS
         if (config.gateway.dns) {
+            const gatewayService = k8s.core.v1.Service.get(
+                "nginx-gateway-svc",
+                pulumi.interpolate`${gatewayNamespace}/nginx-gateway-nginx-gateway-fabric`,
+                {
+                    provider: k8sProvider,
+                    dependsOn: resources.helmCharts?.nginxGateway
+                        ? [resources.helmCharts.nginxGateway]
+                        : [],
+                }
+            );
+
+            resources.gateway.ip = gatewayService.status.loadBalancer.ingress[0].ip;
+
             const dnsResult = createDNSRecords({
                 domain: config.gateway.dns.domain,
                 loadBalancerIp: resources.gateway.ip,
@@ -198,6 +506,7 @@ export function createStack(config: StackConfig, k8sProvider: k8s.Provider): Sta
             imagePullSecrets: config.namespace?.imagePullSecret ? ["ghcr-pull-secret"] : undefined,
             resources: config.app.apiResources,
             podDisruptionBudget: config.app.apiPodDisruptionBudget,
+            prometheusAuthToken: config.monitoring!.prometheus.authToken,
             provider: k8sProvider,
         });
 
@@ -219,8 +528,6 @@ export function createStack(config: StackConfig, k8sProvider: k8s.Provider): Sta
         // HTTPRoutes (always in same namespace as services to avoid cross-namespace ReferenceGrant)
         // Explicitly attach to HTTPS listeners using sectionName to prevent attaching to HTTP listeners
         // (which would prevent HTTP→HTTPS redirects from working)
-        const isPreviewPR = config.env === "preview" && config.namespace;
-
         resources.webRoute = createHTTPRoute({
             namespace: namespace,
             name: "web",
@@ -246,6 +553,19 @@ export function createStack(config: StackConfig, k8sProvider: k8s.Provider): Sta
             sectionName: isPreviewPR ? "https-subdomains-2" : "https-subdomains",
             provider: k8sProvider,
         });
+
+        // ServiceMonitor for API metrics (if monitoring is configured)
+        if (config.monitoring) {
+            resources.apiServiceMonitor = createApiServiceMonitor({
+                namespace: namespace,
+                serviceName: "api",
+                targetPort: 80,
+                metricsPath: "/metrics",
+                scrapeInterval: config.monitoring.prometheus.scrapeInterval || "15s",
+                authToken: config.monitoring.prometheus.authToken,
+                provider: k8sProvider,
+            });
+        }
 
         // HTTP→HTTPS redirect for preview-pr (specific hostnames beat wildcard redirects)
         // This ensures http://123.pr.aphiria.com redirects to https://123.pr.aphiria.com

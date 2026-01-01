@@ -232,4 +232,50 @@ export interface StackConfig {
      * Local and preview-base use "default" namespace
      */
     namespace?: NamespaceConfig;
+
+    /**
+     * Monitoring configuration (Prometheus + Grafana)
+     * Optional - when enabled, creates monitoring namespace with components
+     */
+    monitoring?: {
+        /** Prometheus configuration */
+        prometheus: {
+            /** Bearer token for authenticating to API /metrics endpoint */
+            authToken: pulumi.Input<string>;
+            storageSize: string;
+            scrapeInterval?: string;
+            retentionTime?: string;
+            resources?: {
+                requests?: { cpu?: string; memory?: string };
+                limits?: { cpu?: string; memory?: string };
+            };
+        };
+        /** Grafana configuration */
+        grafana: {
+            storageSize: string;
+            hostname: string;
+            githubOAuth: {
+                clientId: pulumi.Input<string>;
+                clientSecret: pulumi.Input<string>;
+                org: string;
+                adminUser: string;
+            };
+            smtp?: {
+                host: pulumi.Input<string>;
+                port: number;
+                user: pulumi.Input<string>;
+                password: pulumi.Input<string>;
+                fromAddress: string;
+                alertEmail: string;
+            };
+            basicAuth?: {
+                user: pulumi.Input<string>;
+                password: pulumi.Input<string>;
+            };
+            resources?: {
+                requests?: { cpu?: string; memory?: string };
+                limits?: { cpu?: string; memory?: string };
+            };
+        };
+    };
 }

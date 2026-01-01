@@ -115,6 +115,47 @@ createStack(
                 },
             },
         },
+        monitoring: {
+            prometheus: {
+                authToken: stackConfig.prometheus.authToken,
+                storageSize: "5Gi",
+                scrapeInterval: "15s",
+                retentionTime: "7d",
+                resources: {
+                    requests: { cpu: "100m", memory: "128Mi" },
+                    limits: { cpu: "500m", memory: "256Mi" },
+                },
+            },
+            grafana: {
+                storageSize: "2Gi",
+                hostname: `${prNumber}.pr-grafana.aphiria.com`,
+                githubOAuth: {
+                    clientId: stackConfig.grafana.githubClientId,
+                    clientSecret: stackConfig.grafana.githubClientSecret,
+                    org: stackConfig.grafana.githubOrg,
+                    adminUser: stackConfig.grafana.adminUser,
+                },
+                smtp: {
+                    host: stackConfig.grafana.smtpHost,
+                    port: stackConfig.grafana.smtpPort,
+                    user: stackConfig.grafana.smtpUser,
+                    password: stackConfig.grafana.smtpPassword,
+                    fromAddress: stackConfig.grafana.smtpFromAddress,
+                    alertEmail: stackConfig.grafana.alertEmail,
+                },
+                basicAuth:
+                    stackConfig.grafana.basicAuthUser && stackConfig.grafana.basicAuthPassword
+                        ? {
+                              user: stackConfig.grafana.basicAuthUser,
+                              password: stackConfig.grafana.basicAuthPassword,
+                          }
+                        : undefined,
+                resources: {
+                    requests: { cpu: "50m", memory: "256Mi" },
+                    limits: { cpu: "200m", memory: "512Mi" },
+                },
+            },
+        },
     },
     k8sProvider
 );

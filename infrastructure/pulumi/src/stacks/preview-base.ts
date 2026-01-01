@@ -18,7 +18,7 @@ const { kubeconfig: clusterKubeconfig, provider: k8sProvider } = createKubernete
     nodeCount: 1,
     autoScale: true,
     minNodes: 1,
-    maxNodes: 3,
+    maxNodes: 4,
     vpcUuid: "976f980d-dc84-11e8-80bc-3cfdfea9fba1",
 });
 
@@ -50,6 +50,7 @@ const stack = createStack(
             domains: [
                 "*.pr.aphiria.com", // Web preview URLs
                 "*.pr-api.aphiria.com", // API preview URLs
+                "*.pr-grafana.aphiria.com", // Grafana preview URLs
             ],
             dnsToken: stackConfig.certManager.dnsToken,
             dns: {
@@ -57,6 +58,7 @@ const stack = createStack(
                 records: [
                     { name: "*.pr", resourceName: "preview-web-dns" },
                     { name: "*.pr-api", resourceName: "preview-api-dns" },
+                    { name: "*.pr-grafana", resourceName: "preview-grafana-dns" },
                 ],
                 ttl: 300,
             },

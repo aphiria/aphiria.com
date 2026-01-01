@@ -6,6 +6,7 @@ import {
     createHTTPSRedirectRoute,
     createWWWRedirectRoute,
 } from "../../src/components/http-route";
+import { promiseOf } from "../test-utils";
 
 describe("http-route components", () => {
     let k8sProvider: k8s.Provider;
@@ -31,7 +32,7 @@ describe("http-route components", () => {
     });
 
     describe("createHTTPRoute", () => {
-        it("should create HTTPRoute without rate limiting", (done) => {
+        it("should create HTTPRoute without rate limiting", async () => {
             const route = createHTTPRoute({
                 name: "web-route",
                 namespace: "web-ns",
@@ -47,17 +48,18 @@ describe("http-route components", () => {
 
             expect(route).toBeDefined();
 
-            pulumi
-                .all([route.metadata.name, route.metadata.namespace, route.metadata.annotations])
-                .apply(([name, namespace, annotations]) => {
-                    expect(name).toBe("web-route");
-                    expect(namespace).toBe("web-ns");
-                    expect(annotations).toBeUndefined(); // No rate limiting = no annotations
-                    done();
-                });
+            const [name, namespace, annotations] = await Promise.all([
+                promiseOf(route.metadata.name),
+                promiseOf(route.metadata.namespace),
+                promiseOf(route.metadata.annotations),
+            ]);
+
+            expect(name).toBe("web-route");
+            expect(namespace).toBe("web-ns");
+            expect(annotations).toBeUndefined();
         });
 
-        it("should create HTTPRoute with rate limiting annotations", (done) => {
+        it("should create HTTPRoute with rate limiting annotations", async () => {
             const route = createHTTPRoute({
                 name: "api-route",
                 namespace: "api-ns",
@@ -73,20 +75,20 @@ describe("http-route components", () => {
 
             expect(route).toBeDefined();
 
-            pulumi
-                .all([route.metadata.name, route.metadata.annotations])
-                .apply(([name, annotations]) => {
-                    expect(name).toBe("api-route");
-                    expect(annotations).toBeDefined();
-                    expect(annotations).toMatchObject({
-                        "nginx.org/rate-limit": "10r/s",
-                        "nginx.org/rate-limit-burst": "20",
-                    });
-                    done();
-                });
+            const [name, annotations] = await Promise.all([
+                promiseOf(route.metadata.name),
+                promiseOf(route.metadata.annotations),
+            ]);
+
+            expect(name).toBe("api-route");
+            expect(annotations).toBeDefined();
+            expect(annotations).toMatchObject({
+                "nginx.org/rate-limit": "10r/s",
+                "nginx.org/rate-limit-burst": "20",
+            });
         });
 
-        it("should merge custom labels with default labels", (done) => {
+        it("should merge custom labels with default labels", async () => {
             const route = createHTTPRoute({
                 name: "custom-route",
                 namespace: "custom-ns",
@@ -106,18 +108,16 @@ describe("http-route components", () => {
 
             expect(route).toBeDefined();
 
-            route.metadata.labels.apply((labels: any) => {
-                expect(labels).toMatchObject({
-                    "app.kubernetes.io/name": "httproute-custom-route",
-                    "app.kubernetes.io/component": "routing",
-                    "custom-label": "custom-value",
-                    environment: "testing",
-                });
-                done();
+            const labels = await promiseOf(route.metadata.labels);
+            expect(labels).toMatchObject({
+                "app.kubernetes.io/name": "httproute-custom-route",
+                "app.kubernetes.io/component": "routing",
+                "custom-label": "custom-value",
+                environment: "testing",
             });
         });
 
-        it("should attach to specific listener using sectionName when provided", (done) => {
+        it("should attach to specific listener using sectionName when provided", async () => {
             const route = createHTTPRoute({
                 name: "web-route",
                 namespace: "default",
@@ -135,14 +135,12 @@ describe("http-route components", () => {
             expect(route).toBeDefined();
 
             // Cast to any to access spec property (not in mock types)
-            (route as any).spec.apply((spec: any) => {
-                expect(spec.parentRefs).toBeDefined();
-                expect(spec.parentRefs[0].sectionName).toBe("https-subdomains-1");
-                done();
-            });
+            const spec: any = await promiseOf((route as any).spec);
+            expect(spec.parentRefs).toBeDefined();
+            expect(spec.parentRefs[0].sectionName).toBe("https-subdomains-1");
         });
 
-        it("should not include sectionName when not provided", (done) => {
+        it("should not include sectionName when not provided", async () => {
             const route = createHTTPRoute({
                 name: "web-route",
                 namespace: "default",
@@ -159,16 +157,14 @@ describe("http-route components", () => {
             expect(route).toBeDefined();
 
             // Cast to any to access spec property (not in mock types)
-            (route as any).spec.apply((spec: any) => {
-                expect(spec.parentRefs).toBeDefined();
-                expect(spec.parentRefs[0].sectionName).toBeUndefined();
-                done();
-            });
+            const spec: any = await promiseOf((route as any).spec);
+            expect(spec.parentRefs).toBeDefined();
+            expect(spec.parentRefs[0].sectionName).toBeUndefined();
         });
     });
 
     describe("createHTTPSRedirectRoute", () => {
-        it("should create HTTPS redirect route for root and wildcard domains", (done) => {
+        it("should create HTTPS redirect route for root and wildcard domains", async () => {
             const route = createHTTPSRedirectRoute({
                 namespace: "redirect-ns",
                 gatewayName: "gateway",
@@ -179,16 +175,16 @@ describe("http-route components", () => {
 
             expect(route).toBeDefined();
 
-            pulumi
-                .all([route.metadata.name, route.metadata.namespace])
-                .apply(([name, namespace]) => {
-                    expect(name).toBe("https-redirect");
-                    expect(namespace).toBe("redirect-ns");
-                    done();
-                });
+            const [name, namespace] = await Promise.all([
+                promiseOf(route.metadata.name),
+                promiseOf(route.metadata.namespace),
+            ]);
+
+            expect(name).toBe("https-redirect");
+            expect(namespace).toBe("redirect-ns");
         });
 
-        it("should create HTTPS redirect route for multiple wildcard domains", (done) => {
+        it("should create HTTPS redirect route for multiple wildcard domains", async () => {
             const route = createHTTPSRedirectRoute({
                 namespace: "default",
                 gatewayName: "gateway",
@@ -198,16 +194,16 @@ describe("http-route components", () => {
 
             expect(route).toBeDefined();
 
-            pulumi
-                .all([route.metadata.name, route.metadata.namespace])
-                .apply(([name, namespace]) => {
-                    expect(name).toBe("https-redirect");
-                    expect(namespace).toBe("default");
-                    done();
-                });
+            const [name, namespace] = await Promise.all([
+                promiseOf(route.metadata.name),
+                promiseOf(route.metadata.namespace),
+            ]);
+
+            expect(name).toBe("https-redirect");
+            expect(namespace).toBe("default");
         });
 
-        it("should create HTTPS redirect route for wildcard-only domain", (done) => {
+        it("should create HTTPS redirect route for wildcard-only domain", async () => {
             const route = createHTTPSRedirectRoute({
                 namespace: "default",
                 gatewayName: "gateway",
@@ -217,16 +213,16 @@ describe("http-route components", () => {
 
             expect(route).toBeDefined();
 
-            pulumi
-                .all([route.metadata.name, route.metadata.namespace])
-                .apply(([name, namespace]) => {
-                    expect(name).toBe("https-redirect");
-                    expect(namespace).toBe("default");
-                    done();
-                });
+            const [name, namespace] = await Promise.all([
+                promiseOf(route.metadata.name),
+                promiseOf(route.metadata.namespace),
+            ]);
+
+            expect(name).toBe("https-redirect");
+            expect(namespace).toBe("default");
         });
 
-        it("should skip http-root listener when skipRootListener is true", (done) => {
+        it("should skip http-root listener when skipRootListener is true", async () => {
             const route = createHTTPSRedirectRoute({
                 namespace: "default",
                 gatewayName: "gateway",
@@ -237,16 +233,16 @@ describe("http-route components", () => {
 
             expect(route).toBeDefined();
 
-            pulumi
-                .all([route.metadata.name, route.metadata.namespace])
-                .apply(([name, namespace]) => {
-                    expect(name).toBe("https-redirect");
-                    expect(namespace).toBe("default");
-                    done();
-                });
+            const [name, namespace] = await Promise.all([
+                promiseOf(route.metadata.name),
+                promiseOf(route.metadata.namespace),
+            ]);
+
+            expect(name).toBe("https-redirect");
+            expect(namespace).toBe("default");
         });
 
-        it("should create hostname-based redirect for preview PR domains", (done) => {
+        it("should create hostname-based redirect for preview PR domains", async () => {
             const route = createHTTPSRedirectRoute({
                 namespace: "preview-pr-117",
                 gatewayName: "nginx-gateway",
@@ -256,16 +252,16 @@ describe("http-route components", () => {
 
             expect(route).toBeDefined();
 
-            pulumi
-                .all([route.metadata.name, route.metadata.namespace])
-                .apply(([name, namespace]) => {
-                    expect(name).toBe("https-redirect");
-                    expect(namespace).toBe("preview-pr-117");
-                    done();
-                });
+            const [name, namespace] = await Promise.all([
+                promiseOf(route.metadata.name),
+                promiseOf(route.metadata.namespace),
+            ]);
+
+            expect(name).toBe("https-redirect");
+            expect(namespace).toBe("preview-pr-117");
         });
 
-        it("should attach to HTTP listeners using sectionName for specific hostnames", (done) => {
+        it("should attach to HTTP listeners using sectionName for specific hostnames", async () => {
             const route = createHTTPSRedirectRoute({
                 namespace: "preview-pr-117",
                 gatewayName: "nginx-gateway",
@@ -276,18 +272,16 @@ describe("http-route components", () => {
             expect(route).toBeDefined();
 
             // Cast to any to access spec property (not in mock types)
-            (route as any).spec.apply((spec: any) => {
-                expect(spec.parentRefs).toBeDefined();
-                expect(spec.parentRefs.length).toBe(2); // Both web and api listeners
-                expect(spec.parentRefs[0].sectionName).toBe("http-subdomains-1");
-                expect(spec.parentRefs[1].sectionName).toBe("http-subdomains-2");
-                done();
-            });
+            const spec: any = await promiseOf((route as any).spec);
+            expect(spec.parentRefs).toBeDefined();
+            expect(spec.parentRefs.length).toBe(2); // Both web and api listeners
+            expect(spec.parentRefs[0].sectionName).toBe("http-subdomains-1");
+            expect(spec.parentRefs[1].sectionName).toBe("http-subdomains-2");
         });
     });
 
     describe("createWWWRedirectRoute", () => {
-        it("should create WWW redirect route with explicit gateway namespace", (done) => {
+        it("should create WWW redirect route with explicit gateway namespace", async () => {
             const route = createWWWRedirectRoute({
                 namespace: "redirect-ns",
                 gatewayName: "gateway",
@@ -299,16 +293,16 @@ describe("http-route components", () => {
 
             expect(route).toBeDefined();
 
-            pulumi
-                .all([route.metadata.name, route.metadata.namespace])
-                .apply(([name, namespace]) => {
-                    expect(name).toBe("www-redirect");
-                    expect(namespace).toBe("redirect-ns");
-                    done();
-                });
+            const [name, namespace] = await Promise.all([
+                promiseOf(route.metadata.name),
+                promiseOf(route.metadata.namespace),
+            ]);
+
+            expect(name).toBe("www-redirect");
+            expect(namespace).toBe("redirect-ns");
         });
 
-        it("should create WWW redirect route with default gateway namespace", (done) => {
+        it("should create WWW redirect route with default gateway namespace", async () => {
             const route = createWWWRedirectRoute({
                 namespace: "default",
                 gatewayName: "gateway",
@@ -319,13 +313,13 @@ describe("http-route components", () => {
 
             expect(route).toBeDefined();
 
-            pulumi
-                .all([route.metadata.name, route.metadata.namespace])
-                .apply(([name, namespace]) => {
-                    expect(name).toBe("www-redirect");
-                    expect(namespace).toBe("default");
-                    done();
-                });
+            const [name, namespace] = await Promise.all([
+                promiseOf(route.metadata.name),
+                promiseOf(route.metadata.namespace),
+            ]);
+
+            expect(name).toBe("www-redirect");
+            expect(namespace).toBe("default");
         });
     });
 });
