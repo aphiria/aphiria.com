@@ -9,8 +9,8 @@ export interface ApiServiceMonitorArgs {
     namespace: pulumi.Input<string>;
     /** Name of the API service to scrape */
     serviceName: pulumi.Input<string>;
-    /** Port name on the service to scrape (e.g., "http") */
-    portName: pulumi.Input<string>;
+    /** Target port number on the pod to scrape (e.g., 80) */
+    targetPort: pulumi.Input<number>;
     /** Path to scrape metrics from (e.g., "/metrics") */
     metricsPath: string;
     /** Scrape interval (e.g., "15s") */
@@ -67,6 +67,7 @@ export function createApiServiceMonitor(args: ApiServiceMonitorArgs): ApiService
                 labels: {
                     app: "api",
                     component: "metrics",
+                    release: "kube-prometheus-stack", // Required for Prometheus Operator to discover this ServiceMonitor
                 },
             },
             spec: {
@@ -77,7 +78,7 @@ export function createApiServiceMonitor(args: ApiServiceMonitorArgs): ApiService
                 },
                 endpoints: [
                     {
-                        port: args.portName,
+                        targetPort: args.targetPort,
                         path: args.metricsPath,
                         interval: args.scrapeInterval,
                         bearerTokenSecret: {

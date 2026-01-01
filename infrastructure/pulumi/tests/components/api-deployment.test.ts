@@ -259,4 +259,29 @@ describe("createAPIDeployment", () => {
         const namespace = await promiseOf(result.deployment.namespace);
         expect(namespace).toBe("prod-ns");
     });
+
+    it("should create Service for ServiceMonitor compatibility", async () => {
+        const result = createAPIDeployment({
+            env: "local",
+            namespace: "test-ns",
+            replicas: 1,
+            image: "ghcr.io/aphiria/aphiria.com-api:latest",
+            dbHost: "db.default.svc.cluster.local",
+            dbName: "aphiria",
+            dbUser: pulumi.output("postgres"),
+            dbPassword: pulumi.output("password"),
+            webUrl: "https://www.aphiria.com",
+            apiUrl: "https://api.aphiria.com",
+            logLevel: "debug",
+            cookieDomain: ".aphiria.com",
+            cookieSecure: false,
+            prometheusAuthToken: pulumi.output("test-token"),
+            provider: k8sProvider,
+        });
+
+        expect(result.service).toBeDefined();
+
+        const serviceName = await promiseOf(result.service.name);
+        expect(serviceName).toBe("api");
+    });
 });

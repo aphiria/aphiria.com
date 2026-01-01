@@ -16,7 +16,7 @@
                 "name": "namespace",
                 "type": "query",
                 "label": "Namespace",
-                "query": "label_values(http_request_duration_seconds_count, namespace)",
+                "query": "label_values(app_http_request_duration_seconds_count, namespace)",
                 "datasource": {
                     "type": "prometheus",
                     "uid": "prometheus"
@@ -44,7 +44,7 @@
             },
             "targets": [
                 {
-                    "expr": "sum(rate(http_request_duration_seconds_count{namespace=\"$namespace\"}[5m]))",
+                    "expr": "sum(rate(app_http_request_duration_seconds_count{namespace=\"$namespace\"}[5m]))",
                     "refId": "A",
                     "datasource": {
                         "type": "prometheus",
@@ -97,7 +97,7 @@
             },
             "targets": [
                 {
-                    "expr": "histogram_quantile(0.50, sum(rate(http_request_duration_seconds_bucket{namespace=\"$namespace\"}[5m])) by (le))",
+                    "expr": "histogram_quantile(0.50, sum(rate(app_http_request_duration_seconds_bucket{namespace=\"$namespace\"}[5m])) by (le))",
                     "refId": "A",
                     "datasource": {
                         "type": "prometheus",
@@ -150,7 +150,7 @@
             },
             "targets": [
                 {
-                    "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{namespace=\"$namespace\"}[5m])) by (le))",
+                    "expr": "histogram_quantile(0.95, sum(rate(app_http_request_duration_seconds_bucket{namespace=\"$namespace\"}[5m])) by (le))",
                     "refId": "A",
                     "datasource": {
                         "type": "prometheus",
@@ -203,7 +203,7 @@
             },
             "targets": [
                 {
-                    "expr": "sum(rate(http_request_duration_seconds_count{namespace=\"$namespace\"}[5m])) by (endpoint)",
+                    "expr": "sum(rate(app_http_request_duration_seconds_count{namespace=\"$namespace\"}[5m])) by (endpoint)",
                     "refId": "A",
                     "legendFormat": "{{endpoint}}",
                     "datasource": {
@@ -240,7 +240,7 @@
             },
             "targets": [
                 {
-                    "expr": "histogram_quantile(0.50, sum(rate(http_request_duration_seconds_bucket{namespace=\"$namespace\"}[5m])) by (le))",
+                    "expr": "histogram_quantile(0.50, sum(rate(app_http_request_duration_seconds_bucket{namespace=\"$namespace\"}[5m])) by (le))",
                     "refId": "A",
                     "legendFormat": "p50",
                     "datasource": {
@@ -249,7 +249,7 @@
                     }
                 },
                 {
-                    "expr": "histogram_quantile(0.90, sum(rate(http_request_duration_seconds_bucket{namespace=\"$namespace\"}[5m])) by (le))",
+                    "expr": "histogram_quantile(0.90, sum(rate(app_http_request_duration_seconds_bucket{namespace=\"$namespace\"}[5m])) by (le))",
                     "refId": "B",
                     "legendFormat": "p90",
                     "datasource": {
@@ -258,7 +258,7 @@
                     }
                 },
                 {
-                    "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{namespace=\"$namespace\"}[5m])) by (le))",
+                    "expr": "histogram_quantile(0.95, sum(rate(app_http_request_duration_seconds_bucket{namespace=\"$namespace\"}[5m])) by (le))",
                     "refId": "C",
                     "legendFormat": "p95",
                     "datasource": {
@@ -267,7 +267,7 @@
                     }
                 },
                 {
-                    "expr": "histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket{namespace=\"$namespace\"}[5m])) by (le))",
+                    "expr": "histogram_quantile(0.99, sum(rate(app_http_request_duration_seconds_bucket{namespace=\"$namespace\"}[5m])) by (le))",
                     "refId": "D",
                     "legendFormat": "p99",
                     "datasource": {
@@ -304,7 +304,7 @@
             },
             "targets": [
                 {
-                    "expr": "sum(rate(http_request_duration_seconds_bucket{namespace=\"$namespace\"}[5m])) by (le)",
+                    "expr": "sum(rate(app_http_request_duration_seconds_bucket{namespace=\"$namespace\"}[5m])) by (le)",
                     "refId": "A",
                     "legendFormat": "{{le}}s",
                     "datasource": {
@@ -344,7 +344,7 @@
             },
             "targets": [
                 {
-                    "expr": "sum(rate(http_request_duration_seconds_count{namespace=\"$namespace\"}[5m])) by (endpoint)",
+                    "expr": "sum(rate(app_http_request_duration_seconds_count{namespace=\"$namespace\"}[5m])) by (endpoint)",
                     "refId": "A",
                     "format": "table",
                     "instant": true,
@@ -354,7 +354,7 @@
                     }
                 },
                 {
-                    "expr": "histogram_quantile(0.50, sum(rate(http_request_duration_seconds_bucket{namespace=\"$namespace\"}[5m])) by (endpoint, le))",
+                    "expr": "histogram_quantile(0.50, sum(rate(app_http_request_duration_seconds_bucket{namespace=\"$namespace\"}[5m])) by (endpoint, le))",
                     "refId": "B",
                     "format": "table",
                     "instant": true,
@@ -364,7 +364,7 @@
                     }
                 },
                 {
-                    "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{namespace=\"$namespace\"}[5m])) by (endpoint, le))",
+                    "expr": "histogram_quantile(0.95, sum(rate(app_http_request_duration_seconds_bucket{namespace=\"$namespace\"}[5m])) by (endpoint, le))",
                     "refId": "C",
                     "format": "table",
                     "instant": true,
@@ -374,7 +374,7 @@
                     }
                 },
                 {
-                    "expr": "histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket{namespace=\"$namespace\"}[5m])) by (endpoint, le))",
+                    "expr": "histogram_quantile(0.99, sum(rate(app_http_request_duration_seconds_bucket{namespace=\"$namespace\"}[5m])) by (endpoint, le))",
                     "refId": "D",
                     "format": "table",
                     "instant": true,

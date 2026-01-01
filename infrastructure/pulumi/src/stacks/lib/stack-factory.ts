@@ -505,7 +505,7 @@ export function createStack(config: StackConfig, k8sProvider: k8s.Provider): Sta
             resources.apiServiceMonitor = createApiServiceMonitor({
                 namespace: namespace,
                 serviceName: "api",
-                portName: "http",
+                targetPort: 80,
                 metricsPath: "/metrics",
                 scrapeInterval: config.monitoring.prometheus.scrapeInterval || "15s",
                 authToken: config.monitoring.prometheus.authToken,
