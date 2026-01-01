@@ -225,4 +225,86 @@ describe("createDBMigrationJob", () => {
         // NOTE: ignoreChanges: ["*"] is set in db-migration.ts:111
         // This prevents drift detection from reporting Job deletion as drift
     });
+
+    it("should use correct monorepo paths for phinx executable", async () => {
+        const job = createDBMigrationJob({
+            env: "production",
+            namespace: "default",
+            image: "ghcr.io/aphiria/aphiria.com-api@sha256:abc123",
+            dbHost: "db.default.svc.cluster.local",
+            dbName: "aphiria",
+            dbUser: pulumi.output("postgres"),
+            dbPassword: pulumi.output("password"),
+            runSeeder: true,
+            provider: k8sProvider,
+        });
+
+        expect(job).toBeDefined();
+
+        const containers = await promiseOf(job.spec.template.spec?.containers);
+        expect(containers).toBeDefined();
+        expect(containers).toHaveLength(1);
+
+        const command = containers![0].command;
+        expect(command).toBeDefined();
+        expect(command).toHaveLength(3);
+        expect(command![0]).toBe("sh");
+        expect(command![1]).toBe("-c");
+        // Verify paths use /app/apps/api (monorepo structure) not /app/api
+        expect(command![2]).toContain("/app/apps/api/vendor/bin/phinx migrate");
+        expect(command![2]).toContain("/app/apps/api/vendor/bin/phinx seed:run");
+    });
+
+    it("should use correct monorepo paths when seeder is disabled", async () => {
+        const job = createDBMigrationJob({
+            env: "production",
+            namespace: "default",
+            image: "ghcr.io/aphiria/aphiria.com-api@sha256:abc123",
+            dbHost: "db.default.svc.cluster.local",
+            dbName: "aphiria",
+            dbUser: pulumi.output("postgres"),
+            dbPassword: pulumi.output("password"),
+            runSeeder: false,
+            provider: k8sProvider,
+        });
+
+        expect(job).toBeDefined();
+
+        const containers = await promiseOf(job.spec.template.spec?.containers);
+        expect(containers).toBeDefined();
+        expect(containers).toHaveLength(1);
+
+        const command = containers![0].command;
+        expect(command).toBeDefined();
+        expect(command).toHaveLength(3);
+        expect(command![0]).toBe("sh");
+        expect(command![1]).toBe("-c");
+        // Verify path uses /app/apps/api (monorepo structure) not /app/api
+        expect(command![2]).toBe("/app/apps/api/vendor/bin/phinx migrate");
+    });
+
+    it("should have fail-fast configuration to avoid wasting CI time", async () => {
+        const job = createDBMigrationJob({
+            env: "production",
+            namespace: "default",
+            image: "ghcr.io/aphiria/aphiria.com-api@sha256:abc123",
+            dbHost: "db.default.svc.cluster.local",
+            dbName: "aphiria",
+            dbUser: pulumi.output("postgres"),
+            dbPassword: pulumi.output("password"),
+            runSeeder: true,
+            provider: k8sProvider,
+        });
+
+        expect(job).toBeDefined();
+
+        const [backoffLimit, activeDeadline] = await Promise.all([
+            promiseOf(job.spec.backoffLimit),
+            promiseOf(job.spec.activeDeadlineSeconds),
+        ]);
+
+        // Verify fail-fast settings prevent infinite retries
+        expect(backoffLimit).toBe(2); // Only retry twice
+        expect(activeDeadline).toBe(300); // Max 5 minutes total
+    });
 });

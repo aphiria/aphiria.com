@@ -106,7 +106,7 @@ export function createGrafanaAlerts(args: GrafanaAlertsArgs): GrafanaAlertsResul
             annotations: {
                 summary: "High CPU usage detected",
                 description:
-                    "Container {{ $labels.container }} in pod {{ $labels.pod }} has CPU usage above 80% for 10 minutes (current: {{ $value }})",
+                    "Container {{ $values.A.Labels.container }} in pod {{ $values.A.Labels.pod }} has CPU usage above 80% for 10 minutes (current: {{ $values.B.Value }})",
             },
         },
         {
@@ -123,7 +123,7 @@ export function createGrafanaAlerts(args: GrafanaAlertsArgs): GrafanaAlertsResul
             annotations: {
                 summary: "High memory usage detected",
                 description:
-                    "Container {{ $labels.container }} in pod {{ $labels.pod }} has memory usage above 90% for 10 minutes (current: {{ $value }})",
+                    "Container {{ $values.A.Labels.container }} in pod {{ $values.A.Labels.pod }} has memory usage above 90% for 10 minutes (current: {{ $values.B.Value }})",
             },
         },
         {
@@ -140,7 +140,7 @@ export function createGrafanaAlerts(args: GrafanaAlertsArgs): GrafanaAlertsResul
             annotations: {
                 summary: "High API latency detected",
                 description:
-                    "API P95 latency is above 1 second for 5 minutes (current: {{ $value }}s)",
+                    "API P95 latency is above 1 second for 5 minutes (current: {{ $values.B.Value }}s)",
             },
         },
         {
@@ -157,7 +157,7 @@ export function createGrafanaAlerts(args: GrafanaAlertsArgs): GrafanaAlertsResul
             annotations: {
                 summary: "High API 4xx rate detected",
                 description:
-                    "API 4xx error rate is above 10% for 5 minutes (current: {{ $value }})",
+                    "API 4xx error rate is above 10% for 5 minutes (current: {{ $values.B.Value }})",
             },
         },
         {
@@ -173,7 +173,8 @@ export function createGrafanaAlerts(args: GrafanaAlertsArgs): GrafanaAlertsResul
             },
             annotations: {
                 summary: "High API 5xx rate detected",
-                description: "API 5xx error rate is above 5% for 5 minutes (current: {{ $value }})",
+                description:
+                    "API 5xx error rate is above 5% for 5 minutes (current: {{ $values.B.Value }})",
             },
         },
         {
@@ -190,7 +191,7 @@ export function createGrafanaAlerts(args: GrafanaAlertsArgs): GrafanaAlertsResul
             annotations: {
                 summary: "Pod is crash looping",
                 description:
-                    "Pod {{ $labels.pod }} in namespace {{ $labels.namespace }} is in CrashLoopBackOff state",
+                    "Pod {{ $values.A.Labels.pod }} in namespace {{ $values.A.Labels.namespace }} is in CrashLoopBackOff state",
             },
         },
         {
@@ -207,7 +208,7 @@ export function createGrafanaAlerts(args: GrafanaAlertsArgs): GrafanaAlertsResul
             annotations: {
                 summary: "Pod has failed",
                 description:
-                    "Pod {{ $labels.pod }} in namespace {{ $labels.namespace }} has failed",
+                    "Pod {{ $values.A.Labels.pod }} in namespace {{ $values.A.Labels.namespace }} has failed",
             },
         },
     ];
@@ -369,7 +370,7 @@ policies:
     group_by: ['alertname', 'environment']
     group_wait: 30s
     group_interval: 5m
-    repeat_interval: 12h
+    repeat_interval: 0
     matchers:
       - environment = ${args.environment}
 `;

@@ -49,8 +49,8 @@ export function createDBMigrationJob(args: DBMigrationJobArgs): k8s.batch.v1.Job
 
     // Build command based on whether seeder should run
     const command = args.runSeeder
-        ? "/app/api/vendor/bin/phinx migrate && /app/api/vendor/bin/phinx seed:run"
-        : "/app/api/vendor/bin/phinx migrate";
+        ? "/app/apps/api/vendor/bin/phinx migrate && /app/apps/api/vendor/bin/phinx seed:run"
+        : "/app/apps/api/vendor/bin/phinx migrate";
 
     return new k8s.batch.v1.Job(
         "db-migration",
@@ -72,6 +72,9 @@ export function createDBMigrationJob(args: DBMigrationJobArgs): k8s.batch.v1.Job
                 // Note: Combined with ignoreChanges below, this creates a fire-and-forget pattern
                 // where the Job runs once, auto-deletes, and won't be recreated on subsequent runs.
                 ttlSecondsAfterFinished: 0,
+                // Fail fast: limit retries and total runtime to avoid wasting CI time on broken migrations
+                backoffLimit: 2,
+                activeDeadlineSeconds: 300, // 5 minutes max
                 template: {
                     metadata: {
                         labels,
