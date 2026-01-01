@@ -277,9 +277,6 @@ providers:
             },
             spec: {
                 replicas: 1,
-                strategy: {
-                    type: "Recreate",
-                },
                 selector: {
                     matchLabels: {
                         app: "grafana",
@@ -563,10 +560,7 @@ providers:
                 ],
             },
         },
-        {
-            provider: args.provider,
-            replaceOnChanges: ["spec.strategy.type"],
-        }
+        { provider: args.provider }
     );
 
     return {

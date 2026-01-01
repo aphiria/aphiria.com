@@ -388,23 +388,4 @@ describe("createGrafana", () => {
         expect(deployment.name).toBe("grafana");
         expect(deployment.namespace).toBe("monitoring");
     });
-
-    it("should use Recreate deployment strategy for RWO volume compatibility", async () => {
-        const result = createGrafana({
-            env: "production",
-            namespace: "monitoring",
-            prometheusUrl: "http://prometheus:9090",
-            storageSize: "5Gi",
-            githubClientId: "client-id",
-            githubClientSecret: "client-secret",
-            githubOrg: "aphiria",
-            adminUser: "davidbyoung",
-            provider: k8sProvider,
-        });
-
-        // Verify deployment is created
-        const deployment = await promiseOf(result.deployment);
-        expect(deployment.name).toBe("grafana");
-        expect(deployment.namespace).toBe("monitoring");
-    });
 });
