@@ -43,9 +43,10 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
-          extensions: curl, dom, libxml, mbstring, pcntl, pgsql, xdebug, zip
+          extensions: apcu, curl, dom, libxml, mbstring, pcntl, pgsql, xdebug, zip
           tools: composer:v2
           coverage: xdebug
+          ini-values: apc.enable_cli=1
       - name: Install dependencies
         run: |
           chmod +x ./install.sh
