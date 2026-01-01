@@ -59,6 +59,11 @@ return [
             'name' => \getenv('DB_NAME'),
             'connection' => $container->resolve(PDO::class),
         ],
+        'testing' => [
+            'adapter' => 'postgresql',
+            'name' => \getenv('DB_NAME'),
+            'connection' => $container->resolve(PDO::class),
+        ],
     ],
     'version_order' => 'creation',
 ];
