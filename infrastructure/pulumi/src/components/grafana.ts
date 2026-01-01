@@ -38,6 +38,10 @@ export interface GrafanaArgs {
     alertEmail?: string;
     /** Dashboards ConfigMap for auto-provisioning */
     dashboardsConfigMap?: k8s.core.v1.ConfigMap;
+    /** Basic auth username (optional, for preview environments) */
+    basicAuthUser?: pulumi.Input<string>;
+    /** Basic auth password (optional, for preview environments) */
+    basicAuthPassword?: pulumi.Input<string>;
     /** Optional resource limits for containers */
     resources?: {
         requests?: { cpu?: string; memory?: string };
@@ -118,11 +122,19 @@ alerting:
         group_by: ['alertname']
 `;
 
-    // Create Secret for OAuth and SMTP credentials
-    const secretData: Record<string, pulumi.Input<string>> = {
-        GF_AUTH_GITHUB_CLIENT_ID: args.githubClientId,
-        GF_AUTH_GITHUB_CLIENT_SECRET: args.githubClientSecret,
-    };
+    // Determine auth mode: basic auth for preview (if configured), otherwise GitHub OAuth
+    const useBasicAuth = args.basicAuthUser !== undefined && args.basicAuthPassword !== undefined;
+
+    // Create Secret for OAuth, SMTP, and basic auth credentials
+    const secretData: Record<string, pulumi.Input<string>> = {};
+
+    if (useBasicAuth) {
+        secretData.GF_SECURITY_ADMIN_USER = args.basicAuthUser!;
+        secretData.GF_SECURITY_ADMIN_PASSWORD = args.basicAuthPassword!;
+    } else {
+        secretData.GF_AUTH_GITHUB_CLIENT_ID = args.githubClientId;
+        secretData.GF_AUTH_GITHUB_CLIENT_SECRET = args.githubClientSecret;
+    }
 
     if (isProduction && args.smtpHost) {
         secretData.GF_SMTP_HOST = pulumi.interpolate`${args.smtpHost}:${args.smtpPort || 587}`;
@@ -169,18 +181,25 @@ root_url = https://grafana.aphiria.com
 serve_from_sub_path = false
 
 [auth]
-disable_login_form = true
+disable_login_form = ${useBasicAuth ? "false" : "true"}
 disable_signout_menu = false
 
+[auth.basic]
+enabled = ${useBasicAuth ? "true" : "false"}
+
 [auth.github]
-enabled = true
-allow_sign_up = true
+enabled = ${useBasicAuth ? "false" : "true"}
+${
+    !useBasicAuth
+        ? `allow_sign_up = true
 scopes = user:email,read:org
 auth_url = https://github.com/login/oauth/authorize
 token_url = https://github.com/login/oauth/access_token
 api_url = https://api.github.com/user
 allowed_organizations = ${args.githubOrg}
-role_attribute_path = contains(groups[*], '@${args.githubOrg}/${args.adminUser}') && 'Admin' || 'Viewer'
+role_attribute_path = contains(groups[*], '@${args.githubOrg}/${args.adminUser}') && 'Admin' || 'Viewer'`
+        : ""
+}
 
 [users]
 allow_sign_up = false

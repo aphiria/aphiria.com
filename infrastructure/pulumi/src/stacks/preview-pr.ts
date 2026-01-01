@@ -143,6 +143,13 @@ createStack(
                     fromAddress: stackConfig.grafana.smtpFromAddress,
                     alertEmail: stackConfig.grafana.alertEmail,
                 },
+                basicAuth:
+                    stackConfig.grafana.basicAuthUser && stackConfig.grafana.basicAuthPassword
+                        ? {
+                              user: stackConfig.grafana.basicAuthUser,
+                              password: stackConfig.grafana.basicAuthPassword,
+                          }
+                        : undefined,
                 resources: {
                     requests: { cpu: "50m", memory: "256Mi" },
                     limits: { cpu: "200m", memory: "512Mi" },

@@ -106,6 +106,8 @@ export class StackConfig {
             smtpPassword: cfg.requireSecret("smtpPassword"),
             smtpFromAddress: cfg.require("smtpFromAddress"),
             alertEmail: cfg.require("alertEmail"),
+            basicAuthUser: cfg.getSecret("basicAuthUser"),
+            basicAuthPassword: cfg.getSecret("basicAuthPassword"),
         };
     }
 }

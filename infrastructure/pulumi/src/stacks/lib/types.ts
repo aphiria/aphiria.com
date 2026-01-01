@@ -268,6 +268,10 @@ export interface StackConfig {
                 fromAddress: string;
                 alertEmail: string;
             };
+            basicAuth?: {
+                user: pulumi.Input<string>;
+                password: pulumi.Input<string>;
+            };
             resources?: {
                 requests?: { cpu?: string; memory?: string };
                 limits?: { cpu?: string; memory?: string };

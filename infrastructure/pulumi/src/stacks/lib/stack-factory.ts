@@ -300,6 +300,8 @@ export function createStack(config: StackConfig, k8sProvider: k8s.Provider): Sta
             smtpPassword: config.monitoring.grafana.smtp?.password,
             smtpFromAddress: config.monitoring.grafana.smtp?.fromAddress,
             alertEmail: config.monitoring.grafana.smtp?.alertEmail,
+            basicAuthUser: config.monitoring.grafana.basicAuth?.user,
+            basicAuthPassword: config.monitoring.grafana.basicAuth?.password,
             dashboardsConfigMap: dashboards.configMap,
             provider: k8sProvider,
         });
