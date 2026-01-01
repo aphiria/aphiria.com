@@ -76,7 +76,7 @@ final class PrometheusMetrics implements IMiddleware
 
             $counter->inc([
                 $exception::class,
-                $request->uri->path,
+                $request->uri->path ?? '/',
             ]);
         } catch (MetricsRegistrationException $ex) {
             // Swallow and log the exception to prevent metrics collection from breaking requests
@@ -103,7 +103,7 @@ final class PrometheusMetrics implements IMiddleware
             );
             $counter->inc([
                 $request->method,
-                $request->uri->path,
+                $request->uri->path ?? '/',
                 (string) $response->statusCode->value,
             ]);
 
@@ -117,7 +117,7 @@ final class PrometheusMetrics implements IMiddleware
             );
             $histogram->observe($latency, [
                 $request->method,
-                $request->uri->path,
+                $request->uri->path ?? '/',
                 (string) $response->statusCode->value,
             ]);
         } catch (MetricsRegistrationException $ex) {

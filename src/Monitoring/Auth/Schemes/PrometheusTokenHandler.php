@@ -36,9 +36,11 @@ final class PrometheusTokenHandler implements IAuthenticationSchemeHandler
      */
     public function authenticate(IRequest $request, AuthenticationScheme $scheme): AuthenticationResult
     {
+        /** @var string|null $authHeader */
         $authHeader = null;
 
-        if ($request->headers->tryGetFirst('Authorization', $authHeader) === false || !\str_starts_with($authHeader ?? '', 'Bearer ')) {
+        /** @psalm-suppress MixedMethodCall Psalm cannot figure out headers->tryGetFirst() for some reason - bug */
+        if ($request->headers->tryGetFirst('Authorization', $authHeader) === false || $authHeader === null || !\str_starts_with($authHeader, 'Bearer ')) {
             return AuthenticationResult::fail('Missing or invalid Authorization header', $scheme->name);
         }
 
@@ -70,6 +72,7 @@ final class PrometheusTokenHandler implements IAuthenticationSchemeHandler
     public function challenge(IRequest $request, IResponse $response, AuthenticationScheme $scheme): void
     {
         $response->statusCode = HttpStatusCode::Unauthorized;
+        /** @psalm-suppress MixedMethodCall Psalm cannot figure out headers->add() for some reason - bug */
         $response->headers->add('WWW-Authenticate', 'Bearer realm="Prometheus Metrics"');
     }
 
