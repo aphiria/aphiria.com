@@ -35,7 +35,7 @@ use PDO;
 final class DocumentationBinder extends Binder
 {
     /** @var string The path to the HTML docs */
-    private const string HTML_DOC_PATH = 'apps/api/resources/views/partials/docs';
+    private const string HTML_DOC_PATH = '/apps/api/resources/views/partials/docs';
 
     /**
      * @inheritdoc
