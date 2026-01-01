@@ -4,13 +4,13 @@
  * Aphiria
  *
  * @link      https://www.aphiria.com
- * @copyright Copyright (C) 2025 David Young
+ * @copyright Copyright (C) 2026 David Young
  * @license   https://github.com/aphiria/aphiria.com/blob/master/LICENSE.md
  */
 
 declare(strict_types=1);
 
-namespace App\Monitoring\Middleware;
+namespace App\Monitoring\Api\Middleware;
 
 use Aphiria\Middleware\IMiddleware;
 use Aphiria\Net\Http\IRequest;
@@ -59,20 +59,6 @@ final class PrometheusMetrics implements IMiddleware
     }
 
     /**
-     * Gets the path with query string
-     *
-     * @param IRequest $request The request
-     * @return string The path with query string
-     */
-    private static function getPathWithQueryString(IRequest $request): string
-    {
-        $path = $request->uri->path;
-        $queryString = $request->uri->queryString;
-
-        return $queryString === null || $queryString === '' ? $path : "$path?$queryString";
-    }
-
-    /**
      * Records an exception metric
      *
      * @param IRequest $request The request
@@ -117,7 +103,7 @@ final class PrometheusMetrics implements IMiddleware
             );
             $counter->inc([
                 $request->method,
-                self::getPathWithQueryString($request),
+                $request->uri->path,
                 (string) $response->statusCode->value,
             ]);
 
@@ -126,12 +112,13 @@ final class PrometheusMetrics implements IMiddleware
                 'app',
                 'http_request_duration_seconds',
                 'HTTP request latency',
-                ['method', 'endpoint'],
+                ['method', 'endpoint', 'status'],
                 [0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10],
             );
             $histogram->observe($latency, [
                 $request->method,
-                self::getPathWithQueryString($request),
+                $request->uri->path,
+                (string) $response->statusCode->value,
             ]);
         } catch (MetricsRegistrationException $ex) {
             // Swallow and log the exception to prevent metrics collection from breaking requests

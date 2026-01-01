@@ -4,13 +4,13 @@
  * Aphiria
  *
  * @link      https://www.aphiria.com
- * @copyright Copyright (C) 2025 David Young
+ * @copyright Copyright (C) 2026 David Young
  * @license   https://github.com/aphiria/aphiria.com/blob/master/LICENSE.md
  */
 
 declare(strict_types=1);
 
-namespace App\Monitoring\Controllers;
+namespace App\Monitoring\Api\Controllers;
 
 use Aphiria\Api\Controllers\Controller;
 use Aphiria\Authentication\Attributes\Authenticate;

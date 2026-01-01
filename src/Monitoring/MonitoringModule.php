@@ -4,7 +4,7 @@
  * Aphiria
  *
  * @link      https://www.aphiria.com
- * @copyright Copyright (C) 2025 David Young
+ * @copyright Copyright (C) 2026 David Young
  * @license   https://github.com/aphiria/aphiria.com/blob/master/LICENSE.md
  */
 
@@ -17,9 +17,9 @@ use Aphiria\Authentication\AuthenticationScheme;
 use Aphiria\Authentication\AuthenticationSchemeOptions;
 use Aphiria\Framework\Application\AphiriaModule;
 use Aphiria\Middleware\MiddlewareBinding;
+use App\Monitoring\Api\Middleware\PrometheusMetrics;
 use App\Monitoring\Auth\Schemes\PrometheusTokenHandler;
 use App\Monitoring\Binders\MonitoringBinder;
-use App\Monitoring\Middleware\PrometheusMetrics;
 
 /**
  * Defines the monitoring module

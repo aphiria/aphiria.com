@@ -203,9 +203,9 @@
             },
             "targets": [
                 {
-                    "expr": "sum(rate(app_http_request_duration_seconds_count{namespace=\"$namespace\"}[5m])) by (endpoint)",
+                    "expr": "sum(rate(app_http_request_duration_seconds_count{namespace=\"$namespace\"}[5m])) by (exported_endpoint)",
                     "refId": "A",
-                    "legendFormat": "{{endpoint}}",
+                    "legendFormat": "{{exported_endpoint}}",
                     "datasource": {
                         "type": "prometheus",
                         "uid": "prometheus"
@@ -344,7 +344,7 @@
             },
             "targets": [
                 {
-                    "expr": "sum(rate(app_http_request_duration_seconds_count{namespace=\"$namespace\"}[5m])) by (endpoint)",
+                    "expr": "sum(rate(app_http_request_duration_seconds_count{namespace=\"$namespace\"}[5m])) by (exported_endpoint)",
                     "refId": "A",
                     "format": "table",
                     "instant": true,
@@ -391,7 +391,11 @@
                 {
                     "id": "organize",
                     "options": {
+                        "excludeByName": {
+                            "endpoint": true
+                        },
                         "renameByName": {
+                            "exported_endpoint": "Path",
                             "Value #A": "RPS",
                             "Value #B": "P50 (s)",
                             "Value #C": "P95 (s)",
