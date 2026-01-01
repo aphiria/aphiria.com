@@ -191,6 +191,10 @@ datasources:
     editable: false
     jsonData:
       timeInterval: 15s
+      # Disable importing Prometheus alert rules into Grafana
+      # We manage alerts via Grafana Unified Alerting (ConfigMaps) instead
+      # Without this, Grafana imports all PrometheusRules (including kube-prometheus-stack defaults)
+      manageAlerts: false
 `,
                 "dashboards.yaml": `
 apiVersion: 1
