@@ -372,7 +372,7 @@ Write tests FIRST (TDD).
 
 ### PHP
 
-- PSR-4: `App\` → `src/`
+- PSR-4: `App\` → `apps/api/src/`
 - PSR-12 coding style
 - `declare(strict_types=1);` in EVERY file
 - Use `readonly` properties, value objects, enums

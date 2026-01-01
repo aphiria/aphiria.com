@@ -32,23 +32,23 @@ RUN echo "apc.shm_size=64M" >> /usr/local/etc/php/conf.d/docker-php-ext-apcu.ini
 
 # Composer
 COPY --from=composer:2 /usr/bin/composer /usr/local/bin/composer
-COPY composer.json composer.lock* ./
-RUN composer install --no-interaction --ignore-platform-reqs --prefer-dist --no-progress
+COPY apps/api/composer.json apps/api/composer.lock* ./apps/api/
+RUN cd apps/api && composer install --no-interaction --ignore-platform-reqs --prefer-dist --no-progress
 
 # Copy the rest of the source
 COPY . .
-COPY ./.env.dist ./.env
+COPY apps/api/.env.dist apps/api/.env
 
 # JS deps + gulp
-RUN yarn install --frozen-lockfile || yarn install \
+RUN cd apps/web && yarn install --frozen-lockfile || yarn install \
  && yarn global add gulp
 
 # Use docs SHA to bust cache and force rebuilds when docs change
 ARG DOCS_SHA=latest
 ENV DOCS_SHA=${DOCS_SHA}
-RUN gulp build
+RUN cd apps/web && gulp build
 
 # Server-side code highlighting
 RUN npm install prismjs jsdom \
- && chmod +x ./resources/js/server-side/highlight-code.js \
- && find ./public-web -type f -name "*.html" -exec node ./resources/js/server-side/highlight-code.js {} \;
+ && chmod +x ./apps/api/resources/js/server-side/highlight-code.js \
+ && find ./apps/web/public -type f -name "*.html" -exec node ./apps/api/resources/js/server-side/highlight-code.js {} \;

@@ -30,8 +30,8 @@ final class ServeCommandHandler implements ICommandHandler
      */
     public function handle(Input $input, IOutput $output)
     {
-        $publicApiPath = \realpath(__DIR__ . '/../../../../public-api');
-        $publicWebPath = \realpath(__DIR__ . '/../../../../public-web');
+        $publicApiPath = \realpath(__DIR__ . '/../../../../public');
+        $publicWebPath = \realpath(__DIR__ . '/../../../../../web/public');
         $localhostRouterPath = \realpath(__DIR__ . '/../../../../localhost-router.php');
 
         if (!\is_string($publicApiPath)) {

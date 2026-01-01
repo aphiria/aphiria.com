@@ -2,11 +2,10 @@
 /.git/
 /.github/
 /.idea/
+/apps/api/tmp/framework/**/*.txt
+/apps/api/tmp/logs/errors.txt
+/apps/api/vendor/
+/apps/web/node_modules/
 # Note: We keep the database infrastructure directory so it can be copied to run migrations against
 /infrastructure/docker
-/infrastructure/kubernetes
 /infrastructure/pulumi
-/node_modules/
-/tmp/framework/**/*.txt
-/tmp/logs/errors.txt
-/vendor/

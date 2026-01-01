@@ -216,7 +216,7 @@ class LexemeSeeder extends AbstractSeed
     {
         // Recursively search all subdirectories (which are split by documentation version) for HTML files
         $htmlPaths = $fileSystem
-            ->listContents('/public-web/docs', true)
+            ->listContents('/public/docs', true)
             ->filter(fn(StorageAttributes $attributes) => $attributes->isFile() && \str_ends_with($attributes->path(), '.html'))
             ->map(fn(StorageAttributes $attributes) => $attributes->path())
             ->toArray();

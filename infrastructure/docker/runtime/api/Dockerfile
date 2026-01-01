@@ -31,20 +31,20 @@ RUN echo "apc.shm_size=64M" >> /usr/local/etc/php/conf.d/docker-php-ext-apcu.ini
 FROM base
 
 # Copy the API application from the build image
-COPY --from=build /app/infrastructure/database ./infrastructure/database
-COPY --from=build /app/public-api          ./public
+COPY --from=build /app/apps/api/database         ./database
+COPY --from=build /app/apps/api/public           ./public
 # We need the web files to be able to index their contents
-COPY --from=build /app/public-web          ./public-web
-COPY --from=build /app/src                 ./src
-COPY --from=build /app/tests               ./tests
-COPY --from=build /app/tmp                 ./tmp
-COPY --from=build /app/vendor              ./vendor
-COPY --from=build /app/.env                ./.env
-COPY --from=build /app/aphiria             ./aphiria
-COPY --from=build /app/composer.json       ./composer.json
-COPY --from=build /app/config.php          ./config.php
-COPY --from=build /app/phinx.php           ./phinx.php
-COPY --from=build /app/phpunit.xml.dist    ./phpunit.xml.dist
+COPY --from=build /app/apps/web/public           ./public-web
+COPY --from=build /app/apps/api/src              ./src
+COPY --from=build /app/apps/api/tests            ./tests
+COPY --from=build /app/apps/api/tmp              ./tmp
+COPY --from=build /app/apps/api/vendor           ./vendor
+COPY --from=build /app/apps/api/.env             ./.env
+COPY --from=build /app/apps/api/aphiria          ./aphiria
+COPY --from=build /app/apps/api/composer.json    ./composer.json
+COPY --from=build /app/apps/api/config.php       ./config.php
+COPY --from=build /app/apps/api/phinx.php        ./phinx.php
+COPY --from=build /app/apps/api/phpunit.xml.dist ./phpunit.xml.dist
 
 # Allow nginx/php-fpm user to write to tmp
 RUN chown -R www-data:www-data .

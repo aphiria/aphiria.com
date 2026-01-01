@@ -13,14 +13,14 @@ const sass = require('gulp-sass')(require('sass'));
 const sourcemaps = require('gulp-sourcemaps');
 
 const paths = {
-    'manifest': 'public-web/rev-manifest.json',
-    'public': 'public-web',
-    'publicCss': 'public-web/css',
-    'publicJs': 'public-web/js',
-    'resourcesCss': 'resources/css',
-    'resourcesJs': 'resources/js',
-    'resourcesViews': 'resources/views',
-    'tmpCss': 'tmp/css'
+    'manifest': 'public/rev-manifest.json',
+    'public': 'public',
+    'publicCss': 'public/css',
+    'publicJs': 'public/js',
+    'resourcesCss': '../api/resources/css',
+    'resourcesJs': '../api/resources/js',
+    'resourcesViews': '../api/resources/views',
+    'tmpCss': '../api/tmp/css'
 };
 
 const rewriteReferences = () => {
@@ -77,7 +77,8 @@ const compileScss = () => {
         .pipe(gulp.dest(paths.tmpCss));
 };
 const cleanCss = () => {
-    return del([`${paths.tmpCss}/*.css`, `${paths.publicCss}/*.css`, `${paths.publicCss}/*.css.map`]);
+    // Need to force this because these files are outside the working directory
+    return del([`${paths.tmpCss}/*.css`, `${paths.publicCss}/*.css`, `${paths.publicCss}/*.css.map`], { force: true });
 };
 const cleanJs = () => {
     // Delete everything but the config.js
@@ -90,8 +91,8 @@ gulp.task('rewrite-references', rewriteReferences);
 gulp.task('minify-js', minifyJs);
 gulp.task('minify-css', minifyCss);
 gulp.task('compile-scss', compileScss);
-gulp.task('download-docs', shell.task('php aphiria docs:build'));
-gulp.task('build-views', shell.task('php aphiria views:build'));
+gulp.task('download-docs', shell.task('php ../api/aphiria docs:build'));
+gulp.task('build-views', shell.task('php ../api/aphiria views:build'));
 // We intentionally build our assets first so that they're ready to be inserted into the built views
 gulp.task('build', gulp.series('clean-css', 'clean-js', 'compile-scss', 'minify-js', 'minify-css', 'download-docs', 'build-views', 'rewrite-references'));
 gulp.task('watch-assets', () => {

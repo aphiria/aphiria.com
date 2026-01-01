@@ -9,7 +9,15 @@
 
 # About
 
-This repository contains the code for both https://www.aphiria.com and https://api.aphiria.com.
+This monorepo contains the code for both https://www.aphiria.com and https://api.aphiria.com.
+
+## Directory Structure
+
+- _apps_: The source code for the web and API applications
+  - _apps/api_: The API code
+  - _apps/web_: The website code
+- _infrastructure_: Contains the Docker and Pulumi infrastructure-as-code
+- _specs_: The GitHub Spec Kit specs
 
 ## Preview Environments
 
@@ -87,7 +95,7 @@ pulumi up --stack local
 
 > **Note:** `pulumi login --local` stores state on your machine in `~/.pulumi` and doesn't require a Pulumi Cloud account.  The local stack uses passphrase `"password"` for encryption (safe to share - no actual secrets in local stack).
 
-> **Note:** If you need to log back into the cloud instance, run `pulumi logout`, then `pulumi login`.
+> **Note:** If you need to log back into the cloud instance, run `pulumi logout`, then `pulumi login` to authenticate with Pulumi Cloud.
 
 #### Updating The Kubernetes Cluster
 
