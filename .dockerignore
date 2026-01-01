@@ -2,6 +2,7 @@
 /.git/
 /.github/
 /.idea/
+/apps/api/tmp/docs/
 /apps/api/tmp/framework/**/*.txt
 /apps/api/tmp/logs/errors.txt
 /apps/api/vendor/

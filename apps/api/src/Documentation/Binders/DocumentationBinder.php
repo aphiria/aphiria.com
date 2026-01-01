@@ -35,7 +35,7 @@ use PDO;
 final class DocumentationBinder extends Binder
 {
     /** @var string The path to the HTML docs */
-    private const string HTML_DOC_PATH = '/resources/views/partials/docs';
+    private const string HTML_DOC_PATH = 'apps/api/resources/views/partials/docs';
 
     /**
      * @inheritdoc
@@ -48,7 +48,7 @@ final class DocumentationBinder extends Binder
         $container->bindInstance(DocumentationMetadata::class, $metadata);
         $files = new Filesystem(
             new LocalFilesystemAdapter(
-                __DIR__ . '/../../..',
+                __DIR__ . '/../../../..',
                 PortableVisibilityConverter::fromArray([
                     'file' => [
                         'public' => 0777,
@@ -86,7 +86,7 @@ final class DocumentationBinder extends Binder
             $converter,
             $metadata->branches,
             __DIR__ . '/../../../tmp/docs',
-            '/tmp/docs',
+            '/api/tmp/docs',
             self::HTML_DOC_PATH,
             $files,
         );
