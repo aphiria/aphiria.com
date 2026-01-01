@@ -313,32 +313,55 @@ providers:
                                     },
                                 ],
                                 env: [
-                                    {
-                                        name: "GF_SECURITY_ADMIN_USER",
-                                        value: "admin",
-                                    },
-                                    {
-                                        name: "GF_SECURITY_ADMIN_PASSWORD",
-                                        value: "admin", // Will be changed on first login via OAuth
-                                    },
-                                    {
-                                        name: "GF_AUTH_GITHUB_CLIENT_ID",
-                                        valueFrom: {
-                                            secretKeyRef: {
-                                                name: secret.metadata.name,
-                                                key: "GF_AUTH_GITHUB_CLIENT_ID",
-                                            },
-                                        },
-                                    },
-                                    {
-                                        name: "GF_AUTH_GITHUB_CLIENT_SECRET",
-                                        valueFrom: {
-                                            secretKeyRef: {
-                                                name: secret.metadata.name,
-                                                key: "GF_AUTH_GITHUB_CLIENT_SECRET",
-                                            },
-                                        },
-                                    },
+                                    ...(useBasicAuth
+                                        ? [
+                                              {
+                                                  name: "GF_SECURITY_ADMIN_USER",
+                                                  valueFrom: {
+                                                      secretKeyRef: {
+                                                          name: secret.metadata.name,
+                                                          key: "GF_SECURITY_ADMIN_USER",
+                                                      },
+                                                  },
+                                              },
+                                              {
+                                                  name: "GF_SECURITY_ADMIN_PASSWORD",
+                                                  valueFrom: {
+                                                      secretKeyRef: {
+                                                          name: secret.metadata.name,
+                                                          key: "GF_SECURITY_ADMIN_PASSWORD",
+                                                      },
+                                                  },
+                                              },
+                                          ]
+                                        : [
+                                              {
+                                                  name: "GF_SECURITY_ADMIN_USER",
+                                                  value: "admin",
+                                              },
+                                              {
+                                                  name: "GF_SECURITY_ADMIN_PASSWORD",
+                                                  value: "admin", // Will be changed on first login via OAuth
+                                              },
+                                              {
+                                                  name: "GF_AUTH_GITHUB_CLIENT_ID",
+                                                  valueFrom: {
+                                                      secretKeyRef: {
+                                                          name: secret.metadata.name,
+                                                          key: "GF_AUTH_GITHUB_CLIENT_ID",
+                                                      },
+                                                  },
+                                              },
+                                              {
+                                                  name: "GF_AUTH_GITHUB_CLIENT_SECRET",
+                                                  valueFrom: {
+                                                      secretKeyRef: {
+                                                          name: secret.metadata.name,
+                                                          key: "GF_AUTH_GITHUB_CLIENT_SECRET",
+                                                      },
+                                                  },
+                                              },
+                                          ]),
                                     ...(isProduction && args.smtpHost
                                         ? [
                                               {

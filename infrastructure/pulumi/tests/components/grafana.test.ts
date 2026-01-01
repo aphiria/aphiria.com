@@ -350,4 +350,42 @@ describe("createGrafana", () => {
         const secret = await promiseOf(result.secret);
         expect(secret.name).toBe("grafana-secrets");
     });
+
+    it("should create deployment with basic auth configuration", async () => {
+        const result = createGrafana({
+            env: "preview",
+            namespace: "monitoring",
+            prometheusUrl: "http://prometheus:9090",
+            storageSize: "2Gi",
+            githubClientId: "client-id",
+            githubClientSecret: "client-secret",
+            githubOrg: "aphiria",
+            adminUser: "davidbyoung",
+            basicAuthUser: "admin",
+            basicAuthPassword: "secure-password",
+            provider: k8sProvider,
+        });
+
+        const deployment = await promiseOf(result.deployment);
+        expect(deployment.name).toBe("grafana");
+        expect(deployment.namespace).toBe("monitoring");
+    });
+
+    it("should create deployment with GitHub OAuth configuration", async () => {
+        const result = createGrafana({
+            env: "production",
+            namespace: "monitoring",
+            prometheusUrl: "http://prometheus:9090",
+            storageSize: "5Gi",
+            githubClientId: "client-id",
+            githubClientSecret: "client-secret",
+            githubOrg: "aphiria",
+            adminUser: "davidbyoung",
+            provider: k8sProvider,
+        });
+
+        const deployment = await promiseOf(result.deployment);
+        expect(deployment.name).toBe("grafana");
+        expect(deployment.namespace).toBe("monitoring");
+    });
 });
