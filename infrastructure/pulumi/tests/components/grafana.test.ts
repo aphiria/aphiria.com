@@ -402,6 +402,9 @@ describe("createGrafana", () => {
             provider: k8sProvider,
         });
 
-        expect(result.deployment).toBeDefined();
+        // Verify deployment is created
+        const deployment = await promiseOf(result.deployment);
+        expect(deployment.name).toBe("grafana");
+        expect(deployment.namespace).toBe("monitoring");
     });
 });

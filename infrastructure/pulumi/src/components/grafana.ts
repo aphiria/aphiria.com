@@ -563,7 +563,10 @@ providers:
                 ],
             },
         },
-        { provider: args.provider }
+        {
+            provider: args.provider,
+            replaceOnChanges: ["spec.strategy.type"],
+        }
     );
 
     return {
