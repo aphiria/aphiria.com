@@ -189,18 +189,18 @@ describe("createDBMigrationJob", () => {
 
     /**
      * Integration test: Verifies Job is created with ttlSecondsAfterFinished for auto-cleanup
-     * IMPORTANT: This Job uses ignoreChanges: ["*"] to prevent drift detection when the Job
-     * completes and gets auto-deleted by Kubernetes TTL controller.
+     * IMPORTANT: This Job uses replaceOnChanges + deleteBeforeReplace to handle the
+     * ephemeral pattern where the Job auto-deletes after completion.
      *
      * Behavior:
      * 1. Pulumi creates Job during deployment
      * 2. Job runs migrations/seeder and completes
      * 3. Kubernetes deletes Job after ttlSecondsAfterFinished (0 seconds = immediate)
-     * 4. Drift detection ignores the deletion (no false positives)
-     * 5. Next deployment recreates Job if needed
+     * 4. Next deployment: Pulumi deletes Job from state, then creates new Job
+     * 5. No "Job not found" errors because deleteBeforeReplace cleans up state first
      *
      * Manual verification: Run `pulumi preview --stack production` after Job completes
-     * and confirm no drift is reported for the missing Job resource.
+     * and confirm the Job is recreated without errors.
      */
     it("should create ephemeral Job with auto-cleanup configuration", async () => {
         const job = createDBMigrationJob({
@@ -309,5 +309,33 @@ describe("createDBMigrationJob", () => {
         // Verify fail-fast settings prevent infinite retries
         expect(backoffLimit).toBe(2); // Only retry twice
         expect(activeDeadline).toBe(300); // Max 5 minutes total
+    });
+
+    it("should use replaceOnChanges and deleteBeforeReplace for ephemeral Job pattern", () => {
+        // This test verifies resource options are set correctly by checking the resource's
+        // internal options. In a real deployment, these options ensure:
+        // 1. replaceOnChanges: Any change to the Job triggers a replacement (not update)
+        // 2. deleteBeforeReplace: Old Job is removed from state before new one is created
+        // This prevents "Job not found" errors when the Job has been auto-deleted by Kubernetes
+
+        const job = createDBMigrationJob({
+            env: "production",
+            namespace: "default",
+            image: "ghcr.io/aphiria/aphiria.com-api@sha256:abc123",
+            dbHost: "db.default.svc.cluster.local",
+            dbName: "aphiria",
+            dbUser: pulumi.output("postgres"),
+            dbPassword: pulumi.output("password"),
+            runSeeder: true,
+            provider: k8sProvider,
+        });
+
+        expect(job).toBeDefined();
+
+        // Verify resource options are set (accessing internal __opts property)
+        const opts = (job as any).__opts;
+        expect(opts.replaceOnChanges).toBeDefined();
+        expect(opts.replaceOnChanges).toContain("**");
+        expect(opts.deleteBeforeReplace).toBe(true);
     });
 });
