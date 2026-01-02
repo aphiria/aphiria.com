@@ -16,7 +16,7 @@ This monorepo contains the code for both https://www.aphiria.com and https://api
 - _apps_: The source code for the web and API applications
   - _apps/api_: The API code
   - _apps/web_: The website code
-- _infrastructure_: Contains the Docker and Pulumi infrastructure-as-code
+- _infrastructure_: The Docker and Pulumi infrastructure-as-code
 - _specs_: The GitHub Spec Kit specs
 
 ## Preview Environments
@@ -111,6 +111,9 @@ kubectl rollout restart deployment api \
 The local stack includes Grafana monitoring. Before running `pulumi up`, configure these values:
 
 ```bash
+
+cd infrastructure/pulumi
+
 # Prometheus monitoring
 pulumi config set prometheus:authToken "dummy-password" --secret local
 
@@ -127,6 +130,7 @@ pulumi config set grafana:smtpUser "noreply@example.com" --secret --stack local
 pulumi config set grafana:smtpPassword "dummy-password" --secret --stack local
 pulumi config set grafana:smtpFromAddress "noreply@example.com" --stack local
 pulumi config set grafana:alertEmail "admin@example.com" --stack local
+pulumi config set prometheus:authToken "password" --stack local
 ```
 
 > **Note:** For local development, you can use placeholder values. GitHub OAuth won't work with dummy credentials, but Grafana will still deploy. For production setup, see [SECRETS.md](SECRETS.md).
@@ -167,6 +171,8 @@ minikube dashboard
 ### Common Pulumi Commands
 
 ```bash
+cd infrastructure/pulumi
+
 # Set passphrase for Pulumi commands (required for local stack)
 export PULUMI_CONFIG_PASSPHRASE="password"
 
@@ -185,13 +191,13 @@ pulumi cancel --stack local
 ### PHP
 
 ```bash
-composer phpunit
+cd apps/api && composer phpunit & cd ../../
 ```
 
 ### TypeScript
 
 ```bash
-cd ./infrastructure/pulumi && npm test && cd ../../
+cd infrastructure/pulumi && npm test && cd ../../
 ```
 
 ## Linting
@@ -199,11 +205,11 @@ cd ./infrastructure/pulumi && npm test && cd ../../
 ### PHP
 
 ```bash
-composer phpcs-fix
+cd apps/api && composer phpcs-fix && cd ../../
 ```
 
 ### TypeScript
 
 ```bash
-cd ./infrastructure/pulumi && npm install && npm run lint:fix && npm run format && cd ../../
+cd infrastructure/pulumi && npm install && npm run lint:fix && npm run format && cd ../../
 ```
