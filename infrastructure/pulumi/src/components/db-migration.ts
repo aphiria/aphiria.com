@@ -49,8 +49,8 @@ export function createDBMigrationJob(args: DBMigrationJobArgs): k8s.batch.v1.Job
 
     // Build command based on whether seeder should run
     const command = args.runSeeder
-        ? "/app/api/vendor/bin/phinx migrate && /app/api/vendor/bin/phinx seed:run"
-        : "/app/api/vendor/bin/phinx migrate";
+        ? "/app/apps/api/vendor/bin/phinx migrate && /app/apps/api/vendor/bin/phinx seed:run"
+        : "/app/apps/api/vendor/bin/phinx migrate";
 
     return new k8s.batch.v1.Job(
         "db-migration",
@@ -65,13 +65,20 @@ export function createDBMigrationJob(args: DBMigrationJobArgs): k8s.batch.v1.Job
                     // but Kubernetes Server-Side Apply (SSA) metadata persists, causing conflicts
                     // on the next `pulumi up`. This annotation tells Pulumi to force the update.
                     "pulumi.com/patchForce": "true",
+                    // Skip await logic to prevent "Job not found" errors during preview/refresh.
+                    // The Job auto-deletes after completion (ttlSecondsAfterFinished=0), so Pulumi's
+                    // default await logic fails when trying to check Job status on subsequent runs.
+                    "pulumi.com/skipAwait": "true",
                 },
             },
             spec: {
                 // Auto-delete Job after completion to avoid clutter.
-                // Note: Combined with ignoreChanges below, this creates a fire-and-forget pattern
-                // where the Job runs once, auto-deletes, and won't be recreated on subsequent runs.
+                // Note: Combined with replaceOnChanges + deleteBeforeReplace, this creates an
+                // ephemeral pattern where the Job runs, auto-deletes, and is recreated on each deployment.
                 ttlSecondsAfterFinished: 0,
+                // Fail fast: limit retries and total runtime to avoid wasting CI time on broken migrations
+                backoffLimit: 2,
+                activeDeadlineSeconds: 300, // 5 minutes max
                 template: {
                     metadata: {
                         labels,
@@ -150,11 +157,12 @@ export function createDBMigrationJob(args: DBMigrationJobArgs): k8s.batch.v1.Job
         },
         {
             provider: args.provider,
-            // Ignore all changes to prevent drift detection errors.
-            // This Job auto-deletes after completion (ttlSecondsAfterFinished=0), so Pulumi
-            // would normally report it as "missing" and try to recreate it on every run.
-            // ignoreChanges tells Pulumi: "Job is ephemeral, don't track changes after creation."
-            ignoreChanges: ["*"],
+            // Ephemeral Job pattern: Job auto-deletes after completion (ttlSecondsAfterFinished=0)
+            // replaceOnChanges: Always replace instead of update (Jobs are immutable anyway)
+            // deleteBeforeReplace: Delete from state before creating new Job to avoid "not found" errors
+            // This allows the Job to be recreated on each deployment without conflicts
+            replaceOnChanges: ["**"],
+            deleteBeforeReplace: true,
         }
     );
 }

@@ -10,6 +10,8 @@ import { StackConfig } from "./lib/stack-config";
 // Minikube provider (default kubeconfig)
 const k8sProvider = new k8s.Provider("aphiria-com-local-k8s", {
     context: "minikube",
+    // Disable SSA to prevent field manager conflicts between deployments
+    enableServerSideApply: false,
 });
 
 const stackConfig = new StackConfig("https://www.aphiria.com", "https://api.aphiria.com");

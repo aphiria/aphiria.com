@@ -365,4 +365,40 @@ describe("createGrafanaAlerts", () => {
         expect(rulesYaml).toContain("apiVersion:");
         expect(rulesYaml).toContain("groups:");
     });
+
+    it("should handle contact point receivers without disableResolveMessage", async () => {
+        const contactPoints = [
+            {
+                name: "test-receiver",
+                receivers: [
+                    {
+                        uid: "test-uid",
+                        type: "email",
+                        settings: {
+                            addresses: "test@example.com",
+                        },
+                        // disableResolveMessage intentionally omitted (undefined)
+                    },
+                ],
+            },
+        ];
+
+        const result = createGrafanaAlerts({
+            namespace: "monitoring",
+            environment: "production",
+            contactPoints,
+            defaultReceiver: "test-receiver",
+            provider: k8sProvider,
+        });
+
+        const data = await promiseOf(result.contactPointsConfigMap.data);
+        const contactPointsYaml = data["contact-points.yaml"];
+
+        // Should not include disableResolveMessage when undefined
+        expect(contactPointsYaml).toContain("test@example.com");
+        expect(contactPointsYaml).toContain("type: email");
+        // Verify it doesn't add disableResolveMessage when undefined
+        const receiverSection = contactPointsYaml.split("receivers:")[1].split("- orgId:")[0];
+        expect(receiverSection).not.toContain("disableResolveMessage");
+    });
 });

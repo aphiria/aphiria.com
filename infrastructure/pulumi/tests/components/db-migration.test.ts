@@ -164,7 +164,7 @@ describe("createDBMigrationJob", () => {
         expect(job).toBeDefined();
     });
 
-    it("should have patchForce annotation to prevent SSA conflicts", async () => {
+    it("should have patchForce and skipAwait annotations for ephemeral Job pattern", async () => {
         const job = createDBMigrationJob({
             env: "production",
             namespace: "default",
@@ -181,23 +181,26 @@ describe("createDBMigrationJob", () => {
 
         const annotations = await promiseOf(job.metadata.annotations);
         expect(annotations).toBeDefined();
+        // patchForce: Handle SSA conflicts when Job is recreated
         expect(annotations["pulumi.com/patchForce"]).toBe("true");
+        // skipAwait: Prevent "Job not found" errors when Job auto-deletes
+        expect(annotations["pulumi.com/skipAwait"]).toBe("true");
     });
 
     /**
      * Integration test: Verifies Job is created with ttlSecondsAfterFinished for auto-cleanup
-     * IMPORTANT: This Job uses ignoreChanges: ["*"] to prevent drift detection when the Job
-     * completes and gets auto-deleted by Kubernetes TTL controller.
+     * IMPORTANT: This Job uses replaceOnChanges + deleteBeforeReplace to handle the
+     * ephemeral pattern where the Job auto-deletes after completion.
      *
      * Behavior:
      * 1. Pulumi creates Job during deployment
      * 2. Job runs migrations/seeder and completes
      * 3. Kubernetes deletes Job after ttlSecondsAfterFinished (0 seconds = immediate)
-     * 4. Drift detection ignores the deletion (no false positives)
-     * 5. Next deployment recreates Job if needed
+     * 4. Next deployment: Pulumi deletes Job from state, then creates new Job
+     * 5. No "Job not found" errors because deleteBeforeReplace cleans up state first
      *
      * Manual verification: Run `pulumi preview --stack production` after Job completes
-     * and confirm no drift is reported for the missing Job resource.
+     * and confirm the Job is recreated without errors.
      */
     it("should create ephemeral Job with auto-cleanup configuration", async () => {
         const job = createDBMigrationJob({
@@ -224,5 +227,87 @@ describe("createDBMigrationJob", () => {
 
         // NOTE: ignoreChanges: ["*"] is set in db-migration.ts:111
         // This prevents drift detection from reporting Job deletion as drift
+    });
+
+    it("should use correct monorepo paths for phinx executable", async () => {
+        const job = createDBMigrationJob({
+            env: "production",
+            namespace: "default",
+            image: "ghcr.io/aphiria/aphiria.com-api@sha256:abc123",
+            dbHost: "db.default.svc.cluster.local",
+            dbName: "aphiria",
+            dbUser: pulumi.output("postgres"),
+            dbPassword: pulumi.output("password"),
+            runSeeder: true,
+            provider: k8sProvider,
+        });
+
+        expect(job).toBeDefined();
+
+        const containers = await promiseOf(job.spec.template.spec?.containers);
+        expect(containers).toBeDefined();
+        expect(containers).toHaveLength(1);
+
+        const command = containers![0].command;
+        expect(command).toBeDefined();
+        expect(command).toHaveLength(3);
+        expect(command![0]).toBe("sh");
+        expect(command![1]).toBe("-c");
+        // Verify paths use /app/apps/api (monorepo structure) not /app/api
+        expect(command![2]).toContain("/app/apps/api/vendor/bin/phinx migrate");
+        expect(command![2]).toContain("/app/apps/api/vendor/bin/phinx seed:run");
+    });
+
+    it("should use correct monorepo paths when seeder is disabled", async () => {
+        const job = createDBMigrationJob({
+            env: "production",
+            namespace: "default",
+            image: "ghcr.io/aphiria/aphiria.com-api@sha256:abc123",
+            dbHost: "db.default.svc.cluster.local",
+            dbName: "aphiria",
+            dbUser: pulumi.output("postgres"),
+            dbPassword: pulumi.output("password"),
+            runSeeder: false,
+            provider: k8sProvider,
+        });
+
+        expect(job).toBeDefined();
+
+        const containers = await promiseOf(job.spec.template.spec?.containers);
+        expect(containers).toBeDefined();
+        expect(containers).toHaveLength(1);
+
+        const command = containers![0].command;
+        expect(command).toBeDefined();
+        expect(command).toHaveLength(3);
+        expect(command![0]).toBe("sh");
+        expect(command![1]).toBe("-c");
+        // Verify path uses /app/apps/api (monorepo structure) not /app/api
+        expect(command![2]).toBe("/app/apps/api/vendor/bin/phinx migrate");
+    });
+
+    it("should have fail-fast configuration to avoid wasting CI time", async () => {
+        const job = createDBMigrationJob({
+            env: "production",
+            namespace: "default",
+            image: "ghcr.io/aphiria/aphiria.com-api@sha256:abc123",
+            dbHost: "db.default.svc.cluster.local",
+            dbName: "aphiria",
+            dbUser: pulumi.output("postgres"),
+            dbPassword: pulumi.output("password"),
+            runSeeder: true,
+            provider: k8sProvider,
+        });
+
+        expect(job).toBeDefined();
+
+        const [backoffLimit, activeDeadline] = await Promise.all([
+            promiseOf(job.spec.backoffLimit),
+            promiseOf(job.spec.activeDeadlineSeconds),
+        ]);
+
+        // Verify fail-fast settings prevent infinite retries
+        expect(backoffLimit).toBe(2); // Only retry twice
+        expect(activeDeadline).toBe(300); // Max 5 minutes total
     });
 });

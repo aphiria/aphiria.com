@@ -444,6 +444,68 @@ Write tests FIRST (TDD).
 2. Implement `up()` and `down()` (reversible)
 3. Test: `phinx migrate` + `phinx rollback`
 
+### Debugging Failed Deployments - Critical First Steps
+
+When investigating deployment failures, follow this order (NEVER skip to theory):
+
+**1. Verify cluster context FIRST**:
+```bash
+kubectl cluster-info | head -1
+pulumi stack output kubeconfig --stack <stack> --show-secrets | grep "server:"
+```
+These MUST match. Set `KUBECONFIG` explicitly if needed:
+```bash
+pulumi stack output kubeconfig --stack <stack> --show-secrets > /tmp/kubeconfig.yaml
+export KUBECONFIG=/tmp/kubeconfig.yaml
+```
+
+**2. Get actual error logs from failing pod/container**:
+```bash
+kubectl get pods -n <namespace>  # Find the pod
+kubectl logs -n <namespace> <pod-name> -c <container-name>
+kubectl describe pod -n <namespace> <pod-name>  # For init container issues
+```
+**The ACTUAL error message trumps all theory.**
+
+**3. Check what's actually deployed vs. what you expect**:
+```bash
+kubectl get deployment -n <namespace> <name> -o yaml
+```
+Don't assume Pulumi state matches Kubernetes reality.
+
+**4. Check Pulumi update history**:
+```bash
+pulumi stack history --stack <stack> -j | jq -r '.[] | "\(.version) \(.status) \(.startTime) \(.message)"'
+```
+Failed updates don't persist state changes. Last SUCCESSFUL update matters.
+
+**Debugging Philosophy**:
+- ✅ kubectl logs → Shows actual error
+- ✅ kubectl get/describe → Shows actual state
+- ✅ pulumi stack history → Shows what succeeded
+- ❌ Assuming code deployed = code running
+- ❌ Theorizing about paths without checking
+- ❌ Looking at source code before checking what's deployed
+
+### Pulumi Update Failure Behavior
+
+**CRITICAL**: When `pulumi up` fails:
+- Resources may be partially created/updated in Kubernetes
+- **BUT** Pulumi's state file is NOT updated with new desired inputs
+- The state still reflects the last SUCCESSFUL update
+- A failed update means you need to fix the issue and re-run - the changes weren't applied
+
+**Implications**:
+- If update #7 fails, but update #4 succeeded, the stack state reflects update #4's code
+- Even if you deployed from the correct commit, a failed update means old state persists
+- Always check: `pulumi stack history` to find last successful update
+- Check resource's `modified` timestamp in state:
+  ```bash
+  pulumi stack export --stack <stack> | jq '.deployment.resources[] | select(.type == "..." and .id == "...") | {modified, created}'
+  ```
+
+**Example**: If a resource like HTTPRoute fails to create (already exists), it can block the entire update. Other resource changes (like Deployment updates) won't be persisted even if they were calculated correctly.
+
 ### Debugging
 
 **Local (Minikube)**:
