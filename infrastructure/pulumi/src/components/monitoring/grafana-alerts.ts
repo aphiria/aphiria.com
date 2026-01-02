@@ -370,7 +370,7 @@ policies:
     group_by: ['alertname', 'environment']
     group_wait: 30s
     group_interval: 5m
-    repeat_interval: 0
+    repeat_interval: 12h
     matchers:
       - environment = ${args.environment}
 `;
