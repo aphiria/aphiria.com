@@ -43,7 +43,9 @@ export function createKubernetesCluster(args: KubernetesClusterArgs): Kubernetes
         `${args.name}-k8s`,
         {
             kubeconfig: kubeconfig,
-            enableServerSideApply: true,
+            // Disable SSA to prevent field manager conflicts between deployments
+            // SSA field manager IDs change when provider is recreated, causing conflicts
+            enableServerSideApply: false,
         },
         {
             dependsOn: [cluster],
