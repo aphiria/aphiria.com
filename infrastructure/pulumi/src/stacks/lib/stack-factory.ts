@@ -420,10 +420,10 @@ export function createStack(config: StackConfig, k8sProvider: k8s.Provider): Sta
 
         // Create DNS records if configured
         // Fetch LoadBalancer IP from nginx-gateway Chart resources
+        /* istanbul ignore next - Chart.resources is only populated at runtime, cannot be mocked in unit tests */
         if (config.gateway.dns && resources.helmCharts?.nginxGateway) {
             // Workaround for Pulumi bug #16395: Service.get() doesn't respect dependsOn
             // Use Chart v4's .resources output to get the Service directly from child resources
-            /* istanbul ignore next - Chart.resources is only populated at runtime, cannot be mocked in unit tests */
             const gatewayServiceOutput = resources.helmCharts.nginxGateway.resources.apply(
                 (chartResources) => {
                     const service = chartResources.find(
