@@ -517,7 +517,7 @@ jobs:
           pulumi config set apiImageDigest "${{ needs.build.outputs.api-digest }}" --stack "${STACK_NAME}"
 
           set +e
-          timeout 600 pulumi preview --stack "${STACK_NAME}" --non-interactive 2>&1 | tee preview.txt
+          timeout 300 pulumi preview --stack "${STACK_NAME}" --non-interactive 2>&1 | tee preview.txt
           PREVIEW_EXIT_CODE=${PIPESTATUS[0]}
           set -e
 
@@ -632,10 +632,10 @@ jobs:
           pulumi config set apiImageDigest "${{ needs.build.outputs.api-digest }}" --stack "${STACK_NAME}"
 
           # Retry deployment with refresh on failure to handle orphaned resources
-          if ! timeout 600 pulumi up --stack "${STACK_NAME}" --yes; then
+          if ! timeout 420 pulumi up --stack "${STACK_NAME}" --yes; then
             echo "Deployment failed, refreshing state and retrying once..."
             pulumi refresh --stack "${STACK_NAME}" --yes
-            timeout 600 pulumi up --stack "${STACK_NAME}" --yes
+            timeout 420 pulumi up --stack "${STACK_NAME}" --yes
           fi
 
       - name: Post deployment success comment (preview)
