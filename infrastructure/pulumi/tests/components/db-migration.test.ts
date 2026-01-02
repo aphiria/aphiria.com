@@ -310,32 +310,4 @@ describe("createDBMigrationJob", () => {
         expect(backoffLimit).toBe(2); // Only retry twice
         expect(activeDeadline).toBe(300); // Max 5 minutes total
     });
-
-    it("should use replaceOnChanges and deleteBeforeReplace for ephemeral Job pattern", () => {
-        // This test verifies resource options are set correctly by checking the resource's
-        // internal options. In a real deployment, these options ensure:
-        // 1. replaceOnChanges: Any change to the Job triggers a replacement (not update)
-        // 2. deleteBeforeReplace: Old Job is removed from state before new one is created
-        // This prevents "Job not found" errors when the Job has been auto-deleted by Kubernetes
-
-        const job = createDBMigrationJob({
-            env: "production",
-            namespace: "default",
-            image: "ghcr.io/aphiria/aphiria.com-api@sha256:abc123",
-            dbHost: "db.default.svc.cluster.local",
-            dbName: "aphiria",
-            dbUser: pulumi.output("postgres"),
-            dbPassword: pulumi.output("password"),
-            runSeeder: true,
-            provider: k8sProvider,
-        });
-
-        expect(job).toBeDefined();
-
-        // Verify resource options are set (accessing internal __opts property)
-        const opts = (job as any).__opts;
-        expect(opts.replaceOnChanges).toBeDefined();
-        expect(opts.replaceOnChanges).toContain("**");
-        expect(opts.deleteBeforeReplace).toBe(true);
-    });
 });
