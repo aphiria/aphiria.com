@@ -631,7 +631,12 @@ jobs:
           pulumi config set webImageDigest "${{ needs.build.outputs.web-digest }}" --stack "${STACK_NAME}"
           pulumi config set apiImageDigest "${{ needs.build.outputs.api-digest }}" --stack "${STACK_NAME}"
 
-          timeout 1200 pulumi up --stack "${STACK_NAME}" --yes
+          # Retry deployment with refresh on failure to handle orphaned resources
+          if ! timeout 1200 pulumi up --stack "${STACK_NAME}" --yes; then
+            echo "Deployment failed, refreshing state and retrying once..."
+            pulumi refresh --stack "${STACK_NAME}" --yes
+            timeout 1200 pulumi up --stack "${STACK_NAME}" --yes
+          fi
 
       - name: Post deployment success comment (preview)
         if: success() && needs.determine-mode.outputs.mode == 'preview'

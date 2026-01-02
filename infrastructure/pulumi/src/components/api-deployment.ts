@@ -220,7 +220,7 @@ export function createAPIDeployment(args: APIDeploymentArgs): APIDeploymentResul
                                           ? "IfNotPresent"
                                           : "Always",
                                 // Preserve permissions so nginx can access tmp directory
-                                command: ["sh", "-c", "cp -Rp /app/api/. /usr/share/nginx/html"],
+                                command: ["sh", "-c", "cp -Rp /app/apps/api/. /usr/share/nginx/html"],
                                 volumeMounts: [
                                     {
                                         name: "api-code",
