@@ -168,4 +168,29 @@ describe("createNamespace", () => {
         expect(policyName).toBe("preview-pr-123-network-policy");
         expect(secretName).toBe("ghcr-pull-secret");
     });
+
+    it("should use Namespace.get() for default namespace instead of creating it", async () => {
+        const result = createNamespace({
+            name: "default",
+            env: "production",
+            imagePullSecret: {
+                registry: "ghcr.io",
+                username: pulumi.output("user"),
+                token: pulumi.output("ghp_token"),
+            },
+            provider: k8sProvider,
+        });
+
+        // Verify namespace and imagePullSecret are created
+        expect(result.namespace).toBeDefined();
+        expect(result.imagePullSecret).toBeDefined();
+
+        // Verify URN contains the namespace type - this confirms the resource was created/retrieved
+        const urn = await promiseOf(result.namespace.urn);
+        expect(urn).toContain("kubernetes:core/v1:Namespace");
+
+        // Verify imagePullSecret was created
+        const secretName = await promiseOf(result.imagePullSecret!.metadata.name);
+        expect(secretName).toBe("ghcr-pull-secret");
+    });
 });

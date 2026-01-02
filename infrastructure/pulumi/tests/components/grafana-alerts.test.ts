@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll } from "@jest/globals";
 import * as k8s from "@pulumi/kubernetes";
-import { createGrafanaAlerts } from "../../../src/components/monitoring/grafana-alerts";
-import { promiseOf } from "../../test-utils";
+import { createGrafanaAlerts } from "../../src/components/grafana-alerts";
+import { promiseOf } from "../test-utils";
 
 describe("createGrafanaAlerts", () => {
     let k8sProvider: k8s.Provider;
@@ -339,9 +339,9 @@ describe("createGrafanaAlerts", () => {
         });
 
         const [rulesLabels, contactPointsLabels, policiesLabels] = await Promise.all([
-            promiseOf(result.alertRulesConfigMap.metadata.apply((m) => m.labels)),
-            promiseOf(result.contactPointsConfigMap.metadata.apply((m) => m.labels)),
-            promiseOf(result.notificationPoliciesConfigMap.metadata.apply((m) => m.labels)),
+            promiseOf(result.alertRulesConfigMap.metadata.apply((m: any) => m.labels)),
+            promiseOf(result.contactPointsConfigMap.metadata.apply((m: any) => m.labels)),
+            promiseOf(result.notificationPoliciesConfigMap.metadata.apply((m: any) => m.labels)),
         ]);
 
         expect(rulesLabels).toMatchObject({ grafana_alert: "1" });

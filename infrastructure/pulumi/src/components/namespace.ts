@@ -47,17 +47,21 @@ export function createNamespace(args: NamespaceArgs): NamespaceResult {
         ...(args.labels || {}),
     };
 
-    // Create Namespace
-    const namespace = new k8s.core.v1.Namespace(
-        args.name,
-        {
-            metadata: {
-                name: args.name,
-                labels,
-            },
-        },
-        { provider: args.provider }
-    );
+    // Create or get Namespace
+    // Default namespace always exists in Kubernetes - use .get() instead of creating
+    const namespace =
+        args.name === "default"
+            ? k8s.core.v1.Namespace.get(args.name, args.name, { provider: args.provider })
+            : new k8s.core.v1.Namespace(
+                  args.name,
+                  {
+                      metadata: {
+                          name: args.name,
+                          labels,
+                      },
+                  },
+                  { provider: args.provider }
+              );
 
     // Create ResourceQuota (if specified)
     let resourceQuota: k8s.core.v1.ResourceQuota | undefined;

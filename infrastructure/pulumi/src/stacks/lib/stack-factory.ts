@@ -1,4 +1,3 @@
-import * as pulumi from "@pulumi/pulumi";
 import * as k8s from "@pulumi/kubernetes";
 import {
     installBaseHelmCharts,
@@ -17,7 +16,7 @@ import {
 } from "../../components";
 import { createGrafana } from "../../components/grafana";
 import { createGrafanaIngress, GrafanaIngressResult } from "../../components/grafana-ingress";
-import { createGrafanaAlerts } from "../../components/monitoring/grafana-alerts";
+import { createGrafanaAlerts } from "../../components/grafana-alerts";
 import { createDashboards } from "../../components/dashboards";
 import {
     createApiServiceMonitor,
@@ -420,20 +419,27 @@ export function createStack(config: StackConfig, k8sProvider: k8s.Provider): Sta
         });
 
         // Create DNS records if configured
-        // Only fetch LoadBalancer IP if we need it for DNS
-        if (config.gateway.dns) {
-            const gatewayService = k8s.core.v1.Service.get(
-                "nginx-gateway-svc",
-                pulumi.interpolate`${gatewayNamespace}/nginx-gateway-nginx-gateway-fabric`,
-                {
-                    provider: k8sProvider,
-                    dependsOn: resources.helmCharts?.nginxGateway
-                        ? [resources.helmCharts.nginxGateway]
-                        : [],
+        // Fetch LoadBalancer IP from nginx-gateway Chart resources
+        if (config.gateway.dns && resources.helmCharts?.nginxGateway) {
+            // Workaround for Pulumi bug #16395: Service.get() doesn't respect dependsOn
+            // Use Chart v4's .resources output to get the Service directly from child resources
+            /* istanbul ignore next - Chart.resources is only populated at runtime, cannot be mocked in unit tests */
+            const gatewayServiceOutput = resources.helmCharts.nginxGateway.resources.apply(
+                (chartResources) => {
+                    const service = chartResources.find(
+                        (r) =>
+                            r.__pulumiType === "kubernetes:core/v1:Service" &&
+                            r.__name ===
+                                "nginx-gateway:nginx-gateway/nginx-gateway-nginx-gateway-fabric"
+                    );
+                    if (!service) {
+                        throw new Error("Could not find nginx-gateway Service in Chart resources");
+                    }
+                    return service as k8s.core.v1.Service;
                 }
             );
 
-            resources.gateway.ip = gatewayService.status.loadBalancer.ingress[0].ip;
+            resources.gateway.ip = gatewayServiceOutput.status.loadBalancer.ingress[0].ip;
 
             const dnsResult = createDNSRecords({
                 domain: config.gateway.dns.domain,

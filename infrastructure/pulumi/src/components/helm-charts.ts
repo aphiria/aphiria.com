@@ -183,6 +183,13 @@ export function installBaseHelmCharts(args: BaseHelmChartsArgs): BaseHelmChartsR
             version: "1.2.0",
             namespace: "nginx-gateway",
             provider: args.provider,
+            values: {
+                nginxGateway: {
+                    snippetsFilters: {
+                        enable: true,
+                    },
+                },
+            },
         },
         nginxGatewayDependencies
     );
