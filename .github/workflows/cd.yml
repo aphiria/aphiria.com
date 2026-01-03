@@ -7,17 +7,17 @@ on:
   workflow_dispatch:
     inputs:
       environment:
-        description: 'Target environment'
+        description: "Target environment"
         type: choice
         options: [preview, production]
         default: preview
         required: true
       pr_number:
-        description: 'PR number (preview only, for fork PRs after code review)'
+        description: "PR number (preview only, for fork PRs after code review)"
         type: string
         required: false
       commit_sha:
-        description: 'Exact commit SHA you reviewed'
+        description: "Exact commit SHA you reviewed"
         type: string
         required: false
 
@@ -352,7 +352,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: "20"
 
       - name: Install Pulumi CLI
         uses: pulumi/actions@v5
@@ -471,7 +471,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: "20"
 
       - name: Install Pulumi CLI
         uses: pulumi/actions@v5
@@ -592,7 +592,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: "20"
 
       - name: Install Pulumi CLI
         uses: pulumi/actions@v5
@@ -718,7 +718,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: "20"
 
       - name: Install root TypeScript dependencies
         run: npm install

@@ -6,7 +6,7 @@ on:
       - master
   pull_request:
   schedule:
-    - cron: '0 0 * * *'
+    - cron: "0 0 * * *"
 
 jobs:
   test:
@@ -16,8 +16,8 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - php: '8.4'
-          - php: '8.5'
+          - php: "8.4"
+          - php: "8.5"
     services:
       postgres:
         image: postgres:16-alpine
