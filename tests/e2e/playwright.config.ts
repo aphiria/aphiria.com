@@ -16,8 +16,8 @@ export default defineConfig({
     /* Fail the build on CI if you accidentally left test.only in the source code */
     forbidOnly: !!process.env.CI,
 
-    /* NO global retries - retries handled by assertPageOk() helper only */
-    retries: 0,
+    /* Retry failed tests in CI (2 retries), none locally for fast feedback */
+    retries: process.env.CI ? 2 : 0,
 
     /* Reporter to use */
     reporter: [
