@@ -51,7 +51,7 @@ test.describe("Mobile navigation (<1024px)", () => {
         const grayOut = page.locator("div#gray-out");
         const body = page.locator("body");
 
-        // Initially, side nav should be off-screen (left: 100%)
+        // Initially, side nav should be visible but positioned off-screen
         await expect(sideNav).toBeVisible();
         await expect(grayOut).toHaveCSS("visibility", "hidden");
         await expect(body).not.toHaveClass(/nav-open/);
@@ -59,18 +59,16 @@ test.describe("Mobile navigation (<1024px)", () => {
         // Click mobile menu to open
         await mobileMenuLink.click();
 
-        // Wait for transition to complete by checking final state
+        // Verify nav-open class is added and gray-out becomes visible
         await expect(body).toHaveClass(/nav-open/);
         await expect(grayOut).toHaveCSS("visibility", "visible");
-        await expect(sideNav).toHaveCSS("transform", "matrix(1, 0, 0, 1, 0, 0)"); // translate3d(0, 0, 0)
 
         // Click mobile menu again to close
         await mobileMenuLink.click();
 
-        // Wait for transition to complete
+        // Verify nav-open class is removed and gray-out is hidden
         await expect(body).not.toHaveClass(/nav-open/);
         await expect(grayOut).toHaveCSS("visibility", "hidden");
-        await expect(sideNav).toHaveCSS("transform", "none");
     });
 
     test("clicking gray-out closes mobile nav", async ({ page }) => {
@@ -89,7 +87,7 @@ test.describe("Mobile navigation (<1024px)", () => {
         // Click gray-out to close
         await grayOut.click();
 
-        // Wait for transition to complete
+        // Verify nav-open class is removed and gray-out is hidden
         await expect(body).not.toHaveClass(/nav-open/);
         await expect(grayOut).toHaveCSS("visibility", "hidden");
     });

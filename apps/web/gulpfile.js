@@ -17,10 +17,10 @@ const paths = {
     'public': 'public',
     'publicCss': 'public/css',
     'publicJs': 'public/js',
-    'resourcesCss': '../api/resources/css',
-    'resourcesJs': '../api/resources/js',
-    'resourcesViews': '../api/resources/views',
-    'tmpCss': '../api/tmp/css'
+    'resourcesCss': '../web/src/css',
+    'resourcesJs': '../web/src/js',
+    'resourcesViews': '../api/src/views',
+    'tmpCss': '../web/tmp/css'
 };
 
 const rewriteReferences = () => {

@@ -50,5 +50,5 @@ RUN cd apps/web && gulp build
 
 # Server-side code highlighting
 RUN npm install prismjs jsdom \
- && chmod +x ./apps/api/resources/js/server-side/highlight-code.js \
- && find ./apps/web/public -type f -name "*.html" -exec node ./apps/api/resources/js/server-side/highlight-code.js {} \;
+ && chmod +x ./apps/web/src/js/server-side/highlight-code.js \
+ && find ./apps/web/public -type f -name "*.html" -exec node ./apps/web/src/js/server-side/highlight-code.js {} \;
