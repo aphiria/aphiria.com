@@ -16,12 +16,12 @@ test("main navigation structure", async ({ page }) => {
     const homePage = new HomePage(page);
     await homePage.goto();
 
-    const navItems = homePage.mainNav.getNavItems();
+    const navItems = homePage.mainNav.navItems;
     await expect(navItems).toHaveCount(4);
 
-    await expect(homePage.mainNav.getDocsLink()).toHaveCount(1);
-    await expect(homePage.mainNav.getGitHubLink()).toHaveCount(1);
-    await expect(homePage.mainNav.getDiscussionsLink()).toHaveCount(1);
+    await expect(homePage.mainNav.docsLink).toHaveCount(1);
+    await expect(homePage.mainNav.gitHubLink).toHaveCount(1);
+    await expect(homePage.mainNav.discussionsLink).toHaveCount(1);
 });
 
 test("copy button copies code and changes button text", async ({ page }) => {

@@ -190,9 +190,9 @@ composer phpcs-fix
 composer psalm
 ```
 
-#### TypeScript Linting & Formatting
+#### TypeScript/GitHub Workflow Linting & Formatting
 
-All TypeScript code (infrastructure and tests) is linted and formatted from the root:
+All TypeScript code (infrastructure and tests) and GitHub workflow code is linted and formatted from the root:
 
 ```bash
 npm run lint:fix

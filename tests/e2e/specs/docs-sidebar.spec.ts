@@ -1,10 +1,12 @@
 import { test, expect } from "@playwright/test";
+import { DocsPage } from "../pages/DocsPage";
 import { assertPageOk } from "../lib/navigation";
 
 test("sidebar structure", async ({ page }) => {
-    await assertPageOk(page, `${process.env.SITE_BASE_URL}/docs/1.x/introduction.html`);
+    const docsPage = new DocsPage(page);
+    await docsPage.goto("/docs/1.x/introduction.html");
 
-    const sections = page.locator("nav.side-nav section");
+    const sections = docsPage.sideNav.sections;
     await expect(sections).not.toHaveCount(0);
 
     const sectionCount = await sections.count();
@@ -23,36 +25,14 @@ test("sidebar structure", async ({ page }) => {
 });
 
 test("sidebar link traversal", async ({ page }) => {
-    await assertPageOk(page, `${process.env.SITE_BASE_URL}/docs/1.x/introduction.html`);
+    const docsPage = new DocsPage(page);
+    await docsPage.goto("/docs/1.x/introduction.html");
 
-    const sections = page.locator("nav.side-nav section");
-    const hrefs: string[] = [];
-
-    const sectionCount = await sections.count();
-    for (let i = 0; i < sectionCount; i++) {
-        const links = sections.nth(i).locator("ul.doc-sidebar-nav li a");
-        const linkCount = await links.count();
-
-        for (let j = 0; j < linkCount; j++) {
-            const href = await links.nth(j).getAttribute("href");
-            if (href) hrefs.push(href);
-        }
-    }
-
-    const uniqueHrefs = [...new Set(hrefs)];
-
-    const baseUrl = new URL(process.env.SITE_BASE_URL!);
-    const internalHrefs = uniqueHrefs.filter((href) => {
-        try {
-            const url = new URL(href, baseUrl);
-            return url.origin === baseUrl.origin;
-        } catch {
-            return false;
-        }
-    });
+    const internalHrefs = await docsPage.sideNav.getAllInternalLinks();
 
     console.log(`Testing ${internalHrefs.length} same-origin sidebar links`);
 
+    const baseUrl = new URL(process.env.SITE_BASE_URL!);
     for (const href of internalHrefs) {
         const fullUrl = new URL(href, baseUrl).toString();
         await assertPageOk(page, fullUrl);

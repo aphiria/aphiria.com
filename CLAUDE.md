@@ -430,6 +430,20 @@ Write tests FIRST (TDD).
 - Dependency Injection via Binders
 - Parameterized queries ONLY
 
+### TypeScript
+
+- Use properties instead of getters/setters
+- Use `readonly` properties, when possible
+- Use `enum`s for constants
+- Use `interface`s for contracts
+- Use `type`s for type aliases
+- Use `const enum`s for compile-time constants
+- Use `any` only for external APIs
+- Use `unknown` only for untrusted input
+- Use `never` only for impossible cases
+- Use `assertNever()` to enforce exhaustiveness
+- Use `assert()` for preconditions
+
 ### Comments
 
 - ❌ Don't comment self-explanatory code

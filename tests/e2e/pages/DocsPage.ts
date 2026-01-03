@@ -14,7 +14,8 @@ export class DocsPage {
         this.sideNav = new DocsSideNav(page);
     }
 
-    async goto(): Promise<void> {
-        await assertPageOk(this.page, process.env.SITE_BASE_URL!);
+    async goto(docPath?: string): Promise<void> {
+        const url = docPath ? `${process.env.SITE_BASE_URL}${docPath}` : process.env.SITE_BASE_URL!;
+        await assertPageOk(this.page, url);
     }
 }

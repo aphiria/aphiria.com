@@ -20,7 +20,7 @@ test("search displays results", async ({ page }) => {
 
     await homePage.search.query("rout");
 
-    const results = homePage.search.getResults();
+    const results = homePage.search.results;
     await expect(results).not.toHaveCount(0);
 
     const firstResult = results.first().locator("a");
@@ -34,10 +34,10 @@ test("can use arrow keys to select search results", async ({ page }) => {
     await homePage.search.query("rout");
 
     await page.keyboard.press("ArrowDown");
-    let selected = page.locator("ul.search-results li.selected");
+    const selected = page.locator("ul.search-results li.selected");
     await expect(selected).toHaveCount(1);
 
-    const results = homePage.search.getResults();
+    const results = homePage.search.results;
     const count = await results.count();
 
     for (let i = 1; i < count; i++) {
@@ -45,31 +45,57 @@ test("can use arrow keys to select search results", async ({ page }) => {
     }
 
     await page.keyboard.press("ArrowDown");
-    selected = results.first().locator(".selected");
-    await expect(selected).toHaveCount(1);
+    await expect(results.first()).toHaveClass(/selected/);
 
     await page.keyboard.press("ArrowUp");
-    selected = results.last().locator(".selected");
-    await expect(selected).toHaveCount(1);
+    await expect(results.last()).toHaveClass(/selected/);
 });
 
-test("search enter key navigation", async ({ page }) => {
+test("pressing enter navigates to first search result by default", async ({ page }) => {
     const homePage = new HomePage(page);
     await homePage.goto();
 
     await homePage.search.query("rout");
 
-    await page.keyboard.press("ArrowDown");
+    const results = homePage.search.results;
+    const firstResultLink = results.first().locator("a");
+    const href = await firstResultLink.getAttribute("href");
 
-    const selectedLink = homePage.search.getSelectedResult();
-    const href = await selectedLink.getAttribute("href");
+    expect(href).toBeTruthy();
 
+    // Press Enter and wait for navigation to complete
     await page.keyboard.press("Enter");
+    await page.waitForURL((url) => url.toString().includes(href || ""), { waitUntil: "domcontentloaded" });
+
+    // We've already asserted that href should not be empty, so it should never fall back to ""
+    expect(page.url()).toContain(href || "");
+});
+
+test("can click on search result to navigate", async ({ page }) => {
+    const homePage = new HomePage(page);
+    await homePage.goto();
+
+    await homePage.search.query("rout");
+
+    const results = homePage.search.results;
+
+    // Get second result and click it
+    const secondResult = results.nth(1);
+    const secondResultLink = secondResult.locator("a");
+    const href = await secondResultLink.getAttribute("href");
+
+    expect(href).toBeTruthy(); // Fail if href is null/undefined
+
+    await secondResultLink.click();
 
     await page.waitForLoadState("domcontentloaded");
 
-    const currentUrl = page.url();
-    expect(currentUrl).toContain(href || "");
+    // Build expected URL with context parameter
+    // We've already asserted that href should not be empty, so it should never fall back to ""
+    const url = new URL(href || "", "https://www.aphiria.com");
+    url.searchParams.set("context", "framework");
+
+    await expect(page).toHaveURL(url.toString());
 });
 
 test("search no results message", async ({ page }) => {
@@ -78,9 +104,9 @@ test("search no results message", async ({ page }) => {
 
     await homePage.search.query("abcdefg123");
 
-    const noResults = homePage.search.getNoResults();
+    const noResults = homePage.search.noResults;
     await expect(noResults).toHaveCount(1);
-    await expect(noResults).toContainText('no results for "abcdefg123"');
+    await expect(noResults).toContainText('No results for "abcdefg123"');
 });
 
 test("clicking outside search results hides them", async ({ page }) => {

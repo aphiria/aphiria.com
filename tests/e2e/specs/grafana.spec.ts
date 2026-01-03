@@ -1,6 +1,7 @@
 import { test } from "@playwright/test";
-import { assertPageOk } from "../lib/navigation";
+import { GrafanaHomePage } from "../pages/GrafanaHomePage";
 
 test("Grafana accessibility", async ({ page }) => {
-    await assertPageOk(page, process.env.GRAFANA_BASE_URL!);
+    const grafanaPage = new GrafanaHomePage(page);
+    await grafanaPage.goto();
 });
