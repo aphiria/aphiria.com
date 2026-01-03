@@ -9,6 +9,7 @@
 ## Overview
 
 The ephemeral environment system manages the lifecycle of preview deployments using a **two-stack infrastructure pattern** with Pulumi. State is distributed across:
+
 - **Persistent base infrastructure** (`ephemeral-base` Pulumi stack): Shared PostgreSQL, Gateway, DNS
 - **Per-PR ephemeral resources** (`ephemeral-pr-{PR_NUMBER}` Pulumi stacks): Namespaces, deployments, per-PR databases
 - **GitHub PR metadata**: Deployment status, image digests, approval tracking
@@ -25,20 +26,20 @@ Represents a deployed preview environment for a specific pull request.
 
 **Attributes**:
 
-| Field | Type | Description | Source |
-|-------|------|-------------|--------|
-| `prNumber` | integer | Pull request number (unique identifier) | GitHub PR |
-| `namespaceName` | string | Kubernetes namespace name (`ephemeral-pr-{prNumber}`) | Derived |
-| `webUrl` | string | Public web URL (`{prNumber}.pr.aphiria.com`) | Derived |
-| `apiUrl` | string | Public API URL (`{prNumber}.pr-api.aphiria.com`) | Derived |
-| `commitSha` | string | Git commit SHA currently deployed | GitHub PR |
-| `webImageDigest` | string | Immutable web image digest (sha256:...) | Docker build output |
-| `apiImageDigest` | string | Immutable API image digest (sha256:...) | Docker build output |
-| `databaseName` | string | Logical database name (`aphiria_pr_{prNumber}`) | Derived |
-| `status` | enum | Current deployment status (see State Machine below) | Pulumi + K8s status |
-| `createdAt` | timestamp | When environment was first provisioned | Pulumi stack creation time |
-| `updatedAt` | timestamp | Last deployment/update time | Pulumi stack update time |
-| `approvedBy` | string | GitHub username who approved deployment | GitHub Actions environment |
+| Field            | Type      | Description                                           | Source                     |
+| ---------------- | --------- | ----------------------------------------------------- | -------------------------- |
+| `prNumber`       | integer   | Pull request number (unique identifier)               | GitHub PR                  |
+| `namespaceName`  | string    | Kubernetes namespace name (`ephemeral-pr-{prNumber}`) | Derived                    |
+| `webUrl`         | string    | Public web URL (`{prNumber}.pr.aphiria.com`)          | Derived                    |
+| `apiUrl`         | string    | Public API URL (`{prNumber}.pr-api.aphiria.com`)      | Derived                    |
+| `commitSha`      | string    | Git commit SHA currently deployed                     | GitHub PR                  |
+| `webImageDigest` | string    | Immutable web image digest (sha256:...)               | Docker build output        |
+| `apiImageDigest` | string    | Immutable API image digest (sha256:...)               | Docker build output        |
+| `databaseName`   | string    | Logical database name (`aphiria_pr_{prNumber}`)       | Derived                    |
+| `status`         | enum      | Current deployment status (see State Machine below)   | Pulumi + K8s status        |
+| `createdAt`      | timestamp | When environment was first provisioned                | Pulumi stack creation time |
+| `updatedAt`      | timestamp | Last deployment/update time                           | Pulumi stack update time   |
+| `approvedBy`     | string    | GitHub username who approved deployment               | GitHub Actions environment |
 
 **Kubernetes Representation**:
 
@@ -48,22 +49,22 @@ Namespace with labels and annotations:
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: ephemeral-pr-123
-  labels:
-    app.kubernetes.io/name: preview-environment
-    app.kubernetes.io/instance: pr-123
-    app.kubernetes.io/managed-by: pulumi
-    preview.aphiria.com/pr-number: "123"
-    # Image digest labels for production promotion
-    preview.aphiria.com/web-image-digest: "sha256:abc123..."
-    preview.aphiria.com/api-image-digest: "sha256:def456..."
-  annotations:
-    preview.aphiria.com/commit-sha: "abc123def456"
-    preview.aphiria.com/created-at: "2025-12-20T14:32:00Z"
-    preview.aphiria.com/updated-at: "2025-12-20T15:10:00Z"
-    preview.aphiria.com/approved-by: "username"
-    preview.aphiria.com/pr-url: "https://github.com/aphiria/aphiria.com/pull/123"
-    preview.aphiria.com/database-name: "aphiria_pr_123"
+    name: ephemeral-pr-123
+    labels:
+        app.kubernetes.io/name: preview-environment
+        app.kubernetes.io/instance: pr-123
+        app.kubernetes.io/managed-by: pulumi
+        preview.aphiria.com/pr-number: "123"
+        # Image digest labels for production promotion
+        preview.aphiria.com/web-image-digest: "sha256:abc123..."
+        preview.aphiria.com/api-image-digest: "sha256:def456..."
+    annotations:
+        preview.aphiria.com/commit-sha: "abc123def456"
+        preview.aphiria.com/created-at: "2025-12-20T14:32:00Z"
+        preview.aphiria.com/updated-at: "2025-12-20T15:10:00Z"
+        preview.aphiria.com/approved-by: "username"
+        preview.aphiria.com/pr-url: "https://github.com/aphiria/aphiria.com/pull/123"
+        preview.aphiria.com/database-name: "aphiria_pr_123"
 ```
 
 **Pulumi Stack Outputs**:
@@ -99,13 +100,13 @@ Represents the persistent infrastructure shared across all preview environments.
 
 **Attributes**:
 
-| Field | Type | Description | Lifecycle |
-|-------|------|-------------|-----------|
-| `clusterName` | string | Kubernetes cluster name/reference | Persistent |
-| `postgresqlService` | string | PostgreSQL service name (`db`) | Persistent |
-| `gatewayName` | string | Gateway API gateway name | Persistent |
-| `wildcardCertSecret` | string | TLS wildcard cert secret name | Persistent |
-| `dnsWildcardZone` | string | DNS zone (`*.pr.aphiria.com`) | Persistent |
+| Field                | Type   | Description                       | Lifecycle  |
+| -------------------- | ------ | --------------------------------- | ---------- |
+| `clusterName`        | string | Kubernetes cluster name/reference | Persistent |
+| `postgresqlService`  | string | PostgreSQL service name (`db`)    | Persistent |
+| `gatewayName`        | string | Gateway API gateway name          | Persistent |
+| `wildcardCertSecret` | string | TLS wildcard cert secret name     | Persistent |
+| `dnsWildcardZone`    | string | DNS zone (`*.pr.aphiria.com`)     | Persistent |
 
 **Pulumi Stack Outputs**:
 
@@ -119,6 +120,7 @@ export const wildcardTlsSecret = "wildcard-pr-aphiria-com";
 ```
 
 **Lifecycle**:
+
 - Deployed once manually or via separate workflow
 - Never destroyed by PR workflows
 - Updates manual as-needed (clarified in research.md)
@@ -131,14 +133,14 @@ Represents the isolated database for a preview environment.
 
 **Attributes**:
 
-| Field | Type | Description | Source |
-|-------|------|-------------|--------|
-| `databaseName` | string | PostgreSQL database name (`aphiria_pr_{prNumber}`) | Derived |
-| `ownerUser` | string | Database owner user (shared or per-PR) | ConfigMap/Secret |
-| `connectionString` | string | Database connection string | ConfigMap |
-| `createdAt` | timestamp | When database was created | Pulumi stack |
-| `migrationsApplied` | boolean | Whether Phinx migrations ran successfully | Job status |
-| `lexemesSeeded` | boolean | Whether LexemeSeeder populated search index | Job status |
+| Field               | Type      | Description                                        | Source           |
+| ------------------- | --------- | -------------------------------------------------- | ---------------- |
+| `databaseName`      | string    | PostgreSQL database name (`aphiria_pr_{prNumber}`) | Derived          |
+| `ownerUser`         | string    | Database owner user (shared or per-PR)             | ConfigMap/Secret |
+| `connectionString`  | string    | Database connection string                         | ConfigMap        |
+| `createdAt`         | timestamp | When database was created                          | Pulumi stack     |
+| `migrationsApplied` | boolean   | Whether Phinx migrations ran successfully          | Job status       |
+| `lexemesSeeded`     | boolean   | Whether LexemeSeeder populated search index        | Job status       |
 
 **PostgreSQL Representation**:
 
@@ -156,19 +158,20 @@ CREATE DATABASE aphiria_pr_123;
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: env-vars
-  namespace: ephemeral-pr-123
+    name: env-vars
+    namespace: ephemeral-pr-123
 data:
-  DB_HOST: "db"  # Shared PostgreSQL service
-  DB_NAME: "aphiria_pr_123"  # PR-specific database
-  DB_PORT: "5432"
-  APP_WEB_URL: "https://123.pr.aphiria.com"
-  APP_API_URL: "https://123.pr-api.aphiria.com"
-  APP_ENV: "preview"
-  LOG_LEVEL: "debug"
+    DB_HOST: "db" # Shared PostgreSQL service
+    DB_NAME: "aphiria_pr_123" # PR-specific database
+    DB_PORT: "5432"
+    APP_WEB_URL: "https://123.pr.aphiria.com"
+    APP_API_URL: "https://123.pr-api.aphiria.com"
+    APP_ENV: "preview"
+    LOG_LEVEL: "debug"
 ```
 
 **Cleanup**:
+
 - On PR close: `DROP DATABASE IF EXISTS aphiria_pr_{PR_NUMBER}`
 - Executed by Pulumi during stack destroy
 - Verification step ensures database removed
@@ -181,16 +184,16 @@ Tracks current state and progress of a preview environment deployment.
 
 **Attributes**:
 
-| Field | Type | Description | Source |
-|-------|------|-------------|--------|
-| `prNumber` | integer | Associated pull request | GitHub PR |
-| `status` | enum | Overall deployment status | Computed from Pulumi + K8s |
-| `webReplicas` | string | Web deployment status (e.g., "1/1") | Kubernetes Deployment status |
-| `apiReplicas` | string | API deployment status (e.g., "1/1") | Kubernetes Deployment status |
-| `databaseReady` | boolean | Database created and migrations applied | Pulumi + Job status |
-| `httpRouteReady` | boolean | HTTPRoute configured and healthy | Gateway API status |
-| `errorMessage` | string (optional) | Error description if status=failed | Workflow logs |
-| `lastDeployedCommit` | string | Last successfully deployed commit SHA | Namespace annotation |
+| Field                | Type              | Description                             | Source                       |
+| -------------------- | ----------------- | --------------------------------------- | ---------------------------- |
+| `prNumber`           | integer           | Associated pull request                 | GitHub PR                    |
+| `status`             | enum              | Overall deployment status               | Computed from Pulumi + K8s   |
+| `webReplicas`        | string            | Web deployment status (e.g., "1/1")     | Kubernetes Deployment status |
+| `apiReplicas`        | string            | API deployment status (e.g., "1/1")     | Kubernetes Deployment status |
+| `databaseReady`      | boolean           | Database created and migrations applied | Pulumi + Job status          |
+| `httpRouteReady`     | boolean           | HTTPRoute configured and healthy        | Gateway API status           |
+| `errorMessage`       | string (optional) | Error description if status=failed      | Workflow logs                |
+| `lastDeployedCommit` | string            | Last successfully deployed commit SHA   | Namespace annotation         |
 
 **GitHub PR Comment Representation**:
 
@@ -228,14 +231,14 @@ Tracks the image digest promotion from preview to production deployment.
 
 **Attributes**:
 
-| Field | Type | Description | Source |
-|-------|------|-------------|--------|
-| `prNumber` | integer | PR that was merged to production | GitHub PR |
-| `commitSha` | string | Git commit deployed to production | Merged PR |
-| `webImageDigest` | string | Web image digest deployed | Preview environment label |
-| `apiImageDigest` | string | API image digest deployed | Preview environment label |
-| `promotedAt` | timestamp | When promotion occurred | Workflow execution time |
-| `promotedBy` | string | Who triggered production deployment | GitHub user |
+| Field            | Type      | Description                         | Source                    |
+| ---------------- | --------- | ----------------------------------- | ------------------------- |
+| `prNumber`       | integer   | PR that was merged to production    | GitHub PR                 |
+| `commitSha`      | string    | Git commit deployed to production   | Merged PR                 |
+| `webImageDigest` | string    | Web image digest deployed           | Preview environment label |
+| `apiImageDigest` | string    | API image digest deployed           | Preview environment label |
+| `promotedAt`     | timestamp | When promotion occurred             | Workflow execution time   |
+| `promotedBy`     | string    | Who triggered production deployment | GitHub user               |
 
 **Storage**: GitHub PR Labels (visible, queryable)
 
@@ -249,6 +252,7 @@ image-digest/api:sha256:def456...
 Production deployment workflow reads these labels from the merged PR to deploy the exact same images.
 
 **Validation**:
+
 - Image digests MUST match what was deployed in preview
 - Production MUST NOT rebuild images
 - Promotion workflow MUST verify digest exists before deploying
@@ -279,16 +283,16 @@ stateDiagram-v2
 
 **State Descriptions**:
 
-| State | Description | Actions | Exit Condition |
-|-------|-------------|---------|----------------|
-| **Pending** | PR open, awaiting approval | Display approval prompt in PR | Maintainer approves deployment |
-| **Provisioning** | Creating Pulumi stack, namespace, deploying K8s resources | Post "deploying" status to PR | Stack up complete OR error |
-| **MigratingDB** | Running db-migration Job (Phinx migrations + LexemeSeeder) | Monitor Job status | Job complete OR error |
-| **Ready** | Environment fully operational, search working | Post URLs and status to PR | New commit OR PR closed |
-| **Updating** | Deploying new commit to existing env (pulumi up) | Update PR comment with progress | Deployment complete OR error |
-| **Failed** | Deployment/migration error occurred | Post error details to PR | Manual retry OR PR closed |
-| **Destroying** | Namespace deletion in progress | Post "cleaning up" status | Namespace deleted |
-| **DroppingDB** | Dropping PR database from shared PostgreSQL | Pulumi executing database drop | Database dropped, stack removed |
+| State            | Description                                                | Actions                         | Exit Condition                  |
+| ---------------- | ---------------------------------------------------------- | ------------------------------- | ------------------------------- |
+| **Pending**      | PR open, awaiting approval                                 | Display approval prompt in PR   | Maintainer approves deployment  |
+| **Provisioning** | Creating Pulumi stack, namespace, deploying K8s resources  | Post "deploying" status to PR   | Stack up complete OR error      |
+| **MigratingDB**  | Running db-migration Job (Phinx migrations + LexemeSeeder) | Monitor Job status              | Job complete OR error           |
+| **Ready**        | Environment fully operational, search working              | Post URLs and status to PR      | New commit OR PR closed         |
+| **Updating**     | Deploying new commit to existing env (pulumi up)           | Update PR comment with progress | Deployment complete OR error    |
+| **Failed**       | Deployment/migration error occurred                        | Post error details to PR        | Manual retry OR PR closed       |
+| **Destroying**   | Namespace deletion in progress                             | Post "cleaning up" status       | Namespace deleted               |
+| **DroppingDB**   | Dropping PR database from shared PostgreSQL                | Pulumi executing database drop  | Database dropped, stack removed |
 
 ---
 
@@ -311,6 +315,7 @@ stateDiagram-v2
 ### 3. Preview Environment → Kubernetes Resources (1:N)
 
 Each preview environment Pulumi stack manages:
+
 - 1 Namespace
 - 2 Deployments (Web: 1 replica, API: 1 replica)
 - 2 Services (Web, API - ClusterIP)
@@ -327,6 +332,7 @@ All Kubernetes resources are in the preview namespace; namespace deletion cascad
 ### 4. GitHub Actions Workflow → Preview Environment (N:1)
 
 Multiple workflow runs can target the same preview environment:
+
 - Initial deployment (create Pulumi stack)
 - Update deployments (pulumi up on new commits)
 - Cleanup deployment (pulumi destroy on PR close)
@@ -420,6 +426,7 @@ count/pods: "5"
 Prevents single preview from consuming excessive cluster resources.
 
 **Deployment Replicas** (preview-specific):
+
 - Web: 1 replica (vs. 2 in production)
 - API: 1 replica (vs. 2 in production)
 
@@ -447,51 +454,57 @@ Prevents single preview from consuming excessive cluster resources.
 **Flow**:
 
 1. **Build Phase** (GitHub Actions on PR push):
-   ```yaml
-   - name: Build and push web image
-     id: build-web
-     uses: docker/build-push-action@v5
-     with:
-       tags: davidbyoung/aphiria.com-web:pr-${{ github.event.pull_request.number }}
-     # Outputs: digest (sha256:abc123...)
-   ```
+
+    ```yaml
+    - name: Build and push web image
+      id: build-web
+      uses: docker/build-push-action@v5
+      with:
+          tags: davidbyoung/aphiria.com-web:pr-${{ github.event.pull_request.number }}
+      # Outputs: digest (sha256:abc123...)
+    ```
 
 2. **Preview Deployment** (Pulumi):
-   ```typescript
-   const webDeployment = new k8s.apps.v1.Deployment("web", {
-       spec: {
-           template: {
-               spec: {
-                   containers: [{
-                       name: "web",
-                       image: `davidbyoung/aphiria.com-web@${webImageDigest}`, // Use digest
-                   }],
-               },
-           },
-       },
-   });
-   ```
+
+    ```typescript
+    const webDeployment = new k8s.apps.v1.Deployment("web", {
+        spec: {
+            template: {
+                spec: {
+                    containers: [
+                        {
+                            name: "web",
+                            image: `davidbyoung/aphiria.com-web@${webImageDigest}`, // Use digest
+                        },
+                    ],
+                },
+            },
+        },
+    });
+    ```
 
 3. **Promotion Tracking** (PR Labels):
-   - After successful preview deployment, GitHub Actions adds labels to PR
-   - Labels: `image-digest/web:sha256:abc123...`, `image-digest/api:sha256:def456...`
+    - After successful preview deployment, GitHub Actions adds labels to PR
+    - Labels: `image-digest/web:sha256:abc123...`, `image-digest/api:sha256:def456...`
 
 4. **Production Deployment** (on merge):
-   - Read labels from merged PR
-   - Deploy to production using same digests
-   - **No rebuild** - guaranteed identical images
+    - Read labels from merged PR
+    - Deploy to production using same digests
+    - **No rebuild** - guaranteed identical images
 
 ---
 
 ## Summary
 
 The data model leverages a **hybrid approach**:
+
 - **Persistent base infrastructure** (Pulumi `ephemeral-base` stack): Shared PostgreSQL, Gateway, DNS
 - **Ephemeral per-PR resources** (Pulumi `ephemeral-pr-*` stacks): Namespaces, deployments, databases
 - **State storage**: Pulumi state (infrastructure), Kubernetes resources (runtime), GitHub PR metadata (status, digests)
 - **Cleanup**: Pulumi destroy guarantees removal of all resources (namespace cascades K8s, explicit database drop)
 
 This design:
+
 - **Cost-effective**: Shared PostgreSQL (70-80% cheaper than per-PR instances)
 - **Fast provisioning**: Database creation ~2 seconds (vs. ~2 minutes for full PostgreSQL deployment)
 - **Reliable cleanup**: Pulumi tracks all resources, database drop explicit

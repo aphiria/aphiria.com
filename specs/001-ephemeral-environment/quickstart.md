@@ -10,6 +10,7 @@
 Preview environments allow you to test pull request changes in a live, isolated environment before merging. Each PR can have its own temporary deployment at `{PR_NUMBER}.pr.aphiria.com`.
 
 **Key Benefits**:
+
 - Test changes in production-like environment
 - Share working previews with reviewers/stakeholders
 - Validate behavior without local setup
@@ -37,6 +38,7 @@ When a pull request is opened targeting the `master` branch, the preview deploym
 ### Step 3: Wait for Deployment
 
 The workflow will:
+
 - Create an isolated Kubernetes namespace
 - Deploy the web and API applications
 - Set up a dedicated PostgreSQL database
@@ -74,6 +76,7 @@ As a contributor, you **cannot** trigger preview deployments directly (security 
 ### Automatic Updates
 
 Once a preview is deployed:
+
 - Every new commit pushed to the PR branch automatically updates the preview
 - No need to request re-deployment
 - Status updates appear in PR comments
@@ -110,6 +113,7 @@ Check the PR comments for the latest deployment status:
 ### Reporting Issues
 
 If you find problems:
+
 1. Document the issue in a PR comment
 2. Include steps to reproduce
 3. Mention which page/URL exhibited the problem
@@ -124,14 +128,16 @@ If you find problems:
 **Symptom**: PR comment shows "❌ Failed" status
 
 **Troubleshooting**:
+
 1. Click the workflow run link in the PR comment
 2. Review the error logs
 3. Common issues:
-   - **Image build failure**: Check if CI workflow succeeded
-   - **Resource limits**: Cluster may be at capacity
-   - **Configuration error**: Kubernetes manifest syntax error
+    - **Image build failure**: Check if CI workflow succeeded
+    - **Resource limits**: Cluster may be at capacity
+    - **Configuration error**: Kubernetes manifest syntax error
 
 **Resolution**:
+
 - Fix the underlying issue
 - Re-run the workflow from the GitHub Actions UI
 - Or close/reopen the PR to trigger a new deployment
@@ -141,11 +147,13 @@ If you find problems:
 **Symptom**: Preview doesn't reflect latest commit
 
 **Troubleshooting**:
+
 1. Check the commit SHA in the PR comment
 2. Does it match the latest commit in the PR?
 3. Check the workflow runs - did the update workflow run?
 
 **Resolution**:
+
 - Wait a few minutes (deployment may be in progress)
 - Manually trigger workflow re-run if needed
 - Hard refresh browser cache (Ctrl+Shift+R / Cmd+Shift+R)
@@ -155,11 +163,13 @@ If you find problems:
 **Symptom**: URL is accessible but returns 404 or error page
 
 **Possible Causes**:
+
 - **DNS propagation delay**: Wait 1-2 minutes after deployment
 - **Ingress not ready**: Check Ingress status in deployment details
 - **TLS certificate issue**: Try HTTP instead of HTTPS temporarily
 
 **Resolution**:
+
 - Wait a few minutes for DNS/Ingress to stabilize
 - Check workflow logs for Ingress configuration errors
 - Contact maintainer if issue persists
@@ -171,6 +181,7 @@ If you find problems:
 **Context**: Infrastructure supports up to 10 concurrent previews
 
 **Resolution**:
+
 - Close/merge completed PRs to free up capacity
 - Prioritize critical PRs
 - Wait for automatic cleanup (happens when PRs close)
@@ -182,6 +193,7 @@ If you find problems:
 ### Automatic Cleanup
 
 Preview environments are **automatically destroyed** when:
+
 - The PR is merged
 - The PR is closed without merging
 
@@ -190,6 +202,7 @@ Preview environments are **automatically destroyed** when:
 ### What Gets Cleaned Up
 
 All resources associated with the preview:
+
 - Kubernetes namespace
 - Deployments and pods
 - Database and persistent volumes
@@ -217,12 +230,14 @@ kubectl get all -n preview-pr-<PR_NUMBER>  # Should return "No resources found"
 ### For Maintainers
 
 ✅ **Do**:
+
 - Review code before approving preview deployment
 - Only approve deployments for trusted contributors
 - Test functionality in preview before merging PR
 - Close stale PRs to free up preview capacity
 
 ❌ **Don't**:
+
 - Approve deployments for suspicious PRs from unknown forks
 - Rely on preview for production-critical testing (use staging)
 - Leave PRs open indefinitely (wastes resources)
@@ -230,12 +245,14 @@ kubectl get all -n preview-pr-<PR_NUMBER>  # Should return "No resources found"
 ### For Contributors
 
 ✅ **Do**:
+
 - Provide clear testing instructions in PR description
 - Keep commits small and focused (faster updates)
 - Test locally before requesting preview deployment
 - Update PR description if preview reveals issues
 
 ❌ **Don't**:
+
 - Force-push to PR branch (may cause deployment conflicts)
 - Expect instant preview availability (requires approval)
 - Use preview for load/performance testing (not designed for it)
@@ -243,12 +260,14 @@ kubectl get all -n preview-pr-<PR_NUMBER>  # Should return "No resources found"
 ### For Reviewers
 
 ✅ **Do**:
+
 - Test user-facing changes in preview
 - Report bugs with clear reproduction steps
 - Verify documentation renders correctly
 - Check accessibility and mobile responsiveness
 
 ❌ **Don't**:
+
 - Assume preview is identical to production (it's close, not exact)
 - Test with real user data (preview uses seed data)
 - Expect long-term availability (preview destroyed when PR closes)
@@ -297,6 +316,7 @@ psql -h localhost -U aphiria -d aphiria
 ### Q: How do I test API endpoints?
 
 **A**: API is available at the same preview URL. For example:
+
 - Web: `https://123.pr.aphiria.com`
 - API: `https://123.pr.aphiria.com/api/...`
 

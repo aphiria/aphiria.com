@@ -144,10 +144,10 @@ description: "Task list for Post-Deployment Smoke Tests feature implementation"
 - **Setup (Phase 1)**: No dependencies - can start immediately
 - **Foundational (Phase 2)**: Depends on Setup completion - BLOCKS all user stories
 - **User Stories (Phase 3-6)**: All depend on Foundational phase completion
-  - User Story 1 (P1): Can start after Foundational - No dependencies on other stories
-  - User Story 2 (P2): Can start after Foundational - Extends US1 tests but independently testable
-  - User Story 3 (P3): Can start after Foundational - Already implemented in US1, just validation
-  - User Story 4 (P4): Can start after Foundational - Adds local dev support, independently testable
+    - User Story 1 (P1): Can start after Foundational - No dependencies on other stories
+    - User Story 2 (P2): Can start after Foundational - Extends US1 tests but independently testable
+    - User Story 3 (P3): Can start after Foundational - Already implemented in US1, just validation
+    - User Story 4 (P4): Can start after Foundational - Adds local dev support, independently testable
 - **Polish (Phase 7)**: Depends on all user stories being complete
 
 ### User Story Dependencies
@@ -214,10 +214,10 @@ With multiple developers:
 
 1. Team completes Setup + Foundational together
 2. Once Foundational is done:
-   - Developer A: User Story 1 (basic health checks)
-   - Developer B: User Story 2 (core site functionality)
-   - Developer C: User Story 4 (local dev support)
-   - User Story 3 is just validation of US1's Grafana test - can be done by anyone
+    - Developer A: User Story 1 (basic health checks)
+    - Developer B: User Story 2 (core site functionality)
+    - Developer C: User Story 4 (local dev support)
+    - User Story 3 is just validation of US1's Grafana test - can be done by anyone
 3. Stories complete and integrate independently
 
 ---

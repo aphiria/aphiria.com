@@ -19,6 +19,7 @@ Follow-up TODOs: None
 ### I. PHP Framework Standards
 
 All code MUST adhere to modern PHP best practices and framework conventions:
+
 - Use PHP 8.4+ features appropriately (typed properties, enums, attributes, readonly)
 - Follow PSR-4 autoloading and PSR-12 coding standards
 - Leverage Aphiria framework patterns (dependency injection, routing, content negotiation)
@@ -29,6 +30,7 @@ All code MUST adhere to modern PHP best practices and framework conventions:
 ### II. Documentation-First Development
 
 Documentation changes MUST be treated as first-class features:
+
 - Documentation accuracy is critical - it directly impacts framework adoption
 - All framework API changes require corresponding documentation updates
 - Documentation builds (Gulp) must complete successfully before deployment
@@ -39,6 +41,7 @@ Documentation changes MUST be treated as first-class features:
 ### III. Test Coverage (NON-NEGOTIABLE)
 
 All new features and bug fixes MUST include appropriate tests:
+
 - Unit tests for business logic (PHPUnit)
 - Integration tests for database interactions and external dependencies
 - Contract tests for API endpoints
@@ -50,6 +53,7 @@ All new features and bug fixes MUST include appropriate tests:
 ### IV. Static Analysis & Code Quality
 
 All code MUST pass static analysis and linting before commit:
+
 - Psalm must report no errors at configured level
 - PHP-CS-Fixer must pass with no violations
 - No suppressed warnings without explicit justification in code comments
@@ -60,6 +64,7 @@ All code MUST pass static analysis and linting before commit:
 ### V. Production Reliability
 
 All changes MUST consider production deployment requirements:
+
 - Database migrations must be reversible (up/down methods in Phinx)
 - Configuration changes must be documented in .env.dist
 - Kubernetes manifests must be validated before deployment
@@ -71,6 +76,7 @@ All changes MUST consider production deployment requirements:
 ### VI. CI/CD & Infrastructure Reuse
 
 GitHub Actions workflows and infrastructure code MUST be parameterized and reusable across environments:
+
 - GitHub Actions workflows must accept inputs/variables to support dev/preview/prod environments
 - Pulumi infrastructure must use stacks and configuration, not duplicated code
 - Environment differences (dev/preview/prod) must be expressed via inputs, config files, or stack values
@@ -108,6 +114,7 @@ GitHub Actions workflows and infrastructure code MUST be parameterized and reusa
 ### Pre-Commit Gates
 
 Before any commit, code MUST pass:
+
 1. `composer phpcs-fix` (auto-fix formatting)
 2. `composer phpunit` (all tests pass)
 3. `composer psalm` (no static analysis errors)
@@ -115,6 +122,7 @@ Before any commit, code MUST pass:
 ### Pre-Deployment Gates
 
 Before any deployment, validate:
+
 1. Docker images build successfully
 2. Kubernetes manifests apply without errors
 3. Database migrations execute cleanly (test in dev cluster)
@@ -124,6 +132,7 @@ Before any deployment, validate:
 ### Review Requirements
 
 All pull requests MUST:
+
 - Include tests for new functionality
 - Update documentation if user-facing changes
 - Pass all automated checks (CI workflow)

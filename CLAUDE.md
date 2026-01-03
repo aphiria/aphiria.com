@@ -12,6 +12,7 @@
 ### NEVER Guess - Always Research
 
 **Core Rules**:
+
 - ✅ Explicitly state "I don't know - let me research" when uncertain
 - ✅ Search official docs BEFORE custom solutions
 - ✅ Verify problems exist before attempting fixes
@@ -20,11 +21,13 @@
 - ❌ Never implement workarounds before checking for official solutions
 
 **Decision Framework**:
+
 1. Do I know this with 100% certainty? → If NO, research first
 2. Is there a standard library/API? → Check official docs FIRST
 3. Have I verified this problem exists? → Check error messages, use diagnostics
 
 **Critical Infrastructure Claims**: Before making ANY statement about Kubernetes, Docker, Pulumi, or GitHub Actions behavior:
+
 1. STOP - Don't present theory yet
 2. SEARCH - Look up official documentation
 3. VERIFY - Cross-reference with at least 2 sources
@@ -33,6 +36,7 @@
 ### Always Consider Idempotency
 
 **Core Rules**:
+
 - ✅ Think through: 1st run, 2nd run, 3rd run
 - ✅ Ask "what if this already exists?"
 - ✅ Make operations idempotent
@@ -41,12 +45,13 @@
 - ❌ Never create duplicates without checking
 
 **Example**:
+
 ```javascript
 // ❌ Bad: Creates duplicates
-const newLabels = [...existingLabels, 'my-label'];
+const newLabels = [...existingLabels, "my-label"];
 
 // ✅ Good: Idempotent
-const newLabels = [...existingLabels.filter(l => l !== 'my-label'), 'my-label'];
+const newLabels = [...existingLabels.filter((l) => l !== "my-label"), "my-label"];
 ```
 
 ### ALWAYS Ask Before Deleting
@@ -54,6 +59,7 @@ const newLabels = [...existingLabels.filter(l => l !== 'my-label'), 'my-label'];
 **CRITICAL**: MUST ask for explicit confirmation before ANY deletion via GitHub CLI (`gh`).
 
 **Rules**:
+
 - ✅ List resources to delete and ASK first
 - ✅ Wait for explicit "yes" before executing
 - ✅ Explain WHY you think it's safe to delete
@@ -64,24 +70,28 @@ const newLabels = [...existingLabels.filter(l => l !== 'my-label'), 'my-label'];
 **Before modifying infrastructure that depends on other stacks:**
 
 1. **Verify stack exists and is healthy**:
-   ```bash
-   pulumi stack ls  # Check stack exists
-   pulumi refresh --stack <stack-name>  # Verify connectivity
-   ```
+
+    ```bash
+    pulumi stack ls  # Check stack exists
+    pulumi refresh --stack <stack-name>  # Verify connectivity
+    ```
 
 2. **Check stack outputs are accessible**:
-   ```bash
-   pulumi stack output --stack <stack-name>
-   ```
+
+    ```bash
+    pulumi stack output --stack <stack-name>
+    ```
 
 3. **For cross-stack references**: Ensure base stack is reachable before adding dependencies
 
 **For API changes:**
+
 - Always verify interface/type definitions before implementing
 - Check official docs for parameter names and types
 - Don't assume - validate with `grep` or type checking
 
 **Decision Framework for Infrastructure Issues:**
+
 1. Research official solutions first (docs, GitHub issues)
 2. Verify the problem exists (reproduce, check logs)
 3. Test proposed fix in isolation before applying
@@ -95,24 +105,28 @@ const newLabels = [...existingLabels.filter(l => l !== 'my-label'), 'my-label'];
 **Core Principle**: Don't fight the framework - fix the code design.
 
 **Testability Patterns**:
+
 - ✅ **Dependency Injection**: Accept dependencies as parameters rather than creating them internally
 - ✅ **Configuration Flags**: Add optional parameters (marked `@internal`) that allow tests to bypass external dependencies
 - ✅ **Separation of Concerns**: Separate I/O operations from business logic
 - ✅ **Pure Functions**: Maximize pure functions that are easy to test
 
 **Anti-Patterns to Avoid**:
+
 - ❌ Don't spend excessive time trying to mock external APIs - make code testable instead
 - ❌ Don't assume testing framework limitations can always be worked around
 - ❌ Don't try multiple workarounds without understanding the root cause
 - ❌ Don't write code that requires network calls, file I/O, or external services to test
 
 **When Stuck on Testing**:
+
 1. **Step back**: Ask "Is the code designed to be testable?"
 2. **Consider design**: "Can I add a parameter to make this testable?"
 3. **Research limitations**: "Are there known limitations in the testing framework?"
 4. **Root cause**: "What's the fundamental problem here?"
 
 **Example - Network Calls in Tests**:
+
 ```typescript
 // ❌ BAD: Hard to test - requires real network call
 const kubeconfig = cluster.name.apply((name) =>
@@ -121,10 +135,12 @@ const kubeconfig = cluster.name.apply((name) =>
 
 // ✅ GOOD: Testable - accepts flag to use static config
 const kubeconfig = args.useStaticKubeconfig
-    ? cluster.kubeConfigs[0].rawConfig  // Tests use this
-    : cluster.name.apply((name) =>       // Production uses this
-        digitalocean.getKubernetesCluster({ name }).then((c) => c.kubeConfigs[0].rawConfig)
-    );
+    ? cluster.kubeConfigs[0].rawConfig // Tests use this
+    : cluster.name.apply(
+          (
+              name // Production uses this
+          ) => digitalocean.getKubernetesCluster({ name }).then((c) => c.kubeConfigs[0].rawConfig)
+      );
 ```
 
 **Key Insight**: If you find yourself fighting the testing framework, you're solving the wrong problem. The real problem is code that wasn't designed for testability.
@@ -142,8 +158,8 @@ const kubeconfig = args.useStaticKubeconfig
 
 1. **Build Image**: Clones docs repo → Compiles Markdown→HTML → Runs `gulp build` → Produces static assets
 2. **Runtime Images**:
-   - API: nginx + PHP-FPM + compiled docs
-   - Web: nginx + static files
+    - API: nginx + PHP-FPM + compiled docs
+    - Web: nginx + static files
 3. **Database Init**: Kubernetes Job runs Phinx migrations + LexemeSeeder (indexes docs for search)
 
 **Critical**: API search requires LexemeSeeder completion. Build failures break both web AND API.
@@ -162,21 +178,25 @@ const kubeconfig = args.useStaticKubeconfig
 ### Port-Forwarding in CI/CD
 
 ❌ **NEVER** use `kubectl port-forward` in GitHub Actions
+
 - It's a debugging tool, not automation
 - Run cluster tasks inside the cluster (Kubernetes Jobs, init containers)
 
 ### Pulumi TypeScript Build Requirement
 
 ❌ **NEVER** run Pulumi without compiling TypeScript first
+
 - Pulumi executes compiled JavaScript in `dist/`, not `.ts` source
 - Changes to `.ts` have NO EFFECT until `npm run build`
 
 **Required before EVERY Pulumi command**:
+
 ```bash
 cd infrastructure/pulumi && npm run build
 ```
 
 **Directory structure**:
+
 ```
 infrastructure/pulumi/
 ├── coverage/         # Test coverage (gitignored)
@@ -195,6 +215,7 @@ infrastructure/pulumi/
 ### kubectl Usage Policy
 
 ❌ **NEVER** use `kubectl` to modify cluster state
+
 - kubectl is for inspection ONLY
 - ALL infrastructure changes go through Pulumi
 
@@ -207,6 +228,7 @@ infrastructure/pulumi/
 **CRITICAL**: Components MUST be environment-agnostic and reusable. Stacks contain environment-specific logic.
 
 **Components (environment-agnostic)**:
+
 - ✅ Shared infrastructure patterns (Deployments, Services, ConfigMaps)
 - ✅ Accept configuration via function parameters
 - ✅ No hardcoded environment names ("local", "preview", "production")
@@ -214,12 +236,14 @@ infrastructure/pulumi/
 - ❌ Never put environment-specific decisions in components
 
 **Stacks (environment-specific)**:
+
 - ✅ Configuration parameters and secrets
 - ✅ Environment-specific resource creation (e.g., install CRDs for local only)
 - ✅ Conditional logic based on environment needs
 - ✅ Pass environment-agnostic components the data they need
 
 **Example**:
+
 ```typescript
 // ❌ BAD: Environment logic in component
 export function createDeployment(args: DeploymentArgs) {
@@ -239,6 +263,7 @@ export function createDeployment(args: DeploymentArgs) {
 **Why**: ResourceQuotas reject pods without limits, costs run away, cluster stability issues.
 
 **Sizing**:
+
 - Jobs/Init: 100m CPU / 128Mi memory (requests), 200m / 256Mi (limits)
 - API: 250m CPU / 512Mi memory
 - Web: 100m CPU / 256Mi memory
@@ -258,6 +283,7 @@ export function createDeployment(args: DeploymentArgs) {
 **NEVER** assume which cluster kubectl is connected to.
 
 **Before ANY kubectl command**:
+
 1. Check endpoint: `kubectl cluster-info | head -1`
 2. Compare with Pulumi: `pulumi stack output kubeconfig --stack <stack> --show-secrets | grep "server:"`
 3. Use explicit kubeconfig for CI/CD debugging
@@ -267,6 +293,7 @@ export function createDeployment(args: DeploymentArgs) {
 **NEVER** deploy without verifying ports match application protocol.
 
 **Critical**:
+
 - PHP-FPM speaks FastCGI on port 9000, NOT HTTP
 - nginx speaks HTTP on port 80
 - Probe protocol MUST match container (HTTP probe on FastCGI fails)
@@ -292,6 +319,7 @@ export function createDeployment(args: DeploymentArgs) {
 **Location**: `specs/.specify/memory/constitution.md` (v1.0.0)
 
 **Core Principles**:
+
 1. PHP Framework Standards (PSR-4, PSR-12, strict types)
 2. Documentation-First Development
 3. Test Coverage (NON-NEGOTIABLE)
@@ -305,6 +333,7 @@ export function createDeployment(args: DeploymentArgs) {
 ### Quality Gates (PHP)
 
 Before completing ANY PHP task:
+
 ```bash
 composer phpcs-fix  # Auto-fix code style
 composer phpunit    # All tests
@@ -315,9 +344,10 @@ composer psalm      # Static analysis
 
 ### Quality Gates (TypeScript)
 
-Any changes to our infrastructure MUST have corresponding unit tests added.  NEVER just update the infrastructure without writing unit tests to cover the changes.
+Any changes to our infrastructure MUST have corresponding unit tests added. NEVER just update the infrastructure without writing unit tests to cover the changes.
 
 **Linting and Formatting (from root)**:
+
 ```bash
 npm install      # Install linting/formatting dependencies
 npm run lint     # ESLint (must pass with 0 errors, 0 warnings)
@@ -325,6 +355,7 @@ npm run format:check  # Prettier (must pass with 0 errors, 0 warnings)
 ```
 
 **Infrastructure Build and Tests**:
+
 ```bash
 cd infrastructure/pulumi
 npm install      # Install Pulumi dependencies
@@ -333,6 +364,7 @@ npm test         # Jest tests with coverage thresholds
 ```
 
 **E2E Tests**:
+
 ```bash
 cd tests/e2e
 npm install      # Install Playwright dependencies
@@ -340,6 +372,7 @@ npm test         # Playwright smoke tests
 ```
 
 **NON-NEGOTIABLE**:
+
 - **Linting**: MUST pass with 0 errors and 0 warnings (run from root)
 - **Formatting**: MUST pass with 0 errors and 0 warnings (run from root)
 - **Tests**: MUST pass 100% (all suites)
@@ -347,6 +380,7 @@ npm test         # Playwright smoke tests
 - **Build**: TypeScript compilation MUST succeed with no errors
 
 **Jest Coverage Thresholds** (from `jest.config.js`):
+
 ```javascript
 coverageThreshold: {
     global: {
@@ -363,6 +397,7 @@ If any quality gate fails, fix before proceeding. NO exceptions.
 ### Test Coverage (Mandatory)
 
 For every feature/bug fix:
+
 - Unit tests (business logic)
 - Integration tests (database, external deps)
 - Contract tests (API endpoints)
@@ -374,6 +409,7 @@ Write tests FIRST (TDD).
 **Stage new files**: `git add <new-file>` - NEVER leave unstaged
 
 **Sensitive files to .gitignore**:
+
 ```gitignore
 .env, *.key, *.pem, credentials.json, secrets.yaml, kubeconfig*
 .idea/, .vscode/, *.swp
@@ -410,8 +446,10 @@ Write tests FIRST (TDD).
 **CRITICAL**: All secrets/PATs MUST be documented in `SECRETS.md`.
 
 **Template**:
+
 ```markdown
 ### SECRET_NAME
+
 **Why needed**: <explanation>
 **Generate**: <steps with scopes>
 **Update**: <rotation procedure>
@@ -423,6 +461,7 @@ Write tests FIRST (TDD).
 ## Pre-Commit Checklist
 
 **PHP**:
+
 - [ ] `composer phpcs-fix`, `composer phpunit`, `composer psalm`
 - [ ] New files staged
 - [ ] Sensitive files in `.gitignore`
@@ -430,6 +469,7 @@ Write tests FIRST (TDD).
 - [ ] No TODOs without issue tracking
 
 **TypeScript** (linting/formatting from root):
+
 - [ ] `npm install` (in root)
 - [ ] `npm run lint` (0 errors, 0 warnings)
 - [ ] `npm run format:check` (0 errors, 0 warnings)
@@ -437,13 +477,16 @@ Write tests FIRST (TDD).
 - [ ] `dist/`, `coverage/`, `playwright-report/`, `test-results/` NOT committed (gitignored)
 
 **TypeScript/Pulumi** (infrastructure-specific):
+
 - [ ] `cd infrastructure/pulumi && npm run build` (compiles TypeScript)
 - [ ] `npm test` (100% pass rate, meets coverage thresholds)
 
 **TypeScript/E2E** (e2e-specific):
+
 - [ ] `cd tests/e2e && npm test` (smoke tests pass)
 
 **GitHub Actions**:
+
 - [ ] Secrets documented in `SECRETS.md`
 - [ ] PAT scopes minimal
 - [ ] `workflow_dispatch` ref uses branch name (not `context.ref`)
@@ -453,6 +496,7 @@ Write tests FIRST (TDD).
 ## Common Tasks
 
 ### Adding Feature
+
 1. Branch: `git checkout -b feature-name`
 2. Write tests first (TDD)
 3. Implement
@@ -461,6 +505,7 @@ Write tests FIRST (TDD).
 6. Commit + PR
 
 ### Database Migration
+
 1. `vendor/bin/phinx create MigrationName`
 2. Implement `up()` and `down()` (reversible)
 3. Test: `phinx migrate` + `phinx rollback`
@@ -470,37 +515,47 @@ Write tests FIRST (TDD).
 When investigating deployment failures, follow this order (NEVER skip to theory):
 
 **1. Verify cluster context FIRST**:
+
 ```bash
 kubectl cluster-info | head -1
 pulumi stack output kubeconfig --stack <stack> --show-secrets | grep "server:"
 ```
+
 These MUST match. Set `KUBECONFIG` explicitly if needed:
+
 ```bash
 pulumi stack output kubeconfig --stack <stack> --show-secrets > /tmp/kubeconfig.yaml
 export KUBECONFIG=/tmp/kubeconfig.yaml
 ```
 
 **2. Get actual error logs from failing pod/container**:
+
 ```bash
 kubectl get pods -n <namespace>  # Find the pod
 kubectl logs -n <namespace> <pod-name> -c <container-name>
 kubectl describe pod -n <namespace> <pod-name>  # For init container issues
 ```
+
 **The ACTUAL error message trumps all theory.**
 
 **3. Check what's actually deployed vs. what you expect**:
+
 ```bash
 kubectl get deployment -n <namespace> <name> -o yaml
 ```
+
 Don't assume Pulumi state matches Kubernetes reality.
 
 **4. Check Pulumi update history**:
+
 ```bash
 pulumi stack history --stack <stack> -j | jq -r '.[] | "\(.version) \(.status) \(.startTime) \(.message)"'
 ```
+
 Failed updates don't persist state changes. Last SUCCESSFUL update matters.
 
 **Debugging Philosophy**:
+
 - ✅ kubectl logs → Shows actual error
 - ✅ kubectl get/describe → Shows actual state
 - ✅ pulumi stack history → Shows what succeeded
@@ -511,28 +566,31 @@ Failed updates don't persist state changes. Last SUCCESSFUL update matters.
 ### Pulumi Update Failure Behavior
 
 **CRITICAL**: When `pulumi up` fails:
+
 - Resources may be partially created/updated in Kubernetes
 - **BUT** Pulumi's state file is NOT updated with new desired inputs
 - The state still reflects the last SUCCESSFUL update
 - A failed update means you need to fix the issue and re-run - the changes weren't applied
 
 **Implications**:
+
 - If update #7 fails, but update #4 succeeded, the stack state reflects update #4's code
 - Even if you deployed from the correct commit, a failed update means old state persists
 - Always check: `pulumi stack history` to find last successful update
 - Check resource's `modified` timestamp in state:
-  ```bash
-  pulumi stack export --stack <stack> | jq '.deployment.resources[] | select(.type == "..." and .id == "...") | {modified, created}'
-  ```
+    ```bash
+    pulumi stack export --stack <stack> | jq '.deployment.resources[] | select(.type == "..." and .id == "...") | {modified, created}'
+    ```
 
 **Example**: If a resource like HTTPRoute fails to create (already exists), it can block the entire update. Other resource changes (like Deployment updates) won't be persisted even if they were calculated correctly.
 
 ### Debugging
 
 **Local (Minikube)**:
+
 - **FIRST**: Check minikube tunnel is running: `ps aux | grep "minikube tunnel"`
-  - If not running: `minikube tunnel` (requires sudo password)
-  - Without tunnel, LoadBalancer services won't be accessible at 127.0.0.1
+    - If not running: `minikube tunnel` (requires sudo password)
+    - Without tunnel, LoadBalancer services won't be accessible at 127.0.0.1
 - Logs: `kubectl logs -f deployment/api`
 - DB: `kubectl port-forward service/db 5432:5432`
 - Shell: `kubectl exec -it deployment/api -- /bin/bash`
@@ -540,6 +598,7 @@ Failed updates don't persist state changes. Last SUCCESSFUL update matters.
 - Check HTTPRoutes: `kubectl get httproute -A`
 
 **Remote (Preview/Production)**:
+
 - Logs: `kubectl logs -f deployment/api`
 - DB: `kubectl port-forward service/db 5432:5432`
 - Shell: `kubectl exec -it deployment/api -- /bin/bash`
@@ -569,6 +628,7 @@ Failed updates don't persist state changes. Last SUCCESSFUL update matters.
 ## GitHub Actions Standards
 
 **Naming**:
+
 - Workflow names: Title Case
 - Job names: Title Case
 - Step names: Sentence case
@@ -576,6 +636,7 @@ Failed updates don't persist state changes. Last SUCCESSFUL update matters.
 - File names: lowercase-with-hyphens.yml
 
 **Gotchas**:
+
 - Cannot use `GITHUB_` prefix for custom secrets
 - Use auto-provided `GITHUB_TOKEN` for GHCR auth
 

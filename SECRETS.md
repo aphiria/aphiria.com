@@ -23,20 +23,21 @@ GitHub Secrets (CI/CD) → Pulumi ESC (Infrastructure Config) → Kubernetes Sec
 ```
 
 1. **GitHub Secrets**: CI/CD workflow authentication
-   - `PULUMI_ACCESS_TOKEN` - Authenticate to Pulumi Cloud
-   - `WORKFLOW_DISPATCH_TOKEN` - Trigger workflows from other workflows
+    - `PULUMI_ACCESS_TOKEN` - Authenticate to Pulumi Cloud
+    - `WORKFLOW_DISPATCH_TOKEN` - Trigger workflows from other workflows
 
 2. **Pulumi ESC Environments**: Infrastructure configuration secrets
-   - Environment: `aphiria.com/Preview` (preview-base, preview-pr-*)
-   - Environment: `aphiria.com/Production` (production)
-   - Stores: DigitalOcean tokens, GHCR credentials, PostgreSQL passwords, cert-manager DNS tokens
+    - Environment: `aphiria.com/Preview` (preview-base, preview-pr-\*)
+    - Environment: `aphiria.com/Production` (production)
+    - Stores: DigitalOcean tokens, GHCR credentials, PostgreSQL passwords, cert-manager DNS tokens
 
 3. **Kubernetes Secrets**: Application runtime secrets
-   - Created by Pulumi components
-   - Populated from Pulumi ESC values
-   - Scoped to namespaces (preview-pr-123, default)
+    - Created by Pulumi components
+    - Populated from Pulumi ESC values
+    - Scoped to namespaces (preview-pr-123, default)
 
 **Data Flow Example**:
+
 ```
 postgresql:password (Pulumi ESC)
   ↓ (accessed by Pulumi TypeScript)
@@ -48,6 +49,7 @@ PostgreSQL container
 ### Why Pulumi ESC?
 
 **Benefits**:
+
 - ✅ Centralized infrastructure secret management
 - ✅ Automatic injection into Pulumi stacks (`pulumi config env add`)
 - ✅ Encrypted at rest in Pulumi Cloud
@@ -55,6 +57,7 @@ PostgreSQL container
 - ✅ Secret versioning and audit logs
 
 **Free Tier Limitations**:
+
 - 5 environments max
 - 1 team member
 - Current usage: 2 environments (`aphiria.com/Preview`, `aphiria.com/Production`)
@@ -63,10 +66,10 @@ PostgreSQL container
 
 ### GitHub Repository Secrets
 
-| Secret Name | Purpose | Rotation Schedule | Used By |
-|-------------|---------|-------------------|---------|
-| `PULUMI_ACCESS_TOKEN` | Manage infrastructure state in Pulumi Cloud | Annually | `preview-deploy.yml`, `preview-cleanup.yml` |
-| `WORKFLOW_DISPATCH_TOKEN` | Trigger preview deployment workflow from build workflow | Annually | `build-preview-images.yml` |
+| Secret Name               | Purpose                                                 | Rotation Schedule | Used By                                     |
+| ------------------------- | ------------------------------------------------------- | ----------------- | ------------------------------------------- |
+| `PULUMI_ACCESS_TOKEN`     | Manage infrastructure state in Pulumi Cloud             | Annually          | `preview-deploy.yml`, `preview-cleanup.yml` |
+| `WORKFLOW_DISPATCH_TOKEN` | Trigger preview deployment workflow from build workflow | Annually          | `build-preview-images.yml`                  |
 
 **Note**: `GITHUB_TOKEN` is automatically provided by GitHub Actions for pushing Docker images to ghcr.io. No manual secret configuration required.
 
@@ -75,30 +78,32 @@ PostgreSQL container
 These secrets are stored in Pulumi ESC and automatically injected into Pulumi stacks when you run `pulumi config env add <environment>`.
 
 **Environments**:
-- `aphiria.com/Preview` - Used by preview-base and preview-pr-* stacks
+
+- `aphiria.com/Preview` - Used by preview-base and preview-pr-\* stacks
 - `aphiria.com/Production` - Used by production stack
 
-| Secret Name | Purpose | Rotation Schedule | Environment |
-|-------------|---------|-------------------|-------------|
-| `digitalocean:token` | DigitalOcean API access for cluster management | Annually | Both |
-| `certmanager:digitaloceanDnsToken` | DNS API access for cert-manager wildcard TLS (DNS-01 challenges) | Annually | Both |
-| `ghcr:token` | Pull private Docker images from ghcr.io (Kubernetes imagePullSecrets) | Annually | Both |
-| `ghcr:username` | GitHub username for GHCR authentication | N/A | Both |
-| `postgresql:user` | PostgreSQL admin user | N/A | Both |
-| `postgresql:password` | PostgreSQL admin password | Quarterly | Both |
-| `grafana:githubClientId` | GitHub OAuth App Client ID for Grafana authentication | When OAuth app is rotated | Both |
-| `grafana:githubClientSecret` | GitHub OAuth App Client Secret for Grafana authentication | Annually | Both |
-| `grafana:githubOrg` | GitHub organization for access control (e.g., "aphiria") | N/A | Both |
-| `grafana:adminUser` | GitHub username with Grafana admin privileges | N/A | Both |
-| `grafana:smtpHost` | SMTP server hostname for alert emails | When SMTP provider changes | Both (unused in preview) |
-| `grafana:smtpPort` | SMTP server port (typically 587) | N/A | Both (unused in preview) |
-| `grafana:smtpUser` | SMTP authentication username | When SMTP credentials rotate | Both (unused in preview) |
-| `grafana:smtpPassword` | SMTP authentication password | Quarterly | Both (unused in preview) |
-| `grafana:smtpFromAddress` | Email "From" address for alerts | N/A | Both (unused in preview) |
-| `grafana:alertEmail` | Email address to receive Grafana alerts | N/A | Both (unused in preview) |
-| `prometheus:authToken` | Bearer token for authenticating Prometheus to scrape /metrics endpoint | Annually | Both |
+| Secret Name                        | Purpose                                                                | Rotation Schedule            | Environment              |
+| ---------------------------------- | ---------------------------------------------------------------------- | ---------------------------- | ------------------------ |
+| `digitalocean:token`               | DigitalOcean API access for cluster management                         | Annually                     | Both                     |
+| `certmanager:digitaloceanDnsToken` | DNS API access for cert-manager wildcard TLS (DNS-01 challenges)       | Annually                     | Both                     |
+| `ghcr:token`                       | Pull private Docker images from ghcr.io (Kubernetes imagePullSecrets)  | Annually                     | Both                     |
+| `ghcr:username`                    | GitHub username for GHCR authentication                                | N/A                          | Both                     |
+| `postgresql:user`                  | PostgreSQL admin user                                                  | N/A                          | Both                     |
+| `postgresql:password`              | PostgreSQL admin password                                              | Quarterly                    | Both                     |
+| `grafana:githubClientId`           | GitHub OAuth App Client ID for Grafana authentication                  | When OAuth app is rotated    | Both                     |
+| `grafana:githubClientSecret`       | GitHub OAuth App Client Secret for Grafana authentication              | Annually                     | Both                     |
+| `grafana:githubOrg`                | GitHub organization for access control (e.g., "aphiria")               | N/A                          | Both                     |
+| `grafana:adminUser`                | GitHub username with Grafana admin privileges                          | N/A                          | Both                     |
+| `grafana:smtpHost`                 | SMTP server hostname for alert emails                                  | When SMTP provider changes   | Both (unused in preview) |
+| `grafana:smtpPort`                 | SMTP server port (typically 587)                                       | N/A                          | Both (unused in preview) |
+| `grafana:smtpUser`                 | SMTP authentication username                                           | When SMTP credentials rotate | Both (unused in preview) |
+| `grafana:smtpPassword`             | SMTP authentication password                                           | Quarterly                    | Both (unused in preview) |
+| `grafana:smtpFromAddress`          | Email "From" address for alerts                                        | N/A                          | Both (unused in preview) |
+| `grafana:alertEmail`               | Email address to receive Grafana alerts                                | N/A                          | Both (unused in preview) |
+| `prometheus:authToken`             | Bearer token for authenticating Prometheus to scrape /metrics endpoint | Annually                     | Both                     |
 
 **How Pulumi ESC works**:
+
 1. Secrets are stored in Pulumi Cloud at https://app.pulumi.com/[org]/settings/environments
 2. Stack config files reference the environment: `pulumi config env add aphiria.com/Preview`
 3. When you run `pulumi up`, Pulumi automatically injects ESC secrets as stack config
@@ -128,13 +133,13 @@ These secrets are stored in Pulumi ESC and automatically injected into Pulumi st
 2. Select `aphiria.com/Preview` environment
 3. Click "Edit"
 4. Update the `pulumiConfig` section:
-   ```yaml
-   values:
-     pulumiConfig:
-       "ghcr:token":
-         fn::secret: "ghp_YOUR_NEW_TOKEN_HERE"
-       "ghcr:username": "your-github-username"
-   ```
+    ```yaml
+    values:
+        pulumiConfig:
+            "ghcr:token":
+                fn::secret: "ghp_YOUR_NEW_TOKEN_HERE"
+            "ghcr:username": "your-github-username"
+    ```
 5. Save
 6. Repeat for `aphiria.com/Production` environment
 
@@ -202,19 +207,20 @@ pulumi env set aphiria.com/Production pulumiConfig."ghcr:username" "your-github-
 2. Click "Generate New Token"
 3. Token name: `cert-manager DNS-01 (aphiria.com)`
 4. **Scopes** (REQUIRED - select these exact scopes):
-   - Under **"Scopes"** dropdown, select **"Custom Scopes"**
-   - Expand **"domain"** section
-   - ✅ Enable **"domain:read"** (allows cert-manager to query existing DNS records)
-   - ✅ Enable **"domain:create"** (allows cert-manager to create TXT records for ACME challenge)
-   - ✅ Enable **"domain:delete"** (allows cert-manager to cleanup TXT records after validation)
-   - Leave all other scopes disabled (droplet, kubernetes, etc. are not needed)
+    - Under **"Scopes"** dropdown, select **"Custom Scopes"**
+    - Expand **"domain"** section
+    - ✅ Enable **"domain:read"** (allows cert-manager to query existing DNS records)
+    - ✅ Enable **"domain:create"** (allows cert-manager to create TXT records for ACME challenge)
+    - ✅ Enable **"domain:delete"** (allows cert-manager to cleanup TXT records after validation)
+    - Leave all other scopes disabled (droplet, kubernetes, etc. are not needed)
 5. Expiration: No expiration (or set custom expiration date)
 6. Click "Generate Token"
 7. Copy the token (starts with `dop_v1_`)
 
 **Alternative: If Custom Scopes not available, use Full Access**:
-   - Select **"Full Access"** (read + write to all resources)
-   - Note: This grants broader permissions than needed, but is acceptable for cert-manager use case
+
+- Select **"Full Access"** (read + write to all resources)
+- Note: This grants broader permissions than needed, but is acceptable for cert-manager use case
 
 **Configure in Pulumi ESC**:
 
@@ -234,11 +240,13 @@ pulumi env set aphiria.com/Production pulumiConfig."certmanager:digitaloceanDnsT
 ```
 
 **Alternative: Via Pulumi ESC UI**:
+
 1. Navigate to https://app.pulumi.com/[your-org]/settings/environments
 2. Edit `aphiria.com/Preview` and `aphiria.com/Production`
 3. Update `pulumiConfig."certmanager:digitaloceanDnsToken"` with new token (mark as secret)
 
 **Security Notes**:
+
 - Minimum required scopes: `domain:read`, `domain:create`, `domain:delete`
 - This token grants DNS write access to your entire `aphiria.com` domain
 - Store securely in Pulumi ESC (never commit to git)
@@ -278,11 +286,13 @@ pulumi env set aphiria.com/Production pulumiConfig."grafana:githubClientSecret" 
 ```
 
 **Alternative: Via Pulumi ESC UI**:
+
 1. Navigate to https://app.pulumi.com/[your-org]/settings/environments
 2. Edit `aphiria.com/Preview` and `aphiria.com/Production`
 3. Update `pulumiConfig."grafana:githubClientId"` and `pulumiConfig."grafana:githubClientSecret"` (mark as secret)
 
 **Security Notes**:
+
 - Callback URL must match exactly (including `https://` and domain)
 - For preview environments, the callback URL pattern is `https://{PR}.pr-grafana.aphiria.com/login/github` (wildcard not supported, each PR gets unique Grafana instance)
 - Client secret only shown once - store securely in Pulumi ESC
@@ -310,6 +320,7 @@ pulumi env set aphiria.com/Production pulumiConfig."grafana:adminUser" "your-git
 ```
 
 **Security Notes**:
+
 - Organization name is case-sensitive (must match GitHub exactly)
 - Admin user must be a member of the specified organization
 - These are not secrets (plain text values)
@@ -327,8 +338,8 @@ pulumi env set aphiria.com/Production pulumiConfig."grafana:adminUser" "your-git
 3. App name: `Grafana Alerts - aphiria.com`
 4. Click "Create"
 5. Copy the 16-character app password (shown once)
-   - Google displays it with spaces (e.g., `abcd efgh ijkl mnop`)
-   - Remove all spaces when using it (e.g., `abcdefghijklmnop`)
+    - Google displays it with spaces (e.g., `abcd efgh ijkl mnop`)
+    - Remove all spaces when using it (e.g., `abcdefghijklmnop`)
 
 **Configure in Pulumi ESC**:
 
@@ -354,11 +365,13 @@ pulumi env set aphiria.com/Production pulumiConfig."grafana:alertEmail" "admin@a
 ```
 
 **Alternative: Via Pulumi ESC UI**:
+
 1. Navigate to https://app.pulumi.com/[your-org]/settings/environments
 2. Edit `aphiria.com/Preview` and `aphiria.com/Production`
 3. Update SMTP configuration values (mark `smtpHost`, `smtpUser`, `smtpPassword` as secret)
 
 **Security Notes**:
+
 - Use Google Workspace app password (not main account password)
 - App passwords bypass 2FA (revoke immediately if compromised)
 - SMTP port 587 uses STARTTLS encryption
@@ -400,17 +413,20 @@ pulumi env set aphiria.com/Production pulumiConfig."prometheus:authToken" "YOUR_
 ```
 
 **Alternative: Via Pulumi ESC UI**:
+
 1. Navigate to https://app.pulumi.com/[your-org]/settings/environments
 2. Edit `aphiria.com/Preview` and `aphiria.com/Production`
 3. Update `pulumiConfig."prometheus:authToken"` with new token (mark as secret)
 
 **How it's used**:
+
 1. Pulumi injects token into Kubernetes Secret `PROMETHEUS_AUTH_TOKEN` (API environment variable)
 2. API's `PrometheusTokenHandler` validates Bearer token from `Authorization` header
 3. Prometheus ServiceMonitor configured with `bearerToken` from same Secret
 4. Only Prometheus can scrape `/metrics` endpoint with valid token
 
 **Security Notes**:
+
 - Token is NOT hashed - stored as plaintext in Pulumi ESC, injected as-is into Kubernetes Secret
 - API compares token using `hash_equals()` for timing-attack protection
 - Use minimum 32 bytes (256 bits) of entropy for cryptographic strength
@@ -431,12 +447,12 @@ If a secret is compromised:
 
 ## Troubleshooting
 
-| Error | Cause | Solution |
-|-------|-------|----------|
-| Authentication failed (build-preview-images.yml) | `GITHUB_TOKEN` permissions issue | Verify `packages: write` permission in workflow |
-| ImagePullBackOff / 401 Unauthorized (Kubernetes pods) | Invalid `ghcr:token` in Pulumi ESC | Add/update token in Pulumi ESC environments |
-| Pulumi login failed | Invalid `PULUMI_ACCESS_TOKEN` | Rotate token |
-| workflow_dispatch trigger fails (403 error) | Invalid `WORKFLOW_DISPATCH_TOKEN` | Rotate token |
-| DNS records not created | Invalid `digitalocean:token` in Pulumi ESC | Add/update token in Pulumi ESC environments |
+| Error                                                 | Cause                                      | Solution                                        |
+| ----------------------------------------------------- | ------------------------------------------ | ----------------------------------------------- |
+| Authentication failed (build-preview-images.yml)      | `GITHUB_TOKEN` permissions issue           | Verify `packages: write` permission in workflow |
+| ImagePullBackOff / 401 Unauthorized (Kubernetes pods) | Invalid `ghcr:token` in Pulumi ESC         | Add/update token in Pulumi ESC environments     |
+| Pulumi login failed                                   | Invalid `PULUMI_ACCESS_TOKEN`              | Rotate token                                    |
+| workflow_dispatch trigger fails (403 error)           | Invalid `WORKFLOW_DISPATCH_TOKEN`          | Rotate token                                    |
+| DNS records not created                               | Invalid `digitalocean:token` in Pulumi ESC | Add/update token in Pulumi ESC environments     |
 
 **Last Updated**: 2025-12-23

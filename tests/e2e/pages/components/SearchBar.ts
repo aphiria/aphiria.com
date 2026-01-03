@@ -13,8 +13,7 @@ export class SearchBar {
 
     async query(searchQuery: string): Promise<void> {
         const responsePromise = this.page.waitForResponse(
-            (response) =>
-                response.url().includes("/docs/search") && response.status() === 200
+            (response) => response.url().includes("/docs/search") && response.status() === 200
         );
 
         await this.searchInput.fill(searchQuery);
