@@ -18,6 +18,7 @@ This monorepo contains the code for both https://www.aphiria.com and https://api
   - _apps/web_: The website code
 - _infrastructure_: Contains the Docker and Pulumi infrastructure-as-code
 - _specs_: The GitHub Spec Kit specs
+- _tests_: End-to-end tests of the entire website using Playwright
 
 ## Preview Environments
 
@@ -111,6 +112,8 @@ kubectl rollout restart deployment api \
 The local stack includes Grafana monitoring. Before running `pulumi up`, configure these values:
 
 ```bash
+cd infrastructure/pulumi
+
 # Prometheus monitoring
 pulumi config set prometheus:authToken "dummy-password" --secret local
 
@@ -167,6 +170,8 @@ minikube dashboard
 ### Common Pulumi Commands
 
 ```bash
+cd infrastructure/pulumi
+
 # Set passphrase for Pulumi commands (required for local stack)
 export PULUMI_CONFIG_PASSPHRASE="password"
 
@@ -185,13 +190,15 @@ pulumi cancel --stack local
 ### PHP
 
 ```bash
-composer phpunit
+cd apps/api && composer phpunit && cd ../../
 ```
 
 ### TypeScript
 
+The following command runs TypeScript unit tests for Pulumi:
+
 ```bash
-cd ./infrastructure/pulumi && npm test && cd ../../
+cd infrastructure/pulumi && npm test && cd ../../
 ```
 
 ## Linting
@@ -199,11 +206,44 @@ cd ./infrastructure/pulumi && npm test && cd ../../
 ### PHP
 
 ```bash
-composer phpcs-fix
+cd apps/api && composer phpcs-fix && cd ../../
 ```
 
 ### TypeScript
 
+Linting and formatting for all TypeScript code is managed from the root:
+
 ```bash
-cd ./infrastructure/pulumi && npm install && npm run lint:fix && npm run format && cd ../../
+npm install
+npm run lint:fix
+npm run format
 ```
+
+## E2E Smoke Tests
+
+Post-deployment smoke tests verify site accessibility and core functionality after deployments.
+
+### Running Locally
+
+**Against local minikube** (accepts self-signed certificates):
+```bash
+cd tests/e2e
+cp .env.dist .env
+npm install
+npx playwright install --with-deps chromium
+npm run test:e2e:local
+```
+
+**Against production/preview** (validates certificates):
+```bash
+cd tests/e2e
+SITE_BASE_URL=https://www.aphiria.com \
+GRAFANA_BASE_URL=https://grafana.aphiria.com \
+npm run test:e2e
+```
+
+### CI/CD
+
+Tests run automatically after deployments via GitHub Actions. The workflow constructs environment-specific URLs and uploads test reports/traces on failure.
+
+See `.github/workflows/cd.yml` for the full workflow.

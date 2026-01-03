@@ -1,0 +1,21 @@
+# Files/directories
+.env
+node_modules/
+
+# Environment files
+
+# Test artifacts
+playwright-report/
+test-results/
+
+# Test videos/screenshots (captured on failure)
+*.webm
+*.png
+*.jpg
+
+# Coverage (if added later)
+coverage/
+
+# OS files
+.DS_Store
+Thumbs.db

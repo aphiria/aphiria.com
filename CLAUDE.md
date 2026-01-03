@@ -313,22 +313,37 @@ composer psalm      # Static analysis
 
 **NEVER** skip these. If they fail, fix before proceeding.
 
-### Quality Gates (TypeScript/Pulumi)
+### Quality Gates (TypeScript)
 
-Any changes to our infrastructure MUST have corresponding unit tests added.  NEVER just update the infrastructure without writing unit tests to cover the changes..
+Any changes to our infrastructure MUST have corresponding unit tests added.  NEVER just update the infrastructure without writing unit tests to cover the changes.
 
-Before completing ANY TypeScript/infrastructure task:
+**Linting and Formatting (from root)**:
+```bash
+npm install      # Install linting/formatting dependencies
+npm run lint     # ESLint (must pass with 0 errors, 0 warnings)
+npm run format:check  # Prettier (must pass with 0 errors, 0 warnings)
+```
+
+**Infrastructure Build and Tests**:
 ```bash
 cd infrastructure/pulumi
-npm run build   # Compile TypeScript
-npm run lint    # ESLint (must pass with 0 errors, 0 warnings)
-npm test        # Jest tests with coverage thresholds
+npm install      # Install Pulumi dependencies
+npm run build    # Compile TypeScript
+npm test         # Jest tests with coverage thresholds
+```
+
+**E2E Tests**:
+```bash
+cd tests/e2e
+npm install      # Install Playwright dependencies
+npm test         # Playwright smoke tests
 ```
 
 **NON-NEGOTIABLE**:
-- **Linting**: MUST pass with 0 errors and 0 warnings
+- **Linting**: MUST pass with 0 errors and 0 warnings (run from root)
+- **Formatting**: MUST pass with 0 errors and 0 warnings (run from root)
 - **Tests**: MUST pass 100% (all suites)
-- **Coverage**: MUST meet jest.config.js thresholds (100% for all metrics)
+- **Coverage**: MUST meet jest.config.js thresholds for infrastructure (100% for all metrics)
 - **Build**: TypeScript compilation MUST succeed with no errors
 
 **Jest Coverage Thresholds** (from `jest.config.js`):
@@ -414,13 +429,19 @@ Write tests FIRST (TDD).
 - [ ] Tests written
 - [ ] No TODOs without issue tracking
 
-**TypeScript/Pulumi**:
-- [ ] `npm run build` (in `infrastructure/pulumi/`)
+**TypeScript** (linting/formatting from root):
+- [ ] `npm install` (in root)
 - [ ] `npm run lint` (0 errors, 0 warnings)
 - [ ] `npm run format:check` (0 errors, 0 warnings)
-- [ ] `npm test` (100% pass rate, meets coverage thresholds)
 - [ ] New files staged
-- [ ] `dist/` and `coverage/` NOT committed (gitignored)
+- [ ] `dist/`, `coverage/`, `playwright-report/`, `test-results/` NOT committed (gitignored)
+
+**TypeScript/Pulumi** (infrastructure-specific):
+- [ ] `cd infrastructure/pulumi && npm run build` (compiles TypeScript)
+- [ ] `npm test` (100% pass rate, meets coverage thresholds)
+
+**TypeScript/E2E** (e2e-specific):
+- [ ] `cd tests/e2e && npm test` (smoke tests pass)
 
 **GitHub Actions**:
 - [ ] Secrets documented in `SECRETS.md`

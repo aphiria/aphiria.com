@@ -6,10 +6,13 @@ export default [
     {
         ignores: [
             "node_modules/",
+            "vendor/",
             "bin/",
             ".pulumi/",
             "dist/",
             "coverage/",
+            "playwright-report/",
+            "test-results/",
             "*.config.js",
             "*.config.mjs",
         ],
@@ -18,9 +21,10 @@ export default [
     ...tseslint.configs.recommended,
     prettier,
     {
+        files: ["infrastructure/pulumi/**/*.ts"],
         languageOptions: {
             parserOptions: {
-                project: "./tsconfig.json",
+                project: "./infrastructure/pulumi/tsconfig.json",
                 ecmaVersion: 2020,
                 sourceType: "module",
             },
@@ -36,7 +40,25 @@ export default [
         },
     },
     {
-        files: ["tests/**/*.ts"],
+        files: ["tests/e2e/**/*.ts"],
+        languageOptions: {
+            parserOptions: {
+                project: "./tests/e2e/tsconfig.json",
+                ecmaVersion: 2020,
+                sourceType: "module",
+            },
+        },
+        rules: {
+            "@typescript-eslint/no-explicit-any": "warn",
+            "@typescript-eslint/explicit-function-return-type": "off",
+            "@typescript-eslint/no-unused-vars": [
+                "error",
+                { argsIgnorePattern: "^_", varsIgnorePattern: "^_" },
+            ],
+        },
+    },
+    {
+        files: ["infrastructure/pulumi/tests/**/*.ts"],
         rules: {
             "@typescript-eslint/no-explicit-any": "off", // Allow any in test files for mocking/callbacks
         },

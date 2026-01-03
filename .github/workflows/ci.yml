@@ -75,19 +75,22 @@ jobs:
         if: matrix.php == '8.4'
         working-directory: apps/api
         run: composer psalm -- --shepherd
-      - name: Build TypeScript code
+      - name: Install root TypeScript dependencies
+        if: matrix.php == '8.4'
+        run: npm install
+      - name: Lint TypeScript code
+        if: matrix.php == '8.4'
+        run: npm run lint
+      - name: Format check TypeScript code
+        if: matrix.php == '8.4'
+        run: npm run format:check
+      - name: Build infrastructure TypeScript code
         if: matrix.php == '8.4'
         working-directory: infrastructure/pulumi
         run: |
           npm install
           npm run build
-      - name: Lint TypeScript code
-        if: matrix.php == '8.4'
-        working-directory: infrastructure/pulumi
-        run: |
-          npm run lint
-          npm run format:check
-      - name: Test TypeScript code
+      - name: Test infrastructure TypeScript code
         if: matrix.php == '8.4'
         working-directory: infrastructure/pulumi
         run: npm run test:ci
