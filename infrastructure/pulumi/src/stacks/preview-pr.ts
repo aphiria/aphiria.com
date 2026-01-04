@@ -86,41 +86,47 @@ createStack(
             domains: ["*.pr.aphiria.com", "*.pr-api.aphiria.com"],
         },
         app: {
-            webReplicas: 1,
-            apiReplicas: 1,
-            webUrl: stackConfig.urls.web,
-            apiUrl: stackConfig.urls.api,
-            webImage: stackConfig.images.web,
-            apiImage: stackConfig.images.api,
+            web: {
+                replicas: 1,
+                url: stackConfig.urls.web,
+                image: stackConfig.images.web,
+                resources: {
+                    requests: { cpu: "50m", memory: "64Mi" },
+                    limits: { cpu: "100m", memory: "128Mi" },
+                },
+            },
+            api: {
+                replicas: 1,
+                url: stackConfig.urls.api,
+                image: stackConfig.images.api,
+                resources: {
+                    nginx: {
+                        requests: { cpu: "50m", memory: "64Mi" },
+                        limits: { cpu: "100m", memory: "128Mi" },
+                    },
+                    php: {
+                        requests: { cpu: "100m", memory: "128Mi" },
+                        limits: { cpu: "200m", memory: "256Mi" },
+                    },
+                    initContainer: {
+                        requests: { cpu: "50m", memory: "64Mi" },
+                        limits: { cpu: "100m", memory: "128Mi" },
+                    },
+                },
+            },
+            migration: {
+                resources: {
+                    migration: {
+                        requests: { cpu: "50m", memory: "128Mi" },
+                        limits: { cpu: "200m", memory: "256Mi" },
+                    },
+                    initContainer: {
+                        requests: { cpu: "10m", memory: "32Mi" },
+                        limits: { cpu: "50m", memory: "64Mi" },
+                    },
+                },
+            },
             cookieDomain: ".pr.aphiria.com",
-            webResources: {
-                requests: { cpu: "50m", memory: "64Mi" },
-                limits: { cpu: "100m", memory: "128Mi" },
-            },
-            apiResources: {
-                nginx: {
-                    requests: { cpu: "50m", memory: "64Mi" },
-                    limits: { cpu: "100m", memory: "128Mi" },
-                },
-                php: {
-                    requests: { cpu: "100m", memory: "128Mi" },
-                    limits: { cpu: "200m", memory: "256Mi" },
-                },
-                initContainer: {
-                    requests: { cpu: "50m", memory: "64Mi" },
-                    limits: { cpu: "100m", memory: "128Mi" },
-                },
-            },
-            migrationResources: {
-                migration: {
-                    requests: { cpu: "50m", memory: "128Mi" },
-                    limits: { cpu: "200m", memory: "256Mi" },
-                },
-                initContainer: {
-                    requests: { cpu: "10m", memory: "32Mi" },
-                    limits: { cpu: "50m", memory: "64Mi" },
-                },
-            },
         },
         monitoring: {
             prometheus: {

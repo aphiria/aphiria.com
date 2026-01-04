@@ -108,39 +108,48 @@ export interface APIResourceLimits {
  * Application deployment configuration (web + API)
  */
 export interface AppConfig {
-    /** Number of web deployment replicas */
-    webReplicas: number;
-    /** Number of API deployment replicas */
-    apiReplicas: number;
-    /** Web application base URL */
-    webUrl: string;
-    /** API base URL */
-    apiUrl: string;
-    /** Web Docker image reference (tag or digest) */
-    webImage: string;
-    /** API Docker image reference (tag or digest) */
-    apiImage: string;
-    /** Cookie domain for sessions (e.g., ".aphiria.com", ".pr.aphiria.com") */
-    cookieDomain: string;
-    /** Web container resource limits (required) */
-    webResources: ResourceLimits;
-    /** API container resource limits (required) */
-    apiResources: APIResourceLimits;
-    /** Database migration job resource limits (required) */
-    migrationResources: {
-        migration: {
-            requests: { cpu: string; memory: string };
-            limits: { cpu: string; memory: string };
-        };
-        initContainer: {
-            requests: { cpu: string; memory: string };
-            limits: { cpu: string; memory: string };
+    /** Web application configuration */
+    web: {
+        /** Number of deployment replicas */
+        replicas: number;
+        /** Application base URL */
+        url: string;
+        /** Docker image reference (tag or digest) */
+        image: string;
+        /** Container resource limits (required) */
+        resources: ResourceLimits;
+        /** PodDisruptionBudget (optional - production only) */
+        podDisruptionBudget?: { minAvailable?: number; maxUnavailable?: number };
+    };
+    /** API application configuration */
+    api: {
+        /** Number of deployment replicas */
+        replicas: number;
+        /** API base URL */
+        url: string;
+        /** Docker image reference (tag or digest) */
+        image: string;
+        /** Container resource limits (required) */
+        resources: APIResourceLimits;
+        /** PodDisruptionBudget (optional - production only) */
+        podDisruptionBudget?: { minAvailable?: number; maxUnavailable?: number };
+    };
+    /** Database migration job configuration */
+    migration: {
+        /** Migration job resource limits (required) */
+        resources: {
+            migration: {
+                requests: { cpu: string; memory: string };
+                limits: { cpu: string; memory: string };
+            };
+            initContainer: {
+                requests: { cpu: string; memory: string };
+                limits: { cpu: string; memory: string };
+            };
         };
     };
-    /** Web PodDisruptionBudget (optional - production only) */
-    webPodDisruptionBudget?: { minAvailable?: number; maxUnavailable?: number };
-    /** API PodDisruptionBudget (optional - production only) */
-    apiPodDisruptionBudget?: { minAvailable?: number; maxUnavailable?: number };
+    /** Cookie domain for sessions (e.g., ".aphiria.com", ".pr.aphiria.com") - shared config */
+    cookieDomain: string;
 }
 
 /**

@@ -198,7 +198,9 @@ describe("createGrafanaAlerts", () => {
 
         expect(rulesYaml).toContain("High API 4xx Rate");
         expect(rulesYaml).toContain("uid: high_api_4xx_rate");
-        expect(rulesYaml).toContain('(sum(rate(app_http_requests_total{job="api",status=~"4.."}[5m])) or vector(0))');
+        expect(rulesYaml).toContain(
+            '(sum(rate(app_http_requests_total{job="api",status=~"4.."}[5m])) or vector(0))'
+        );
         expect(rulesYaml).toContain("- 0.1");
         expect(rulesYaml).toContain("5m");
     });
@@ -217,7 +219,9 @@ describe("createGrafanaAlerts", () => {
 
         expect(rulesYaml).toContain("High API 5xx Rate");
         expect(rulesYaml).toContain("uid: high_api_5xx_rate");
-        expect(rulesYaml).toContain('(sum(rate(app_http_requests_total{job="api",status=~"5.."}[5m])) or vector(0))');
+        expect(rulesYaml).toContain(
+            '(sum(rate(app_http_requests_total{job="api",status=~"5.."}[5m])) or vector(0))'
+        );
         expect(rulesYaml).toContain("- 0.05");
         expect(rulesYaml).toContain("5m");
     });
@@ -415,7 +419,9 @@ describe("createGrafanaAlerts", () => {
         const rulesYaml = data["alert-rules.yaml"];
 
         // Verify pod alerts use or vector(0) to return 0 instead of nodata
-        expect(rulesYaml).toContain('sum(kube_pod_container_status_waiting_reason{reason="CrashLoopBackOff"}) or vector(0)');
+        expect(rulesYaml).toContain(
+            'sum(kube_pod_container_status_waiting_reason{reason="CrashLoopBackOff"}) or vector(0)'
+        );
         expect(rulesYaml).toContain('sum(kube_pod_status_phase{phase="Failed"} > 0) or vector(0)');
     });
 
@@ -432,7 +438,11 @@ describe("createGrafanaAlerts", () => {
         const rulesYaml = data["alert-rules.yaml"];
 
         // Verify API error rate alerts use or vector(0) to return 0 instead of nodata when no errors
-        expect(rulesYaml).toContain('(sum(rate(app_http_requests_total{job="api",status=~"4.."}[5m])) or vector(0))');
-        expect(rulesYaml).toContain('(sum(rate(app_http_requests_total{job="api",status=~"5.."}[5m])) or vector(0))');
+        expect(rulesYaml).toContain(
+            '(sum(rate(app_http_requests_total{job="api",status=~"4.."}[5m])) or vector(0))'
+        );
+        expect(rulesYaml).toContain(
+            '(sum(rate(app_http_requests_total{job="api",status=~"5.."}[5m])) or vector(0))'
+        );
     });
 });

@@ -190,8 +190,7 @@ export function createGrafanaAlerts(args: GrafanaAlertsArgs): GrafanaAlertsResul
             },
             annotations: {
                 summary: "Pod is crash looping",
-                description:
-                    "{{ $values.B.Value }} pod(s) are in CrashLoopBackOff state",
+                description: "{{ $values.B.Value }} pod(s) are in CrashLoopBackOff state",
             },
         },
         {
@@ -207,8 +206,7 @@ export function createGrafanaAlerts(args: GrafanaAlertsArgs): GrafanaAlertsResul
             },
             annotations: {
                 summary: "Pod has failed",
-                description:
-                    "{{ $values.B.Value }} pod(s) have failed",
+                description: "{{ $values.B.Value }} pod(s) have failed",
             },
         },
     ];
