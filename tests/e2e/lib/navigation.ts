@@ -13,7 +13,7 @@ export async function assertPageOk(page: Page, url: string, maxRetries = 1): Pro
 
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
         try {
-            const response = await page.goto(url, { waitUntil: "domcontentloaded" });
+            const response = await page.goto(url, { waitUntil: "load" });
 
             if (response) {
                 const status = response.status();

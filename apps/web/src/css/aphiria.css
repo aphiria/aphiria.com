@@ -607,6 +607,7 @@ blockquote {
             --sideNavBackgroundColor: #f6f6f6;
 
             position: fixed;
+            border-top: 1px solid #ccc;
             border-left: 1px solid var(--sideNavBackgroundColor);
             left: 100%;
             /* We want this to appear just below the main nav. The additional 20px is the padding in the nav bar. */

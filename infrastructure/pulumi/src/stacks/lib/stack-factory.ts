@@ -563,15 +563,17 @@ export function createStack(config: StackConfig, k8sProvider: k8s.Provider): Sta
             provider: k8sProvider,
         });
 
-        // ServiceMonitor for API metrics (if monitoring is configured)
-        if (config.monitoring) {
+        // ServiceMonitor for API metrics (if monitoring is configured OR prometheusAuthToken is provided)
+        // preview-pr passes prometheusAuthToken directly, other envs pass config.monitoring
+        const authToken = config.monitoring?.prometheus.authToken || config.prometheusAuthToken;
+        if (authToken) {
             resources.apiServiceMonitor = createApiServiceMonitor({
                 namespace: namespace,
                 serviceName: "api",
                 targetPort: 80,
                 metricsPath: "/metrics",
-                scrapeInterval: config.monitoring.prometheus.scrapeInterval || "15s",
-                authToken: config.monitoring.prometheus.authToken,
+                scrapeInterval: config.monitoring?.prometheus.scrapeInterval || "15s",
+                authToken: authToken,
                 provider: k8sProvider,
             });
         }
