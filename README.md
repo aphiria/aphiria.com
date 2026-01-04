@@ -16,7 +16,7 @@ This monorepo contains the code for both https://www.aphiria.com and https://api
 - _apps_: The source code for the web and API applications
     - _apps/api_: The API code
     - _apps/web_: The website code
-- _infrastructure_: Contains the Docker and Pulumi infrastructure-as-code
+- _infrastructure_: The Docker and Pulumi infrastructure-as-code
 - _specs_: The GitHub Spec Kit specs
 - _tests_: End-to-end tests of the entire website using Playwright
 

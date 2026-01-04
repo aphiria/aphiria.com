@@ -514,7 +514,9 @@ export function createStack(config: StackConfig, k8sProvider: k8s.Provider): Sta
             imagePullSecrets: config.namespace?.imagePullSecret ? ["ghcr-pull-secret"] : undefined,
             resources: config.app.api.resources,
             podDisruptionBudget: config.app.api.podDisruptionBudget,
-            prometheusAuthToken: config.monitoring!.prometheus.authToken,
+            // Prefer top-level prometheusAuthToken (preview-pr) over monitoring.prometheus.authToken (local/preview-base/production)
+            prometheusAuthToken:
+                config.prometheusAuthToken || config.monitoring?.prometheus.authToken,
             provider: k8sProvider,
         });
 

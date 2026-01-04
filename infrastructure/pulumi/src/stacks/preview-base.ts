@@ -54,7 +54,7 @@ const stack = createStack(
             domains: [
                 "*.pr.aphiria.com", // Web preview URLs
                 "*.pr-api.aphiria.com", // API preview URLs
-                "*.pr-grafana.aphiria.com", // Grafana preview URLs
+                "pr-grafana.aphiria.com", // Shared Grafana for all PRs
             ],
             dnsToken: stackConfig.certManager.dnsToken,
             dns: {
@@ -62,9 +62,51 @@ const stack = createStack(
                 records: [
                     { name: "*.pr", resourceName: "preview-web-dns" },
                     { name: "*.pr-api", resourceName: "preview-api-dns" },
-                    { name: "*.pr-grafana", resourceName: "preview-grafana-dns" },
+                    { name: "pr-grafana", resourceName: "preview-grafana-dns" },
                 ],
                 ttl: 300,
+            },
+        },
+        // Shared monitoring for all preview-pr stacks (monitors all preview-pr-* namespaces)
+        monitoring: {
+            prometheus: {
+                authToken: stackConfig.prometheus.authToken,
+                storageSize: "10Gi",
+                scrapeInterval: "15s",
+                retentionTime: "14d",
+                resources: {
+                    requests: { cpu: "250m", memory: "512Mi" },
+                    limits: { cpu: "1000m", memory: "1Gi" },
+                },
+            },
+            grafana: {
+                storageSize: "5Gi",
+                hostname: "pr-grafana.aphiria.com",
+                githubOAuth: {
+                    clientId: stackConfig.grafana.githubClientId,
+                    clientSecret: stackConfig.grafana.githubClientSecret,
+                    org: stackConfig.grafana.githubOrg,
+                    adminUser: stackConfig.grafana.adminUser,
+                },
+                smtp: {
+                    host: stackConfig.grafana.smtpHost,
+                    port: stackConfig.grafana.smtpPort,
+                    user: stackConfig.grafana.smtpUser,
+                    password: stackConfig.grafana.smtpPassword,
+                    fromAddress: stackConfig.grafana.smtpFromAddress,
+                    alertEmail: stackConfig.grafana.alertEmail,
+                },
+                basicAuth:
+                    stackConfig.grafana.basicAuthUser && stackConfig.grafana.basicAuthPassword
+                        ? {
+                              user: stackConfig.grafana.basicAuthUser,
+                              password: stackConfig.grafana.basicAuthPassword,
+                          }
+                        : undefined,
+                resources: {
+                    requests: { cpu: "100m", memory: "512Mi" },
+                    limits: { cpu: "500m", memory: "1Gi" },
+                },
             },
         },
         // No app config - preview-base is infrastructure only
@@ -77,4 +119,5 @@ if (!stack.namespace) throw new Error("Preview-base stack must create namespace"
 
 export const kubeconfig = pulumi.secret(clusterKubeconfig);
 export const postgresqlHost = pulumi.interpolate`db.${stack.namespace.namespace.metadata.name}.svc.cluster.local`;
+export const prometheusAuthToken = pulumi.secret(stackConfig.prometheus.authToken);
 export { postgresqlAdminUser, postgresqlAdminPassword };

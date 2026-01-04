@@ -245,6 +245,12 @@ export interface StackConfig {
     namespace?: NamespaceConfig;
 
     /**
+     * Prometheus auth token for API /metrics endpoint
+     * Optional - can be passed directly (preview-pr) or via monitoring.prometheus.authToken (other envs)
+     */
+    prometheusAuthToken?: pulumi.Input<string>;
+
+    /**
      * Monitoring configuration (Prometheus + Grafana)
      * Optional - when enabled, creates monitoring namespace with components
      */

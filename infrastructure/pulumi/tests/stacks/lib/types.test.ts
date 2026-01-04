@@ -309,13 +309,48 @@ describe("Types", () => {
                 },
                 gateway: {
                     tlsMode: "letsencrypt-prod",
-                    domains: ["*.pr.aphiria.com", "*.pr-api.aphiria.com"],
+                    domains: ["*.pr.aphiria.com", "*.pr-api.aphiria.com", "pr-grafana.aphiria.com"],
                     dnsToken: "dop_v1_token",
+                },
+                monitoring: {
+                    prometheus: {
+                        authToken: "test-token",
+                        storageSize: "10Gi",
+                        scrapeInterval: "15s",
+                        retentionTime: "14d",
+                        resources: {
+                            requests: { cpu: "250m", memory: "512Mi" },
+                            limits: { cpu: "1000m", memory: "1Gi" },
+                        },
+                    },
+                    grafana: {
+                        storageSize: "5Gi",
+                        hostname: "pr-grafana.aphiria.com",
+                        githubOAuth: {
+                            clientId: "test-client-id",
+                            clientSecret: "test-client-secret",
+                            org: "aphiria",
+                            adminUser: "admin",
+                        },
+                        smtp: {
+                            host: "smtp.example.com",
+                            port: 587,
+                            user: "test@example.com",
+                            password: "smtp-password",
+                            fromAddress: "grafana@example.com",
+                            alertEmail: "alerts@example.com",
+                        },
+                        resources: {
+                            requests: { cpu: "100m", memory: "512Mi" },
+                            limits: { cpu: "500m", memory: "1Gi" },
+                        },
+                    },
                 },
             };
 
             expect(config.env).toBe("preview");
             expect(config.cluster).toBeDefined();
+            expect(config.monitoring).toBeDefined();
             expect(config.app).toBeUndefined();
         });
 
