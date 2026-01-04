@@ -180,7 +180,7 @@ export function createGrafanaAlerts(args: GrafanaAlertsArgs): GrafanaAlertsResul
         {
             uid: "pod_crash_looping",
             title: "Pod Crash Looping",
-            expr: 'count(kube_pod_container_status_waiting_reason{reason="CrashLoopBackOff"}) or vector(0)',
+            expr: 'sum(kube_pod_container_status_waiting_reason{reason="CrashLoopBackOff"}) or vector(0)',
             threshold: "> 0",
             reduceFunction: "last",
             for: "5m",
@@ -197,10 +197,10 @@ export function createGrafanaAlerts(args: GrafanaAlertsArgs): GrafanaAlertsResul
         {
             uid: "pod_failed",
             title: "Pod Failed",
-            expr: 'count(kube_pod_status_phase{phase="Failed"}) or vector(0)',
+            expr: 'sum(kube_pod_status_phase{phase="Failed"} > 0) or vector(0)',
             threshold: "> 0",
             reduceFunction: "last",
-            for: "1m",
+            for: "5m",
             labels: {
                 severity: "critical",
                 environment: args.environment,

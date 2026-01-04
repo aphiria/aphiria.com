@@ -237,7 +237,7 @@ describe("createGrafanaAlerts", () => {
         expect(rulesYaml).toContain("Pod Crash Looping");
         expect(rulesYaml).toContain("uid: pod_crash_looping");
         expect(rulesYaml).toContain(
-            'count(kube_pod_container_status_waiting_reason{reason="CrashLoopBackOff"}) or vector(0)'
+            'sum(kube_pod_container_status_waiting_reason{reason="CrashLoopBackOff"}) or vector(0)'
         );
         expect(rulesYaml).toContain("5m");
     });
@@ -256,8 +256,8 @@ describe("createGrafanaAlerts", () => {
 
         expect(rulesYaml).toContain("Pod Failed");
         expect(rulesYaml).toContain("uid: pod_failed");
-        expect(rulesYaml).toContain('count(kube_pod_status_phase{phase="Failed"}) or vector(0)');
-        expect(rulesYaml).toContain("1m");
+        expect(rulesYaml).toContain('sum(kube_pod_status_phase{phase="Failed"} > 0) or vector(0)');
+        expect(rulesYaml).toContain("5m");
     });
 
     it("should configure email contact point for production environment", async () => {
@@ -415,8 +415,8 @@ describe("createGrafanaAlerts", () => {
         const rulesYaml = data["alert-rules.yaml"];
 
         // Verify pod alerts use or vector(0) to return 0 instead of nodata
-        expect(rulesYaml).toContain('count(kube_pod_container_status_waiting_reason{reason="CrashLoopBackOff"}) or vector(0)');
-        expect(rulesYaml).toContain('count(kube_pod_status_phase{phase="Failed"}) or vector(0)');
+        expect(rulesYaml).toContain('sum(kube_pod_container_status_waiting_reason{reason="CrashLoopBackOff"}) or vector(0)');
+        expect(rulesYaml).toContain('sum(kube_pod_status_phase{phase="Failed"} > 0) or vector(0)');
     });
 
     it("should use vector(0) fallback for API error rate alerts", async () => {
