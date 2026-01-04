@@ -10,6 +10,8 @@ const concat = require('gulp-concat');
 const del = require('del');
 const shell = require('gulp-shell');
 const sourcemaps = require('gulp-sourcemaps');
+const postcss = require('gulp-postcss');
+const postcssNested = require('postcss-nested');
 
 const paths = {
     'manifest': 'public/rev-manifest.json',
@@ -58,6 +60,8 @@ const minifyCss = () => {
         // Create a minified, concatenated CSS file
         .pipe(sourcemaps.init())
         .pipe(concat('styles.min.css'))
+        // Transform nested CSS to flat CSS before minification
+        .pipe(postcss([postcssNested()]))
         .pipe(uglifyCss())
         // Version our CSS
         .pipe(rev())

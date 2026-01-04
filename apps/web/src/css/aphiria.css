@@ -1,692 +1,914 @@
-@charset "UTF-8";
+/* =========================
+   CSS variables (converted from SCSS variables)
+   ========================= */
+:root {
+    --fullExperienceSiteWidth: 1024px;
+    --baseFontColor: #000;
+    --docSidebarWidth: 240px;
+    --fontSize: 16px;
+    --codeBackgroundColor: #f9f9f9;
+    --inputVerticalPadding: 0.25em;
+    --footerBackgroundColor: #f7f7f7;
+    --pageSideMargin: 5%;
+    --lineHeight: 1.8;
+}
+
 * {
-  box-sizing: border-box;
+    box-sizing: border-box;
 }
 
 html {
-  font-family: roboto, arial, sans-serif;
-  font-size: 16px;
-  line-height: 1.8;
-  color: #000;
-  text-align: left;
-  font-weight: 300;
-  min-height: 500px;
-  overflow-x: hidden;
-  -webkit-font-smoothing: antialiased;
+    font-family: roboto, arial, sans-serif;
+    font-size: var(--fontSize);
+    line-height: var(--lineHeight);
+    color: var(--baseFontColor);
+    text-align: left;
+    font-weight: 300;
+    min-height: 500px;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
 }
 
 body {
-  margin: 0;
-  overflow-x: hidden;
-}
-body.docs.loading > main article #article-loading {
-  display: flex;
-  opacity: 1;
-  visibility: visible;
-}
-body.loading {
-  overflow: hidden;
+    margin: 0;
+    overflow-x: hidden;
+
+    &.docs.loading > main article #article-loading {
+        display: flex;
+        opacity: 1;
+        visibility: visible;
+    }
+
+    &.loading {
+        overflow: hidden;
+    }
 }
 
-h1, h2, h3, h4, h5, h6 {
-  font-weight: 200;
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    font-weight: 200;
 }
 
 h1 {
-  font-size: 30px;
+    font-size: 30px;
 }
 
 h2 {
-  font-size: 1.65em;
+    font-size: 1.65em;
 }
 
 h3 {
-  font-size: 1.5em;
+    font-size: 1.5em;
 }
 
 h4 {
-  font-size: 1.3em;
+    font-size: 1.3em;
 }
 
 h5 {
-  font-size: 1em;
+    font-size: 1em;
 }
 
 h6 {
-  font-size: 0.85em;
+    font-size: 0.85em;
 }
 
-a, a:link, a:active, a:visited {
-  color: #07c;
-  text-decoration: none;
-  transition: color 0.3s ease;
-}
-a:hover {
-  color: #000;
+a {
+    &,
+    &:link,
+    &:active,
+    &:visited {
+        color: #07c;
+        text-decoration: none;
+        transition: color 0.3s ease;
+    }
+
+    &:hover {
+        color: var(--baseFontColor);
+    }
 }
 
-a.button, a.button:link, a.button:active, a.button:visited {
-  color: #fff;
-  background: #07c;
-  padding: 10px 20px;
-  display: inline-block;
-  font-weight: bolder;
-  /* Try to make the button widths consistent */
-  min-width: 140px;
-  text-align: center;
-  transition: color 0.3s ease, background-color 0.3s ease;
-}
-a.button:hover {
-  background: #06b;
+a.button {
+    &,
+    &:link,
+    &:active,
+    &:visited {
+        color: #fff;
+        background: #07c;
+        padding: 10px 20px;
+        display: inline-block;
+        font-weight: bolder;
+        /* Try to make the button widths consistent */
+        min-width: 140px;
+        text-align: center;
+        transition: color 0.3s ease, background-color 0.3s ease;
+    }
+
+    &:hover {
+        background: #06b;
+    }
 }
 
 img {
-  border: none;
+    border: none;
 }
 
-ul, ol {
-  padding: 10px 1em;
-  margin: 0;
-}
-ul ul, ul ol, ol ul, ol ol {
-  padding: 0 0 0 25px;
-}
-ul > li:not(:last-child), ol > li:not(:last-child) {
-  padding-bottom: 2px;
+ul,
+ol {
+    padding: 10px 1em;
+    margin: 0;
+
+    ul,
+    ol {
+        padding: 0 0 0 25px;
+    }
+
+    & > li:not(:last-child) {
+        padding-bottom: 2px;
+    }
 }
 
 ul {
-  list-style: inside disc;
+    list-style: inside disc;
 }
 
 ol {
-  list-style-position: inside;
+    list-style-position: inside;
 }
 
-input[type=text] {
-  border-width: 0 0 1px 0;
-  border-style: solid;
-  border-color: #bbb;
-  transition: border-color 0.3s ease;
-  font-size: 1em;
-  box-shadow: none;
-  outline: none;
-  padding: 0.25em 0;
-}
-input[type=text]:focus {
-  border-bottom-color: #555;
+input {
+    &[type='text'] {
+        border-width: 0 0 1px 0;
+        border-style: solid;
+        border-color: #bbb;
+        transition: border-color 0.3s ease;
+        font-size: 1em;
+        box-shadow: none;
+        outline: none;
+        padding: var(--inputVerticalPadding) 0;
+
+        &:focus {
+            border-bottom-color: #555;
+        }
+    }
 }
 
 table {
-  border-collapse: collapse;
-  border-spacing: 0;
-  width: 100%;
-}
-table td, table th {
-  border: 1px solid #ccc;
-  padding: 10px;
-  font-size: 0.9em;
-}
-table tr:nth-child(even) td {
-  background-color: #f7f7f7;
+    border-collapse: collapse;
+    border-spacing: 0;
+    width: 100%;
+
+    td,
+    th {
+        border: 1px solid #ccc;
+        padding: 10px;
+        font-size: 0.9em;
+    }
+
+    tr:nth-child(even) td {
+        background-color: #f7f7f7;
+    }
 }
 
 body > header {
-  margin: 0 5%;
-  position: fixed;
-  left: 0;
-  right: 0;
-  background: #fff;
-  z-index: 1;
-}
-body > header > nav {
-  position: relative;
-  text-align: left;
-}
-body > header > nav > ul.main-nav {
-  /* We want to be able to show the doc search next to the list */
-  display: inline-block;
-}
-body > header > nav > ul.main-nav li {
-  display: inline-block;
-  font-size: 1.9em;
-  padding-bottom: 0;
-}
-body > header > nav > ul.main-nav li img.logo {
-  vertical-align: text-bottom;
-}
-body > header > nav div.doc-search img.search-icon {
-  height: 20px;
-  position: absolute;
-  left: 0;
-  /* Get this to line up with the text in the input */
-  top: 0.25em;
-  bottom: 0;
-}
-body > header > nav div.doc-search input#search-query {
-  width: 100%;
-  padding-left: 25px;
-  background: url("/images/search-icon.svg") no-repeat 0 25%;
-  background-size: 20px 20px;
-}
-body > header > nav div.doc-search ul.search-results {
-  list-style: inside none;
-  display: none;
-  position: absolute;
-  top: 100%;
-  left: 0;
-  right: 0;
-  overflow: auto;
-  max-height: 500px;
-  border-width: 0 1px 1px 1px;
-  border-style: solid;
-  border-color: #ccc;
-  border-radius: 0 0 5px 5px;
-  background: #fff;
-  z-index: 1;
-  padding: 0;
-  box-shadow: 2px 2px 5px #ddd;
-}
-body > header > nav div.doc-search ul.search-results li {
-  font-size: 0.9rem;
-  width: 100%;
-  padding: 0;
-}
-body > header > nav div.doc-search ul.search-results li.selected a, body > header > nav div.doc-search ul.search-results li a:hover {
-  background: #eef7ff;
-}
-body > header > nav div.doc-search ul.search-results li.selected a p, body > header > nav div.doc-search ul.search-results li.selected a blockquote, body > header > nav div.doc-search ul.search-results li a:hover p, body > header > nav div.doc-search ul.search-results li a:hover blockquote {
-  /* Make the element less washed out looking when mousing over */
-  background-color: #e3f3ff;
-}
-body > header > nav div.doc-search ul.search-results li h1, body > header > nav div.doc-search ul.search-results li h2, body > header > nav div.doc-search ul.search-results li h3, body > header > nav div.doc-search ul.search-results li h4, body > header > nav div.doc-search ul.search-results li h5, body > header > nav div.doc-search ul.search-results li h6 {
-  margin: 0;
-}
-body > header > nav div.doc-search ul.search-results li h1.search-result-text {
-  font-size: 1.6rem;
-}
-body > header > nav div.doc-search ul.search-results li h2.search-result-text {
-  font-size: 1.5rem;
-}
-body > header > nav div.doc-search ul.search-results li h3.search-result-text {
-  font-size: 1.4rem;
-}
-body > header > nav div.doc-search ul.search-results li h4.search-result-text {
-  font-size: 1.3rem;
-}
-body > header > nav div.doc-search ul.search-results li h5.search-result-text {
-  font-size: 1.2rem;
-}
-body > header > nav div.doc-search ul.search-results li p, body > header > nav div.doc-search ul.search-results li blockquote {
-  background-color: #f7f7f7;
-  margin: 10px;
-  padding: 10px;
-}
-body > header > nav div.doc-search ul.search-results li .search-result-context {
-  border-bottom: 1px solid #ccc;
-}
-body > header > nav div.doc-search ul.search-results li .search-result-context h1, body > header > nav div.doc-search ul.search-results li .search-result-context h2, body > header > nav div.doc-search ul.search-results li .search-result-context h3, body > header > nav div.doc-search ul.search-results li .search-result-context h4, body > header > nav div.doc-search ul.search-results li .search-result-context h5, body > header > nav div.doc-search ul.search-results li .search-result-context h6 {
-  font-size: 1em;
-  display: inline;
-  margin: 0;
-}
-body > header > nav div.doc-search ul.search-results li a, body > header > nav div.doc-search ul.search-results li.no-results {
-  /* Make the results take up the entire list item */
-  display: block;
-  padding: 10px;
-  color: #000;
-}
-body > header > nav div.doc-search ul.search-results li em {
-  font-weight: 600;
-  font-style: normal;
-}
-body > header > nav div.doc-search ul.search-results li:not(:last-of-type) {
-  border-bottom: 1px solid #ccc;
+    margin: 0 var(--pageSideMargin);
+    position: fixed;
+    left: 0;
+    right: 0;
+    background: #fff;
+    z-index: 1;
+
+    & > nav {
+        position: relative;
+        text-align: left;
+
+        & > ul.main-nav {
+            /* We want to be able to show the doc search next to the list */
+            display: inline-block;
+
+            li {
+                display: inline-block;
+                font-size: 1.9em;
+                padding-bottom: 0;
+
+                img.logo {
+                    vertical-align: text-bottom;
+                }
+            }
+        }
+
+        div.doc-search {
+            img.search-icon {
+                height: 20px;
+                position: absolute;
+                left: 0;
+                /* Get this to line up with the text in the input */
+                top: var(--inputVerticalPadding);
+                bottom: 0;
+            }
+
+            input#search-query {
+                width: 100%;
+                padding-left: 25px;
+                background: url('/images/search-icon.svg') no-repeat 0 25%;
+                background-size: 20px 20px;
+            }
+
+            ul.search-results {
+                list-style: inside none;
+                display: none;
+                position: absolute;
+                top: 100%;
+                left: 0;
+                right: 0;
+                overflow: auto;
+                max-height: 500px;
+                border-width: 0 1px 1px 1px;
+                border-style: solid;
+                border-color: #ccc;
+                border-radius: 0 0 5px 5px;
+                background: #fff;
+                z-index: 1;
+                padding: 0;
+                box-shadow: 2px 2px 5px #ddd;
+
+                li {
+                    font-size: 0.9rem;
+                    width: 100%;
+                    padding: 0;
+
+                    &.selected a,
+                    a:hover {
+                        background: #eef7ff;
+
+                        p,
+                        blockquote {
+                            /* Make the element less washed out looking when mousing over */
+                            background-color: #e3f3ff;
+                        }
+                    }
+
+                    h1,
+                    h2,
+                    h3,
+                    h4,
+                    h5,
+                    h6 {
+                        margin: 0;
+                    }
+
+                    h1.search-result-text {
+                        font-size: 1.6rem;
+                    }
+
+                    h2.search-result-text {
+                        font-size: 1.5rem;
+                    }
+
+                    h3.search-result-text {
+                        font-size: 1.4rem;
+                    }
+
+                    h4.search-result-text {
+                        font-size: 1.3rem;
+                    }
+
+                    h5.search-result-text {
+                        font-size: 1.2rem;
+                    }
+
+                    p,
+                    blockquote {
+                        background-color: #f7f7f7;
+                        margin: 10px;
+                        padding: 10px;
+                    }
+
+                    .search-result-context {
+                        border-bottom: 1px solid #ccc;
+
+                        h1,
+                        h2,
+                        h3,
+                        h4,
+                        h5,
+                        h6 {
+                            font-size: 1em;
+                            display: inline;
+                            margin: 0;
+                        }
+                    }
+
+                    a,
+                    &.no-results {
+                        /* Make the results take up the entire list item */
+                        display: block;
+                        padding: 10px;
+                        color: var(--baseFontColor);
+                    }
+
+                    em {
+                        font-weight: 600;
+                        font-style: normal;
+                    }
+
+                    &:not(:last-of-type) {
+                        border-bottom: 1px solid #ccc;
+                    }
+                }
+            }
+        }
+    }
 }
 
 body > footer {
-  text-align: center;
-  /* Using vertical padding allows us to vertically center the footer text */
-  padding: 30px 20px;
-  margin: 0 5%;
-  background: linear-gradient(0.25turn, #fff 0%, #f7f7f7 10%, #f7f7f7 90%, #fff 100%);
-  border-top: 1px solid #ddd;
-  color: #555;
-}
-body > footer > nav > ul li {
-  display: inline-block;
+    text-align: center;
+    /* Using vertical padding allows us to vertically center the footer text */
+    padding: 30px 20px;
+    margin: 0 var(--pageSideMargin);
+    background: linear-gradient(
+        0.25turn,
+        #fff 0%,
+        var(--footerBackgroundColor) 10%,
+        var(--footerBackgroundColor) 90%,
+        #fff 100%
+    );
+    border-top: 1px solid #ddd;
+    color: #555;
+
+    & > nav > ul li {
+        display: inline-block;
+    }
 }
 
 body > main {
-  margin: 0 5%;
-  position: relative;
-  padding-bottom: 20px;
-}
-body > main nav.side-nav {
-  padding-top: 10px;
-  overflow-y: auto;
-}
-body > main nav.side-nav a.selected {
-  font-weight: bold;
-}
-body > main nav.side-nav section:not(:last-child) {
-  margin-bottom: 25px;
-}
-body > main nav.side-nav section h5 {
-  margin: 0 0 15px 0;
-}
-body > main nav.side-nav ul {
-  padding-top: 0;
-  padding-bottom: 0;
-  list-style: inside none;
-}
-body > main nav.side-nav ul:not(:last-child) {
-  margin-bottom: 20px;
+    margin: 0 var(--pageSideMargin);
+    position: relative;
+    padding-bottom: 20px;
+
+    nav.side-nav {
+        padding-top: 10px;
+        overflow-y: auto;
+
+        a.selected {
+            font-weight: bold;
+        }
+
+        section {
+            &:not(:last-child) {
+                margin-bottom: 25px;
+            }
+
+            h5 {
+                margin: 0 0 15px 0;
+            }
+        }
+
+        ul {
+            padding-top: 0;
+            padding-bottom: 0;
+            list-style: inside none;
+
+            &:not(:last-child) {
+                margin-bottom: 20px;
+            }
+        }
+    }
 }
 
 body.docs > main article {
-  position: relative;
-}
-body.docs > main article #article-loading {
-  transition: opacity 0.5s ease, visibility 0.5s ease;
-  display: none;
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background: rgba(255, 255, 255, 0.8);
-  align-items: center;
-  justify-content: center;
-  font-size: 1.5em;
-  z-index: 9999;
-}
-body.docs > main article h2, body.docs > main article h3, body.docs > main article h4, body.docs > main article h5 {
-  margin-bottom: 20px;
-  color: #555;
-}
-body.docs > main article {
-  /* Make it clear what links leave the site */
-}
-body.docs > main article a[target=_blank]::after {
-  content: " [↗]";
-  font-size: 0.65em;
-  vertical-align: super;
-}
-body.docs > main article footer {
-  margin-top: 30px;
-}
-body.docs > main article footer a {
-  font-size: 0.9em;
-}
-body.docs > main article footer .edit-icon {
-  /* Necessary so we can transform the icon */
-  display: inline-block;
-  /* Set the edit icon to point to the lower left */
-  transform: rotateY(180deg);
+    position: relative;
+
+    #article-loading {
+        transition: opacity 0.5s ease, visibility 0.5s ease;
+        display: none;
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: rgba(255, 255, 255, 0.8);
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5em;
+        z-index: 9999;
+    }
+
+    h2,
+    h3,
+    h4,
+    h5 {
+        margin-bottom: 20px;
+        color: #555;
+    }
+
+    /* Make it clear what links leave the site */
+    a[target='_blank']::after {
+        content: ' [\2197]';
+        font-size: 0.65em;
+        vertical-align: super;
+    }
+
+    footer {
+        margin-top: 30px;
+
+        a {
+            font-size: 0.9em;
+        }
+
+        .edit-icon {
+            /* Necessary so we can transform the icon */
+            display: inline-block;
+            /* Set the edit icon to point to the lower left */
+            transform: rotateY(180deg);
+        }
+    }
 }
 
-pre[class*=language-] {
-  padding: 10px !important;
-  background: #f9f9f9 !important;
-  border: 1px solid #e9e9e9 !important;
-  position: relative !important;
-  overflow: auto !important;
-  font-size: 0.85rem !important;
-  line-height: 1.9 !important;
-  text-shadow: none !important;
+pre[class*='language-'] {
+    padding: 10px !important;
+    background: var(--codeBackgroundColor) !important;
+    border: 1px solid #e9e9e9 !important;
+    position: relative !important;
+    overflow: auto !important;
+    font-size: 0.85rem !important;
+    line-height: 1.9 !important;
+    text-shadow: none !important;
 }
 
 /* Don't show the copy button for code samples that explicitly opt out */
 pre.no-copy div.button-wrapper {
-  display: none;
+    display: none;
 }
 
 pre div.button-wrapper {
-  position: sticky;
-  right: 0;
-  top: 0;
-  left: 0;
-  text-align: right;
-  /* By making it zero height, text can flow behind it */
-  height: 0;
-  width: 100%;
-}
-pre div.button-wrapper button.copy-button {
-  padding: 5px;
-  background: #f1f1f1;
-  border-radius: 5px;
-  color: #444;
-  border: 1px solid #ccc;
-}
-pre div.button-wrapper button.copy-button:hover {
-  background: #e6e6e6;
-  cursor: pointer;
+    position: sticky;
+    right: 0;
+    top: 0;
+    left: 0;
+    text-align: right;
+    /* By making it zero height, text can flow behind it */
+    height: 0;
+    width: 100%;
+
+    button.copy-button {
+        padding: 5px;
+        background: #f1f1f1;
+        border-radius: 5px;
+        color: #444;
+        border: 1px solid #ccc;
+
+        &:hover {
+            background: #e6e6e6;
+            cursor: pointer;
+        }
+    }
 }
 
 code {
-  font-family: "Roboto Mono", "Consolas", monospace !important;
-  font-size: 0.98em !important;
-}
-code[class*=language-] {
-  text-shadow: none !important;
+    font-family: 'Roboto Mono', 'Consolas', monospace !important;
+    font-size: 0.98em !important;
+
+    &[class*='language-'] {
+        text-shadow: none !important;
+    }
 }
 
-p code, li code {
-  background: #f9f9f9 !important;
-  padding: 2px 5px !important;
-  font-size: 13px !important;
+/* SCSS local var: $verticalPadding: 2px; converted to a scoped CSS variable */
+p code,
+li code {
+    --verticalPadding: 2px;
+
+    background: var(--codeBackgroundColor) !important;
+    padding: var(--verticalPadding) 5px !important;
+
+    /* $fontSize - 2*$verticalPadding + 1px */
+    font-size: calc(var(--fontSize) - (2 * var(--verticalPadding)) + 1px) !important;
 }
 
 p code {
-  border: 1px solid #e9e9e9 !important;
-  white-space: pre-wrap !important;
+    border: 1px solid #e9e9e9 !important;
+    white-space: pre-wrap !important;
 }
 
-body.home > main h1, body.home > main h2, body.home > main pre.center {
-  text-align: center;
+body.home > main {
+    h1,
+    h2,
+    pre.center {
+        text-align: center;
+    }
 }
 
 hgroup#site-slogan h2 {
-  font-size: 1.2em;
+    font-size: 1.2em;
 }
 
 nav.doc-short-links-nav {
-  margin-top: 30px;
-  text-align: center;
-  /* Add spacing between the buttons */
-}
-nav.doc-short-links-nav a.button {
-  margin: 5px;
+    margin-top: 30px;
+    text-align: center;
+
+    /* Add spacing between the buttons */
+    a.button {
+        margin: 5px;
+    }
 }
 
 blockquote {
-  background: #e7f7ff;
-  border: 1px solid #ccd9dd;
-  padding: 20px;
-  margin: 10px 30px;
-}
-blockquote p {
-  margin: 0 !important;
+    background: #e7f7ff;
+    border: 1px solid #ccd9dd;
+    padding: 20px;
+    margin: 10px 30px;
+
+    p {
+        margin: 0 !important;
+    }
 }
 
-.token.variable {
-  color: rgb(0, 119, 187) !important;
-}
-.token.property {
-  color: rgb(0, 92, 197) !important;
-}
-.token.keyword, .token.constant {
-  color: rgb(0, 124, 229) !important;
-}
-.token.function {
-  color: rgb(230, 58, 60) !important;
-}
-.token.string {
-  color: #6a0 !important;
-}
-.token.class-name, .token.type-hint {
-  color: #333 !important;
-}
-.token.operator {
-  color: rgb(0, 92, 197) !important;
-  background: none !important;
-}
-.token.boolean {
-  color: rgb(107, 159, 191) !important;
+.token {
+    &.variable {
+        color: rgb(0, 119, 187) !important;
+    }
+
+    &.property {
+        color: rgb(0, 92, 197) !important;
+    }
+
+    &.keyword,
+    &.constant {
+        color: rgb(0, 124, 229) !important;
+    }
+
+    &.function {
+        color: rgb(230, 58, 60) !important;
+    }
+
+    &.string {
+        color: #6a0 !important;
+    }
+
+    &.class-name,
+    &.type-hint {
+        color: #333 !important;
+    }
+
+    &.operator {
+        color: rgb(0, 92, 197) !important;
+        background: none !important;
+    }
+
+    &.boolean {
+        color: rgb(107, 159, 191) !important;
+    }
 }
 
-/* Mobile experience site settings (retina displays can show fractions of a pixel, hence the -0.1px) */
-@media screen and (max-width: 1023.9px) {
-  body > header, body > main, body > footer {
-    /* Take the parts to the edge of the screen to not waste space */
-    margin-left: 0;
-    margin-right: 0;
-  }
-  body.nav-open nav.side-nav {
-    transform: translate3d(-100%, 0, 0);
-    transition: transform 0.3s;
-  }
-  body.nav-open #gray-out {
-    visibility: visible;
-    background: rgba(0, 0, 0, 0.5);
-    transition: background 0.3s ease;
-  }
-  body > main {
-    /* Account for both the main nav padding and search bar padding, and then pad a little extra so we're not right up against the search bar */
-    padding: 100px 10px 10px 10px;
-  }
-  body > main nav.side-nav {
-    position: fixed;
-    border-left: 1px solid #f6f6f6;
-    left: 100%;
-    /* We want this to appear just below the main nav.  The additional 20px is the padding in the nav bar. */
-    top: 50px;
-    bottom: 0;
-    min-width: 25%;
-    padding-left: 10px;
-    padding-bottom: 10px;
-    background: #f6f6f6;
-    z-index: 5;
-    transition: transform 0.3s;
-  }
-  body > main nav.side-nav li {
-    white-space: nowrap;
-  }
-  body > header > nav ul.main-nav {
-    display: block;
-    /* Keep the mobile menu in line with the other menu items */
-    position: relative;
-  }
-  body > header > nav ul.main-nav li {
-    /* Make the links less huge */
-    font-size: 1.4em;
-  }
-  body > header > nav ul.main-nav li:nth-child(1), body > header > nav ul.main-nav li:nth-child(2), body > header > nav ul.main-nav li:nth-child(1), body > header > nav ul.main-nav li:nth-child(3) {
-    /* The selector would need to be reworked if we add more links.  We don't care about padding against the mobile menu item. */
-    padding-right: 0.7em;
-  }
-  body > header > nav ul.main-nav li.main-nav-link {
-    /* Do not display main nav links in the main nav - they'll be shown in the side nav */
-    display: none;
-  }
-  body > header > nav ul.main-nav li#mobile-menu {
-    display: inline-block;
-    position: absolute;
-    right: 10px;
-    top: -5px;
-    font-size: 3em;
-    line-height: normal;
-  }
-  body > header > nav ul.main-nav li img.logo {
-    height: 30px;
-  }
-  body > header > nav div.doc-search {
-    /* Render the search bar on its own line */
-    display: block;
-    /* Give the results a relative parent for positioning */
-    position: relative;
-    margin: 10px 20px 0;
-  }
-  body.docs > main article h1, body.docs > main article h2, body.docs > main article h3, body.docs > main article h4, body.docs > main article h5 {
-    /* Make sure that tapping a link to a doc section makes the header visible from underneath the main nav */
-    padding-top: 100px;
-    margin-top: -90px;
-    margin-bottom: 0;
-  }
-  body > footer {
-    /* Gradient looks strange on small screens */
-    background: #f7f7f7;
-  }
-  #gray-out {
-    /*display: none;*/
-    visibility: hidden;
-    background: rgba(0, 0, 0, 0);
-    position: fixed;
-    /* We want this to appear just below the main nav.  The additional 20px is the padding in the nav bar. */
-    top: 50px;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    z-index: 1;
-  }
+/* =========================================================
+   Mobile experience site settings
+   NOTE: CSS custom properties cannot be used in media queries
+   across browsers yet, so we inline 1024px here.
+   (We still keep --fullExperienceSiteWidth for everything else.)
+   ========================================================= */
+@media screen and (max-width: calc(1024px - 0.1px)) {
+    :root {
+        --headerLogoHeight: 30px;
+        --searchBarHeight: 20px;
+        --headerHeight: calc(var(--headerLogoHeight) + var(--searchBarHeight) + 40px);
+    }
+
+    body > header,
+    body > main,
+    body > footer {
+        /* Take the parts to the edge of the screen to not waste space */
+        margin-left: 0;
+        margin-right: 0;
+    }
+
+    body.nav-open {
+        nav.side-nav {
+            transform: translate3d(-100%, 0, 0);
+            transition: transform 0.3s;
+        }
+
+        #gray-out {
+            visibility: visible;
+            background: rgba(0, 0, 0, 0.5);
+            transition: background 0.3s ease;
+        }
+    }
+
+    body > main {
+        /* Account for both the main nav padding and search bar padding, then pad a little extra */
+        padding: calc(var(--headerHeight) + 10px) 10px 10px 10px;
+
+        nav.side-nav {
+            --sideNavBackgroundColor: #f6f6f6;
+
+            position: fixed;
+            border-left: 1px solid var(--sideNavBackgroundColor);
+            left: 100%;
+            /* We want this to appear just below the main nav. The additional 20px is the padding in the nav bar. */
+            top: calc(var(--headerLogoHeight) + 20px);
+            bottom: 0;
+            min-width: 25%;
+            padding-left: 10px;
+            padding-bottom: 10px;
+            background: var(--sideNavBackgroundColor);
+            z-index: 5;
+            transition: transform 0.3s;
+
+            li {
+                white-space: nowrap;
+            }
+        }
+    }
+
+    body > header > nav {
+        ul.main-nav {
+            display: block;
+            /* Keep the mobile menu in line with the other menu items */
+            position: relative;
+
+            li {
+                /* Make the links less huge */
+                font-size: 1.4em;
+
+                &:nth-child(1),
+                &:nth-child(2),
+                &:nth-child(3) {
+                    /* Selector would need rework if we add more links */
+                    padding-right: 0.7em;
+                }
+
+                &.main-nav-link {
+                    /* Do not display main nav links in the main nav - they'll be shown in the side nav */
+                    display: none;
+                }
+
+                &#mobile-menu {
+                    display: inline-block;
+                    position: absolute;
+                    right: 10px;
+                    top: -5px;
+                    font-size: 3em;
+                    line-height: normal;
+                }
+
+                img.logo {
+                    height: var(--headerLogoHeight);
+                }
+            }
+        }
+
+        div.doc-search {
+            /* Render the search bar on its own line */
+            display: block;
+            /* Give the results a relative parent for positioning */
+            position: relative;
+            margin: 10px 20px 0;
+        }
+    }
+
+    body.docs > main article {
+        h1,
+        h2,
+        h3,
+        h4,
+        h5 {
+            /* Make sure tapping a link shows header from underneath main nav */
+            padding-top: calc(var(--headerHeight) + 10px);
+            margin-top: calc(-1 * var(--headerHeight));
+            margin-bottom: 0;
+        }
+    }
+
+    body > footer {
+        /* Gradient looks strange on small screens */
+        background: var(--footerBackgroundColor);
+    }
+
+    #gray-out {
+        visibility: hidden;
+        background: rgba(0, 0, 0, 0);
+        position: fixed;
+        /* Just below main nav (additional 20px is nav padding) */
+        top: calc(var(--headerLogoHeight) + 20px);
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 1;
+    }
 }
-/* Full experience site settings */
+
+/* =========================
+   Full experience site settings
+   ========================= */
 @media screen and (min-width: 1024px) {
-  *::-webkit-scrollbar {
-    background-color: #fff;
-    width: 16px;
-  }
-  * {
-    /* The background of the scrollbar except button or resizer */
-  }
-  *::-webkit-scrollbar-track {
-    background-color: #fff;
-  }
-  * {
-    /* The scrollbar itself */
-  }
-  *::-webkit-scrollbar-thumb {
-    background-color: #babac0;
-    border-radius: 16px;
-    border: 4px solid #fff;
-  }
-  *::-webkit-scrollbar-thumb:hover {
-    background-color: #aaaab0;
-  }
-  * {
-    /* Remove scrollbar buttons */
-  }
-  *::-webkit-scrollbar-button {
-    display: none;
-  }
-  p, blockquote, pre[class*=language-], table {
-    margin-bottom: 2em !important;
-  }
-  /*
-  Make sure there's not too much of a gap between paragraphs and lists.  Since there's no easy way of
-  selecting the paragraph with a CSS combinator, we select the list and give it a negative margin equal
-  to the bottom margin of the paragraph.
-  */
-  p + ul, p + ol {
-    margin-top: -1em !important;
-  }
-  body.home > main pre {
-    width: 700px;
-    margin: 0 auto;
-  }
-  #sidebar-main-nav {
-    display: none;
-  }
-  /* Don't display the sidebar except on the docs where it acts as the doc nav bar  */
-  body:not(.docs) nav.side-nav {
-    display: none;
-  }
-  body > header {
-    border-bottom: 1px solid #ddd;
-    height: 60px;
-  }
-  body > header nav ul.main-nav li {
-    /* The text is pretty large on large screens, so reduce the weight */
-    font-weight: 200;
-  }
-  body > header nav ul.main-nav li:nth-child(1), body > header nav ul.main-nav li:nth-child(2), body > header nav ul.main-nav li:nth-child(3) {
-    /* The selector would need to be reworked if we add more links.  We don't care about padding against the mobile menu item. */
-    padding-right: 1em;
-  }
-  body > header nav ul.main-nav li#mobile-menu {
-    display: none;
-  }
-  body > header nav ul.main-nav li img.logo {
-    height: 40px;
-  }
-  body > header nav div.doc-search {
-    display: inline-block;
-    position: absolute;
-    right: 0;
-    bottom: 20px;
-    width: 35%;
-  }
-  body > main {
-    padding-top: 60px;
-  }
-  body > main article {
-    margin: 0 0 0 240px;
-    padding: 20px 30px 0 30px;
-    /* Fill up the remaining space */
-    width: calc(100% - 480px);
-  }
-  body > main article h1, body > main article h2, body > main article h3, body > main article h4, body > main article h5 {
-    /* Make sure that tapping a link to a doc section makes the header visible from underneath the main nav */
-    padding-top: 60px;
-    margin-top: -60px;
-  }
-  body > main article {
-    /*
-    Make sure there's not too much of a gap between paragraphs/headers and lists.  Since there's no easy way of
-    selecting the paragraph/header with a CSS combinator, we select the list and give it a negative margin equal
-    to the bottom margin of the paragraph/header.
-    */
-  }
-  body > main article p + ul, body > main article p + ol, body > main article h3 + ul, body > main article h3 + ol, body > main article h4 + ul, body > main article h4 + ol, body > main article h5 + ul, body > main article h5 + ol, body > main article h6 + ul, body > main article h6 + ol {
-    margin-top: -1em !important;
-  }
-  body > main article nav.toc-nav {
-    position: absolute;
-    right: -240px;
-    width: 240px;
-    padding: 0 0 10px 20px;
-    top: 0;
-    /* This needs to match the bottom padding of <article> so the left border goes all the way down to the footer */
-    bottom: -20px;
-    overflow-y: auto;
-    border-left: 1px solid #ddd; /* Need to make sure we're reusing the same border color as elsewhere */
-    font-size: 0.9rem;
-  }
-  body > main article nav.toc-nav h2, body > main article nav.toc-nav h3, body > main article nav.toc-nav h4, body > main article nav.toc-nav h5 {
-    margin-bottom: 0;
-  }
-  body > main article nav.toc-nav ol, body > main article nav.toc-nav ul {
-    list-style: none;
-  }
-  body > main article nav.toc-nav .toc-nav-contents {
-    position: fixed;
-    top: 60px;
-    padding-top: 20px;
-    overflow-y: auto;
-    bottom: 0;
-    /* Subtract the border and left-padding that's applied to the parent element */
-    width: 219px;
-  }
-  body > main article nav.toc-nav .toc-nav-contents a.selected {
-    font-weight: bold;
-  }
-  body > main article nav.toc-nav .toc-nav-contents > ol, body > main article nav.toc-nav .toc-nav-contents > ul {
-    /* We don't want to indent the first items */
-    padding: 10px 0;
-  }
-  body > main nav.side-nav {
-    position: fixed;
-    top: 60px;
-    bottom: 0;
-    overflow-y: auto;
-    padding: 20px 10px 10px 0;
-    float: left;
-    width: 240px;
-    border-right: 1px solid #ddd;
-  }
-  #gray-out {
-    display: none;
-  }
+    :root {
+        --headerLogoHeight: 40px;
+        --headerHeight: calc(var(--headerLogoHeight) + 20px);
+        --pageBorderColor: #ddd;
+    }
+
+    * {
+        &::-webkit-scrollbar {
+            background-color: #fff;
+            width: 16px;
+        }
+
+        /* The background of the scrollbar except button or resizer */
+        &::-webkit-scrollbar-track {
+            background-color: #fff;
+        }
+
+        /* The scrollbar itself */
+        &::-webkit-scrollbar-thumb {
+            background-color: #babac0;
+            border-radius: 16px;
+            border: 4px solid #fff;
+
+            &:hover {
+                background-color: #aaaab0;
+            }
+        }
+
+        /* Remove scrollbar buttons */
+        &::-webkit-scrollbar-button {
+            display: none;
+        }
+    }
+
+    p,
+    blockquote,
+    pre[class*='language-'],
+    table {
+        margin-bottom: 2em !important;
+    }
+
+    /* Reduce gap between paragraphs and lists */
+    p + ul,
+    p + ol {
+        margin-top: -1em !important;
+    }
+
+    body.home > main pre {
+        width: 700px;
+        margin: 0 auto;
+    }
+
+    #sidebar-main-nav {
+        display: none;
+    }
+
+    /* Don't display the sidebar except on the docs where it acts as the doc nav bar */
+    body:not(.docs) nav.side-nav {
+        display: none;
+    }
+
+    body > header {
+        border-bottom: 1px solid var(--pageBorderColor);
+        height: var(--headerHeight);
+
+        nav {
+            ul.main-nav {
+                li {
+                    /* The text is pretty large on large screens, so reduce the weight */
+                    font-weight: 200;
+
+                    &:nth-child(1),
+                    &:nth-child(2),
+                    &:nth-child(3) {
+                        /* Selector would need rework if we add more links */
+                        padding-right: 1em;
+                    }
+
+                    &#mobile-menu {
+                        display: none;
+                    }
+
+                    img.logo {
+                        height: var(--headerLogoHeight);
+                    }
+                }
+            }
+
+            div.doc-search {
+                display: inline-block;
+                position: absolute;
+                right: 0;
+                bottom: 20px;
+                width: 35%;
+            }
+        }
+    }
+
+    body > main {
+        padding-top: var(--headerHeight);
+
+        article {
+            margin: 0 0 0 var(--docSidebarWidth);
+            padding: 20px 30px 0 30px;
+            /* Fill up the remaining space */
+            width: calc(100% - (2 * var(--docSidebarWidth)));
+
+            h1,
+            h2,
+            h3,
+            h4,
+            h5 {
+                /* Make sure tapping a link shows header from underneath main nav */
+                padding-top: var(--headerHeight);
+                margin-top: calc(-1 * var(--headerHeight));
+            }
+
+            /* Reduce gap between paragraphs/headers and lists */
+            p + ul,
+            p + ol,
+            h3 + ul,
+            h3 + ol,
+            h4 + ul,
+            h4 + ol,
+            h5 + ul,
+            h5 + ol,
+            h6 + ul,
+            h6 + ol {
+                margin-top: -1em !important;
+            }
+
+            nav.toc-nav {
+                position: absolute;
+                right: calc(-1 * var(--docSidebarWidth));
+                width: var(--docSidebarWidth);
+                padding: 0 0 10px 20px;
+                top: 0;
+                /* Match bottom padding of <article> so left border goes all the way down */
+                bottom: -20px;
+                overflow-y: auto;
+                border-left: 1px solid var(--pageBorderColor);
+                font-size: 0.9rem;
+
+                h2,
+                h3,
+                h4,
+                h5 {
+                    margin-bottom: 0;
+                }
+
+                ol,
+                ul {
+                    list-style: none;
+                }
+
+                .toc-nav-contents {
+                    position: fixed;
+                    top: var(--headerHeight);
+                    padding-top: 20px;
+                    overflow-y: auto;
+                    bottom: 0;
+                    /* Subtract border + left padding of parent */
+                    width: calc(var(--docSidebarWidth) - 1px - 20px);
+
+                    a.selected {
+                        font-weight: bold;
+                    }
+
+                    & > ol,
+                    & > ul {
+                        /* We don't want to indent the first items */
+                        padding: 10px 0;
+                    }
+                }
+            }
+        }
+
+        nav.side-nav {
+            position: fixed;
+            top: var(--headerHeight);
+            bottom: 0;
+            overflow-y: auto;
+            padding: 20px 10px 10px 0;
+            float: left;
+            width: var(--docSidebarWidth);
+            border-right: 1px solid var(--pageBorderColor);
+        }
+    }
+
+    #gray-out {
+        display: none;
+    }
 }
+
 @media screen and (min-height: 650px) {
-  main {
-    min-height: 300px;
-  }
+    main {
+        min-height: 300px;
+    }
 }
+
 @media screen and (max-height: 600px) {
-  /* Make the search results a little smaller so they don't overflow the bottom */
-  body > header > nav div.doc-search ul.search-results {
-    max-height: 400px;
-  }
+    /* Make the search results a little smaller so they don't overflow the bottom */
+    body > header > nav div.doc-search ul.search-results {
+        max-height: 400px;
+    }
 }
