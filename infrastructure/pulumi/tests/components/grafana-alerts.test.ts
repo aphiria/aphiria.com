@@ -156,7 +156,7 @@ describe("createGrafanaAlerts", () => {
         expect(rulesYaml).toContain("High Memory Usage");
         expect(rulesYaml).toContain("uid: high_memory_usage");
         expect(rulesYaml).toContain(
-            "expr: container_memory_working_set_bytes / container_spec_memory_limit_bytes"
+            'expr: sum by (pod, namespace) (container_memory_working_set_bytes) / sum by (pod, namespace) (kube_pod_container_resource_limits{resource="memory"})'
         );
         expect(rulesYaml).toContain("expression: B");
         expect(rulesYaml).toContain("- 0.9");
@@ -198,7 +198,7 @@ describe("createGrafanaAlerts", () => {
 
         expect(rulesYaml).toContain("High API 4xx Rate");
         expect(rulesYaml).toContain("uid: high_api_4xx_rate");
-        expect(rulesYaml).toContain('rate(app_http_requests_total{job="api",status=~"4.."}[5m])');
+        expect(rulesYaml).toContain('(sum(rate(app_http_requests_total{job="api",status=~"4.."}[5m])) or vector(0))');
         expect(rulesYaml).toContain("- 0.1");
         expect(rulesYaml).toContain("5m");
     });
@@ -217,7 +217,7 @@ describe("createGrafanaAlerts", () => {
 
         expect(rulesYaml).toContain("High API 5xx Rate");
         expect(rulesYaml).toContain("uid: high_api_5xx_rate");
-        expect(rulesYaml).toContain('rate(app_http_requests_total{job="api",status=~"5.."}[5m])');
+        expect(rulesYaml).toContain('(sum(rate(app_http_requests_total{job="api",status=~"5.."}[5m])) or vector(0))');
         expect(rulesYaml).toContain("- 0.05");
         expect(rulesYaml).toContain("5m");
     });
@@ -237,7 +237,7 @@ describe("createGrafanaAlerts", () => {
         expect(rulesYaml).toContain("Pod Crash Looping");
         expect(rulesYaml).toContain("uid: pod_crash_looping");
         expect(rulesYaml).toContain(
-            'kube_pod_container_status_waiting_reason{reason="CrashLoopBackOff"}'
+            'count(kube_pod_container_status_waiting_reason{reason="CrashLoopBackOff"}) or vector(0)'
         );
         expect(rulesYaml).toContain("5m");
     });
@@ -256,7 +256,7 @@ describe("createGrafanaAlerts", () => {
 
         expect(rulesYaml).toContain("Pod Failed");
         expect(rulesYaml).toContain("uid: pod_failed");
-        expect(rulesYaml).toContain('kube_pod_status_phase{phase="Failed"}');
+        expect(rulesYaml).toContain('count(kube_pod_status_phase{phase="Failed"}) or vector(0)');
         expect(rulesYaml).toContain("1m");
     });
 
@@ -400,5 +400,39 @@ describe("createGrafanaAlerts", () => {
         // Verify it doesn't add disableResolveMessage when undefined
         const receiverSection = contactPointsYaml.split("receivers:")[1].split("- orgId:")[0];
         expect(receiverSection).not.toContain("disableResolveMessage");
+    });
+
+    it("should use vector(0) fallback for pod alerts", async () => {
+        const result = createGrafanaAlerts({
+            namespace: "monitoring",
+            environment: "production",
+            contactPoints: getProductionContactPoints(),
+            defaultReceiver: "email-admin",
+            provider: k8sProvider,
+        });
+
+        const data = await promiseOf(result.alertRulesConfigMap.data);
+        const rulesYaml = data["alert-rules.yaml"];
+
+        // Verify pod alerts use or vector(0) to return 0 instead of nodata
+        expect(rulesYaml).toContain('count(kube_pod_container_status_waiting_reason{reason="CrashLoopBackOff"}) or vector(0)');
+        expect(rulesYaml).toContain('count(kube_pod_status_phase{phase="Failed"}) or vector(0)');
+    });
+
+    it("should use vector(0) fallback for API error rate alerts", async () => {
+        const result = createGrafanaAlerts({
+            namespace: "monitoring",
+            environment: "production",
+            contactPoints: getProductionContactPoints(),
+            defaultReceiver: "email-admin",
+            provider: k8sProvider,
+        });
+
+        const data = await promiseOf(result.alertRulesConfigMap.data);
+        const rulesYaml = data["alert-rules.yaml"];
+
+        // Verify API error rate alerts use or vector(0) to return 0 instead of nodata when no errors
+        expect(rulesYaml).toContain('(sum(rate(app_http_requests_total{job="api",status=~"4.."}[5m])) or vector(0))');
+        expect(rulesYaml).toContain('(sum(rate(app_http_requests_total{job="api",status=~"5.."}[5m])) or vector(0))');
     });
 });

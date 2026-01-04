@@ -112,7 +112,7 @@ export function createGrafanaAlerts(args: GrafanaAlertsArgs): GrafanaAlertsResul
         {
             uid: "high_memory_usage",
             title: "High Memory Usage",
-            expr: "container_memory_working_set_bytes / container_spec_memory_limit_bytes",
+            expr: 'sum by (pod, namespace) (container_memory_working_set_bytes) / sum by (pod, namespace) (kube_pod_container_resource_limits{resource="memory"})',
             threshold: "> 0.9",
             reduceFunction: "last",
             for: "10m",
@@ -123,7 +123,7 @@ export function createGrafanaAlerts(args: GrafanaAlertsArgs): GrafanaAlertsResul
             annotations: {
                 summary: "High memory usage detected",
                 description:
-                    "Container {{ $values.A.Labels.container }} in pod {{ $values.A.Labels.pod }} has memory usage above 90% for 10 minutes (current: {{ $values.B.Value }})",
+                    "Pod {{ $values.A.Labels.pod }} in namespace {{ $values.A.Labels.namespace }} has memory usage above 90% for 10 minutes (current: {{ $values.B.Value }})",
             },
         },
         {
@@ -146,7 +146,7 @@ export function createGrafanaAlerts(args: GrafanaAlertsArgs): GrafanaAlertsResul
         {
             uid: "high_api_4xx_rate",
             title: "High API 4xx Rate",
-            expr: 'rate(app_http_requests_total{job="api",status=~"4.."}[5m]) / rate(app_http_requests_total{job="api"}[5m])',
+            expr: '(sum(rate(app_http_requests_total{job="api",status=~"4.."}[5m])) or vector(0)) / sum(rate(app_http_requests_total{job="api"}[5m]))',
             threshold: "> 0.1",
             reduceFunction: "last",
             for: "5m",
@@ -163,7 +163,7 @@ export function createGrafanaAlerts(args: GrafanaAlertsArgs): GrafanaAlertsResul
         {
             uid: "high_api_5xx_rate",
             title: "High API 5xx Rate",
-            expr: 'rate(app_http_requests_total{job="api",status=~"5.."}[5m]) / rate(app_http_requests_total{job="api"}[5m])',
+            expr: '(sum(rate(app_http_requests_total{job="api",status=~"5.."}[5m])) or vector(0)) / sum(rate(app_http_requests_total{job="api"}[5m]))',
             threshold: "> 0.05",
             reduceFunction: "last",
             for: "5m",
@@ -180,7 +180,7 @@ export function createGrafanaAlerts(args: GrafanaAlertsArgs): GrafanaAlertsResul
         {
             uid: "pod_crash_looping",
             title: "Pod Crash Looping",
-            expr: 'kube_pod_container_status_waiting_reason{reason="CrashLoopBackOff"}',
+            expr: 'count(kube_pod_container_status_waiting_reason{reason="CrashLoopBackOff"}) or vector(0)',
             threshold: "> 0",
             reduceFunction: "last",
             for: "5m",
@@ -191,13 +191,13 @@ export function createGrafanaAlerts(args: GrafanaAlertsArgs): GrafanaAlertsResul
             annotations: {
                 summary: "Pod is crash looping",
                 description:
-                    "Pod {{ $values.A.Labels.pod }} in namespace {{ $values.A.Labels.namespace }} is in CrashLoopBackOff state",
+                    "{{ $values.B.Value }} pod(s) are in CrashLoopBackOff state",
             },
         },
         {
             uid: "pod_failed",
             title: "Pod Failed",
-            expr: 'kube_pod_status_phase{phase="Failed"}',
+            expr: 'count(kube_pod_status_phase{phase="Failed"}) or vector(0)',
             threshold: "> 0",
             reduceFunction: "last",
             for: "1m",
@@ -208,7 +208,7 @@ export function createGrafanaAlerts(args: GrafanaAlertsArgs): GrafanaAlertsResul
             annotations: {
                 summary: "Pod has failed",
                 description:
-                    "Pod {{ $values.A.Labels.pod }} in namespace {{ $values.A.Labels.namespace }} has failed",
+                    "{{ $values.B.Value }} pod(s) have failed",
             },
         },
     ];

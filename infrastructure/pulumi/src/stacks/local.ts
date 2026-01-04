@@ -37,6 +37,25 @@ createStack(
             webImage: "aphiria.com-web:latest",
             apiImage: "aphiria.com-api:latest",
             cookieDomain: ".aphiria.com",
+            // Resource limits for local development (smaller than production)
+            webResources: {
+                requests: { cpu: "50m", memory: "128Mi" },
+                limits: { cpu: "200m", memory: "256Mi" },
+            },
+            apiResources: {
+                initContainer: {
+                    requests: { cpu: "50m", memory: "64Mi" },
+                    limits: { cpu: "100m", memory: "128Mi" },
+                },
+                nginx: {
+                    requests: { cpu: "50m", memory: "64Mi" },
+                    limits: { cpu: "100m", memory: "128Mi" },
+                },
+                php: {
+                    requests: { cpu: "100m", memory: "256Mi" },
+                    limits: { cpu: "250m", memory: "512Mi" },
+                },
+            },
         },
         monitoring: {
             prometheus: {

@@ -301,6 +301,8 @@ export function createStack(config: StackConfig, k8sProvider: k8s.Provider): Sta
                                           config.monitoring.grafana.smtp?.alertEmail ||
                                           "admin@aphiria.com",
                                       singleEmail: true,
+                                      subject:
+                                          '[{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .CommonLabels.environment }} {{ (index .Alerts 0).Annotations.summary }}',
                                   },
                                   disableResolveMessage: false,
                               },
