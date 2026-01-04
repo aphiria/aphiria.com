@@ -92,7 +92,7 @@ test("can click on search result to navigate", async ({ page }) => {
 
     // Build expected URL with context parameter
     // We've already asserted that href should not be empty, so it should never fall back to ""
-    const url = new URL(href || "", "https://www.aphiria.com");
+    const url = new URL(href || "", process.env.SITE_BASE_URL!);
     url.searchParams.set("context", "framework");
 
     await expect(page).toHaveURL(url.toString());

@@ -20,7 +20,7 @@ test("changing context updates URL and sets cookie", async ({ page }) => {
     const contextCookie = cookies.find((c) => c.name === "context");
     expect(contextCookie).toBeDefined();
     expect(contextCookie?.value).toBe("library");
-    expect(contextCookie?.domain).toBe(".aphiria.com");
+    expect(contextCookie?.domain).toBe(process.env.COOKIE_DOMAIN);
     expect(contextCookie?.secure).toBe(true);
     expect(contextCookie?.httpOnly).toBe(false);
 

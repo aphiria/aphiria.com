@@ -9,3 +9,4 @@ specs/
 test-results/
 vendor/
 *.md
+package-lock.json
