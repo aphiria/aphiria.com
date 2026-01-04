@@ -11,6 +11,21 @@ describe("createAPIDeployment", () => {
         k8sProvider = new k8s.Provider("test", {});
     });
 
+    const standardApiResources = {
+        nginx: {
+            requests: { cpu: "50m", memory: "64Mi" },
+            limits: { cpu: "100m", memory: "128Mi" },
+        },
+        php: {
+            requests: { cpu: "100m", memory: "128Mi" },
+            limits: { cpu: "200m", memory: "256Mi" },
+        },
+        initContainer: {
+            requests: { cpu: "50m", memory: "64Mi" },
+            limits: { cpu: "100m", memory: "128Mi" },
+        },
+    };
+
     it("should create deployment with required resources", async () => {
         const result = createAPIDeployment({
             env: "local",
@@ -27,6 +42,7 @@ describe("createAPIDeployment", () => {
             cookieDomain: ".aphiria.com",
             cookieSecure: false,
             prometheusAuthToken: pulumi.output("test-token"),
+            resources: standardApiResources,
             provider: k8sProvider,
         });
 
@@ -65,6 +81,7 @@ describe("createAPIDeployment", () => {
             podDisruptionBudget: {
                 minAvailable: 1,
             },
+            resources: standardApiResources,
             provider: k8sProvider,
         });
 
@@ -94,6 +111,7 @@ describe("createAPIDeployment", () => {
             cookieDomain: ".aphiria.com",
             cookieSecure: false,
             prometheusAuthToken: pulumi.output("test-token"),
+            resources: standardApiResources,
             provider: k8sProvider,
         });
 
@@ -116,6 +134,7 @@ describe("createAPIDeployment", () => {
             cookieDomain: ".aphiria.com",
             cookieSecure: true,
             prometheusAuthToken: pulumi.output("test-token"),
+            resources: standardApiResources,
             provider: k8sProvider,
         });
 
@@ -139,6 +158,7 @@ describe("createAPIDeployment", () => {
             cookieSecure: true,
             prometheusAuthToken: pulumi.output("test-token"),
             prNumber: "123",
+            resources: standardApiResources,
             provider: k8sProvider,
         });
 
@@ -201,6 +221,7 @@ describe("createAPIDeployment", () => {
             cookieSecure: true,
             prometheusAuthToken: pulumi.output("test-token"),
             imagePullSecrets: ["ghcr-pull-secret"],
+            resources: standardApiResources,
             provider: k8sProvider,
         });
 
@@ -226,6 +247,7 @@ describe("createAPIDeployment", () => {
             cookieDomain: ".aphiria.com",
             cookieSecure: false,
             prometheusAuthToken: pulumi.output("test-token"),
+            resources: standardApiResources,
             provider: k8sProvider,
         });
 
@@ -251,6 +273,7 @@ describe("createAPIDeployment", () => {
             cookieDomain: ".aphiria.com",
             cookieSecure: true,
             prometheusAuthToken: pulumi.output("test-token"),
+            resources: standardApiResources,
             provider: k8sProvider,
         });
 
@@ -276,6 +299,7 @@ describe("createAPIDeployment", () => {
             cookieDomain: ".aphiria.com",
             cookieSecure: false,
             prometheusAuthToken: pulumi.output("test-token"),
+            resources: standardApiResources,
             provider: k8sProvider,
         });
 

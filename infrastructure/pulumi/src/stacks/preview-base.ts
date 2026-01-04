@@ -44,6 +44,10 @@ const stack = createStack(
             storageSize: "20Gi",
             dbUser: stackConfig.postgresql.user,
             dbPassword: stackConfig.postgresql.password,
+            resources: {
+                requests: { cpu: "100m", memory: "128Mi" },
+                limits: { cpu: "200m", memory: "256Mi" },
+            },
         },
         gateway: {
             tlsMode: "letsencrypt-prod",

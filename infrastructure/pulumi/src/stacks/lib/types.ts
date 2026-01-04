@@ -49,6 +49,8 @@ export interface DatabaseConfig {
     dbAdminUser?: pulumi.Input<string>;
     /** Admin password for database creation (preview-pr only) */
     dbAdminPassword?: pulumi.Input<string>;
+    /** Database container resource limits (required) */
+    resources: ResourceLimits;
 }
 
 /**
@@ -97,9 +99,9 @@ export interface ResourceLimits {
  * API pods have nginx, PHP-FPM, and init containers with different resource needs
  */
 export interface APIResourceLimits {
-    nginx?: ResourceLimits;
-    php?: ResourceLimits;
-    initContainer?: ResourceLimits;
+    nginx: ResourceLimits;
+    php: ResourceLimits;
+    initContainer: ResourceLimits;
 }
 
 /**
@@ -120,19 +122,19 @@ export interface AppConfig {
     apiImage: string;
     /** Cookie domain for sessions (e.g., ".aphiria.com", ".pr.aphiria.com") */
     cookieDomain: string;
-    /** Web container resource limits (optional - for cost control in preview/production) */
-    webResources?: ResourceLimits;
-    /** API container resource limits (optional - for cost control in preview/production) */
-    apiResources?: APIResourceLimits;
-    /** Database migration job resource limits (optional - for namespaces with ResourceQuotas) */
-    migrationResources?: {
-        migration?: {
-            requests?: { cpu?: string; memory?: string };
-            limits?: { cpu?: string; memory?: string };
+    /** Web container resource limits (required) */
+    webResources: ResourceLimits;
+    /** API container resource limits (required) */
+    apiResources: APIResourceLimits;
+    /** Database migration job resource limits (required) */
+    migrationResources: {
+        migration: {
+            requests: { cpu: string; memory: string };
+            limits: { cpu: string; memory: string };
         };
-        initContainer?: {
-            requests?: { cpu?: string; memory?: string };
-            limits?: { cpu?: string; memory?: string };
+        initContainer: {
+            requests: { cpu: string; memory: string };
+            limits: { cpu: string; memory: string };
         };
     };
     /** Web PodDisruptionBudget (optional - production only) */

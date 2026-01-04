@@ -37,6 +37,7 @@ describe("Types", () => {
                 storageSize: "20Gi",
                 dbUser: "postgres",
                 dbPassword: "secret",
+                    resources: { requests: { cpu: "100m", memory: "128Mi" }, limits: { cpu: "200m", memory: "256Mi" } },
             };
 
             expect(config.persistentStorage).toBe(true);
@@ -49,6 +50,7 @@ describe("Types", () => {
                 storageSize: "1Gi",
                 dbUser: "postgres",
                 dbPassword: "secret",
+                    resources: { requests: { cpu: "100m", memory: "128Mi" }, limits: { cpu: "200m", memory: "256Mi" } },
                 createDatabase: true,
                 databaseName: "aphiria_pr_123",
                 dbHost: "db.default.svc.cluster.local",
@@ -148,6 +150,20 @@ describe("Types", () => {
                         requests: { cpu: "250m", memory: "512Mi" },
                         limits: { cpu: "500m", memory: "1Gi" },
                     },
+                    initContainer: {
+                        requests: { cpu: "50m", memory: "64Mi" },
+                        limits: { cpu: "100m", memory: "128Mi" },
+                    },
+                },
+                migrationResources: {
+                    migration: {
+                        requests: { cpu: "50m", memory: "128Mi" },
+                        limits: { cpu: "200m", memory: "256Mi" },
+                    },
+                    initContainer: {
+                        requests: { cpu: "10m", memory: "32Mi" },
+                        limits: { cpu: "50m", memory: "64Mi" },
+                    },
                 },
                 webPodDisruptionBudget: { minAvailable: 1 },
                 apiPodDisruptionBudget: { minAvailable: 1 },
@@ -199,6 +215,7 @@ describe("Types", () => {
                     storageSize: "1Gi",
                     dbUser: "postgres",
                     dbPassword: "postgres",
+                    resources: { requests: { cpu: "100m", memory: "128Mi" }, limits: { cpu: "200m", memory: "256Mi" } },
                 },
                 gateway: {
                     tlsMode: "self-signed",
@@ -212,6 +229,9 @@ describe("Types", () => {
                     webImage: "aphiria.com-web:latest",
                     apiImage: "aphiria.com-api:latest",
                     cookieDomain: ".aphiria.com",
+                    webResources: { requests: { cpu: "50m", memory: "64Mi" }, limits: { cpu: "100m", memory: "128Mi" } },
+                    apiResources: { nginx: { requests: { cpu: "50m", memory: "64Mi" }, limits: { cpu: "100m", memory: "128Mi" } }, php: { requests: { cpu: "100m", memory: "128Mi" }, limits: { cpu: "200m", memory: "256Mi" } }, initContainer: { requests: { cpu: "50m", memory: "64Mi" }, limits: { cpu: "100m", memory: "128Mi" } } },
+                    migrationResources: { migration: { requests: { cpu: "50m", memory: "128Mi" }, limits: { cpu: "200m", memory: "256Mi" } }, initContainer: { requests: { cpu: "10m", memory: "32Mi" }, limits: { cpu: "50m", memory: "64Mi" } } },
                 },
             };
 
@@ -236,6 +256,7 @@ describe("Types", () => {
                     storageSize: "10Gi",
                     dbUser: "postgres",
                     dbPassword: "secret",
+                    resources: { requests: { cpu: "100m", memory: "128Mi" }, limits: { cpu: "200m", memory: "256Mi" } },
                 },
                 gateway: {
                     tlsMode: "letsencrypt-prod",
@@ -271,6 +292,7 @@ describe("Types", () => {
                     storageSize: "1Gi",
                     dbUser: "postgres",
                     dbPassword: "secret",
+                    resources: { requests: { cpu: "100m", memory: "128Mi" }, limits: { cpu: "200m", memory: "256Mi" } },
                 },
                 gateway: {
                     tlsMode: "letsencrypt-prod",
@@ -284,6 +306,9 @@ describe("Types", () => {
                     webImage: "ghcr.io/aphiria/aphiria.com-web@sha256:abc123",
                     apiImage: "ghcr.io/aphiria/aphiria.com-api@sha256:def456",
                     cookieDomain: ".pr.aphiria.com",
+                    webResources: { requests: { cpu: "50m", memory: "64Mi" }, limits: { cpu: "100m", memory: "128Mi" } },
+                    apiResources: { nginx: { requests: { cpu: "50m", memory: "64Mi" }, limits: { cpu: "100m", memory: "128Mi" } }, php: { requests: { cpu: "100m", memory: "128Mi" }, limits: { cpu: "200m", memory: "256Mi" } }, initContainer: { requests: { cpu: "50m", memory: "64Mi" }, limits: { cpu: "100m", memory: "128Mi" } } },
+                    migrationResources: { migration: { requests: { cpu: "50m", memory: "128Mi" }, limits: { cpu: "200m", memory: "256Mi" } }, initContainer: { requests: { cpu: "10m", memory: "32Mi" }, limits: { cpu: "50m", memory: "64Mi" } } },
                 },
             };
 
@@ -309,6 +334,7 @@ describe("Types", () => {
                     storageSize: "50Gi",
                     dbUser: "postgres",
                     dbPassword: "secret",
+                    resources: { requests: { cpu: "100m", memory: "128Mi" }, limits: { cpu: "200m", memory: "256Mi" } },
                 },
                 gateway: {
                     tlsMode: "letsencrypt-prod",
@@ -323,6 +349,9 @@ describe("Types", () => {
                     webImage: "ghcr.io/aphiria/aphiria.com-web@sha256:abc123",
                     apiImage: "ghcr.io/aphiria/aphiria.com-api@sha256:def456",
                     cookieDomain: ".aphiria.com",
+                    webResources: { requests: { cpu: "50m", memory: "64Mi" }, limits: { cpu: "100m", memory: "128Mi" } },
+                    apiResources: { nginx: { requests: { cpu: "50m", memory: "64Mi" }, limits: { cpu: "100m", memory: "128Mi" } }, php: { requests: { cpu: "100m", memory: "128Mi" }, limits: { cpu: "200m", memory: "256Mi" } }, initContainer: { requests: { cpu: "50m", memory: "64Mi" }, limits: { cpu: "100m", memory: "128Mi" } } },
+                    migrationResources: { migration: { requests: { cpu: "50m", memory: "128Mi" }, limits: { cpu: "200m", memory: "256Mi" } }, initContainer: { requests: { cpu: "10m", memory: "32Mi" }, limits: { cpu: "50m", memory: "64Mi" } } },
                     webPodDisruptionBudget: { minAvailable: 1 },
                     apiPodDisruptionBudget: { minAvailable: 1 },
                 },

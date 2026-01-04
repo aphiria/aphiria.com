@@ -11,6 +11,17 @@ describe("createDBMigrationJob", () => {
         k8sProvider = new k8s.Provider("test", {});
     });
 
+    const standardMigrationResources = {
+        migration: {
+            requests: { cpu: "50m", memory: "128Mi" },
+            limits: { cpu: "200m", memory: "256Mi" },
+        },
+        initContainer: {
+            requests: { cpu: "10m", memory: "32Mi" },
+            limits: { cpu: "50m", memory: "64Mi" },
+        },
+    };
+
     it("should create migration job without seeder", async () => {
         const job = createDBMigrationJob({
             env: "local",
@@ -21,6 +32,7 @@ describe("createDBMigrationJob", () => {
             dbUser: pulumi.output("postgres"),
             dbPassword: pulumi.output("password"),
             runSeeder: false,
+            resources: standardMigrationResources,
             provider: k8sProvider,
         });
 
@@ -44,6 +56,7 @@ describe("createDBMigrationJob", () => {
             dbUser: pulumi.output("postgres"),
             dbPassword: pulumi.output("password"),
             runSeeder: true,
+            resources: standardMigrationResources,
             provider: k8sProvider,
         });
 
@@ -94,6 +107,7 @@ describe("createDBMigrationJob", () => {
             dbPassword: pulumi.output("password"),
             runSeeder: true,
             imagePullSecrets: ["ghcr-pull-secret"],
+            resources: standardMigrationResources,
             provider: k8sProvider,
         });
 
@@ -117,6 +131,7 @@ describe("createDBMigrationJob", () => {
                 "custom-label": "custom-value",
                 environment: "testing",
             },
+            resources: standardMigrationResources,
             provider: k8sProvider,
         });
 
@@ -142,6 +157,7 @@ describe("createDBMigrationJob", () => {
             dbUser: pulumi.output("postgres"),
             dbPassword: pulumi.output("password"),
             runSeeder: true,
+            resources: standardMigrationResources,
             provider: k8sProvider,
         });
 
@@ -158,6 +174,7 @@ describe("createDBMigrationJob", () => {
             dbUser: pulumi.output("postgres"),
             dbPassword: pulumi.output("password"),
             runSeeder: true,
+            resources: standardMigrationResources,
             provider: k8sProvider,
         });
 
@@ -174,6 +191,7 @@ describe("createDBMigrationJob", () => {
             dbUser: pulumi.output("postgres"),
             dbPassword: pulumi.output("password"),
             runSeeder: true,
+            resources: standardMigrationResources,
             provider: k8sProvider,
         });
 
@@ -212,6 +230,7 @@ describe("createDBMigrationJob", () => {
             dbUser: pulumi.output("postgres"),
             dbPassword: pulumi.output("password"),
             runSeeder: true,
+            resources: standardMigrationResources,
             provider: k8sProvider,
         });
 
@@ -239,6 +258,7 @@ describe("createDBMigrationJob", () => {
             dbUser: pulumi.output("postgres"),
             dbPassword: pulumi.output("password"),
             runSeeder: true,
+            resources: standardMigrationResources,
             provider: k8sProvider,
         });
 
@@ -268,6 +288,7 @@ describe("createDBMigrationJob", () => {
             dbUser: pulumi.output("postgres"),
             dbPassword: pulumi.output("password"),
             runSeeder: false,
+            resources: standardMigrationResources,
             provider: k8sProvider,
         });
 
@@ -296,6 +317,7 @@ describe("createDBMigrationJob", () => {
             dbUser: pulumi.output("postgres"),
             dbPassword: pulumi.output("password"),
             runSeeder: true,
+            resources: standardMigrationResources,
             provider: k8sProvider,
         });
 

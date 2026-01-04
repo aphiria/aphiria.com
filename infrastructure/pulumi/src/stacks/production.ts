@@ -39,6 +39,10 @@ createStack(
             storageSize: "20Gi",
             dbUser: stackConfig.postgresql.user,
             dbPassword: stackConfig.postgresql.password,
+            resources: {
+                requests: { cpu: "100m", memory: "128Mi" },
+                limits: { cpu: "200m", memory: "256Mi" },
+            },
         },
         gateway: {
             tlsMode: "letsencrypt-prod",
@@ -65,6 +69,34 @@ createStack(
             cookieDomain: ".aphiria.com",
             webPodDisruptionBudget: { minAvailable: 1 },
             apiPodDisruptionBudget: { minAvailable: 1 },
+            webResources: {
+                requests: { cpu: "50m", memory: "64Mi" },
+                limits: { cpu: "100m", memory: "128Mi" },
+            },
+            apiResources: {
+                initContainer: {
+                    requests: { cpu: "50m", memory: "64Mi" },
+                    limits: { cpu: "100m", memory: "128Mi" },
+                },
+                nginx: {
+                    requests: { cpu: "50m", memory: "64Mi" },
+                    limits: { cpu: "100m", memory: "128Mi" },
+                },
+                php: {
+                    requests: { cpu: "100m", memory: "128Mi" },
+                    limits: { cpu: "200m", memory: "256Mi" },
+                },
+            },
+            migrationResources: {
+                migration: {
+                    requests: { cpu: "50m", memory: "128Mi" },
+                    limits: { cpu: "200m", memory: "256Mi" },
+                },
+                initContainer: {
+                    requests: { cpu: "10m", memory: "32Mi" },
+                    limits: { cpu: "50m", memory: "64Mi" },
+                },
+            },
         },
         monitoring: {
             prometheus: {

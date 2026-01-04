@@ -75,6 +75,11 @@ createStack(
             dbHost: postgresqlHost,
             dbAdminUser: postgresqlAdminUser,
             dbAdminPassword: postgresqlAdminPassword,
+            // Unused (preview uses shared DB from preview-base), but required by type
+            resources: {
+                requests: { cpu: "100m", memory: "128Mi" },
+                limits: { cpu: "200m", memory: "256Mi" },
+            },
         },
         gateway: {
             tlsMode: "letsencrypt-prod",
@@ -89,8 +94,8 @@ createStack(
             apiImage: stackConfig.images.api,
             cookieDomain: ".pr.aphiria.com",
             webResources: {
-                requests: { cpu: "50m", memory: "128Mi" },
-                limits: { cpu: "250m", memory: "512Mi" },
+                requests: { cpu: "50m", memory: "64Mi" },
+                limits: { cpu: "100m", memory: "128Mi" },
             },
             apiResources: {
                 nginx: {
@@ -98,8 +103,8 @@ createStack(
                     limits: { cpu: "100m", memory: "128Mi" },
                 },
                 php: {
-                    requests: { cpu: "250m", memory: "512Mi" },
-                    limits: { cpu: "500m", memory: "1Gi" },
+                    requests: { cpu: "100m", memory: "128Mi" },
+                    limits: { cpu: "200m", memory: "256Mi" },
                 },
                 initContainer: {
                     requests: { cpu: "50m", memory: "64Mi" },

@@ -24,6 +24,10 @@ createStack(
             storageSize: "5Gi",
             dbUser: "postgres",
             dbPassword: "postgres",
+            resources: {
+                requests: { cpu: "100m", memory: "128Mi" },
+                limits: { cpu: "200m", memory: "256Mi" },
+            },
         },
         gateway: {
             tlsMode: "self-signed",
@@ -37,10 +41,9 @@ createStack(
             webImage: "aphiria.com-web:latest",
             apiImage: "aphiria.com-api:latest",
             cookieDomain: ".aphiria.com",
-            // Resource limits for local development (smaller than production)
             webResources: {
-                requests: { cpu: "50m", memory: "128Mi" },
-                limits: { cpu: "200m", memory: "256Mi" },
+                requests: { cpu: "50m", memory: "64Mi" },
+                limits: { cpu: "100m", memory: "128Mi" },
             },
             apiResources: {
                 initContainer: {
@@ -52,8 +55,18 @@ createStack(
                     limits: { cpu: "100m", memory: "128Mi" },
                 },
                 php: {
-                    requests: { cpu: "100m", memory: "256Mi" },
-                    limits: { cpu: "250m", memory: "512Mi" },
+                    requests: { cpu: "100m", memory: "128Mi" },
+                    limits: { cpu: "200m", memory: "256Mi" },
+                },
+            },
+            migrationResources: {
+                migration: {
+                    requests: { cpu: "50m", memory: "128Mi" },
+                    limits: { cpu: "200m", memory: "256Mi" },
+                },
+                initContainer: {
+                    requests: { cpu: "10m", memory: "32Mi" },
+                    limits: { cpu: "50m", memory: "64Mi" },
                 },
             },
         },

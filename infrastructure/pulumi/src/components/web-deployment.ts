@@ -24,15 +24,15 @@ export interface WebDeploymentArgs extends CommonDeploymentArgs {
     extraVars?: Record<string, pulumi.Input<string>>;
     /** Optional image pull secrets for private registries */
     imagePullSecrets?: pulumi.Input<string>[];
-    /** Optional resource limits */
-    resources?: {
-        requests?: {
-            cpu?: string;
-            memory?: string;
+    /** Resource requests and limits (required) */
+    resources: {
+        requests: {
+            cpu: string;
+            memory: string;
         };
-        limits?: {
-            cpu?: string;
-            memory?: string;
+        limits: {
+            cpu: string;
+            memory: string;
         };
     };
     /** Optional PodDisruptionBudget for high availability (production only) */
@@ -158,9 +158,7 @@ export function createWebDeployment(args: WebDeploymentArgs): WebDeploymentResul
                                         configMapRef: { name: envConfigMap.metadata.name },
                                     },
                                 ],
-                                ...(args.resources && {
-                                    resources: args.resources,
-                                }),
+                                resources: args.resources,
                                 livenessProbe: {
                                     httpGet: {
                                         path: "/",

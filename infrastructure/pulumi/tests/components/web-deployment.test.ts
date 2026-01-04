@@ -10,6 +10,11 @@ describe("createWebDeployment", () => {
         k8sProvider = new k8s.Provider("test", {});
     });
 
+    const standardResources = {
+        requests: { cpu: "50m", memory: "64Mi" },
+        limits: { cpu: "100m", memory: "128Mi" },
+    };
+
     it("should create deployment with required resources", async () => {
         const result = createWebDeployment({
             env: "local",
@@ -21,6 +26,7 @@ describe("createWebDeployment", () => {
                 apiBaseUrl: "https://api.aphiria.com",
             },
             logLevel: "debug",
+            resources: standardResources,
             provider: k8sProvider,
         });
 
@@ -54,6 +60,7 @@ describe("createWebDeployment", () => {
             podDisruptionBudget: {
                 minAvailable: 1,
             },
+            resources: standardResources,
             provider: k8sProvider,
         });
 
@@ -78,6 +85,7 @@ describe("createWebDeployment", () => {
                 apiBaseUrl: "https://api.aphiria.com",
             },
             logLevel: "debug",
+            resources: standardResources,
             provider: k8sProvider,
         });
 
@@ -96,6 +104,7 @@ describe("createWebDeployment", () => {
             },
             logLevel: "debug",
             prNumber: "123",
+            resources: standardResources,
             provider: k8sProvider,
         });
 
@@ -138,6 +147,7 @@ describe("createWebDeployment", () => {
             },
             logLevel: "warning",
             imagePullSecrets: ["ghcr-pull-secret"],
+            resources: standardResources,
             provider: k8sProvider,
         });
 
@@ -159,6 +169,7 @@ describe("createWebDeployment", () => {
                 "custom-label": "custom-value",
                 environment: "testing",
             },
+            resources: standardResources,
             provider: k8sProvider,
         });
 
@@ -185,6 +196,7 @@ describe("createWebDeployment", () => {
                 apiBaseUrl: "https://api.aphiria.com",
             },
             logLevel: "warning",
+            resources: standardResources,
             provider: k8sProvider,
         });
 
@@ -208,6 +220,7 @@ describe("createWebDeployment", () => {
             extraVars: {
                 CUSTOM_VAR: "custom-value",
             },
+            resources: standardResources,
             provider: k8sProvider,
         });
 

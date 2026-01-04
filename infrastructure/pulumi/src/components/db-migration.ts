@@ -26,15 +26,15 @@ export interface DBMigrationJobArgs {
     runSeeder: boolean;
     /** Optional image pull secrets for private registries */
     imagePullSecrets?: pulumi.Input<string>[];
-    /** Optional resource limits for containers */
-    resources?: {
-        migration?: {
-            requests?: { cpu?: string; memory?: string };
-            limits?: { cpu?: string; memory?: string };
+    /** Resource requests and limits for containers (required) */
+    resources: {
+        migration: {
+            requests: { cpu: string; memory: string };
+            limits: { cpu: string; memory: string };
         };
-        initContainer?: {
-            requests?: { cpu?: string; memory?: string };
-            limits?: { cpu?: string; memory?: string };
+        initContainer: {
+            requests: { cpu: string; memory: string };
+            limits: { cpu: string; memory: string };
         };
     };
     /** Resource labels */
@@ -100,9 +100,7 @@ export function createDBMigrationJob(args: DBMigrationJobArgs): k8s.batch.v1.Job
                                         value: args.dbHost,
                                     },
                                 ],
-                                ...(args.resources?.initContainer && {
-                                    resources: args.resources.initContainer,
-                                }),
+                                resources: args.resources.initContainer,
                             },
                         ],
                         containers: [
@@ -142,9 +140,7 @@ export function createDBMigrationJob(args: DBMigrationJobArgs): k8s.batch.v1.Job
                                         value: args.dbPassword,
                                     },
                                 ],
-                                ...(args.resources?.migration && {
-                                    resources: args.resources.migration,
-                                }),
+                                resources: args.resources.migration,
                             },
                         ],
                         restartPolicy: "Never",
