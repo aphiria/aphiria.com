@@ -20,6 +20,11 @@ export interface PostgreSQLArgs {
     dbUser: string;
     /** Database password (sensitive) */
     dbPassword: pulumi.Input<string>;
+    /** Resource requests and limits */
+    resources?: {
+        requests: { cpu: string; memory: string };
+        limits: { cpu: string; memory: string };
+    };
     /** Resource labels */
     labels?: Record<string, string>;
     /** Kubernetes provider */
@@ -154,6 +159,7 @@ export function createPostgreSQL(args: PostgreSQLArgs): PostgreSQLResult {
                                         containerPort: POSTGRES_PORT,
                                     },
                                 ],
+                                resources: args.resources,
                                 // Graceful shutdown to prevent data corruption.
                                 // preStop hook ensures PostgreSQL shuts down cleanly before pod termination.
                                 // Without this, Kubernetes sends SIGTERM then SIGKILL after grace period,

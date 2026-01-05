@@ -186,8 +186,8 @@ export function createAPIDeployment(args: APIDeploymentArgs): APIDeploymentResul
                 strategy: {
                     type: "RollingUpdate",
                     rollingUpdate: {
-                        maxUnavailable: 0,
-                        maxSurge: 1,
+                        maxUnavailable: 1,
+                        maxSurge: 0,
                     },
                 },
                 template: {

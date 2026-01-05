@@ -158,4 +158,77 @@ describe("createPostgreSQL", () => {
             "pg_ctl stop -D /var/lib/postgresql/data/pgdata -m fast -t 60",
         ]);
     });
+
+    it("should apply resource requests and limits when provided", async () => {
+        const deployment = new k8s.apps.v1.Deployment("db-resources-test", {
+            metadata: {
+                name: "db",
+                namespace: "default",
+            },
+            spec: {
+                replicas: 1,
+                selector: {
+                    matchLabels: { app: "db" },
+                },
+                template: {
+                    metadata: {
+                        labels: { app: "db" },
+                    },
+                    spec: {
+                        containers: [
+                            {
+                                name: "db",
+                                image: "postgres:16",
+                                resources: {
+                                    requests: { cpu: "100m", memory: "128Mi" },
+                                    limits: { cpu: "200m", memory: "256Mi" },
+                                },
+                            },
+                        ],
+                    },
+                },
+            },
+        });
+
+        const spec = await promiseOf(deployment.spec);
+        const container = spec.template.spec?.containers?.[0];
+
+        expect(container?.resources?.requests?.cpu).toBe("100m");
+        expect(container?.resources?.requests?.memory).toBe("128Mi");
+        expect(container?.resources?.limits?.cpu).toBe("200m");
+        expect(container?.resources?.limits?.memory).toBe("256Mi");
+    });
+
+    it("should not apply resources when not provided", async () => {
+        const deployment = new k8s.apps.v1.Deployment("db-no-resources-test", {
+            metadata: {
+                name: "db",
+                namespace: "default",
+            },
+            spec: {
+                replicas: 1,
+                selector: {
+                    matchLabels: { app: "db" },
+                },
+                template: {
+                    metadata: {
+                        labels: { app: "db" },
+                    },
+                    spec: {
+                        containers: [
+                            {
+                                name: "db",
+                                image: "postgres:16",
+                            },
+                        ],
+                    },
+                },
+            },
+        });
+
+        const spec = await promiseOf(deployment.spec);
+        const container = spec.template.spec?.containers?.[0];
+
+        expect(container?.resources).toBeUndefined();
+    });
 });

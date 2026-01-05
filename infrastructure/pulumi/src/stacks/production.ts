@@ -17,7 +17,7 @@ const { provider: k8sProvider } = createKubernetesCluster({
     nodeCount: 1,
     autoScale: true,
     minNodes: 1,
-    maxNodes: 3,
+    maxNodes: 4,
     vpcUuid: "976f980d-dc84-11e8-80bc-3cfdfea9fba1",
 });
 

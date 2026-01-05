@@ -401,6 +401,7 @@ export function createStack(config: StackConfig, k8sProvider: k8s.Provider): Sta
             storageSize: config.database.storageSize,
             dbUser: String(config.database.dbUser),
             dbPassword: config.database.dbPassword,
+            resources: config.database.resources,
             provider: k8sProvider,
         });
     }
