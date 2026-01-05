@@ -22,6 +22,41 @@ export function installCertManager(
                     enabled: true,
                 },
                 extraArgs: ["--feature-gates=ExperimentalGatewayAPISupport=true"],
+                // Resource limits for cert-manager components
+                resources: {
+                    requests: {
+                        cpu: "50m",
+                        memory: "128Mi",
+                    },
+                    limits: {
+                        cpu: "100m",
+                        memory: "256Mi",
+                    },
+                },
+                webhook: {
+                    resources: {
+                        requests: {
+                            cpu: "25m",
+                            memory: "64Mi",
+                        },
+                        limits: {
+                            cpu: "50m",
+                            memory: "128Mi",
+                        },
+                    },
+                },
+                cainjector: {
+                    resources: {
+                        requests: {
+                            cpu: "50m",
+                            memory: "256Mi",
+                        },
+                        limits: {
+                            cpu: "100m",
+                            memory: "512Mi",
+                        },
+                    },
+                },
                 ...(args.values || {}),
             },
         },
