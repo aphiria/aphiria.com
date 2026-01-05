@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { HomePage } from "../pages/HomePage";
+import { HomePage } from "../pages/home.page";
 
 test("search results are invisible by default and when the query is deleted", async ({ page }) => {
     const homePage = new HomePage(page);

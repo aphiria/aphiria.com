@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { DocsPage } from "../pages/DocsPage";
+import { DocsPage } from "../pages/docs.page";
 
 test("changing context updates URL and sets cookie", async ({ page }) => {
     const docsPage = new DocsPage(page);

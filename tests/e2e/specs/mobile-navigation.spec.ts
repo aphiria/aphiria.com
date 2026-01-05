@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
-import { HomePage } from "../pages/HomePage";
-import { DocsPage } from "../pages/DocsPage";
+import { HomePage } from "../pages/home.page";
+import { DocsPage } from "../pages/docs.page";
 
 test.describe("Desktop navigation (>=1024px)", () => {
     test.use({ viewport: { width: 1024, height: 768 } });

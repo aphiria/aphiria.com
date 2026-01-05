@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { DocsPage } from "../pages/DocsPage";
+import { DocsPage } from "../pages/docs.page";
 import { assertPageOk } from "../lib/navigation";
 
 test("sidebar structure", async ({ page }) => {
@@ -25,6 +25,9 @@ test("sidebar structure", async ({ page }) => {
 });
 
 test("sidebar link traversal", async ({ page }) => {
+    // We're visiting a bunch of pages here, so increase the timeout
+    test.setTimeout(60000);
+
     const docsPage = new DocsPage(page);
     await docsPage.goto("/docs/1.x/introduction.html");
 

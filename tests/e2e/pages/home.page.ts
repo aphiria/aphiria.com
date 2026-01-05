@@ -1,6 +1,6 @@
 import { Page } from "@playwright/test";
-import { MainNavBar } from "./components/MainNavBar";
-import { SearchBar } from "./components/SearchBar";
+import { MainNavBar } from "./components/main-nav-bar.component";
+import { SearchBar } from "./components/search-bar.component";
 import { assertPageOk } from "../lib/navigation";
 
 export class HomePage {

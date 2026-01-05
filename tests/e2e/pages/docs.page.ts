@@ -1,7 +1,7 @@
 import { Page } from "@playwright/test";
-import { SearchBar } from "./components/SearchBar";
-import { DocsSideNav } from "./components/DocsSideNav";
-import { ContextSelector } from "./components/ContextSelector";
+import { SearchBar } from "./components/search-bar.component";
+import { DocsSideNav } from "./components/docs-side-nav.component";
+import { ContextSelector } from "./components/context-selector.component";
 import { assertPageOk } from "../lib/navigation";
 
 export class DocsPage {

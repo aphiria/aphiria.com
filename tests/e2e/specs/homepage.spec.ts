@@ -1,11 +1,11 @@
 import { test, expect } from "@playwright/test";
-import { HomePage } from "../pages/HomePage";
+import { HomePage } from "../pages/home.page";
 import {
     getFirstCopyButton,
     getCodeTextForCopyButton,
     clickCopyButton,
     getClipboardText,
-} from "../pages/components/CopyButton";
+} from "../pages/components/copy-button.component";
 
 test("homepage loads successfully", async ({ page }) => {
     const homePage = new HomePage(page);
