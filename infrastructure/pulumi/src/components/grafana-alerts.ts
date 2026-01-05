@@ -333,7 +333,7 @@ ${cp.receivers
 ${Object.entries(r.settings)
     .map(
         ([key, value]) =>
-            `          ${key}: ${typeof value === "string" ? value : JSON.stringify(value)}`
+            `          ${key}: ${JSON.stringify(value)}`
     )
     .join(
         "\n"

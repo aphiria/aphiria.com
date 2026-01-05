@@ -48,7 +48,7 @@ jobs:
         with:
           context: .
           file: ./infrastructure/docker/build/Dockerfile
-          push: false
+          push: true
           cache-from: type=gha,scope=build-master
           cache-to: type=gha,mode=max,scope=build-master
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-build:master
@@ -59,7 +59,9 @@ jobs:
         with:
           context: .
           file: ./infrastructure/docker/runtime/web/Dockerfile
-          push: false
+          build-args: |
+            BUILD_IMAGE=${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-build:master
+          push: true
           cache-from: type=gha,scope=web-master
           cache-to: type=gha,mode=max,scope=web-master
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-web:master
@@ -70,7 +72,9 @@ jobs:
         with:
           context: .
           file: ./infrastructure/docker/runtime/api/Dockerfile
-          push: false
+          build-args: |
+            BUILD_IMAGE=${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-build:master
+          push: true
           cache-from: type=gha,scope=api-master
           cache-to: type=gha,mode=max,scope=api-master
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-api:master
