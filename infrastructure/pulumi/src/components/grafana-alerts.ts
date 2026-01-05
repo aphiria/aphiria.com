@@ -331,10 +331,7 @@ ${cp.receivers
         type: ${r.type}
         settings:
 ${Object.entries(r.settings)
-    .map(
-        ([key, value]) =>
-            `          ${key}: ${JSON.stringify(value)}`
-    )
+    .map(([key, value]) => `          ${key}: ${JSON.stringify(value)}`)
     .join(
         "\n"
     )}${r.disableResolveMessage !== undefined ? `\n        disableResolveMessage: ${r.disableResolveMessage}` : ""}`
