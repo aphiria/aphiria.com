@@ -134,7 +134,9 @@ describe("createGrafanaAlerts", () => {
         const rulesYaml = data["alert-rules.yaml"];
         expect(rulesYaml).toContain("High CPU Usage");
         expect(rulesYaml).toContain("uid: high_cpu_usage");
-        expect(rulesYaml).toContain("expr: rate(container_cpu_usage_seconds_total[5m])");
+        expect(rulesYaml).toContain(
+            'expr: rate(container_cpu_usage_seconds_total{namespace!="kube-system"}[5m])'
+        );
         expect(rulesYaml).toContain("expression: B");
         expect(rulesYaml).toContain("params:");
         expect(rulesYaml).toContain("- 0.8");
@@ -156,7 +158,7 @@ describe("createGrafanaAlerts", () => {
         expect(rulesYaml).toContain("High Memory Usage");
         expect(rulesYaml).toContain("uid: high_memory_usage");
         expect(rulesYaml).toContain(
-            'expr: sum by (pod, namespace) (container_memory_working_set_bytes) / sum by (pod, namespace) (kube_pod_container_resource_limits{resource="memory"})'
+            'expr: sum by (pod, namespace) (container_memory_working_set_bytes{namespace!="kube-system"}) / sum by (pod, namespace) (kube_pod_container_resource_limits{resource="memory", namespace!="kube-system"} > 0)'
         );
         expect(rulesYaml).toContain("expression: B");
         expect(rulesYaml).toContain("- 0.9");
@@ -241,7 +243,7 @@ describe("createGrafanaAlerts", () => {
         expect(rulesYaml).toContain("Pod Crash Looping");
         expect(rulesYaml).toContain("uid: pod_crash_looping");
         expect(rulesYaml).toContain(
-            'sum(kube_pod_container_status_waiting_reason{reason="CrashLoopBackOff"}) or vector(0)'
+            'sum(kube_pod_container_status_waiting_reason{reason="CrashLoopBackOff", namespace!="kube-system"}) or vector(0)'
         );
         expect(rulesYaml).toContain("5m");
     });
@@ -260,7 +262,9 @@ describe("createGrafanaAlerts", () => {
 
         expect(rulesYaml).toContain("Pod Failed");
         expect(rulesYaml).toContain("uid: pod_failed");
-        expect(rulesYaml).toContain('sum(kube_pod_status_phase{phase="Failed"} > 0) or vector(0)');
+        expect(rulesYaml).toContain(
+            'sum(kube_pod_status_phase{phase="Failed", namespace!="kube-system"} > 0) or vector(0)'
+        );
         expect(rulesYaml).toContain("5m");
     });
 
@@ -420,9 +424,11 @@ describe("createGrafanaAlerts", () => {
 
         // Verify pod alerts use or vector(0) to return 0 instead of nodata
         expect(rulesYaml).toContain(
-            'sum(kube_pod_container_status_waiting_reason{reason="CrashLoopBackOff"}) or vector(0)'
+            'sum(kube_pod_container_status_waiting_reason{reason="CrashLoopBackOff", namespace!="kube-system"}) or vector(0)'
         );
-        expect(rulesYaml).toContain('sum(kube_pod_status_phase{phase="Failed"} > 0) or vector(0)');
+        expect(rulesYaml).toContain(
+            'sum(kube_pod_status_phase{phase="Failed", namespace!="kube-system"} > 0) or vector(0)'
+        );
     });
 
     it("should use vector(0) fallback for API error rate alerts", async () => {

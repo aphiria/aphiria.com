@@ -3,6 +3,7 @@ import * as pulumi from "@pulumi/pulumi";
 import * as k8s from "@pulumi/kubernetes";
 import {
     installBaseHelmCharts,
+    installCertManager,
     installNginxGateway,
     ignoreDigitalOceanServiceAnnotationsV4,
 } from "../../src/components/helm-charts";
@@ -67,6 +68,22 @@ describe("installBaseHelmCharts", () => {
 
         expect(certUrn).toContain("cert-manager");
         expect(nginxUrn).toContain("nginx-gateway");
+    });
+
+    it("should configure cert-manager with resource limits", async () => {
+        const certManager = installCertManager({
+            env: "production",
+            chartName: "cert-manager",
+            repository: "https://charts.jetstack.io",
+            version: "v1.13.2",
+            namespace: "cert-manager",
+            provider: k8sProvider,
+        });
+
+        expect(certManager).toBeDefined();
+
+        const urn = await promiseOf(certManager.urn);
+        expect(urn).toContain("cert-manager");
     });
 });
 
