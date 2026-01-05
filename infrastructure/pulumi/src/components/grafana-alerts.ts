@@ -95,7 +95,7 @@ export function createGrafanaAlerts(args: GrafanaAlertsArgs): GrafanaAlertsResul
         {
             uid: "high_cpu_usage",
             title: "High CPU Usage",
-            expr: "rate(container_cpu_usage_seconds_total[5m])",
+            expr: 'rate(container_cpu_usage_seconds_total{namespace!="kube-system"}[5m])',
             threshold: "> 0.8",
             reduceFunction: "last",
             for: "10m",
@@ -106,13 +106,13 @@ export function createGrafanaAlerts(args: GrafanaAlertsArgs): GrafanaAlertsResul
             annotations: {
                 summary: "High CPU usage detected",
                 description:
-                    "Container {{ $values.A.Labels.container }} in pod {{ $values.A.Labels.pod }} has CPU usage above 80% for 10 minutes (current: {{ $values.B.Value }})",
+                    'Container {{ $labels.container }} in pod {{ $labels.pod }} has CPU usage above 80% (current: {{ printf \\"%.1f\\" (mul $values.B.Value 100) }}%)',
             },
         },
         {
             uid: "high_memory_usage",
             title: "High Memory Usage",
-            expr: "container_memory_working_set_bytes / container_spec_memory_limit_bytes",
+            expr: 'sum by (pod, namespace) (container_memory_working_set_bytes{namespace!="kube-system"}) / sum by (pod, namespace) (kube_pod_container_resource_limits{resource="memory", namespace!="kube-system"} > 0)',
             threshold: "> 0.9",
             reduceFunction: "last",
             for: "10m",
@@ -123,7 +123,7 @@ export function createGrafanaAlerts(args: GrafanaAlertsArgs): GrafanaAlertsResul
             annotations: {
                 summary: "High memory usage detected",
                 description:
-                    "Container {{ $values.A.Labels.container }} in pod {{ $values.A.Labels.pod }} has memory usage above 90% for 10 minutes (current: {{ $values.B.Value }})",
+                    'Pod {{ $labels.pod }} in namespace {{ $labels.namespace }} has memory usage above 90% (current: {{ printf \\"%.1f\\" (mul $values.B.Value 100) }}%)',
             },
         },
         {
@@ -140,13 +140,13 @@ export function createGrafanaAlerts(args: GrafanaAlertsArgs): GrafanaAlertsResul
             annotations: {
                 summary: "High API latency detected",
                 description:
-                    "API P95 latency is above 1 second for 5 minutes (current: {{ $values.B.Value }}s)",
+                    'API P95 latency is above 1 second (current: {{ printf \\"%.2f\\" $values.B.Value }}s)',
             },
         },
         {
             uid: "high_api_4xx_rate",
             title: "High API 4xx Rate",
-            expr: 'rate(app_http_requests_total{job="api",status=~"4.."}[5m]) / rate(app_http_requests_total{job="api"}[5m])',
+            expr: '(sum(rate(app_http_requests_total{job="api",status=~"4.."}[5m])) or vector(0)) / sum(rate(app_http_requests_total{job="api"}[5m]))',
             threshold: "> 0.1",
             reduceFunction: "last",
             for: "5m",
@@ -157,13 +157,13 @@ export function createGrafanaAlerts(args: GrafanaAlertsArgs): GrafanaAlertsResul
             annotations: {
                 summary: "High API 4xx rate detected",
                 description:
-                    "API 4xx error rate is above 10% for 5 minutes (current: {{ $values.B.Value }})",
+                    'API 4xx error rate is above 10% (current: {{ printf \\"%.1f\\" (mul $values.B.Value 100) }}%)',
             },
         },
         {
             uid: "high_api_5xx_rate",
             title: "High API 5xx Rate",
-            expr: 'rate(app_http_requests_total{job="api",status=~"5.."}[5m]) / rate(app_http_requests_total{job="api"}[5m])',
+            expr: '(sum(rate(app_http_requests_total{job="api",status=~"5.."}[5m])) or vector(0)) / sum(rate(app_http_requests_total{job="api"}[5m]))',
             threshold: "> 0.05",
             reduceFunction: "last",
             for: "5m",
@@ -174,13 +174,13 @@ export function createGrafanaAlerts(args: GrafanaAlertsArgs): GrafanaAlertsResul
             annotations: {
                 summary: "High API 5xx rate detected",
                 description:
-                    "API 5xx error rate is above 5% for 5 minutes (current: {{ $values.B.Value }})",
+                    'API 5xx error rate is above 5% (current: {{ printf \\"%.1f\\" (mul $values.B.Value 100) }}%)',
             },
         },
         {
             uid: "pod_crash_looping",
             title: "Pod Crash Looping",
-            expr: 'kube_pod_container_status_waiting_reason{reason="CrashLoopBackOff"}',
+            expr: 'sum(kube_pod_container_status_waiting_reason{reason="CrashLoopBackOff", namespace!="kube-system"}) or vector(0)',
             threshold: "> 0",
             reduceFunction: "last",
             for: "5m",
@@ -191,24 +191,23 @@ export function createGrafanaAlerts(args: GrafanaAlertsArgs): GrafanaAlertsResul
             annotations: {
                 summary: "Pod is crash looping",
                 description:
-                    "Pod {{ $values.A.Labels.pod }} in namespace {{ $values.A.Labels.namespace }} is in CrashLoopBackOff state",
+                    '{{ printf \\"%.0f\\" $values.B.Value }} pod(s) are in CrashLoopBackOff state',
             },
         },
         {
             uid: "pod_failed",
             title: "Pod Failed",
-            expr: 'kube_pod_status_phase{phase="Failed"}',
+            expr: 'sum(kube_pod_status_phase{phase="Failed", namespace!="kube-system"} > 0) or vector(0)',
             threshold: "> 0",
             reduceFunction: "last",
-            for: "1m",
+            for: "5m",
             labels: {
                 severity: "critical",
                 environment: args.environment,
             },
             annotations: {
                 summary: "Pod has failed",
-                description:
-                    "Pod {{ $values.A.Labels.pod }} in namespace {{ $values.A.Labels.namespace }} has failed",
+                description: '{{ printf \\"%.0f\\" $values.B.Value }} pod(s) have failed',
             },
         },
     ];

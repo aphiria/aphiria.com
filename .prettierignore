@@ -1,0 +1,12 @@
+.claude/
+.pulumi/
+apps/
+coverage/
+dist/
+node_modules/
+playwright-report/
+specs/
+test-results/
+vendor/
+*.md
+package-lock.json

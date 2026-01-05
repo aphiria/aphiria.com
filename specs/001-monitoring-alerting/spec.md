@@ -17,7 +17,7 @@
 - Q: HTTP to HTTPS redirect requirement → A: http://grafana.aphiria.com must redirect to https://grafana.aphiria.com (HTTP should never be accessible)
 - Q: Local development environment support → A: Support "local" environment where grafana.aphiria.com (via /etc/hosts) points to local Kubernetes cluster for testing dashboard changes before production deployment
 
-## User Scenarios & Testing *(mandatory)*
+## User Scenarios & Testing _(mandatory)_
 
 ### User Story 1 - Infrastructure Health Visibility (Priority: P1)
 
@@ -134,7 +134,7 @@ As a developer, I need all dashboard definitions stored in source control (not c
 - What happens when a preview environment is deleted while alerts are active? Alerts should automatically deactivate or stop firing when the target environment no longer exists.
 - How does the system handle concurrent dashboard access by multiple administrators? Changes should be reflected in real-time or users should be notified of conflicts.
 
-## Requirements *(mandatory)*
+## Requirements _(mandatory)_
 
 ### Functional Requirements
 
@@ -175,7 +175,7 @@ As a developer, I need all dashboard definitions stored in source control (not c
 - **Datasource**: The connection configuration linking the dashboard system to the metrics storage backend
 - **Environment**: A deployment context (production or preview) that determines alert severity and labeling
 
-## Success Criteria *(mandatory)*
+## Success Criteria _(mandatory)_
 
 ### Measurable Outcomes
 
@@ -195,7 +195,7 @@ As a developer, I need all dashboard definitions stored in source control (not c
 - The NGINX Gateway infrastructure is already deployed and operational (as referenced in the requirements)
 - The application pods expose Prometheus-compatible metrics endpoints (or will be instrumented to do so)
 - Email delivery infrastructure (SMTP server or equivalent) is available for alert notifications
-- DNS configuration for grafana.aphiria.com (production) and *.pr-grafana.aphiria.com (preview) can be managed through existing infrastructure automation
+- DNS configuration for grafana.aphiria.com (production) and \*.pr-grafana.aphiria.com (preview) can be managed through existing infrastructure automation
 - Let's Encrypt is already integrated with the NGINX Gateway for certificate issuance
 - GitHub OAuth application credentials will be provided or can be created in the aphiria organization
 - Pulumi ESC is already configured and accessible for secret storage

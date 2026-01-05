@@ -5,6 +5,7 @@
 **Decision**: Deploy Prometheus using raw Kubernetes manifests via Pulumi's `kubernetes` package (not Helm, not Operator)
 
 **Rationale**:
+
 - **Full Pulumi control**: Raw manifests give complete visibility and control over every resource created - ConfigMaps, Deployments, Services, etc. All defined in TypeScript with strong typing
 - **No kubectl requirement**: Everything deployed declaratively through Pulumi stack. No manual `kubectl apply` or `helm install` steps required
 - **Simplicity**: For single-replica Prometheus with basic scraping needs, raw manifests avoid the complexity of Operator CRDs (ServiceMonitor, PrometheusRule, etc.) or Helm value hierarchies
@@ -25,6 +26,7 @@
 **Decision**: Deploy Grafana using raw Kubernetes manifests via Pulumi's `kubernetes` package
 
 **Rationale**:
+
 - **Consistency with Prometheus**: Same deployment pattern for both monitoring components. Team learns one approach, not mix of raw/Helm/Operator
 - **Explicit dashboard provisioning**: Grafana ConfigMaps for datasources and dashboards are first-class Pulumi resources, making provisioning transparent
 - **No Helm complexity**: Avoid nested values.yaml, simplify testing, maintain full visibility into generated resources
@@ -43,6 +45,7 @@
 **Decision**: Version-controlled JSON dashboards in Git, loaded via Grafana ConfigMap provisioning
 
 **Rationale**:
+
 - **No manual export required**: Dashboards defined in Git are the source of truth. Grafana loads them on startup via provisioning ConfigMaps
 - **True GitOps**: Dashboard changes go through PR review, are auditable, and deployed via Pulumi. No UI drift
 - **No compilation step**: JSON is Grafana's native format. No Jsonnet/CUE toolchain needed in CI/CD
@@ -62,6 +65,7 @@
 **Decision**: Use Prometheus recording/alerting rules (prometheus.yml) for metrics-based alerts, not Grafana Unified Alerting
 
 **Rationale**:
+
 - **Single source of truth**: Prometheus evaluates rules based on its scraped metrics. No dual alerting systems to maintain
 - **ConfigMap-based**: Rules defined in Prometheus ConfigMap, version-controlled, deployed via Pulumi
 - **Environment-specific routing**: Alertmanager config (also in ConfigMap) handles routing. Prod sends to email, preview suppresses. Simple YAML conditions
@@ -80,6 +84,7 @@
 **Decision**: Use PersistentVolumeClaim with 7-day retention for Prometheus, emptyDir for Grafana
 
 **Rationale**:
+
 - **Prometheus needs persistence**: Metrics data must survive pod restarts/updates. PVC enables this
 - **Retention policy**: Prometheus `--storage.tsdb.retention.time=7d` flag ensures 7-day window. PVC sized accordingly (e.g., 10Gi for expected metric volume)
 - **DigitalOcean compatibility**: DO Kubernetes supports dynamic PV provisioning via default StorageClass. Pulumi creates PVC, DO provisions block storage automatically
@@ -100,6 +105,7 @@
 **Decision**: Use Kubernetes service discovery (`kubernetes_sd_configs`) in prometheus.yml for pod/service scraping, not static configs
 
 **Rationale**:
+
 - **Automatic target discovery**: Prometheus auto-discovers annotated pods/services in cluster. No manual IP management
 - **Works with auto-scaling**: If API pods scale 1→3, Prometheus automatically scrapes all replicas. Static configs can't handle dynamic targets
 - **Annotation-based filtering**: Services with `prometheus.io/scrape: "true"` annotation are auto-scraped. Others ignored. Clean opt-in model
@@ -118,6 +124,7 @@
 ## Summary
 
 **Key Principles Applied**:
+
 1. **Simplicity over features**: Raw manifests + ConfigMaps beat Operators/Helm for our single-replica, single-cluster use case
 2. **Pulumi-only deployment**: Zero manual kubectl/helm commands. Everything declarative in TypeScript
 3. **Version control as truth**: Dashboards, Prometheus rules, and configs in Git. No UI drift
@@ -125,11 +132,13 @@
 5. **Dynamic infrastructure**: Kubernetes service discovery handles pod scaling/restarts without manual intervention
 
 **Testing Strategy**:
+
 - Unit tests for Pulumi components (ConfigMap generation, resource requests/limits)
 - Integration tests for Prometheus scraping (verify annotation-based discovery)
 - Validation: JSON schema checks for dashboards, promtool for Prometheus rules
 
 **Future Considerations**:
+
 - If we need 10+ similar dashboards → revisit Jsonnet/Grafonnet
 - If we adopt multi-cluster → consider Prometheus federation or Thanos
 - If alert complexity grows → evaluate Grafana Unified Alerting for cross-datasource rules

@@ -8,15 +8,11 @@
         "watch": "tsc --watch",
         "test": "PULUMI_SKIP_UPDATE_CHECK=1 PULUMI_AUTOMATION_API_SKIP_VERSION_CHECK=1 jest --coverage --runInBand",
         "test:watch": "PULUMI_SKIP_UPDATE_CHECK=1 PULUMI_AUTOMATION_API_SKIP_VERSION_CHECK=1 jest --watch",
-        "test:ci": "PULUMI_SKIP_UPDATE_CHECK=1 PULUMI_AUTOMATION_API_SKIP_VERSION_CHECK=1 jest --ci --coverage --maxWorkers=1",
-        "lint": "eslint .",
-        "lint:fix": "eslint . --fix",
-        "format": "prettier --write .",
-        "format:check": "prettier --check ."
+        "test:ci": "PULUMI_SKIP_UPDATE_CHECK=1 PULUMI_AUTOMATION_API_SKIP_VERSION_CHECK=1 jest --ci --coverage --maxWorkers=1"
     },
     "keywords": [],
     "author": "",
-    "license": "ISC",
+    "license": "MIT",
     "dependencies": {
         "@pulumi/digitalocean": "^4.55.0",
         "@pulumi/kubernetes": "^4.24.1",
@@ -28,14 +24,7 @@
         "@pulumi/pulumi": "^3.213.0",
         "@types/jest": "^29.0.0",
         "@types/node": "^20.0.0",
-        "@typescript-eslint/eslint-plugin": "^8.0.0",
-        "@typescript-eslint/parser": "^8.0.0",
-        "eslint": "^9.0.0",
-        "eslint-config-prettier": "^10.1.8",
         "jest": "^29.0.0",
-        "prettier": "^3.0.0",
-        "ts-jest": "^29.0.0",
-        "typescript": "^5.0.0",
-        "typescript-eslint": "^8.50.1"
+        "ts-jest": "^29.0.0"
     }
 }

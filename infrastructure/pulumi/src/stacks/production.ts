@@ -39,6 +39,10 @@ createStack(
             storageSize: "20Gi",
             dbUser: stackConfig.postgresql.user,
             dbPassword: stackConfig.postgresql.password,
+            resources: {
+                requests: { cpu: "100m", memory: "128Mi" },
+                limits: { cpu: "200m", memory: "256Mi" },
+            },
         },
         gateway: {
             tlsMode: "letsencrypt-prod",
@@ -56,15 +60,49 @@ createStack(
             },
         },
         app: {
-            webReplicas: 2,
-            apiReplicas: 2,
-            webUrl: stackConfig.urls.web,
-            apiUrl: stackConfig.urls.api,
-            webImage: stackConfig.images.web,
-            apiImage: stackConfig.images.api,
+            web: {
+                replicas: 2,
+                url: stackConfig.urls.web,
+                image: stackConfig.images.web,
+                resources: {
+                    requests: { cpu: "50m", memory: "64Mi" },
+                    limits: { cpu: "100m", memory: "128Mi" },
+                },
+                podDisruptionBudget: { minAvailable: 1 },
+            },
+            api: {
+                replicas: 2,
+                url: stackConfig.urls.api,
+                image: stackConfig.images.api,
+                resources: {
+                    initContainer: {
+                        requests: { cpu: "50m", memory: "64Mi" },
+                        limits: { cpu: "100m", memory: "128Mi" },
+                    },
+                    nginx: {
+                        requests: { cpu: "50m", memory: "64Mi" },
+                        limits: { cpu: "100m", memory: "128Mi" },
+                    },
+                    php: {
+                        requests: { cpu: "100m", memory: "128Mi" },
+                        limits: { cpu: "200m", memory: "256Mi" },
+                    },
+                },
+                podDisruptionBudget: { minAvailable: 1 },
+            },
+            migration: {
+                resources: {
+                    migration: {
+                        requests: { cpu: "50m", memory: "128Mi" },
+                        limits: { cpu: "200m", memory: "256Mi" },
+                    },
+                    initContainer: {
+                        requests: { cpu: "10m", memory: "32Mi" },
+                        limits: { cpu: "50m", memory: "64Mi" },
+                    },
+                },
+            },
             cookieDomain: ".aphiria.com",
-            webPodDisruptionBudget: { minAvailable: 1 },
-            apiPodDisruptionBudget: { minAvailable: 1 },
         },
         monitoring: {
             prometheus: {

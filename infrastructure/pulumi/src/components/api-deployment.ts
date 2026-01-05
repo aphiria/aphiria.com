@@ -33,23 +33,23 @@ export interface APIDeploymentArgs extends CommonDeploymentArgs {
     cookieSecure: boolean;
     /** PR number (optional, preview environments only) */
     prNumber?: string;
-    /** Prometheus Bearer token for /metrics endpoint authentication */
-    prometheusAuthToken: pulumi.Input<string>;
+    /** Prometheus Bearer token for /metrics endpoint authentication (optional if monitoring disabled) */
+    prometheusAuthToken?: pulumi.Input<string>;
     /** Optional image pull secrets for private registries */
     imagePullSecrets?: pulumi.Input<string>[];
-    /** Optional resource limits for containers */
-    resources?: {
-        nginx?: {
-            requests?: { cpu?: string; memory?: string };
-            limits?: { cpu?: string; memory?: string };
+    /** Resource requests and limits for containers (required) */
+    resources: {
+        nginx: {
+            requests: { cpu: string; memory: string };
+            limits: { cpu: string; memory: string };
         };
-        php?: {
-            requests?: { cpu?: string; memory?: string };
-            limits?: { cpu?: string; memory?: string };
+        php: {
+            requests: { cpu: string; memory: string };
+            limits: { cpu: string; memory: string };
         };
-        initContainer?: {
-            requests?: { cpu?: string; memory?: string };
-            limits?: { cpu?: string; memory?: string };
+        initContainer: {
+            requests: { cpu: string; memory: string };
+            limits: { cpu: string; memory: string };
         };
     };
     /** Optional PodDisruptionBudget for high availability (production only) */
@@ -92,7 +92,7 @@ export function createAPIDeployment(args: APIDeploymentArgs): APIDeploymentResul
     // Build Secret data
     const secretData: Record<string, pulumi.Input<string>> = {
         DB_PASSWORD: args.dbPassword,
-        PROMETHEUS_AUTH_TOKEN: args.prometheusAuthToken,
+        PROMETHEUS_AUTH_TOKEN: args.prometheusAuthToken!, // Always set via config.prometheusAuthToken or config.monitoring.prometheus.authToken
     };
 
     // Calculate checksums for pod annotations (forces restart when config or secrets change)
@@ -231,9 +231,7 @@ export function createAPIDeployment(args: APIDeploymentArgs): APIDeploymentResul
                                         mountPath: "/usr/share/nginx/html",
                                     },
                                 ],
-                                ...(args.resources?.initContainer && {
-                                    resources: args.resources.initContainer,
-                                }),
+                                resources: args.resources.initContainer,
                             },
                         ],
                         containers: [
@@ -273,9 +271,7 @@ export function createAPIDeployment(args: APIDeploymentArgs): APIDeploymentResul
                                         subPath: "default.conf",
                                     },
                                 ],
-                                ...(args.resources?.nginx && {
-                                    resources: args.resources.nginx,
-                                }),
+                                resources: args.resources.nginx,
                             },
                             // php: PHP-FPM process manager
                             {
@@ -311,9 +307,7 @@ export function createAPIDeployment(args: APIDeploymentArgs): APIDeploymentResul
                                         mountPath: "/usr/share/nginx/html",
                                     },
                                 ],
-                                ...(args.resources?.php && {
-                                    resources: args.resources.php,
-                                }),
+                                resources: args.resources.php,
                             },
                         ],
                         volumes: [

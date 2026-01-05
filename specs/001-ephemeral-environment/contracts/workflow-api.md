@@ -20,32 +20,33 @@ This document specifies the contract for the preview environment automation work
 
 ```yaml
 on:
-  pull_request:
-    types: [opened, synchronize, reopened]
-    branches:
-      - master
+    pull_request:
+        types: [opened, synchronize, reopened]
+        branches:
+            - master
 ```
 
 **Conditions**:
+
 - Only runs for PRs targeting `master` branch
 - Requires manual approval via GitHub environment protection
 - Skips if PR is from a fork (security: untrusted code)
 
 ### Inputs
 
-| Input | Source | Type | Description | Example |
-|-------|--------|------|-------------|---------|
-| `pr.number` | GitHub event | integer | Pull request number | `123` |
-| `pr.head.sha` | GitHub event | string | Commit SHA to deploy | `abc123def456...` |
-| `pr.head.ref` | GitHub event | string | Branch name | `feature/new-docs` |
-| `pr.base.ref` | GitHub event | string | Base branch (should be master) | `master` |
+| Input         | Source       | Type    | Description                    | Example            |
+| ------------- | ------------ | ------- | ------------------------------ | ------------------ |
+| `pr.number`   | GitHub event | integer | Pull request number            | `123`              |
+| `pr.head.sha` | GitHub event | string  | Commit SHA to deploy           | `abc123def456...`  |
+| `pr.head.ref` | GitHub event | string  | Branch name                    | `feature/new-docs` |
+| `pr.base.ref` | GitHub event | string  | Base branch (should be master) | `master`           |
 
 ### Secrets (Environment-Scoped)
 
-| Secret | Purpose | Format |
-|--------|---------|--------|
-| `KUBECONFIG` | Kubernetes cluster access | base64-encoded kubeconfig |
-| `DO_TOKEN` | DigitalOcean API token (optional) | Token string |
+| Secret       | Purpose                           | Format                    |
+| ------------ | --------------------------------- | ------------------------- |
+| `KUBECONFIG` | Kubernetes cluster access         | base64-encoded kubeconfig |
+| `DO_TOKEN`   | DigitalOcean API token (optional) | Token string              |
 
 ### Outputs
 
@@ -79,14 +80,15 @@ on:
 
 **Status Values**:
 
-| Status Text | Emoji | Description |
-|-------------|-------|-------------|
-| `Deploying` | 🔄 | Provisioning in progress |
-| `Ready` | ✅ | All resources healthy |
-| `Failed` | ❌ | Deployment error |
-| `Updating` | 🔄 | Updating to new commit |
+| Status Text | Emoji | Description              |
+| ----------- | ----- | ------------------------ |
+| `Deploying` | 🔄    | Provisioning in progress |
+| `Ready`     | ✅    | All resources healthy    |
+| `Failed`    | ❌    | Deployment error         |
+| `Updating`  | 🔄    | Updating to new commit   |
 
 **Comment Upsert Logic**:
+
 - Search for existing comment with marker `<!-- preview-environment-status: pr-[PR_NUMBER] -->`
 - If found: Update existing comment
 - If not found: Create new comment
@@ -96,6 +98,7 @@ on:
 **Name**: `Preview Environment`
 
 **Statuses**:
+
 - `pending`: Awaiting approval
 - `in_progress`: Deploying
 - `success`: Preview ready at URL
@@ -105,12 +108,12 @@ on:
 
 ### Exit Conditions
 
-| Condition | Exit Code | Output |
-|-----------|-----------|--------|
-| Deployment successful | 0 | PR comment updated with "Ready" status |
-| Deployment failed | 1 | PR comment updated with error details |
-| Approval timeout | 1 | Workflow cancelled (GitHub environment timeout) |
-| Concurrent limit reached | 1 | Comment posted: "Max concurrent previews reached" |
+| Condition                | Exit Code | Output                                            |
+| ------------------------ | --------- | ------------------------------------------------- |
+| Deployment successful    | 0         | PR comment updated with "Ready" status            |
+| Deployment failed        | 1         | PR comment updated with error details             |
+| Approval timeout         | 1         | Workflow cancelled (GitHub environment timeout)   |
+| Concurrent limit reached | 1         | Comment posted: "Max concurrent previews reached" |
 
 ---
 
@@ -122,25 +125,26 @@ on:
 
 ```yaml
 on:
-  pull_request:
-    types: [closed]
+    pull_request:
+        types: [closed]
 ```
 
 **Conditions**:
+
 - Runs automatically (no approval required)
 - Runs whether PR was merged or closed without merging
 
 ### Inputs
 
-| Input | Source | Type | Description | Example |
-|-------|--------|------|-------------|---------|
-| `pr.number` | GitHub event | integer | Pull request number | `123` |
-| `pr.merged` | GitHub event | boolean | Whether PR was merged | `true` |
+| Input       | Source       | Type    | Description           | Example |
+| ----------- | ------------ | ------- | --------------------- | ------- |
+| `pr.number` | GitHub event | integer | Pull request number   | `123`   |
+| `pr.merged` | GitHub event | boolean | Whether PR was merged | `true`  |
 
 ### Secrets
 
-| Secret | Purpose | Format |
-|--------|---------|--------|
+| Secret       | Purpose                   | Format                    |
+| ------------ | ------------------------- | ------------------------- |
 | `KUBECONFIG` | Kubernetes cluster access | base64-encoded kubeconfig |
 
 ### Outputs
@@ -162,18 +166,19 @@ Preview environment and all associated resources have been removed.
 #### 2. Cleanup Verification
 
 **Validation Steps**:
+
 1. Verify namespace deleted: `kubectl get namespace preview-pr-[PR_NUMBER]` returns not found
 2. Verify PVCs removed: `kubectl get pvc -A | grep preview-pr-[PR_NUMBER]` returns empty
 3. Verify Ingress removed: `kubectl get ingress -A | grep pr-[PR_NUMBER]` returns empty
 
 ### Exit Conditions
 
-| Condition | Exit Code | Output |
-|-----------|-----------|--------|
-| Cleanup successful | 0 | PR comment updated with "Destroyed" status |
-| Namespace not found | 0 | Idempotent: treated as success |
-| Cleanup timeout (>5 min) | 1 | Warning posted to PR, manual intervention required |
-| Partial cleanup (orphaned resources) | 1 | Error posted with list of orphaned resources |
+| Condition                            | Exit Code | Output                                             |
+| ------------------------------------ | --------- | -------------------------------------------------- |
+| Cleanup successful                   | 0         | PR comment updated with "Destroyed" status         |
+| Namespace not found                  | 0         | Idempotent: treated as success                     |
+| Cleanup timeout (>5 min)             | 1         | Warning posted to PR, manual intervention required |
+| Partial cleanup (orphaned resources) | 1         | Error posted with list of orphaned resources       |
 
 ---
 
@@ -185,10 +190,10 @@ Preview environment and all associated resources have been removed.
 
 ```yaml
 on:
-  pull_request:
-    types: [opened, synchronize, reopened]
-    branches:
-      - master
+    pull_request:
+        types: [opened, synchronize, reopened]
+        branches:
+            - master
 ```
 
 ### Purpose
@@ -197,15 +202,15 @@ Build container images once per commit, push to registry with immutable digest.
 
 ### Inputs
 
-| Input | Source | Type | Description |
-|-------|--------|------|-------------|
-| `pr.head.sha` | GitHub event | string | Commit SHA to build |
-| `pr.number` | GitHub event | integer | PR number |
+| Input         | Source       | Type    | Description         |
+| ------------- | ------------ | ------- | ------------------- |
+| `pr.head.sha` | GitHub event | string  | Commit SHA to build |
+| `pr.number`   | GitHub event | integer | PR number           |
 
 ### Outputs
 
-| Output | Format | Description |
-|--------|--------|-------------|
+| Output       | Format     | Description                |
+| ------------ | ---------- | -------------------------- |
 | `web_digest` | sha256:... | Immutable web image digest |
 | `api_digest` | sha256:... | Immutable API image digest |
 
@@ -218,6 +223,7 @@ Build container images once per commit, push to registry with immutable digest.
 5. Add PR labels with digests for production promotion
 
 **PR Labels Added**:
+
 ```
 image-digest/web:sha256:abc123...
 image-digest/api:sha256:def456...
@@ -233,63 +239,65 @@ image-digest/api:sha256:def456...
 
 ```yaml
 on:
-  pull_request:
-    types: [closed]
-    branches:
-      - master
+    pull_request:
+        types: [closed]
+        branches:
+            - master
 ```
 
 **Condition**: Only runs if `pr.merged == true`
 
 ### Inputs
 
-| Input | Source | Type | Description |
-|-------|--------|------|-------------|
-| `pr.number` | GitHub event | integer | Merged PR number |
-| `pr.merge_commit_sha` | GitHub event | string | Merge commit SHA |
+| Input                 | Source       | Type    | Description      |
+| --------------------- | ------------ | ------- | ---------------- |
+| `pr.number`           | GitHub event | integer | Merged PR number |
+| `pr.merge_commit_sha` | GitHub event | string  | Merge commit SHA |
 
 ### Secrets
 
-| Secret | Purpose |
-|--------|---------|
+| Secret       | Purpose                   |
+| ------------ | ------------------------- |
 | `KUBECONFIG` | Production cluster access |
 
 ### Process
 
 1. **Retrieve Image Digests** from merged PR labels:
-   ```bash
-   WEB_DIGEST=$(gh pr view $PR_NUMBER --json labels \
-     --jq '.labels[] | select(.name | startswith("image-digest/web:")) | .name | split(":")[1:]')
-   ```
+
+    ```bash
+    WEB_DIGEST=$(gh pr view $PR_NUMBER --json labels \
+      --jq '.labels[] | select(.name | startswith("image-digest/web:")) | .name | split(":")[1:]')
+    ```
 
 2. **Validate Digests Exist**:
-   - Exit 1 if labels not found (preview didn't deploy successfully)
-   - Exit 1 if digest format invalid
+    - Exit 1 if labels not found (preview didn't deploy successfully)
+    - Exit 1 if digest format invalid
 
 3. **Deploy to Production** using exact digest:
-   ```bash
-   kubectl set image deployment/web \
-     web=ghcr.io/aphiria/aphiria.com/web@sha256:$WEB_DIGEST \
-     -n production
-   ```
+
+    ```bash
+    kubectl set image deployment/web \
+      web=ghcr.io/aphiria/aphiria.com/web@sha256:$WEB_DIGEST \
+      -n production
+    ```
 
 4. **Verify Deployment**:
-   - Wait for rollout to complete
-   - Check pod readiness
-   - Verify new image digest matches expected
+    - Wait for rollout to complete
+    - Check pod readiness
+    - Verify new image digest matches expected
 
 5. **Update Deployment Record**:
-   - Tag image with `latest` and `production` (mutable tags for reference)
-   - Post deployment summary to merged PR
+    - Tag image with `latest` and `production` (mutable tags for reference)
+    - Post deployment summary to merged PR
 
 ### Exit Conditions
 
-| Condition | Exit Code | Output |
-|-----------|-----------|--------|
-| Promotion successful | 0 | Comment on PR with deployment details |
-| Digest not found | 1 | Error: Preview must be deployed before merge |
-| Deployment failed | 1 | Error with rollback instructions |
-| Digest mismatch | 1 | Error: Running image != expected digest |
+| Condition            | Exit Code | Output                                       |
+| -------------------- | --------- | -------------------------------------------- |
+| Promotion successful | 0         | Comment on PR with deployment details        |
+| Digest not found     | 1         | Error: Preview must be deployed before merge |
+| Deployment failed    | 1         | Error with rollback instructions             |
+| Digest mismatch      | 1         | Error: Running image != expected digest      |
 
 ---
 
@@ -301,13 +309,14 @@ on:
 
 ```yaml
 on:
-  schedule:
-    - cron: '*/30 * * * *'  # Every 30 minutes
+    schedule:
+        - cron: "*/30 * * * *" # Every 30 minutes
 ```
 
 ### Purpose
 
 Detect and clean up orphaned preview environments:
+
 - Namespaces for closed PRs
 - Environments older than 7 days
 - Resources exceeding limits
@@ -338,19 +347,19 @@ Detect and clean up orphaned preview environments:
 
 **Inputs**:
 
-| Argument | Required | Description | Example |
-|----------|----------|-------------|---------|
-| `--pr-number` | Yes | Pull request number | `123` |
-| `--commit-sha` | Yes | Git commit SHA to deploy | `abc123def456...` |
-| `--namespace` | Yes | Kubernetes namespace name | `preview-pr-123` |
+| Argument       | Required | Description               | Example           |
+| -------------- | -------- | ------------------------- | ----------------- |
+| `--pr-number`  | Yes      | Pull request number       | `123`             |
+| `--commit-sha` | Yes      | Git commit SHA to deploy  | `abc123def456...` |
+| `--namespace`  | Yes      | Kubernetes namespace name | `preview-pr-123`  |
 
 **Outputs**:
 
-| Output | Format | Description |
-|--------|--------|-------------|
-| stdout | Text | Progress messages |
-| stderr | Text | Errors and warnings |
-| Exit code | 0/1 | Success (0) or failure (1) |
+| Output    | Format | Description                |
+| --------- | ------ | -------------------------- |
+| stdout    | Text   | Progress messages          |
+| stderr    | Text   | Errors and warnings        |
+| Exit code | 0/1    | Success (0) or failure (1) |
 
 **Behavior**:
 
@@ -366,6 +375,7 @@ Detect and clean up orphaned preview environments:
 10. Return success
 
 **Error Handling**:
+
 - Timeout: Exit 1, output resource status to stderr
 - Apply failure: Exit 1, output kubectl error
 - Resource not ready: Exit 1, output pod logs if applicable
@@ -386,18 +396,18 @@ Detect and clean up orphaned preview environments:
 
 **Inputs**:
 
-| Argument | Required | Description | Example |
-|----------|----------|-------------|---------|
-| `--pr-number` | Yes | Pull request number | `123` |
-| `--namespace` | Yes | Kubernetes namespace name | `preview-pr-123` |
+| Argument      | Required | Description               | Example          |
+| ------------- | -------- | ------------------------- | ---------------- |
+| `--pr-number` | Yes      | Pull request number       | `123`            |
+| `--namespace` | Yes      | Kubernetes namespace name | `preview-pr-123` |
 
 **Outputs**:
 
-| Output | Format | Description |
-|--------|--------|-------------|
-| stdout | Text | Progress messages |
-| stderr | Text | Warnings if resources orphaned |
-| Exit code | 0/1 | Success (0) or failure (1) |
+| Output    | Format | Description                    |
+| --------- | ------ | ------------------------------ |
+| stdout    | Text   | Progress messages              |
+| stderr    | Text   | Warnings if resources orphaned |
+| Exit code | 0/1    | Success (0) or failure (1)     |
 
 **Behavior**:
 
@@ -407,6 +417,7 @@ Detect and clean up orphaned preview environments:
 4. Return success if no orphans found
 
 **Error Handling**:
+
 - Namespace not found: Exit 0 (idempotent)
 - Deletion timeout: Exit 1, output stuck resources
 - Orphaned resources: Exit 1, output list to stderr
@@ -428,11 +439,11 @@ Detect and clean up orphaned preview environments:
 
 **Inputs**:
 
-| Argument | Required | Description | Example |
-|----------|----------|-------------|---------|
-| `--pr-number` | Yes | Pull request number | `123` |
-| `--commit-sha` | Yes | Git commit SHA | `abc123def456...` |
-| `--output-dir` | Yes | Directory to write overlay | `/tmp/preview-overlay` |
+| Argument       | Required | Description                | Example                |
+| -------------- | -------- | -------------------------- | ---------------------- |
+| `--pr-number`  | Yes      | Pull request number        | `123`                  |
+| `--commit-sha` | Yes      | Git commit SHA             | `abc123def456...`      |
+| `--output-dir` | Yes      | Directory to write overlay | `/tmp/preview-overlay` |
 
 **Outputs**:
 
@@ -445,22 +456,22 @@ kind: Kustomization
 namespace: preview-pr-123
 
 commonLabels:
-  preview.aphiria.com/pr-number: "123"
+    preview.aphiria.com/pr-number: "123"
 
 images:
-  - name: aphiria.com-web
-    newTag: abc123def456
-  - name: aphiria.com-api
-    newTag: abc123def456
+    - name: aphiria.com-web
+      newTag: abc123def456
+    - name: aphiria.com-api
+      newTag: abc123def456
 
 patches:
-  - patch: |-
-      - op: replace
-        path: /spec/rules/0/host
-        value: 123.pr.aphiria.com
-    target:
-      kind: Ingress
-      name: preview-ingress
+    - patch: |-
+          - op: replace
+            path: /spec/rules/0/host
+            value: 123.pr.aphiria.com
+      target:
+          kind: Ingress
+          name: preview-ingress
 ```
 
 **Exit Code**: 0 on success, 1 on error
@@ -508,9 +519,10 @@ When deployment fails, PR comment should include:
 ---
 
 ### ❌ Deployment Error
-
 ```
+
 [Error message from workflow/script]
+
 ```
 
 <details>

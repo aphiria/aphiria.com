@@ -301,6 +301,8 @@ export function createStack(config: StackConfig, k8sProvider: k8s.Provider): Sta
                                           config.monitoring.grafana.smtp?.alertEmail ||
                                           "admin@aphiria.com",
                                       singleEmail: true,
+                                      subject:
+                                          '[{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .CommonLabels.environment }} {{ (index .Alerts 0).Annotations.summary }}',
                                   },
                                   disableResolveMessage: false,
                               },
@@ -364,10 +366,9 @@ export function createStack(config: StackConfig, k8sProvider: k8s.Provider): Sta
             gatewayName: "nginx-gateway",
             gatewayNamespace: gatewayNamespace,
             hostname: config.monitoring.grafana.hostname,
-            // Use numbered listener for preview-pr, unnumbered for production/preview-base
-            // https-subdomains-3 is for *.pr-grafana.aphiria.com
-            /* istanbul ignore next - sectionName varies by environment (preview-pr vs other) */
-            sectionName: isPreviewPR ? "https-subdomains-3" : "https-subdomains",
+            // Grafana uses a root domain (pr-grafana.aphiria.com or grafana.aphiria.com)
+            // Root domains always use the https-root listener
+            sectionName: "https-root",
             provider: k8sProvider,
         });
 
@@ -472,21 +473,21 @@ export function createStack(config: StackConfig, k8sProvider: k8s.Provider): Sta
         resources.web = createWebDeployment({
             env: config.env,
             namespace,
-            replicas: config.app.webReplicas,
-            image: config.app.webImage,
+            replicas: config.app.web.replicas,
+            image: config.app.web.image,
             jsConfigData: {
-                apiUri: config.app.apiUrl,
+                apiUri: config.app.api.url,
                 cookieDomain: config.app.cookieDomain,
             },
-            baseUrl: config.app.webUrl,
+            baseUrl: config.app.web.url,
             logLevel: config.env === "production" ? "warning" : "debug",
             prNumber:
                 config.env === "preview" && config.namespace
                     ? config.namespace.name.replace("preview-pr-", "")
                     : undefined,
             imagePullSecrets: config.namespace?.imagePullSecret ? ["ghcr-pull-secret"] : undefined,
-            resources: config.app.webResources,
-            podDisruptionBudget: config.app.webPodDisruptionBudget,
+            resources: config.app.web.resources,
+            podDisruptionBudget: config.app.web.podDisruptionBudget,
             provider: k8sProvider,
         });
 
@@ -494,14 +495,14 @@ export function createStack(config: StackConfig, k8sProvider: k8s.Provider): Sta
         resources.api = createAPIDeployment({
             env: config.env,
             namespace,
-            replicas: config.app.apiReplicas,
-            image: config.app.apiImage,
+            replicas: config.app.api.replicas,
+            image: config.app.api.image,
             dbHost,
             dbName,
             dbUser,
             dbPassword,
-            apiUrl: config.app.apiUrl,
-            webUrl: config.app.webUrl,
+            apiUrl: config.app.api.url,
+            webUrl: config.app.web.url,
             logLevel: config.env === "production" ? "warning" : "debug",
             cookieDomain: config.app.cookieDomain,
             cookieSecure: config.env !== "local",
@@ -510,9 +511,11 @@ export function createStack(config: StackConfig, k8sProvider: k8s.Provider): Sta
                     ? config.namespace.name.replace("preview-pr-", "")
                     : undefined,
             imagePullSecrets: config.namespace?.imagePullSecret ? ["ghcr-pull-secret"] : undefined,
-            resources: config.app.apiResources,
-            podDisruptionBudget: config.app.apiPodDisruptionBudget,
-            prometheusAuthToken: config.monitoring!.prometheus.authToken,
+            resources: config.app.api.resources,
+            podDisruptionBudget: config.app.api.podDisruptionBudget,
+            // Prefer top-level prometheusAuthToken (preview-pr) over monitoring.prometheus.authToken (local/preview-base/production)
+            prometheusAuthToken:
+                config.prometheusAuthToken || config.monitoring?.prometheus.authToken,
             provider: k8sProvider,
         });
 
@@ -520,14 +523,14 @@ export function createStack(config: StackConfig, k8sProvider: k8s.Provider): Sta
         resources.migration = createDBMigrationJob({
             env: config.env,
             namespace,
-            image: config.app.apiImage,
+            image: config.app.api.image,
             dbHost,
             dbName,
             dbUser,
             dbPassword,
             runSeeder: true,
             imagePullSecrets: config.namespace?.imagePullSecret ? ["ghcr-pull-secret"] : undefined,
-            resources: config.app.migrationResources,
+            resources: config.app.migration.resources,
             provider: k8sProvider,
         });
 
@@ -537,7 +540,7 @@ export function createStack(config: StackConfig, k8sProvider: k8s.Provider): Sta
         resources.webRoute = createHTTPRoute({
             namespace: namespace,
             name: "web",
-            hostname: new URL(config.app.webUrl).hostname,
+            hostname: new URL(config.app.web.url).hostname,
             serviceName: "web",
             serviceNamespace: namespace,
             servicePort: 80,
@@ -550,7 +553,7 @@ export function createStack(config: StackConfig, k8sProvider: k8s.Provider): Sta
         resources.apiRoute = createHTTPRoute({
             namespace: namespace,
             name: "api",
-            hostname: new URL(config.app.apiUrl).hostname,
+            hostname: new URL(config.app.api.url).hostname,
             serviceName: "api",
             serviceNamespace: namespace,
             servicePort: 80,
@@ -560,15 +563,17 @@ export function createStack(config: StackConfig, k8sProvider: k8s.Provider): Sta
             provider: k8sProvider,
         });
 
-        // ServiceMonitor for API metrics (if monitoring is configured)
-        if (config.monitoring) {
+        // ServiceMonitor for API metrics (if monitoring is configured OR prometheusAuthToken is provided)
+        // preview-pr passes prometheusAuthToken directly, other envs pass config.monitoring
+        const authToken = config.monitoring?.prometheus.authToken || config.prometheusAuthToken;
+        if (authToken) {
             resources.apiServiceMonitor = createApiServiceMonitor({
                 namespace: namespace,
                 serviceName: "api",
                 targetPort: 80,
                 metricsPath: "/metrics",
-                scrapeInterval: config.monitoring.prometheus.scrapeInterval || "15s",
-                authToken: config.monitoring.prometheus.authToken,
+                scrapeInterval: config.monitoring?.prometheus.scrapeInterval || "15s",
+                authToken: authToken,
                 provider: k8sProvider,
             });
         }
@@ -576,8 +581,8 @@ export function createStack(config: StackConfig, k8sProvider: k8s.Provider): Sta
         // HTTP→HTTPS redirect for preview-pr (specific hostnames beat wildcard redirects)
         // This ensures http://123.pr.aphiria.com redirects to https://123.pr.aphiria.com
         if (config.env === "preview" && config.namespace) {
-            const webHostname = new URL(config.app.webUrl).hostname;
-            const apiHostname = new URL(config.app.apiUrl).hostname;
+            const webHostname = new URL(config.app.web.url).hostname;
+            const apiHostname = new URL(config.app.api.url).hostname;
 
             resources.httpsRedirect = createHTTPSRedirectRoute({
                 namespace: namespace,

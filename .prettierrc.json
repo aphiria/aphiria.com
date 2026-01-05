@@ -1,0 +1,22 @@
+{
+    "semi": true,
+    "trailingComma": "es5",
+    "singleQuote": false,
+    "printWidth": 100,
+    "tabWidth": 4,
+    "arrowParens": "always",
+    "overrides": [
+        {
+            "files": ["*.yml", "*.yaml"],
+            "options": {
+                "tabWidth": 2
+            }
+        },
+        {
+            "files": "*.html",
+            "options": {
+                "printWidth": 1000
+            }
+        }
+    ]
+}

@@ -60,6 +60,10 @@ describe("createStack factory", () => {
                         storageSize: "1Gi",
                         dbUser: pulumi.output("postgres"),
                         dbPassword: pulumi.output("password"),
+                        resources: {
+                            requests: { cpu: "100m", memory: "128Mi" },
+                            limits: { cpu: "200m", memory: "256Mi" },
+                        },
                     },
                     gateway: {
                         tlsMode: "letsencrypt-prod",
@@ -90,6 +94,10 @@ describe("createStack factory", () => {
                         storageSize: "1Gi",
                         dbUser: pulumi.output("postgres"),
                         dbPassword: pulumi.output("password"),
+                        resources: {
+                            requests: { cpu: "100m", memory: "128Mi" },
+                            limits: { cpu: "200m", memory: "256Mi" },
+                        },
                     },
                     gateway: {
                         tlsMode: "self-signed",
@@ -114,6 +122,10 @@ describe("createStack factory", () => {
                         storageSize: "1Gi",
                         dbUser: pulumi.output("postgres"),
                         dbPassword: pulumi.output("password"),
+                        resources: {
+                            requests: { cpu: "100m", memory: "128Mi" },
+                            limits: { cpu: "200m", memory: "256Mi" },
+                        },
                     },
                     gateway: {
                         tlsMode: "self-signed",
@@ -142,6 +154,10 @@ describe("createStack factory", () => {
                         storageSize: "1Gi",
                         dbUser: pulumi.output("postgres"),
                         dbPassword: pulumi.output("password"),
+                        resources: {
+                            requests: { cpu: "100m", memory: "128Mi" },
+                            limits: { cpu: "200m", memory: "256Mi" },
+                        },
                     },
                     gateway: {
                         tlsMode: "letsencrypt-prod",
@@ -167,18 +183,56 @@ describe("createStack factory", () => {
                         storageSize: "1Gi",
                         dbUser: pulumi.output("postgres"),
                         dbPassword: pulumi.output("password"),
+                        resources: {
+                            requests: { cpu: "100m", memory: "128Mi" },
+                            limits: { cpu: "200m", memory: "256Mi" },
+                        },
                     },
                     gateway: {
                         tlsMode: "self-signed",
                         domains: ["*.aphiria.com"],
                     },
                     app: {
-                        webReplicas: 1,
-                        apiReplicas: 1,
-                        webUrl: "https://www.aphiria.com",
-                        apiUrl: "https://api.aphiria.com",
-                        webImage: "ghcr.io/aphiria/aphiria.com-web:latest",
-                        apiImage: "ghcr.io/aphiria/aphiria.com-api:latest",
+                        web: {
+                            replicas: 1,
+                            url: "https://www.aphiria.com",
+                            image: "ghcr.io/aphiria/aphiria.com-web:latest",
+                            resources: {
+                                requests: { cpu: "50m", memory: "64Mi" },
+                                limits: { cpu: "100m", memory: "128Mi" },
+                            },
+                        },
+                        api: {
+                            replicas: 1,
+                            url: "https://api.aphiria.com",
+                            image: "ghcr.io/aphiria/aphiria.com-api:latest",
+                            resources: {
+                                nginx: {
+                                    requests: { cpu: "50m", memory: "64Mi" },
+                                    limits: { cpu: "100m", memory: "128Mi" },
+                                },
+                                php: {
+                                    requests: { cpu: "100m", memory: "128Mi" },
+                                    limits: { cpu: "200m", memory: "256Mi" },
+                                },
+                                initContainer: {
+                                    requests: { cpu: "50m", memory: "64Mi" },
+                                    limits: { cpu: "100m", memory: "128Mi" },
+                                },
+                            },
+                        },
+                        migration: {
+                            resources: {
+                                migration: {
+                                    requests: { cpu: "50m", memory: "128Mi" },
+                                    limits: { cpu: "200m", memory: "256Mi" },
+                                },
+                                initContainer: {
+                                    requests: { cpu: "10m", memory: "32Mi" },
+                                    limits: { cpu: "50m", memory: "64Mi" },
+                                },
+                            },
+                        },
                         cookieDomain: ".aphiria.com",
                     },
                     monitoring: minimalMonitoringConfig,
@@ -211,6 +265,10 @@ describe("createStack factory", () => {
                         storageSize: "10Gi",
                         dbUser: pulumi.output("postgres"),
                         dbPassword: pulumi.output("password"),
+                        resources: {
+                            requests: { cpu: "100m", memory: "128Mi" },
+                            limits: { cpu: "200m", memory: "256Mi" },
+                        },
                     },
                     gateway: {
                         tlsMode: "letsencrypt-prod",
@@ -236,18 +294,56 @@ describe("createStack factory", () => {
                         storageSize: "1Gi",
                         dbUser: pulumi.output("postgres"),
                         dbPassword: pulumi.output("password"),
+                        resources: {
+                            requests: { cpu: "100m", memory: "128Mi" },
+                            limits: { cpu: "200m", memory: "256Mi" },
+                        },
                     },
                     gateway: {
                         tlsMode: "self-signed",
                         domains: ["*.aphiria.com"],
                     },
                     app: {
-                        webReplicas: 1,
-                        apiReplicas: 1,
-                        webUrl: "https://www.aphiria.com",
-                        apiUrl: "https://api.aphiria.com",
-                        webImage: "ghcr.io/aphiria/aphiria.com-web:latest",
-                        apiImage: "ghcr.io/aphiria/aphiria.com-api:latest",
+                        web: {
+                            replicas: 1,
+                            url: "https://www.aphiria.com",
+                            image: "ghcr.io/aphiria/aphiria.com-web:latest",
+                            resources: {
+                                requests: { cpu: "50m", memory: "64Mi" },
+                                limits: { cpu: "100m", memory: "128Mi" },
+                            },
+                        },
+                        api: {
+                            replicas: 1,
+                            url: "https://api.aphiria.com",
+                            image: "ghcr.io/aphiria/aphiria.com-api:latest",
+                            resources: {
+                                nginx: {
+                                    requests: { cpu: "50m", memory: "64Mi" },
+                                    limits: { cpu: "100m", memory: "128Mi" },
+                                },
+                                php: {
+                                    requests: { cpu: "100m", memory: "128Mi" },
+                                    limits: { cpu: "200m", memory: "256Mi" },
+                                },
+                                initContainer: {
+                                    requests: { cpu: "50m", memory: "64Mi" },
+                                    limits: { cpu: "100m", memory: "128Mi" },
+                                },
+                            },
+                        },
+                        migration: {
+                            resources: {
+                                migration: {
+                                    requests: { cpu: "50m", memory: "128Mi" },
+                                    limits: { cpu: "200m", memory: "256Mi" },
+                                },
+                                initContainer: {
+                                    requests: { cpu: "10m", memory: "32Mi" },
+                                    limits: { cpu: "50m", memory: "64Mi" },
+                                },
+                            },
+                        },
                         cookieDomain: ".aphiria.com",
                     },
                     monitoring: minimalMonitoringConfig,
@@ -277,18 +373,56 @@ describe("createStack factory", () => {
                         storageSize: "1Gi",
                         dbUser: pulumi.output("app-user"),
                         dbPassword: pulumi.output("app-password"),
+                        resources: {
+                            requests: { cpu: "100m", memory: "128Mi" },
+                            limits: { cpu: "200m", memory: "256Mi" },
+                        },
                     },
                     gateway: {
                         tlsMode: "self-signed",
                         domains: ["*.pr.aphiria.com"],
                     },
                     app: {
-                        webReplicas: 1,
-                        apiReplicas: 1,
-                        webUrl: "https://pr-123.pr.aphiria.com",
-                        apiUrl: "https://pr-123.pr-api.aphiria.com",
-                        webImage: "ghcr.io/aphiria/aphiria.com-web:latest",
-                        apiImage: "ghcr.io/aphiria/aphiria.com-api:latest",
+                        web: {
+                            replicas: 1,
+                            url: "https://pr-123.pr.aphiria.com",
+                            image: "ghcr.io/aphiria/aphiria.com-web:latest",
+                            resources: {
+                                requests: { cpu: "50m", memory: "64Mi" },
+                                limits: { cpu: "100m", memory: "128Mi" },
+                            },
+                        },
+                        api: {
+                            replicas: 1,
+                            url: "https://pr-123.pr-api.aphiria.com",
+                            image: "ghcr.io/aphiria/aphiria.com-api:latest",
+                            resources: {
+                                nginx: {
+                                    requests: { cpu: "50m", memory: "64Mi" },
+                                    limits: { cpu: "100m", memory: "128Mi" },
+                                },
+                                php: {
+                                    requests: { cpu: "100m", memory: "128Mi" },
+                                    limits: { cpu: "200m", memory: "256Mi" },
+                                },
+                                initContainer: {
+                                    requests: { cpu: "50m", memory: "64Mi" },
+                                    limits: { cpu: "100m", memory: "128Mi" },
+                                },
+                            },
+                        },
+                        migration: {
+                            resources: {
+                                migration: {
+                                    requests: { cpu: "50m", memory: "128Mi" },
+                                    limits: { cpu: "200m", memory: "256Mi" },
+                                },
+                                initContainer: {
+                                    requests: { cpu: "10m", memory: "32Mi" },
+                                    limits: { cpu: "50m", memory: "64Mi" },
+                                },
+                            },
+                        },
                         cookieDomain: ".pr.aphiria.com",
                     },
                     monitoring: minimalMonitoringConfig,
@@ -311,18 +445,56 @@ describe("createStack factory", () => {
                         storageSize: "1Gi",
                         dbUser: pulumi.output("postgres"),
                         dbPassword: pulumi.output("password"),
+                        resources: {
+                            requests: { cpu: "100m", memory: "128Mi" },
+                            limits: { cpu: "200m", memory: "256Mi" },
+                        },
                     },
                     gateway: {
                         tlsMode: "self-signed",
                         domains: ["*.aphiria.com"],
                     },
                     app: {
-                        webReplicas: 1,
-                        apiReplicas: 1,
-                        webUrl: "https://www.aphiria.com",
-                        apiUrl: "https://api.aphiria.com",
-                        webImage: "ghcr.io/aphiria/aphiria.com-web:latest",
-                        apiImage: "ghcr.io/aphiria/aphiria.com-api:latest",
+                        web: {
+                            replicas: 1,
+                            url: "https://www.aphiria.com",
+                            image: "ghcr.io/aphiria/aphiria.com-web:latest",
+                            resources: {
+                                requests: { cpu: "50m", memory: "64Mi" },
+                                limits: { cpu: "100m", memory: "128Mi" },
+                            },
+                        },
+                        api: {
+                            replicas: 1,
+                            url: "https://api.aphiria.com",
+                            image: "ghcr.io/aphiria/aphiria.com-api:latest",
+                            resources: {
+                                nginx: {
+                                    requests: { cpu: "50m", memory: "64Mi" },
+                                    limits: { cpu: "100m", memory: "128Mi" },
+                                },
+                                php: {
+                                    requests: { cpu: "100m", memory: "128Mi" },
+                                    limits: { cpu: "200m", memory: "256Mi" },
+                                },
+                                initContainer: {
+                                    requests: { cpu: "50m", memory: "64Mi" },
+                                    limits: { cpu: "100m", memory: "128Mi" },
+                                },
+                            },
+                        },
+                        migration: {
+                            resources: {
+                                migration: {
+                                    requests: { cpu: "50m", memory: "128Mi" },
+                                    limits: { cpu: "200m", memory: "256Mi" },
+                                },
+                                initContainer: {
+                                    requests: { cpu: "10m", memory: "32Mi" },
+                                    limits: { cpu: "50m", memory: "64Mi" },
+                                },
+                            },
+                        },
                         cookieDomain: ".aphiria.com",
                     },
                     monitoring: minimalMonitoringConfig,
@@ -356,18 +528,56 @@ describe("createStack factory", () => {
                         storageSize: "1Gi",
                         dbUser: pulumi.output("postgres"),
                         dbPassword: pulumi.output("password"),
+                        resources: {
+                            requests: { cpu: "100m", memory: "128Mi" },
+                            limits: { cpu: "200m", memory: "256Mi" },
+                        },
                     },
                     gateway: {
                         tlsMode: "self-signed",
                         domains: ["*.pr.aphiria.com"],
                     },
                     app: {
-                        webReplicas: 1,
-                        apiReplicas: 1,
-                        webUrl: "https://pr-123.pr.aphiria.com",
-                        apiUrl: "https://pr-123.pr-api.aphiria.com",
-                        webImage: "ghcr.io/aphiria/aphiria.com-web:latest",
-                        apiImage: "ghcr.io/aphiria/aphiria.com-api:latest",
+                        web: {
+                            replicas: 1,
+                            url: "https://pr-123.pr.aphiria.com",
+                            image: "ghcr.io/aphiria/aphiria.com-web:latest",
+                            resources: {
+                                requests: { cpu: "50m", memory: "64Mi" },
+                                limits: { cpu: "100m", memory: "128Mi" },
+                            },
+                        },
+                        api: {
+                            replicas: 1,
+                            url: "https://pr-123.pr-api.aphiria.com",
+                            image: "ghcr.io/aphiria/aphiria.com-api:latest",
+                            resources: {
+                                nginx: {
+                                    requests: { cpu: "50m", memory: "64Mi" },
+                                    limits: { cpu: "100m", memory: "128Mi" },
+                                },
+                                php: {
+                                    requests: { cpu: "100m", memory: "128Mi" },
+                                    limits: { cpu: "200m", memory: "256Mi" },
+                                },
+                                initContainer: {
+                                    requests: { cpu: "50m", memory: "64Mi" },
+                                    limits: { cpu: "100m", memory: "128Mi" },
+                                },
+                            },
+                        },
+                        migration: {
+                            resources: {
+                                migration: {
+                                    requests: { cpu: "50m", memory: "128Mi" },
+                                    limits: { cpu: "200m", memory: "256Mi" },
+                                },
+                                initContainer: {
+                                    requests: { cpu: "10m", memory: "32Mi" },
+                                    limits: { cpu: "50m", memory: "64Mi" },
+                                },
+                            },
+                        },
                         cookieDomain: ".pr.aphiria.com",
                     },
                     monitoring: minimalMonitoringConfig,
@@ -398,18 +608,56 @@ describe("createStack factory", () => {
                         storageSize: "1Gi",
                         dbUser: pulumi.output("postgres"),
                         dbPassword: pulumi.output("password"),
+                        resources: {
+                            requests: { cpu: "100m", memory: "128Mi" },
+                            limits: { cpu: "200m", memory: "256Mi" },
+                        },
                     },
                     gateway: {
                         tlsMode: "self-signed",
                         domains: ["*.pr.aphiria.com"],
                     },
                     app: {
-                        webReplicas: 1,
-                        apiReplicas: 1,
-                        webUrl: "https://pr-456.pr.aphiria.com",
-                        apiUrl: "https://pr-456.pr-api.aphiria.com",
-                        webImage: "ghcr.io/aphiria/aphiria.com-web:latest",
-                        apiImage: "ghcr.io/aphiria/aphiria.com-api:latest",
+                        web: {
+                            replicas: 1,
+                            url: "https://pr-456.pr.aphiria.com",
+                            image: "ghcr.io/aphiria/aphiria.com-web:latest",
+                            resources: {
+                                requests: { cpu: "50m", memory: "64Mi" },
+                                limits: { cpu: "100m", memory: "128Mi" },
+                            },
+                        },
+                        api: {
+                            replicas: 1,
+                            url: "https://pr-456.pr-api.aphiria.com",
+                            image: "ghcr.io/aphiria/aphiria.com-api:latest",
+                            resources: {
+                                nginx: {
+                                    requests: { cpu: "50m", memory: "64Mi" },
+                                    limits: { cpu: "100m", memory: "128Mi" },
+                                },
+                                php: {
+                                    requests: { cpu: "100m", memory: "128Mi" },
+                                    limits: { cpu: "200m", memory: "256Mi" },
+                                },
+                                initContainer: {
+                                    requests: { cpu: "50m", memory: "64Mi" },
+                                    limits: { cpu: "100m", memory: "128Mi" },
+                                },
+                            },
+                        },
+                        migration: {
+                            resources: {
+                                migration: {
+                                    requests: { cpu: "50m", memory: "128Mi" },
+                                    limits: { cpu: "200m", memory: "256Mi" },
+                                },
+                                initContainer: {
+                                    requests: { cpu: "10m", memory: "32Mi" },
+                                    limits: { cpu: "50m", memory: "64Mi" },
+                                },
+                            },
+                        },
                         cookieDomain: ".pr.aphiria.com",
                     },
                     monitoring: minimalMonitoringConfig,
@@ -431,18 +679,56 @@ describe("createStack factory", () => {
                         storageSize: "1Gi",
                         dbUser: pulumi.output("postgres"),
                         dbPassword: pulumi.output("password"),
+                        resources: {
+                            requests: { cpu: "100m", memory: "128Mi" },
+                            limits: { cpu: "200m", memory: "256Mi" },
+                        },
                     },
                     gateway: {
                         tlsMode: "self-signed",
                         domains: ["*.aphiria.com"],
                     },
                     app: {
-                        webReplicas: 1,
-                        apiReplicas: 1,
-                        webUrl: "https://www.aphiria.com",
-                        apiUrl: "https://api.aphiria.com",
-                        webImage: "ghcr.io/aphiria/aphiria.com-web:latest",
-                        apiImage: "ghcr.io/aphiria/aphiria.com-api:latest",
+                        web: {
+                            replicas: 1,
+                            url: "https://www.aphiria.com",
+                            image: "ghcr.io/aphiria/aphiria.com-web:latest",
+                            resources: {
+                                requests: { cpu: "50m", memory: "64Mi" },
+                                limits: { cpu: "100m", memory: "128Mi" },
+                            },
+                        },
+                        api: {
+                            replicas: 1,
+                            url: "https://api.aphiria.com",
+                            image: "ghcr.io/aphiria/aphiria.com-api:latest",
+                            resources: {
+                                nginx: {
+                                    requests: { cpu: "50m", memory: "64Mi" },
+                                    limits: { cpu: "100m", memory: "128Mi" },
+                                },
+                                php: {
+                                    requests: { cpu: "100m", memory: "128Mi" },
+                                    limits: { cpu: "200m", memory: "256Mi" },
+                                },
+                                initContainer: {
+                                    requests: { cpu: "50m", memory: "64Mi" },
+                                    limits: { cpu: "100m", memory: "128Mi" },
+                                },
+                            },
+                        },
+                        migration: {
+                            resources: {
+                                migration: {
+                                    requests: { cpu: "50m", memory: "128Mi" },
+                                    limits: { cpu: "200m", memory: "256Mi" },
+                                },
+                                initContainer: {
+                                    requests: { cpu: "10m", memory: "32Mi" },
+                                    limits: { cpu: "50m", memory: "64Mi" },
+                                },
+                            },
+                        },
                         cookieDomain: ".aphiria.com",
                     },
                     monitoring: minimalMonitoringConfig,
@@ -462,6 +748,10 @@ describe("createStack factory", () => {
                         storageSize: "50Gi",
                         dbUser: pulumi.output("postgres"),
                         dbPassword: pulumi.output("password"),
+                        resources: {
+                            requests: { cpu: "100m", memory: "128Mi" },
+                            limits: { cpu: "200m", memory: "256Mi" },
+                        },
                     },
                     gateway: {
                         tlsMode: "letsencrypt-prod",
@@ -469,12 +759,46 @@ describe("createStack factory", () => {
                         dnsToken: pulumi.output("fake-dns-token"),
                     },
                     app: {
-                        webReplicas: 2,
-                        apiReplicas: 2,
-                        webUrl: "https://www.aphiria.com",
-                        apiUrl: "https://api.aphiria.com",
-                        webImage: "ghcr.io/aphiria/aphiria.com-web@sha256:abc123",
-                        apiImage: "ghcr.io/aphiria/aphiria.com-api@sha256:def456",
+                        web: {
+                            replicas: 2,
+                            url: "https://www.aphiria.com",
+                            image: "ghcr.io/aphiria/aphiria.com-web@sha256:abc123",
+                            resources: {
+                                requests: { cpu: "50m", memory: "64Mi" },
+                                limits: { cpu: "100m", memory: "128Mi" },
+                            },
+                        },
+                        api: {
+                            replicas: 2,
+                            url: "https://api.aphiria.com",
+                            image: "ghcr.io/aphiria/aphiria.com-api@sha256:def456",
+                            resources: {
+                                nginx: {
+                                    requests: { cpu: "50m", memory: "64Mi" },
+                                    limits: { cpu: "100m", memory: "128Mi" },
+                                },
+                                php: {
+                                    requests: { cpu: "100m", memory: "128Mi" },
+                                    limits: { cpu: "200m", memory: "256Mi" },
+                                },
+                                initContainer: {
+                                    requests: { cpu: "50m", memory: "64Mi" },
+                                    limits: { cpu: "100m", memory: "128Mi" },
+                                },
+                            },
+                        },
+                        migration: {
+                            resources: {
+                                migration: {
+                                    requests: { cpu: "50m", memory: "128Mi" },
+                                    limits: { cpu: "200m", memory: "256Mi" },
+                                },
+                                initContainer: {
+                                    requests: { cpu: "10m", memory: "32Mi" },
+                                    limits: { cpu: "50m", memory: "64Mi" },
+                                },
+                            },
+                        },
                         cookieDomain: ".aphiria.com",
                     },
                     monitoring: minimalMonitoringConfig,
@@ -496,6 +820,10 @@ describe("createStack factory", () => {
                         storageSize: "20Gi",
                         dbUser: pulumi.output("postgres"),
                         dbPassword: pulumi.output("password"),
+                        resources: {
+                            requests: { cpu: "100m", memory: "128Mi" },
+                            limits: { cpu: "200m", memory: "256Mi" },
+                        },
                     },
                     gateway: {
                         tlsMode: "letsencrypt-prod",
@@ -528,18 +856,56 @@ describe("createStack factory", () => {
                         storageSize: "1Gi",
                         dbUser: pulumi.output("app-user"),
                         dbPassword: pulumi.output("app-password"),
+                        resources: {
+                            requests: { cpu: "100m", memory: "128Mi" },
+                            limits: { cpu: "200m", memory: "256Mi" },
+                        },
                     },
                     gateway: {
                         tlsMode: "letsencrypt-prod",
                         domains: ["*.pr.aphiria.com"],
                     },
                     app: {
-                        webReplicas: 1,
-                        apiReplicas: 1,
-                        webUrl: "https://123.pr.aphiria.com",
-                        apiUrl: "https://123.pr-api.aphiria.com",
-                        webImage: "ghcr.io/aphiria/aphiria.com-web@sha256:abc123",
-                        apiImage: "ghcr.io/aphiria/aphiria.com-api@sha256:def456",
+                        web: {
+                            replicas: 1,
+                            url: "https://123.pr.aphiria.com",
+                            image: "ghcr.io/aphiria/aphiria.com-web@sha256:abc123",
+                            resources: {
+                                requests: { cpu: "50m", memory: "64Mi" },
+                                limits: { cpu: "100m", memory: "128Mi" },
+                            },
+                        },
+                        api: {
+                            replicas: 1,
+                            url: "https://123.pr-api.aphiria.com",
+                            image: "ghcr.io/aphiria/aphiria.com-api@sha256:def456",
+                            resources: {
+                                nginx: {
+                                    requests: { cpu: "50m", memory: "64Mi" },
+                                    limits: { cpu: "100m", memory: "128Mi" },
+                                },
+                                php: {
+                                    requests: { cpu: "100m", memory: "128Mi" },
+                                    limits: { cpu: "200m", memory: "256Mi" },
+                                },
+                                initContainer: {
+                                    requests: { cpu: "50m", memory: "64Mi" },
+                                    limits: { cpu: "100m", memory: "128Mi" },
+                                },
+                            },
+                        },
+                        migration: {
+                            resources: {
+                                migration: {
+                                    requests: { cpu: "50m", memory: "128Mi" },
+                                    limits: { cpu: "200m", memory: "256Mi" },
+                                },
+                                initContainer: {
+                                    requests: { cpu: "10m", memory: "32Mi" },
+                                    limits: { cpu: "50m", memory: "64Mi" },
+                                },
+                            },
+                        },
                         cookieDomain: ".pr.aphiria.com",
                     },
                     monitoring: minimalMonitoringConfig,
@@ -563,6 +929,10 @@ describe("createStack factory", () => {
                         storageSize: "10Gi",
                         dbUser: pulumi.output("postgres"),
                         dbPassword: pulumi.output("password"),
+                        resources: {
+                            requests: { cpu: "100m", memory: "128Mi" },
+                            limits: { cpu: "200m", memory: "256Mi" },
+                        },
                     },
                     gateway: {
                         tlsMode: "letsencrypt-prod",
@@ -598,6 +968,10 @@ describe("createStack factory", () => {
                         storageSize: "20Gi",
                         dbUser: pulumi.output("postgres"),
                         dbPassword: pulumi.output("password"),
+                        resources: {
+                            requests: { cpu: "100m", memory: "128Mi" },
+                            limits: { cpu: "200m", memory: "256Mi" },
+                        },
                     },
                     gateway: {
                         tlsMode: "letsencrypt-prod",
@@ -641,6 +1015,10 @@ describe("createStack factory", () => {
                         storageSize: "1Gi",
                         dbUser: pulumi.output("postgres"),
                         dbPassword: pulumi.output("password"),
+                        resources: {
+                            requests: { cpu: "100m", memory: "128Mi" },
+                            limits: { cpu: "200m", memory: "256Mi" },
+                        },
                     },
                     gateway: {
                         tlsMode: "letsencrypt-prod",
@@ -665,6 +1043,10 @@ describe("createStack factory", () => {
                         storageSize: "20Gi",
                         dbUser: pulumi.output("postgres"),
                         dbPassword: pulumi.output("password"),
+                        resources: {
+                            requests: { cpu: "100m", memory: "128Mi" },
+                            limits: { cpu: "200m", memory: "256Mi" },
+                        },
                     },
                     gateway: {
                         tlsMode: "letsencrypt-prod",
@@ -725,6 +1107,10 @@ describe("createStack factory", () => {
                         storageSize: "5Gi",
                         dbUser: pulumi.output("postgres"),
                         dbPassword: pulumi.output("password"),
+                        resources: {
+                            requests: { cpu: "100m", memory: "128Mi" },
+                            limits: { cpu: "200m", memory: "256Mi" },
+                        },
                     },
                     gateway: {
                         tlsMode: "letsencrypt-prod",
@@ -770,6 +1156,10 @@ describe("createStack factory", () => {
                         storageSize: "5Gi",
                         dbUser: pulumi.output("postgres"),
                         dbPassword: pulumi.output("password"),
+                        resources: {
+                            requests: { cpu: "100m", memory: "128Mi" },
+                            limits: { cpu: "200m", memory: "256Mi" },
+                        },
                     },
                     gateway: {
                         tlsMode: "letsencrypt-prod",
@@ -810,6 +1200,10 @@ describe("createStack factory", () => {
                         storageSize: "1Gi",
                         dbUser: pulumi.output("postgres"),
                         dbPassword: pulumi.output("password"),
+                        resources: {
+                            requests: { cpu: "100m", memory: "128Mi" },
+                            limits: { cpu: "200m", memory: "256Mi" },
+                        },
                     },
                     gateway: {
                         tlsMode: "self-signed",
@@ -832,6 +1226,10 @@ describe("createStack factory", () => {
                         storageSize: "1Gi",
                         dbUser: pulumi.output("postgres"),
                         dbPassword: pulumi.output("password"),
+                        resources: {
+                            requests: { cpu: "100m", memory: "128Mi" },
+                            limits: { cpu: "200m", memory: "256Mi" },
+                        },
                     },
                     gateway: {
                         tlsMode: "self-signed",
@@ -870,6 +1268,10 @@ describe("createStack factory", () => {
                         storageSize: "20Gi",
                         dbUser: pulumi.output("postgres"),
                         dbPassword: pulumi.output("password"),
+                        resources: {
+                            requests: { cpu: "100m", memory: "128Mi" },
+                            limits: { cpu: "200m", memory: "256Mi" },
+                        },
                     },
                     gateway: {
                         tlsMode: "letsencrypt-prod",
@@ -913,6 +1315,10 @@ describe("createStack factory", () => {
                         storageSize: "20Gi",
                         dbUser: pulumi.output("postgres"),
                         dbPassword: pulumi.output("password"),
+                        resources: {
+                            requests: { cpu: "100m", memory: "128Mi" },
+                            limits: { cpu: "200m", memory: "256Mi" },
+                        },
                     },
                     gateway: {
                         tlsMode: "letsencrypt-prod",
@@ -958,6 +1364,10 @@ describe("createStack factory", () => {
                         storageSize: "1Gi",
                         dbUser: pulumi.output("postgres"),
                         dbPassword: pulumi.output("password"),
+                        resources: {
+                            requests: { cpu: "100m", memory: "128Mi" },
+                            limits: { cpu: "200m", memory: "256Mi" },
+                        },
                     },
                     gateway: {
                         tlsMode: "self-signed",
@@ -999,6 +1409,10 @@ describe("createStack factory", () => {
                         storageSize: "10Gi",
                         dbUser: pulumi.output("postgres"),
                         dbPassword: pulumi.output("password"),
+                        resources: {
+                            requests: { cpu: "100m", memory: "128Mi" },
+                            limits: { cpu: "200m", memory: "256Mi" },
+                        },
                     },
                     gateway: {
                         tlsMode: "letsencrypt-prod",
@@ -1039,6 +1453,10 @@ describe("createStack factory", () => {
                         storageSize: "20Gi",
                         dbUser: pulumi.output("postgres"),
                         dbPassword: pulumi.output("password"),
+                        resources: {
+                            requests: { cpu: "100m", memory: "128Mi" },
+                            limits: { cpu: "200m", memory: "256Mi" },
+                        },
                     },
                     gateway: {
                         tlsMode: "letsencrypt-prod",
@@ -1080,6 +1498,10 @@ describe("createStack factory", () => {
                         storageSize: "1Gi",
                         dbUser: pulumi.output("postgres"),
                         dbPassword: pulumi.output("password"),
+                        resources: {
+                            requests: { cpu: "100m", memory: "128Mi" },
+                            limits: { cpu: "200m", memory: "256Mi" },
+                        },
                     },
                     gateway: {
                         tlsMode: "self-signed",
@@ -1122,6 +1544,10 @@ describe("createStack factory", () => {
                         storageSize: "20Gi",
                         dbUser: pulumi.output("postgres"),
                         dbPassword: pulumi.output("password"),
+                        resources: {
+                            requests: { cpu: "100m", memory: "128Mi" },
+                            limits: { cpu: "200m", memory: "256Mi" },
+                        },
                     },
                     gateway: {
                         tlsMode: "letsencrypt-prod",
@@ -1129,12 +1555,46 @@ describe("createStack factory", () => {
                         dnsToken: pulumi.output("fake-dns-token"),
                     },
                     app: {
-                        webReplicas: 2,
-                        apiReplicas: 2,
-                        webUrl: "https://www.aphiria.com",
-                        apiUrl: "https://api.aphiria.com",
-                        webImage: "ghcr.io/aphiria/aphiria.com-web@sha256:abc123",
-                        apiImage: "ghcr.io/aphiria/aphiria.com-api@sha256:def456",
+                        web: {
+                            replicas: 2,
+                            url: "https://www.aphiria.com",
+                            image: "ghcr.io/aphiria/aphiria.com-web@sha256:abc123",
+                            resources: {
+                                requests: { cpu: "50m", memory: "64Mi" },
+                                limits: { cpu: "100m", memory: "128Mi" },
+                            },
+                        },
+                        api: {
+                            replicas: 2,
+                            url: "https://api.aphiria.com",
+                            image: "ghcr.io/aphiria/aphiria.com-api@sha256:def456",
+                            resources: {
+                                nginx: {
+                                    requests: { cpu: "50m", memory: "64Mi" },
+                                    limits: { cpu: "100m", memory: "128Mi" },
+                                },
+                                php: {
+                                    requests: { cpu: "100m", memory: "128Mi" },
+                                    limits: { cpu: "200m", memory: "256Mi" },
+                                },
+                                initContainer: {
+                                    requests: { cpu: "50m", memory: "64Mi" },
+                                    limits: { cpu: "100m", memory: "128Mi" },
+                                },
+                            },
+                        },
+                        migration: {
+                            resources: {
+                                migration: {
+                                    requests: { cpu: "50m", memory: "128Mi" },
+                                    limits: { cpu: "200m", memory: "256Mi" },
+                                },
+                                initContainer: {
+                                    requests: { cpu: "10m", memory: "32Mi" },
+                                    limits: { cpu: "50m", memory: "64Mi" },
+                                },
+                            },
+                        },
                         cookieDomain: ".aphiria.com",
                     },
                     monitoring: {
@@ -1183,18 +1643,56 @@ describe("createStack factory", () => {
                         storageSize: "1Gi",
                         dbUser: pulumi.output("postgres"),
                         dbPassword: pulumi.output("password"),
+                        resources: {
+                            requests: { cpu: "100m", memory: "128Mi" },
+                            limits: { cpu: "200m", memory: "256Mi" },
+                        },
                     },
                     gateway: {
                         tlsMode: "self-signed",
                         domains: ["*.aphiria.com"],
                     },
                     app: {
-                        webReplicas: 1,
-                        apiReplicas: 1,
-                        webUrl: "https://www.aphiria.com",
-                        apiUrl: "https://api.aphiria.com",
-                        webImage: "ghcr.io/aphiria/aphiria.com-web:latest",
-                        apiImage: "ghcr.io/aphiria/aphiria.com-api:latest",
+                        web: {
+                            replicas: 1,
+                            url: "https://www.aphiria.com",
+                            image: "ghcr.io/aphiria/aphiria.com-web:latest",
+                            resources: {
+                                requests: { cpu: "50m", memory: "64Mi" },
+                                limits: { cpu: "100m", memory: "128Mi" },
+                            },
+                        },
+                        api: {
+                            replicas: 1,
+                            url: "https://api.aphiria.com",
+                            image: "ghcr.io/aphiria/aphiria.com-api:latest",
+                            resources: {
+                                nginx: {
+                                    requests: { cpu: "50m", memory: "64Mi" },
+                                    limits: { cpu: "100m", memory: "128Mi" },
+                                },
+                                php: {
+                                    requests: { cpu: "100m", memory: "128Mi" },
+                                    limits: { cpu: "200m", memory: "256Mi" },
+                                },
+                                initContainer: {
+                                    requests: { cpu: "50m", memory: "64Mi" },
+                                    limits: { cpu: "100m", memory: "128Mi" },
+                                },
+                            },
+                        },
+                        migration: {
+                            resources: {
+                                migration: {
+                                    requests: { cpu: "50m", memory: "128Mi" },
+                                    limits: { cpu: "200m", memory: "256Mi" },
+                                },
+                                initContainer: {
+                                    requests: { cpu: "10m", memory: "32Mi" },
+                                    limits: { cpu: "50m", memory: "64Mi" },
+                                },
+                            },
+                        },
                         cookieDomain: ".aphiria.com",
                     },
                     monitoring: {
@@ -1235,6 +1733,10 @@ describe("createStack factory", () => {
                         storageSize: "1Gi",
                         dbUser: pulumi.output("postgres"),
                         dbPassword: pulumi.output("password"),
+                        resources: {
+                            requests: { cpu: "100m", memory: "128Mi" },
+                            limits: { cpu: "200m", memory: "256Mi" },
+                        },
                     },
                     gateway: {
                         tlsMode: "self-signed",
@@ -1257,6 +1759,10 @@ describe("createStack factory", () => {
                         storageSize: "20Gi",
                         dbUser: pulumi.output("postgres"),
                         dbPassword: pulumi.output("password"),
+                        resources: {
+                            requests: { cpu: "100m", memory: "128Mi" },
+                            limits: { cpu: "200m", memory: "256Mi" },
+                        },
                     },
                     gateway: {
                         tlsMode: "letsencrypt-prod",
@@ -1298,18 +1804,56 @@ describe("createStack factory", () => {
                         storageSize: "5Gi",
                         dbUser: "postgres",
                         dbPassword: "postgres",
+                        resources: {
+                            requests: { cpu: "100m", memory: "128Mi" },
+                            limits: { cpu: "200m", memory: "256Mi" },
+                        },
                     },
                     gateway: {
                         tlsMode: "self-signed",
                         domains: ["aphiria.com", "*.aphiria.com"],
                     },
                     app: {
-                        webReplicas: 1,
-                        apiReplicas: 1,
-                        webUrl: "https://www.aphiria.com",
-                        apiUrl: "https://api.aphiria.com",
-                        webImage: "aphiria.com-web:latest",
-                        apiImage: "aphiria.com-api:latest",
+                        web: {
+                            replicas: 1,
+                            url: "https://www.aphiria.com",
+                            image: "aphiria.com-web:latest",
+                            resources: {
+                                requests: { cpu: "50m", memory: "64Mi" },
+                                limits: { cpu: "100m", memory: "128Mi" },
+                            },
+                        },
+                        api: {
+                            replicas: 1,
+                            url: "https://api.aphiria.com",
+                            image: "aphiria.com-api:latest",
+                            resources: {
+                                nginx: {
+                                    requests: { cpu: "50m", memory: "64Mi" },
+                                    limits: { cpu: "100m", memory: "128Mi" },
+                                },
+                                php: {
+                                    requests: { cpu: "100m", memory: "128Mi" },
+                                    limits: { cpu: "200m", memory: "256Mi" },
+                                },
+                                initContainer: {
+                                    requests: { cpu: "50m", memory: "64Mi" },
+                                    limits: { cpu: "100m", memory: "128Mi" },
+                                },
+                            },
+                        },
+                        migration: {
+                            resources: {
+                                migration: {
+                                    requests: { cpu: "50m", memory: "128Mi" },
+                                    limits: { cpu: "200m", memory: "256Mi" },
+                                },
+                                initContainer: {
+                                    requests: { cpu: "10m", memory: "32Mi" },
+                                    limits: { cpu: "50m", memory: "64Mi" },
+                                },
+                            },
+                        },
                         cookieDomain: ".aphiria.com",
                     },
                     monitoring: minimalMonitoringConfig,
@@ -1346,18 +1890,56 @@ describe("createStack factory", () => {
                         storageSize: "1Gi",
                         dbUser: "postgres",
                         dbPassword: "postgres",
+                        resources: {
+                            requests: { cpu: "100m", memory: "128Mi" },
+                            limits: { cpu: "200m", memory: "256Mi" },
+                        },
                     },
                     gateway: {
                         tlsMode: "letsencrypt-prod",
                         domains: ["*.pr.aphiria.com"],
                     },
                     app: {
-                        webReplicas: 1,
-                        apiReplicas: 1,
-                        webUrl: "https://123.pr.aphiria.com",
-                        apiUrl: "https://123.pr-api.aphiria.com",
-                        webImage: "ghcr.io/aphiria/aphiria.com-web@sha256:abc123",
-                        apiImage: "ghcr.io/aphiria/aphiria.com-api@sha256:def456",
+                        web: {
+                            replicas: 1,
+                            url: "https://123.pr.aphiria.com",
+                            image: "ghcr.io/aphiria/aphiria.com-web@sha256:abc123",
+                            resources: {
+                                requests: { cpu: "50m", memory: "64Mi" },
+                                limits: { cpu: "100m", memory: "128Mi" },
+                            },
+                        },
+                        api: {
+                            replicas: 1,
+                            url: "https://123.pr-api.aphiria.com",
+                            image: "ghcr.io/aphiria/aphiria.com-api@sha256:def456",
+                            resources: {
+                                nginx: {
+                                    requests: { cpu: "50m", memory: "64Mi" },
+                                    limits: { cpu: "100m", memory: "128Mi" },
+                                },
+                                php: {
+                                    requests: { cpu: "100m", memory: "128Mi" },
+                                    limits: { cpu: "200m", memory: "256Mi" },
+                                },
+                                initContainer: {
+                                    requests: { cpu: "50m", memory: "64Mi" },
+                                    limits: { cpu: "100m", memory: "128Mi" },
+                                },
+                            },
+                        },
+                        migration: {
+                            resources: {
+                                migration: {
+                                    requests: { cpu: "50m", memory: "128Mi" },
+                                    limits: { cpu: "200m", memory: "256Mi" },
+                                },
+                                initContainer: {
+                                    requests: { cpu: "10m", memory: "32Mi" },
+                                    limits: { cpu: "50m", memory: "64Mi" },
+                                },
+                            },
+                        },
                         cookieDomain: ".pr.aphiria.com",
                     },
                     monitoring: minimalMonitoringConfig,

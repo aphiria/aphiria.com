@@ -20,6 +20,7 @@ const baseStack = new pulumi.StackReference(stackConfig.baseStackReference);
 const postgresqlHost = baseStack.getOutput("postgresqlHost");
 const postgresqlAdminUser = baseStack.getOutput("postgresqlAdminUser");
 const postgresqlAdminPassword = baseStack.requireOutput("postgresqlAdminPassword");
+const prometheusAuthToken = baseStack.requireOutput("prometheusAuthToken");
 const kubeconfig = baseStack.requireOutput("kubeconfig");
 
 // Naming conventions
@@ -43,6 +44,7 @@ const k8sProvider = new k8s.Provider(
 createStack(
     {
         env: "preview",
+        prometheusAuthToken: prometheusAuthToken,
         skipBaseInfrastructure: true, // Uses shared Helm charts and Gateway from preview-base
         namespace: {
             name: namespaceName,
@@ -75,88 +77,58 @@ createStack(
             dbHost: postgresqlHost,
             dbAdminUser: postgresqlAdminUser,
             dbAdminPassword: postgresqlAdminPassword,
+            // Unused (preview uses shared DB from preview-base), but required by type
+            resources: {
+                requests: { cpu: "100m", memory: "128Mi" },
+                limits: { cpu: "200m", memory: "256Mi" },
+            },
         },
         gateway: {
             tlsMode: "letsencrypt-prod",
             domains: ["*.pr.aphiria.com", "*.pr-api.aphiria.com"],
         },
         app: {
-            webReplicas: 1,
-            apiReplicas: 1,
-            webUrl: stackConfig.urls.web,
-            apiUrl: stackConfig.urls.api,
-            webImage: stackConfig.images.web,
-            apiImage: stackConfig.images.api,
+            web: {
+                replicas: 1,
+                url: stackConfig.urls.web,
+                image: stackConfig.images.web,
+                resources: {
+                    requests: { cpu: "50m", memory: "64Mi" },
+                    limits: { cpu: "100m", memory: "128Mi" },
+                },
+            },
+            api: {
+                replicas: 1,
+                url: stackConfig.urls.api,
+                image: stackConfig.images.api,
+                resources: {
+                    nginx: {
+                        requests: { cpu: "50m", memory: "64Mi" },
+                        limits: { cpu: "100m", memory: "128Mi" },
+                    },
+                    php: {
+                        requests: { cpu: "100m", memory: "128Mi" },
+                        limits: { cpu: "200m", memory: "256Mi" },
+                    },
+                    initContainer: {
+                        requests: { cpu: "50m", memory: "64Mi" },
+                        limits: { cpu: "100m", memory: "128Mi" },
+                    },
+                },
+            },
+            migration: {
+                resources: {
+                    migration: {
+                        requests: { cpu: "50m", memory: "128Mi" },
+                        limits: { cpu: "200m", memory: "256Mi" },
+                    },
+                    initContainer: {
+                        requests: { cpu: "10m", memory: "32Mi" },
+                        limits: { cpu: "50m", memory: "64Mi" },
+                    },
+                },
+            },
             cookieDomain: ".pr.aphiria.com",
-            webResources: {
-                requests: { cpu: "50m", memory: "128Mi" },
-                limits: { cpu: "250m", memory: "512Mi" },
-            },
-            apiResources: {
-                nginx: {
-                    requests: { cpu: "50m", memory: "64Mi" },
-                    limits: { cpu: "100m", memory: "128Mi" },
-                },
-                php: {
-                    requests: { cpu: "250m", memory: "512Mi" },
-                    limits: { cpu: "500m", memory: "1Gi" },
-                },
-                initContainer: {
-                    requests: { cpu: "50m", memory: "64Mi" },
-                    limits: { cpu: "100m", memory: "128Mi" },
-                },
-            },
-            migrationResources: {
-                migration: {
-                    requests: { cpu: "50m", memory: "128Mi" },
-                    limits: { cpu: "200m", memory: "256Mi" },
-                },
-                initContainer: {
-                    requests: { cpu: "10m", memory: "32Mi" },
-                    limits: { cpu: "50m", memory: "64Mi" },
-                },
-            },
-        },
-        monitoring: {
-            prometheus: {
-                authToken: stackConfig.prometheus.authToken,
-                storageSize: "5Gi",
-                scrapeInterval: "15s",
-                retentionTime: "7d",
-                resources: {
-                    requests: { cpu: "100m", memory: "128Mi" },
-                    limits: { cpu: "500m", memory: "256Mi" },
-                },
-            },
-            grafana: {
-                storageSize: "2Gi",
-                hostname: `${prNumber}.pr-grafana.aphiria.com`,
-                githubOAuth: {
-                    clientId: stackConfig.grafana.githubClientId,
-                    clientSecret: stackConfig.grafana.githubClientSecret,
-                    org: stackConfig.grafana.githubOrg,
-                    adminUser: stackConfig.grafana.adminUser,
-                },
-                smtp: {
-                    host: stackConfig.grafana.smtpHost,
-                    port: stackConfig.grafana.smtpPort,
-                    user: stackConfig.grafana.smtpUser,
-                    password: stackConfig.grafana.smtpPassword,
-                    fromAddress: stackConfig.grafana.smtpFromAddress,
-                    alertEmail: stackConfig.grafana.alertEmail,
-                },
-                basicAuth:
-                    stackConfig.grafana.basicAuthUser && stackConfig.grafana.basicAuthPassword
-                        ? {
-                              user: stackConfig.grafana.basicAuthUser,
-                              password: stackConfig.grafana.basicAuthPassword,
-                          }
-                        : undefined,
-                resources: {
-                    requests: { cpu: "50m", memory: "256Mi" },
-                    limits: { cpu: "200m", memory: "512Mi" },
-                },
-            },
         },
     },
     k8sProvider

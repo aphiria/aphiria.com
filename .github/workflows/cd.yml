@@ -7,17 +7,17 @@ on:
   workflow_dispatch:
     inputs:
       environment:
-        description: 'Target environment'
+        description: "Target environment"
         type: choice
         options: [preview, production]
         default: preview
         required: true
       pr_number:
-        description: 'PR number (preview only, for fork PRs after code review)'
+        description: "PR number (preview only, for fork PRs after code review)"
         type: string
         required: false
       commit_sha:
-        description: 'Exact commit SHA you reviewed'
+        description: "Exact commit SHA you reviewed"
         type: string
         required: false
 
@@ -352,7 +352,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: "20"
 
       - name: Install Pulumi CLI
         uses: pulumi/actions@v5
@@ -471,7 +471,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: "20"
 
       - name: Install Pulumi CLI
         uses: pulumi/actions@v5
@@ -592,7 +592,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: "20"
 
       - name: Install Pulumi CLI
         uses: pulumi/actions@v5
@@ -645,7 +645,7 @@ jobs:
           script: |
             const prNumber = ${{ needs.determine-mode.outputs.pr-number }};
             const previewUrl = `https://${prNumber}.pr.aphiria.com`;
-            const grafanaUrl = `https://${prNumber}.pr-grafana.aphiria.com`;
+            const grafanaUrl = `https://pr-grafana.aphiria.com`;
 
             const body = `## ✅ Preview Environment Deployed
 
@@ -703,3 +703,61 @@ jobs:
           echo "### ❌ Production Deployment Failed" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "Please check the logs above for details." >> $GITHUB_STEP_SUMMARY
+
+  smoke-tests:
+    name: Smoke Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: [determine-mode, deploy]
+    if: needs.determine-mode.outputs.is-safe == 'true'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install root TypeScript dependencies
+        run: npm install
+
+      - name: Install e2e dependencies
+        working-directory: tests/e2e
+        run: npm ci
+
+      - name: Install Playwright browsers
+        working-directory: tests/e2e
+        run: npx playwright install --with-deps chromium
+
+      - name: Construct URLs
+        run: |
+          MODE="${{ needs.determine-mode.outputs.mode }}"
+          PR="${{ needs.determine-mode.outputs.pr-number }}"
+
+          if [ "$MODE" = "preview" ]; then
+            echo "APP_ENV=preview" >> $GITHUB_ENV
+            echo "SITE_BASE_URL=https://${PR}.pr.aphiria.com" >> $GITHUB_ENV
+            echo "GRAFANA_BASE_URL=https://pr-grafana.aphiria.com" >> $GITHUB_ENV
+            echo "COOKIE_DOMAIN=.pr.aphiria.com" >> $GITHUB_ENV
+          else
+            echo "APP_ENV=production" >> $GITHUB_ENV
+            echo "SITE_BASE_URL=https://www.aphiria.com" >> $GITHUB_ENV
+            echo "GRAFANA_BASE_URL=https://grafana.aphiria.com" >> $GITHUB_ENV
+            echo "COOKIE_DOMAIN=.aphiria.com" >> $GITHUB_ENV
+          fi
+
+      - name: Run smoke tests
+        working-directory: tests/e2e
+        run: npm run test:e2e
+
+      - name: Upload test artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-artifacts-${{ needs.determine-mode.outputs.mode }}
+          path: |
+            tests/e2e/playwright-report/
+            tests/e2e/test-results/
+          retention-days: 7

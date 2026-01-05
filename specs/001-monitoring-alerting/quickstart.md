@@ -9,6 +9,7 @@
 This guide covers local development, deployment, and operational procedures for the Prometheus + Grafana monitoring stack. All infrastructure is managed via Pulumi with zero manual kubectl configuration.
 
 **Architecture**:
+
 - **Prometheus**: Metrics collection and storage (7-day retention)
 - **Grafana**: Visualization and alerting (Grafana Unified Alerting)
 - **Namespace**: `monitoring`
@@ -56,6 +57,7 @@ pulumi up
 ```
 
 **What Gets Deployed**:
+
 - Prometheus StatefulSet (port 9090)
 - Grafana Deployment (port 3000)
 - PersistentVolumeClaims for both
@@ -66,6 +68,7 @@ pulumi up
 ### Step 3: Access Dashboards Locally
 
 **Option A: Port Forward (Recommended for Local)**
+
 ```bash
 # Forward Grafana port to localhost
 kubectl port-forward -n monitoring service/grafana 3000:3000
@@ -75,6 +78,7 @@ kubectl port-forward -n monitoring service/grafana 3000:3000
 ```
 
 **Option B: Minikube Service (Minikube Only)**
+
 ```bash
 # Expose service and open browser
 minikube service -n monitoring grafana
@@ -114,9 +118,9 @@ Local development typically uses default Grafana credentials (admin/admin). Skip
 
 1. Go to https://github.com/organizations/aphiria/settings/applications/new
 2. Fill in:
-   - **Application name**: `Grafana - Aphiria.com Monitoring`
-   - **Homepage URL**: `https://grafana.aphiria.com`
-   - **Authorization callback URL**: `https://grafana.aphiria.com/login/github`
+    - **Application name**: `Grafana - Aphiria.com Monitoring`
+    - **Homepage URL**: `https://grafana.aphiria.com`
+    - **Authorization callback URL**: `https://grafana.aphiria.com/login/github`
 3. Click "Register application"
 4. Copy the **Client ID**
 5. Click "Generate a new client secret", copy the **Client Secret**
@@ -164,6 +168,7 @@ pulumi up --stack production
 4. Verify you're logged in with correct role (Viewer for org members, Admin for davidbyoung)
 
 **Troubleshooting OAuth**:
+
 - **"Invalid redirect URI"**: Verify callback URL in GitHub app settings matches exactly
 - **"Organization not allowed"**: Check GF_AUTH_GITHUB_ALLOWED_ORGANIZATIONS is set to "aphiria"
 - **Wrong role assignment**: Verify role_attribute_path logic matches your GitHub team structure
@@ -222,6 +227,7 @@ kubectl logs -n monitoring deployment/grafana | grep -i smtp
 Preview environments suppress email delivery (alerts log-only). No SMTP configuration needed.
 
 **Environment Detection**:
+
 ```typescript
 // Alert notification logic
 const environment = config.require("environment");
@@ -289,16 +295,19 @@ kubectl get pods -n default -w
 ### Verify Alert Delivery
 
 **Check Grafana Alert History**:
+
 1. Navigate to Grafana > Alerting > Alert rules
 2. Find the triggered alert
 3. Check "State history" tab
 
 **Check Email Delivery** (Production only):
+
 - Wait up to 2 minutes for alert evaluation
 - Check admin@aphiria.com inbox for alert email
 - Verify email contains environment, severity, and metric details
 
 **Check Logs** (Preview environments):
+
 ```bash
 kubectl logs -n monitoring deployment/grafana | grep -i alert
 ```
@@ -321,24 +330,26 @@ vim infrastructure/pulumi/src/components/monitoring/alert-rules-component.ts
 ```typescript
 // Example: Add disk space alert
 const rules: PrometheusAlertRule[] = [
-  // ... existing rules ...
-  {
-    alert: "HighDiskUsage",
-    expr: 'kubelet_volume_stats_used_bytes / kubelet_volume_stats_capacity_bytes > 0.85',
-    for: "10m",
-    labels: {
-      severity: environment === "production" ? "warning" : "info",
-      environment: environment,
+    // ... existing rules ...
+    {
+        alert: "HighDiskUsage",
+        expr: "kubelet_volume_stats_used_bytes / kubelet_volume_stats_capacity_bytes > 0.85",
+        for: "10m",
+        labels: {
+            severity: environment === "production" ? "warning" : "info",
+            environment: environment,
+        },
+        annotations: {
+            summary: "High disk usage on {{ $labels.persistentvolumeclaim }}",
+            description:
+                "Disk usage is {{ $value | humanizePercentage }} on PVC {{ $labels.persistentvolumeclaim }}",
+        },
     },
-    annotations: {
-      summary: "High disk usage on {{ $labels.persistentvolumeclaim }}",
-      description: "Disk usage is {{ $value | humanizePercentage }} on PVC {{ $labels.persistentvolumeclaim }}",
-    },
-  },
 ];
 ```
 
 **Rule Fields**:
+
 - `alert`: Unique alert name (CamelCase)
 - `expr`: PromQL query (string, returns boolean when threshold exceeded)
 - `for`: Duration threshold must be met before firing (e.g., "10m", "5m")
@@ -370,12 +381,12 @@ vim infrastructure/pulumi/tests/components/alert-rules-component.test.ts
 ```typescript
 // Example test
 it("should create HighDiskUsage alert rule", () => {
-  const resources = setup();
-  const configMap = resources.find(r => r.type === "kubernetes:core/v1:ConfigMap");
-  const alertRules = configMap.data["alert-rules.yml"];
+    const resources = setup();
+    const configMap = resources.find((r) => r.type === "kubernetes:core/v1:ConfigMap");
+    const alertRules = configMap.data["alert-rules.yml"];
 
-  expect(alertRules).toContain("alert: HighDiskUsage");
-  expect(alertRules).toContain("kubelet_volume_stats_used_bytes");
+    expect(alertRules).toContain("alert: HighDiskUsage");
+    expect(alertRules).toContain("kubelet_volume_stats_used_bytes");
 });
 ```
 
@@ -434,36 +445,37 @@ vim specs/001-monitoring-alerting/contracts/dashboards/custom-dashboard.json
 
 ```json
 {
-  "uid": "custom-dashboard",
-  "title": "Custom Dashboard",
-  "tags": ["custom"],
-  "timezone": "browser",
-  "schemaVersion": 38,
-  "version": 1,
-  "refresh": "30s",
-  "time": {
-    "from": "now-1h",
-    "to": "now"
-  },
-  "panels": [
-    {
-      "id": 1,
-      "type": "graph",
-      "title": "Custom Metric",
-      "gridPos": {"x": 0, "y": 0, "w": 12, "h": 8},
-      "targets": [
+    "uid": "custom-dashboard",
+    "title": "Custom Dashboard",
+    "tags": ["custom"],
+    "timezone": "browser",
+    "schemaVersion": 38,
+    "version": 1,
+    "refresh": "30s",
+    "time": {
+        "from": "now-1h",
+        "to": "now"
+    },
+    "panels": [
         {
-          "expr": "your_prometheus_query_here",
-          "refId": "A",
-          "datasource": {"type": "prometheus", "uid": "prometheus"}
+            "id": 1,
+            "type": "graph",
+            "title": "Custom Metric",
+            "gridPos": { "x": 0, "y": 0, "w": 12, "h": 8 },
+            "targets": [
+                {
+                    "expr": "your_prometheus_query_here",
+                    "refId": "A",
+                    "datasource": { "type": "prometheus", "uid": "prometheus" }
+                }
+            ]
         }
-      ]
-    }
-  ]
+    ]
 }
 ```
 
 **Key Fields**:
+
 - `uid`: Unique identifier (lowercase-with-hyphens)
 - `title`: Display name
 - `refresh`: Auto-refresh interval ("30s", "1m", "5m")
@@ -481,22 +493,25 @@ import * as fs from "fs";
 import * as path from "path";
 
 // Load dashboard JSON files
-const dashboardsDir = path.join(__dirname, "../../../../../specs/001-monitoring-alerting/contracts/dashboards");
+const dashboardsDir = path.join(
+    __dirname,
+    "../../../../../specs/001-monitoring-alerting/contracts/dashboards"
+);
 const dashboards = [
-  fs.readFileSync(path.join(dashboardsDir, "cluster-overview.json"), "utf8"),
-  fs.readFileSync(path.join(dashboardsDir, "namespace-service.json"), "utf8"),
-  fs.readFileSync(path.join(dashboardsDir, "api-performance.json"), "utf8"),
-  fs.readFileSync(path.join(dashboardsDir, "error-rates.json"), "utf8"),
-  fs.readFileSync(path.join(dashboardsDir, "resource-utilization.json"), "utf8"),
-  fs.readFileSync(path.join(dashboardsDir, "custom-dashboard.json"), "utf8"), // ADD THIS
+    fs.readFileSync(path.join(dashboardsDir, "cluster-overview.json"), "utf8"),
+    fs.readFileSync(path.join(dashboardsDir, "namespace-service.json"), "utf8"),
+    fs.readFileSync(path.join(dashboardsDir, "api-performance.json"), "utf8"),
+    fs.readFileSync(path.join(dashboardsDir, "error-rates.json"), "utf8"),
+    fs.readFileSync(path.join(dashboardsDir, "resource-utilization.json"), "utf8"),
+    fs.readFileSync(path.join(dashboardsDir, "custom-dashboard.json"), "utf8"), // ADD THIS
 ];
 
 // Create ConfigMap with all dashboards
 const dashboardConfigMap = new k8s.core.v1.ConfigMap("grafana-dashboards", {
-  metadata: { name: "grafana-dashboards", namespace: "monitoring" },
-  data: {
-    "dashboards.json": JSON.stringify(dashboards.map(d => JSON.parse(d))),
-  },
+    metadata: { name: "grafana-dashboards", namespace: "monitoring" },
+    data: {
+        "dashboards.json": JSON.stringify(dashboards.map((d) => JSON.parse(d))),
+    },
 });
 ```
 
@@ -508,13 +523,13 @@ vim infrastructure/pulumi/tests/components/dashboards-component.test.ts
 
 ```typescript
 it("should include custom dashboard", () => {
-  const resources = setup();
-  const configMap = resources.find(r => r.type === "kubernetes:core/v1:ConfigMap");
-  const dashboards = JSON.parse(configMap.data["dashboards.json"]);
+    const resources = setup();
+    const configMap = resources.find((r) => r.type === "kubernetes:core/v1:ConfigMap");
+    const dashboards = JSON.parse(configMap.data["dashboards.json"]);
 
-  const customDashboard = dashboards.find(d => d.uid === "custom-dashboard");
-  expect(customDashboard).toBeDefined();
-  expect(customDashboard.title).toBe("Custom Dashboard");
+    const customDashboard = dashboards.find((d) => d.uid === "custom-dashboard");
+    expect(customDashboard).toBeDefined();
+    expect(customDashboard.title).toBe("Custom Dashboard");
 });
 ```
 
@@ -545,13 +560,13 @@ Dashboard JSON is source of truth. Prevent manual edits via Grafana config:
 ```typescript
 // In grafana-component.ts
 const grafanaConfig = {
-  // ...
-  dashboards: {
-    default_home_dashboard_path: "/etc/grafana/provisioning/dashboards/cluster-overview.json",
-  },
-  users: {
-    viewers_can_edit: false, // Prevent Viewer role from editing
-  },
+    // ...
+    dashboards: {
+        default_home_dashboard_path: "/etc/grafana/provisioning/dashboards/cluster-overview.json",
+    },
+    users: {
+        viewers_can_edit: false, // Prevent Viewer role from editing
+    },
 };
 ```
 
@@ -566,6 +581,7 @@ This is enforced by default. Any UI changes will be discarded on Grafana restart
 **Symptom**: Targets show "DOWN" in Prometheus UI (Status > Targets)
 
 **Diagnosis**:
+
 ```bash
 # Check Prometheus logs
 kubectl logs -n monitoring statefulset/prometheus | grep -i error
@@ -578,12 +594,14 @@ kubectl exec -it -n default <pod-name> -- curl http://localhost:9090/metrics
 ```
 
 **Common Causes**:
+
 - **Port mismatch**: Verify pod exposes metrics on expected port (usually 9090 or 8080)
 - **No metrics exporter**: Application pods must expose Prometheus-compatible /metrics endpoint
 - **Network policy**: Ensure monitoring namespace can reach target pods
 - **ServiceMonitor misconfiguration**: Verify label selectors match target services
 
 **Fix**:
+
 ```bash
 # Example: Add metrics endpoint to API deployment
 # Edit src/components/api-deployment.ts to add:
@@ -599,6 +617,7 @@ pulumi up --stack production
 **Symptom**: Dashboards show "Data source not found" or "Error loading data"
 
 **Diagnosis**:
+
 ```bash
 # Check Grafana logs
 kubectl logs -n monitoring deployment/grafana | grep -i datasource
@@ -608,11 +627,13 @@ kubectl exec -it -n monitoring deployment/grafana -- curl http://prometheus.moni
 ```
 
 **Common Causes**:
+
 - **Service name mismatch**: Datasource URL must match Prometheus service DNS name
 - **Prometheus not running**: Check `kubectl get pods -n monitoring`
 - **Datasource not provisioned**: Verify datasource-component.ts creates Prometheus datasource
 
 **Fix**:
+
 ```bash
 # Manually test datasource in Grafana UI
 # Configuration > Data Sources > Prometheus > Test
@@ -627,6 +648,7 @@ kubectl run -it --rm debug --image=curlimages/curl --restart=Never -- \
 **Symptom**: Threshold exceeded but no alert email received
 
 **Diagnosis**:
+
 ```bash
 # Check Grafana alert evaluation logs
 kubectl logs -n monitoring deployment/grafana | grep -i alert
@@ -641,12 +663,14 @@ kubectl logs -n monitoring deployment/grafana | grep -i smtp
 ```
 
 **Common Causes**:
+
 - **Alert rule not loaded**: ConfigMap update didn't trigger reload
 - **PromQL query returns no data**: Query syntax error or missing metrics
 - **Email delivery failure**: SMTP credentials incorrect or network blocked
 - **Preview environment**: Email suppressed intentionally (expected behavior)
 
 **Fix**:
+
 ```bash
 # Force reload Prometheus config
 kubectl rollout restart -n monitoring statefulset/prometheus
@@ -663,6 +687,7 @@ kubectl rollout restart -n monitoring deployment/grafana
 **Symptom**: Dashboard panels display "No data" despite metrics being scraped
 
 **Diagnosis**:
+
 ```bash
 # Check if Prometheus has data for query
 kubectl port-forward -n monitoring service/prometheus 9090:9090
@@ -676,11 +701,13 @@ kubectl port-forward -n monitoring service/prometheus 9090:9090
 ```
 
 **Common Causes**:
+
 - **Time range too narrow**: Dashboard shows "Last 5 minutes" but data collection just started
 - **PromQL query error**: Query syntax invalid or metric name misspelled
 - **Datasource mismatch**: Panel configured for wrong datasource UID
 
 **Fix**:
+
 ```bash
 # Update dashboard JSON to use correct datasource UID
 vim specs/001-monitoring-alerting/contracts/dashboards/<name>.json
@@ -695,6 +722,7 @@ pulumi up --stack production
 **Symptom**: Prometheus pod OOMKilled or memory limit warnings
 
 **Diagnosis**:
+
 ```bash
 # Check memory usage
 kubectl top pod -n monitoring prometheus-0
@@ -704,27 +732,31 @@ kubectl describe statefulset -n monitoring prometheus | grep -i retention
 ```
 
 **Common Causes**:
+
 - **Too many metrics**: High cardinality labels (unique label combinations)
 - **Long retention period**: 7-day retention on high-traffic cluster
 - **Insufficient resource limits**: Memory limit too low for workload
 
 **Fix**:
+
 ```typescript
 // Edit prometheus-component.ts to increase memory limits
 const prometheusDeployment = new k8s.apps.v1.StatefulSet("prometheus", {
-  // ...
-  spec: {
-    template: {
-      spec: {
-        containers: [{
-          resources: {
-            requests: { memory: "512Mi" }, // Increase from 256Mi
-            limits: { memory: "1Gi" },     // Increase from 512Mi
-          },
-        }],
-      },
+    // ...
+    spec: {
+        template: {
+            spec: {
+                containers: [
+                    {
+                        resources: {
+                            requests: { memory: "512Mi" }, // Increase from 256Mi
+                            limits: { memory: "1Gi" }, // Increase from 512Mi
+                        },
+                    },
+                ],
+            },
+        },
     },
-  },
 });
 ```
 
@@ -738,6 +770,7 @@ pulumi up --stack production
 **Symptom**: https://grafana.aphiria.com returns 404 or connection refused
 
 **Diagnosis**:
+
 ```bash
 # Check HTTPRoute exists
 kubectl get httproute -n monitoring
@@ -753,12 +786,14 @@ kubectl get certificate -n monitoring
 ```
 
 **Common Causes**:
+
 - **HTTPRoute missing**: grafana-ingress-component.ts not deployed
 - **DNS not configured**: grafana.aphiria.com doesn't resolve to cluster IP
 - **NGINX Gateway not installed**: Base infrastructure missing
 - **TLS certificate pending**: Let's Encrypt validation in progress
 
 **Fix**:
+
 ```bash
 # Check HTTPRoute configuration
 kubectl describe httproute -n monitoring grafana
@@ -844,6 +879,7 @@ npm run build       # TypeScript: MUST compile with no errors
 ```
 
 **Coverage Thresholds** (from jest.config.js):
+
 - Branches: 100%
 - Functions: 100%
 - Lines: 100%

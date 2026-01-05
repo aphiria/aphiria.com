@@ -5,14 +5,14 @@ on:
     branches:
       - master
     paths:
-      - 'apps/api/composer.json'
-      - 'apps/api/composer.lock'
-      - 'apps/api/src/**'
-      - 'apps/api/public/**'
-      - 'apps/web/package.json'
-      - 'apps/web/package-lock.json'
-      - 'apps/web/public/**'
-      - 'infrastructure/docker/**'
+      - "apps/api/composer.json"
+      - "apps/api/composer.lock"
+      - "apps/api/src/**"
+      - "apps/api/public/**"
+      - "apps/web/package.json"
+      - "apps/web/package-lock.json"
+      - "apps/web/public/**"
+      - "infrastructure/docker/**"
 
 permissions:
   contents: read

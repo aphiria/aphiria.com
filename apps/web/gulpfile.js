@@ -9,18 +9,18 @@ const uglifyCss = require('gulp-clean-css');
 const concat = require('gulp-concat');
 const del = require('del');
 const shell = require('gulp-shell');
-const sass = require('gulp-sass')(require('sass'));
 const sourcemaps = require('gulp-sourcemaps');
+const postcss = require('gulp-postcss');
+const postcssNested = require('postcss-nested');
 
 const paths = {
     'manifest': 'public/rev-manifest.json',
     'public': 'public',
     'publicCss': 'public/css',
     'publicJs': 'public/js',
-    'resourcesCss': '../api/resources/css',
-    'resourcesJs': '../api/resources/js',
-    'resourcesViews': '../api/resources/views',
-    'tmpCss': '../api/tmp/css'
+    'srcCss': 'src/css',
+    'srcJs': 'src/js',
+    'srcViews': 'src/views'
 };
 
 const rewriteReferences = () => {
@@ -42,7 +42,7 @@ const rewriteReferences = () => {
         .pipe(gulp.dest(paths.public));
 };
 const minifyJs = () => {
-    return gulp.src(`${paths.resourcesJs}/client-side/*.js`)
+    return gulp.src(`${paths.srcJs}/client-side/*.js`)
         // Create a minified, concatenated JS file
         .pipe(sourcemaps.init())
         .pipe(concat('scripts.min.js'))
@@ -56,11 +56,12 @@ const minifyJs = () => {
         .pipe(gulp.dest(paths.public));
 };
 const minifyCss = () => {
-    // Combine any compiled SCSS files in tmp as well as any other CSS files in resources
-    return gulp.src([`${paths.resourcesCss}/*.css`, `${paths.tmpCss}/*.css`])
+    return gulp.src(`${paths.srcCss}/*.css`)
         // Create a minified, concatenated CSS file
         .pipe(sourcemaps.init())
         .pipe(concat('styles.min.css'))
+        // Transform nested CSS to flat CSS before minification
+        .pipe(postcss([postcssNested()]))
         .pipe(uglifyCss())
         // Version our CSS
         .pipe(rev())
@@ -70,15 +71,8 @@ const minifyCss = () => {
         .pipe(rev.manifest(paths.manifest, { base: paths.public, merge: true }))
         .pipe(gulp.dest(paths.public));
 };
-const compileScss = () => {
-    return gulp.src(`${paths.resourcesCss}/*.scss`)
-        .pipe(sourcemaps.init())
-        .pipe(sass().on('error', sass.logError))
-        .pipe(gulp.dest(paths.tmpCss));
-};
 const cleanCss = () => {
-    // Need to force this because these files are outside the working directory
-    return del([`${paths.tmpCss}/*.css`, `${paths.publicCss}/*.css`, `${paths.publicCss}/*.css.map`], { force: true });
+    return del([`${paths.publicCss}/*.css`, `${paths.publicCss}/*.css.map`]);
 };
 const cleanJs = () => {
     // Delete everything but the config.js
@@ -90,16 +84,13 @@ gulp.task('clean-js', cleanJs);
 gulp.task('rewrite-references', rewriteReferences);
 gulp.task('minify-js', minifyJs);
 gulp.task('minify-css', minifyCss);
-gulp.task('compile-scss', compileScss);
 gulp.task('download-docs', shell.task('php ../api/aphiria docs:build'));
 gulp.task('build-views', shell.task('php ../api/aphiria views:build'));
 // We intentionally build our assets first so that they're ready to be inserted into the built views
-gulp.task('build', gulp.series('clean-css', 'clean-js', 'compile-scss', 'minify-js', 'minify-css', 'download-docs', 'build-views', 'rewrite-references'));
+gulp.task('build', gulp.series('clean-css', 'clean-js', 'minify-js', 'minify-css', 'download-docs', 'build-views', 'rewrite-references'));
 gulp.task('watch-assets', () => {
-    // Purposely deferring rewriting of references to the .css watcher
-    gulp.watch(`${paths.resourcesCss}/*.scss`, gulp.series(compileScss));
-    gulp.watch(`${paths.resourcesJs}/client-size/*.js`, gulp.series('minify-js', rewriteReferences));
-    gulp.watch(`${paths.resourcesCss}/*.css`, gulp.series('minify-css', rewriteReferences));
+    gulp.watch(`${paths.srcJs}/client-side/*.js`, gulp.series('minify-js', rewriteReferences));
+    gulp.watch(`${paths.srcCss}/*.css`, gulp.series('minify-css', rewriteReferences));
     // When our raw views change, we want to also make sure we rewrite their references
-    gulp.watch(`${paths.resourcesViews}/**/*.html`, gulp.series('build-views', rewriteReferences));
+    gulp.watch(`${paths.srcViews}/**/*.html`, gulp.series('build-views', rewriteReferences));
 });
