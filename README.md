@@ -169,12 +169,23 @@ npx playwright install --with-deps chromium
 npm run test:e2e:local
 ```
 
-**Against production/preview** (validates certificates):
+**Against preview**:
+
+```bash
+cd tests/e2e
+SITE_BASE_URL=https://{PR}.pr.aphiria.com \
+GRAFANA_BASE_URL=https://pr-grafana.aphiria.com \
+COOKIE_DOMAIN=".pr.aphiria.com" \
+npm run test:e2e
+```
+
+**Against production:
 
 ```bash
 cd tests/e2e
 SITE_BASE_URL=https://www.aphiria.com \
 GRAFANA_BASE_URL=https://grafana.aphiria.com \
+COOKIE_DOMAIN=".aphiria.com" \
 npm run test:e2e
 ```
 
