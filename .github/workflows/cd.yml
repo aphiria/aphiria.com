@@ -709,7 +709,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     needs: [determine-mode, deploy]
-    if: needs.determine-mode.outputs.is-safe == 'true'
+    if: |
+      always() &&
+      needs.deploy.result == 'success'
 
     steps:
       - name: Checkout code

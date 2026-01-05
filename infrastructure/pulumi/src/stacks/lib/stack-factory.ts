@@ -366,9 +366,10 @@ export function createStack(config: StackConfig, k8sProvider: k8s.Provider): Sta
             gatewayName: "nginx-gateway",
             gatewayNamespace: gatewayNamespace,
             hostname: config.monitoring.grafana.hostname,
-            // Grafana uses a root domain (pr-grafana.aphiria.com or grafana.aphiria.com)
-            // Root domains always use the https-root listener
-            sectionName: "https-root",
+            // Preview: pr-grafana.aphiria.com uses https-root (exact match)
+            // Production: grafana.aphiria.com uses https-subdomains (*.aphiria.com wildcard)
+            /* istanbul ignore next - sectionName varies by environment (preview vs production) */
+            sectionName: config.env === "preview" ? "https-root" : "https-subdomains",
             provider: k8sProvider,
         });
 
