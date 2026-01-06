@@ -25,8 +25,10 @@ createStack(
             dbUser: "postgres",
             dbPassword: "postgres",
             resources: {
-                requests: { cpu: "100m", memory: "128Mi" },
-                limits: { cpu: "200m", memory: "256Mi" },
+                // PostgreSQL 16 needs 512Mi to initialize (shared buffers, background processes)
+                // Once running, it uses ~21Mi RSS for this small database (7.5MB data)
+                requests: { cpu: "100m", memory: "256Mi" },
+                limits: { cpu: "200m", memory: "512Mi" },
             },
         },
         gateway: {

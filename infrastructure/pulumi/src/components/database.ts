@@ -136,6 +136,14 @@ export function createPostgreSQL(args: PostgreSQLArgs): PostgreSQLResult {
             },
             spec: {
                 replicas: 1, // Single replica - multi-replica requires StatefulSet + replication
+                // Recreate strategy: Terminate old pod before creating new pod.
+                // REQUIRED for RWO (ReadWriteOnce) PersistentVolumeClaims.
+                // RWO PVCs can only be attached to one pod at a time, so rolling updates
+                // cause deadlock: new pod can't start (PVC attached to old pod), old pod
+                // won't terminate (waiting for new pod to be ready).
+                strategy: {
+                    type: "Recreate",
+                },
                 selector: {
                     matchLabels: {
                         app: "db",

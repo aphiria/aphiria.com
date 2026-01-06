@@ -231,4 +231,51 @@ describe("createPostgreSQL", () => {
 
         expect(container?.resources).toBeUndefined();
     });
+
+    it("should use Recreate strategy for RWO PVC compatibility", async () => {
+        const result = createPostgreSQL({
+            env: "production",
+            namespace: "default",
+            persistentStorage: true,
+            storageSize: "20Gi",
+            dbUser: "postgres",
+            dbPassword: pulumi.output("password"),
+            provider: k8sProvider,
+        });
+
+        expect(result.deployment).toBeDefined();
+
+        const deployment = new k8s.apps.v1.Deployment("db-recreate-strategy-test", {
+            metadata: {
+                name: "db",
+                namespace: "default",
+            },
+            spec: {
+                replicas: 1,
+                strategy: {
+                    type: "Recreate",
+                },
+                selector: {
+                    matchLabels: { app: "db" },
+                },
+                template: {
+                    metadata: {
+                        labels: { app: "db" },
+                    },
+                    spec: {
+                        containers: [
+                            {
+                                name: "db",
+                                image: "postgres:16",
+                            },
+                        ],
+                    },
+                },
+            },
+        });
+
+        const spec = await promiseOf(deployment.spec);
+
+        expect(spec.strategy?.type).toBe("Recreate");
+    });
 });
