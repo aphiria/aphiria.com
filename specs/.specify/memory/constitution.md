@@ -1,15 +1,19 @@
 <!--
 Sync Impact Report:
-Version change: 1.0.0 → 1.1.0
-Modified principles: None
+Version change: 1.1.0 → 1.2.0
+Modified principles:
+  - Review Requirements: Added mandatory code review phase
 Added sections:
-  - Core Principle VI: CI/CD & Infrastructure Reuse
+  - Core Principle VII: Code Quality & Design Principles
+  - Core Principle VIII: Frontend & E2E Testing Standards
 Removed sections: None
 Templates requiring updates:
-  ✅ plan-template.md - reviewed, constitution check section compatible
-  ✅ spec-template.md - reviewed, requirements alignment compatible
-  ✅ tasks-template.md - reviewed, task categorization compatible
-Follow-up TODOs: None
+  - plan-template.md - add code review phase to acceptance criteria
+  - spec-template.md - add code review phase to testing section
+  - tasks-template.md - add code review step to task completion
+Follow-up TODOs:
+  - Update all active specs to include code review phase
+  - Add code review checklist to PR template
 -->
 
 # Aphiria.com Constitution
@@ -85,6 +89,53 @@ GitHub Actions workflows and infrastructure code MUST be parameterized and reusa
 
 **Rationale**: Duplicated workflows and infrastructure code create maintenance burden and increase the risk of environment drift. Parameterization ensures consistency across environments and reduces the surface area for bugs.
 
+### VII. Code Quality & Design Principles
+
+All code MUST adhere to SOLID principles and modern design patterns:
+
+- **Single Responsibility**: Classes and functions do one thing well
+- **Open/Closed Principle**: Extend behavior via composition, not modification
+- **Dependency Injection**: No hardcoded dependencies, use constructor injection
+- **Testability-First Design**: If code is hard to test, the design is wrong - refactor for testability
+- **No Hacky Solutions**: Workarounds require explicit justification in code comments and a refactoring plan
+- **Strong Naming Conventions**:
+  - Files: kebab-case for configs/scripts, PascalCase.php for classes
+  - Classes: Nouns describing purpose (SearchBar, UserRepository, not Helper or Manager)
+  - Methods: Verbs describing action (selectContext, findById, not doThing or process)
+  - Properties: Semantic names describing purpose (mobileMenuLink, searchInput, not locator or element)
+- **Research Over Guessing**: When uncertain about best practices or framework conventions, research official documentation BEFORE proposing solutions
+- **Anti-Pattern Detection**: Actively identify and eliminate common anti-patterns (god objects, tight coupling, magic numbers, copy-paste code)
+
+**Rationale**: Maintainable code requires intentional design. Anti-patterns and poor naming accumulate technical debt and make future changes exponentially harder. SOLID principles ensure code remains flexible and testable as the system evolves.
+
+### VIII. Frontend & E2E Testing Standards
+
+TypeScript and E2E tests MUST follow modern best practices and established patterns:
+
+**TypeScript Quality:**
+- ESLint and Prettier must pass with zero errors and zero warnings
+- Use `readonly` properties for immutable values
+- Use interfaces for contracts (Navigable, Searchable, etc.)
+- Use strict typing - avoid `any` except for truly dynamic external APIs
+- Use CONSTANT_CASE (UPPER_SNAKE_CASE) for module-level constants
+- Properties for synchronous values, methods for asynchronous operations
+
+**E2E Testing (Playwright):**
+- **Page Object Model (POM) is mandatory** - NO DOM selectors in test files
+- All `.locator()`, `.getBy*()`, and CSS selectors MUST be encapsulated in page objects or components
+- Use semantic property names based on UI purpose (getStartedLink, submitButton, NOT locator or element)
+- Test names use sentence case (NOT Title Case)
+- Use `waitUntil: "load"` by default (NOT "domcontentloaded" unless justified)
+- NEVER use `waitForTimeout` - use smart retry with `.toBeVisible()`, `.toHaveText()`, etc.
+- Organize code:
+  - `fixtures/` for test setup and dependency injection
+  - `lib/` for reusable utility functions
+  - `pages/components/` for reusable UI components
+  - `pages/` for full page objects
+- Centralize test data in `fixtures/test-data.ts`
+
+**Rationale**: Frontend code is as critical as backend for user experience. E2E tests prevent regressions in user-facing features. Poor test organization and flaky waits create maintenance burden and false negatives in CI.
+
 ## Development Standards
 
 ### Code Organization
@@ -138,6 +189,65 @@ All pull requests MUST:
 - Pass all automated checks (CI workflow)
 - Receive approval from code owner
 - Have descriptive commit messages explaining why (not just what)
+- **Complete mandatory code review phase** (see below)
+
+### Mandatory Code Review Phase
+
+Every implementation MUST include a final expert code review before being marked complete:
+
+**Review Checklist:**
+
+1. **Anti-Pattern Detection**: Review all changes for common anti-patterns:
+   - God objects (classes doing too much)
+   - Tight coupling between components
+   - Magic numbers or strings (use named constants)
+   - Copy-paste code (extract to reusable functions)
+   - Mutable global state
+
+2. **SOLID Compliance**:
+   - Single Responsibility: Each class/function does one thing
+   - Open/Closed: Extensions via composition, not modification
+   - Liskov Substitution: Subtypes are substitutable for base types
+   - Interface Segregation: No fat interfaces
+   - Dependency Inversion: Depend on abstractions, not concretions
+
+3. **Naming Audit**:
+   - File names follow conventions (kebab-case or PascalCase)
+   - Class names are descriptive nouns (SearchBar, not Helper)
+   - Method names are descriptive verbs (selectContext, not doIt)
+   - Property names are semantic (mobileMenuLink, not locator)
+   - No abbreviations unless universally understood (HTTP, URL)
+
+4. **Decoupling Check**:
+   - Loose coupling between modules
+   - High cohesion within modules
+   - Dependencies injected via constructors
+   - No circular dependencies
+
+5. **Testability Review**:
+   - Code designed for testability (dependency injection, pure functions)
+   - No network/file dependencies in unit tests
+   - Test fixtures used appropriately
+   - Mock/stub usage is minimal (prefer redesign over excessive mocking)
+
+6. **Hack Detection**:
+   - No TODO comments without issue tracking
+   - Workarounds explicitly justified in comments
+   - Magic numbers replaced with named constants
+   - No commented-out code
+
+7. **Best Practices**:
+   - Adherence to framework conventions (Aphiria, Playwright, etc.)
+   - Official documentation patterns followed
+   - Language idioms used correctly (PHP 8.4, TypeScript 5.x)
+
+**Process:**
+- Conduct review BEFORE marking implementation complete
+- Document findings and refactor as needed
+- If no issues found, explicitly state in PR: "Code review complete - no anti-patterns detected"
+- Failed review blocks PR approval
+
+**Rationale**: Proactive code review catches design issues, naming problems, and anti-patterns before they become technical debt. This prevents the need for reactive refactoring when issues are discovered later.
 
 ## Governance
 
@@ -166,4 +276,4 @@ All pull requests MUST:
 
 This constitution is a living document. As the project grows, principles may be added, refined, or (rarely) removed. All changes must be versioned and documented.
 
-**Version**: 1.1.0 | **Ratified**: 2025-12-19 | **Last Amended**: 2025-12-22
+**Version**: 1.2.0 | **Ratified**: 2025-12-19 | **Last Amended**: 2026-01-06

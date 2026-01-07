@@ -1,9 +1,9 @@
 import { test, expect } from "../fixtures/pages";
-import { testDocs } from "../fixtures/test-data";
+import { TEST_DOCS } from "../fixtures/test-data";
 import { assertPageOk } from "../lib/assertions";
 
 test("sidebar sections contain visible headings with text and navigation lists", async ({ docsPage }) => {
-    await docsPage.goto(testDocs.introduction);
+    await docsPage.goto(TEST_DOCS.introduction);
 
     const sections = docsPage.sideNav.sections;
     await expect(sections).not.toHaveCount(0);
@@ -27,7 +27,7 @@ test("all sidebar links return successful HTTP responses", async ({ page, docsPa
     // We're visiting a bunch of pages here, so increase the timeout
     test.setTimeout(60000);
 
-    await docsPage.goto(testDocs.introduction);
+    await docsPage.goto(TEST_DOCS.introduction);
 
     const internalHrefs = await docsPage.sideNav.getAllInternalLinks();
 

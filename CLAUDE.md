@@ -230,6 +230,277 @@ npm test  # Playwright smoke tests
 
 ---
 
+# E2E TESTING STANDARDS (Playwright)
+
+## Page Object Model (NON-NEGOTIABLE)
+
+**Critical Rule**: Tests describe WHAT to test. Page objects encapsulate HOW to interact.
+
+- ALL DOM selectors MUST be in page objects or components
+- Tests MUST NOT contain `.locator()`, `.getBy*()`, or CSS selectors
+- Component properties MUST have semantic names (getStartedLink, mobileMenuLink)
+- NEVER use generic names (locator, element, button) - describe the PURPOSE
+
+**Example**:
+
+```typescript
+// BAD: Selector in test
+test("search works", async ({ page }) => {
+    const input = page.locator("#search-query");  // NO!
+    await input.fill("test");
+});
+
+// GOOD: Selector in component
+// search-bar.component.ts
+export class SearchBar {
+    readonly searchInput: Locator;  // Semantic name
+
+    constructor(page: Page) {
+        this.searchInput = page.locator("#search-query");
+    }
+}
+
+// Test
+test("search works", async ({ homePage }) => {
+    await homePage.search.searchInput.fill("test");  // YES!
+});
+```
+
+---
+
+## TypeScript Design Patterns
+
+- Use `readonly` properties for all locators
+- Use interfaces for contracts (Navigable, Searchable, etc.)
+- Properties for synchronous values, methods for async operations
+- Pass `Locator` parameters for methods that operate on variable elements
+
+**Example**:
+
+```typescript
+// GOOD: Properties for locators (sync)
+readonly results: Locator;
+readonly selectedResult: Locator;
+
+// GOOD: Methods for async operations
+async query(searchQuery: string): Promise<void> { ... }
+
+// GOOD: Methods that accept locators
+getResultLink(result: Locator): Locator {
+    return result.locator("a");
+}
+```
+
+---
+
+## Naming Conventions
+
+### Constants (test data)
+
+- Use CONSTANT_CASE (UPPER_SNAKE_CASE) for module-level constants
+- Centralize in `fixtures/test-data.ts`
+
+```typescript
+// GOOD
+export const TEST_DOCS = {
+    installation: "/docs/1.x/installation.html",
+    introduction: "/docs/1.x/introduction.html",
+} as const;
+
+export const TEST_QUERIES = {
+    valid: "rout",
+    noResults: "abcdefg123",
+} as const;
+```
+
+### Components and Pages
+
+- Components: Noun describing UI element (SearchBar, MobileNav, ContextSelector)
+- Properties: Semantic names (mobileMenuLink, NOT link or locator)
+- Methods: Verb-based (selectContext, getResultLink, query)
+
+### Tests
+
+- Use sentence case for test names (NOT Title Case)
+- Be specific and descriptive
+
+```typescript
+// GOOD
+test("search results are invisible by default and when the query is deleted", ...)
+test("can use arrow keys to select search results", ...)
+
+// BAD
+test("Search Results Visibility", ...)
+test("Arrow Keys", ...)
+```
+
+---
+
+## File Organization
+
+### fixtures/
+
+Playwright test setup (dependency injection):
+- Page object instances with auto-navigation
+- Browser configurations
+- Test context (authenticated users, etc.)
+
+**Example**:
+
+```typescript
+export const test = base.extend<PageFixtures>({
+    homePage: async ({ page }, use) => {
+        const homePage = new HomePage(page);
+        await homePage.goto();  // Auto-navigate
+        await use(homePage);
+    },
+});
+```
+
+### lib/
+
+Reusable utility functions (NOT Playwright-specific):
+- Assertion helpers
+- Data transformers
+- Common algorithms
+
+**Example**:
+
+```typescript
+export async function assertPageOk(page: Page, url: string): Promise<void> {
+    // Reusable navigation + assertion logic
+}
+```
+
+### pages/components/
+
+Reusable UI components used across multiple pages:
+- SearchBar (used on home + docs)
+- MainNavBar (used on all pages)
+- MobileNav (mobile-specific navigation)
+
+### pages/
+
+Page objects representing full pages:
+- HomePage
+- DocsPage
+- Each should implement `Navigable` interface
+
+---
+
+## Quality Standards
+
+### Wait Strategies
+
+- Use `waitUntil: "load"` by default (NOT "domcontentloaded" unless justified)
+- NEVER use `waitForTimeout` - use smart retry with `.toBeVisible()`, `.toHaveText()`, etc.
+- Explicit waits for navigation: `waitForURL`, `waitForLoadState`
+
+```typescript
+// BAD: Flaky timeout
+await page.waitForTimeout(5000);
+
+// GOOD: Smart retry
+await expect(button).toHaveText("Copy", { timeout: 6000 });
+```
+
+### Assertions
+
+- Use meaningful custom error messages
+- Prefer semantic assertions (`.toBeVisible()` over `.toHaveCount(1)`)
+- Extract repeated assertions into helper functions (lib/assertions.ts)
+
+```typescript
+// GOOD: Clear failure message
+expect(href, "Expected first search result to have href attribute").toBeTruthy();
+
+// GOOD: Reusable assertion
+export async function assertContextCookie(page: Page, expectedValue: string) {
+    const cookies = await page.context().cookies();
+    const contextCookie = cookies.find((c) => c.name === "context");
+    expect(contextCookie?.value).toBe(expectedValue);
+}
+```
+
+### Documentation
+
+- JSDoc on all exported classes
+- Minimal comments (no examples unless complex)
+- No method-level JSDoc if signature is self-explanatory
+
+```typescript
+/**
+ * Search bar component
+ */
+export class SearchBar {
+    // No method comments needed - signature is clear
+    async query(searchQuery: string): Promise<void> { ... }
+}
+```
+
+---
+
+## Common Patterns
+
+### Test Organization
+
+Use `describe` blocks and `beforeEach` for shared setup:
+
+```typescript
+test.describe("mobile menu interactions", () => {
+    test.beforeEach(async ({ page, docsPage }) => {
+        await docsPage.goto(testDocs.installation);
+        const mobileNav = new MobileNav(page);
+        await expect(mobileNav.sideNav).toBeVisible();
+    });
+
+    test("toggling mobile menu shows/hides overlay", async ({ page }) => {
+        // Test implementation
+    });
+});
+```
+
+### Fixtures vs Manual Instantiation
+
+- Use fixtures for pages that auto-navigate (homePage, grafanaPage)
+- Manually instantiate components when needed (MobileNav, SearchBar)
+- Use explicit navigation for pages that need different paths (docsPage)
+
+---
+
+## Anti-Patterns
+
+**Selectors in tests**
+```typescript
+test("...", async ({ page }) => {
+    const button = page.locator("button.copy-button");  // NO!
+});
+```
+
+**Generic property names**
+```typescript
+export class CopyButton {
+    readonly locator: Locator;  // NO! What locator?
+}
+```
+
+**camelCase for module-level constants**
+```typescript
+const testQuery = "rout";  // NO! Use CONSTANT_CASE
+```
+
+**Title Case test names**
+```typescript
+test("Search Results Are Visible", ...)  // NO! Use sentence case
+```
+
+**waitForTimeout for page loads**
+```typescript
+await page.waitForTimeout(5000);  // NO! Use smart retry
+```
+
+---
+
 # DELETION SAFETY RULE
 
 Before ANY deletion (files, secrets, infrastructure, GitHub resources):

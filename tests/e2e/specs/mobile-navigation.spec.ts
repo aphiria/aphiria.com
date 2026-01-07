@@ -1,5 +1,5 @@
 import { test, expect } from "../fixtures/pages";
-import { testDocs } from "../fixtures/test-data";
+import { TEST_DOCS } from "../fixtures/test-data";
 import { MobileNav } from "../pages/components/mobile-nav.component";
 
 test.describe("desktop navigation (>=1024px)", () => {
@@ -13,7 +13,7 @@ test.describe("desktop navigation (>=1024px)", () => {
     });
 
     test("side nav is visible on docs pages", async ({ page, docsPage }) => {
-        await docsPage.goto(testDocs.installation);
+        await docsPage.goto(TEST_DOCS.installation);
 
         const mobileNav = new MobileNav(page);
 
@@ -26,7 +26,7 @@ test.describe("mobile navigation (<1024px)", () => {
     test.use({ viewport: { width: 768, height: 1024 } });
 
     test("mobile menu is visible and main nav links are hidden", async ({ page, docsPage }) => {
-        await docsPage.goto(testDocs.installation);
+        await docsPage.goto(TEST_DOCS.installation);
 
         const mobileNav = new MobileNav(page);
 
@@ -36,7 +36,7 @@ test.describe("mobile navigation (<1024px)", () => {
 
     test.describe("mobile menu interactions", () => {
         test.beforeEach(async ({ page, docsPage }) => {
-            await docsPage.goto(testDocs.installation);
+            await docsPage.goto(TEST_DOCS.installation);
 
             const mobileNav = new MobileNav(page);
 

@@ -1,10 +1,10 @@
 import { test, expect } from "../fixtures/pages";
-import { testQueries } from "../fixtures/test-data";
+import { TEST_QUERIES } from "../fixtures/test-data";
 
 test("search results are invisible by default and when the query is deleted", async ({ homePage }) => {
     await expect(homePage.search.searchResults).not.toBeVisible();
 
-    await homePage.search.query(testQueries.valid);
+    await homePage.search.query(TEST_QUERIES.valid);
     await expect(homePage.search.searchResults).toBeVisible();
 
     await homePage.search.clear();
@@ -12,7 +12,7 @@ test("search results are invisible by default and when the query is deleted", as
 });
 
 test("search displays results with a query that should return results", async ({ homePage }) => {
-    await homePage.search.query(testQueries.valid);
+    await homePage.search.query(TEST_QUERIES.valid);
 
     const results = homePage.search.results;
     await expect(results).not.toHaveCount(0);
@@ -22,7 +22,7 @@ test("search displays results with a query that should return results", async ({
 });
 
 test("can use arrow keys to select search results", async ({ page, homePage }) => {
-    await homePage.search.query(testQueries.valid);
+    await homePage.search.query(TEST_QUERIES.valid);
 
     await page.keyboard.press("ArrowDown");
     await expect(homePage.search.selectedResult).toHaveCount(1);
@@ -42,7 +42,7 @@ test("can use arrow keys to select search results", async ({ page, homePage }) =
 });
 
 test("pressing enter navigates to first search result by default", async ({ page, homePage }) => {
-    await homePage.search.query(testQueries.valid);
+    await homePage.search.query(TEST_QUERIES.valid);
 
     const results = homePage.search.results;
     const firstResultLink = homePage.search.getResultLink(results.first());
@@ -58,7 +58,7 @@ test("pressing enter navigates to first search result by default", async ({ page
 });
 
 test("can click on search result to navigate", async ({ page, homePage }) => {
-    await homePage.search.query(testQueries.valid);
+    await homePage.search.query(TEST_QUERIES.valid);
 
     const results = homePage.search.results;
 
@@ -81,15 +81,15 @@ test("can click on search result to navigate", async ({ page, homePage }) => {
 });
 
 test("searching with a query with no results shows a no results message", async ({ homePage }) => {
-    await homePage.search.query(testQueries.noResults);
+    await homePage.search.query(TEST_QUERIES.noResults);
 
     const noResults = homePage.search.noResults;
     await expect(noResults).toHaveCount(1);
-    await expect(noResults).toContainText(`No results for "${testQueries.noResults}"`);
+    await expect(noResults).toContainText(`No results for "${TEST_QUERIES.noResults}"`);
 });
 
 test("clicking outside search results hides them", async ({ page, homePage }) => {
-    await homePage.search.query(testQueries.valid);
+    await homePage.search.query(TEST_QUERIES.valid);
 
     await expect(homePage.search.searchResults).toBeVisible();
 
