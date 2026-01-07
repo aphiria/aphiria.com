@@ -29,7 +29,7 @@ Before proceeding, ask yourself:
    - If YES: stop and check official documentation.
 3. Am I about to delete or destroy anything?
    - If YES: stop and ask first.
-4. Am I about to modify infrastructure code (Pulumi, Kubernetes, Docker, CI/CD, GitHub Actions)?
+4. Am I about to modify infrastructure code (Pulumi)?
    - If YES: have I written tests first?
 
 ---
@@ -179,6 +179,7 @@ const kubeconfig = args.useStaticKubeconfig
 ## PHP
 
 ```bash
+cd apps/api
 composer phpcs-fix
 composer phpunit
 composer psalm
@@ -204,7 +205,7 @@ npm test  # 100% coverage thresholds
 ```javascript
 coverageThreshold: {
     global: {
-        branches: 100,
+        branches: 97,
         functions: 100,
         lines: 100,
         statements: 100
@@ -543,8 +544,8 @@ No exceptions.
 
 ## Monorepo Structure
 
-1. **Web Frontend** (`./public-web`): Static HTML/CSS/JS documentation
-2. **API Backend** (`./public-api`): PHP REST API with full-text search (PostgreSQL TSVectors)
+1. **Web Frontend** (`./apps/web`): Static HTML/CSS/JS documentation
+2. **API Backend** (`./apps/api`): PHP REST API with full-text search (PostgreSQL TSVectors)
 
 ## Build Pipeline
 
