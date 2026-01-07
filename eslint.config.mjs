@@ -22,6 +22,28 @@ export default [
     ...tseslint.configs.recommended,
     prettier,
     {
+        files: ["**/*.ts"],
+        rules: {
+            "@typescript-eslint/member-ordering": [
+                "error",
+                {
+                    default: [
+                        "public-static-field",
+                        "protected-static-field",
+                        "private-static-field",
+                        "public-instance-field",
+                        "protected-instance-field",
+                        "private-instance-field",
+                        "constructor",
+                        "public-instance-method",
+                        "protected-instance-method",
+                        "private-instance-method",
+                    ],
+                },
+            ],
+        },
+    },
+    {
         files: ["infrastructure/pulumi/**/*.ts"],
         languageOptions: {
             parserOptions: {
