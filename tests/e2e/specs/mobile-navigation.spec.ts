@@ -1,94 +1,83 @@
-import { test, expect } from "@playwright/test";
-import { HomePage } from "../pages/home.page";
-import { DocsPage } from "../pages/docs.page";
+import { test, expect } from "../fixtures/pages";
+import { testDocs } from "../fixtures/test-data";
+import { MobileNav } from "../pages/components/mobile-nav.component";
 
-test.describe("Desktop navigation (>=1024px)", () => {
+test.describe("desktop navigation (>=1024px)", () => {
     test.use({ viewport: { width: 1024, height: 768 } });
 
-    test("side nav is hidden on homepage", async ({ page }) => {
-        const homePage = new HomePage(page);
-        await homePage.goto();
+    test("side nav is hidden on homepage", async ({ page, homePage: _homePage }) => {
+        const mobileNav = new MobileNav(page);
 
-        const sideNav = page.locator("nav.side-nav");
-        const mobileMenu = page.locator("li#mobile-menu");
-
-        await expect(sideNav).not.toBeVisible();
-        await expect(mobileMenu).not.toBeVisible();
+        await expect(mobileNav.sideNav).not.toBeVisible();
+        await expect(mobileNav.mobileMenu).not.toBeVisible();
     });
 
-    test("side nav is visible on docs pages", async ({ page }) => {
-        const docsPage = new DocsPage(page);
-        await docsPage.goto("/docs/1.x/installation.html");
+    test("side nav is visible on docs pages", async ({ page, docsPage }) => {
+        await docsPage.goto(testDocs.installation);
 
-        const sideNav = page.locator("nav.side-nav");
-        const mobileMenu = page.locator("li#mobile-menu");
+        const mobileNav = new MobileNav(page);
 
-        await expect(sideNav).toBeVisible();
-        await expect(mobileMenu).not.toBeVisible();
+        await expect(mobileNav.sideNav).toBeVisible();
+        await expect(mobileNav.mobileMenu).not.toBeVisible();
     });
 });
 
-test.describe("Mobile navigation (<1024px)", () => {
+test.describe("mobile navigation (<1024px)", () => {
     test.use({ viewport: { width: 768, height: 1024 } });
 
-    test("mobile menu is visible and main nav links are hidden", async ({ page }) => {
-        const docsPage = new DocsPage(page);
-        await docsPage.goto("/docs/1.x/installation.html");
+    test("mobile menu is visible and main nav links are hidden", async ({ page, docsPage }) => {
+        await docsPage.goto(testDocs.installation);
 
-        const mobileMenu = page.locator("li#mobile-menu");
-        const mainNavLinks = page.locator("li.main-nav-link");
+        const mobileNav = new MobileNav(page);
 
-        await expect(mobileMenu).toBeVisible();
-        await expect(mainNavLinks.first()).not.toBeVisible();
+        await expect(mobileNav.mobileMenu).toBeVisible();
+        await expect(mobileNav.mainNavLinks.first()).not.toBeVisible();
     });
 
-    test("toggling mobile menu shows/hides side nav with overlay", async ({ page }) => {
-        const docsPage = new DocsPage(page);
-        await docsPage.goto("/docs/1.x/installation.html");
+    test.describe("mobile menu interactions", () => {
+        test.beforeEach(async ({ page, docsPage }) => {
+            await docsPage.goto(testDocs.installation);
 
-        const mobileMenuLink = page.locator("li#mobile-menu a");
-        const sideNav = page.locator("nav.side-nav");
-        const grayOut = page.locator("div#gray-out");
-        const body = page.locator("body");
+            const mobileNav = new MobileNav(page);
 
-        // Initially, side nav should be visible but positioned off-screen
-        await expect(sideNav).toBeVisible();
-        await expect(grayOut).toHaveCSS("visibility", "hidden");
-        await expect(body).not.toHaveClass(/nav-open/);
+            // Verify initial state
+            await expect(mobileNav.sideNav).toBeVisible();
+            await expect(mobileNav.grayOut).toHaveCSS("visibility", "hidden");
+            await expect(mobileNav.body).not.toHaveClass(/nav-open/);
+        });
 
-        // Click mobile menu to open
-        await mobileMenuLink.click();
+        test("toggling mobile menu shows/hides side nav with overlay", async ({ page }) => {
+            const mobileNav = new MobileNav(page);
 
-        // Verify nav-open class is added and gray-out becomes visible
-        await expect(body).toHaveClass(/nav-open/);
-        await expect(grayOut).toHaveCSS("visibility", "visible");
+            // Click mobile menu to open
+            await mobileNav.mobileMenuLink.click();
 
-        // Click mobile menu again to close
-        await mobileMenuLink.click();
+            // Verify nav-open class is added and gray-out becomes visible
+            await expect(mobileNav.body).toHaveClass(/nav-open/);
+            await expect(mobileNav.grayOut).toHaveCSS("visibility", "visible");
 
-        // Verify nav-open class is removed and gray-out is hidden
-        await expect(body).not.toHaveClass(/nav-open/);
-        await expect(grayOut).toHaveCSS("visibility", "hidden");
-    });
+            // Click mobile menu again to close
+            await mobileNav.mobileMenuLink.click();
 
-    test("clicking gray-out closes mobile nav", async ({ page }) => {
-        const docsPage = new DocsPage(page);
-        await docsPage.goto("/docs/1.x/installation.html");
+            // Verify nav-open class is removed and gray-out is hidden
+            await expect(mobileNav.body).not.toHaveClass(/nav-open/);
+            await expect(mobileNav.grayOut).toHaveCSS("visibility", "hidden");
+        });
 
-        const mobileMenuLink = page.locator("li#mobile-menu a");
-        const grayOut = page.locator("div#gray-out");
-        const body = page.locator("body");
+        test("clicking gray-out closes mobile nav", async ({ page }) => {
+            const mobileNav = new MobileNav(page);
 
-        // Open mobile nav
-        await mobileMenuLink.click();
-        await expect(body).toHaveClass(/nav-open/);
-        await expect(grayOut).toHaveCSS("visibility", "visible");
+            // Open mobile nav
+            await mobileNav.mobileMenuLink.click();
+            await expect(mobileNav.body).toHaveClass(/nav-open/);
+            await expect(mobileNav.grayOut).toHaveCSS("visibility", "visible");
 
-        // Click gray-out to close
-        await grayOut.click();
+            // Click gray-out to close
+            await mobileNav.grayOut.click();
 
-        // Verify nav-open class is removed and gray-out is hidden
-        await expect(body).not.toHaveClass(/nav-open/);
-        await expect(grayOut).toHaveCSS("visibility", "hidden");
+            // Verify nav-open class is removed and gray-out is hidden
+            await expect(mobileNav.body).not.toHaveClass(/nav-open/);
+            await expect(mobileNav.grayOut).toHaveCSS("visibility", "hidden");
+        });
     });
 });

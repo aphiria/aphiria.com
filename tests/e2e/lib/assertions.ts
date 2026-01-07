@@ -1,4 +1,4 @@
-import { Page } from "@playwright/test";
+import { Page, expect } from "@playwright/test";
 
 /**
  * Navigate to URL and assert successful response (HTTP 2xx or 3xx->2xx).
@@ -43,23 +43,58 @@ export async function assertPageOk(page: Page, url: string, maxRetries = 1): Pro
 
             throw new Error(`HTTP ${checkStatus} for ${page.url()} (SPA navigation)`);
         } catch (error: unknown) {
-            lastError = error;
+            lastError = error instanceof Error ? error : new Error(String(error));
 
             // Retry timeouts and 5xx errors
             const isRetryable =
-                error.message?.includes("timeout") ||
-                error.message?.includes("5") ||
-                error.name === "TimeoutError";
+                lastError.message?.includes("timeout") ||
+                lastError.message?.includes("5") ||
+                lastError.name === "TimeoutError";
 
             if (isRetryable && attempt < maxRetries) {
-                console.log(`${error.message}, retrying in 10s...`);
+                console.log(`${lastError.message}, retrying in 10s...`);
                 await new Promise((resolve) => setTimeout(resolve, 10000));
                 continue;
             }
 
-            throw error;
+            throw lastError;
         }
     }
 
     throw lastError!;
+}
+
+/**
+ * Assert that a context cookie exists with expected properties
+ */
+export async function assertContextCookie(
+    page: Page,
+    expectedValue: string,
+    message?: string
+): Promise<void> {
+    const cookies = await page.context().cookies();
+    const contextCookie = cookies.find((c) => c.name === "context");
+
+    expect(contextCookie, message || `Expected context cookie to exist`).toBeDefined();
+    expect(contextCookie?.value, `Expected context cookie value to be ${expectedValue}`).toBe(
+        expectedValue
+    );
+    expect(contextCookie?.domain, "Expected context cookie domain to match").toBe(
+        process.env.COOKIE_DOMAIN
+    );
+    expect(contextCookie?.secure, "Expected context cookie to be secure").toBe(true);
+    expect(contextCookie?.httpOnly, "Expected context cookie to not be httpOnly").toBe(false);
+}
+
+/**
+ * Assert that a URL contains a specific context parameter
+ */
+export async function assertUrlContainsContext(
+    page: Page,
+    context: string,
+    message?: string
+): Promise<void> {
+    await expect(page, message || `Expected URL to contain context=${context}`).toHaveURL(
+        new RegExp(`\\?context=${context}`)
+    );
 }

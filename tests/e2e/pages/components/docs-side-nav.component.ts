@@ -1,14 +1,25 @@
 import { Page, Locator } from "@playwright/test";
 
+/**
+ * Documentation sidebar navigation component
+ */
 export class DocsSideNav {
     readonly page: Page;
-    readonly sideNav: Locator;
+    readonly nav: Locator;
     readonly sections: Locator;
 
     constructor(page: Page) {
         this.page = page;
-        this.sideNav = page.locator("nav.side-nav");
-        this.sections = this.sideNav.locator("section");
+        this.nav = page.locator("nav.side-nav");
+        this.sections = this.nav.locator("section");
+    }
+
+    sectionHeading(section: Locator): Locator {
+        return section.locator("h5");
+    }
+
+    sectionNav(section: Locator): Locator {
+        return section.locator("ul.doc-sidebar-nav");
     }
 
     async getAllInternalLinks(): Promise<string[]> {

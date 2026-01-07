@@ -1,8 +1,11 @@
 import { Page, Locator } from "@playwright/test";
 
+/**
+ * Main navigation bar component
+ */
 export class MainNavBar {
     readonly page: Page;
-    readonly mainNav: Locator;
+    readonly nav: Locator;
     readonly navItems: Locator;
     readonly docsLink: Locator;
     readonly gitHubLink: Locator;
@@ -10,11 +13,11 @@ export class MainNavBar {
 
     constructor(page: Page) {
         this.page = page;
-        this.mainNav = page.locator("ul.main-nav");
-        this.navItems = this.mainNav.locator("li:visible");
-        this.docsLink = this.mainNav.locator('a[href="/docs/1.x/introduction.html"]');
-        this.gitHubLink = this.mainNav.locator('a[href="https://github.com/aphiria/aphiria"]');
-        this.discussionsLink = this.mainNav.locator(
+        this.nav = page.locator("ul.main-nav");
+        this.navItems = this.nav.locator("li:visible");
+        this.docsLink = this.nav.locator('a[href="/docs/1.x/introduction.html"]');
+        this.gitHubLink = this.nav.locator('a[href="https://github.com/aphiria/aphiria"]');
+        this.discussionsLink = this.nav.locator(
             'a[href="https://github.com/aphiria/aphiria/discussions"]'
         );
     }

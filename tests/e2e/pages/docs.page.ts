@@ -2,9 +2,13 @@ import { Page } from "@playwright/test";
 import { SearchBar } from "./components/search-bar.component";
 import { DocsSideNav } from "./components/docs-side-nav.component";
 import { ContextSelector } from "./components/context-selector.component";
-import { assertPageOk } from "../lib/navigation";
+import { assertPageOk } from "../lib/assertions";
+import { Navigable } from "./navigable.interface";
 
-export class DocsPage {
+/**
+ * Page object for documentation pages
+ */
+export class DocsPage implements Navigable {
     readonly page: Page;
     readonly search: SearchBar;
     readonly sideNav: DocsSideNav;

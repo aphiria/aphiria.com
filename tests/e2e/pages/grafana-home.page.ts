@@ -1,7 +1,11 @@
 import { Page } from "@playwright/test";
-import { assertPageOk } from "../lib/navigation";
+import { assertPageOk } from "../lib/assertions";
+import { Navigable } from "./navigable.interface";
 
-export class GrafanaHomePage {
+/**
+ * Page object for Grafana homepage
+ */
+export class GrafanaHomePage implements Navigable {
     readonly page: Page;
 
     constructor(page: Page) {

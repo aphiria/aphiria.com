@@ -1,7 +1,5 @@
-import { test } from "@playwright/test";
-import { GrafanaHomePage } from "../pages/grafana-home.page";
+import { test, expect } from "../fixtures/pages";
 
-test("Grafana accessibility", async ({ page }) => {
-    const grafanaPage = new GrafanaHomePage(page);
-    await grafanaPage.goto();
+test("Grafana redirects unauthenticated users to login", async ({ grafanaPage }) => {
+    await expect(grafanaPage.page).toHaveURL(/\/login/);
 });

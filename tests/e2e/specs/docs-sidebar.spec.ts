@@ -1,10 +1,9 @@
-import { test, expect } from "@playwright/test";
-import { DocsPage } from "../pages/docs.page";
-import { assertPageOk } from "../lib/navigation";
+import { test, expect } from "../fixtures/pages";
+import { testDocs } from "../fixtures/test-data";
+import { assertPageOk } from "../lib/assertions";
 
-test("sidebar structure", async ({ page }) => {
-    const docsPage = new DocsPage(page);
-    await docsPage.goto("/docs/1.x/introduction.html");
+test("sidebar sections contain visible headings with text and navigation lists", async ({ docsPage }) => {
+    await docsPage.goto(testDocs.introduction);
 
     const sections = docsPage.sideNav.sections;
     await expect(sections).not.toHaveCount(0);
@@ -14,22 +13,21 @@ test("sidebar structure", async ({ page }) => {
     for (let i = 0; i < sectionCount; i++) {
         const section = sections.nth(i);
 
-        const heading = section.locator("h5");
+        const heading = docsPage.sideNav.sectionHeading(section);
         await expect(heading).toBeVisible();
         const headingText = await heading.textContent();
-        expect(headingText?.trim()).not.toBe("");
+        expect(headingText?.trim(), "Expected section heading to have text").not.toBe("");
 
-        const nav = section.locator("ul.doc-sidebar-nav");
+        const nav = docsPage.sideNav.sectionNav(section);
         await expect(nav).toBeVisible();
     }
 });
 
-test("sidebar link traversal", async ({ page }) => {
+test("all sidebar links return successful HTTP responses", async ({ page, docsPage }) => {
     // We're visiting a bunch of pages here, so increase the timeout
     test.setTimeout(60000);
 
-    const docsPage = new DocsPage(page);
-    await docsPage.goto("/docs/1.x/introduction.html");
+    await docsPage.goto(testDocs.introduction);
 
     const internalHrefs = await docsPage.sideNav.getAllInternalLinks();
 

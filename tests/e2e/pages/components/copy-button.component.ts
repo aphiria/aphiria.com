@@ -1,19 +1,28 @@
 import { Page, Locator } from "@playwright/test";
 
-export function getFirstCopyButton(page: Page): Locator {
-    return page.locator("button.copy-button").first();
-}
+/**
+ * Copy button with clipboard functionality
+ */
+export class CopyButton {
+    readonly page: Page;
+    readonly button: Locator;
 
-export async function getCodeTextForCopyButton(button: Locator): Promise<string> {
-    const codeElement = button.locator("..").locator("..").locator("code");
-    return await codeElement.innerText();
-}
+    constructor(page: Page, button?: Locator) {
+        this.page = page;
+        this.button = button || page.locator("button.copy-button").first();
+    }
 
-export async function clickCopyButton(page: Page, button: Locator): Promise<void> {
-    await page.context().grantPermissions(["clipboard-read", "clipboard-write"]);
-    await button.click();
-}
+    async getCodeText(): Promise<string> {
+        const codeElement = this.button.locator("..").locator("..").locator("code");
+        return await codeElement.innerText();
+    }
 
-export async function getClipboardText(page: Page): Promise<string> {
-    return await page.evaluate(() => navigator.clipboard.readText());
+    async click(): Promise<void> {
+        await this.page.context().grantPermissions(["clipboard-read", "clipboard-write"]);
+        await this.button.click();
+    }
+
+    async getClipboardText(): Promise<string> {
+        return await this.page.evaluate(() => navigator.clipboard.readText());
+    }
 }

@@ -1,47 +1,31 @@
-import { test, expect } from "@playwright/test";
-import { HomePage } from "../pages/home.page";
-import {
-    getFirstCopyButton,
-    getCodeTextForCopyButton,
-    clickCopyButton,
-    getClipboardText,
-} from "../pages/components/copy-button.component";
+import { test, expect } from "../fixtures/pages";
 
-test("homepage loads successfully", async ({ page }) => {
-    const homePage = new HomePage(page);
-    await homePage.goto();
+test("homepage loads successfully", async ({ homePage }) => {
+    await expect(homePage.mainNav.navItems.first()).toBeVisible();
 });
 
-test("main navigation structure", async ({ page }) => {
-    const homePage = new HomePage(page);
-    await homePage.goto();
-
+test("main navigation structure is visible", async ({ homePage }) => {
     const navItems = homePage.mainNav.navItems;
     await expect(navItems).toHaveCount(4);
 
-    await expect(homePage.mainNav.docsLink).toHaveCount(1);
-    await expect(homePage.mainNav.gitHubLink).toHaveCount(1);
-    await expect(homePage.mainNav.discussionsLink).toHaveCount(1);
+    await expect(homePage.mainNav.docsLink).toBeVisible();
+    await expect(homePage.mainNav.gitHubLink).toBeVisible();
+    await expect(homePage.mainNav.discussionsLink).toBeVisible();
 });
 
-test("copy button copies code and changes button text", async ({ page }) => {
-    const homePage = new HomePage(page);
-    await homePage.goto();
+test("copy button copies code and changes button text", async ({ homePage }) => {
+    await expect(homePage.copyButton.button).toBeVisible();
+    await expect(homePage.copyButton.button).toHaveText("Copy");
 
-    const copyButton = getFirstCopyButton(page);
-    await expect(copyButton).toBeVisible();
-    await expect(copyButton).toHaveText("Copy");
+    const codeText = await homePage.copyButton.getCodeText();
 
-    const codeText = await getCodeTextForCopyButton(copyButton);
+    await homePage.copyButton.click();
 
-    await clickCopyButton(page, copyButton);
+    await expect(homePage.copyButton.button).toHaveText("Copied!");
 
-    await expect(copyButton).toHaveText("Copied!");
-
-    const clipboardText = await getClipboardText(page);
+    const clipboardText = await homePage.copyButton.getClipboardText();
     expect(clipboardText).toBe(codeText);
 
-    await page.waitForTimeout(5000);
-
-    await expect(copyButton).toHaveText("Copy");
+    // Wait for button text to revert back to "Copy" (uses Playwright's smart retry)
+    await expect(homePage.copyButton.button).toHaveText("Copy", { timeout: 6000 });
 });
