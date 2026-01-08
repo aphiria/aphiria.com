@@ -1,2 +1,147 @@
 environment:
   - aphiria.com/Production
+
+config:
+  # Kubernetes cluster configuration
+  cluster:
+    name: "aphiria-com-cluster"
+    region: "nyc3"
+    version: "1.34.1-do.2"
+    autoUpgrade: true
+    surgeUpgrade: false
+    ha: false
+    nodeSize: "s-2vcpu-2gb"
+    nodeCount: 1
+    autoScale: true
+    minNodes: 1
+    maxNodes: 4
+    vpcUuid: "976f980d-dc84-11e8-80bc-3cfdfea9fba1"
+
+  # Infrastructure configuration
+  infrastructure:
+    installGatewayAPICRDs: false # DigitalOcean pre-installs via Cilium
+
+  # Application configuration (from master production.ts)
+  app:
+    imagePullPolicy: "IfNotPresent" # Production uses digest-based images
+    web:
+      url: "https://www.aphiria.com"
+      cookieDomain: ".aphiria.com"
+      replicas: 2
+      image: "ghcr.io/aphiria/aphiria.com-web:latest" # Will be overridden by CI/CD with digest
+      resources:
+        requests:
+          cpu: "50m"
+          memory: "64Mi"
+        limits:
+          cpu: "100m"
+          memory: "128Mi"
+      podDisruptionBudget:
+        minAvailable: 1
+    api:
+      url: "https://api.aphiria.com"
+      logLevel: "warning"
+      replicas: 2
+      image: "ghcr.io/aphiria/aphiria.com-api:latest" # Will be overridden by CI/CD with digest
+      resources:
+        initContainer:
+          requests:
+            cpu: "50m"
+            memory: "64Mi"
+          limits:
+            cpu: "100m"
+            memory: "128Mi"
+        nginx:
+          requests:
+            cpu: "50m"
+            memory: "64Mi"
+          limits:
+            cpu: "100m"
+            memory: "128Mi"
+        php:
+          requests:
+            cpu: "100m"
+            memory: "128Mi"
+          limits:
+            cpu: "200m"
+            memory: "256Mi"
+      podDisruptionBudget:
+        minAvailable: 1
+    migration:
+      resources:
+        migration:
+          requests:
+            cpu: "50m"
+            memory: "128Mi"
+          limits:
+            cpu: "200m"
+            memory: "256Mi"
+        initContainer:
+          requests:
+            cpu: "10m"
+            memory: "32Mi"
+          limits:
+            cpu: "50m"
+            memory: "64Mi"
+
+  # PostgreSQL database configuration (from master production.ts)
+  postgresql:
+    persistentStorage: true
+    storageSize: "20Gi"
+    useHostPath: false # Cloud uses dynamic provisioning
+    dbHost: "db.default.svc.cluster.local" # Full cluster DNS
+    resources:
+      requests:
+        cpu: "100m"
+        memory: "256Mi"
+      limits:
+        cpu: "200m"
+        memory: "512Mi"
+
+  # Gateway configuration (from master production.ts)
+  gateway:
+    tlsMode: "letsencrypt-prod"
+    domains:
+      - "aphiria.com"
+      - "*.aphiria.com"
+    requireRootAndWildcard: true # Production needs both listeners
+    dns:
+      domain: "aphiria.com"
+      records:
+        - name: "@"
+          resourceName: "production-root-dns"
+        - name: "www"
+          resourceName: "production-www-dns"
+        - name: "api"
+          resourceName: "production-api-dns"
+        - name: "grafana"
+          resourceName: "production-grafana-dns"
+      ttl: 300
+
+  # Prometheus monitoring (from master production.ts)
+  prometheus:
+    storageSize: "10Gi"
+    retentionTime: "7d"
+    resources:
+      requests:
+        cpu: "250m"
+        memory: "512Mi"
+      limits:
+        cpu: "500m"
+        memory: "1Gi"
+    enableEmailAlerts: true # Production sends email alerts
+
+  # Grafana monitoring (from master production.ts)
+  grafana:
+    defaultReceiver: "email-admin" # Production uses email alerts
+    ingressSectionName: "https-subdomains" # Uses wildcard cert
+    storageSize: "5Gi"
+    hostname: "grafana.aphiria.com"
+    replicas: 1
+    resources:
+      requests:
+        cpu: "100m"
+        memory: "256Mi"
+      limits:
+        cpu: "200m"
+        memory: "512Mi"

@@ -4,3 +4,15 @@ runtime:
   options:
     typescript: true
 description: Aphiria.com infrastructure - shared components and stacks for local, preview, and production
+
+# Base configuration shared across all stacks
+# Stack-specific values override these defaults
+config:
+  # PostgreSQL version (consistent across all environments)
+  postgresql:version: "16"
+
+  # Prometheus scrape interval (consistent across all environments)
+  prometheus:scrapeInterval: "15s"
+
+  # Grafana version (consistent across all environments)
+  grafana:version: "11.0.0"

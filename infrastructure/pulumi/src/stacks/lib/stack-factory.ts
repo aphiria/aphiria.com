@@ -412,8 +412,8 @@ export function createStack(env: Environment, k8sProvider: k8s.Provider): StackR
             namespace,
             databaseName: postgresqlConfig.require("databaseName"),
             dbHost: postgresqlConfig.require("dbHost"),
-            dbAdminUser: postgresqlConfig.require("dbAdminUser"),
-            dbAdminPassword: postgresqlConfig.requireSecret("dbAdminPassword"),
+            dbAdminUser: postgresqlConfig.require("user"),
+            dbAdminPassword: postgresqlConfig.requireSecret("password"),
             provider: k8sProvider,
         });
     } else {
@@ -513,7 +513,7 @@ export function createStack(env: Environment, k8sProvider: k8s.Provider): StackR
 
     // Deploy applications (skip for preview-base)
     // Check if app config exists
-    const hasAppConfig = appConfig.get("webUrl");
+    const hasAppConfig = appConfig.get("web:url");
     if (hasAppConfig) {
         // Determine database connection details
         const dbHost = createDatabase
@@ -523,12 +523,9 @@ export function createStack(env: Environment, k8sProvider: k8s.Provider): StackR
               : "db.default.svc.cluster.local";
 
         const dbName = postgresqlConfig.get("databaseName") || "postgres";
-        const dbUser = createDatabase
-            ? postgresqlConfig.require("dbAdminUser")
-            : postgresqlConfig.require("user");
-        const dbPassword = createDatabase
-            ? postgresqlConfig.requireSecret("dbAdminPassword")
-            : postgresqlConfig.requireSecret("password");
+        // When creating a database on shared instance, use the same credentials
+        const dbUser = postgresqlConfig.require("user");
+        const dbPassword = postgresqlConfig.requireSecret("password");
 
         // Get PR number from namespace name if it's a preview-pr
         const prNumber = hasNamespaceConfig
@@ -540,15 +537,13 @@ export function createStack(env: Environment, k8sProvider: k8s.Provider): StackR
             namespace,
             replicas: appConfig.requireNumber("web:replicas"),
             image: appConfig.require("web:image"),
-            imagePullPolicy: env === "local" ? "Never" :
-                appConfig.require("web:image").includes("@sha256:") ? "IfNotPresent" : "Always",
+            imagePullPolicy: appConfig.require("imagePullPolicy"),
             appEnv: env,
             jsConfigData: {
-                apiUri: appConfig.require("apiUrl"),
-                cookieDomain: appConfig.require("cookieDomain"),
+                apiUri: appConfig.require("api:url"),
+                cookieDomain: appConfig.require("web:cookieDomain"),
             },
-            baseUrl: appConfig.require("webUrl"),
-            logLevel: env === "production" ? "warning" : "debug",
+            baseUrl: appConfig.require("web:url"),
             prNumber: env === "preview" && hasNamespaceConfig ? prNumber : undefined,
             imagePullSecrets: hasNamespaceConfig && ghcrConfig.get("username") ? ["ghcr-pull-secret"] : undefined,
             resources: appConfig.requireObject("web:resources") as any,
@@ -561,18 +556,17 @@ export function createStack(env: Environment, k8sProvider: k8s.Provider): StackR
             namespace,
             replicas: appConfig.requireNumber("api:replicas"),
             image: appConfig.require("api:image"),
-            imagePullPolicy: env === "local" ? "Never" :
-                appConfig.require("api:image").includes("@sha256:") ? "IfNotPresent" : "Always",
+            imagePullPolicy: appConfig.require("imagePullPolicy"),
             appEnv: env,
             dbHost,
             dbName,
             dbUser,
             dbPassword,
-            apiUrl: appConfig.require("apiUrl"),
-            webUrl: appConfig.require("webUrl"),
-            logLevel: env === "production" ? "warning" : "debug",
-            cookieDomain: appConfig.require("cookieDomain"),
-            cookieSecure: env !== "local",
+            apiUrl: appConfig.require("api:url"),
+            webUrl: appConfig.require("web:url"),
+            logLevel: appConfig.require("api:logLevel"),
+            cookieDomain: ".aphiria.com", // API doesn't actually use this, but the component requires it
+            cookieSecure: true, // API doesn't actually use this, but the component requires it
             prNumber: env === "preview" && hasNamespaceConfig ? prNumber : undefined,
             imagePullSecrets: hasNamespaceConfig && ghcrConfig.get("username") ? ["ghcr-pull-secret"] : undefined,
             resources: appConfig.requireObject("api:resources") as any,
@@ -586,8 +580,7 @@ export function createStack(env: Environment, k8sProvider: k8s.Provider): StackR
         resources.migration = createDBMigrationJob({
             namespace,
             image: appConfig.require("api:image"),
-            imagePullPolicy: env === "local" ? "Never" :
-                appConfig.require("api:image").includes("@sha256:") ? "IfNotPresent" : "Always",
+            imagePullPolicy: appConfig.require("imagePullPolicy"),
             dbHost,
             dbName,
             dbUser,
@@ -604,7 +597,7 @@ export function createStack(env: Environment, k8sProvider: k8s.Provider): StackR
         resources.webRoute = createHTTPRoute({
             namespace: namespace,
             name: "web",
-            hostname: new URL(appConfig.require("webUrl")).hostname,
+            hostname: new URL(appConfig.require("web:url")).hostname,
             serviceName: "web",
             serviceNamespace: namespace,
             servicePort: 80,
@@ -617,7 +610,7 @@ export function createStack(env: Environment, k8sProvider: k8s.Provider): StackR
         resources.apiRoute = createHTTPRoute({
             namespace: namespace,
             name: "api",
-            hostname: new URL(appConfig.require("apiUrl")).hostname,
+            hostname: new URL(appConfig.require("api:url")).hostname,
             serviceName: "api",
             serviceNamespace: namespace,
             servicePort: 80,
@@ -644,8 +637,8 @@ export function createStack(env: Environment, k8sProvider: k8s.Provider): StackR
         // HTTP→HTTPS redirect for preview-pr (specific hostnames beat wildcard redirects)
         // This ensures http://123.pr.aphiria.com redirects to https://123.pr.aphiria.com
         if (env === "preview" && hasNamespaceConfig) {
-            const webHostname = new URL(appConfig.require("webUrl")).hostname;
-            const apiHostname = new URL(appConfig.require("apiUrl")).hostname;
+            const webHostname = new URL(appConfig.require("web:url")).hostname;
+            const apiHostname = new URL(appConfig.require("api:url")).hostname;
 
             resources.httpsRedirect = createHTTPSRedirectRoute({
                 namespace: namespace,

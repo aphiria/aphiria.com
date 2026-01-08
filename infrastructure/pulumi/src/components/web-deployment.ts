@@ -26,8 +26,6 @@ export interface WebDeploymentArgs {
     jsConfigData: Record<string, string>;
     /** Base URL for the web application */
     baseUrl: string;
-    /** Log level (e.g., "warning", "debug", "info") */
-    logLevel: string;
     /** PR number (optional, preview environments only) */
     prNumber?: string;
     /** Additional custom environment variables */
@@ -82,7 +80,6 @@ export function createWebDeployment(args: WebDeploymentArgs): WebDeploymentResul
     // Build environment variables from parameters
     const envConfigData: Record<string, pulumi.Input<string>> = {
         APP_ENV: args.appEnv,
-        LOG_LEVEL: args.logLevel,
         ...(args.prNumber && { PR_NUMBER: args.prNumber }),
         ...(args.extraVars || {}),
     };

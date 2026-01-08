@@ -24,10 +24,10 @@ const k8sProvider = new k8s.Provider("aphiria-com-preview-pr-k8s", {
     enableServerSideApply: false,
 });
 
-// Create the stack - all configuration is read from Pulumi.preview-pr.yml
+// Create the stack - all configuration is read from Pulumi config set by CI/CD
 createStack("preview", k8sProvider);
 
 // Export the PR URLs for GitHub Actions to post as PR comment
 const appConfig = new pulumi.Config("app");
-export const webUrl = appConfig.require("webUrl");
-export const apiUrl = appConfig.require("apiUrl");
+export const webUrl = appConfig.require("web:url");
+export const apiUrl = appConfig.require("api:url");

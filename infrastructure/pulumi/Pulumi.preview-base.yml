@@ -1,2 +1,85 @@
 environment:
   - aphiria.com/Preview
+
+config:
+  # Kubernetes cluster configuration
+  cluster:
+    name: "aphiria-com-preview-cluster"
+    region: "nyc3"
+    version: "1.34.1-do.2"
+    autoUpgrade: true
+    surgeUpgrade: false
+    ha: false
+    nodeSize: "s-2vcpu-2gb"
+    nodeCount: 1
+    autoScale: true
+    minNodes: 1
+    maxNodes: 4
+    vpcUuid: "976f980d-dc84-11e8-80bc-3cfdfea9fba1"
+
+  # Infrastructure configuration
+  infrastructure:
+    installGatewayAPICRDs: false # DigitalOcean pre-installs via Cilium
+
+  # PostgreSQL database configuration
+  postgresql:
+    persistentStorage: true
+    storageSize: "20Gi"
+    useHostPath: false # Cloud uses dynamic provisioning
+    dbHost: "db.default.svc.cluster.local" # Full cluster DNS
+    resources:
+      requests:
+        cpu: "100m"
+        memory: "256Mi"
+      limits:
+        cpu: "200m"
+        memory: "512Mi"
+
+  # Gateway configuration
+  gateway:
+    tlsMode: "letsencrypt-prod"
+    domains:
+      - "*.pr.aphiria.com"
+      - "*.pr-api.aphiria.com"
+      - "pr-grafana.aphiria.com"
+    requireRootAndWildcard: false # Preview doesn't need root listener
+    dns:
+      domain: "aphiria.com"
+      records:
+        - name: "*.pr"
+          resourceName: "preview-web-dns"
+        - name: "*.pr-api"
+          resourceName: "preview-api-dns"
+        - name: "pr-grafana"
+          resourceName: "preview-grafana-dns"
+      ttl: 300
+
+  # Prometheus monitoring
+  prometheus:
+    storageSize: "10Gi"
+    retentionTime: "14d"
+    resources:
+      requests:
+        cpu: "250m"
+        memory: "512Mi"
+      limits:
+        cpu: "1000m"
+        memory: "1Gi"
+    enableEmailAlerts: false # No email alerts for preview
+
+  # Grafana monitoring
+  grafana:
+    defaultReceiver: "local-notifications" # No email for preview
+    ingressSectionName: "https-root" # Preview uses exact match
+    storageSize: "5Gi"
+    hostname: "pr-grafana.aphiria.com"
+    replicas: 1
+    resources:
+      requests:
+        cpu: "100m"
+        memory: "512Mi"
+      limits:
+        cpu: "500m"
+        memory: "1Gi"
+
+  # No app config - preview-base is infrastructure only

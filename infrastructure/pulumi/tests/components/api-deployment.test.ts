@@ -28,7 +28,8 @@ describe("createAPIDeployment", () => {
 
     it("should create deployment with required resources", async () => {
         const result = createAPIDeployment({
-            env: "local",
+            appEnv: "local",
+            imagePullPolicy: "Never",
             namespace: "test-ns",
             replicas: 1,
             image: "ghcr.io/aphiria/aphiria.com-api:latest",

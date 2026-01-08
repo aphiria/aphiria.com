@@ -120,7 +120,7 @@ export interface KubernetesClusterArgs {
     /** Enable high availability control plane */
     ha: boolean;
     /** VPC UUID to attach cluster to */
-    vpcUuid?: string;
+    vpcUuid: string;
     /** Node pool machine size */
     nodeSize: string;
     /** Initial node count */
