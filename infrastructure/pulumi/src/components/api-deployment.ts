@@ -1,6 +1,6 @@
 import * as pulumi from "@pulumi/pulumi";
 import * as k8s from "@pulumi/kubernetes";
-import { CommonDeploymentArgs, PodDisruptionBudgetConfig, APIDeploymentResult } from "./types";
+import { PodDisruptionBudgetConfig, APIDeploymentResult } from "./types";
 import { checksum } from "./utils";
 import { POSTGRES_PORT } from "./constants";
 import { buildLabels } from "./labels";
@@ -8,11 +8,21 @@ import { buildLabels } from "./labels";
 /**
  * Arguments for API deployment component
  */
-export interface APIDeploymentArgs extends CommonDeploymentArgs {
+export interface APIDeploymentArgs {
+    /** Kubernetes namespace to deploy into */
+    namespace: pulumi.Input<string>;
+    /** Resource labels for Kubernetes resources */
+    labels?: Record<string, string>;
+    /** Kubernetes provider */
+    provider: k8s.Provider;
     /** Number of replicas (1 for dev-local/preview, 2 for production) */
     replicas: number;
     /** Docker image reference (can be tag or digest) */
     image: string;
+    /** Image pull policy ("Always", "IfNotPresent", or "Never") */
+    imagePullPolicy: pulumi.Input<string>;
+    /** Application environment name (e.g., "local", "preview", "production") */
+    appEnv: string;
     /** Database host */
     dbHost: pulumi.Input<string>;
     /** Database name */
@@ -76,7 +86,7 @@ export function createAPIDeployment(args: APIDeploymentArgs): APIDeploymentResul
         DB_PORT: String(POSTGRES_PORT),
         DB_NAME: args.dbName,
         DB_USER: args.dbUser,
-        APP_ENV: args.env,
+        APP_ENV: args.appEnv,
         WEB_URL: args.webUrl,
         API_URL: args.apiUrl,
         APP_WEB_URL: args.webUrl,
@@ -213,12 +223,7 @@ export function createAPIDeployment(args: APIDeploymentArgs): APIDeploymentResul
                                 // - Local: Use "Never" (images loaded via minikube/docker load)
                                 // - SHA256 digest: Use "IfNotPresent" (immutable, safe to cache)
                                 // - Tag: Use "Always" (mutable, must pull to check for updates)
-                                imagePullPolicy:
-                                    args.env === "local"
-                                        ? "Never"
-                                        : args.image.includes("@sha256:")
-                                          ? "IfNotPresent"
-                                          : "Always",
+                                imagePullPolicy: args.imagePullPolicy,
                                 // Preserve permissions so nginx can access tmp directory
                                 command: [
                                     "sh",
@@ -278,12 +283,7 @@ export function createAPIDeployment(args: APIDeploymentArgs): APIDeploymentResul
                                 name: "php",
                                 image: args.image,
                                 // imagePullPolicy rules (same as initContainer - see above)
-                                imagePullPolicy:
-                                    args.env === "local"
-                                        ? "Never"
-                                        : args.image.includes("@sha256:")
-                                          ? "IfNotPresent"
-                                          : "Always",
+                                imagePullPolicy: args.imagePullPolicy,
                                 ports: [
                                     {
                                         containerPort: 9000,

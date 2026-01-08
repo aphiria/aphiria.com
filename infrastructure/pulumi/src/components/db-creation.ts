@@ -1,14 +1,11 @@
 import * as pulumi from "@pulumi/pulumi";
 import * as k8s from "@pulumi/kubernetes";
-import { Environment } from "./types";
 import { buildLabels } from "./labels";
 
 /**
  * Arguments for database creation job component
  */
 export interface DatabaseCreationJobArgs {
-    /** Environment this job targets */
-    env: Environment;
     /** Kubernetes namespace */
     namespace: pulumi.Input<string>;
     /** Database name to create */

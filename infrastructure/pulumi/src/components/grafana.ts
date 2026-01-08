@@ -1,41 +1,53 @@
+/**
+ * Grafana Component
+ * Pure function that accepts ALL configuration as parameters
+ */
+
 import * as k8s from "@pulumi/kubernetes";
 import * as pulumi from "@pulumi/pulumi";
-import { Environment, GrafanaResult } from "./types";
+import { ResourceRequirements } from "./types";
 import { buildLabels } from "./labels";
 import { checksum } from "./utils";
 
 /**
  * Arguments for Grafana component
+ * All configuration must be passed explicitly
  */
 export interface GrafanaArgs {
-    /** Environment this Grafana instance targets */
-    env: Environment;
+    /** Number of replicas */
+    replicas: number;
+    /** Container resource requirements */
+    resources: ResourceRequirements;
     /** Kubernetes namespace */
     namespace: pulumi.Input<string>;
     /** Prometheus service URL for datasource */
     prometheusUrl: pulumi.Input<string>;
     /** Storage size for dashboards (e.g., "5Gi") */
     storageSize: string;
-    /** GitHub OAuth client ID */
-    githubClientId: pulumi.Input<string>;
-    /** GitHub OAuth client secret */
-    githubClientSecret: pulumi.Input<string>;
-    /** GitHub organization for access control */
-    githubOrg: string;
-    /** GitHub user with admin privileges */
-    adminUser: string;
-    /** SMTP host for email alerts (optional, only for production) */
-    smtpHost?: pulumi.Input<string>;
-    /** SMTP port */
-    smtpPort?: number;
-    /** SMTP username */
-    smtpUser?: pulumi.Input<string>;
-    /** SMTP password */
-    smtpPassword?: pulumi.Input<string>;
-    /** Email sender address */
-    smtpFromAddress?: string;
-    /** Email recipient for alerts */
-    alertEmail?: string;
+    /** Grafana domain (e.g., "grafana.aphiria.com") */
+    domain: string;
+    /** Grafana image version */
+    imageVersion: string;
+    /** GitHub OAuth configuration (optional) */
+    githubAuth?: {
+        clientId: pulumi.Input<string>;
+        clientSecret: pulumi.Input<string>;
+        organization: string;
+        adminUser: string;
+    };
+    /** Basic auth configuration (optional) */
+    basicAuth?: {
+        username: pulumi.Input<string>;
+        password: pulumi.Input<string>;
+    };
+    /** SMTP configuration (optional) */
+    smtp?: {
+        host: pulumi.Input<string>;
+        port: number;
+        user: pulumi.Input<string>;
+        password: pulumi.Input<string>;
+        fromAddress: string;
+    };
     /** Dashboards ConfigMap for auto-provisioning */
     dashboardsConfigMap?: k8s.core.v1.ConfigMap;
     /** Alert rules ConfigMap for Grafana Unified Alerting */
@@ -44,47 +56,48 @@ export interface GrafanaArgs {
     contactPointsConfigMap?: k8s.core.v1.ConfigMap;
     /** Notification policies ConfigMap for Grafana Unified Alerting */
     notificationPoliciesConfigMap?: k8s.core.v1.ConfigMap;
-    /** Basic auth username (optional, for preview environments) */
-    basicAuthUser?: pulumi.Input<string>;
-    /** Basic auth password (optional, for preview environments) */
-    basicAuthPassword?: pulumi.Input<string>;
-    /** Optional resource limits for containers */
-    resources?: {
-        requests?: { cpu?: string; memory?: string };
-        limits?: { cpu?: string; memory?: string };
-    };
     /** Resource labels */
     labels?: Record<string, string>;
     /** Kubernetes provider */
     provider: k8s.Provider;
 }
 
-/** Creates Grafana Deployment with GitHub OAuth and environment-specific alerting */
+export interface GrafanaResult {
+    deployment: pulumi.Output<k8s.types.output.meta.v1.ObjectMeta>;
+    service: pulumi.Output<k8s.types.output.meta.v1.ObjectMeta>;
+    pvc: pulumi.Output<k8s.types.output.meta.v1.ObjectMeta>;
+    configMap: pulumi.Output<k8s.types.output.meta.v1.ObjectMeta>;
+    secret: pulumi.Output<k8s.types.output.meta.v1.ObjectMeta>;
+}
+
+/**
+ * Creates Grafana deployment as a pure function
+ * All configuration decisions are made by the caller
+ */
 export function createGrafana(args: GrafanaArgs): GrafanaResult {
     const labels = buildLabels("grafana", "monitoring", args.labels);
 
-    // Determine if this is production (email alerts) or non-production (no emails)
-    const isProduction = args.env === "production";
+    // Determine auth mode from provided config
+    const useBasicAuth = !!args.basicAuth;
+    const useGithubAuth = !!args.githubAuth && !useBasicAuth;
+    const smtpEnabled = !!args.smtp;
 
-    // Determine auth mode: basic auth for preview (if configured), otherwise GitHub OAuth
-    const useBasicAuth = args.basicAuthUser !== undefined && args.basicAuthPassword !== undefined;
-
-    // Create Secret for OAuth, SMTP, and basic auth credentials
+    // Build secret data from provided configuration
     const secretData: Record<string, pulumi.Input<string>> = {};
 
-    if (useBasicAuth) {
-        secretData.GF_SECURITY_ADMIN_USER = args.basicAuthUser!;
-        secretData.GF_SECURITY_ADMIN_PASSWORD = args.basicAuthPassword!;
-    } else {
-        secretData.GF_AUTH_GITHUB_CLIENT_ID = args.githubClientId;
-        secretData.GF_AUTH_GITHUB_CLIENT_SECRET = args.githubClientSecret;
+    if (args.basicAuth) {
+        secretData.GF_SECURITY_ADMIN_USER = args.basicAuth.username;
+        secretData.GF_SECURITY_ADMIN_PASSWORD = args.basicAuth.password;
+    } else if (args.githubAuth) {
+        secretData.GF_AUTH_GITHUB_CLIENT_ID = args.githubAuth.clientId;
+        secretData.GF_AUTH_GITHUB_CLIENT_SECRET = args.githubAuth.clientSecret;
     }
 
-    if (isProduction && args.smtpHost) {
-        secretData.GF_SMTP_HOST = pulumi.interpolate`${args.smtpHost}:${args.smtpPort || 587}`;
-        secretData.GF_SMTP_USER = args.smtpUser || "";
-        secretData.GF_SMTP_PASSWORD = args.smtpPassword || "";
-        secretData.GF_SMTP_FROM_ADDRESS = args.smtpFromAddress || "";
+    if (args.smtp) {
+        secretData.GF_SMTP_HOST = pulumi.interpolate`${args.smtp.host}:${args.smtp.port}`;
+        secretData.GF_SMTP_USER = args.smtp.user;
+        secretData.GF_SMTP_PASSWORD = args.smtp.password;
+        secretData.GF_SMTP_FROM_ADDRESS = args.smtp.fromAddress;
     }
 
     const secret = new k8s.core.v1.Secret(
@@ -138,8 +151,8 @@ export function createGrafana(args: GrafanaArgs): GrafanaResult {
             data: {
                 "grafana.ini": `
 [server]
-domain = grafana.aphiria.com
-root_url = https://grafana.aphiria.com
+domain = ${args.domain}
+root_url = https://${args.domain}
 serve_from_sub_path = false
 
 [security]
@@ -154,16 +167,16 @@ disable_signout_menu = false
 enabled = ${useBasicAuth ? "true" : "false"}
 
 [auth.github]
-enabled = ${useBasicAuth ? "false" : "true"}
+enabled = ${useGithubAuth ? "true" : "false"}
 ${
-    !useBasicAuth
+    useGithubAuth && args.githubAuth
         ? `allow_sign_up = true
 scopes = user:email,read:org
 auth_url = https://github.com/login/oauth/authorize
 token_url = https://github.com/login/oauth/access_token
 api_url = https://api.github.com/user
-allowed_organizations = ${args.githubOrg}
-role_attribute_path = contains(groups[*], '@${args.githubOrg}/${args.adminUser}') && 'Admin' || 'Viewer'`
+allowed_organizations = ${args.githubAuth.organization}
+role_attribute_path = contains(groups[*], '@${args.githubAuth.organization}/${args.githubAuth.adminUser}') && 'Admin' || 'Viewer'`
         : ""
 }
 
@@ -176,7 +189,7 @@ auto_assign_org_role = Viewer
 default_home_dashboard_path = /var/lib/grafana/dashboards/cluster-overview.json
 
 [smtp]
-enabled = ${isProduction && args.smtpHost ? "true" : "false"}
+enabled = ${smtpEnabled ? "true" : "false"}
 skip_verify = false
 `,
                 "datasources.yaml": pulumi.interpolate`
@@ -191,9 +204,6 @@ datasources:
     editable: false
     jsonData:
       timeInterval: 15s
-      # Disable importing Prometheus alert rules into Grafana
-      # We manage alerts via Grafana Unified Alerting (ConfigMaps) instead
-      # Without this, Grafana imports all PrometheusRules (including kube-prometheus-stack defaults)
       manageAlerts: false
 `,
                 "dashboards.yaml": `
@@ -235,6 +245,102 @@ providers:
         { provider: args.provider }
     );
 
+    // Build environment variables based on auth configuration
+    const envVars: k8s.types.input.core.v1.EnvVar[] = [];
+
+    if (useBasicAuth) {
+        envVars.push(
+            {
+                name: "GF_SECURITY_ADMIN_USER",
+                valueFrom: {
+                    secretKeyRef: {
+                        name: secret.metadata.name,
+                        key: "GF_SECURITY_ADMIN_USER",
+                    },
+                },
+            },
+            {
+                name: "GF_SECURITY_ADMIN_PASSWORD",
+                valueFrom: {
+                    secretKeyRef: {
+                        name: secret.metadata.name,
+                        key: "GF_SECURITY_ADMIN_PASSWORD",
+                    },
+                },
+            }
+        );
+    } else if (useGithubAuth) {
+        envVars.push(
+            {
+                name: "GF_SECURITY_ADMIN_USER",
+                value: "admin",
+            },
+            {
+                name: "GF_SECURITY_ADMIN_PASSWORD",
+                value: "admin", // Will be changed on first login via OAuth
+            },
+            {
+                name: "GF_AUTH_GITHUB_CLIENT_ID",
+                valueFrom: {
+                    secretKeyRef: {
+                        name: secret.metadata.name,
+                        key: "GF_AUTH_GITHUB_CLIENT_ID",
+                    },
+                },
+            },
+            {
+                name: "GF_AUTH_GITHUB_CLIENT_SECRET",
+                valueFrom: {
+                    secretKeyRef: {
+                        name: secret.metadata.name,
+                        key: "GF_AUTH_GITHUB_CLIENT_SECRET",
+                    },
+                },
+            }
+        );
+    }
+
+    if (smtpEnabled) {
+        envVars.push(
+            {
+                name: "GF_SMTP_HOST",
+                valueFrom: {
+                    secretKeyRef: {
+                        name: secret.metadata.name,
+                        key: "GF_SMTP_HOST",
+                    },
+                },
+            },
+            {
+                name: "GF_SMTP_USER",
+                valueFrom: {
+                    secretKeyRef: {
+                        name: secret.metadata.name,
+                        key: "GF_SMTP_USER",
+                    },
+                },
+            },
+            {
+                name: "GF_SMTP_PASSWORD",
+                valueFrom: {
+                    secretKeyRef: {
+                        name: secret.metadata.name,
+                        key: "GF_SMTP_PASSWORD",
+                    },
+                },
+            },
+            {
+                name: "GF_SMTP_FROM_ADDRESS",
+                valueFrom: {
+                    secretKeyRef: {
+                        name: secret.metadata.name,
+                        key: "GF_SMTP_FROM_ADDRESS",
+                    },
+                },
+            }
+        );
+    }
+
     // Create Deployment for Grafana
     const deployment = new k8s.apps.v1.Deployment(
         "grafana",
@@ -245,7 +351,7 @@ providers:
                 labels,
             },
             spec: {
-                replicas: 1,
+                replicas: args.replicas,
                 selector: {
                     matchLabels: {
                         app: "grafana",
@@ -259,18 +365,10 @@ providers:
                             "app.kubernetes.io/component": "monitoring",
                         },
                         annotations: {
-                            ...(dashboardChecksum
-                                ? { "checksum/dashboards": dashboardChecksum }
-                                : {}),
-                            ...(alertRulesChecksum
-                                ? { "checksum/alert-rules": alertRulesChecksum }
-                                : {}),
-                            ...(contactPointsChecksum
-                                ? { "checksum/contact-points": contactPointsChecksum }
-                                : {}),
-                            ...(notificationPoliciesChecksum
-                                ? { "checksum/notification-policies": notificationPoliciesChecksum }
-                                : {}),
+                            ...(dashboardChecksum ? { "checksum/dashboards": dashboardChecksum } : {}),
+                            ...(alertRulesChecksum ? { "checksum/alert-rules": alertRulesChecksum } : {}),
+                            ...(contactPointsChecksum ? { "checksum/contact-points": contactPointsChecksum } : {}),
+                            ...(notificationPoliciesChecksum ? { "checksum/notification-policies": notificationPoliciesChecksum } : {}),
                         },
                     },
                     spec: {
@@ -282,7 +380,7 @@ providers:
                         containers: [
                             {
                                 name: "grafana",
-                                image: "grafana/grafana:11.0.0",
+                                image: `grafana/grafana:${args.imageVersion}`,
                                 ports: [
                                     {
                                         name: "http",
@@ -290,97 +388,7 @@ providers:
                                         protocol: "TCP",
                                     },
                                 ],
-                                env: [
-                                    ...(useBasicAuth
-                                        ? [
-                                              {
-                                                  name: "GF_SECURITY_ADMIN_USER",
-                                                  valueFrom: {
-                                                      secretKeyRef: {
-                                                          name: secret.metadata.name,
-                                                          key: "GF_SECURITY_ADMIN_USER",
-                                                      },
-                                                  },
-                                              },
-                                              {
-                                                  name: "GF_SECURITY_ADMIN_PASSWORD",
-                                                  valueFrom: {
-                                                      secretKeyRef: {
-                                                          name: secret.metadata.name,
-                                                          key: "GF_SECURITY_ADMIN_PASSWORD",
-                                                      },
-                                                  },
-                                              },
-                                          ]
-                                        : [
-                                              {
-                                                  name: "GF_SECURITY_ADMIN_USER",
-                                                  value: "admin",
-                                              },
-                                              {
-                                                  name: "GF_SECURITY_ADMIN_PASSWORD",
-                                                  value: "admin", // Will be changed on first login via OAuth
-                                              },
-                                              {
-                                                  name: "GF_AUTH_GITHUB_CLIENT_ID",
-                                                  valueFrom: {
-                                                      secretKeyRef: {
-                                                          name: secret.metadata.name,
-                                                          key: "GF_AUTH_GITHUB_CLIENT_ID",
-                                                      },
-                                                  },
-                                              },
-                                              {
-                                                  name: "GF_AUTH_GITHUB_CLIENT_SECRET",
-                                                  valueFrom: {
-                                                      secretKeyRef: {
-                                                          name: secret.metadata.name,
-                                                          key: "GF_AUTH_GITHUB_CLIENT_SECRET",
-                                                      },
-                                                  },
-                                              },
-                                          ]),
-                                    ...(isProduction && args.smtpHost
-                                        ? [
-                                              {
-                                                  name: "GF_SMTP_HOST",
-                                                  valueFrom: {
-                                                      secretKeyRef: {
-                                                          name: secret.metadata.name,
-                                                          key: "GF_SMTP_HOST",
-                                                      },
-                                                  },
-                                              },
-                                              {
-                                                  name: "GF_SMTP_USER",
-                                                  valueFrom: {
-                                                      secretKeyRef: {
-                                                          name: secret.metadata.name,
-                                                          key: "GF_SMTP_USER",
-                                                      },
-                                                  },
-                                              },
-                                              {
-                                                  name: "GF_SMTP_PASSWORD",
-                                                  valueFrom: {
-                                                      secretKeyRef: {
-                                                          name: secret.metadata.name,
-                                                          key: "GF_SMTP_PASSWORD",
-                                                      },
-                                                  },
-                                              },
-                                              {
-                                                  name: "GF_SMTP_FROM_ADDRESS",
-                                                  valueFrom: {
-                                                      secretKeyRef: {
-                                                          name: secret.metadata.name,
-                                                          key: "GF_SMTP_FROM_ADDRESS",
-                                                      },
-                                                  },
-                                              },
-                                          ]
-                                        : []),
-                                ],
+                                env: envVars,
                                 volumeMounts: [
                                     {
                                         name: "config",
@@ -390,9 +398,7 @@ providers:
                                         name: "datasources",
                                         mountPath: "/etc/grafana/provisioning/datasources",
                                     },
-                                    ...(args.alertRulesConfigMap ||
-                                    args.contactPointsConfigMap ||
-                                    args.notificationPoliciesConfigMap
+                                    ...(args.alertRulesConfigMap || args.contactPointsConfigMap || args.notificationPoliciesConfigMap
                                         ? [
                                               {
                                                   name: "alerting",
@@ -417,16 +423,7 @@ providers:
                                           ]
                                         : []),
                                 ],
-                                resources: {
-                                    requests: {
-                                        cpu: "100m",
-                                        memory: "256Mi",
-                                    },
-                                    limits: {
-                                        cpu: "200m",
-                                        memory: "512Mi",
-                                    },
-                                },
+                                resources: args.resources,
                                 livenessProbe: {
                                     httpGet: {
                                         path: "/api/health",
@@ -472,9 +469,7 @@ providers:
                                     ],
                                 },
                             },
-                            ...(args.alertRulesConfigMap ||
-                            args.contactPointsConfigMap ||
-                            args.notificationPoliciesConfigMap
+                            ...(args.alertRulesConfigMap || args.contactPointsConfigMap || args.notificationPoliciesConfigMap
                                 ? [
                                       {
                                           name: "alerting",
@@ -484,8 +479,7 @@ providers:
                                                       ? [
                                                             {
                                                                 configMap: {
-                                                                    name: args.alertRulesConfigMap
-                                                                        .metadata.name,
+                                                                    name: args.alertRulesConfigMap.metadata.name,
                                                                 },
                                                             },
                                                         ]
@@ -494,9 +488,7 @@ providers:
                                                       ? [
                                                             {
                                                                 configMap: {
-                                                                    name: args
-                                                                        .contactPointsConfigMap
-                                                                        .metadata.name,
+                                                                    name: args.contactPointsConfigMap.metadata.name,
                                                                 },
                                                             },
                                                         ]
@@ -505,9 +497,7 @@ providers:
                                                       ? [
                                                             {
                                                                 configMap: {
-                                                                    name: args
-                                                                        .notificationPoliciesConfigMap
-                                                                        .metadata.name,
+                                                                    name: args.notificationPoliciesConfigMap.metadata.name,
                                                                 },
                                                             },
                                                         ]

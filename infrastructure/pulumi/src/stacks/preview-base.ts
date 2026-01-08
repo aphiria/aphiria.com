@@ -7,13 +7,15 @@
 import * as pulumi from "@pulumi/pulumi";
 import { createKubernetesCluster } from "../components";
 import { createStack } from "./lib/stack-factory";
-import { StackConfig } from "./lib/stack-config";
 
 // Create the preview Kubernetes cluster (includes provider)
 const { kubeconfig: clusterKubeconfig, provider: k8sProvider } = createKubernetesCluster({
     name: "aphiria-com-preview-cluster",
     region: "nyc3",
     version: "1.34.1-do.2",
+    autoUpgrade: true, // Enable automatic Kubernetes version upgrades
+    surgeUpgrade: false, // Disable surge upgrades for preview
+    ha: false, // Disable HA for preview to save costs
     nodeSize: "s-2vcpu-2gb",
     nodeCount: 1,
     autoScale: true,
@@ -22,104 +24,20 @@ const { kubeconfig: clusterKubeconfig, provider: k8sProvider } = createKubernete
     vpcUuid: "976f980d-dc84-11e8-80bc-3cfdfea9fba1",
 });
 
-const stackConfig = new StackConfig("", "");
+// Create the stack - all configuration is read from Pulumi.preview-base.yml
+const stack = createStack("preview", k8sProvider);
 
-// Export these for preview-pr consumption
-const postgresqlAdminUser = stackConfig.postgresql.user;
-const postgresqlAdminPassword = stackConfig.postgresql.password;
-
-const stack = createStack(
-    {
-        env: "preview",
-        namespace: {
-            name: "default",
-            imagePullSecret: {
-                registry: "ghcr.io",
-                username: stackConfig.ghcr.username,
-                token: stackConfig.ghcr.token,
-            },
-        },
-        database: {
-            persistentStorage: true,
-            storageSize: "20Gi",
-            dbUser: stackConfig.postgresql.user,
-            dbPassword: stackConfig.postgresql.password,
-            resources: {
-                // PostgreSQL 16 needs 512Mi to initialize (shared buffers, background processes)
-                // Once running, it uses ~21Mi RSS for this small database (7.5MB data)
-                requests: { cpu: "100m", memory: "256Mi" },
-                limits: { cpu: "200m", memory: "512Mi" },
-            },
-        },
-        gateway: {
-            tlsMode: "letsencrypt-prod",
-            domains: [
-                "*.pr.aphiria.com", // Web preview URLs
-                "*.pr-api.aphiria.com", // API preview URLs
-                "pr-grafana.aphiria.com", // Shared Grafana for all PRs
-            ],
-            dnsToken: stackConfig.certManager.dnsToken,
-            dns: {
-                domain: "aphiria.com",
-                records: [
-                    { name: "*.pr", resourceName: "preview-web-dns" },
-                    { name: "*.pr-api", resourceName: "preview-api-dns" },
-                    { name: "pr-grafana", resourceName: "preview-grafana-dns" },
-                ],
-                ttl: 300,
-            },
-        },
-        // Shared monitoring for all preview-pr stacks (monitors all preview-pr-* namespaces)
-        monitoring: {
-            prometheus: {
-                authToken: stackConfig.prometheus.authToken,
-                storageSize: "10Gi",
-                scrapeInterval: "15s",
-                retentionTime: "14d",
-                resources: {
-                    requests: { cpu: "250m", memory: "512Mi" },
-                    limits: { cpu: "1000m", memory: "1Gi" },
-                },
-            },
-            grafana: {
-                storageSize: "5Gi",
-                hostname: "pr-grafana.aphiria.com",
-                githubOAuth: {
-                    clientId: stackConfig.grafana.githubClientId,
-                    clientSecret: stackConfig.grafana.githubClientSecret,
-                    org: stackConfig.grafana.githubOrg,
-                    adminUser: stackConfig.grafana.adminUser,
-                },
-                smtp: {
-                    host: stackConfig.grafana.smtpHost,
-                    port: stackConfig.grafana.smtpPort,
-                    user: stackConfig.grafana.smtpUser,
-                    password: stackConfig.grafana.smtpPassword,
-                    fromAddress: stackConfig.grafana.smtpFromAddress,
-                    alertEmail: stackConfig.grafana.alertEmail,
-                },
-                basicAuth:
-                    stackConfig.grafana.basicAuthUser && stackConfig.grafana.basicAuthPassword
-                        ? {
-                              user: stackConfig.grafana.basicAuthUser,
-                              password: stackConfig.grafana.basicAuthPassword,
-                          }
-                        : undefined,
-                resources: {
-                    requests: { cpu: "100m", memory: "512Mi" },
-                    limits: { cpu: "500m", memory: "1Gi" },
-                },
-            },
-        },
-        // No app config - preview-base is infrastructure only
-    },
-    k8sProvider
-);
-
-// Outputs (consumed by preview-pr via StackReference and cleanup-preview.yml workflow)
-if (!stack.namespace) throw new Error("Preview-base stack must create namespace");
-
+// Export kubeconfig for preview-pr stacks to consume
 export const kubeconfig = pulumi.secret(clusterKubeconfig);
-export const postgresqlHost = pulumi.interpolate`db.${stack.namespace.namespace.metadata.name}.svc.cluster.local`;
-export const prometheusAuthToken = pulumi.secret(stackConfig.prometheus.authToken);
-export { postgresqlAdminUser, postgresqlAdminPassword };
+
+// Export PostgreSQL credentials for preview-pr to use (read from config)
+const postgresqlConfig = new pulumi.Config("postgresql");
+export const postgresqlAdminUser = postgresqlConfig.require("user");
+export const postgresqlAdminPassword = postgresqlConfig.requireSecret("password");
+
+// Export monitoring namespace resources (they are created for preview-base, but not preview-pr)
+const grafanaConfig = new pulumi.Config("grafana");
+export const grafanaHostname = grafanaConfig.get("hostname");
+export const prometheusEndpoint = stack.monitoring ?
+    pulumi.interpolate`http://kube-prometheus-stack-prometheus.monitoring.svc.cluster.local:9090` :
+    undefined;

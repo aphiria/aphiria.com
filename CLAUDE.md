@@ -74,6 +74,124 @@ export function createDeployment(args: DeploymentArgs) {
 
 ---
 
+## Pulumi Component Architecture (MANDATORY)
+
+### Component Design Principles
+
+Components MUST be pure functions that:
+- Accept ALL configuration as explicit parameters
+- Return infrastructure resources without side effects
+- Contain ZERO environment-specific logic or conditionals
+- Have NO hardcoded values (except technical constants like port protocols)
+- Be testable with mock configurations
+- Be reusable across any project or environment
+
+### Configuration Hierarchy
+
+```typescript
+// ❌ BAD: Component reads files or makes decisions
+export function createGrafanaAlerts() {
+    const alerts = fs.readFileSync('./alerts/prod.yaml'); // NO!
+    const isProduction = pulumi.getStack() === "prod"; // NO!
+    return new AlertRule({
+        threshold: isProduction ? 100 : 50 // NO!
+    });
+}
+
+// ✅ GOOD: Component receives everything as parameters
+export function createGrafanaAlerts(args: GrafanaAlertsArgs) {
+    return args.alerts.map(alert => new AlertRule(alert));
+}
+
+// ✅ GOOD: Stack or config provides the values
+// In stack file or config:
+const alerts = config.require('alerts'); // Or load from file HERE
+createGrafanaAlerts({ alerts });
+```
+
+### Component Purity Checklist
+
+Before creating/modifying any component, verify:
+- [ ] NO file system reads (fs, readFileSync, etc.)
+- [ ] NO environment variables accessed directly
+- [ ] NO stack name checks or environment detection
+- [ ] NO hardcoded configuration values
+- [ ] NO import of configuration files
+- [ ] ALL configuration passed as arguments
+- [ ] Component can be unit tested without deployment
+
+### Configuration Location Rules
+
+| What | Where | Example |
+|------|-------|---------|
+| Environment values | Stack files or config | `preview.ts`, `production.ts` |
+| Default values | Component parameters with defaults | `replicas: number = 1` |
+| Secrets | Stack config or external secret store | `pulumi config set --secret` |
+| File-based config | Loaded in stack, passed to component | Stack reads YAML, passes to component |
+| Alert definitions | Config files loaded by stack | `stack loads alerts.yaml → component` |
+| Dashboard specs | Config files loaded by stack | `stack loads dashboards/* → component` |
+
+### Component Interface Pattern
+
+```typescript
+// Component MUST define clear input interface
+export interface ComponentArgs {
+    // Required configuration
+    name: string;
+
+    // Optional with defaults IN THE INTERFACE
+    replicas?: number; // Default documented here
+
+    // Complex configuration
+    alerts?: AlertDefinition[];
+
+    // NEVER include environment indicators
+    // ❌ environment?: 'dev' | 'prod';
+    // ❌ isProduction?: boolean;
+}
+
+// Component signature
+export function createComponent(args: ComponentArgs): ComponentResources {
+    // Pure transformation of args to resources
+    // NO decisions based on external state
+}
+```
+
+### Testing Requirements for Components
+
+Every component MUST have a unit test that:
+- Passes different configurations
+- Verifies output changes based on input
+- Runs WITHOUT Pulumi runtime (using mocks)
+- Tests edge cases (empty arrays, missing optional values)
+
+```typescript
+// Example test
+it('creates resources matching input config', () => {
+    const result = createComponent({
+        name: 'test',
+        replicas: 3,
+        alerts: [testAlert]
+    });
+
+    expect(result.deployment.replicas).toBe(3);
+    expect(result.alerts).toHaveLength(1);
+});
+```
+
+### Migration Rules
+
+When refactoring existing components:
+1. Extract ALL hardcoded values to parameters
+2. Move file reads to stack level
+3. Replace environment checks with configuration values
+4. Add TypeScript interfaces for all configuration
+5. Document defaults in interface comments
+6. Write tests BEFORE modifying component
+7. Ensure identical infrastructure output after refactoring
+
+---
+
 ## kubectl Usage Policy
 
 - kubectl is READ-ONLY.
@@ -155,6 +273,23 @@ If testing is hard, the code design is wrong.
 4. Root cause: "What's the fundamental problem here?"
 
 **Key Insight**: If you find yourself fighting the testing framework, you're solving the wrong problem. The real problem is code that wasn't designed for testability.
+
+## Infrastructure Component Testing
+
+**Components MUST be testable without deployment**:
+- Use dependency injection for all configuration
+- Mock Pulumi resources in tests
+- Test configuration validation
+- Test default value behavior
+- Verify no side effects
+
+**Red flags requiring redesign**:
+- "Can't test without deploying"
+- "Needs real cluster to test"
+- "Requires environment variables"
+- "Must read files to work"
+- "Tests need specific stack name"
+- "Can't mock the configuration"
 
 **Example**:
 

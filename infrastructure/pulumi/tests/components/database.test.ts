@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll } from "@jest/globals";
 import * as pulumi from "@pulumi/pulumi";
 import * as k8s from "@pulumi/kubernetes";
-import { createPostgreSQL } from "../../src/components/database";
+import { createPostgreSQL, PostgreSQLArgs } from "../../src/components/database";
 import { promiseOf } from "../test-utils";
 
 describe("createPostgreSQL", () => {
@@ -11,16 +11,39 @@ describe("createPostgreSQL", () => {
         k8sProvider = new k8s.Provider("test", {});
     });
 
+    // Helper to create valid test args
+    const getTestArgs = (overrides: Partial<PostgreSQLArgs> = {}): PostgreSQLArgs => ({
+        username: "postgres",
+        password: pulumi.output("password"),
+        replicas: 1,
+        resources: {
+            requests: { cpu: "100m", memory: "256Mi" },
+            limits: { cpu: "500m", memory: "512Mi" }
+        },
+        healthCheck: {
+            interval: "10s",
+            timeout: "5s",
+            retries: 5,
+            command: ["pg_isready", "-U", "postgres"],
+        },
+        namespace: "default",
+        storage: {
+            enabled: false,
+            size: "5Gi",
+        },
+        imageTag: "16",
+        databaseName: "postgres",
+        provider: k8sProvider,
+        ...overrides,
+    });
+
     it("should create deployment without persistent storage", () => {
-        const result = createPostgreSQL({
-            env: "local",
-            namespace: "default",
-            persistentStorage: false,
-            storageSize: "5Gi",
-            dbUser: "postgres",
-            dbPassword: pulumi.output("password"),
-            provider: k8sProvider,
-        });
+        const result = createPostgreSQL(getTestArgs({
+            storage: {
+                enabled: false,
+                size: "5Gi",
+            },
+        }));
 
         expect(result.deployment).toBeDefined();
         expect(result.service).toBeDefined();

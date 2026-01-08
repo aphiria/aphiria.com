@@ -1,11 +1,22 @@
 import * as pulumi from "@pulumi/pulumi";
 import * as k8s from "@pulumi/kubernetes";
 import * as digitalocean from "@pulumi/digitalocean";
+import { Environment } from "../stacks/lib/types";
 
 /**
- * Environment type for stack configuration
+ * Kubernetes resource requirements
+ * Used for container resource requests and limits
  */
-export type Environment = "local" | "preview" | "production";
+export interface ResourceRequirements {
+    requests: {
+        cpu: string;
+        memory: string;
+    };
+    limits: {
+        cpu: string;
+        memory: string;
+    };
+}
 
 /**
  * PodDisruptionBudget configuration for high availability
@@ -16,20 +27,6 @@ export interface PodDisruptionBudgetConfig {
     minAvailable?: number;
     /** Maximum number of pods that can be unavailable (e.g., 1) */
     maxUnavailable?: number;
-}
-
-/**
- * Common arguments shared across all deployment components
- */
-export interface CommonDeploymentArgs {
-    /** Environment this deployment targets */
-    env: Environment;
-    /** Kubernetes namespace to deploy into */
-    namespace: pulumi.Input<string>;
-    /** Resource labels for Kubernetes resources */
-    labels?: Record<string, string>;
-    /** Kubernetes provider */
-    provider: k8s.Provider;
 }
 
 // Component-specific Args have been moved to their respective component files.
@@ -112,28 +109,28 @@ export interface GatewayResult {
 export interface KubernetesClusterArgs {
     /** Cluster name */
     name: string;
-    /** DigitalOcean region (default: nyc1) */
-    region?: string;
-    /** Kubernetes version (default: 1.34.1-do.0) */
-    version?: string;
+    /** DigitalOcean region */
+    region: string;
+    /** Kubernetes version */
+    version: string;
     /** Enable automatic Kubernetes version upgrades */
-    autoUpgrade?: boolean;
+    autoUpgrade: boolean;
     /** Enable surge upgrades (more aggressive) */
-    surgeUpgrade?: boolean;
+    surgeUpgrade: boolean;
     /** Enable high availability control plane */
-    ha?: boolean;
+    ha: boolean;
     /** VPC UUID to attach cluster to */
     vpcUuid?: string;
-    /** Node pool machine size (default: s-2vcpu-4gb) */
-    nodeSize?: string;
-    /** Initial node count (default: 2) */
-    nodeCount?: number;
-    /** Enable auto-scaling (default: true) */
-    autoScale?: boolean;
-    /** Minimum nodes when auto-scaling (default: 1) */
-    minNodes?: number;
-    /** Maximum nodes when auto-scaling (default: 5) */
-    maxNodes?: number;
+    /** Node pool machine size */
+    nodeSize: string;
+    /** Initial node count */
+    nodeCount: number;
+    /** Enable auto-scaling */
+    autoScale: boolean;
+    /** Minimum nodes when auto-scaling */
+    minNodes: number;
+    /** Maximum nodes when auto-scaling */
+    maxNodes: number;
     /** Resource tags */
     tags?: string[];
     /** Node labels */

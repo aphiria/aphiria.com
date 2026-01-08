@@ -1,13 +1,13 @@
 import * as pulumi from "@pulumi/pulumi";
 import * as k8s from "@pulumi/kubernetes";
-import { Environment, GatewayResult } from "./types";
+import { GatewayResult } from "./types";
 
 /**
  * Arguments for Gateway component
  */
 export interface GatewayArgs {
-    /** Environment this gateway targets */
-    env: Environment;
+    /** Whether to require both root and wildcard domains (production requirement) */
+    requireRootAndWildcard: boolean;
     /** Kubernetes namespace */
     namespace: pulumi.Input<string>;
     /** Gateway name */
@@ -33,17 +33,16 @@ export function createGateway(args: GatewayArgs): GatewayResult {
     const wildcardDomains = args.domains.filter((d) => d.startsWith("*"));
     const wildcardDomain = wildcardDomains[0]; // Keep for backward compatibility with validation
 
-    // Production environments MUST have both root and wildcard domains
-    // Preview environments MAY use wildcard-only (e.g., *.pr.aphiria.com for PR previews)
-    if (args.env === "production") {
+    // Some environments require both root and wildcard domains
+    if (args.requireRootAndWildcard) {
         if (!rootDomain) {
             throw new Error(
-                `Production gateway requires a root domain (non-wildcard). Provided domains: ${args.domains.join(", ")}`
+                `Gateway requires a root domain (non-wildcard). Provided domains: ${args.domains.join(", ")}`
             );
         }
         if (!wildcardDomain) {
             throw new Error(
-                `Production gateway requires a wildcard domain (e.g., *.example.com). Provided domains: ${args.domains.join(", ")}`
+                `Gateway requires a wildcard domain (e.g., *.example.com). Provided domains: ${args.domains.join(", ")}`
             );
         }
     } else {

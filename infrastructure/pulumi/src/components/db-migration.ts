@@ -1,6 +1,5 @@
 import * as pulumi from "@pulumi/pulumi";
 import * as k8s from "@pulumi/kubernetes";
-import { Environment } from "./types";
 import { POSTGRES_PORT } from "./constants";
 import { buildLabels } from "./labels";
 
@@ -8,12 +7,12 @@ import { buildLabels } from "./labels";
  * Arguments for database migration job component
  */
 export interface DBMigrationJobArgs {
-    /** Environment this migration targets */
-    env?: Environment;
     /** Kubernetes namespace */
     namespace: pulumi.Input<string>;
     /** Docker image containing migrations */
     image: string;
+    /** Image pull policy ("Always", "IfNotPresent", or "Never") */
+    imagePullPolicy: pulumi.Input<string>;
     /** Database host */
     dbHost: pulumi.Input<string>;
     /** Database name */
@@ -111,12 +110,7 @@ export function createDBMigrationJob(args: DBMigrationJobArgs): k8s.batch.v1.Job
                                 // - Local: Use "Never" (images loaded via minikube/docker load)
                                 // - SHA256 digest: Use "IfNotPresent" (immutable, safe to cache)
                                 // - Tag: Use "Always" (mutable, must pull to check for updates)
-                                imagePullPolicy:
-                                    args.env === "local"
-                                        ? "Never"
-                                        : args.image.includes("@sha256:")
-                                          ? "IfNotPresent"
-                                          : "Always",
+                                imagePullPolicy: args.imagePullPolicy,
                                 command: ["sh", "-c", command],
                                 env: [
                                     {

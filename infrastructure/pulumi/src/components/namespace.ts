@@ -1,6 +1,6 @@
 import * as pulumi from "@pulumi/pulumi";
 import * as k8s from "@pulumi/kubernetes";
-import { Environment, NamespaceResult } from "./types";
+import { NamespaceResult } from "./types";
 
 /**
  * Arguments for namespace component
@@ -8,8 +8,8 @@ import { Environment, NamespaceResult } from "./types";
 export interface NamespaceArgs {
     /** Namespace name */
     name: string;
-    /** Environment this namespace targets */
-    env: Environment;
+    /** Environment label value (e.g., "local", "preview", "production") */
+    environmentLabel: string;
     /** Optional ResourceQuota for the namespace */
     resourceQuota?: {
         cpu: string;
@@ -43,7 +43,7 @@ export interface NamespaceArgs {
 export function createNamespace(args: NamespaceArgs): NamespaceResult {
     const labels = {
         "app.kubernetes.io/name": "aphiria",
-        "app.kubernetes.io/environment": args.env,
+        "app.kubernetes.io/environment": args.environmentLabel,
         ...(args.labels || {}),
     };
 

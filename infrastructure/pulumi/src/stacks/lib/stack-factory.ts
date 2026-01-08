@@ -1,8 +1,9 @@
 import * as k8s from "@pulumi/kubernetes";
+import * as pulumi from "@pulumi/pulumi";
+import { Environment } from "./types";
 import {
     installBaseHelmCharts,
     installKubePrometheusStack,
-    createPostgreSQL,
     createGateway,
     createNamespace,
     createDatabaseCreationJob,
@@ -14,7 +15,9 @@ import {
     createWWWRedirectRoute,
     createDNSRecords,
 } from "../../components";
-import { createGrafana } from "../../components/grafana";
+import { createGrafana, GrafanaResult } from "../../components/grafana";
+import { createPostgreSQL, PostgreSQLResult } from "../../components/database";
+import { createPrometheus, PrometheusResult } from "../../components/prometheus";
 import { createGrafanaIngress, GrafanaIngressResult } from "../../components/grafana-ingress";
 import { createGrafanaAlerts } from "../../components/grafana-alerts";
 import { createDashboards } from "../../components/dashboards";
@@ -23,14 +26,11 @@ import {
     ApiServiceMonitorResult,
 } from "../../components/api-service-monitor";
 import * as path from "path";
-import { StackConfig } from "./types";
 import {
     WebDeploymentResult,
     APIDeploymentResult,
-    PostgreSQLResult,
     GatewayResult,
     NamespaceResult,
-    GrafanaResult,
 } from "../../components/types";
 
 /**
@@ -64,23 +64,45 @@ export interface StackResources {
  * This factory function centralizes all infrastructure creation logic,
  * eliminating duplication across local, preview-base, preview-pr, and production stacks.
  *
- * @param config Stack configuration (environment-specific parameters)
+ * @param env Environment name (local, preview, production)
  * @param k8sProvider Kubernetes provider for resource creation
  * @returns Object containing all created resources
  */
-export function createStack(config: StackConfig, k8sProvider: k8s.Provider): StackResources {
+export function createStack(env: Environment, k8sProvider: k8s.Provider): StackResources {
     const resources: StackResources = {};
+
+    // Read all configuration from Pulumi config
+    const config = new pulumi.Config();
+    const appConfig = new pulumi.Config("app");
+    const postgresqlConfig = new pulumi.Config("postgresql");
+    const gatewayConfig = new pulumi.Config("gateway");
+    const prometheusConfig = new pulumi.Config("prometheus");
+    const grafanaConfig = new pulumi.Config("grafana");
+    const namespaceConfig = new pulumi.Config("namespace");
+    const ghcrConfig = new pulumi.Config("ghcr");
+    const certManagerConfig = new pulumi.Config("certmanager");
 
     const gatewayNamespace = "nginx-gateway";
 
+    // Check if we need to skip base infrastructure (for preview-pr stacks)
+    const skipBaseInfrastructure = config.getBoolean("skipBaseInfrastructure");
+
     // Create custom namespace with ResourceQuota and NetworkPolicy (preview-pr only)
-    if (config.namespace) {
+    // Check if namespace config exists (only for preview-pr)
+    const hasNamespaceConfig = namespaceConfig.get("name");
+    if (hasNamespaceConfig) {
+        const imagePullSecret = ghcrConfig.get("username") ? {
+            registry: "ghcr.io",
+            username: ghcrConfig.require("username"),
+            token: ghcrConfig.requireSecret("token"),
+        } : undefined;
+
         resources.namespace = createNamespace({
-            name: config.namespace.name,
-            env: config.env,
-            resourceQuota: config.namespace.resourceQuota,
-            networkPolicy: config.namespace.networkPolicy,
-            imagePullSecret: config.namespace.imagePullSecret,
+            name: namespaceConfig.require("name"),
+            environmentLabel: env,
+            resourceQuota: namespaceConfig.getObject("resourceQuota"),
+            networkPolicy: namespaceConfig.getObject("networkPolicy"),
+            imagePullSecret: imagePullSecret,
             provider: k8sProvider,
         });
     }
@@ -89,13 +111,13 @@ export function createStack(config: StackConfig, k8sProvider: k8s.Provider): Sta
     const namespace = resources.namespace?.namespace.metadata.name || "default";
 
     // Determine if this is a preview-pr environment (used for Gateway listener sectionName routing)
-    const isPreviewPR = config.env === "preview" && config.namespace;
+    const isPreviewPR = env === "preview" && hasNamespaceConfig;
 
     // Install base infrastructure (cert-manager, nginx-gateway) if not skipped
-    if (!config.skipBaseInfrastructure) {
+    if (!skipBaseInfrastructure) {
         // For local environment: Install Gateway API CRDs and GatewayClass first
         // DigitalOcean Kubernetes (preview/production) pre-installs these via Cilium
-        if (config.env === "local") {
+        if (env === "local") {
             const gatewayApiCrds = new k8s.yaml.ConfigFile(
                 "gateway-api-crds",
                 {
@@ -129,24 +151,26 @@ export function createStack(config: StackConfig, k8sProvider: k8s.Provider): Sta
 
             // Install Helm charts with nginx-gateway depending on CRDs and GatewayClass
             resources.helmCharts = installBaseHelmCharts({
-                env: config.env,
+                env: env,
                 provider: k8sProvider,
                 nginxGatewayDependencies: [gatewayApiCrds, gatewayClass],
             });
         } else {
             // Preview/Production: No CRDs needed, just install Helm charts
             resources.helmCharts = installBaseHelmCharts({
-                env: config.env,
+                env: env,
                 provider: k8sProvider,
             });
         }
     }
 
     // Create monitoring namespace and components (if enabled)
-    if (config.monitoring) {
+    // Check if monitoring is configured
+    const hasMonitoring = grafanaConfig.get("hostname");
+    if (hasMonitoring) {
         const monitoringNamespace = createNamespace({
             name: "monitoring",
-            env: config.env,
+            environmentLabel: env,
             resourceQuota: {
                 cpu: "4",
                 memory: "16Gi",
@@ -161,7 +185,7 @@ export function createStack(config: StackConfig, k8sProvider: k8s.Provider): Sta
         // Install kube-prometheus-stack (Prometheus Operator + Prometheus + kube-state-metrics + Alertmanager)
         const kubePrometheusStack = installKubePrometheusStack(
             {
-                env: config.env,
+                env: env,
                 chartName: "kube-prometheus-stack",
                 repository: "https://prometheus-community.github.io/helm-charts",
                 version: "70.10.0",
@@ -170,34 +194,25 @@ export function createStack(config: StackConfig, k8sProvider: k8s.Provider): Sta
                 values: {
                     prometheus: {
                         prometheusSpec: {
-                            retention: config.monitoring.prometheus.retentionTime || "7d",
-                            scrapeInterval: config.monitoring.prometheus.scrapeInterval || "15s",
+                            retention: prometheusConfig.require("retentionTime"),
+                            scrapeInterval: prometheusConfig.require("scrapeInterval"),
                             storageSpec: {
                                 volumeClaimTemplate: {
                                     spec: {
                                         accessModes: ["ReadWriteOnce"],
                                         resources: {
                                             requests: {
-                                                storage: config.monitoring.prometheus.storageSize,
+                                                storage: prometheusConfig.require("storageSize"),
                                             },
                                         },
                                     },
                                 },
                             },
                             externalLabels: {
-                                environment: config.env,
+                                environment: env,
                             },
                             // Resource limits for Prometheus container (required by ResourceQuota)
-                            resources: config.monitoring.prometheus.resources || {
-                                requests: {
-                                    cpu: "500m",
-                                    memory: "1Gi",
-                                },
-                                limits: {
-                                    cpu: "1",
-                                    memory: "2Gi",
-                                },
-                            },
+                            resources: prometheusConfig.requireObject("resources"),
                         },
                     },
                     // Prometheus Operator resource limits (required by ResourceQuota)
@@ -288,7 +303,7 @@ export function createStack(config: StackConfig, k8sProvider: k8s.Provider): Sta
         // Production: email contact point for real alerts
         // Preview/Local: use Grafana's default contact point (won't send without SMTP)
         const contactPoints =
-            config.env === "production"
+            env === "production"
                 ? [
                       {
                           name: "email-admin",
@@ -297,9 +312,7 @@ export function createStack(config: StackConfig, k8sProvider: k8s.Provider): Sta
                                   uid: "email-admin",
                                   type: "email",
                                   settings: {
-                                      addresses:
-                                          config.monitoring.grafana.smtp?.alertEmail ||
-                                          "admin@aphiria.com",
+                                      addresses: grafanaConfig.require("alertEmail"),
                                       singleEmail: true,
                                       subject:
                                           '[{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .CommonLabels.environment }} {{ (index .Alerts 0).Annotations.summary }}',
@@ -327,31 +340,39 @@ export function createStack(config: StackConfig, k8sProvider: k8s.Provider): Sta
 
         const alerts = createGrafanaAlerts({
             namespace: "monitoring",
-            environment: config.env,
+            environment: env,
             contactPoints,
-            defaultReceiver: config.env === "production" ? "email-admin" : "local-notifications",
+            defaultReceiver: env === "production" ? "email-admin" : "local-notifications",
             provider: k8sProvider,
         });
 
         const grafana = createGrafana({
-            env: config.env,
+            replicas: grafanaConfig.requireNumber("replicas"),
+            resources: grafanaConfig.requireObject("resources"),
             namespace: "monitoring",
             // kube-prometheus-stack creates Prometheus with name kube-prometheus-stack-prometheus
             prometheusUrl:
                 "http://kube-prometheus-stack-prometheus.monitoring.svc.cluster.local:9090",
-            storageSize: config.monitoring.grafana.storageSize,
-            githubClientId: config.monitoring.grafana.githubOAuth.clientId,
-            githubClientSecret: config.monitoring.grafana.githubOAuth.clientSecret,
-            githubOrg: config.monitoring.grafana.githubOAuth.org,
-            adminUser: config.monitoring.grafana.githubOAuth.adminUser,
-            smtpHost: config.monitoring.grafana.smtp?.host,
-            smtpPort: config.monitoring.grafana.smtp?.port,
-            smtpUser: config.monitoring.grafana.smtp?.user,
-            smtpPassword: config.monitoring.grafana.smtp?.password,
-            smtpFromAddress: config.monitoring.grafana.smtp?.fromAddress,
-            alertEmail: config.monitoring.grafana.smtp?.alertEmail,
-            basicAuthUser: config.monitoring.grafana.basicAuth?.user,
-            basicAuthPassword: config.monitoring.grafana.basicAuth?.password,
+            storageSize: grafanaConfig.require("storageSize"),
+            domain: grafanaConfig.require("hostname"),
+            imageVersion: grafanaConfig.require("version"),
+            githubAuth: grafanaConfig.get("githubClientId") ? {
+                clientId: grafanaConfig.requireSecret("githubClientId"),
+                clientSecret: grafanaConfig.requireSecret("githubClientSecret"),
+                organization: grafanaConfig.require("githubOrg"),
+                adminUser: grafanaConfig.require("adminUser"),
+            } : undefined,
+            smtp: grafanaConfig.getSecret("smtpHost") ? {
+                host: grafanaConfig.requireSecret("smtpHost"),
+                port: grafanaConfig.requireNumber("smtpPort"),
+                user: grafanaConfig.requireSecret("smtpUser"),
+                password: grafanaConfig.requireSecret("smtpPassword"),
+                fromAddress: grafanaConfig.require("smtpFromAddress"),
+            } : undefined,
+            basicAuth: grafanaConfig.getSecret("basicAuthUser") ? {
+                username: grafanaConfig.requireSecret("basicAuthUser"),
+                password: grafanaConfig.requireSecret("basicAuthPassword"),
+            } : undefined,
             dashboardsConfigMap: dashboards.configMap,
             alertRulesConfigMap: alerts.alertRulesConfigMap,
             contactPointsConfigMap: alerts.contactPointsConfigMap,
@@ -365,11 +386,11 @@ export function createStack(config: StackConfig, k8sProvider: k8s.Provider): Sta
             servicePort: 80,
             gatewayName: "nginx-gateway",
             gatewayNamespace: gatewayNamespace,
-            hostname: config.monitoring.grafana.hostname,
+            hostname: grafanaConfig.require("hostname"),
             // Preview: pr-grafana.aphiria.com uses https-root (exact match)
             // Production: grafana.aphiria.com uses https-subdomains (*.aphiria.com wildcard)
             /* istanbul ignore next - sectionName varies by environment (preview vs production) */
-            sectionName: config.env === "preview" ? "https-root" : "https-subdomains",
+            sectionName: env === "preview" ? "https-root" : "https-subdomains",
             provider: k8sProvider,
         });
 
@@ -382,40 +403,61 @@ export function createStack(config: StackConfig, k8sProvider: k8s.Provider): Sta
     }
 
     // Create database (shared PostgreSQL instance OR per-PR database)
-    if (config.database.createDatabase && config.database.databaseName) {
+    const createDatabase = postgresqlConfig.getBoolean("createDatabase");
+    const databaseName = postgresqlConfig.get("databaseName");
+
+    if (createDatabase && databaseName) {
         // Preview-PR: Create database on shared instance
         resources.dbInitJob = createDatabaseCreationJob({
-            env: config.env,
             namespace,
-            databaseName: config.database.databaseName,
-            dbHost: config.database.dbHost!,
-            dbAdminUser: config.database.dbAdminUser!,
-            dbAdminPassword: config.database.dbAdminPassword!,
+            databaseName: postgresqlConfig.require("databaseName"),
+            dbHost: postgresqlConfig.require("dbHost"),
+            dbAdminUser: postgresqlConfig.require("dbAdminUser"),
+            dbAdminPassword: postgresqlConfig.requireSecret("dbAdminPassword"),
             provider: k8sProvider,
         });
     } else {
         // Local/Preview-Base: Create PostgreSQL instance
         resources.postgres = createPostgreSQL({
-            env: config.env,
+            username: postgresqlConfig.require("user"),
+            password: postgresqlConfig.requireSecret("password"),
+            replicas: 1,
+            resources: postgresqlConfig.requireObject("resources"),
+            healthCheck: {
+                interval: "10s",
+                timeout: "5s",
+                retries: 5,
+                command: ["pg_isready", "-U", "postgres"],
+            },
+            connectionPooling: {
+                maxConnections: 100,
+            },
             namespace,
-            persistentStorage: config.database.persistentStorage,
-            storageSize: config.database.storageSize,
-            dbUser: String(config.database.dbUser),
-            dbPassword: config.database.dbPassword,
-            resources: config.database.resources,
+            storage: {
+                enabled: postgresqlConfig.requireBoolean("persistentStorage"),
+                size: postgresqlConfig.require("storageSize"),
+                accessMode: "ReadWriteOnce",
+                // Use hostPath for local development
+                useHostPath: env === "local",
+                hostPath: env === "local" ? "/mnt/data" : undefined,
+            },
+            imageTag: postgresqlConfig.require("version"),
+            databaseName: "postgres",
             provider: k8sProvider,
         });
     }
 
     // Create Gateway with TLS if not skipped
-    if (!config.skipBaseInfrastructure) {
+    if (!skipBaseInfrastructure) {
+        const dnsToken = certManagerConfig.getSecret("digitaloceanDnsToken");
+
         resources.gateway = createGateway({
-            env: config.env,
+            requireRootAndWildcard: env === "production",
             namespace: gatewayNamespace,
             name: "nginx-gateway",
-            tlsMode: config.gateway.tlsMode,
-            domains: config.gateway.domains,
-            dnsToken: config.gateway.dnsToken,
+            tlsMode: gatewayConfig.require("tlsMode") as "self-signed" | "letsencrypt-prod",
+            domains: gatewayConfig.requireObject<string[]>("domains"),
+            dnsToken: dnsToken,
             provider: k8sProvider,
             // Ensure cert-manager CRDs are ready before creating ClusterIssuer/Certificate
             certManagerDependency: resources.helmCharts?.certManager,
@@ -424,7 +466,8 @@ export function createStack(config: StackConfig, k8sProvider: k8s.Provider): Sta
         // Create DNS records if configured
         // Fetch LoadBalancer IP from nginx-gateway Chart resources
         /* istanbul ignore next - Chart.resources is only populated at runtime, cannot be mocked in unit tests */
-        if (config.gateway.dns && resources.helmCharts?.nginxGateway) {
+        const dnsConfig = gatewayConfig.getObject("dns");
+        if (dnsConfig && resources.helmCharts?.nginxGateway) {
             // Workaround for Pulumi bug #16395: Service.get() doesn't respect dependsOn
             // Use Chart v4's .resources output to get the Service directly from child resources
             const gatewayServiceOutput = resources.helmCharts.nginxGateway.resources.apply(
@@ -444,95 +487,114 @@ export function createStack(config: StackConfig, k8sProvider: k8s.Provider): Sta
 
             resources.gateway.ip = gatewayServiceOutput.status.loadBalancer.ingress[0].ip;
 
+            // Type the DNS config properly
+            interface DNSConfig {
+                domain: string;
+                records: Array<{
+                    name: string;
+                    resourceName: string;
+                }>;
+                ttl?: number;
+            }
+
+            const typedDnsConfig = dnsConfig as DNSConfig;
+            if (!resources.gateway.ip) {
+                throw new Error("Gateway IP is required for DNS configuration but was not set");
+            }
             const dnsResult = createDNSRecords({
-                domain: config.gateway.dns.domain,
+                domain: typedDnsConfig.domain,
                 loadBalancerIp: resources.gateway.ip,
-                records: config.gateway.dns.records,
-                ttl: config.gateway.dns.ttl,
+                records: typedDnsConfig.records,
+                ttl: typedDnsConfig.ttl,
             });
             resources.gateway.dnsRecords = dnsResult.records;
         }
     }
 
     // Deploy applications (skip for preview-base)
-    if (config.app) {
+    // Check if app config exists
+    const hasAppConfig = appConfig.get("webUrl");
+    if (hasAppConfig) {
         // Determine database connection details
-        const dbHost = config.database.createDatabase
-            ? config.database.dbHost!
-            : config.env === "local"
+        const dbHost = createDatabase
+            ? postgresqlConfig.require("dbHost")
+            : env === "local"
               ? "db"
               : "db.default.svc.cluster.local";
 
-        const dbName = config.database.databaseName || "postgres";
-        const dbUser = config.database.createDatabase
-            ? config.database.dbAdminUser!
-            : config.database.dbUser;
-        const dbPassword = config.database.createDatabase
-            ? config.database.dbAdminPassword!
-            : config.database.dbPassword;
+        const dbName = postgresqlConfig.get("databaseName") || "postgres";
+        const dbUser = createDatabase
+            ? postgresqlConfig.require("dbAdminUser")
+            : postgresqlConfig.require("user");
+        const dbPassword = createDatabase
+            ? postgresqlConfig.requireSecret("dbAdminPassword")
+            : postgresqlConfig.requireSecret("password");
+
+        // Get PR number from namespace name if it's a preview-pr
+        const prNumber = hasNamespaceConfig
+            ? namespaceConfig.require("name").replace("preview-pr-", "")
+            : undefined;
 
         // Web deployment
         resources.web = createWebDeployment({
-            env: config.env,
             namespace,
-            replicas: config.app.web.replicas,
-            image: config.app.web.image,
+            replicas: appConfig.requireNumber("web:replicas"),
+            image: appConfig.require("web:image"),
+            imagePullPolicy: env === "local" ? "Never" :
+                appConfig.require("web:image").includes("@sha256:") ? "IfNotPresent" : "Always",
+            appEnv: env,
             jsConfigData: {
-                apiUri: config.app.api.url,
-                cookieDomain: config.app.cookieDomain,
+                apiUri: appConfig.require("apiUrl"),
+                cookieDomain: appConfig.require("cookieDomain"),
             },
-            baseUrl: config.app.web.url,
-            logLevel: config.env === "production" ? "warning" : "debug",
-            prNumber:
-                config.env === "preview" && config.namespace
-                    ? config.namespace.name.replace("preview-pr-", "")
-                    : undefined,
-            imagePullSecrets: config.namespace?.imagePullSecret ? ["ghcr-pull-secret"] : undefined,
-            resources: config.app.web.resources,
-            podDisruptionBudget: config.app.web.podDisruptionBudget,
+            baseUrl: appConfig.require("webUrl"),
+            logLevel: env === "production" ? "warning" : "debug",
+            prNumber: env === "preview" && hasNamespaceConfig ? prNumber : undefined,
+            imagePullSecrets: hasNamespaceConfig && ghcrConfig.get("username") ? ["ghcr-pull-secret"] : undefined,
+            resources: appConfig.requireObject("web:resources") as any,
+            podDisruptionBudget: appConfig.getObject("web:podDisruptionBudget") as any,
             provider: k8sProvider,
         });
 
         // API deployment
         resources.api = createAPIDeployment({
-            env: config.env,
             namespace,
-            replicas: config.app.api.replicas,
-            image: config.app.api.image,
+            replicas: appConfig.requireNumber("api:replicas"),
+            image: appConfig.require("api:image"),
+            imagePullPolicy: env === "local" ? "Never" :
+                appConfig.require("api:image").includes("@sha256:") ? "IfNotPresent" : "Always",
+            appEnv: env,
             dbHost,
             dbName,
             dbUser,
             dbPassword,
-            apiUrl: config.app.api.url,
-            webUrl: config.app.web.url,
-            logLevel: config.env === "production" ? "warning" : "debug",
-            cookieDomain: config.app.cookieDomain,
-            cookieSecure: config.env !== "local",
-            prNumber:
-                config.env === "preview" && config.namespace
-                    ? config.namespace.name.replace("preview-pr-", "")
-                    : undefined,
-            imagePullSecrets: config.namespace?.imagePullSecret ? ["ghcr-pull-secret"] : undefined,
-            resources: config.app.api.resources,
-            podDisruptionBudget: config.app.api.podDisruptionBudget,
-            // Prefer top-level prometheusAuthToken (preview-pr) over monitoring.prometheus.authToken (local/preview-base/production)
-            prometheusAuthToken:
-                config.prometheusAuthToken || config.monitoring?.prometheus.authToken,
+            apiUrl: appConfig.require("apiUrl"),
+            webUrl: appConfig.require("webUrl"),
+            logLevel: env === "production" ? "warning" : "debug",
+            cookieDomain: appConfig.require("cookieDomain"),
+            cookieSecure: env !== "local",
+            prNumber: env === "preview" && hasNamespaceConfig ? prNumber : undefined,
+            imagePullSecrets: hasNamespaceConfig && ghcrConfig.get("username") ? ["ghcr-pull-secret"] : undefined,
+            resources: appConfig.requireObject("api:resources") as any,
+            podDisruptionBudget: appConfig.getObject("api:podDisruptionBudget") as any,
+            // Use prometheus auth token from config
+            prometheusAuthToken: prometheusConfig.getSecret("authToken"),
             provider: k8sProvider,
         });
 
         // Database migration job
         resources.migration = createDBMigrationJob({
-            env: config.env,
             namespace,
-            image: config.app.api.image,
+            image: appConfig.require("api:image"),
+            imagePullPolicy: env === "local" ? "Never" :
+                appConfig.require("api:image").includes("@sha256:") ? "IfNotPresent" : "Always",
             dbHost,
             dbName,
             dbUser,
             dbPassword,
             runSeeder: true,
-            imagePullSecrets: config.namespace?.imagePullSecret ? ["ghcr-pull-secret"] : undefined,
-            resources: config.app.migration.resources,
+            imagePullSecrets: hasNamespaceConfig && ghcrConfig.get("username") ? ["ghcr-pull-secret"] : undefined,
+            resources: appConfig.requireObject("migration:resources") as any,
             provider: k8sProvider,
         });
 
@@ -542,7 +604,7 @@ export function createStack(config: StackConfig, k8sProvider: k8s.Provider): Sta
         resources.webRoute = createHTTPRoute({
             namespace: namespace,
             name: "web",
-            hostname: new URL(config.app.web.url).hostname,
+            hostname: new URL(appConfig.require("webUrl")).hostname,
             serviceName: "web",
             serviceNamespace: namespace,
             servicePort: 80,
@@ -555,7 +617,7 @@ export function createStack(config: StackConfig, k8sProvider: k8s.Provider): Sta
         resources.apiRoute = createHTTPRoute({
             namespace: namespace,
             name: "api",
-            hostname: new URL(config.app.api.url).hostname,
+            hostname: new URL(appConfig.require("apiUrl")).hostname,
             serviceName: "api",
             serviceNamespace: namespace,
             servicePort: 80,
@@ -565,16 +627,15 @@ export function createStack(config: StackConfig, k8sProvider: k8s.Provider): Sta
             provider: k8sProvider,
         });
 
-        // ServiceMonitor for API metrics (if monitoring is configured OR prometheusAuthToken is provided)
-        // preview-pr passes prometheusAuthToken directly, other envs pass config.monitoring
-        const authToken = config.monitoring?.prometheus.authToken || config.prometheusAuthToken;
+        // ServiceMonitor for API metrics (if prometheus auth token is configured)
+        const authToken = prometheusConfig.getSecret("authToken");
         if (authToken) {
             resources.apiServiceMonitor = createApiServiceMonitor({
                 namespace: namespace,
                 serviceName: "api",
                 targetPort: 80,
                 metricsPath: "/metrics",
-                scrapeInterval: config.monitoring?.prometheus.scrapeInterval || "15s",
+                scrapeInterval: prometheusConfig.require("scrapeInterval"),
                 authToken: authToken,
                 provider: k8sProvider,
             });
@@ -582,9 +643,9 @@ export function createStack(config: StackConfig, k8sProvider: k8s.Provider): Sta
 
         // HTTP→HTTPS redirect for preview-pr (specific hostnames beat wildcard redirects)
         // This ensures http://123.pr.aphiria.com redirects to https://123.pr.aphiria.com
-        if (config.env === "preview" && config.namespace) {
-            const webHostname = new URL(config.app.web.url).hostname;
-            const apiHostname = new URL(config.app.api.url).hostname;
+        if (env === "preview" && hasNamespaceConfig) {
+            const webHostname = new URL(appConfig.require("webUrl")).hostname;
+            const apiHostname = new URL(appConfig.require("apiUrl")).hostname;
 
             resources.httpsRedirect = createHTTPSRedirectRoute({
                 namespace: namespace,
@@ -597,15 +658,15 @@ export function createStack(config: StackConfig, k8sProvider: k8s.Provider): Sta
     }
 
     // HTTP→HTTPS redirect (all Gateway-creating stacks)
-    if (!config.skipBaseInfrastructure) {
+    if (!skipBaseInfrastructure) {
         // Determine if WWW redirect will be created (local and production only)
-        const hasWWWRedirect = config.env !== "preview";
+        const hasWWWRedirect = env !== "preview";
 
         resources.httpsRedirect = createHTTPSRedirectRoute({
             namespace: gatewayNamespace,
             gatewayName: "nginx-gateway",
             gatewayNamespace: gatewayNamespace,
-            domains: config.gateway.domains,
+            domains: gatewayConfig.requireObject<string[]>("domains"),
             // Skip http-root listener when WWW redirect exists to avoid conflicts
             // WWW redirect handles: http://aphiria.com → https://www.aphiria.com (single hop)
             skipRootListener: hasWWWRedirect,
