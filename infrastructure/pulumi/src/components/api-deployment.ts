@@ -37,10 +37,6 @@ export interface APIDeploymentArgs {
     webUrl: string;
     /** Log level (e.g., "warning", "debug", "info") */
     logLevel: string;
-    /** Cookie domain (e.g., ".aphiria.com") */
-    cookieDomain: string;
-    /** Enable secure cookies (true for HTTPS, false for local HTTP) */
-    cookieSecure: boolean;
     /** PR number (optional, preview environments only) */
     prNumber?: string;
     /** Prometheus Bearer token for /metrics endpoint authentication (optional if monitoring disabled) */
@@ -91,8 +87,6 @@ export function createAPIDeployment(args: APIDeploymentArgs): APIDeploymentResul
         API_URL: args.apiUrl,
         APP_WEB_URL: args.webUrl,
         APP_API_URL: args.apiUrl,
-        APP_COOKIE_DOMAIN: args.cookieDomain,
-        APP_COOKIE_SECURE: args.cookieSecure ? "1" : "0",
         APP_BUILDER_API,
         APP_BUILDER_CONSOLE,
         LOG_LEVEL: args.logLevel,

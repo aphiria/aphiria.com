@@ -509,70 +509,15 @@ jobs:
           pulumi config env add "${PULUMI_ENV}" --stack "${STACK_NAME}" --yes
 
           if [ "$MODE" == "preview" ]; then
+            # Set PR-specific configuration values
             pulumi config set prNumber "${PR_NUMBER}" --stack "${STACK_NAME}"
             pulumi config set baseStackReference "${BASE_STACK_REF}" --stack "${STACK_NAME}"
-
-            # Image references (use digests from the build step)
-            pulumi config set app:web:image "${{ needs.build.outputs.web-digest }}" --stack "${STACK_NAME}"
-            pulumi config set app:api:image "${{ needs.build.outputs.api-digest }}" --stack "${STACK_NAME}"
-
-            # Infrastructure config
-            pulumi config set skipBaseInfrastructure true --stack "${STACK_NAME}"
-
-            # Namespace configuration
             pulumi config set namespace:name "preview-pr-${PR_NUMBER}" --stack "${STACK_NAME}"
-            pulumi config set --path namespace:resourceQuota.cpu "2" --stack "${STACK_NAME}"
-            pulumi config set --path namespace:resourceQuota.memory "4Gi" --stack "${STACK_NAME}"
-            pulumi config set --path namespace:resourceQuota.pods "5" --stack "${STACK_NAME}"
-
-            # Database configuration
-            pulumi config set postgresql:createDatabase true --stack "${STACK_NAME}"
             pulumi config set postgresql:databaseName "aphiria_pr_${PR_NUMBER}" --stack "${STACK_NAME}"
-            pulumi config set postgresql:dbHost "db.default.svc.cluster.local" --stack "${STACK_NAME}"
-            # postgresql:user and postgresql:password come from ESC environment
-
-            # Application configuration
-            pulumi config set app:imagePullPolicy "Always" --stack "${STACK_NAME}"
-
-            # Web configuration
             pulumi config set app:web:url "https://${PR_NUMBER}.pr.aphiria.com" --stack "${STACK_NAME}"
-            pulumi config set app:web:cookieDomain ".pr.aphiria.com" --stack "${STACK_NAME}"
-            pulumi config set app:web:replicas 1 --stack "${STACK_NAME}"
-            pulumi config set --path app:web:resources.requests.cpu "50m" --stack "${STACK_NAME}"
-            pulumi config set --path app:web:resources.requests.memory "64Mi" --stack "${STACK_NAME}"
-            pulumi config set --path app:web:resources.limits.cpu "100m" --stack "${STACK_NAME}"
-            pulumi config set --path app:web:resources.limits.memory "128Mi" --stack "${STACK_NAME}"
-
-            # API configuration
+            pulumi config set app:web:image "${{ needs.build.outputs.web-digest }}" --stack "${STACK_NAME}"
             pulumi config set app:api:url "https://${PR_NUMBER}.pr-api.aphiria.com" --stack "${STACK_NAME}"
-            pulumi config set app:api:logLevel "debug" --stack "${STACK_NAME}"
-            pulumi config set app:api:replicas 1 --stack "${STACK_NAME}"
-            pulumi config set --path app:api:resources.nginx.requests.cpu "50m" --stack "${STACK_NAME}"
-            pulumi config set --path app:api:resources.nginx.requests.memory "64Mi" --stack "${STACK_NAME}"
-            pulumi config set --path app:api:resources.nginx.limits.cpu "100m" --stack "${STACK_NAME}"
-            pulumi config set --path app:api:resources.nginx.limits.memory "128Mi" --stack "${STACK_NAME}"
-            pulumi config set --path app:api:resources.php.requests.cpu "100m" --stack "${STACK_NAME}"
-            pulumi config set --path app:api:resources.php.requests.memory "128Mi" --stack "${STACK_NAME}"
-            pulumi config set --path app:api:resources.php.limits.cpu "200m" --stack "${STACK_NAME}"
-            pulumi config set --path app:api:resources.php.limits.memory "256Mi" --stack "${STACK_NAME}"
-            pulumi config set --path app:api:resources.initContainer.requests.cpu "50m" --stack "${STACK_NAME}"
-            pulumi config set --path app:api:resources.initContainer.requests.memory "64Mi" --stack "${STACK_NAME}"
-            pulumi config set --path app:api:resources.initContainer.limits.cpu "100m" --stack "${STACK_NAME}"
-            pulumi config set --path app:api:resources.initContainer.limits.memory "128Mi" --stack "${STACK_NAME}"
-
-            # Migration configuration
-            pulumi config set --path app:migration:resources.migration.requests.cpu "50m" --stack "${STACK_NAME}"
-            pulumi config set --path app:migration:resources.migration.requests.memory "128Mi" --stack "${STACK_NAME}"
-            pulumi config set --path app:migration:resources.migration.limits.cpu "200m" --stack "${STACK_NAME}"
-            pulumi config set --path app:migration:resources.migration.limits.memory "256Mi" --stack "${STACK_NAME}"
-            pulumi config set --path app:migration:resources.initContainer.requests.cpu "10m" --stack "${STACK_NAME}"
-            pulumi config set --path app:migration:resources.initContainer.requests.memory "32Mi" --stack "${STACK_NAME}"
-            pulumi config set --path app:migration:resources.initContainer.limits.cpu "50m" --stack "${STACK_NAME}"
-            pulumi config set --path app:migration:resources.initContainer.limits.memory "64Mi" --stack "${STACK_NAME}"
-
-            # GHCR credentials (for pulling images if private)
-            pulumi config set ghcr:username "${{ github.actor }}" --stack "${STACK_NAME}"
-            pulumi config set ghcr:token "${{ secrets.GITHUB_TOKEN }}" --secret --stack "${STACK_NAME}"
+            pulumi config set app:api:image "${{ needs.build.outputs.api-digest }}" --stack "${STACK_NAME}"
           else
             # Production uses different image config paths
             pulumi config set app:web:image "${{ needs.build.outputs.web-digest }}" --stack "${STACK_NAME}"
@@ -580,7 +525,13 @@ jobs:
           fi
 
           set +e
-          timeout 300 pulumi preview --stack "${STACK_NAME}" --non-interactive 2>&1 | tee preview.txt
+          if [ "$MODE" == "preview" ]; then
+            # Use --config-file to merge with template for preview
+            timeout 300 pulumi preview --stack "${STACK_NAME}" --config-file Pulumi.preview-pr.yml --non-interactive 2>&1 | tee preview.txt
+          else
+            # Production doesn't need config-file
+            timeout 300 pulumi preview --stack "${STACK_NAME}" --non-interactive 2>&1 | tee preview.txt
+          fi
           PREVIEW_EXIT_CODE=${PIPESTATUS[0]}
           set -e
 
@@ -687,70 +638,15 @@ jobs:
           pulumi config env add "${PULUMI_ENV}" --stack "${STACK_NAME}" --yes
 
           if [ "$MODE" == "preview" ]; then
+            # Set PR-specific configuration values
             pulumi config set prNumber "${PR_NUMBER}" --stack "${STACK_NAME}"
             pulumi config set baseStackReference "${BASE_STACK_REF}" --stack "${STACK_NAME}"
-
-            # Image references (use digests from the build step)
-            pulumi config set app:web:image "${{ needs.build.outputs.web-digest }}" --stack "${STACK_NAME}"
-            pulumi config set app:api:image "${{ needs.build.outputs.api-digest }}" --stack "${STACK_NAME}"
-
-            # Infrastructure config
-            pulumi config set skipBaseInfrastructure true --stack "${STACK_NAME}"
-
-            # Namespace configuration
             pulumi config set namespace:name "preview-pr-${PR_NUMBER}" --stack "${STACK_NAME}"
-            pulumi config set --path namespace:resourceQuota.cpu "2" --stack "${STACK_NAME}"
-            pulumi config set --path namespace:resourceQuota.memory "4Gi" --stack "${STACK_NAME}"
-            pulumi config set --path namespace:resourceQuota.pods "5" --stack "${STACK_NAME}"
-
-            # Database configuration
-            pulumi config set postgresql:createDatabase true --stack "${STACK_NAME}"
             pulumi config set postgresql:databaseName "aphiria_pr_${PR_NUMBER}" --stack "${STACK_NAME}"
-            pulumi config set postgresql:dbHost "db.default.svc.cluster.local" --stack "${STACK_NAME}"
-            # postgresql:user and postgresql:password come from ESC environment
-
-            # Application configuration
-            pulumi config set app:imagePullPolicy "Always" --stack "${STACK_NAME}"
-
-            # Web configuration
             pulumi config set app:web:url "https://${PR_NUMBER}.pr.aphiria.com" --stack "${STACK_NAME}"
-            pulumi config set app:web:cookieDomain ".pr.aphiria.com" --stack "${STACK_NAME}"
-            pulumi config set app:web:replicas 1 --stack "${STACK_NAME}"
-            pulumi config set --path app:web:resources.requests.cpu "50m" --stack "${STACK_NAME}"
-            pulumi config set --path app:web:resources.requests.memory "64Mi" --stack "${STACK_NAME}"
-            pulumi config set --path app:web:resources.limits.cpu "100m" --stack "${STACK_NAME}"
-            pulumi config set --path app:web:resources.limits.memory "128Mi" --stack "${STACK_NAME}"
-
-            # API configuration
+            pulumi config set app:web:image "${{ needs.build.outputs.web-digest }}" --stack "${STACK_NAME}"
             pulumi config set app:api:url "https://${PR_NUMBER}.pr-api.aphiria.com" --stack "${STACK_NAME}"
-            pulumi config set app:api:logLevel "debug" --stack "${STACK_NAME}"
-            pulumi config set app:api:replicas 1 --stack "${STACK_NAME}"
-            pulumi config set --path app:api:resources.nginx.requests.cpu "50m" --stack "${STACK_NAME}"
-            pulumi config set --path app:api:resources.nginx.requests.memory "64Mi" --stack "${STACK_NAME}"
-            pulumi config set --path app:api:resources.nginx.limits.cpu "100m" --stack "${STACK_NAME}"
-            pulumi config set --path app:api:resources.nginx.limits.memory "128Mi" --stack "${STACK_NAME}"
-            pulumi config set --path app:api:resources.php.requests.cpu "100m" --stack "${STACK_NAME}"
-            pulumi config set --path app:api:resources.php.requests.memory "128Mi" --stack "${STACK_NAME}"
-            pulumi config set --path app:api:resources.php.limits.cpu "200m" --stack "${STACK_NAME}"
-            pulumi config set --path app:api:resources.php.limits.memory "256Mi" --stack "${STACK_NAME}"
-            pulumi config set --path app:api:resources.initContainer.requests.cpu "50m" --stack "${STACK_NAME}"
-            pulumi config set --path app:api:resources.initContainer.requests.memory "64Mi" --stack "${STACK_NAME}"
-            pulumi config set --path app:api:resources.initContainer.limits.cpu "100m" --stack "${STACK_NAME}"
-            pulumi config set --path app:api:resources.initContainer.limits.memory "128Mi" --stack "${STACK_NAME}"
-
-            # Migration configuration
-            pulumi config set --path app:migration:resources.migration.requests.cpu "50m" --stack "${STACK_NAME}"
-            pulumi config set --path app:migration:resources.migration.requests.memory "128Mi" --stack "${STACK_NAME}"
-            pulumi config set --path app:migration:resources.migration.limits.cpu "200m" --stack "${STACK_NAME}"
-            pulumi config set --path app:migration:resources.migration.limits.memory "256Mi" --stack "${STACK_NAME}"
-            pulumi config set --path app:migration:resources.initContainer.requests.cpu "10m" --stack "${STACK_NAME}"
-            pulumi config set --path app:migration:resources.initContainer.requests.memory "32Mi" --stack "${STACK_NAME}"
-            pulumi config set --path app:migration:resources.initContainer.limits.cpu "50m" --stack "${STACK_NAME}"
-            pulumi config set --path app:migration:resources.initContainer.limits.memory "64Mi" --stack "${STACK_NAME}"
-
-            # GHCR credentials (for pulling images if private)
-            pulumi config set ghcr:username "${{ github.actor }}" --stack "${STACK_NAME}"
-            pulumi config set ghcr:token "${{ secrets.GITHUB_TOKEN }}" --secret --stack "${STACK_NAME}"
+            pulumi config set app:api:image "${{ needs.build.outputs.api-digest }}" --stack "${STACK_NAME}"
           else
             # Production uses different image config paths
             pulumi config set app:web:image "${{ needs.build.outputs.web-digest }}" --stack "${STACK_NAME}"
@@ -758,10 +654,18 @@ jobs:
           fi
 
           # Retry deployment with refresh on failure to handle orphaned resources
-          if ! timeout 420 pulumi up --stack "${STACK_NAME}" --yes; then
-            echo "Deployment failed, refreshing state and retrying once..."
-            pulumi refresh --stack "${STACK_NAME}" --yes
-            timeout 420 pulumi up --stack "${STACK_NAME}" --yes
+          if [ "$MODE" == "preview" ]; then
+            if ! timeout 420 pulumi up --stack "${STACK_NAME}" --config-file Pulumi.preview-pr.yml --yes; then
+              echo "Deployment failed, refreshing state and retrying once..."
+              pulumi refresh --stack "${STACK_NAME}" --yes
+              timeout 420 pulumi up --stack "${STACK_NAME}" --config-file Pulumi.preview-pr.yml --yes
+            fi
+          else
+            if ! timeout 420 pulumi up --stack "${STACK_NAME}" --yes; then
+              echo "Deployment failed, refreshing state and retrying once..."
+              pulumi refresh --stack "${STACK_NAME}" --yes
+              timeout 420 pulumi up --stack "${STACK_NAME}" --yes
+            fi
           fi
 
       - name: Post deployment success comment (preview)

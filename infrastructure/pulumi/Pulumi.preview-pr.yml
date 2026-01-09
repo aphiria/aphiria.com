@@ -1,0 +1,34 @@
+# PR-specific values (prNumber, URLs, images) are set dynamically by CI/CD via pulumi config set
+environment:
+  - aphiria.com/Preview
+
+config:
+  # Infrastructure config
+  skipBaseInfrastructure: true
+
+  # Namespace configuration (name is set dynamically by CI/CD)
+  namespace:
+    resourceQuota:
+      cpu: "2"
+      memory: "4Gi"
+      pods: "5"
+
+  # Database configuration
+  postgresql:
+    createDatabase: true
+    # databaseName is set dynamically as aphiria_pr_{PR_NUMBER} by CI/CD
+    # postgresql:user and postgresql:password come from ESC environment
+
+  # Application configuration
+  app:
+    imagePullPolicy: "Always" # Always pull for preview PRs
+    web:
+      # url is set dynamically as https://{PR_NUMBER}.pr.aphiria.com by CI/CD
+      cookieDomain: ".pr.aphiria.com"
+      replicas: 1
+      # image is set dynamically by CI/CD with the built digest
+    api:
+      # url is set dynamically as https://{PR_NUMBER}.pr-api.aphiria.com by CI/CD
+      logLevel: "debug"
+      replicas: 1
+      # image is set dynamically by CI/CD with the built digest

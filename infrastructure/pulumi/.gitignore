@@ -4,4 +4,4 @@ node_modules/
 coverage/
 *.log
 Pulumi.local.yml
-Pulumi.preview-*.yml
+Pulumi.preview-pr-*.yml
