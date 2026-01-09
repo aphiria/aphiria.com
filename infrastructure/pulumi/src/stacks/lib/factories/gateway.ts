@@ -29,7 +29,7 @@ export interface GatewayResourcesArgs {
  * - DNS record creation (if configured)
  * - LoadBalancer IP extraction from nginx-gateway Chart resources
  *
- * @param args Gateway resources configuration
+ * @param args - Gateway resources configuration
  * @returns Gateway resources
  */
 export function createGatewayResources(args: GatewayResourcesArgs): GatewayResources {
@@ -66,7 +66,8 @@ export function createGatewayResources(args: GatewayResourcesArgs): GatewayResou
                 const service = chartResources.find(
                     (r) =>
                         r.__pulumiType === "kubernetes:core/v1:Service" &&
-                        r.__name === "nginx-gateway:nginx-gateway/nginx-gateway-nginx-gateway-fabric"
+                        r.__name ===
+                            "nginx-gateway:nginx-gateway/nginx-gateway-nginx-gateway-fabric"
                 );
                 if (!service) {
                     throw new Error("Could not find nginx-gateway Service in Chart resources");

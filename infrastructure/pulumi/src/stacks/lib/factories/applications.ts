@@ -9,10 +9,7 @@ import {
     createHTTPSRedirectRoute,
 } from "../../../components";
 import { createApiServiceMonitor } from "../../../components/api-service-monitor";
-import {
-    WebDeploymentResult,
-    APIDeploymentResult,
-} from "../../../components/types";
+import { WebDeploymentResult, APIDeploymentResult } from "../../../components/types";
 import { ApiServiceMonitorResult } from "../../../components/api-service-monitor";
 
 /**
@@ -50,7 +47,7 @@ export interface ApplicationResourcesArgs {
  * - ServiceMonitor for API metrics (if configured)
  * - HTTP->HTTPS redirect for preview-pr (if applicable)
  *
- * @param args Application resources configuration
+ * @param args - Application resources configuration
  * @returns Application resources
  */
 export function createApplicationResources(args: ApplicationResourcesArgs): ApplicationResources {
@@ -95,7 +92,8 @@ export function createApplicationResources(args: ApplicationResourcesArgs): Appl
         },
         baseUrl: appConfig.require("web:url"),
         prNumber: env === "preview" && hasNamespaceConfig ? prNumber : undefined,
-        imagePullSecrets: hasNamespaceConfig && ghcrConfig.get("username") ? ["ghcr-pull-secret"] : undefined,
+        imagePullSecrets:
+            hasNamespaceConfig && ghcrConfig.get("username") ? ["ghcr-pull-secret"] : undefined,
         resources: appConfig.requireObject("web:resources") as any,
         podDisruptionBudget: appConfig.getObject("web:podDisruptionBudget") as any,
         provider,
@@ -116,7 +114,8 @@ export function createApplicationResources(args: ApplicationResourcesArgs): Appl
         webUrl: appConfig.require("web:url"),
         logLevel: appConfig.require("api:logLevel"),
         prNumber: env === "preview" && hasNamespaceConfig ? prNumber : undefined,
-        imagePullSecrets: hasNamespaceConfig && ghcrConfig.get("username") ? ["ghcr-pull-secret"] : undefined,
+        imagePullSecrets:
+            hasNamespaceConfig && ghcrConfig.get("username") ? ["ghcr-pull-secret"] : undefined,
         resources: appConfig.requireObject("api:resources") as any,
         podDisruptionBudget: appConfig.getObject("api:podDisruptionBudget") as any,
         prometheusAuthToken: prometheusConfig.getSecret("authToken"),
@@ -133,7 +132,8 @@ export function createApplicationResources(args: ApplicationResourcesArgs): Appl
         dbUser,
         dbPassword,
         runSeeder: true,
-        imagePullSecrets: hasNamespaceConfig && ghcrConfig.get("username") ? ["ghcr-pull-secret"] : undefined,
+        imagePullSecrets:
+            hasNamespaceConfig && ghcrConfig.get("username") ? ["ghcr-pull-secret"] : undefined,
         resources: appConfig.requireObject("migration:resources") as any,
         provider,
     });

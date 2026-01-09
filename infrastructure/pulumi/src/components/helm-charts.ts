@@ -2,7 +2,13 @@ import * as pulumi from "@pulumi/pulumi";
 import * as k8s from "@pulumi/kubernetes";
 import { HelmChartArgs } from "./types";
 
-/** Installs cert-manager with Gateway API support */
+/**
+ * Installs cert-manager with Gateway API support
+ *
+ * @param args - Helm chart configuration
+ * @param dependsOn - Optional resources to wait for
+ * @returns Helm Chart resource
+ */
 export function installCertManager(
     args: HelmChartArgs,
     dependsOn?: pulumi.Resource[]
@@ -69,7 +75,11 @@ export function installCertManager(
 
 /**
  * Transform function to ignore DigitalOcean-managed annotations on LoadBalancer Service (v4 syntax)
- * DO cloud controller adds these annotations after deployment, causing drift
+ *
+ * DO cloud controller adds these annotations after deployment, causing drift.
+ *
+ * @param args - Resource transform arguments
+ * @returns Transform result with ignoreChanges options
  * @internal - Exported for testing only
  */
 export function ignoreDigitalOceanServiceAnnotationsV4(args: pulumi.ResourceTransformArgs) {
@@ -87,7 +97,13 @@ export function ignoreDigitalOceanServiceAnnotationsV4(args: pulumi.ResourceTran
     return undefined;
 }
 
-/** Installs nginx-gateway-fabric (Gateway API implementation) */
+/**
+ * Installs nginx-gateway-fabric (Gateway API implementation)
+ *
+ * @param args - Helm chart configuration
+ * @param dependsOn - Optional resources to wait for
+ * @returns Helm Chart resource
+ */
 export function installNginxGateway(
     args: HelmChartArgs,
     dependsOn?: pulumi.Resource[]
@@ -131,7 +147,13 @@ export interface BaseHelmChartsResult {
     nginxGateway: k8s.helm.v4.Chart;
 }
 
-/** Installs kube-prometheus-stack (Prometheus Operator + Prometheus + kube-state-metrics) */
+/**
+ * Installs kube-prometheus-stack (Prometheus Operator + Prometheus + kube-state-metrics)
+ *
+ * @param args - Helm chart configuration
+ * @param dependsOn - Optional resources to wait for
+ * @returns Helm Chart resource
+ */
 export function installKubePrometheusStack(
     args: HelmChartArgs,
     dependsOn?: pulumi.Resource[]
@@ -167,6 +189,12 @@ export function installKubePrometheusStack(
     );
 }
 
+/**
+ * Installs cert-manager and nginx-gateway-fabric with correct dependency ordering
+ *
+ * @param args - Configuration for base Helm charts
+ * @returns cert-manager and nginx-gateway Chart resources
+ */
 export function installBaseHelmCharts(args: BaseHelmChartsArgs): BaseHelmChartsResult {
     // Create namespaces
     const certManagerNamespace = new k8s.core.v1.Namespace(

@@ -1,7 +1,5 @@
 /**
  * Base Infrastructure Stack for Preview Environments (DigitalOcean)
- * This stack creates its own dedicated cluster for complete isolation from production.
- * Stack name: preview-base
  */
 
 import * as pulumi from "@pulumi/pulumi";
@@ -41,6 +39,6 @@ export const postgresqlAdminPassword = postgresqlConfig.requireSecret("password"
 // Export monitoring namespace resources (they are created for preview-base, but not preview-pr)
 const grafanaConfig = new pulumi.Config("grafana");
 export const grafanaHostname = grafanaConfig.get("hostname");
-export const prometheusEndpoint = stack.monitoring ?
-    pulumi.interpolate`http://kube-prometheus-stack-prometheus.monitoring.svc.cluster.local:9090` :
-    undefined;
+export const prometheusEndpoint = stack.monitoring
+    ? pulumi.interpolate`http://kube-prometheus-stack-prometheus.monitoring.svc.cluster.local:9090`
+    : undefined;

@@ -18,7 +18,7 @@ describe("createPostgreSQL", () => {
         replicas: 1,
         resources: {
             requests: { cpu: "100m", memory: "256Mi" },
-            limits: { cpu: "500m", memory: "512Mi" }
+            limits: { cpu: "500m", memory: "512Mi" },
         },
         healthCheck: {
             interval: "10s",
@@ -38,12 +38,14 @@ describe("createPostgreSQL", () => {
     });
 
     it("should create deployment without persistent storage", () => {
-        const result = createPostgreSQL(getTestArgs({
-            storage: {
-                enabled: false,
-                size: "5Gi",
-            },
-        }));
+        const result = createPostgreSQL(
+            getTestArgs({
+                storage: {
+                    enabled: false,
+                    size: "5Gi",
+                },
+            })
+        );
 
         expect(result.deployment).toBeDefined();
         expect(result.service).toBeDefined();

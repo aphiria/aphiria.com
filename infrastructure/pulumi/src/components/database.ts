@@ -78,7 +78,11 @@ export interface PostgreSQLResult {
 
 /**
  * Creates PostgreSQL deployment as a pure function
- * All configuration decisions are made by the caller
+ *
+ * All configuration decisions are made by the caller.
+ *
+ * @param args - Configuration for the PostgreSQL deployment
+ * @returns Deployment, Service, Secret, and optional PVC/PV metadata
  */
 export function createPostgreSQL(args: PostgreSQLArgs): PostgreSQLResult {
     const labels = buildLabels("db", "database", args.labels);
@@ -190,7 +194,8 @@ export function createPostgreSQL(args: PostgreSQLArgs): PostgreSQLResult {
                 replicas: args.replicas,
                 // Recreate strategy for RWO PVCs
                 strategy: {
-                    type: args.storage.accessMode === "ReadWriteOnce" ? "Recreate" : "RollingUpdate",
+                    type:
+                        args.storage.accessMode === "ReadWriteOnce" ? "Recreate" : "RollingUpdate",
                 },
                 selector: {
                     matchLabels: {
@@ -266,12 +271,16 @@ export function createPostgreSQL(args: PostgreSQLArgs): PostgreSQLResult {
                                         name: "PGDATA",
                                         value: "/var/lib/postgresql/data/pgdata",
                                     },
-                                    ...(args.connectionPooling ? [
-                                        {
-                                            name: "POSTGRES_MAX_CONNECTIONS",
-                                            value: String(args.connectionPooling.maxConnections || 100),
-                                        },
-                                    ] : []),
+                                    ...(args.connectionPooling
+                                        ? [
+                                              {
+                                                  name: "POSTGRES_MAX_CONNECTIONS",
+                                                  value: String(
+                                                      args.connectionPooling.maxConnections || 100
+                                                  ),
+                                              },
+                                          ]
+                                        : []),
                                 ],
                                 readinessProbe: {
                                     exec: {

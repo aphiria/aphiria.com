@@ -39,6 +39,9 @@ export interface NamespaceArgs {
 
 /**
  * Creates a Kubernetes namespace with optional ResourceQuota, NetworkPolicy, and ImagePullSecret
+ *
+ * @param args - Configuration for the namespace
+ * @returns Namespace, and optional ResourceQuota, NetworkPolicy, and ImagePullSecret
  */
 export function createNamespace(args: NamespaceArgs): NamespaceResult {
     const labels = {

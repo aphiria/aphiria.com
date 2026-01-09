@@ -26,7 +26,12 @@ export interface GatewayArgs {
     certManagerDependency?: pulumi.Resource;
 }
 
-/** Creates Gateway with TLS (self-signed or letsencrypt-prod) and separate listeners for root/subdomains */
+/**
+ * Creates Gateway with TLS (self-signed or letsencrypt-prod) and separate listeners for root/subdomains
+ *
+ * @param args - Configuration for the Gateway
+ * @returns Gateway name, namespace, URN, and optional certificate/IP/DNS records
+ */
 export function createGateway(args: GatewayArgs): GatewayResult {
     // Validate domain requirements based on environment
     const rootDomain = args.domains.find((d) => !d.startsWith("*"));
@@ -301,6 +306,14 @@ export interface SelfSignedCertArgs {
     domains: string[];
 }
 
+/**
+ * Creates self-signed TLS certificate
+ *
+ * @param args - Certificate configuration including namespace and domains
+ * @param provider - Kubernetes provider
+ * @param dependsOn - Optional resources to wait for
+ * @returns Certificate CustomResource
+ */
 export function createSelfSignedCert(
     args: SelfSignedCertArgs,
     provider: k8s.Provider,
@@ -328,7 +341,13 @@ export function createSelfSignedCert(
     );
 }
 
-/** Creates self-signed ClusterIssuer (required for self-signed certs) */
+/**
+ * Creates self-signed ClusterIssuer (required for self-signed certs)
+ *
+ * @param provider - Kubernetes provider
+ * @param dependsOn - Optional resources to wait for
+ * @returns ClusterIssuer CustomResource
+ */
 export function createSelfSignedIssuer(
     provider: k8s.Provider,
     dependsOn?: pulumi.Resource[]

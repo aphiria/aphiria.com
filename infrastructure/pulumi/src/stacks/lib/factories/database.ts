@@ -28,7 +28,7 @@ export interface DatabaseResourcesArgs {
  * - Shared PostgreSQL instance (local, preview-base, production): Creates full PostgreSQL deployment
  * - Per-PR database (preview-pr): Creates database on shared instance via Job
  *
- * @param args Database resources configuration
+ * @param args - Database resources configuration
  * @returns Database resources
  */
 export function createDatabaseResources(args: DatabaseResourcesArgs): DatabaseResources {

@@ -1,6 +1,5 @@
 /**
  * Grafana Component
- * Pure function that accepts ALL configuration as parameters
  */
 
 import * as k8s from "@pulumi/kubernetes";
@@ -71,7 +70,11 @@ export interface GrafanaResult {
 
 /**
  * Creates Grafana deployment as a pure function
- * All configuration decisions are made by the caller
+ *
+ * All configuration decisions are made by the caller.
+ *
+ * @param args - Configuration for the Grafana deployment
+ * @returns Deployment, Service, PVC, ConfigMap, and Secret metadata
  */
 export function createGrafana(args: GrafanaArgs): GrafanaResult {
     const labels = buildLabels("grafana", "monitoring", args.labels);
@@ -364,10 +367,18 @@ providers:
                             "app.kubernetes.io/component": "monitoring",
                         },
                         annotations: {
-                            ...(dashboardChecksum ? { "checksum/dashboards": dashboardChecksum } : {}),
-                            ...(alertRulesChecksum ? { "checksum/alert-rules": alertRulesChecksum } : {}),
-                            ...(contactPointsChecksum ? { "checksum/contact-points": contactPointsChecksum } : {}),
-                            ...(notificationPoliciesChecksum ? { "checksum/notification-policies": notificationPoliciesChecksum } : {}),
+                            ...(dashboardChecksum
+                                ? { "checksum/dashboards": dashboardChecksum }
+                                : {}),
+                            ...(alertRulesChecksum
+                                ? { "checksum/alert-rules": alertRulesChecksum }
+                                : {}),
+                            ...(contactPointsChecksum
+                                ? { "checksum/contact-points": contactPointsChecksum }
+                                : {}),
+                            ...(notificationPoliciesChecksum
+                                ? { "checksum/notification-policies": notificationPoliciesChecksum }
+                                : {}),
                         },
                     },
                     spec: {
@@ -397,7 +408,9 @@ providers:
                                         name: "datasources",
                                         mountPath: "/etc/grafana/provisioning/datasources",
                                     },
-                                    ...(args.alertRulesConfigMap || args.contactPointsConfigMap || args.notificationPoliciesConfigMap
+                                    ...(args.alertRulesConfigMap ||
+                                    args.contactPointsConfigMap ||
+                                    args.notificationPoliciesConfigMap
                                         ? [
                                               {
                                                   name: "alerting",
@@ -468,7 +481,9 @@ providers:
                                     ],
                                 },
                             },
-                            ...(args.alertRulesConfigMap || args.contactPointsConfigMap || args.notificationPoliciesConfigMap
+                            ...(args.alertRulesConfigMap ||
+                            args.contactPointsConfigMap ||
+                            args.notificationPoliciesConfigMap
                                 ? [
                                       {
                                           name: "alerting",
@@ -478,7 +493,8 @@ providers:
                                                       ? [
                                                             {
                                                                 configMap: {
-                                                                    name: args.alertRulesConfigMap.metadata.name,
+                                                                    name: args.alertRulesConfigMap
+                                                                        .metadata.name,
                                                                 },
                                                             },
                                                         ]
@@ -487,7 +503,9 @@ providers:
                                                       ? [
                                                             {
                                                                 configMap: {
-                                                                    name: args.contactPointsConfigMap.metadata.name,
+                                                                    name: args
+                                                                        .contactPointsConfigMap
+                                                                        .metadata.name,
                                                                 },
                                                             },
                                                         ]
@@ -496,7 +514,9 @@ providers:
                                                       ? [
                                                             {
                                                                 configMap: {
-                                                                    name: args.notificationPoliciesConfigMap.metadata.name,
+                                                                    name: args
+                                                                        .notificationPoliciesConfigMap
+                                                                        .metadata.name,
                                                                 },
                                                             },
                                                         ]

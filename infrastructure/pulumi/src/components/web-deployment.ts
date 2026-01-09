@@ -44,7 +44,12 @@ export interface WebDeploymentArgs {
     secretRefs?: pulumi.Input<string>[];
 }
 
-/** Creates nginx deployment for static site with js-config ConfigMap */
+/**
+ * Creates nginx deployment for static site with js-config ConfigMap
+ *
+ * @param args - Configuration for the web deployment
+ * @returns Deployment, Service, ConfigMap, and optional PodDisruptionBudget metadata
+ */
 export function createWebDeployment(args: WebDeploymentArgs): WebDeploymentResult {
     const labels = buildLabels("web", "frontend", args.labels);
 

@@ -89,10 +89,12 @@ export interface AlertRule {
  * Creates Grafana Unified Alerting provisioning ConfigMaps
  *
  * Grafana auto-discovers alert rules, contact points, and notification policies
- * from ConfigMaps with label grafana_alert: "1"
+ * from ConfigMaps with label grafana_alert: "1".
+ *
+ * @param args - Alert configuration including rules, contact points, and notification policies
+ * @returns ConfigMaps for alert rules, contact points, and notification policies
  */
 export function createGrafanaAlerts(args: GrafanaAlertsArgs): GrafanaAlertsResult {
-
     // Convert alert rules to Grafana Unified Alerting provisioning YAML format
     const alertRulesYaml = `apiVersion: 1
 groups:

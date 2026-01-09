@@ -42,7 +42,12 @@ export interface DBMigrationJobArgs {
     provider: k8s.Provider;
 }
 
-/** Creates Phinx migration job (waits for DB, runs migrations, optionally runs LexemeSeeder) */
+/**
+ * Creates Phinx migration job (waits for DB, runs migrations, optionally runs LexemeSeeder)
+ *
+ * @param args - Configuration for the database migration job
+ * @returns Kubernetes Job resource
+ */
 export function createDBMigrationJob(args: DBMigrationJobArgs): k8s.batch.v1.Job {
     const labels = buildLabels("db-migration", "database", args.labels);
 

@@ -1,5 +1,4 @@
 import * as k8s from "@pulumi/kubernetes";
-import * as pulumi from "@pulumi/pulumi";
 import { Environment } from "../types";
 import { installBaseHelmCharts } from "../../../components";
 
@@ -27,10 +26,12 @@ export interface BaseInfrastructureResourcesArgs {
  * - Local: Installs Gateway API CRDs, GatewayClass, then Helm charts
  * - Cloud (preview/production): Only installs Helm charts (DigitalOcean pre-installs CRDs via Cilium)
  *
- * @param args Base infrastructure resources configuration
+ * @param args - Base infrastructure resources configuration
  * @returns Base infrastructure resources
  */
-export function createBaseInfrastructureResources(args: BaseInfrastructureResourcesArgs): BaseInfrastructureResources {
+export function createBaseInfrastructureResources(
+    args: BaseInfrastructureResourcesArgs
+): BaseInfrastructureResources {
     const { env, provider } = args;
 
     const baseInfrastructure: BaseInfrastructureResources = {

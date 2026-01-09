@@ -68,15 +68,6 @@ export interface APIDeploymentResult {
 }
 
 /**
- * Return type for PostgreSQL component
- */
-export interface PostgreSQLResult {
-    deployment: pulumi.Output<k8s.types.output.meta.v1.ObjectMeta>;
-    service: pulumi.Output<k8s.types.output.meta.v1.ObjectMeta>;
-    pvc?: pulumi.Output<k8s.types.output.meta.v1.ObjectMeta>; // Only present if persistentStorage=true
-}
-
-/**
  * Return type for Gateway component
  */
 export interface GatewayResult {
@@ -135,19 +126,6 @@ export interface KubernetesClusterResult {
 }
 
 /**
- * Return type for Prometheus component
- */
-export interface PrometheusResult {
-    serviceAccount: pulumi.Output<k8s.types.output.meta.v1.ObjectMeta>;
-    clusterRole: pulumi.Output<k8s.types.output.meta.v1.ObjectMeta>;
-    clusterRoleBinding: pulumi.Output<k8s.types.output.meta.v1.ObjectMeta>;
-    statefulSet: pulumi.Output<k8s.types.output.meta.v1.ObjectMeta>;
-    service: pulumi.Output<k8s.types.output.meta.v1.ObjectMeta>;
-    pvc: pulumi.Output<k8s.types.output.meta.v1.ObjectMeta>;
-    configMap: pulumi.Output<k8s.types.output.meta.v1.ObjectMeta>;
-}
-
-/**
  * Return type for kube-state-metrics component
  */
 export interface KubeStateMetricsResult {
@@ -158,13 +136,3 @@ export interface KubeStateMetricsResult {
     service: pulumi.Output<k8s.types.output.meta.v1.ObjectMeta>;
 }
 
-/**
- * Return type for Grafana component
- */
-export interface GrafanaResult {
-    deployment: pulumi.Output<k8s.types.output.meta.v1.ObjectMeta>;
-    service: pulumi.Output<k8s.types.output.meta.v1.ObjectMeta>;
-    pvc: pulumi.Output<k8s.types.output.meta.v1.ObjectMeta>;
-    configMap: pulumi.Output<k8s.types.output.meta.v1.ObjectMeta>;
-    secret: pulumi.Output<k8s.types.output.meta.v1.ObjectMeta>;
-}

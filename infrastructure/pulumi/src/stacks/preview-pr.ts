@@ -1,7 +1,5 @@
 /**
  * Preview PR Stack (Per-PR isolated environments)
- * This stack imports the preview-base cluster and creates per-PR resources
- * Stack name format: preview-pr-{PR_NUMBER}
  */
 
 import * as k8s from "@pulumi/kubernetes";

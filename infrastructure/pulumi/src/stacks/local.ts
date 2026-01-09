@@ -1,6 +1,5 @@
 /**
  * Local Stack (Minikube local development environment)
- * Stack name: local
  */
 
 import * as k8s from "@pulumi/kubernetes";

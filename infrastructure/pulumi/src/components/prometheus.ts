@@ -1,6 +1,5 @@
 /**
  * Prometheus Component
- * Pure function that accepts ALL configuration as parameters
  */
 
 import * as pulumi from "@pulumi/pulumi";
@@ -15,13 +14,13 @@ export interface PrometheusScrapeConfig {
     scrape_interval?: string;
     scrape_timeout?: string;
     metrics_path?: string;
-    scheme?: 'http' | 'https';
+    scheme?: "http" | "https";
     static_configs?: Array<{
         targets: string[];
         labels?: Record<string, string>;
     }>;
     kubernetes_sd_configs?: Array<{
-        role: 'endpoints' | 'service' | 'pod' | 'node' | 'ingress';
+        role: "endpoints" | "service" | "pod" | "node" | "ingress";
         namespaces?: {
             names?: string[];
         };
@@ -32,7 +31,7 @@ export interface PrometheusScrapeConfig {
         target_label?: string;
         regex?: string;
         replacement?: string;
-        action?: 'replace' | 'keep' | 'drop' | 'labelmap' | 'labeldrop' | 'labelkeep';
+        action?: "replace" | "keep" | "drop" | "labelmap" | "labeldrop" | "labelkeep";
     }>;
 }
 
@@ -107,6 +106,9 @@ export interface PrometheusResult {
 
 /**
  * Creates Prometheus deployment as a pure function
+ *
+ * @param args - Configuration for the Prometheus deployment
+ * @returns StatefulSet, Service, PVC, ConfigMap, ServiceAccount, ClusterRole, and ClusterRoleBinding metadata
  */
 export function createPrometheus(args: PrometheusArgs): PrometheusResult {
     const labels = buildLabels("prometheus", "monitoring", args.labels);
@@ -181,7 +183,7 @@ export function createPrometheus(args: PrometheusArgs): PrometheusResult {
     );
 
     // Build scrape configs from provided configuration
-    const scrapeConfigs = args.scrapeConfigs.map(config => {
+    const scrapeConfigs = args.scrapeConfigs.map((config) => {
         const yamlConfig: any = {
             job_name: config.job_name,
         };
@@ -191,7 +193,8 @@ export function createPrometheus(args: PrometheusArgs): PrometheusResult {
         if (config.metrics_path) yamlConfig.metrics_path = config.metrics_path;
         if (config.scheme) yamlConfig.scheme = config.scheme;
         if (config.static_configs) yamlConfig.static_configs = config.static_configs;
-        if (config.kubernetes_sd_configs) yamlConfig.kubernetes_sd_configs = config.kubernetes_sd_configs;
+        if (config.kubernetes_sd_configs)
+            yamlConfig.kubernetes_sd_configs = config.kubernetes_sd_configs;
         if (config.relabel_configs) yamlConfig.relabel_configs = config.relabel_configs;
 
         return yamlConfig;
@@ -214,34 +217,42 @@ export function createPrometheus(args: PrometheusArgs): PrometheusResult {
     environment: ${args.environment}
 
 scrape_configs:
-${scrapeConfigs.map(config => {
-    // Convert each scrape config to YAML format
-    const lines: string[] = [`  - job_name: '${config.job_name}'`];
+${scrapeConfigs
+    .map((config) => {
+        // Convert each scrape config to YAML format
+        const lines: string[] = [`  - job_name: '${config.job_name}'`];
 
-    Object.entries(config).forEach(([key, value]) => {
-        if (key === 'job_name') return;
+        Object.entries(config).forEach(([key, value]) => {
+            if (key === "job_name") return;
 
-        if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
-            lines.push(`    ${key}: ${value}`);
-        } else if (Array.isArray(value)) {
-            lines.push(`    ${key}:`);
-            value.forEach(item => {
-                if (typeof item === 'object') {
-                    lines.push(`      - ${JSON.stringify(item).replace(/"/g, '').replace(/:/g, ': ').replace(/,/g, '\n        ')}`);
-                } else {
-                    lines.push(`      - ${item}`);
-                }
-            });
-        } else if (typeof value === 'object' && value !== null) {
-            lines.push(`    ${key}:`);
-            Object.entries(value).forEach(([k, v]) => {
-                lines.push(`      ${k}: ${v}`);
-            });
-        }
-    });
+            if (
+                typeof value === "string" ||
+                typeof value === "number" ||
+                typeof value === "boolean"
+            ) {
+                lines.push(`    ${key}: ${value}`);
+            } else if (Array.isArray(value)) {
+                lines.push(`    ${key}:`);
+                value.forEach((item) => {
+                    if (typeof item === "object") {
+                        lines.push(
+                            `      - ${JSON.stringify(item).replace(/"/g, "").replace(/:/g, ": ").replace(/,/g, "\n        ")}`
+                        );
+                    } else {
+                        lines.push(`      - ${item}`);
+                    }
+                });
+            } else if (typeof value === "object" && value !== null) {
+                lines.push(`    ${key}:`);
+                Object.entries(value).forEach(([k, v]) => {
+                    lines.push(`      ${k}: ${v}`);
+                });
+            }
+        });
 
-    return lines.join('\n');
-}).join('\n\n')}
+        return lines.join("\n");
+    })
+    .join("\n\n")}
 `,
             },
         },

@@ -59,13 +59,14 @@ export interface APIDeploymentArgs {
     configChecksum?: string;
 }
 
-/** Creates nginx + PHP-FPM deployment using initContainer to copy code to shared volume */
+/**
+ * Creates nginx + PHP-FPM deployment using initContainer to copy code to shared volume
+ *
+ * @param args - Configuration for the API deployment
+ * @returns Deployment, Service, Secret, and optional PodDisruptionBudget metadata
+ */
 export function createAPIDeployment(args: APIDeploymentArgs): APIDeploymentResult {
     const labels = buildLabels("api", "backend", args.labels);
-
-    // Hardcoded constants (same across all environments)
-    const APP_BUILDER_API = "\\Aphiria\\Framework\\Api\\SynchronousApiApplicationBuilder";
-    const APP_BUILDER_CONSOLE = "\\Aphiria\\Framework\\Console\\ConsoleApplicationBuilder";
 
     // Build ConfigMap data from parameters
     const configData: Record<string, pulumi.Input<string>> = {
@@ -78,8 +79,8 @@ export function createAPIDeployment(args: APIDeploymentArgs): APIDeploymentResul
         API_URL: args.apiUrl,
         APP_WEB_URL: args.webUrl,
         APP_API_URL: args.apiUrl,
-        APP_BUILDER_API,
-        APP_BUILDER_CONSOLE,
+        APP_BUILDER_API: "\\Aphiria\\Framework\\Api\\SynchronousApiApplicationBuilder",
+        APP_BUILDER_CONSOLE: "\\Aphiria\\Framework\\Console\\ConsoleApplicationBuilder",
         LOG_LEVEL: args.logLevel,
         ...(args.prNumber && { PR_NUMBER: args.prNumber }),
     };

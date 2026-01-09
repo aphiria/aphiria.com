@@ -1,6 +1,7 @@
 import * as k8s from "@pulumi/kubernetes";
 import * as pulumi from "@pulumi/pulumi";
 import * as path from "path";
+import * as fs from "fs";
 import { Environment } from "../types";
 import { installKubePrometheusStack, createNamespace } from "../../../components";
 import { createGrafana, GrafanaResult } from "../../../components/grafana";
@@ -38,7 +39,7 @@ export interface MonitoringResourcesArgs {
  * - Alert rules and contact points
  * - Grafana ingress/routing
  *
- * @param args Monitoring resources configuration
+ * @param args - Monitoring resources configuration
  * @returns Monitoring resources
  */
 export function createMonitoringResources(args: MonitoringResourcesArgs): MonitoringResources {
@@ -132,11 +133,24 @@ export function createMonitoringResources(args: MonitoringResourcesArgs): Monito
         [monitoringNamespace.namespace]
     );
 
+    // Read dashboard files from disk
+    const dashboardDir = path.join(process.cwd(), "dashboards");
+    const dashboardData: Record<string, string> = {};
+
+    if (fs.existsSync(dashboardDir)) {
+        const files = fs.readdirSync(dashboardDir);
+        files.forEach((filename) => {
+            if (path.extname(filename) === ".json") {
+                const filePath = path.join(dashboardDir, filename);
+                dashboardData[filename] = fs.readFileSync(filePath, "utf-8");
+            }
+        });
+    }
+
     // Create dashboard ConfigMaps
     const dashboards = createDashboards({
         namespace: "monitoring",
-        // Use process.cwd() which is the pulumi project root (infrastructure/pulumi)
-        dashboardDir: path.join(process.cwd(), "dashboards"),
+        dashboards: dashboardData,
         provider,
     });
 
@@ -189,7 +203,8 @@ export function createMonitoringResources(args: MonitoringResourcesArgs): Monito
             },
             annotations: {
                 summary: "High API latency detected",
-                description: "API P95 latency is above 1 second (current: {{ humanizeDuration $values.B.Value }})",
+                description:
+                    "API P95 latency is above 1 second (current: {{ humanizeDuration $values.B.Value }})",
             },
         },
         {
@@ -205,7 +220,8 @@ export function createMonitoringResources(args: MonitoringResourcesArgs): Monito
             },
             annotations: {
                 summary: "High API 4xx rate detected",
-                description: "API 4xx error rate is above 10% (current: {{ humanizePercentage $values.B.Value }})",
+                description:
+                    "API 4xx error rate is above 10% (current: {{ humanizePercentage $values.B.Value }})",
             },
         },
         {
@@ -221,7 +237,8 @@ export function createMonitoringResources(args: MonitoringResourcesArgs): Monito
             },
             annotations: {
                 summary: "High API 5xx rate detected",
-                description: "API 5xx error rate is above 5% (current: {{ humanizePercentage $values.B.Value }})",
+                description:
+                    "API 5xx error rate is above 5% (current: {{ humanizePercentage $values.B.Value }})",
             },
         },
         {

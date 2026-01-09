@@ -23,12 +23,15 @@ export interface DatabaseCreationJobArgs {
 }
 
 /**
- * Creates a Kubernetes Job to create a PostgreSQL database.
+ * Creates a Kubernetes Job to create a PostgreSQL database
  *
  * This component is used for environments where databases need to be created
  * on a shared PostgreSQL instance (e.g., preview environments with per-PR databases).
  *
  * The Job is idempotent - it will not fail if the database already exists.
+ *
+ * @param args - Configuration for the database creation job
+ * @returns Kubernetes Job resource
  */
 export function createDatabaseCreationJob(args: DatabaseCreationJobArgs): k8s.batch.v1.Job {
     // Validate database name to prevent SQL injection

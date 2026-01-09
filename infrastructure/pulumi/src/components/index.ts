@@ -6,7 +6,7 @@ export {
     APIDeploymentResult,
     GatewayResult,
     KubernetesClusterResult,
-    KubeStateMetricsResult
+    KubeStateMetricsResult,
 } from "./types";
 
 export * from "./constants";

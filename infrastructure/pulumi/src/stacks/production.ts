@@ -1,7 +1,5 @@
 /**
  * Production Infrastructure Stack (DigitalOcean)
- * Single stack containing cluster + base infrastructure + applications (all long-lived).
- * Stack name: production
  */
 
 import * as pulumi from "@pulumi/pulumi";

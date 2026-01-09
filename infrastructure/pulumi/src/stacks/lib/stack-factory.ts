@@ -7,7 +7,10 @@ import {
     createWWWRedirectRoute,
 } from "../../components";
 import { createMonitoringResources, MonitoringResources } from "./factories/monitoring";
-import { createBaseInfrastructureResources, BaseInfrastructureResources } from "./factories/base-infrastructure";
+import {
+    createBaseInfrastructureResources,
+    BaseInfrastructureResources,
+} from "./factories/base-infrastructure";
 import { createGatewayResources, GatewayResources } from "./factories/gateway";
 import { createDatabaseResources, DatabaseResources } from "./factories/database";
 import { createApplicationResources, ApplicationResources } from "./factories/applications";
@@ -57,11 +60,13 @@ export function createStack(env: Environment, k8sProvider: k8s.Provider): StackR
     // Check if namespace config exists (only for preview-pr)
     const hasNamespaceConfig = namespaceConfig.get("name");
     if (hasNamespaceConfig) {
-        const imagePullSecret = ghcrConfig.get("username") ? {
-            registry: "ghcr.io",
-            username: ghcrConfig.require("username"),
-            token: ghcrConfig.requireSecret("token"),
-        } : undefined;
+        const imagePullSecret = ghcrConfig.get("username")
+            ? {
+                  registry: "ghcr.io",
+                  username: ghcrConfig.require("username"),
+                  token: ghcrConfig.requireSecret("token"),
+              }
+            : undefined;
 
         resources.namespace = createNamespace({
             name: namespaceConfig.require("name"),

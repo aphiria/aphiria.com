@@ -30,7 +30,12 @@ export interface HTTPRouteArgs {
     provider: k8s.Provider;
 }
 
-/** Creates Gateway API HTTPRoute with optional rate limiting */
+/**
+ * Creates Gateway API HTTPRoute with optional rate limiting
+ *
+ * @param args - Configuration for the HTTPRoute
+ * @returns HTTPRoute CustomResource
+ */
 export function createHTTPRoute(args: HTTPRouteArgs): k8s.apiextensions.CustomResource {
     const labels = {
         "app.kubernetes.io/name": `httproute-${args.name}`,
@@ -97,7 +102,7 @@ export function createHTTPRoute(args: HTTPRouteArgs): k8s.apiextensions.CustomRe
 }
 
 /**
- * Creates HTTP → HTTPS redirect route for all domains
+ * Creates HTTP -> HTTPS redirect route for all domains
  *
  * When skipRootListener is true (typically when WWW redirect is enabled), this route
  * will NOT attach to the http-root listener, allowing the WWW redirect to handle
@@ -113,6 +118,12 @@ export interface HTTPSRedirectArgs {
     provider: k8s.Provider;
 }
 
+/**
+ * Creates HTTPRoute that redirects HTTP to HTTPS
+ *
+ * @param args - Configuration for the HTTPS redirect route
+ * @returns HTTPRoute CustomResource
+ */
 export function createHTTPSRedirectRoute(
     args: HTTPSRedirectArgs
 ): k8s.apiextensions.CustomResource {
@@ -242,7 +253,7 @@ export function createHTTPSRedirectRoute(
     );
 }
 
-/** Creates root → www redirect route (e.g., aphiria.com → www.aphiria.com) */
+/** Creates root -> www redirect route (e.g., aphiria.com -> www.aphiria.com) */
 export interface WWWRedirectArgs {
     namespace: pulumi.Input<string>;
     gatewayName: string;
@@ -252,6 +263,12 @@ export interface WWWRedirectArgs {
     provider: k8s.Provider;
 }
 
+/**
+ * Creates HTTPRoute that redirects www to non-www domain
+ *
+ * @param args - Configuration for the www redirect route
+ * @returns HTTPRoute CustomResource
+ */
 export function createWWWRedirectRoute(args: WWWRedirectArgs): k8s.apiextensions.CustomResource {
     return new k8s.apiextensions.CustomResource(
         "www-redirect",
