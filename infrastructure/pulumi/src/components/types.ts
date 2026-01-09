@@ -4,21 +4,6 @@ import * as digitalocean from "@pulumi/digitalocean";
 import { Environment } from "../stacks/lib/types";
 
 /**
- * Kubernetes resource requirements
- * Used for container resource requests and limits
- */
-export interface ResourceRequirements {
-    requests: {
-        cpu: string;
-        memory: string;
-    };
-    limits: {
-        cpu: string;
-        memory: string;
-    };
-}
-
-/**
  * PodDisruptionBudget configuration for high availability
  * Ensures minimum pod availability during voluntary disruptions (node drains, upgrades)
  */

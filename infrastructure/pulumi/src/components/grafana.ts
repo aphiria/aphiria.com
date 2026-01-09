@@ -5,7 +5,6 @@
 
 import * as k8s from "@pulumi/kubernetes";
 import * as pulumi from "@pulumi/pulumi";
-import { ResourceRequirements } from "./types";
 import { buildLabels } from "./labels";
 import { checksum } from "./utils";
 
@@ -17,7 +16,7 @@ export interface GrafanaArgs {
     /** Number of replicas */
     replicas: number;
     /** Container resource requirements */
-    resources: ResourceRequirements;
+    resources: k8s.types.input.core.v1.ResourceRequirements;
     /** Kubernetes namespace */
     namespace: pulumi.Input<string>;
     /** Prometheus service URL for datasource */

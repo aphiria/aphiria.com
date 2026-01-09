@@ -33,16 +33,7 @@ export interface WebDeploymentArgs {
     /** Optional image pull secrets for private registries */
     imagePullSecrets?: pulumi.Input<string>[];
     /** Resource requests and limits (required) */
-    resources: {
-        requests: {
-            cpu: string;
-            memory: string;
-        };
-        limits: {
-            cpu: string;
-            memory: string;
-        };
-    };
+    resources: k8s.types.input.core.v1.ResourceRequirements;
     /** Optional PodDisruptionBudget for high availability (production only) */
     podDisruptionBudget?: PodDisruptionBudgetConfig;
     /** @deprecated Component calculates checksum internally. ConfigMap checksum for pod annotations */

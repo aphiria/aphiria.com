@@ -5,7 +5,6 @@
 
 import * as pulumi from "@pulumi/pulumi";
 import * as k8s from "@pulumi/kubernetes";
-import { ResourceRequirements } from "./types";
 import { buildLabels } from "./labels";
 
 /**
@@ -69,7 +68,7 @@ export interface PrometheusArgs {
     /** Number of replicas */
     replicas: number;
     /** Container resource requirements */
-    resources: ResourceRequirements;
+    resources: k8s.types.input.core.v1.ResourceRequirements;
     /** Metrics retention period (e.g., "7d") */
     retentionTime: string;
     /** Default scrape interval (e.g., "30s") */

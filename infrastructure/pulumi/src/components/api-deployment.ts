@@ -45,18 +45,9 @@ export interface APIDeploymentArgs {
     imagePullSecrets?: pulumi.Input<string>[];
     /** Resource requests and limits for containers (required) */
     resources: {
-        nginx: {
-            requests: { cpu: string; memory: string };
-            limits: { cpu: string; memory: string };
-        };
-        php: {
-            requests: { cpu: string; memory: string };
-            limits: { cpu: string; memory: string };
-        };
-        initContainer: {
-            requests: { cpu: string; memory: string };
-            limits: { cpu: string; memory: string };
-        };
+        nginx: k8s.types.input.core.v1.ResourceRequirements;
+        php: k8s.types.input.core.v1.ResourceRequirements;
+        initContainer: k8s.types.input.core.v1.ResourceRequirements;
     };
     /** Optional PodDisruptionBudget for high availability (production only) */
     podDisruptionBudget?: PodDisruptionBudgetConfig;

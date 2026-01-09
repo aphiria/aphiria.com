@@ -4,7 +4,6 @@
 
 import * as pulumi from "@pulumi/pulumi";
 import * as k8s from "@pulumi/kubernetes";
-import { ResourceRequirements } from "./types";
 import { POSTGRES_PORT } from "./constants";
 import { buildLabels } from "./labels";
 
@@ -28,8 +27,8 @@ export interface PostgreSQLStorageConfig {
     size: string;
     /** Storage class name (optional, uses default if not specified) */
     storageClassName?: string;
-    /** Access mode for PVC */
-    accessMode?: "ReadWriteOnce" | "ReadWriteMany";
+    /** Access mode for PVC (affects deployment strategy: ReadWriteOnce uses Recreate, ReadWriteMany uses RollingUpdate) */
+    accessMode: "ReadWriteOnce" | "ReadWriteMany";
     /** Use hostPath storage (for local development only) */
     useHostPath?: boolean;
     /** Host path location (only used if useHostPath is true) */
@@ -48,7 +47,7 @@ export interface PostgreSQLArgs {
     /** Number of replicas */
     replicas: number;
     /** Container resource requirements */
-    resources: ResourceRequirements;
+    resources: k8s.types.input.core.v1.ResourceRequirements;
     /** Health check configuration */
     healthCheck: DatabaseHealthCheck;
     /** Connection pooling configuration (optional) */
@@ -121,7 +120,7 @@ export function createPostgreSQL(args: PostgreSQLArgs): PostgreSQLResult {
                         capacity: {
                             storage: args.storage.size,
                         },
-                        accessModes: [args.storage.accessMode || "ReadWriteMany"],
+                        accessModes: [args.storage.accessMode],
                         hostPath: {
                             path: args.storage.hostPath,
                         },
@@ -140,7 +139,7 @@ export function createPostgreSQL(args: PostgreSQLArgs): PostgreSQLResult {
                     },
                     spec: {
                         storageClassName: "manual",
-                        accessModes: [args.storage.accessMode || "ReadWriteMany"],
+                        accessModes: [args.storage.accessMode],
                         resources: {
                             requests: {
                                 storage: args.storage.size,
@@ -162,7 +161,7 @@ export function createPostgreSQL(args: PostgreSQLArgs): PostgreSQLResult {
                     },
                     spec: {
                         storageClassName: args.storage.storageClassName,
-                        accessModes: [args.storage.accessMode || "ReadWriteOnce"],
+                        accessModes: [args.storage.accessMode],
                         resources: {
                             requests: {
                                 storage: args.storage.size,
@@ -274,28 +273,26 @@ export function createPostgreSQL(args: PostgreSQLArgs): PostgreSQLResult {
                                         },
                                     ] : []),
                                 ],
-                                ...(healthCheckCommand ? {
-                                    readinessProbe: {
-                                        exec: {
-                                            command: healthCheckCommand,
-                                        },
-                                        initialDelaySeconds: 5,
-                                        periodSeconds: parseInt(args.healthCheck.interval),
-                                        timeoutSeconds: parseInt(args.healthCheck.timeout),
-                                        successThreshold: 1,
-                                        failureThreshold: args.healthCheck.retries,
+                                readinessProbe: {
+                                    exec: {
+                                        command: healthCheckCommand,
                                     },
-                                    livenessProbe: {
-                                        exec: {
-                                            command: healthCheckCommand,
-                                        },
-                                        initialDelaySeconds: 30,
-                                        periodSeconds: parseInt(args.healthCheck.interval),
-                                        timeoutSeconds: parseInt(args.healthCheck.timeout),
-                                        successThreshold: 1,
-                                        failureThreshold: args.healthCheck.retries,
+                                    initialDelaySeconds: 5,
+                                    periodSeconds: parseInt(args.healthCheck.interval),
+                                    timeoutSeconds: parseInt(args.healthCheck.timeout),
+                                    successThreshold: 1,
+                                    failureThreshold: args.healthCheck.retries,
+                                },
+                                livenessProbe: {
+                                    exec: {
+                                        command: healthCheckCommand,
                                     },
-                                } : {}),
+                                    initialDelaySeconds: 30,
+                                    periodSeconds: parseInt(args.healthCheck.interval),
+                                    timeoutSeconds: parseInt(args.healthCheck.timeout),
+                                    successThreshold: 1,
+                                    failureThreshold: args.healthCheck.retries,
+                                },
                             },
                         ],
                         volumes: args.storage.enabled

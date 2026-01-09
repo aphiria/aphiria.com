@@ -35,6 +35,8 @@ export interface GrafanaAlertsArgs {
     namespace: pulumi.Input<string>;
     /** Environment label to add to alert rules */
     environment: string;
+    /** Alert rules to provision */
+    alertRules: AlertRule[];
     /** Contact points configuration */
     contactPoints: ContactPoint[];
     /** Default receiver name for notification policy */
@@ -58,7 +60,7 @@ export interface GrafanaAlertsResult {
 /**
  * Alert rule definition for Grafana Unified Alerting
  */
-interface AlertRule {
+export interface AlertRule {
     /** Unique identifier (max 40 chars) */
     uid: string;
     /** Alert title shown in UI */
@@ -90,126 +92,6 @@ interface AlertRule {
  * from ConfigMaps with label grafana_alert: "1"
  */
 export function createGrafanaAlerts(args: GrafanaAlertsArgs): GrafanaAlertsResult {
-    // Define alert rules using Grafana Unified Alerting format
-    const alertRules: AlertRule[] = [
-        {
-            uid: "high_cpu_usage",
-            title: "High CPU Usage",
-            expr: 'rate(container_cpu_usage_seconds_total{namespace!="kube-system"}[5m])',
-            threshold: "> 0.8",
-            reduceFunction: "last",
-            for: "10m",
-            labels: {
-                severity: "critical",
-                environment: args.environment,
-            },
-            annotations: {
-                summary: "High CPU usage detected",
-                description:
-                    "Container {{ $labels.container }} in pod {{ $labels.pod }} has CPU usage above 80% (current: {{ humanizePercentage $values.B.Value }})",
-            },
-        },
-        {
-            uid: "high_memory_usage",
-            title: "High Memory Usage",
-            expr: 'sum by (pod, namespace) (container_memory_working_set_bytes{namespace!="kube-system"}) / sum by (pod, namespace) (kube_pod_container_resource_limits{resource="memory", namespace!="kube-system"} > 0)',
-            threshold: "> 0.9",
-            reduceFunction: "last",
-            for: "10m",
-            labels: {
-                severity: "critical",
-                environment: args.environment,
-            },
-            annotations: {
-                summary: "High memory usage detected",
-                description:
-                    "Pod {{ $labels.pod }} in namespace {{ $labels.namespace }} has memory usage above 90% (current: {{ humanizePercentage $values.B.Value }})",
-            },
-        },
-        {
-            uid: "high_api_latency",
-            title: "High API Latency",
-            expr: 'histogram_quantile(0.95, sum(rate(app_http_request_duration_seconds_bucket{job="api"}[5m])) by (le))',
-            threshold: "> 1",
-            reduceFunction: "last",
-            for: "5m",
-            labels: {
-                severity: "warning",
-                environment: args.environment,
-            },
-            annotations: {
-                summary: "High API latency detected",
-                description:
-                    "API P95 latency is above 1 second (current: {{ humanizeDuration $values.B.Value }})",
-            },
-        },
-        {
-            uid: "high_api_4xx_rate",
-            title: "High API 4xx Rate",
-            expr: '(sum(rate(app_http_requests_total{job="api",status=~"4.."}[5m])) or vector(0)) / sum(rate(app_http_requests_total{job="api"}[5m]))',
-            threshold: "> 0.1",
-            reduceFunction: "last",
-            for: "5m",
-            labels: {
-                severity: "warning",
-                environment: args.environment,
-            },
-            annotations: {
-                summary: "High API 4xx rate detected",
-                description:
-                    "API 4xx error rate is above 10% (current: {{ humanizePercentage $values.B.Value }})",
-            },
-        },
-        {
-            uid: "high_api_5xx_rate",
-            title: "High API 5xx Rate",
-            expr: '(sum(rate(app_http_requests_total{job="api",status=~"5.."}[5m])) or vector(0)) / sum(rate(app_http_requests_total{job="api"}[5m]))',
-            threshold: "> 0.05",
-            reduceFunction: "last",
-            for: "5m",
-            labels: {
-                severity: "critical",
-                environment: args.environment,
-            },
-            annotations: {
-                summary: "High API 5xx rate detected",
-                description:
-                    "API 5xx error rate is above 5% (current: {{ humanizePercentage $values.B.Value }})",
-            },
-        },
-        {
-            uid: "pod_crash_looping",
-            title: "Pod Crash Looping",
-            expr: 'sum(kube_pod_container_status_waiting_reason{reason="CrashLoopBackOff", namespace!="kube-system"}) or vector(0)',
-            threshold: "> 0",
-            reduceFunction: "last",
-            for: "5m",
-            labels: {
-                severity: "critical",
-                environment: args.environment,
-            },
-            annotations: {
-                summary: "Pod is crash looping",
-                description: "{{ humanize $values.B.Value }} pod(s) are in CrashLoopBackOff state",
-            },
-        },
-        {
-            uid: "pod_failed",
-            title: "Pod Failed",
-            expr: 'sum(kube_pod_status_phase{phase="Failed", namespace!="kube-system"} > 0) or vector(0)',
-            threshold: "> 0",
-            reduceFunction: "last",
-            for: "5m",
-            labels: {
-                severity: "critical",
-                environment: args.environment,
-            },
-            annotations: {
-                summary: "Pod has failed",
-                description: "{{ humanize $values.B.Value }} pod(s) have failed",
-            },
-        },
-    ];
 
     // Convert alert rules to Grafana Unified Alerting provisioning YAML format
     const alertRulesYaml = `apiVersion: 1
@@ -219,7 +101,7 @@ groups:
     folder: Infrastructure
     interval: 1m
     rules:
-${alertRules
+${args.alertRules
     .map(
         (rule) => `      - uid: ${rule.uid}
         title: ${rule.title}
