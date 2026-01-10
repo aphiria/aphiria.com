@@ -39,24 +39,22 @@ jobs:
         working-directory: infrastructure/pulumi
         run: npm install
 
-      - name: Configure kubeconfig from preview-base stack
+      - name: Configure kubeconfig from DigitalOcean
         id: kubeconfig
         working-directory: infrastructure/pulumi
         env:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
         run: |
-          # Get kubeconfig from preview-base stack output
+          # Get cluster name from preview-base stack output
           pulumi stack select preview-base
-          KUBECONFIG_CONTENT=$(pulumi stack output kubeconfig --show-secrets)
+          CLUSTER_NAME=$(pulumi stack output clusterName --show-secrets)
 
-          # Write to temporary file
-          KUBECONFIG_PATH="${HOME}/.kube/config"
-          mkdir -p "${HOME}/.kube"
-          echo "${KUBECONFIG_CONTENT}" > "${KUBECONFIG_PATH}"
-          chmod 600 "${KUBECONFIG_PATH}"
+          # Fetch fresh kubeconfig from DigitalOcean
+          doctl kubernetes cluster kubeconfig show "${CLUSTER_NAME}" > "${HOME}/.kube/config"
+          chmod 600 "${HOME}/.kube/config"
 
-          echo "path=${KUBECONFIG_PATH}" >> $GITHUB_OUTPUT
-          echo "✅ Kubeconfig configured from preview-base stack"
+          echo "path=${HOME}/.kube/config" >> $GITHUB_OUTPUT
+          echo "✅ Fresh kubeconfig fetched from DigitalOcean"
 
       - name: Destroy preview environment
         id: destroy
