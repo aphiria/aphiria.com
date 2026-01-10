@@ -2,6 +2,10 @@ environment:
   - aphiria.com/Production
 
 config:
+  # Infrastructure configuration
+  infrastructure:
+    installGatewayAPICRDs: false # DigitalOcean pre-installs via Cilium
+
   # Kubernetes cluster configuration
   cluster:
     name: "aphiria-com-cluster"
@@ -16,3 +20,172 @@ config:
     minNodes: 1
     maxNodes: 4
     vpcUuid: "976f980d-dc84-11e8-80bc-3cfdfea9fba1"
+
+  # Application configuration
+  app:
+    imagePullPolicy: "IfNotPresent" # Use digest-based images
+    web:
+      url: "https://www.aphiria.com"
+      cookieDomain: ".aphiria.com"
+      replicas: 2
+      image: "ghcr.io/aphiria/aphiria.com-web:latest" # Will be overridden by CI/CD with digest
+      resources:
+        requests:
+          cpu: "50m"
+          memory: "64Mi"
+        limits:
+          cpu: "100m"
+          memory: "128Mi"
+      podDisruptionBudget:
+        minAvailable: 1
+    api:
+      url: "https://api.aphiria.com"
+      logLevel: "warning"
+      replicas: 2
+      image: "ghcr.io/aphiria/aphiria.com-api:latest" # Will be overridden by CI/CD with digest
+      resources:
+        initContainer:
+          requests:
+            cpu: "50m"
+            memory: "64Mi"
+          limits:
+            cpu: "100m"
+            memory: "128Mi"
+        nginx:
+          requests:
+            cpu: "50m"
+            memory: "64Mi"
+          limits:
+            cpu: "100m"
+            memory: "128Mi"
+        php:
+          requests:
+            cpu: "100m"
+            memory: "128Mi"
+          limits:
+            cpu: "200m"
+            memory: "256Mi"
+      podDisruptionBudget:
+        minAvailable: 1
+    migration:
+      resources:
+        migration:
+          requests:
+            cpu: "50m"
+            memory: "128Mi"
+          limits:
+            cpu: "200m"
+            memory: "256Mi"
+        initContainer:
+          requests:
+            cpu: "10m"
+            memory: "32Mi"
+          limits:
+            cpu: "50m"
+            memory: "64Mi"
+
+  # PostgreSQL database configuration
+  postgresql:
+    version: "16"
+    persistentStorage: true
+    storageSize: "20Gi"
+    useHostPath: false # Cloud uses dynamic provisioning
+    dbHost: "db.default.svc.cluster.local" # Full cluster DNS
+    resources:
+      requests:
+        cpu: "100m"
+        memory: "256Mi"
+      limits:
+        cpu: "200m"
+        memory: "512Mi"
+
+  # Gateway configuration
+  gateway:
+    tlsMode: "letsencrypt-prod"
+    domains:
+      - "aphiria.com"
+      - "*.aphiria.com"
+    requireRootAndWildcard: true # Production needs both listeners
+    dns:
+      domain: "aphiria.com"
+      records:
+        - name: "@"
+          resourceName: "production-root-dns"
+        - name: "www"
+          resourceName: "production-www-dns"
+        - name: "api"
+          resourceName: "production-api-dns"
+        - name: "grafana"
+          resourceName: "production-grafana-dns"
+      ttl: 300
+
+  # Monitoring namespace configuration
+  monitoring:
+    namespace:
+      resourceQuota:
+        cpu: "4"
+        memory: "16Gi"
+        pods: "30"
+
+  # Prometheus monitoring
+  prometheus:
+    scrapeInterval: "15s"
+    storageSize: "10Gi"
+    retentionTime: "7d"
+    resources:
+      requests:
+        cpu: "250m"
+        memory: "512Mi"
+      limits:
+        cpu: "500m"
+        memory: "1Gi"
+    # Prometheus Operator resources
+    operator:
+      resources:
+        requests:
+          cpu: "100m"
+          memory: "128Mi"
+        limits:
+          cpu: "200m"
+          memory: "256Mi"
+      configReloader:
+        requests:
+          cpu: "50m"
+          memory: "50Mi"
+        limits:
+          cpu: "100m"
+          memory: "100Mi"
+    # Node exporter resources
+    nodeExporter:
+      resources:
+        requests:
+          cpu: "50m"
+          memory: "64Mi"
+        limits:
+          cpu: "100m"
+          memory: "128Mi"
+    # kube-state-metrics resources
+    kubeStateMetrics:
+      resources:
+        requests:
+          cpu: "50m"
+          memory: "128Mi"
+        limits:
+          cpu: "100m"
+          memory: "256Mi"
+
+  # Grafana monitoring
+  grafana:
+    version: "11.0.0"
+    defaultReceiver: "email-admin"
+    ingressSectionName: "https-subdomains" # Uses wildcard cert
+    storageSize: "5Gi"
+    hostname: "grafana.aphiria.com"
+    replicas: 1
+    resources:
+      requests:
+        cpu: "100m"
+        memory: "256Mi"
+      limits:
+        cpu: "200m"
+        memory: "512Mi"

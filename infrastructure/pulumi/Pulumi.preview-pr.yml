@@ -13,12 +13,6 @@ config:
       memory: "4Gi"
       pods: "5"
 
-  # Database configuration
-  postgresql:
-    createDatabase: true
-    # databaseName is set dynamically as aphiria_pr_{PR_NUMBER} by CI/CD
-    # postgresql:user and postgresql:password come from ESC environment
-
   # Application configuration
   app:
     imagePullPolicy: "Always" # Always pull for preview PRs
@@ -27,8 +21,63 @@ config:
       cookieDomain: ".pr.aphiria.com"
       replicas: 1
       # image is set dynamically by CI/CD with the built digest
+      resources:
+        requests:
+          cpu: "50m"
+          memory: "64Mi"
+        limits:
+          cpu: "100m"
+          memory: "128Mi"
+      podDisruptionBudget:
+        minAvailable: 1
     api:
       # url is set dynamically as https://{PR_NUMBER}.pr-api.aphiria.com by CI/CD
       logLevel: "debug"
       replicas: 1
       # image is set dynamically by CI/CD with the built digest
+      resources:
+        initContainer:
+          requests:
+            cpu: "50m"
+            memory: "64Mi"
+          limits:
+            cpu: "100m"
+            memory: "128Mi"
+        nginx:
+          requests:
+            cpu: "50m"
+            memory: "64Mi"
+          limits:
+            cpu: "100m"
+            memory: "128Mi"
+        php:
+          requests:
+            cpu: "100m"
+            memory: "128Mi"
+          limits:
+            cpu: "200m"
+            memory: "256Mi"
+      podDisruptionBudget:
+        minAvailable: 1
+    migration:
+      resources:
+        migration:
+          requests:
+            cpu: "50m"
+            memory: "128Mi"
+          limits:
+            cpu: "200m"
+            memory: "256Mi"
+        initContainer:
+          requests:
+            cpu: "10m"
+            memory: "32Mi"
+          limits:
+            cpu: "50m"
+            memory: "64Mi"
+
+  # Database configuration
+  postgresql:
+    createDatabase: true
+    # databaseName is set dynamically as aphiria_pr_{PR_NUMBER} by CI/CD
+    # postgresql:user and postgresql:password come from ESC environment

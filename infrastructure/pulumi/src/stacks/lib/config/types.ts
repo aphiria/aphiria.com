@@ -1,0 +1,259 @@
+/**
+ * Configuration type definitions for all Pulumi stack configuration objects
+ *
+ * These types define the structure of nested configuration objects read from Pulumi.*.yml files.
+ * All config objects are read using `config.requireObject<Type>('key')` from the main
+ * `aphiria-com-infrastructure` namespace.
+ *
+ * Secrets must be wrapped with `pulumi.secret()` after reading from config.
+ */
+
+/**
+ * Resource limits and requests for Kubernetes containers
+ */
+export interface ResourceRequirements {
+    requests: {
+        cpu: string;
+        memory: string;
+    };
+    limits: {
+        cpu: string;
+        memory: string;
+    };
+}
+
+/**
+ * Infrastructure configuration (cert-manager, gateway API CRDs, etc.)
+ */
+export interface InfrastructureConfig {
+    installGatewayAPICRDs: boolean;
+}
+
+/**
+ * Kubernetes cluster configuration (DigitalOcean)
+ */
+export interface ClusterConfig {
+    name: string;
+    region: string;
+    version: string;
+    autoUpgrade: boolean;
+    surgeUpgrade: boolean;
+    ha: boolean;
+    nodeSize: string;
+    nodeCount: number;
+    autoScale: boolean;
+    minNodes: number;
+    maxNodes: number;
+    vpcUuid: string;
+}
+
+/**
+ * PostgreSQL database configuration
+ */
+export interface PostgreSQLConfig {
+    version: string;
+    persistentStorage: boolean;
+    user: string;
+    password: string; // Secret - wrap with pulumi.secret()
+    storageSize: string;
+    useHostPath: boolean;
+    hostPath?: string;
+    dbHost: string;
+    resources: ResourceRequirements;
+    createDatabase?: boolean;
+    databaseName?: string;
+}
+
+/**
+ * Web application configuration
+ */
+export interface WebAppConfig {
+    url: string;
+    cookieDomain: string;
+    replicas: number;
+    image: string;
+    resources: ResourceRequirements;
+    podDisruptionBudget?: {
+        minAvailable: number;
+    };
+}
+
+/**
+ * API application configuration
+ */
+export interface APIAppConfig {
+    url: string;
+    logLevel: string;
+    replicas: number;
+    image: string;
+    resources: {
+        initContainer: ResourceRequirements;
+        nginx: ResourceRequirements;
+        php: ResourceRequirements;
+    };
+    podDisruptionBudget?: {
+        minAvailable: number;
+    };
+}
+
+/**
+ * Database migration job configuration
+ */
+export interface MigrationConfig {
+    resources: {
+        migration: ResourceRequirements;
+        initContainer: ResourceRequirements;
+    };
+}
+
+/**
+ * Application configuration (web, API, migration)
+ */
+export interface AppConfig {
+    imagePullPolicy: string;
+    web: WebAppConfig;
+    api: APIAppConfig;
+    migration: MigrationConfig;
+}
+
+/**
+ * DNS record configuration
+ */
+export interface DNSRecordConfig {
+    name: string;
+    resourceName: string;
+}
+
+/**
+ * DNS configuration for Gateway
+ */
+export interface DNSConfig {
+    domain: string;
+    records: DNSRecordConfig[];
+    ttl?: number;
+}
+
+/**
+ * Gateway configuration (nginx-gateway, TLS, DNS)
+ */
+export interface GatewayConfig {
+    tlsMode: "self-signed" | "letsencrypt-prod";
+    domains: string[];
+    requireRootAndWildcard: boolean;
+    dns?: DNSConfig;
+}
+
+/**
+ * Cert-manager configuration (DigitalOcean DNS API token)
+ * Optional - only needed for Let's Encrypt production (wildcard certs)
+ */
+export interface CertManagerConfig {
+    digitaloceanDnsToken: string; // Secret - wrap with pulumi.secret()
+}
+
+/**
+ * Namespace resource quota configuration
+ */
+export interface ResourceQuotaConfig {
+    cpu: string;
+    memory: string;
+    pods: string;
+}
+
+/**
+ * Namespace network policy configuration
+ * Optional - not currently used in any stacks
+ */
+export interface NetworkPolicyConfig {
+    allowDNS: boolean;
+    allowHTTPS: boolean;
+    allowPostgreSQL?: {
+        host: string;
+        port: number;
+    };
+}
+
+/**
+ * Namespace configuration (preview-pr only)
+ */
+export interface NamespaceConfig {
+    name: string;
+    resourceQuota?: ResourceQuotaConfig;
+    networkPolicy?: NetworkPolicyConfig;
+}
+
+/**
+ * Monitoring namespace configuration
+ */
+export interface MonitoringConfig {
+    namespace: {
+        resourceQuota: ResourceQuotaConfig;
+    };
+}
+
+/**
+ * Prometheus Operator configuration
+ */
+export interface PrometheusOperatorConfig {
+    resources: ResourceRequirements;
+    configReloader: ResourceRequirements;
+}
+
+/**
+ * Node exporter configuration
+ */
+export interface NodeExporterConfig {
+    resources: ResourceRequirements;
+}
+
+/**
+ * kube-state-metrics configuration
+ */
+export interface KubeStateMetricsConfig {
+    resources: ResourceRequirements;
+}
+
+/**
+ * Prometheus configuration
+ */
+export interface PrometheusConfig {
+    scrapeInterval: string;
+    authToken: string; // Secret - wrap with pulumi.secret()
+    storageSize: string;
+    retentionTime: string;
+    resources: ResourceRequirements;
+    operator: PrometheusOperatorConfig;
+    nodeExporter: NodeExporterConfig;
+    kubeStateMetrics: KubeStateMetricsConfig;
+}
+
+/**
+ * Grafana configuration
+ */
+export interface GrafanaConfig {
+    version: string;
+    defaultReceiver: string;
+    ingressSectionName: string;
+    githubClientId: string;
+    githubClientSecret: string; // Secret - wrap with pulumi.secret()
+    githubOrg: string;
+    adminUser: string;
+    smtpHost: string; // Secret - wrap with pulumi.secret()
+    smtpPort: number;
+    smtpUser: string; // Secret - wrap with pulumi.secret()
+    smtpPassword: string; // Secret - wrap with pulumi.secret()
+    smtpFromAddress: string;
+    alertEmail: string;
+    storageSize: string;
+    hostname: string;
+    replicas: number;
+    resources: ResourceRequirements;
+}
+
+/**
+ * GitHub Container Registry credentials configuration
+ */
+export interface GHCRConfig {
+    username: string;
+    token: string; // Secret - wrap with pulumi.secret()
+}

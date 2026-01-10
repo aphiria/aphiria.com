@@ -2,6 +2,10 @@ environment:
   - aphiria.com/Preview
 
 config:
+  # Infrastructure configuration
+  infrastructure:
+    installGatewayAPICRDs: false # DigitalOcean pre-installs via Cilium
+
   # Kubernetes cluster configuration
   cluster:
     name: "aphiria-com-preview-cluster"
@@ -17,14 +21,31 @@ config:
     maxNodes: 4
     vpcUuid: "976f980d-dc84-11e8-80bc-3cfdfea9fba1"
 
+  # PostgreSQL database configuration (shared instance for all PRs)
+  postgresql:
+    version: "16"
+    persistentStorage: true
+    storageSize: "20Gi"
+    useHostPath: false # Cloud uses dynamic provisioning
+    dbHost: "db.default.svc.cluster.local" # Full cluster DNS
+    resources:
+      requests:
+        cpu: "100m"
+        memory: "256Mi"
+      limits:
+        cpu: "200m"
+        memory: "512Mi"
+
   # Gateway configuration
   gateway:
+    tlsMode: "letsencrypt-prod"
     domains:
       - "*.pr.aphiria.com"
       - "*.pr-api.aphiria.com"
       - "pr-grafana.aphiria.com"
     requireRootAndWildcard: false # Preview doesn't need root listener
     dns:
+      domain: "aphiria.com"
       records:
         - name: "*.pr"
           resourceName: "preview-web-dns"
@@ -32,21 +53,74 @@ config:
           resourceName: "preview-api-dns"
         - name: "pr-grafana"
           resourceName: "preview-grafana-dns"
+      ttl: 300
+
+  # Monitoring namespace configuration
+  monitoring:
+    namespace:
+      resourceQuota:
+        cpu: "4"
+        memory: "16Gi"
+        pods: "30"
 
   # Prometheus monitoring
   prometheus:
+    scrapeInterval: "15s"
+    storageSize: "10Gi"
     retentionTime: "14d"
     resources:
+      requests:
+        cpu: "250m"
+        memory: "512Mi"
       limits:
         cpu: "1000m" # Higher limit for preview
+        memory: "1Gi"
+    # Prometheus Operator resources
+    operator:
+      resources:
+        requests:
+          cpu: "100m"
+          memory: "128Mi"
+        limits:
+          cpu: "200m"
+          memory: "256Mi"
+      configReloader:
+        requests:
+          cpu: "50m"
+          memory: "50Mi"
+        limits:
+          cpu: "100m"
+          memory: "100Mi"
+    # Node exporter resources
+    nodeExporter:
+      resources:
+        requests:
+          cpu: "50m"
+          memory: "64Mi"
+        limits:
+          cpu: "100m"
+          memory: "128Mi"
+    # kube-state-metrics resources
+    kubeStateMetrics:
+      resources:
+        requests:
+          cpu: "50m"
+          memory: "128Mi"
+        limits:
+          cpu: "100m"
+          memory: "256Mi"
 
-  # Grafana monitoring (preview-specific settings)
+  # Grafana monitoring
   grafana:
+    version: "11.0.0"
     defaultReceiver: "local-notifications" # No email for preview
     ingressSectionName: "https-root" # Preview uses exact match
+    storageSize: "5Gi"
     hostname: "pr-grafana.aphiria.com"
+    replicas: 1
     resources:
       requests:
+        cpu: "100m"
         memory: "512Mi" # More memory for preview
       limits:
         cpu: "500m" # Higher CPU limit for preview
