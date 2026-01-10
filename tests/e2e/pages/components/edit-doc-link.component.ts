@@ -9,7 +9,7 @@ export class EditDocLink {
 
     constructor(page: Page) {
         this.page = page;
-        this.link = page.locator("article footer a[href*='github.com/aphiria/docs']");
+        this.link = page.locator("article footer a[href*='github.com/aphiria/aphiria.com']");
     }
 
     async getHref(): Promise<string | null> {
@@ -18,11 +18,12 @@ export class EditDocLink {
 
     /**
      * Converts a documentation page path to expected GitHub edit URL
-     * Example: /docs/1.x/introduction.html -> https://github.com/aphiria/docs/blob/1.x/introduction.md
+     * Example: /docs/1.x/introduction.html -> https://github.com/aphiria/aphiria.com/blob/master/docs/introduction.md
      */
     static getExpectedGitHubUrl(docPath: string): string {
         const pathWithoutDocsPrefix = docPath.replace(/^\/docs\//, "");
-        const mdPath = pathWithoutDocsPrefix.replace(/\.html$/, ".md");
-        return `https://github.com/aphiria/docs/blob/${mdPath}`;
+        const pathWithoutVersion = pathWithoutDocsPrefix.replace(/^[^/]+\//, "");
+        const mdPath = pathWithoutVersion.replace(/\.html$/, ".md");
+        return `https://github.com/aphiria/aphiria.com/blob/master/docs/${mdPath}`;
     }
 }

@@ -43,9 +43,7 @@ COPY apps/api/.env.dist apps/api/.env
 RUN cd apps/web && yarn install --frozen-lockfile || yarn install \
  && yarn global add gulp
 
-# Use docs SHA to bust cache and force rebuilds when docs change
-ARG DOCS_SHA=latest
-ENV DOCS_SHA=${DOCS_SHA}
+# Build static assets and compile docs
 RUN cd apps/web && gulp build
 
 # Server-side code highlighting
