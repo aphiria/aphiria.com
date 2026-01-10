@@ -229,7 +229,7 @@ class LexemeSeeder extends AbstractSeed
 
         foreach ($htmlPaths as $htmlPath) {
             $pathParts = \explode(DIRECTORY_SEPARATOR, $htmlPath);
-            $version = $pathParts[3]; // /web/public/docs/[VERSION]/file.html
+            $version = $pathParts[4]; // /apps/web/public/docs/[VERSION]/file.html
 
             if (!isset($htmlFilesByVersion[$version])) {
                 $htmlFilesByVersion[$version] = [];
