@@ -15,7 +15,7 @@ test("search displays results with a query that should return results", async ({
     await homePage.search.query(TEST_QUERIES.valid);
 
     const results = homePage.search.results;
-    await expect(results).not.toHaveCount(0);
+    await expect(results).toHaveCount(5);
 
     const firstResult = homePage.search.getResultLink(results.first());
     await expect(firstResult).toBeVisible();
@@ -96,4 +96,38 @@ test("clicking outside search results hides them", async ({ page, homePage }) =>
     await page.click("body");
 
     await expect(homePage.search.searchResults).not.toBeVisible();
+});
+
+test("searching again after hiding results displays results", async ({ page, homePage }) => {
+    await homePage.search.query(TEST_QUERIES.valid);
+
+    const results = homePage.search.results;
+    await expect(results).toHaveCount(5);
+
+    await page.click("body");
+    await expect(homePage.search.searchResults).not.toBeVisible();
+
+    await homePage.search.searchInput.clear();
+    await homePage.search.query(TEST_QUERIES.valid);
+    await expect(results).toHaveCount(5);
+    await expect(homePage.search.searchResults).toBeVisible();
+});
+
+test("search results highlight the root word with emphasis", async ({ homePage }) => {
+    await homePage.search.query(TEST_QUERIES.valid);
+
+    const results = homePage.search.results;
+    await expect(results).toHaveCount(5);
+
+    const resultCount = await results.count();
+
+    for (let i = 0; i < resultCount; i++) {
+        const hasHighlight = await homePage.search.hasHighlightedTermMatching(
+            i,
+            TEST_QUERIES.validHighlightPattern
+        );
+        expect(hasHighlight, `Expected result ${i + 1} to highlight a word matching root "rout"`).toBe(
+            true
+        );
+    }
 });

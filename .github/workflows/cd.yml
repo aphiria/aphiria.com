@@ -731,7 +731,7 @@ jobs:
 
       - name: Install Playwright browsers
         working-directory: tests/e2e
-        run: npx playwright install --with-deps chromium
+        run: npx playwright install --with-deps chromium webkit
 
       - name: Construct URLs
         run: |

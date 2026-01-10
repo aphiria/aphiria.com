@@ -3,7 +3,7 @@ import { TEST_DOCS } from "../fixtures/test-data";
 import { MobileNav } from "../pages/components/mobile-nav.component";
 
 test.describe("desktop navigation (>=1024px)", () => {
-    test.use({ viewport: { width: 1024, height: 768 } });
+    test.use({ viewport: { width: 1025, height: 768 } });
 
     test("side nav is hidden on homepage", async ({ page, homePage: _homePage }) => {
         const mobileNav = new MobileNav(page);

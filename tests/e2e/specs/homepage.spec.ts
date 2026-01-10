@@ -13,7 +13,9 @@ test("main navigation structure is visible", async ({ homePage }) => {
     await expect(homePage.mainNav.discussionsLink).toBeVisible();
 });
 
-test("copy button copies code and changes button text", async ({ homePage }) => {
+test("copy button copies code and changes button text", async ({ homePage, browserName }) => {
+    test.skip(browserName === "webkit", "WebKit does not support reading from clipboard in tests");
+
     await expect(homePage.copyButton.button).toBeVisible();
     await expect(homePage.copyButton.button).toHaveText("Copy");
 

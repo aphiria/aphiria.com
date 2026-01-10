@@ -1,0 +1,28 @@
+import { Page, Locator } from "@playwright/test";
+
+/**
+ * Edit documentation link component in article footer
+ */
+export class EditDocLink {
+    readonly page: Page;
+    readonly link: Locator;
+
+    constructor(page: Page) {
+        this.page = page;
+        this.link = page.locator("article footer a[href*='github.com/aphiria/docs']");
+    }
+
+    async getHref(): Promise<string | null> {
+        return this.link.getAttribute("href");
+    }
+
+    /**
+     * Converts a documentation page path to expected GitHub edit URL
+     * Example: /docs/1.x/introduction.html -> https://github.com/aphiria/docs/blob/1.x/introduction.md
+     */
+    static getExpectedGitHubUrl(docPath: string): string {
+        const pathWithoutDocsPrefix = docPath.replace(/^\/docs\//, "");
+        const mdPath = pathWithoutDocsPrefix.replace(/\.html$/, ".md");
+        return `https://github.com/aphiria/docs/blob/${mdPath}`;
+    }
+}
