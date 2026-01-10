@@ -8,6 +8,7 @@ export const TEST_DOCS = {
 
 export const TEST_QUERIES = {
     valid: "rout",
+    validHighlightPattern: /^rout(e|es|ing)?$/i,
     noResults: "abcdefg123",
 } as const;
 

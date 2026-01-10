@@ -10,7 +10,11 @@ import { createStack } from "./lib/stack-factory";
 import { StackConfig } from "./lib/stack-config";
 
 // Create the preview Kubernetes cluster (includes provider)
-const { kubeconfig: clusterKubeconfig, provider: k8sProvider } = createKubernetesCluster({
+const {
+    cluster,
+    clusterId,
+    provider: k8sProvider,
+} = createKubernetesCluster({
     name: "aphiria-com-preview-cluster",
     region: "nyc3",
     version: "1.34.1-do.2",
@@ -119,7 +123,8 @@ const stack = createStack(
 // Outputs (consumed by preview-pr via StackReference and cleanup-preview.yml workflow)
 if (!stack.namespace) throw new Error("Preview-base stack must create namespace");
 
-export const kubeconfig = pulumi.secret(clusterKubeconfig);
+export const clusterName = cluster.name;
+export { clusterId };
 export const postgresqlHost = pulumi.interpolate`db.${stack.namespace.namespace.metadata.name}.svc.cluster.local`;
 export const prometheusAuthToken = pulumi.secret(stackConfig.prometheus.authToken);
 export { postgresqlAdminUser, postgresqlAdminPassword };

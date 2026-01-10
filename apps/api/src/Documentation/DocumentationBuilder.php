@@ -24,35 +24,29 @@ use League\Flysystem\StorageAttributes;
  */
 final class DocumentationBuilder
 {
-    /** The GitHub docs repository */
-    private const string GITHUB_REPOSITORY = 'https://github.com/aphiria/docs.git';
-
     /**
      * @param ConverterInterface $markdownConverter The Markdown parser
-     * @param list<string> $branches The branches to download
-     * @param string $clonedDocAbsolutePath The absolute path to the cloned documentation
-     * @param string $clonedDocRelativePath The relative path to the cloned documentation
+     * @param list<string> $branches The branches to read
+     * @param string $docsSourcePath The path to the local docs directory
      * @param string $htmlDocPath The path to store HTML docs in
      * @param FilesystemOperator $files The file system helper
      */
     public function __construct(
         private readonly ConverterInterface $markdownConverter,
         private readonly array $branches,
-        private readonly string $clonedDocAbsolutePath,
-        private readonly string $clonedDocRelativePath,
+        private readonly string $docsSourcePath,
         private readonly string $htmlDocPath,
         private readonly FilesystemOperator $files,
     ) {}
 
     /**
-     * Builds our documentation, which includes cloning it and compiling the Markdown
+     * Builds our documentation by compiling the Markdown from the local docs directory
      *
-     * @throws DownloadFailedException Thrown if there was a problem downloading the documentation
      * @throws HtmlCompilationException Thrown if the docs could not be built
      */
     public function buildDocs(): void
     {
-        $markdownFilePathsByBranch = $this->downloadDocs();
+        $markdownFilePathsByBranch = $this->readDocs();
         $this->createHtmlDocs($markdownFilePathsByBranch);
     }
 
@@ -91,68 +85,22 @@ final class DocumentationBuilder
     }
 
     /**
-     * Deletes a directory recursively
+     * Reads all documentation from the local docs directory
      *
-     * @param string $dir The path to the directory to delete
-     * @throws DownloadFailedException Thrown if the directory could not be deleted
+     * @return array<string, list<string>> The mapping of branch names to Markdown file paths
+     * @throws HtmlCompilationException Thrown if there was any error reading the docs
      */
-    private function deleteDir(string $dir): void
-    {
-        try {
-            /** @var list<string> $contentPaths */
-            $contentPaths = $this->files
-                ->listContents($dir, true)
-                ->filter(fn(StorageAttributes $attributes) => $attributes->isFile() || $attributes->isDir())
-                ->map(fn(StorageAttributes $attributes) => $attributes->path())
-                ->toArray();
-
-            foreach ($contentPaths as $contentPath) {
-                $this->files->setVisibility($contentPath, 'public');
-            }
-
-            $this->files->deleteDirectory($dir);
-        } catch (FilesystemException $ex) {
-            throw new DownloadFailedException('Failed to set visibility', 0, $ex);
-        }
-    }
-
-    /**
-     * Downloads all of our documentation
-     *
-     * @return array<string, list<string>> The mapping of branch names to local file paths created by the downloads
-     * @throws DownloadFailedException Thrown if there was any error reading or writing to the file system
-     */
-    private function downloadDocs(): array
+    private function readDocs(): array
     {
         try {
             $markdownFiles = [];
 
             foreach ($this->branches as $branch) {
                 $markdownFiles[$branch] = [];
-                $rawDocsPath = "$this->clonedDocRelativePath/$branch";
 
-                if ($this->files->has($rawDocsPath)) {
-                    $this->deleteDir($rawDocsPath);
-                }
-
-                $this->files->createDirectory($rawDocsPath);
-
-                // Clone the branch from GitHub into our temporary directory
-                /** @psalm-suppress ForbiddenCode We are purposely allowing this call */
-                \shell_exec(
-                    \sprintf(
-                        'git clone -b %s --single-branch %s "%s"',
-                        $branch,
-                        self::GITHUB_REPOSITORY,
-                        $this->clonedDocAbsolutePath . "/$branch",
-                    ),
-                );
-
-                // Delete the .git directory so we don't get multiple VCS roots registered
-                $this->deleteDir("$this->clonedDocRelativePath/$branch/.git");
                 /** @var list<string> $markdownFilePaths */
                 $markdownFilePaths = $this->files
-                    ->listContents($rawDocsPath)
+                    ->listContents($this->docsSourcePath)
                     ->filter(fn(StorageAttributes $attributes) => $attributes->isFile() && \str_ends_with($attributes->path(), '.md'))
                     ->map(fn(StorageAttributes $attributes) => $attributes->path())
                     ->toArray();
@@ -162,13 +110,13 @@ final class DocumentationBuilder
                 }
 
                 if (\count($markdownFiles[$branch]) === 0) {
-                    throw new DownloadFailedException("Failed to download docs for branch $branch");
+                    throw new HtmlCompilationException("No markdown files found in $this->docsSourcePath");
                 }
             }
 
             return $markdownFiles;
         } catch (FilesystemException $ex) {
-            throw new DownloadFailedException('Failed to download docs', 0, $ex);
+            throw new HtmlCompilationException('Failed to read docs', 0, $ex);
         }
     }
 }

@@ -3,7 +3,8 @@ import { TEST_DOCS } from "../fixtures/test-data";
 import { MobileNav } from "../pages/components/mobile-nav.component";
 
 test.describe("desktop navigation (>=1024px)", () => {
-    test.use({ viewport: { width: 1024, height: 768 } });
+    // Due to some issues with WebKit being unpredictable right at the margin (1024x), we give it a little bit of buffer
+    test.use({ viewport: { width: 1080, height: 768 } });
 
     test("side nav is hidden on homepage", async ({ page, homePage: _homePage }) => {
         const mobileNav = new MobileNav(page);

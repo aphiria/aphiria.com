@@ -51,6 +51,7 @@ window.addEventListener('load', loadEvent => {
     const detectClickOffSearch = clickEvent => {
         if (clickEvent.target !== searchInputElem && clickEvent.target !== searchResultsElem) {
             searchResultsElem.style.display = 'none';
+            prevSearchQuery = null;
         }
     };
 

@@ -4,6 +4,7 @@
  * Preview URLs: {PR}.pr.aphiria.com (web), {PR}.pr-api.aphiria.com (api)
  */
 
+import * as digitalocean from "@pulumi/digitalocean";
 import * as pulumi from "@pulumi/pulumi";
 import * as k8s from "@pulumi/kubernetes";
 import { createStack } from "./lib/stack-factory";
@@ -21,13 +22,19 @@ const postgresqlHost = baseStack.getOutput("postgresqlHost");
 const postgresqlAdminUser = baseStack.getOutput("postgresqlAdminUser");
 const postgresqlAdminPassword = baseStack.requireOutput("postgresqlAdminPassword");
 const prometheusAuthToken = baseStack.requireOutput("prometheusAuthToken");
-const kubeconfig = baseStack.requireOutput("kubeconfig");
+const clusterName = baseStack.requireOutput("clusterName");
+
+// Fetch fresh kubeconfig from DigitalOcean on every operation
+// This ensures credentials never expire (DO rotates them every 7 days)
+const kubeconfig = clusterName.apply((name) =>
+    digitalocean.getKubernetesCluster({ name }).then((cluster) => cluster.kubeConfigs[0].rawConfig)
+);
 
 // Naming conventions
 const namespaceName = `preview-pr-${prNumber}`;
 const databaseName = `aphiria_pr_${prNumber}`;
 
-// Create the Kubernetes provider using kubeconfig from the base stack
+// Create the Kubernetes provider using fresh kubeconfig from DigitalOcean
 const k8sProvider = new k8s.Provider(
     `${namespaceName}-k8s`,
     {

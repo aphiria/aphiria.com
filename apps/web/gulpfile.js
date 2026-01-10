@@ -84,10 +84,10 @@ gulp.task('clean-js', cleanJs);
 gulp.task('rewrite-references', rewriteReferences);
 gulp.task('minify-js', minifyJs);
 gulp.task('minify-css', minifyCss);
-gulp.task('download-docs', shell.task('php ../api/aphiria docs:build'));
+gulp.task('build-docs', shell.task('php ../api/aphiria docs:build'));
 gulp.task('build-views', shell.task('php ../api/aphiria views:build'));
 // We intentionally build our assets first so that they're ready to be inserted into the built views
-gulp.task('build', gulp.series('clean-css', 'clean-js', 'minify-js', 'minify-css', 'download-docs', 'build-views', 'rewrite-references'));
+gulp.task('build', gulp.series('clean-css', 'clean-js', 'minify-js', 'minify-css', 'build-docs', 'build-views', 'rewrite-references'));
 gulp.task('watch-assets', () => {
     gulp.watch(`${paths.srcJs}/client-side/*.js`, gulp.series('minify-js', rewriteReferences));
     gulp.watch(`${paths.srcCss}/*.css`, gulp.series('minify-css', rewriteReferences));

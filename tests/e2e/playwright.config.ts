@@ -42,6 +42,14 @@ export default defineConfig({
 
         /* Maximum time each action can take */
         actionTimeout: 30000,
+
+        /* Maximum time for navigation actions */
+        navigationTimeout: 30000,
+    },
+
+    /* Expect timeout for assertions */
+    expect: {
+        timeout: 10000,
     },
 
     /* Configure projects for different browsers if needed */
@@ -49,6 +57,16 @@ export default defineConfig({
         {
             name: "chromium",
             use: { ...devices["Desktop Chrome"] },
+        },
+        {
+            name: "webkit",
+            use: {
+                ...devices["Desktop Safari"],
+                /* WebKit-specific: Disable video/trace on first run for better performance */
+                trace: "on-first-retry",
+                video: "on-first-retry",
+            },
+            timeout: 60000,
         },
     ],
 

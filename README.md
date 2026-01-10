@@ -165,7 +165,7 @@ npm test
 cd tests/e2e
 cp .env.dist .env
 npm install
-npx playwright install --with-deps chromium
+npx playwright install --with-deps chromium webkit
 npm run test:e2e:local
 ```
 

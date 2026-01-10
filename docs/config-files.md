@@ -1,0 +1,201 @@
+<h1 id="doc-title">Config Files</h1>
+
+<nav class="toc-nav">
+
+<div class="toc-nav-contents">
+
+<h2 id="table-of-contents">Table of Contents</h2>
+
+<ol>
+<li><a href="#reading-from-configs">Reading From Configs</a><ol>
+<li><a href="#reading-php-files">Reading PHP Files</a></li>
+<li><a href="#reading-json-files">Reading JSON Files</a></li>
+<li><a href="#reading-yaml-files">Reading YAML Files</a></li>
+<li><a href="#custom-file-readers">Custom File Readers</a></li>
+</ol>
+</li>
+<li><a href="#global-configuration">Global Configuration</a><ol>
+<li><a href="#building-the-global-configuration">Building The Global Configuration</a></li>
+</ol>
+</li>
+</ol>
+
+</div>
+
+</nav>
+
+<h2 id="reading-from-configs">Reading From Configs</h2>
+
+Configs allow you to store changeable values that power your application.  Unlike environment variables, they do not typically change between environments.  Configurations must implement `IConfiguration`, which provides the following methods:
+
+```php
+// Get the value as an array
+$config->getArray('foo');
+
+// Get the value as a boolean
+$config->getBool('foo');
+
+// Get the value as a float
+$config->getFloat('foo');
+
+// Get the value as an integer
+$config->getInt('foo');
+
+// Get the value as an object
+$config->getObject('foo', fn(mixed $options): MyObject => new MyObject($options));
+
+// Get the value as a string
+$config->getString('foo');
+
+// Get the raw value
+$config->getValue('foo');
+
+// Try to get the value as an array
+$config->tryGetArray('foo', $value);
+
+// Try to get the value as a boolean
+$config->tryGetBool('foo', $value);
+
+// Try to get the value as a float
+$config->tryGetFloat('foo', $value);
+
+// Try to get the value as an integer
+$config->tryGetInt('foo', $value);
+
+// Try to get the value as an object
+$config->tryGetObject('foo', fn(mixed $options): MyObject => new MyObject($options), $value);
+
+// Try to get the value as a string
+$config->tryGetString('foo', $value);
+
+// Try to get the raw value
+$config->tryGetValue('foo', $value);
+```
+
+<h3 id="reading-php-files">Reading PHP Files</h3>
+
+Let's say you have a PHP config array that looks like this:
+
+```php
+return [
+    'api' => [
+        'supportedLanguages' => ['en', 'es']
+    ]
+];
+```
+
+You can load this PHP file into a configuration object:
+
+```php
+use Aphiria\Application\Configuration\PhpConfigurationFileReader;
+
+$config = new PhpConfigurationFileReader()->readConfiguration('config.php');
+```
+
+Grab the supported languages by using `.` as a delimiter for nested sections:
+
+```php
+$supportedLanguages = $config->getArray('api.supportedLanguages');
+```
+
+> **Note:**  Avoid using periods as keys in your configs.  If you must, you can change the delimiter character (eg to `:`) by passing it in as a second parameter to `readConfiguration()`.
+
+<h3 id="reading-json-files">Reading JSON Files</h3>
+
+Similarly, you can read JSON config files.
+
+```php
+use Aphiria\Application\Configuration\JsonConfigurationFileReader;
+
+$config = new JsonConfigurationFileReader()->readConfiguration('config.json');
+```
+
+<h3 id="reading-yaml-files">Reading YAML Files</h3>
+
+Aphiria supports reading YAML config files, too, as long as they parse to an associative array in PHP.
+
+```php
+use Aphiria\Application\Configuration\YamlConfigurationFileReader;
+
+$config = new YamlConfigurationFileReader()->readConfiguration('config.yaml');
+```
+
+<h3 id="custom-file-readers">Custom File Readers</h3>
+
+You can create your own custom file reader by implementing `IConfigurationFileReader`, which just needs to know how to convert the file contents to a PHP associative array.
+  
+<h2 id="global-configuration">Global Configuration</h2>
+
+`GlobalConfiguration` is a static class that can access values from multiple configurations that were registered via `GlobalConfiguration::addConfigurationSource()`.  It is the most convenient way to read configuration values from places like [binders](dependency-injection.md#binders).  Let's look at its methods:
+
+```php
+use Aphiria\Application\Configuration\GlobalConfiguration;
+
+// Get the value as an array
+GlobalConfiguration::getArray('foo');
+
+// Get the value as a boolean
+GlobalConfiguration::getBool('foo');
+
+// Get the value as a float
+GlobalConfiguration::getFloat('foo');
+
+// Get the value as an integer
+GlobalConfiguration::getInt('foo');
+
+// Get the value as an object
+GlobalConfiguration::getObject('foo', fn(mixed $options): MyObject => new MyObject($options));
+
+// Get the value as a string
+GlobalConfiguration::getString('foo');
+
+// Get the raw value
+GlobalConfiguration::getValue('foo');
+
+// Try to get the value as an array
+GlobalConfiguration::tryGetArray('foo', $value);
+
+// Try to get the value as a boolean
+GlobalConfiguration::tryGetBool('foo', $value);
+
+// Try to get the value as a float
+GlobalConfiguration::tryGetFloat('foo', $value);
+
+// Try to get the value as an integer
+GlobalConfiguration::tryGetInt('foo', $value);
+
+// Try to get the value as an object
+GlobalConfiguration::tryGetObject('foo', fn(mixed $options): MyObject => new MyObject($options), $value);
+
+// Try to get the value as a string
+GlobalConfiguration::tryGetString('foo', $value);
+
+// Try to get the raw value
+GlobalConfiguration::tryGetValue('foo', $value);
+```
+
+These methods mimic the `IConfiguration` interface, but are static.  Like `IConfiguration`, you can use `.` as a delimiter between sections.  If you have 2 configuration sources registered, `GlobalConfiguration` will attempt to find the path in the first registered source, and, if it's not found, the second source.  If no value is found, the `get*()` methods will throw a `MissingConfigurationValueException`, and the `tryGet*()` methods will return `false`.
+
+<h3 id="building-the-global-configuration">Building The Global Configuration</h3>
+
+`GlobalConfigurationBuilder` simplifies configuring different sources and building your global configuration.  In this example, we're loading from a PHP file, a JSON file, and environment variables:
+
+```php
+use Aphiria\Application\Configuration\GlobalConfigurationBuilder;
+
+new GlobalConfigurationBuilder()
+    ->withPhpFileConfigurationSource('config.php')
+    ->withJsonFileConfigurationSource('config.json')
+    ->withEnvironmentVariables()
+    ->build();
+```
+
+> **Note:** The reading of files and environment variables is deferred until `build()` is called.
+
+After `build()` is called, you can start accessing the values from `config.php`, `config.json`, and environment variables via `GlobalConfiguration`.
+
+<div class="context-framework">
+
+Your global configuration is created for you in the constructor of `GlobalModule` in the skeleton app.
+
+</div>

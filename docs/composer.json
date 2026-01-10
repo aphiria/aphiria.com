@@ -1,0 +1,19 @@
+{
+    "name": "aphiria/docs",
+    "authors": [
+        {
+            "name": "David Young",
+            "email": "dave@aphiria.com",
+            "role": "Author"
+        }
+    ],
+    "license": "MIT",
+    "require": {
+        "aphiria/aphiria": "1.*@dev",
+        "nyholm/psr7": "^1.3",
+        "php": "^8.4",
+        "symfony/routing": "^7.0",
+        "symfony/yaml": "^7.0"
+    },
+    "minimum-stability": "dev"
+}

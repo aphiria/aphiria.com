@@ -29,8 +29,8 @@ final class ViewCompilerBinder extends Binder
     public function bind(IContainer $container): void
     {
         $viewCompiler = new ViewCompiler(
-            '/web/src/views',
-            '/web/public',
+            '/apps/web/src/views',
+            '/apps/web/public',
             $container->resolve(DocumentationMetadata::class),
             $container->resolve(FilesystemOperator::class),
         );

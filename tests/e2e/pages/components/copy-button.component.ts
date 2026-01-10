@@ -1,4 +1,5 @@
 import { Page, Locator } from "@playwright/test";
+import { grantClipboardPermissions, readClipboard } from "../../lib/clipboard";
 
 /**
  * Copy button with clipboard functionality
@@ -18,11 +19,11 @@ export class CopyButton {
     }
 
     async click(): Promise<void> {
-        await this.page.context().grantPermissions(["clipboard-read", "clipboard-write"]);
+        await grantClipboardPermissions(this.page);
         await this.button.click();
     }
 
     async getClipboardText(): Promise<string> {
-        return await this.page.evaluate(() => navigator.clipboard.readText());
+        return await readClipboard(this.page);
     }
 }

@@ -18,7 +18,6 @@ use Aphiria\Console\Input\Input;
 use Aphiria\Console\Output\IOutput;
 use Aphiria\Console\StatusCode;
 use App\Documentation\DocumentationBuilder;
-use App\Documentation\DownloadFailedException;
 use App\Documentation\HtmlCompilationException;
 
 /**
@@ -42,7 +41,7 @@ final class BuildDocsCommandHandler implements ICommandHandler
             $output->writeln('<success>Documentation built</success>');
 
             return StatusCode::Ok;
-        } catch (DownloadFailedException | HtmlCompilationException $ex) {
+        } catch (HtmlCompilationException $ex) {
             $output->writeln('<fatal>Failed to build docs</fatal>');
             $output->writeln("<info>{$ex->getMessage()}</info>");
             $output->writeln("<info>{$ex->getTraceAsString()}</info>");
