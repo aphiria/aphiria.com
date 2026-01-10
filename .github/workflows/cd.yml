@@ -401,10 +401,6 @@ jobs:
               await exec.exec('pulumi', ['refresh', '--stack', stackName, '--yes'], {
                 cwd: 'infrastructure/pulumi',
                 timeout: 600000, // 10 minutes
-                env: {
-                  ...process.env,
-                  PULUMI_K8S_DELETE_UNREACHABLE: 'true' // Skip unreachable resources (expired credentials)
-                }
               });
             }
 
@@ -417,10 +413,6 @@ jobs:
                   await exec.exec('pulumi', ['up', '--stack', stackName, '--yes'], {
                     cwd: 'infrastructure/pulumi',
                     timeout: 1200000, // 20 minutes
-                    env: {
-                      ...process.env,
-                      PULUMI_K8S_DELETE_UNREACHABLE: 'true' // Skip unreachable resources (expired credentials)
-                    }
                   });
 
                   core.info(`✅ ${stackName} deployed successfully`);
