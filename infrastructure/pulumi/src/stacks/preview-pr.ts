@@ -34,7 +34,7 @@ const kubeconfig = clusterName.apply((name) =>
 const namespaceName = `preview-pr-${prNumber}`;
 const databaseName = `aphiria_pr_${prNumber}`;
 
-// Create the Kubernetes provider using kubeconfig from the base stack
+// Create the Kubernetes provider using fresh kubeconfig from DigitalOcean
 const k8sProvider = new k8s.Provider(
     `${namespaceName}-k8s`,
     {

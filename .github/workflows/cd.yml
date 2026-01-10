@@ -400,7 +400,11 @@ jobs:
             async function pulumiRefresh(stackName) {
               await exec.exec('pulumi', ['refresh', '--stack', stackName, '--yes'], {
                 cwd: 'infrastructure/pulumi',
-                timeout: 600000  // 10 minutes
+                timeout: 600000, // 10 minutes
+                env: {
+                  PULUMI_ACCESS_TOKEN: process.env.PULUMI_ACCESS_TOKEN,
+                  PULUMI_K8S_DELETE_UNREACHABLE: 'true' // Skip unreachable resources (expired credentials)
+                }
               });
             }
 
@@ -412,8 +416,13 @@ jobs:
                 try {
                   await exec.exec('pulumi', ['up', '--stack', stackName, '--yes'], {
                     cwd: 'infrastructure/pulumi',
-                    timeout: 1200000  // 20 minutes
+                    timeout: 1200000, // 20 minutes
+                    env: {
+                      PULUMI_ACCESS_TOKEN: process.env.PULUMI_ACCESS_TOKEN,
+                      PULUMI_K8S_DELETE_UNREACHABLE: 'true' // Skip unreachable resources (expired credentials)
+                    }
                   });
+
                   core.info(`✅ ${stackName} deployed successfully`);
                   return;
                 } catch (error) {
