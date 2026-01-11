@@ -39,17 +39,28 @@ jobs:
         working-directory: infrastructure/pulumi
         run: npm install
 
-      - name: Configure kubeconfig from DigitalOcean
+      - name: Install doctl and configure kubeconfig
         id: kubeconfig
         working-directory: infrastructure/pulumi
         env:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
         run: |
-          # Get cluster name from preview-base stack output
+          # Get cluster name and DigitalOcean token from preview-base stack
           pulumi stack select preview-base
           CLUSTER_NAME=$(pulumi stack output clusterName --show-secrets)
+          DO_TOKEN=$(pulumi config get digitalocean:token --show-secrets)
 
-           # Create .kube directory if it doesn't exist
+          # Install doctl CLI
+          cd /tmp
+          wget https://github.com/digitalocean/doctl/releases/download/v1.94.0/doctl-1.94.0-linux-amd64.tar.gz
+          tar xf doctl-1.94.0-linux-amd64.tar.gz
+          sudo mv doctl /usr/local/bin
+          cd -
+
+          # Authenticate doctl
+          doctl auth init --access-token "${DO_TOKEN}"
+
+          # Create .kube directory if it doesn't exist
           mkdir -p "${HOME}/.kube"
 
           # Fetch fresh kubeconfig from DigitalOcean
