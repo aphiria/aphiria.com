@@ -43,13 +43,6 @@ config:
       replicas: 1
       # Set dynamically by CD workflow during deployment (with digest)
       image: "ghcr.io/aphiria/aphiria.com-web@sha256:abc123..."
-      resources:
-        requests:
-          cpu: "50m"
-          memory: "64Mi"
-        limits:
-          cpu: "100m"
-          memory: "128Mi"
     api:
       # Set dynamically by CD workflow during deployment
       url: "https://123.pr-api.aphiria.com"
@@ -57,25 +50,3 @@ config:
       replicas: 1
       # Set dynamically by CD workflow during deployment (with digest)
       image: "ghcr.io/aphiria/aphiria.com-api@sha256:def456..."
-      resources:
-        initContainer:
-          requests:
-            cpu: "50m"
-            memory: "64Mi"
-          limits:
-            cpu: "100m"
-            memory: "128Mi"
-        nginx:
-          requests:
-            cpu: "50m"
-            memory: "64Mi"
-          limits:
-            cpu: "100m"
-            memory: "128Mi"
-        php:
-          requests:
-            cpu: "100m"
-            memory: "128Mi"
-          limits:
-            cpu: "200m"
-            memory: "256Mi"

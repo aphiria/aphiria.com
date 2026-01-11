@@ -65,18 +65,13 @@ export function createApplicationResources(args: ApplicationResourcesArgs): Appl
 
     // Determine database connection details
     const createDatabase = postgresqlConfig.createDatabase;
-    const dbHost = createDatabase
-        ? postgresqlConfig.dbHost
-        : env === "local"
-          ? "db"
-          : "db.default.svc.cluster.local";
-
+    const dbHost = postgresqlConfig.dbHost;
     const dbName = postgresqlConfig.databaseName || "postgres";
     const dbUser = postgresqlConfig.user;
     const dbPassword = postgresqlConfig.password;
 
     // Get PR number from namespace name if it's a preview-pr
-    const prNumber = hasNamespaceConfig && namespaceConfig
+    const prNumber = hasNamespaceConfig && namespaceConfig?.name
         ? namespaceConfig.name.replace("preview-pr-", "")
         : undefined;
 

@@ -57,7 +57,7 @@ export function createStack(env: Environment, k8sProvider: k8s.Provider): StackR
     const skipBaseInfrastructure = config.getBoolean("skipBaseInfrastructure");
 
     // Create custom namespace with ResourceQuota and NetworkPolicy (preview-pr only)
-    if (namespaceConfig) {
+    if (namespaceConfig?.name) {
         resources.namespace = createNamespace({
             name: namespaceConfig.name,
             environmentLabel: env,
