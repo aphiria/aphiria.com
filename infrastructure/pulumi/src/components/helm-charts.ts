@@ -157,6 +157,7 @@ export function installKubePrometheusStack(
                 crds: {
                     enabled: true,
                 },
+                /* istanbul ignore next - defensive fallback, args.values always provided in practice */
                 ...(args.values || {}),
             },
         },

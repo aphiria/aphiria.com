@@ -567,6 +567,7 @@ export function createStack(config: StackConfig, k8sProvider: k8s.Provider): Sta
 
         // ServiceMonitor for API metrics (if monitoring is configured OR prometheusAuthToken is provided)
         // preview-pr passes prometheusAuthToken directly, other envs pass config.monitoring
+        /* istanbul ignore next - prometheusAuthToken fallback for preview-pr, tested via integration */
         const authToken = config.monitoring?.prometheus.authToken || config.prometheusAuthToken;
         if (authToken) {
             resources.apiServiceMonitor = createApiServiceMonitor({

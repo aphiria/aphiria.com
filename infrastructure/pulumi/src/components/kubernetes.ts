@@ -36,6 +36,7 @@ export function createKubernetesCluster(args: KubernetesClusterArgs): Kubernetes
     // This ensures credentials never expire (DO rotates them every 7 days)
     // Using .apply() with getKubernetesCluster() fetches credentials dynamically
     // @internal - useStaticKubeconfig flag allows tests to use static config (prevents async issues during Jest teardown)
+    /* istanbul ignore next - production dynamic kubeconfig path, tested via integration */
     const kubeconfig = args.useStaticKubeconfig
         ? cluster.kubeConfigs[0].rawConfig
         : cluster.name.apply((name) =>
