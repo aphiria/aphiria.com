@@ -34,9 +34,7 @@ export function createBaseInfrastructureResources(
 ): BaseInfrastructureResources {
     const { env, provider } = args;
 
-    const baseInfrastructure: BaseInfrastructureResources = {
-        helmCharts: undefined as any, // Will be set below
-    };
+    const baseInfrastructure: Partial<BaseInfrastructureResources> = {};
 
     // For local environment: Install Gateway API CRDs and GatewayClass first
     // DigitalOcean Kubernetes (preview/production) pre-installs these via Cilium
@@ -89,5 +87,5 @@ export function createBaseInfrastructureResources(
         });
     }
 
-    return baseInfrastructure;
+    return baseInfrastructure as BaseInfrastructureResources;
 }

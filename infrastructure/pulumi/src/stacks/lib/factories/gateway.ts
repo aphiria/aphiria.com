@@ -1,5 +1,4 @@
 import * as k8s from "@pulumi/kubernetes";
-import * as pulumi from "@pulumi/pulumi";
 import { Environment } from "../types";
 import { createGateway, createDNSRecords } from "../../../components";
 import { GatewayResult } from "../../../components/types";
@@ -19,6 +18,7 @@ export interface GatewayResources {
 export interface GatewayResourcesArgs {
     env: Environment;
     provider: k8s.Provider;
+    gatewayConfig: GatewayConfig;
     baseInfrastructure?: BaseInfrastructureResources;
 }
 
@@ -34,11 +34,7 @@ export interface GatewayResourcesArgs {
  * @returns Gateway resources
  */
 export function createGatewayResources(args: GatewayResourcesArgs): GatewayResources {
-    const { provider, baseInfrastructure } = args;
-
-    // Read configuration
-    const config = new pulumi.Config();
-    const gatewayConfig = config.requireObject<GatewayConfig>("gateway");
+    const { provider, gatewayConfig, baseInfrastructure } = args;
 
     const gatewayNamespace = "nginx-gateway";
 

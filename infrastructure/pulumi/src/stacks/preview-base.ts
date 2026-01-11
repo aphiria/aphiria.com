@@ -5,7 +5,12 @@
 import * as pulumi from "@pulumi/pulumi";
 import { createKubernetesCluster } from "../components";
 import { createStack } from "./lib/stack-factory";
-import { ClusterConfig, PostgreSQLConfig, GrafanaConfig, PrometheusConfig } from "./lib/config/types";
+import {
+    ClusterConfig,
+    PostgreSQLConfig,
+    GrafanaConfig,
+    PrometheusConfig,
+} from "./lib/config/types";
 
 // Read cluster configuration from Pulumi config
 const config = new pulumi.Config();

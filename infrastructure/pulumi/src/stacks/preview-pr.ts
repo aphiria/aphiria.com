@@ -10,16 +10,16 @@ import { AppConfig } from "./lib/config/types";
 
 // Get PR number from config
 const config = new pulumi.Config();
-const prNumber = config.requireNumber("prNumber");
+const _prNumber = config.requireNumber("prNumber");
 
 // Import the preview-base stack to get cluster access
 const baseStackReference = new pulumi.StackReference(config.require("baseStackReference"));
 
 // Get base stack outputs
-const postgresqlHost = baseStackReference.getOutput("postgresqlHost");
-const postgresqlAdminUser = baseStackReference.getOutput("postgresqlAdminUser");
-const postgresqlAdminPassword = baseStackReference.requireOutput("postgresqlAdminPassword");
-const prometheusAuthToken = baseStackReference.requireOutput("prometheusAuthToken");
+const _postgresqlHost = baseStackReference.getOutput("postgresqlHost");
+const _postgresqlAdminUser = baseStackReference.getOutput("postgresqlAdminUser");
+const _postgresqlAdminPassword = baseStackReference.requireOutput("postgresqlAdminPassword");
+const _prometheusAuthToken = baseStackReference.requireOutput("prometheusAuthToken");
 const clusterName = baseStackReference.requireOutput("clusterName");
 
 // Fetch fresh kubeconfig from DigitalOcean on every operation

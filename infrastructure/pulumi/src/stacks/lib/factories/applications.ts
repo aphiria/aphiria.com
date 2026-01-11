@@ -35,6 +35,10 @@ export interface ApplicationResourcesArgs {
     namespace: pulumi.Output<string> | string;
     isPreviewPR: boolean;
     hasNamespaceConfig: boolean;
+    appConfig: AppConfig;
+    postgresqlConfig: PostgreSQLConfig;
+    prometheusConfig: PrometheusConfig;
+    namespaceConfig?: NamespaceConfig;
 }
 
 /**
@@ -52,28 +56,38 @@ export interface ApplicationResourcesArgs {
  * @returns Application resources
  */
 export function createApplicationResources(args: ApplicationResourcesArgs): ApplicationResources {
-    const { env, provider, namespace, isPreviewPR, hasNamespaceConfig } = args;
-
-    // Read configuration
-    const config = new pulumi.Config();
-    const appConfig = config.requireObject<AppConfig>("app");
-    const postgresqlConfig = config.requireObject<PostgreSQLConfig>("postgresql");
-    const prometheusConfig = config.requireObject<PrometheusConfig>("prometheus");
-    const namespaceConfig = config.getObject<NamespaceConfig>("namespace");
+    const {
+        env,
+        provider,
+        namespace,
+        isPreviewPR,
+        hasNamespaceConfig,
+        appConfig,
+        postgresqlConfig,
+        prometheusConfig,
+        namespaceConfig,
+    } = args;
 
     const gatewayNamespace = "nginx-gateway";
 
     // Determine database connection details
     const createDatabase = postgresqlConfig.createDatabase;
     const dbHost = postgresqlConfig.dbHost;
+
+    // databaseName is required when createDatabase is true (preview-PR pattern)
+    if (createDatabase && !postgresqlConfig.databaseName) {
+        throw new Error("postgresqlConfig.databaseName is required when createDatabase is true");
+    }
     const dbName = postgresqlConfig.databaseName || "postgres";
+
     const dbUser = postgresqlConfig.user;
     const dbPassword = postgresqlConfig.password;
 
     // Get PR number from namespace name if it's a preview-pr
-    const prNumber = hasNamespaceConfig && namespaceConfig?.name
-        ? namespaceConfig.name.replace("preview-pr-", "")
-        : undefined;
+    const prNumber =
+        hasNamespaceConfig && namespaceConfig?.name
+            ? namespaceConfig.name.replace("preview-pr-", "")
+            : undefined;
 
     // Web deployment
     const web = createWebDeployment({
@@ -89,8 +103,8 @@ export function createApplicationResources(args: ApplicationResourcesArgs): Appl
         baseUrl: appConfig.web.url,
         prNumber: env === "preview" && hasNamespaceConfig ? prNumber : undefined,
         imagePullSecrets: namespaceConfig?.imagePullSecret ? ["ghcr-pull-secret"] : undefined,
-        resources: appConfig.web.resources as any,
-        podDisruptionBudget: appConfig.web.podDisruptionBudget as any,
+        resources: appConfig.web.resources,
+        podDisruptionBudget: appConfig.web.podDisruptionBudget,
         provider,
     });
 
@@ -110,8 +124,8 @@ export function createApplicationResources(args: ApplicationResourcesArgs): Appl
         logLevel: appConfig.api.logLevel,
         prNumber: env === "preview" && hasNamespaceConfig ? prNumber : undefined,
         imagePullSecrets: namespaceConfig?.imagePullSecret ? ["ghcr-pull-secret"] : undefined,
-        resources: appConfig.api.resources as any,
-        podDisruptionBudget: appConfig.api.podDisruptionBudget as any,
+        resources: appConfig.api.resources,
+        podDisruptionBudget: appConfig.api.podDisruptionBudget,
         prometheusAuthToken: pulumi.secret(prometheusConfig.authToken),
         provider,
     });
@@ -127,7 +141,7 @@ export function createApplicationResources(args: ApplicationResourcesArgs): Appl
         dbPassword,
         runSeeder: true,
         imagePullSecrets: namespaceConfig?.imagePullSecret ? ["ghcr-pull-secret"] : undefined,
-        resources: appConfig.migration.resources as any,
+        resources: appConfig.migration.resources,
         provider,
     });
 

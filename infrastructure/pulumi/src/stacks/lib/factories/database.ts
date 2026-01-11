@@ -20,6 +20,7 @@ export interface DatabaseResourcesArgs {
     env: Environment;
     provider: k8s.Provider;
     namespace: pulumi.Output<string> | string;
+    postgresqlConfig: PostgreSQLConfig;
 }
 
 /**
@@ -33,10 +34,7 @@ export interface DatabaseResourcesArgs {
  * @returns Database resources
  */
 export function createDatabaseResources(args: DatabaseResourcesArgs): DatabaseResources {
-    const { provider, namespace } = args;
-
-    const config = new pulumi.Config();
-    const postgresqlConfig = config.requireObject<PostgreSQLConfig>("postgresql");
+    const { provider, namespace, postgresqlConfig } = args;
 
     const resources: DatabaseResources = {};
 

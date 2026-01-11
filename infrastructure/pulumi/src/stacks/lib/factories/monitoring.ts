@@ -27,6 +27,9 @@ export interface MonitoringResources {
 export interface MonitoringResourcesArgs {
     env: Environment;
     provider: k8s.Provider;
+    monitoringConfig: MonitoringConfig;
+    prometheusConfig: PrometheusConfig;
+    grafanaConfig: GrafanaConfig;
 }
 
 /**
@@ -44,13 +47,7 @@ export interface MonitoringResourcesArgs {
  * @returns Monitoring resources
  */
 export function createMonitoringResources(args: MonitoringResourcesArgs): MonitoringResources {
-    const { env, provider } = args;
-
-    // Read configuration
-    const config = new pulumi.Config();
-    const monitoringConfig = config.requireObject<MonitoringConfig>("monitoring");
-    const prometheusConfig = config.requireObject<PrometheusConfig>("prometheus");
-    const grafanaConfig = config.requireObject<GrafanaConfig>("grafana");
+    const { env, provider, monitoringConfig, prometheusConfig, grafanaConfig } = args;
 
     // Create monitoring namespace with ResourceQuota
     const monitoringNamespace = createNamespace({

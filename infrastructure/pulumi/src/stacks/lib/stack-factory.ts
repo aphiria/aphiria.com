@@ -1,5 +1,4 @@
 import * as k8s from "@pulumi/kubernetes";
-import * as pulumi from "@pulumi/pulumi";
 import { Environment } from "./types";
 import {
     createNamespace,
@@ -16,7 +15,7 @@ import { createGatewayResources, GatewayResources } from "./factories/gateway";
 import { createDatabaseResources, DatabaseResources } from "./factories/database";
 import { createApplicationResources, ApplicationResources } from "./factories/applications";
 import { NamespaceResult } from "../../components/types";
-import { NamespaceConfig, GatewayConfig, GrafanaConfig, AppConfig } from "./config/types";
+import { loadConfig } from "./config/loader";
 
 /**
  * Stack resources returned by createStack factory
@@ -46,24 +45,19 @@ export interface StackResources {
 export function createStack(env: Environment, k8sProvider: k8s.Provider): StackResources {
     const resources: StackResources = {};
 
-    // Read all configuration from Pulumi config
-    const config = new pulumi.Config();
-    const namespaceConfig = config.getObject<NamespaceConfig>("namespace");
-    const gatewayConfig = config.requireObject<GatewayConfig>("gateway");
+    // Load configuration
+    const config = loadConfig();
 
     const gatewayNamespace = "nginx-gateway";
 
-    // Check if we need to skip base infrastructure (for preview-pr stacks)
-    const skipBaseInfrastructure = config.getBoolean("skipBaseInfrastructure");
-
     // Create custom namespace with ResourceQuota and NetworkPolicy (preview-pr only)
-    if (namespaceConfig?.name) {
+    if (config.namespace?.name) {
         resources.namespace = createNamespace({
-            name: namespaceConfig.name,
+            name: config.namespace.name,
             environmentLabel: env,
-            resourceQuota: namespaceConfig.resourceQuota,
-            networkPolicy: namespaceConfig.networkPolicy,
-            imagePullSecret: namespaceConfig.imagePullSecret,
+            resourceQuota: config.namespace.resourceQuota,
+            networkPolicy: config.namespace.networkPolicy,
+            imagePullSecret: config.namespace.imagePullSecret,
             provider: k8sProvider,
         });
     }
@@ -73,23 +67,23 @@ export function createStack(env: Environment, k8sProvider: k8s.Provider): StackR
 
     // Create imagePullSecret if config exists but no custom namespace was created
     // (for production which uses "default" namespace)
-    if (namespaceConfig?.imagePullSecret && !resources.namespace) {
+    if (config.namespace?.imagePullSecret && !resources.namespace) {
         const result = createImagePullSecret({
             name: "ghcr-pull-secret",
             namespace: "default",
-            registry: namespaceConfig.imagePullSecret.registry,
-            username: namespaceConfig.imagePullSecret.username,
-            token: namespaceConfig.imagePullSecret.token,
+            registry: config.namespace.imagePullSecret.registry,
+            username: config.namespace.imagePullSecret.username,
+            token: config.namespace.imagePullSecret.token,
             provider: k8sProvider,
         });
         resources.imagePullSecret = result.secret;
     }
 
     // Determine if this is a preview-pr environment (used for Gateway listener sectionName routing)
-    const isPreviewPR = env === "preview" && !!namespaceConfig;
+    const isPreviewPR = env === "preview" && !!config.namespace;
 
     // Install base infrastructure (cert-manager, nginx-gateway) if not skipped
-    if (!skipBaseInfrastructure) {
+    if (!config.skipBaseInfrastructure) {
         resources.baseInfrastructure = createBaseInfrastructureResources({
             env,
             provider: k8sProvider,
@@ -97,12 +91,14 @@ export function createStack(env: Environment, k8sProvider: k8s.Provider): StackR
     }
 
     // Create monitoring stack (if configured)
-    const grafanaConfig = config.getObject<GrafanaConfig>("grafana");
-    const hasMonitoring = grafanaConfig?.hostname;
+    const hasMonitoring = config.grafana?.hostname;
     if (hasMonitoring) {
         resources.monitoring = createMonitoringResources({
             env,
             provider: k8sProvider,
+            monitoringConfig: config.monitoring!,
+            prometheusConfig: config.prometheus!,
+            grafanaConfig: config.grafana!,
         });
     }
 
@@ -111,33 +107,38 @@ export function createStack(env: Environment, k8sProvider: k8s.Provider): StackR
         env,
         provider: k8sProvider,
         namespace,
+        postgresqlConfig: config.postgresql!,
     });
 
     // Create Gateway with TLS if not skipped
-    if (!skipBaseInfrastructure) {
+    if (!config.skipBaseInfrastructure) {
         resources.gateway = createGatewayResources({
             env,
             provider: k8sProvider,
+            gatewayConfig: config.gateway!,
             baseInfrastructure: resources.baseInfrastructure,
         });
     }
 
     // Deploy applications (skip for preview-base)
     // Check if app config exists
-    const appConfig = config.getObject<AppConfig>("app");
-    const hasAppConfig = appConfig?.web?.url;
+    const hasAppConfig = config.app?.web?.url;
     if (hasAppConfig) {
         resources.applications = createApplicationResources({
             env,
             provider: k8sProvider,
             namespace,
             isPreviewPR,
-            hasNamespaceConfig: !!namespaceConfig,
+            hasNamespaceConfig: !!config.namespace,
+            appConfig: config.app!,
+            postgresqlConfig: config.postgresql!,
+            prometheusConfig: config.prometheus!,
+            namespaceConfig: config.namespace,
         });
     }
 
     // HTTP→HTTPS redirect (all Gateway-creating stacks)
-    if (!skipBaseInfrastructure) {
+    if (!config.skipBaseInfrastructure) {
         // Determine if WWW redirect will be created (local and production only)
         const hasWWWRedirect = env !== "preview";
 
@@ -145,7 +146,7 @@ export function createStack(env: Environment, k8sProvider: k8s.Provider): StackR
             namespace: gatewayNamespace,
             gatewayName: "nginx-gateway",
             gatewayNamespace: gatewayNamespace,
-            domains: gatewayConfig.domains,
+            domains: config.gateway!.domains,
             // Skip http-root listener when WWW redirect exists to avoid conflicts
             // WWW redirect handles: http://aphiria.com → https://www.aphiria.com (single hop)
             skipRootListener: hasWWWRedirect,

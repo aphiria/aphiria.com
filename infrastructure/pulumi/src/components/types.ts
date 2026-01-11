@@ -140,4 +140,3 @@ export interface KubeStateMetricsResult {
     deployment: pulumi.Output<k8s.types.output.meta.v1.ObjectMeta>;
     service: pulumi.Output<k8s.types.output.meta.v1.ObjectMeta>;
 }
-

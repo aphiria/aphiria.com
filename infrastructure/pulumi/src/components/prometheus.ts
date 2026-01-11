@@ -184,7 +184,7 @@ export function createPrometheus(args: PrometheusArgs): PrometheusResult {
 
     // Build scrape configs from provided configuration
     const scrapeConfigs = args.scrapeConfigs.map((config) => {
-        const yamlConfig: any = {
+        const yamlConfig: Record<string, unknown> = {
             job_name: config.job_name,
         };
 
