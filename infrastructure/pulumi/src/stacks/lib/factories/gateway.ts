@@ -4,7 +4,7 @@ import { Environment } from "../types";
 import { createGateway, createDNSRecords } from "../../../components";
 import { GatewayResult } from "../../../components/types";
 import { BaseInfrastructureResources } from "./base-infrastructure";
-import { GatewayConfig, CertManagerConfig } from "../config/types";
+import { GatewayConfig } from "../config/types";
 
 /**
  * Gateway resources
@@ -39,7 +39,6 @@ export function createGatewayResources(args: GatewayResourcesArgs): GatewayResou
     // Read configuration
     const config = new pulumi.Config();
     const gatewayConfig = config.requireObject<GatewayConfig>("gateway");
-    const certManagerConfig = config.getObject<CertManagerConfig>("certmanager");
 
     const gatewayNamespace = "nginx-gateway";
 
@@ -49,7 +48,7 @@ export function createGatewayResources(args: GatewayResourcesArgs): GatewayResou
         name: "nginx-gateway",
         tlsMode: gatewayConfig.tlsMode,
         domains: gatewayConfig.domains,
-        dnsToken: certManagerConfig?.digitaloceanDnsToken,
+        dnsToken: gatewayConfig.digitaloceanDnsToken,
         provider,
         // Ensure cert-manager CRDs are ready before creating ClusterIssuer/Certificate
         certManagerDependency: baseInfrastructure?.helmCharts.certManager,

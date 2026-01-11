@@ -23,13 +23,6 @@ export interface ResourceRequirements {
 }
 
 /**
- * Infrastructure configuration (cert-manager, gateway API CRDs, etc.)
- */
-export interface InfrastructureConfig {
-    installGatewayAPICRDs: boolean;
-}
-
-/**
  * Kubernetes cluster configuration (DigitalOcean)
  */
 export interface ClusterConfig {
@@ -141,14 +134,7 @@ export interface GatewayConfig {
     domains: string[];
     requireRootAndWildcard: boolean;
     dns?: DNSConfig;
-}
-
-/**
- * Cert-manager configuration (DigitalOcean DNS API token)
- * Optional - only needed for Let's Encrypt production (wildcard certs)
- */
-export interface CertManagerConfig {
-    digitaloceanDnsToken: string; // Secret - wrap with pulumi.secret()
+    digitaloceanDnsToken?: string; // Secret - wrap with pulumi.secret() (optional - only for Let's Encrypt wildcard certs, set via ESC in CD)
 }
 
 /**
@@ -267,12 +253,4 @@ export interface GrafanaConfig {
     hostname: string;
     replicas: number;
     resources: ResourceRequirements;
-}
-
-/**
- * GitHub Container Registry credentials configuration
- */
-export interface GHCRConfig {
-    username: string;
-    token: string; // Secret - wrap with pulumi.secret()
 }

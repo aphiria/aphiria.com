@@ -6,9 +6,10 @@ runtime:
 description: Aphiria.com infrastructure - shared components and stacks for local, preview, and production
 
 config:
-  infrastructure:
+  namespace:
     value:
-      installGatewayAPICRDs: false
+      imagePullSecret:
+        registry: "ghcr.io"
 
   cluster:
     value:

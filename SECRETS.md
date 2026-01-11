@@ -82,12 +82,12 @@ These secrets are stored in Pulumi ESC and automatically injected into Pulumi st
 - `aphiria.com/Preview` - Used by preview-base and preview-pr-\* stacks
 - `aphiria.com/Production` - Used by production stack
 
-| Secret Name                        | Purpose                                                                | Rotation Schedule            | Environment              |
-| ---------------------------------- | ---------------------------------------------------------------------- | ---------------------------- | ------------------------ |
-| `digitalocean:token`               | DigitalOcean API access for cluster management                         | Annually                     | Both                     |
-| `certmanager:digitaloceanDnsToken` | DNS API access for cert-manager wildcard TLS (DNS-01 challenges)       | Annually                     | Both                     |
-| `ghcr:token`                       | Pull private Docker images from ghcr.io (Kubernetes imagePullSecrets)  | Annually                     | Both                     |
-| `ghcr:username`                    | GitHub username for GHCR authentication                                | N/A                          | Both                     |
+| Secret Name                               | Purpose                                                                | Rotation Schedule            | Environment              |
+| ----------------------------------------- | ---------------------------------------------------------------------- | ---------------------------- | ------------------------ |
+| `digitalocean:token`                      | DigitalOcean API access for cluster management                         | Annually                     | Both                     |
+| `gateway:digitaloceanDnsToken`            | DNS API access for cert-manager wildcard TLS (DNS-01 challenges)       | Annually                     | Both                     |
+| `namespace:imagePullSecret:token`         | Pull private Docker images from ghcr.io (Kubernetes imagePullSecrets)  | Annually                     | Both                     |
+| `namespace:imagePullSecret:username`      | GitHub username for GHCR authentication                                | N/A                          | Both                     |
 | `postgresql:user`                  | PostgreSQL admin user                                                  | N/A                          | Both                     |
 | `postgresql:password`              | PostgreSQL admin password                                              | Quarterly                    | Both                     |
 | `grafana:githubClientId`           | GitHub OAuth App Client ID for Grafana authentication                  | When OAuth app is rotated    | Both                     |
@@ -112,9 +112,9 @@ These secrets are stored in Pulumi ESC and automatically injected into Pulumi st
 
 ## Rotation Procedures
 
-### GHCR Token (Pulumi ESC - Kubernetes Image Pulling)
+### namespace:imagePullSecret:token and namespace:imagePullSecret:username (Pulumi ESC - Kubernetes Image Pulling)
 
-**Why this is needed**: Kubernetes clusters need credentials to pull private Docker images from ghcr.io. This token is configured in Pulumi ESC and injected into Kubernetes imagePullSecrets at runtime.
+**Why this is needed**: Kubernetes clusters need credentials to pull private Docker images from ghcr.io. These values are configured in Pulumi ESC and injected into Kubernetes imagePullSecrets at runtime.
 
 **Generate new token**:
 
@@ -136,9 +136,9 @@ These secrets are stored in Pulumi ESC and automatically injected into Pulumi st
     ```yaml
     values:
         pulumiConfig:
-            "ghcr:token":
+            "namespace:imagePullSecret:token":
                 fn::secret: "ghp_YOUR_NEW_TOKEN_HERE"
-            "ghcr:username": "your-github-username"
+            "namespace:imagePullSecret:username": "your-github-username"
     ```
 5. Save
 6. Repeat for `aphiria.com/Production` environment
@@ -147,13 +147,15 @@ These secrets are stored in Pulumi ESC and automatically injected into Pulumi st
 
 ```bash
 # Configure for Preview environment
-pulumi env set aphiria.com/Preview pulumiConfig."ghcr:token" "ghp_YOUR_TOKEN" --secret
-pulumi env set aphiria.com/Preview pulumiConfig."ghcr:username" "your-github-username"
+pulumi env set aphiria.com/Preview pulumiConfig."namespace:imagePullSecret:token" "ghp_YOUR_TOKEN" --secret
+pulumi env set aphiria.com/Preview pulumiConfig."namespace:imagePullSecret:username" "your-github-username"
 
 # Configure for Production environment
-pulumi env set aphiria.com/Production pulumiConfig."ghcr:token" "ghp_YOUR_TOKEN" --secret
-pulumi env set aphiria.com/Production pulumiConfig."ghcr:username" "your-github-username"
+pulumi env set aphiria.com/Production pulumiConfig."namespace:imagePullSecret:token" "ghp_YOUR_TOKEN" --secret
+pulumi env set aphiria.com/Production pulumiConfig."namespace:imagePullSecret:username" "your-github-username"
 ```
+
+**Note**: The registry URL (`ghcr.io`) is configured in stack-specific YAML files (Pulumi.production.yml, Pulumi.preview-pr.yml), not in ESC.
 
 **Cleanup**: Delete old token at https://github.com/settings/tokens (ensure new token works first)
 
@@ -197,7 +199,7 @@ pulumi env set aphiria.com/Production pulumiConfig."ghcr:username" "your-github-
 
 **Cleanup**: Delete old token at https://app.pulumi.com/settings/tokens
 
-### certmanager:digitaloceanDnsToken
+### gateway:digitaloceanDnsToken
 
 **Why this is needed**: cert-manager requires DigitalOcean DNS API access to create TXT records for ACME DNS-01 challenges when provisioning wildcard TLS certificates (`*.pr.aphiria.com`, `*.pr-api.aphiria.com`). Wildcard certificates cannot use HTTP-01 validation and must use DNS-01.
 
@@ -229,21 +231,21 @@ pulumi env set aphiria.com/Production pulumiConfig."ghcr:username" "your-github-
 cd infrastructure/pulumi
 
 # Configure for Preview environment
-pulumi env set aphiria.com/Preview pulumiConfig."certmanager:digitaloceanDnsToken" "dop_v1_YOUR_TOKEN_HERE" --secret
+pulumi env set aphiria.com/Preview pulumiConfig."gateway:digitaloceanDnsToken" "dop_v1_YOUR_TOKEN_HERE" --secret
 
 # Verify it's set
 pulumi env get aphiria.com/Preview
-# Should show: certmanager:digitaloceanDnsToken: [secret]
+# Should show: gateway:digitaloceanDnsToken: [secret]
 
 # Configure for Production environment
-pulumi env set aphiria.com/Production pulumiConfig."certmanager:digitaloceanDnsToken" "dop_v1_YOUR_TOKEN_HERE" --secret
+pulumi env set aphiria.com/Production pulumiConfig."gateway:digitaloceanDnsToken" "dop_v1_YOUR_TOKEN_HERE" --secret
 ```
 
 **Alternative: Via Pulumi ESC UI**:
 
 1. Navigate to https://app.pulumi.com/[your-org]/settings/environments
 2. Edit `aphiria.com/Preview` and `aphiria.com/Production`
-3. Update `pulumiConfig."certmanager:digitaloceanDnsToken"` with new token (mark as secret)
+3. Update `pulumiConfig."gateway:digitaloceanDnsToken"` with new token (mark as secret)
 
 **Security Notes**:
 
@@ -447,12 +449,13 @@ If a secret is compromised:
 
 ## Troubleshooting
 
-| Error                                                 | Cause                                      | Solution                                        |
-| ----------------------------------------------------- | ------------------------------------------ | ----------------------------------------------- |
-| Authentication failed (build-preview-images.yml)      | `GITHUB_TOKEN` permissions issue           | Verify `packages: write` permission in workflow |
-| ImagePullBackOff / 401 Unauthorized (Kubernetes pods) | Invalid `ghcr:token` in Pulumi ESC         | Add/update token in Pulumi ESC environments     |
-| Pulumi login failed                                   | Invalid `PULUMI_ACCESS_TOKEN`              | Rotate token                                    |
-| workflow_dispatch trigger fails (403 error)           | Invalid `WORKFLOW_DISPATCH_TOKEN`          | Rotate token                                    |
-| DNS records not created                               | Invalid `digitalocean:token` in Pulumi ESC | Add/update token in Pulumi ESC environments     |
+| Error                                                 | Cause                                                      | Solution                                        |
+| ----------------------------------------------------- | ---------------------------------------------------------- | ----------------------------------------------- |
+| Authentication failed (build-preview-images.yml)      | `GITHUB_TOKEN` permissions issue                           | Verify `packages: write` permission in workflow |
+| ImagePullBackOff / 401 Unauthorized (Kubernetes pods) | Invalid `namespace:imagePullSecret:token` in Pulumi ESC    | Add/update token in Pulumi ESC environments     |
+| Pulumi login failed                                   | Invalid `PULUMI_ACCESS_TOKEN`                              | Rotate token                                    |
+| workflow_dispatch trigger fails (403 error)           | Invalid `WORKFLOW_DISPATCH_TOKEN`                          | Rotate token                                    |
+| DNS records not created                               | Invalid `digitalocean:token` in Pulumi ESC                 | Add/update token in Pulumi ESC environments     |
+| cert-manager DNS-01 challenge fails                   | Invalid `gateway:digitaloceanDnsToken` in Pulumi ESC       | Add/update token in Pulumi ESC environments     |
 
 **Last Updated**: 2025-12-23

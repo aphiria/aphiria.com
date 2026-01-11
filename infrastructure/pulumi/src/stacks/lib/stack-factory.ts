@@ -3,6 +3,7 @@ import * as pulumi from "@pulumi/pulumi";
 import { Environment } from "./types";
 import {
     createNamespace,
+    createImagePullSecret,
     createHTTPSRedirectRoute,
     createWWWRedirectRoute,
 } from "../../components";
@@ -25,6 +26,7 @@ export interface StackResources {
     gateway?: GatewayResources;
     database?: DatabaseResources;
     namespace?: NamespaceResult;
+    imagePullSecret?: k8s.core.v1.Secret;
     applications?: ApplicationResources;
     httpsRedirect?: k8s.apiextensions.CustomResource;
     wwwRedirect?: k8s.apiextensions.CustomResource;
@@ -68,6 +70,20 @@ export function createStack(env: Environment, k8sProvider: k8s.Provider): StackR
 
     // Determine namespace (use created namespace or default)
     const namespace = resources.namespace?.namespace.metadata.name || "default";
+
+    // Create imagePullSecret if config exists but no custom namespace was created
+    // (for production which uses "default" namespace)
+    if (namespaceConfig?.imagePullSecret && !resources.namespace) {
+        const result = createImagePullSecret({
+            name: "ghcr-pull-secret",
+            namespace: "default",
+            registry: namespaceConfig.imagePullSecret.registry,
+            username: namespaceConfig.imagePullSecret.username,
+            token: namespaceConfig.imagePullSecret.token,
+            provider: k8sProvider,
+        });
+        resources.imagePullSecret = result.secret;
+    }
 
     // Determine if this is a preview-pr environment (used for Gateway listener sectionName routing)
     const isPreviewPR = env === "preview" && !!namespaceConfig;

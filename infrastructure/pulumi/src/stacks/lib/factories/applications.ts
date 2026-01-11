@@ -93,8 +93,7 @@ export function createApplicationResources(args: ApplicationResourcesArgs): Appl
         },
         baseUrl: appConfig.web.url,
         prNumber: env === "preview" && hasNamespaceConfig ? prNumber : undefined,
-        imagePullSecrets:
-            hasNamespaceConfig && namespaceConfig?.imagePullSecret ? ["ghcr-pull-secret"] : undefined,
+        imagePullSecrets: namespaceConfig?.imagePullSecret ? ["ghcr-pull-secret"] : undefined,
         resources: appConfig.web.resources as any,
         podDisruptionBudget: appConfig.web.podDisruptionBudget as any,
         provider,
@@ -115,8 +114,7 @@ export function createApplicationResources(args: ApplicationResourcesArgs): Appl
         webUrl: appConfig.web.url,
         logLevel: appConfig.api.logLevel,
         prNumber: env === "preview" && hasNamespaceConfig ? prNumber : undefined,
-        imagePullSecrets:
-            hasNamespaceConfig && namespaceConfig?.imagePullSecret ? ["ghcr-pull-secret"] : undefined,
+        imagePullSecrets: namespaceConfig?.imagePullSecret ? ["ghcr-pull-secret"] : undefined,
         resources: appConfig.api.resources as any,
         podDisruptionBudget: appConfig.api.podDisruptionBudget as any,
         prometheusAuthToken: pulumi.secret(prometheusConfig.authToken),
@@ -133,8 +131,7 @@ export function createApplicationResources(args: ApplicationResourcesArgs): Appl
         dbUser,
         dbPassword,
         runSeeder: true,
-        imagePullSecrets:
-            hasNamespaceConfig && namespaceConfig?.imagePullSecret ? ["ghcr-pull-secret"] : undefined,
+        imagePullSecrets: namespaceConfig?.imagePullSecret ? ["ghcr-pull-secret"] : undefined,
         resources: appConfig.migration.resources as any,
         provider,
     });
