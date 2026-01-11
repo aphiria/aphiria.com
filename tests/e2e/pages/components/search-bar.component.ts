@@ -37,4 +37,25 @@ export class SearchBar {
         await this.searchInput.clear();
         await this.searchInput.press("Backspace");
     }
+
+    async hasHighlightedTermMatching(resultIndex: number, pattern: RegExp): Promise<boolean> {
+        const resultCount = await this.results.count();
+
+        if (resultIndex >= resultCount) {
+            return false;
+        }
+
+        const result = this.results.nth(resultIndex);
+        const emphasisElements = result.locator("em");
+        const emphasisCount = await emphasisElements.count();
+
+        for (let i = 0; i < emphasisCount; i++) {
+            const emphasisText = await emphasisElements.nth(i).textContent();
+            if (emphasisText && pattern.test(emphasisText)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
 }

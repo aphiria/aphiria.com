@@ -39,24 +39,36 @@ jobs:
         working-directory: infrastructure/pulumi
         run: npm install
 
-      - name: Configure kubeconfig from preview-base stack
+      - name: Install doctl and configure kubeconfig
         id: kubeconfig
         working-directory: infrastructure/pulumi
         env:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
         run: |
-          # Get kubeconfig from preview-base stack output
+          # Get cluster name and DigitalOcean token from preview-base stack
           pulumi stack select preview-base
-          KUBECONFIG_CONTENT=$(pulumi stack output kubeconfig --show-secrets)
+          CLUSTER_NAME=$(pulumi stack output clusterName --show-secrets)
+          DO_TOKEN=$(pulumi config get digitalocean:token --show-secrets)
 
-          # Write to temporary file
-          KUBECONFIG_PATH="${HOME}/.kube/config"
+          # Install doctl CLI
+          cd /tmp
+          wget https://github.com/digitalocean/doctl/releases/download/v1.94.0/doctl-1.94.0-linux-amd64.tar.gz
+          tar xf doctl-1.94.0-linux-amd64.tar.gz
+          sudo mv doctl /usr/local/bin
+          cd -
+
+          # Authenticate doctl
+          doctl auth init --access-token "${DO_TOKEN}"
+
+          # Create .kube directory if it doesn't exist
           mkdir -p "${HOME}/.kube"
-          echo "${KUBECONFIG_CONTENT}" > "${KUBECONFIG_PATH}"
-          chmod 600 "${KUBECONFIG_PATH}"
 
-          echo "path=${KUBECONFIG_PATH}" >> $GITHUB_OUTPUT
-          echo "✅ Kubeconfig configured from preview-base stack"
+          # Fetch fresh kubeconfig from DigitalOcean
+          doctl kubernetes cluster kubeconfig show "${CLUSTER_NAME}" > "${HOME}/.kube/config"
+          chmod 600 "${HOME}/.kube/config"
+
+          echo "path=${HOME}/.kube/config" >> $GITHUB_OUTPUT
+          echo "✅ Fresh kubeconfig fetched from DigitalOcean"
 
       - name: Destroy preview environment
         id: destroy

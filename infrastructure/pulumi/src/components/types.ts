@@ -111,6 +111,11 @@ export interface KubernetesClusterArgs {
     tags?: string[];
     /** Node labels */
     labels?: Record<string, string>;
+    /**
+     * @internal Use static kubeconfig from cluster resource instead of fetching fresh credentials.
+     * Set to true in tests to prevent async getKubernetesCluster() calls during Jest teardown.
+     */
+    useStaticKubeconfig?: boolean;
 }
 
 /**

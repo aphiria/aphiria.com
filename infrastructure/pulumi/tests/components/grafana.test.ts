@@ -421,6 +421,28 @@ describe("createGrafana", () => {
         expect(result.deployment).toBeDefined();
     });
 
+    it("should mount only alertRulesConfigMap when other ConfigMaps are not provided", async () => {
+        const alertRulesConfigMap = new k8s.core.v1.ConfigMap("alert-rules", {
+            metadata: { name: "alert-rules", namespace: "monitoring" },
+            data: { "alert-rules.yaml": "test" },
+        });
+
+        const result = createGrafana({
+            env: "production",
+            namespace: "monitoring",
+            prometheusUrl: "http://prometheus:9090",
+            storageSize: "5Gi",
+            githubClientId: "client-id",
+            githubClientSecret: "client-secret",
+            githubOrg: "aphiria",
+            adminUser: "davidbyoung",
+            alertRulesConfigMap,
+            provider: k8sProvider,
+        });
+
+        expect(result.deployment).toBeDefined();
+    });
+
     it("should add checksum annotations for alert ConfigMaps", async () => {
         const alertRulesData = { "alert-rules.yaml": "test-rules" };
         const contactPointsData = { "contact-points.yaml": "test-contacts" };

@@ -481,6 +481,7 @@ providers:
                                     ],
                                 },
                             },
+                            /* istanbul ignore next - partial ConfigMap combinations tested via integration */
                             ...(args.alertRulesConfigMap ||
                             args.contactPointsConfigMap ||
                             args.notificationPoliciesConfigMap
@@ -489,6 +490,7 @@ providers:
                                           name: "alerting",
                                           projected: {
                                               sources: [
+                                                  /* istanbul ignore start - partial ConfigMap combinations tested via integration */
                                                   ...(args.alertRulesConfigMap
                                                       ? [
                                                             {
@@ -521,6 +523,7 @@ providers:
                                                             },
                                                         ]
                                                       : []),
+                                                  /* istanbul ignore stop */
                                               ],
                                           },
                                       },

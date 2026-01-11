@@ -400,7 +400,7 @@ jobs:
             async function pulumiRefresh(stackName) {
               await exec.exec('pulumi', ['refresh', '--stack', stackName, '--yes'], {
                 cwd: 'infrastructure/pulumi',
-                timeout: 600000  // 10 minutes
+                timeout: 600000, // 10 minutes
               });
             }
 
@@ -412,8 +412,9 @@ jobs:
                 try {
                   await exec.exec('pulumi', ['up', '--stack', stackName, '--yes'], {
                     cwd: 'infrastructure/pulumi',
-                    timeout: 1200000  // 20 minutes
+                    timeout: 1200000, // 20 minutes
                   });
+
                   core.info(`✅ ${stackName} deployed successfully`);
                   return;
                 } catch (error) {
@@ -761,7 +762,7 @@ jobs:
 
       - name: Install Playwright browsers
         working-directory: tests/e2e
-        run: npx playwright install --with-deps chromium
+        run: npx playwright install --with-deps chromium webkit
 
       - name: Construct URLs
         run: |
