@@ -117,11 +117,12 @@ window.addEventListener('load', loadEvent => {
             searchResultsElem.style.display = 'none';
             document.removeEventListener('click', detectClickOffSearch);
         } else if (searchInputElem.value !== prevSearchQuery) {
+            const currentQuery = searchInputElem.value;
             timer = setTimeout(() => {
-                prevSearchQuery = searchInputElem.value;
+                prevSearchQuery = currentQuery;
                 // When we add multiple versions of the documentation, update the following to grab the version from an input
                 fetch(
-                    `${config.apiUri}/docs/search?query=${encodeURIComponent(searchInputElem.value)}&version=1.x`,
+                    `${config.apiUri}/docs/search?query=${encodeURIComponent(currentQuery)}&version=1.x`,
                     { credentials: 'include' }
                 )
                     .then((response) => response.json())
@@ -163,7 +164,7 @@ window.addEventListener('load', loadEvent => {
 
                         if (searchResultItems === '') {
                             // No results
-                            searchResultItems = `<li class="no-results">No results for "${searchInputElem.value}"</li>`;
+                            searchResultItems = `<li class="no-results">No results for "${currentQuery}"</li>`;
                         }
 
                         searchResultsElem.innerHTML = searchResultItems;

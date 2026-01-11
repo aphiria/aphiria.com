@@ -1,2 +1,6 @@
 environment:
   - aphiria.com/Production
+config:
+  cluster:name: aphiria-com-cluster
+  aphiria-com-infrastructure:webImageDigest: sha256:1496ef0721ee119170317b61123a28cedc27e87590f039b671e904e9c94e32da
+  aphiria-com-infrastructure:apiImageDigest: sha256:f666d9bf03b9c8dacabfc7a6f159df1d125c2ccf85d44b4a6737ac0302dacbd2
