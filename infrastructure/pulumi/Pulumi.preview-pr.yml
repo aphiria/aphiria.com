@@ -1,26 +1,48 @@
-# PR-specific values (prNumber, URLs, images) are set dynamically by CI/CD via pulumi config set
 environment:
   - aphiria.com/Preview
 
 config:
-  # Infrastructure config
-  skipBaseInfrastructure: true
+  # Set dynamically by CD workflow during deployment
+  aphiria-com-infrastructure:prNumber: 123
 
-  # Namespace configuration (name is set dynamically by CI/CD)
-  namespace:
+  # Set dynamically by CD workflow during deployment
+  aphiria-com-infrastructure:baseStackReference: "organization/aphiria-com-infrastructure/preview-base"
+
+  aphiria-com-infrastructure:skipBaseInfrastructure: true
+
+  # Namespace configuration
+  aphiria-com-infrastructure:namespace:
+    # Set dynamically by CD workflow during deployment
+    name: "preview-pr-123"
     resourceQuota:
       cpu: "2"
       memory: "4Gi"
       pods: "5"
+    # Network policies allow preview-pr pods to communicate with shared services in preview-base
+    # (PostgreSQL in default namespace, DNS, and external HTTPS for API calls)
+    networkPolicy:
+      allowDNS: true
+      allowHTTPS: true
+      allowPostgreSQL:
+        host: "db.default.svc.cluster.local"
+        port: 5432
+
+  # PostgreSQL configuration
+  aphiria-com-infrastructure:postgresql:
+    createDatabase: true
+    # Set dynamically by CD workflow during deployment
+    databaseName: "aphiria_pr_123"
 
   # Application configuration
-  app:
-    imagePullPolicy: "Always" # Always pull for preview PRs
+  aphiria-com-infrastructure:app:
+    imagePullPolicy: "Always"
     web:
-      # url is set dynamically as https://{PR_NUMBER}.pr.aphiria.com by CI/CD
+      # Set dynamically by CD workflow during deployment
+      url: "https://123.pr.aphiria.com"
       cookieDomain: ".pr.aphiria.com"
       replicas: 1
-      # image is set dynamically by CI/CD with the built digest
+      # Set dynamically by CD workflow during deployment (with digest)
+      image: "ghcr.io/aphiria/aphiria.com-web@sha256:abc123..."
       resources:
         requests:
           cpu: "50m"
@@ -28,13 +50,13 @@ config:
         limits:
           cpu: "100m"
           memory: "128Mi"
-      podDisruptionBudget:
-        minAvailable: 1
     api:
-      # url is set dynamically as https://{PR_NUMBER}.pr-api.aphiria.com by CI/CD
+      # Set dynamically by CD workflow during deployment
+      url: "https://123.pr-api.aphiria.com"
       logLevel: "debug"
       replicas: 1
-      # image is set dynamically by CI/CD with the built digest
+      # Set dynamically by CD workflow during deployment (with digest)
+      image: "ghcr.io/aphiria/aphiria.com-api@sha256:def456..."
       resources:
         initContainer:
           requests:
@@ -57,27 +79,3 @@ config:
           limits:
             cpu: "200m"
             memory: "256Mi"
-      podDisruptionBudget:
-        minAvailable: 1
-    migration:
-      resources:
-        migration:
-          requests:
-            cpu: "50m"
-            memory: "128Mi"
-          limits:
-            cpu: "200m"
-            memory: "256Mi"
-        initContainer:
-          requests:
-            cpu: "10m"
-            memory: "32Mi"
-          limits:
-            cpu: "50m"
-            memory: "64Mi"
-
-  # Database configuration
-  postgresql:
-    createDatabase: true
-    # databaseName is set dynamically as aphiria_pr_{PR_NUMBER} by CI/CD
-    # postgresql:user and postgresql:password come from ESC environment

@@ -5,25 +5,26 @@
 import * as pulumi from "@pulumi/pulumi";
 import { createKubernetesCluster } from "../components";
 import { createStack } from "./lib/stack-factory";
+import { ClusterConfig } from "./lib/config/types";
 
 // Read cluster configuration from Pulumi config
-const clusterConfig = new pulumi.Config("cluster");
+const clusterConfig = new pulumi.Config("cluster").requireObject<ClusterConfig>("");
 
 // Create the production Kubernetes cluster
 const { provider: k8sProvider } = createKubernetesCluster({
-    name: clusterConfig.require("name"),
-    region: clusterConfig.require("region"),
-    version: clusterConfig.require("version"),
-    autoUpgrade: clusterConfig.requireBoolean("autoUpgrade"),
-    surgeUpgrade: clusterConfig.requireBoolean("surgeUpgrade"),
-    ha: clusterConfig.requireBoolean("ha"),
-    nodeSize: clusterConfig.require("nodeSize"),
-    nodeCount: clusterConfig.requireNumber("nodeCount"),
-    autoScale: clusterConfig.requireBoolean("autoScale"),
-    minNodes: clusterConfig.requireNumber("minNodes"),
-    maxNodes: clusterConfig.requireNumber("maxNodes"),
-    vpcUuid: clusterConfig.require("vpcUuid"),
+    name: clusterConfig.name,
+    region: clusterConfig.region,
+    version: clusterConfig.version,
+    autoUpgrade: clusterConfig.autoUpgrade,
+    surgeUpgrade: clusterConfig.surgeUpgrade,
+    ha: clusterConfig.ha,
+    nodeSize: clusterConfig.nodeSize,
+    nodeCount: clusterConfig.nodeCount,
+    autoScale: clusterConfig.autoScale,
+    minNodes: clusterConfig.minNodes,
+    maxNodes: clusterConfig.maxNodes,
+    vpcUuid: clusterConfig.vpcUuid,
 });
 
-// Create the stack - all configuration is read from Pulumi.production.yml
+// Create the stack
 createStack("production", k8sProvider);

@@ -174,12 +174,22 @@ export interface NetworkPolicyConfig {
 }
 
 /**
+ * Image pull secret configuration for GHCR
+ */
+export interface ImagePullSecretConfig {
+    registry: string;
+    username: string; // Secret - wrap with pulumi.secret()
+    token: string; // Secret - wrap with pulumi.secret()
+}
+
+/**
  * Namespace configuration (preview-pr only)
  */
 export interface NamespaceConfig {
     name: string;
     resourceQuota?: ResourceQuotaConfig;
     networkPolicy?: NetworkPolicyConfig;
+    imagePullSecret?: ImagePullSecretConfig;
 }
 
 /**
@@ -228,6 +238,14 @@ export interface PrometheusConfig {
 }
 
 /**
+ * Grafana basic auth configuration (preview only)
+ */
+export interface GrafanaBasicAuthConfig {
+    user: string; // Secret - wrap with pulumi.secret()
+    password: string; // Secret - wrap with pulumi.secret()
+}
+
+/**
  * Grafana configuration
  */
 export interface GrafanaConfig {
@@ -238,12 +256,13 @@ export interface GrafanaConfig {
     githubClientSecret: string; // Secret - wrap with pulumi.secret()
     githubOrg: string;
     adminUser: string;
-    smtpHost: string; // Secret - wrap with pulumi.secret()
-    smtpPort: number;
-    smtpUser: string; // Secret - wrap with pulumi.secret()
-    smtpPassword: string; // Secret - wrap with pulumi.secret()
-    smtpFromAddress: string;
-    alertEmail: string;
+    smtpHost?: string; // Secret - wrap with pulumi.secret() (optional - preview doesn't have)
+    smtpPort?: number; // Optional - preview doesn't have
+    smtpUser?: string; // Secret - wrap with pulumi.secret() (optional - preview doesn't have)
+    smtpPassword?: string; // Secret - wrap with pulumi.secret() (optional - preview doesn't have)
+    smtpFromAddress?: string; // Optional - preview doesn't have
+    alertEmail?: string; // Optional - preview doesn't have
+    basicAuth?: GrafanaBasicAuthConfig; // Optional - preview only
     storageSize: string;
     hostname: string;
     replicas: number;

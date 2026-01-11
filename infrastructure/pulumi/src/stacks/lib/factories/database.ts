@@ -3,6 +3,7 @@ import * as pulumi from "@pulumi/pulumi";
 import { Environment } from "../types";
 import { createDatabaseCreationJob } from "../../../components";
 import { createPostgreSQL, PostgreSQLResult } from "../../../components/database";
+import { PostgreSQLConfig } from "../config/types";
 
 /**
  * Database resources
@@ -32,31 +33,29 @@ export interface DatabaseResourcesArgs {
  * @returns Database resources
  */
 export function createDatabaseResources(args: DatabaseResourcesArgs): DatabaseResources {
-    const { env, provider, namespace } = args;
+    const { provider, namespace } = args;
 
-    const postgresqlConfig = new pulumi.Config("postgresql");
-    const createDatabase = postgresqlConfig.getBoolean("createDatabase");
-    const databaseName = postgresqlConfig.get("databaseName");
+    const postgresqlConfig = new pulumi.Config("postgresql").requireObject<PostgreSQLConfig>("");
 
     const resources: DatabaseResources = {};
 
-    if (createDatabase && databaseName) {
+    if (postgresqlConfig.createDatabase && postgresqlConfig.databaseName) {
         // Preview-PR: Create database on shared instance
         resources.dbInitJob = createDatabaseCreationJob({
             namespace,
-            databaseName: postgresqlConfig.require("databaseName"),
-            dbHost: postgresqlConfig.require("dbHost"),
-            dbAdminUser: postgresqlConfig.require("user"),
-            dbAdminPassword: postgresqlConfig.requireSecret("password"),
+            databaseName: postgresqlConfig.databaseName,
+            dbHost: postgresqlConfig.dbHost,
+            dbAdminUser: postgresqlConfig.user,
+            dbAdminPassword: postgresqlConfig.password,
             provider,
         });
     } else {
         // Local/Preview-Base/Production: Create PostgreSQL instance
         resources.postgres = createPostgreSQL({
-            username: postgresqlConfig.require("user"),
-            password: postgresqlConfig.requireSecret("password"),
+            username: postgresqlConfig.user,
+            password: postgresqlConfig.password,
             replicas: 1,
-            resources: postgresqlConfig.requireObject("resources"),
+            resources: postgresqlConfig.resources,
             healthCheck: {
                 interval: "10s",
                 timeout: "5s",
@@ -68,14 +67,14 @@ export function createDatabaseResources(args: DatabaseResourcesArgs): DatabaseRe
             },
             namespace,
             storage: {
-                enabled: postgresqlConfig.requireBoolean("persistentStorage"),
-                size: postgresqlConfig.require("storageSize"),
+                enabled: postgresqlConfig.persistentStorage,
+                size: postgresqlConfig.storageSize,
                 accessMode: "ReadWriteOnce",
                 // Use hostPath for local development
-                useHostPath: env === "local",
-                hostPath: env === "local" ? "/mnt/data" : undefined,
+                useHostPath: postgresqlConfig.useHostPath,
+                hostPath: postgresqlConfig.hostPath,
             },
-            imageTag: postgresqlConfig.require("version"),
+            imageTag: postgresqlConfig.version,
             databaseName: "postgres",
             provider,
         });

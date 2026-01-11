@@ -4,6 +4,7 @@ import { Environment } from "../types";
 import { createGateway, createDNSRecords } from "../../../components";
 import { GatewayResult } from "../../../components/types";
 import { BaseInfrastructureResources } from "./base-infrastructure";
+import { GatewayConfig, CertManagerConfig } from "../config/types";
 
 /**
  * Gateway resources
@@ -33,22 +34,21 @@ export interface GatewayResourcesArgs {
  * @returns Gateway resources
  */
 export function createGatewayResources(args: GatewayResourcesArgs): GatewayResources {
-    const { env, provider, baseInfrastructure } = args;
+    const { provider, baseInfrastructure } = args;
 
     // Read configuration
-    const gatewayConfig = new pulumi.Config("gateway");
-    const certManagerConfig = new pulumi.Config("certmanager");
+    const gatewayConfig = new pulumi.Config("gateway").requireObject<GatewayConfig>("");
+    const certManagerConfig = new pulumi.Config("certmanager").getObject<CertManagerConfig>("");
 
     const gatewayNamespace = "nginx-gateway";
-    const dnsToken = certManagerConfig.getSecret("digitaloceanDnsToken");
 
     const gateway = createGateway({
-        requireRootAndWildcard: env === "production",
+        requireRootAndWildcard: gatewayConfig.requireRootAndWildcard,
         namespace: gatewayNamespace,
         name: "nginx-gateway",
-        tlsMode: gatewayConfig.require("tlsMode") as "self-signed" | "letsencrypt-prod",
-        domains: gatewayConfig.requireObject<string[]>("domains"),
-        dnsToken: dnsToken,
+        tlsMode: gatewayConfig.tlsMode,
+        domains: gatewayConfig.domains,
+        dnsToken: certManagerConfig?.digitaloceanDnsToken,
         provider,
         // Ensure cert-manager CRDs are ready before creating ClusterIssuer/Certificate
         certManagerDependency: baseInfrastructure?.helmCharts.certManager,
@@ -57,8 +57,7 @@ export function createGatewayResources(args: GatewayResourcesArgs): GatewayResou
     // Create DNS records if configured
     // Fetch LoadBalancer IP from nginx-gateway Chart resources
     /* istanbul ignore next - Chart.resources is only populated at runtime, cannot be mocked in unit tests */
-    const dnsConfig = gatewayConfig.getObject("dns");
-    if (dnsConfig && baseInfrastructure?.helmCharts.nginxGateway) {
+    if (gatewayConfig.dns && baseInfrastructure?.helmCharts.nginxGateway) {
         // Workaround for Pulumi bug #16395: Service.get() doesn't respect dependsOn
         // Use Chart v4's .resources output to get the Service directly from child resources
         const gatewayServiceOutput = baseInfrastructure.helmCharts.nginxGateway.resources.apply(
@@ -78,25 +77,14 @@ export function createGatewayResources(args: GatewayResourcesArgs): GatewayResou
 
         gateway.ip = gatewayServiceOutput.status.loadBalancer.ingress[0].ip;
 
-        // Type the DNS config properly
-        interface DNSConfig {
-            domain: string;
-            records: Array<{
-                name: string;
-                resourceName: string;
-            }>;
-            ttl?: number;
-        }
-
-        const typedDnsConfig = dnsConfig as DNSConfig;
         if (!gateway.ip) {
             throw new Error("Gateway IP is required for DNS configuration but was not set");
         }
         const dnsResult = createDNSRecords({
-            domain: typedDnsConfig.domain,
+            domain: gatewayConfig.dns.domain,
             loadBalancerIp: gateway.ip,
-            records: typedDnsConfig.records,
-            ttl: typedDnsConfig.ttl,
+            records: gatewayConfig.dns.records,
+            ttl: gatewayConfig.dns.ttl,
         });
         gateway.dnsRecords = dnsResult.records;
     }

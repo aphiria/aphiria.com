@@ -6,6 +6,7 @@ import * as digitalocean from "@pulumi/digitalocean";
 import * as k8s from "@pulumi/kubernetes";
 import * as pulumi from "@pulumi/pulumi";
 import { createStack } from "./lib/stack-factory";
+import { AppConfig } from "./lib/config/types";
 
 // Get PR number from config
 const config = new pulumi.Config();
@@ -45,6 +46,6 @@ const k8sProvider = new k8s.Provider(
 createStack("preview", k8sProvider);
 
 // Export the PR URLs for GitHub Actions to post as PR comment
-const appConfig = new pulumi.Config("app");
-export const webUrl = appConfig.require("web:url");
-export const apiUrl = appConfig.require("api:url");
+const appConfig = new pulumi.Config("app").requireObject<AppConfig>("");
+export const webUrl = appConfig.web.url;
+export const apiUrl = appConfig.api.url;
