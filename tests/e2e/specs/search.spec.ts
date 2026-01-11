@@ -131,3 +131,34 @@ test("search results highlight the root word with emphasis", async ({ homePage }
         );
     }
 });
+
+test("re-focusing search input re-displays results if query exists", async ({ page, homePage }) => {
+    await homePage.search.query(TEST_QUERIES.valid);
+
+    const results = homePage.search.results;
+    await expect(results).toHaveCount(5);
+    await expect(homePage.search.searchResults).toBeVisible();
+
+    // Click body to hide results
+    await page.click("body");
+    await expect(homePage.search.searchResults).not.toBeVisible();
+
+    // Focus the search input again (query still in input)
+    await homePage.search.searchInput.focus();
+
+    // Wait for API call to complete and results to be visible
+    await expect(homePage.search.searchResults).toBeVisible();
+    await expect(results).toHaveCount(5);
+});
+
+test("re-focusing empty search input does not show results", async ({ page, homePage }) => {
+    // Ensure search input is empty
+    await expect(homePage.search.searchInput).toHaveValue("");
+
+    // Click body then focus input
+    await page.click("body");
+    await homePage.search.searchInput.focus();
+
+    // Results should remain hidden
+    await expect(homePage.search.searchResults).not.toBeVisible();
+});

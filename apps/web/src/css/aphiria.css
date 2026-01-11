@@ -453,14 +453,15 @@ pre div.button-wrapper {
     width: 100%;
 
     button.copy-button {
-        padding: 5px;
-        background: #f1f1f1;
-        border-radius: 5px;
-        color: #444;
-        border: 1px solid #ccc;
+        padding: 3px;
+        background: none;
+        border: none;
+        color: #777;
+        text-align: center;
+        vertical-align: middle;
 
         &:hover {
-            background: #e6e6e6;
+            color: #555;
             cursor: pointer;
         }
     }

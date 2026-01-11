@@ -6,6 +6,7 @@ describe("createKubernetesCluster", () => {
     it("should create cluster with default settings", async () => {
         const result = createKubernetesCluster({
             name: "test-cluster",
+            useStaticKubeconfig: true,
         });
 
         expect(result.cluster).toBeDefined();
@@ -24,6 +25,7 @@ describe("createKubernetesCluster", () => {
     it("should create cluster with custom settings", async () => {
         const result = createKubernetesCluster({
             name: "custom-cluster",
+            useStaticKubeconfig: true,
             region: "sfo3",
             version: "1.34.1-do.0",
             nodeSize: "s-4vcpu-8gb",
@@ -46,6 +48,7 @@ describe("createKubernetesCluster", () => {
     it("should create cluster with tags and labels", async () => {
         const result = createKubernetesCluster({
             name: "tagged-cluster",
+            useStaticKubeconfig: true,
             tags: ["production", "k8s"],
             labels: {
                 environment: "production",
@@ -62,6 +65,7 @@ describe("createKubernetesCluster", () => {
     it("should create cluster with VPC", async () => {
         const result = createKubernetesCluster({
             name: "vpc-cluster",
+            useStaticKubeconfig: true,
             vpcUuid: "mock-vpc-uuid",
         });
 
@@ -74,6 +78,7 @@ describe("createKubernetesCluster", () => {
     it("should use default values when not specified", async () => {
         const result = createKubernetesCluster({
             name: "minimal-cluster",
+            useStaticKubeconfig: true,
         });
 
         expect(result.cluster).toBeDefined();
@@ -101,6 +106,7 @@ describe("createKubernetesCluster", () => {
     it("should create cluster with autoscaling configuration", async () => {
         const result = createKubernetesCluster({
             name: "autoscale-cluster",
+            useStaticKubeconfig: true,
             autoScale: true,
             nodeCount: 2,
             minNodes: 1,
@@ -125,6 +131,7 @@ describe("createKubernetesCluster", () => {
     it("should create cluster with fixed node count when autoscaling is disabled", async () => {
         const result = createKubernetesCluster({
             name: "fixed-cluster",
+            useStaticKubeconfig: true,
             autoScale: false,
             nodeCount: 3,
         });
@@ -141,6 +148,7 @@ describe("createKubernetesCluster", () => {
     it("should disable Server-Side Apply to prevent field manager conflicts", async () => {
         const result = createKubernetesCluster({
             name: "ssa-disabled-cluster",
+            useStaticKubeconfig: true,
         });
 
         expect(result.provider).toBeDefined();

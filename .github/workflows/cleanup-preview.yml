@@ -49,6 +49,9 @@ jobs:
           pulumi stack select preview-base
           CLUSTER_NAME=$(pulumi stack output clusterName --show-secrets)
 
+           # Create .kube directory if it doesn't exist
+          mkdir -p "${HOME}/.kube"
+
           # Fetch fresh kubeconfig from DigitalOcean
           doctl kubernetes cluster kubeconfig show "${CLUSTER_NAME}" > "${HOME}/.kube/config"
           chmod 600 "${HOME}/.kube/config"
