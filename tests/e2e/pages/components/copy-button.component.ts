@@ -19,7 +19,7 @@ export class CopyButton {
 
     async getCodeText(): Promise<string> {
         const codeElement = this.button.locator("..").locator("..").locator("code");
-        return await codeElement.innerText();
+        return (await codeElement.innerText()).trim();
     }
 
     async click(): Promise<void> {
