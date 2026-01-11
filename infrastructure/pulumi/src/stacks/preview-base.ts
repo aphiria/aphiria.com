@@ -8,7 +8,8 @@ import { createStack } from "./lib/stack-factory";
 import { ClusterConfig, PostgreSQLConfig, GrafanaConfig, PrometheusConfig } from "./lib/config/types";
 
 // Read cluster configuration from Pulumi config
-const clusterConfig = new pulumi.Config("cluster").requireObject<ClusterConfig>("");
+const config = new pulumi.Config();
+const clusterConfig = config.requireObject<ClusterConfig>("cluster");
 
 // Create the preview Kubernetes cluster (includes provider)
 const {
@@ -40,7 +41,7 @@ export { clusterId };
 export const kubeconfig = pulumi.secret(clusterKubeconfig);
 
 // Export PostgreSQL credentials for preview-pr to use
-const postgresqlConfig = new pulumi.Config("postgresql").requireObject<PostgreSQLConfig>("");
+const postgresqlConfig = config.requireObject<PostgreSQLConfig>("postgresql");
 export const postgresqlAdminUser = postgresqlConfig.user;
 export const postgresqlAdminPassword = pulumi.secret(postgresqlConfig.password);
 
@@ -49,8 +50,8 @@ if (!stack.namespace) throw new Error("Preview-base stack must create namespace"
 export const postgresqlHost = pulumi.interpolate`db.${stack.namespace.namespace.metadata.name}.svc.cluster.local`;
 
 // Export monitoring resources (created for preview-base, consumed by preview-pr)
-const grafanaConfig = new pulumi.Config("grafana").requireObject<GrafanaConfig>("");
-const prometheusConfig = new pulumi.Config("prometheus").requireObject<PrometheusConfig>("");
+const grafanaConfig = config.requireObject<GrafanaConfig>("grafana");
+const prometheusConfig = config.requireObject<PrometheusConfig>("prometheus");
 export const grafanaHostname = grafanaConfig.hostname;
 export const prometheusEndpoint = stack.monitoring
     ? pulumi.interpolate`http://kube-prometheus-stack-prometheus.monitoring.svc.cluster.local:9090`

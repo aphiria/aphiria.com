@@ -46,6 +46,6 @@ const k8sProvider = new k8s.Provider(
 createStack("preview", k8sProvider);
 
 // Export the PR URLs for GitHub Actions to post as PR comment
-const appConfig = new pulumi.Config("app").requireObject<AppConfig>("");
+const appConfig = config.requireObject<AppConfig>("app");
 export const webUrl = appConfig.web.url;
 export const apiUrl = appConfig.api.url;

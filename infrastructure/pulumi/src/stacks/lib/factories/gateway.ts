@@ -37,8 +37,9 @@ export function createGatewayResources(args: GatewayResourcesArgs): GatewayResou
     const { provider, baseInfrastructure } = args;
 
     // Read configuration
-    const gatewayConfig = new pulumi.Config("gateway").requireObject<GatewayConfig>("");
-    const certManagerConfig = new pulumi.Config("certmanager").getObject<CertManagerConfig>("");
+    const config = new pulumi.Config();
+    const gatewayConfig = config.requireObject<GatewayConfig>("gateway");
+    const certManagerConfig = config.getObject<CertManagerConfig>("certmanager");
 
     const gatewayNamespace = "nginx-gateway";
 

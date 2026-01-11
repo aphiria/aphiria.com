@@ -47,9 +47,10 @@ export function createMonitoringResources(args: MonitoringResourcesArgs): Monito
     const { env, provider } = args;
 
     // Read configuration
-    const monitoringConfig = new pulumi.Config("monitoring").requireObject<MonitoringConfig>("");
-    const prometheusConfig = new pulumi.Config("prometheus").requireObject<PrometheusConfig>("");
-    const grafanaConfig = new pulumi.Config("grafana").requireObject<GrafanaConfig>("");
+    const config = new pulumi.Config();
+    const monitoringConfig = config.requireObject<MonitoringConfig>("monitoring");
+    const prometheusConfig = config.requireObject<PrometheusConfig>("prometheus");
+    const grafanaConfig = config.requireObject<GrafanaConfig>("grafana");
 
     // Create monitoring namespace with ResourceQuota
     const monitoringNamespace = createNamespace({

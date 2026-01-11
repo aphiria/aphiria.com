@@ -15,7 +15,7 @@ import { createGatewayResources, GatewayResources } from "./factories/gateway";
 import { createDatabaseResources, DatabaseResources } from "./factories/database";
 import { createApplicationResources, ApplicationResources } from "./factories/applications";
 import { NamespaceResult } from "../../components/types";
-import { NamespaceConfig, GatewayConfig } from "./config/types";
+import { NamespaceConfig, GatewayConfig, GrafanaConfig, AppConfig } from "./config/types";
 
 /**
  * Stack resources returned by createStack factory
@@ -46,8 +46,8 @@ export function createStack(env: Environment, k8sProvider: k8s.Provider): StackR
 
     // Read all configuration from Pulumi config
     const config = new pulumi.Config();
-    const namespaceConfig = new pulumi.Config("namespace").getObject<NamespaceConfig>("");
-    const gatewayConfig = new pulumi.Config("gateway").requireObject<GatewayConfig>("");
+    const namespaceConfig = config.getObject<NamespaceConfig>("namespace");
+    const gatewayConfig = config.requireObject<GatewayConfig>("gateway");
 
     const gatewayNamespace = "nginx-gateway";
 
@@ -81,7 +81,7 @@ export function createStack(env: Environment, k8sProvider: k8s.Provider): StackR
     }
 
     // Create monitoring stack (if configured)
-    const grafanaConfig = new pulumi.Config("grafana").getObject<{ hostname?: string }>("");
+    const grafanaConfig = config.getObject<GrafanaConfig>("grafana");
     const hasMonitoring = grafanaConfig?.hostname;
     if (hasMonitoring) {
         resources.monitoring = createMonitoringResources({
@@ -108,7 +108,7 @@ export function createStack(env: Environment, k8sProvider: k8s.Provider): StackR
 
     // Deploy applications (skip for preview-base)
     // Check if app config exists
-    const appConfig = new pulumi.Config("app").getObject<{ web?: { url?: string } }>("");
+    const appConfig = config.getObject<AppConfig>("app");
     const hasAppConfig = appConfig?.web?.url;
     if (hasAppConfig) {
         resources.applications = createApplicationResources({

@@ -8,7 +8,8 @@ import { createStack } from "./lib/stack-factory";
 import { ClusterConfig } from "./lib/config/types";
 
 // Read cluster configuration from Pulumi config
-const clusterConfig = new pulumi.Config("cluster").requireObject<ClusterConfig>("");
+const config = new pulumi.Config();
+const clusterConfig = config.requireObject<ClusterConfig>("cluster");
 
 // Create the production Kubernetes cluster
 const { provider: k8sProvider } = createKubernetesCluster({

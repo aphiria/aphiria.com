@@ -55,10 +55,11 @@ export function createApplicationResources(args: ApplicationResourcesArgs): Appl
     const { env, provider, namespace, isPreviewPR, hasNamespaceConfig } = args;
 
     // Read configuration
-    const appConfig = new pulumi.Config("app").requireObject<AppConfig>("");
-    const postgresqlConfig = new pulumi.Config("postgresql").requireObject<PostgreSQLConfig>("");
-    const prometheusConfig = new pulumi.Config("prometheus").requireObject<PrometheusConfig>("");
-    const namespaceConfig = new pulumi.Config("namespace").getObject<NamespaceConfig>("");
+    const config = new pulumi.Config();
+    const appConfig = config.requireObject<AppConfig>("app");
+    const postgresqlConfig = config.requireObject<PostgreSQLConfig>("postgresql");
+    const prometheusConfig = config.requireObject<PrometheusConfig>("prometheus");
+    const namespaceConfig = config.getObject<NamespaceConfig>("namespace");
 
     const gatewayNamespace = "nginx-gateway";
 

@@ -35,7 +35,8 @@ export interface DatabaseResourcesArgs {
 export function createDatabaseResources(args: DatabaseResourcesArgs): DatabaseResources {
     const { provider, namespace } = args;
 
-    const postgresqlConfig = new pulumi.Config("postgresql").requireObject<PostgreSQLConfig>("");
+    const config = new pulumi.Config();
+    const postgresqlConfig = config.requireObject<PostgreSQLConfig>("postgresql");
 
     const resources: DatabaseResources = {};
 
