@@ -27,20 +27,26 @@ class DocSearch {
         this.debounceMs = debounceMs;
         this.previousQuery = null;
         this.debounceTimer = null;
+        this.resultsVisible = false;
         this.clickOutsideHandler = this.handleClickOutside.bind(this);
 
         this.attachEventListeners();
     }
 
+    get currentQuery() {
+        return this.input.value.trim();
+    }
+
     attachEventListeners() {
         this.input.addEventListener('keyup', () => this.handleInput());
+        this.input.addEventListener('focus', () => this.handleFocus());
         window.addEventListener('keydown', (e) => this.handleKeyboardNavigation(e));
     }
 
     handleInput() {
         clearTimeout(this.debounceTimer);
 
-        const query = this.input.value.trim();
+        const query = this.currentQuery;
 
         if (query.length === 0) {
             this.hide();
@@ -52,6 +58,37 @@ class DocSearch {
         }
 
         this.debounceTimer = setTimeout(() => this.performSearch(query), this.debounceMs);
+    }
+
+    handleFocus() {
+        const query = this.currentQuery;
+
+        // Re-fetch results if there's a query but results are hidden
+        if (query.length > 0 && !this.resultsVisible) {
+            this.performSearch(query);
+        }
+    }
+
+    handleClickOutside(event) {
+        if (!this.input.contains(event.target) && !this.results.contains(event.target)) {
+            this.hide();
+        }
+    }
+
+    handleKeyboardNavigation(event) {
+        if (!this.isVisible() || this.hasNoResults()) {
+            return;
+        }
+
+        const { key } = event;
+
+        if (key === 'ArrowUp') {
+            this.navigateUp();
+        } else if (key === 'ArrowDown') {
+            this.navigateDown();
+        } else if (key === 'Enter') {
+            this.selectResult();
+        }
     }
 
     async performSearch(query) {
@@ -79,12 +116,56 @@ class DocSearch {
         this.show();
     }
 
+    show() {
+        this.results.style.display = 'block';
+        this.resultsVisible = true;
+        document.addEventListener('click', this.clickOutsideHandler);
+    }
+
+    hide() {
+        this.results.style.display = 'none';
+        this.resultsVisible = false;
+        document.removeEventListener('click', this.clickOutsideHandler);
+    }
+
+    navigateUp() {
+        const current = this.results.querySelector('li.selected');
+
+        if (current) {
+            current.classList.remove('selected');
+        }
+
+        const target = current?.previousElementSibling ?? this.results.lastElementChild;
+        target?.classList.add('selected');
+    }
+
+    navigateDown() {
+        const current = this.results.querySelector('li.selected');
+
+        if (current) {
+            current.classList.remove('selected');
+        }
+
+        const target = current?.nextElementSibling ?? this.results.firstElementChild;
+        target?.classList.add('selected');
+    }
+
+    selectResult() {
+        const selected = this.results.querySelector('li.selected a');
+        const firstResult = this.results.querySelector('li a');
+        const link = selected ?? firstResult;
+
+        if (link) {
+            window.location = link.href;
+        }
+    }
+
     /**
      * @param {Object} result - Search result object
      * @param {string} result.htmlElementType - HTML element type (h1-h5)
      * @param {string} result.highlightedInnerText - Highlighted search result text
      * @param {string} result.link - URL to the result
-     * @returns {string} HTML string for search result
+     * @returns {string} HTML string for search the result
      */
     formatSearchResult(result) {
         const context = this.buildResultContext(result);
@@ -121,39 +202,6 @@ class DocSearch {
         return `<span class="search-result-context">${contextParts.join(' > ')}</span>`;
     }
 
-    show() {
-        this.results.style.display = 'block';
-        document.addEventListener('click', this.clickOutsideHandler);
-    }
-
-    hide() {
-        this.results.style.display = 'none';
-        document.removeEventListener('click', this.clickOutsideHandler);
-        this.previousQuery = null;
-    }
-
-    handleClickOutside(event) {
-        if (!this.input.contains(event.target) && !this.results.contains(event.target)) {
-            this.hide();
-        }
-    }
-
-    handleKeyboardNavigation(event) {
-        if (!this.isVisible() || this.hasNoResults()) {
-            return;
-        }
-
-        const { key } = event;
-
-        if (key === 'ArrowUp') {
-            this.navigateUp();
-        } else if (key === 'ArrowDown') {
-            this.navigateDown();
-        } else if (key === 'Enter') {
-            this.selectResult();
-        }
-    }
-
     isVisible() {
         const display = this.results.style.display;
         return display !== '' && display !== 'none';
@@ -161,38 +209,6 @@ class DocSearch {
 
     hasNoResults() {
         return this.results.querySelector('.no-results') !== null;
-    }
-
-    navigateUp() {
-        const current = this.results.querySelector('li.selected');
-
-        if (current) {
-            current.classList.remove('selected');
-        }
-
-        const target = current?.previousElementSibling ?? this.results.lastElementChild;
-        target?.classList.add('selected');
-    }
-
-    navigateDown() {
-        const current = this.results.querySelector('li.selected');
-
-        if (current) {
-            current.classList.remove('selected');
-        }
-
-        const target = current?.nextElementSibling ?? this.results.firstElementChild;
-        target?.classList.add('selected');
-    }
-
-    selectResult() {
-        const selected = this.results.querySelector('li.selected a');
-        const firstResult = this.results.querySelector('li a');
-        const link = selected ?? firstResult;
-
-        if (link) {
-            window.location = link.href;
-        }
     }
 }
 
