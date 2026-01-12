@@ -13,7 +13,6 @@ describe("createDatabaseCreationJob", () => {
 
     it("should create database creation job with valid database name", async () => {
         const job = createDatabaseCreationJob({
-            env: "preview",
             namespace: "preview-pr-123",
             databaseName: "aphiria_pr_123",
             dbHost: "db.default.svc.cluster.local",
@@ -35,7 +34,6 @@ describe("createDatabaseCreationJob", () => {
     it("should reject invalid database name with special characters", () => {
         expect(() => {
             createDatabaseCreationJob({
-                env: "preview",
                 namespace: "preview-pr-123",
                 databaseName: "aphiria-pr-123",
                 dbHost: "db.default.svc.cluster.local",
@@ -50,7 +48,6 @@ describe("createDatabaseCreationJob", () => {
         const longName = "a".repeat(64);
         expect(() => {
             createDatabaseCreationJob({
-                env: "preview",
                 namespace: "preview-pr-123",
                 databaseName: longName,
                 dbHost: "db.default.svc.cluster.local",
@@ -63,7 +60,6 @@ describe("createDatabaseCreationJob", () => {
 
     it("should accept database name with underscores and alphanumeric characters", async () => {
         const job = createDatabaseCreationJob({
-            env: "preview",
             namespace: "preview-pr-456",
             databaseName: "aphiria_pr_123_test",
             dbHost: "db.default.svc.cluster.local",
@@ -80,7 +76,6 @@ describe("createDatabaseCreationJob", () => {
 
     it("should merge custom labels with default labels", async () => {
         const job = createDatabaseCreationJob({
-            env: "preview",
             namespace: "preview-pr-789",
             databaseName: "aphiria_pr_123",
             dbHost: "db.default.svc.cluster.local",

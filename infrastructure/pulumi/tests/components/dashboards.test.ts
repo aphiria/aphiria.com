@@ -1,7 +1,6 @@
 import { describe, it, expect, beforeAll } from "@jest/globals";
 import * as k8s from "@pulumi/kubernetes";
 import { createDashboards } from "../../src/components/dashboards";
-import * as path from "path";
 import { promiseOf } from "../test-utils";
 
 describe("createDashboards", () => {
@@ -11,11 +10,17 @@ describe("createDashboards", () => {
         k8sProvider = new k8s.Provider("test", {});
     });
 
+    const sampleDashboard = JSON.stringify({
+        uid: "test-dashboard",
+        title: "Test Dashboard",
+        panels: [],
+    });
+
     it("should create ConfigMap with name grafana-dashboards", async () => {
-        const dashboardDir = path.join(__dirname, "../../dashboards");
+        const dashboards = { "test.json": sampleDashboard };
         const result = createDashboards({
             namespace: "monitoring",
-            dashboardDir,
+            dashboards,
             provider: k8sProvider,
         });
 
@@ -27,10 +32,10 @@ describe("createDashboards", () => {
     });
 
     it("should create ConfigMap in monitoring namespace", async () => {
-        const dashboardDir = path.join(__dirname, "../../dashboards");
+        const dashboards = { "test.json": sampleDashboard };
         const result = createDashboards({
             namespace: "monitoring",
-            dashboardDir,
+            dashboards,
             provider: k8sProvider,
         });
 
@@ -39,10 +44,10 @@ describe("createDashboards", () => {
     });
 
     it("should include grafana_dashboard label for provisioning discovery", async () => {
-        const dashboardDir = path.join(__dirname, "../../dashboards");
+        const dashboards = { "test.json": sampleDashboard };
         const result = createDashboards({
             namespace: "monitoring",
-            dashboardDir,
+            dashboards,
             provider: k8sProvider,
         });
 
@@ -52,10 +57,14 @@ describe("createDashboards", () => {
     });
 
     it("should include all dashboard JSON files as data entries", async () => {
-        const dashboardDir = path.join(__dirname, "../../dashboards");
+        const dashboards = {
+            "cluster-overview.json": sampleDashboard,
+            "resource-utilization.json": sampleDashboard,
+            "api-performance.json": sampleDashboard,
+        };
         const result = createDashboards({
             namespace: "monitoring",
-            dashboardDir,
+            dashboards,
             provider: k8sProvider,
         });
 
@@ -65,15 +74,13 @@ describe("createDashboards", () => {
         expect(data!["cluster-overview.json"]).toBeDefined();
         expect(data!["resource-utilization.json"]).toBeDefined();
         expect(data!["api-performance.json"]).toBeDefined();
-        expect(data!["error-rates.json"]).toBeDefined();
-        expect(data!["namespace-service.json"]).toBeDefined();
     });
 
     it("should contain valid JSON content for dashboards", async () => {
-        const dashboardDir = path.join(__dirname, "../../dashboards");
+        const dashboards = { "test.json": sampleDashboard };
         const result = createDashboards({
             namespace: "monitoring",
-            dashboardDir,
+            dashboards,
             provider: k8sProvider,
         });
 
@@ -94,10 +101,10 @@ describe("createDashboards", () => {
     });
 
     it("should handle custom namespace", async () => {
-        const dashboardDir = path.join(__dirname, "../../dashboards");
+        const dashboards = { "test.json": sampleDashboard };
         const result = createDashboards({
             namespace: "custom-monitoring",
-            dashboardDir,
+            dashboards,
             provider: k8sProvider,
         });
 
@@ -106,10 +113,10 @@ describe("createDashboards", () => {
     });
 
     it("should include component labels", async () => {
-        const dashboardDir = path.join(__dirname, "../../dashboards");
+        const dashboards = { "test.json": sampleDashboard };
         const result = createDashboards({
             namespace: "monitoring",
-            dashboardDir,
+            dashboards,
             provider: k8sProvider,
         });
 
@@ -119,31 +126,18 @@ describe("createDashboards", () => {
         expect(metadata.labels!["app.kubernetes.io/component"]).toBe("monitoring");
     });
 
-    it("should throw error for invalid JSON files", () => {
-        // Create a temporary directory with invalid JSON
-        const tempDir = path.join(__dirname, "../../../dashboards-invalid-test");
-        const fs = require("fs");
+    it("should throw error for invalid JSON content", () => {
+        const invalidDashboards = {
+            "invalid.json": "{ invalid json }",
+        };
 
-        try {
-            // Create temp directory and invalid JSON file
-            if (!fs.existsSync(tempDir)) {
-                fs.mkdirSync(tempDir, { recursive: true });
-            }
-            fs.writeFileSync(path.join(tempDir, "invalid.json"), "{ invalid json }");
-
-            // Expect createDashboards to throw
-            expect(() => {
-                createDashboards({
-                    namespace: "monitoring",
-                    dashboardDir: tempDir,
-                    provider: k8sProvider,
-                });
-            }).toThrow(/Invalid JSON in dashboard file invalid.json/);
-        } finally {
-            // Clean up temp directory
-            if (fs.existsSync(tempDir)) {
-                fs.rmSync(tempDir, { recursive: true, force: true });
-            }
-        }
+        // Expect createDashboards to throw
+        expect(() => {
+            createDashboards({
+                namespace: "monitoring",
+                dashboards: invalidDashboards,
+                provider: k8sProvider,
+            });
+        }).toThrow(/Invalid JSON in dashboard invalid.json/);
     });
 });

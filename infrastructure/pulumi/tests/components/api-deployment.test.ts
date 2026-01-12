@@ -40,8 +40,6 @@ describe("createAPIDeployment", () => {
             webUrl: "https://www.aphiria.com",
             apiUrl: "https://api.aphiria.com",
             logLevel: "debug",
-            cookieDomain: ".aphiria.com",
-            cookieSecure: false,
             prometheusAuthToken: pulumi.output("test-token"),
             resources: standardApiResources,
             provider: k8sProvider,
@@ -65,7 +63,8 @@ describe("createAPIDeployment", () => {
 
     it("should create PodDisruptionBudget when configured", async () => {
         const result = createAPIDeployment({
-            env: "production",
+            appEnv: "local",
+            imagePullPolicy: "Never",
             namespace: "prod-ns",
             replicas: 2,
             image: "ghcr.io/aphiria/aphiria.com-api@sha256:abc123",
@@ -76,8 +75,6 @@ describe("createAPIDeployment", () => {
             webUrl: "https://www.aphiria.com",
             apiUrl: "https://api.aphiria.com",
             logLevel: "warning",
-            cookieDomain: ".aphiria.com",
-            cookieSecure: true,
             prometheusAuthToken: pulumi.output("test-token"),
             podDisruptionBudget: {
                 minAvailable: 1,
@@ -98,7 +95,8 @@ describe("createAPIDeployment", () => {
 
     it("should not create PodDisruptionBudget when not configured", () => {
         const result = createAPIDeployment({
-            env: "local",
+            appEnv: "local",
+            imagePullPolicy: "Never",
             namespace: "default",
             replicas: 1,
             image: "ghcr.io/aphiria/aphiria.com-api:latest",
@@ -109,8 +107,6 @@ describe("createAPIDeployment", () => {
             webUrl: "https://www.aphiria.com",
             apiUrl: "https://api.aphiria.com",
             logLevel: "debug",
-            cookieDomain: ".aphiria.com",
-            cookieSecure: false,
             prometheusAuthToken: pulumi.output("test-token"),
             resources: standardApiResources,
             provider: k8sProvider,
@@ -121,7 +117,8 @@ describe("createAPIDeployment", () => {
 
     it("should handle production environment", () => {
         const result = createAPIDeployment({
-            env: "production",
+            appEnv: "local",
+            imagePullPolicy: "Never",
             namespace: "default",
             replicas: 2,
             image: "ghcr.io/aphiria/aphiria.com-api@sha256:abc123",
@@ -132,8 +129,6 @@ describe("createAPIDeployment", () => {
             webUrl: "https://www.aphiria.com",
             apiUrl: "https://api.aphiria.com",
             logLevel: "warning",
-            cookieDomain: ".aphiria.com",
-            cookieSecure: true,
             prometheusAuthToken: pulumi.output("test-token"),
             resources: standardApiResources,
             provider: k8sProvider,
@@ -144,7 +139,8 @@ describe("createAPIDeployment", () => {
 
     it("should include PR_NUMBER when provided", async () => {
         const result = createAPIDeployment({
-            env: "preview",
+            appEnv: "local",
+            imagePullPolicy: "Never",
             namespace: "preview-pr-123",
             replicas: 1,
             image: "ghcr.io/aphiria/aphiria.com-api:latest",
@@ -155,8 +151,6 @@ describe("createAPIDeployment", () => {
             webUrl: "https://pr-123.pr.aphiria.com",
             apiUrl: "https://pr-123.pr-api.aphiria.com",
             logLevel: "debug",
-            cookieDomain: ".pr.aphiria.com",
-            cookieSecure: true,
             prometheusAuthToken: pulumi.output("test-token"),
             prNumber: "123",
             resources: standardApiResources,
@@ -171,7 +165,8 @@ describe("createAPIDeployment", () => {
 
     it("should handle custom resource limits", () => {
         const result = createAPIDeployment({
-            env: "production",
+            appEnv: "local",
+            imagePullPolicy: "Never",
             namespace: "default",
             replicas: 2,
             image: "ghcr.io/aphiria/aphiria.com-api@sha256:abc123",
@@ -182,8 +177,6 @@ describe("createAPIDeployment", () => {
             webUrl: "https://www.aphiria.com",
             apiUrl: "https://api.aphiria.com",
             logLevel: "warning",
-            cookieDomain: ".aphiria.com",
-            cookieSecure: true,
             prometheusAuthToken: pulumi.output("test-token"),
             resources: {
                 nginx: {
@@ -207,7 +200,8 @@ describe("createAPIDeployment", () => {
 
     it("should handle imagePullSecrets", async () => {
         const result = createAPIDeployment({
-            env: "production",
+            appEnv: "local",
+            imagePullPolicy: "Never",
             namespace: "secure-ns",
             replicas: 2,
             image: "ghcr.io/aphiria/aphiria.com-api@sha256:abc123",
@@ -218,8 +212,6 @@ describe("createAPIDeployment", () => {
             webUrl: "https://www.aphiria.com",
             apiUrl: "https://api.aphiria.com",
             logLevel: "warning",
-            cookieDomain: ".aphiria.com",
-            cookieSecure: true,
             prometheusAuthToken: pulumi.output("test-token"),
             imagePullSecrets: ["ghcr-pull-secret"],
             resources: standardApiResources,
@@ -234,7 +226,8 @@ describe("createAPIDeployment", () => {
 
     it("should set cookieSecure to 0 when explicitly disabled", async () => {
         const result = createAPIDeployment({
-            env: "local",
+            appEnv: "local",
+            imagePullPolicy: "Never",
             namespace: "local-ns",
             replicas: 1,
             image: "ghcr.io/aphiria/aphiria.com-api:latest",
@@ -245,8 +238,6 @@ describe("createAPIDeployment", () => {
             webUrl: "https://www.aphiria.com",
             apiUrl: "https://api.aphiria.com",
             logLevel: "debug",
-            cookieDomain: ".aphiria.com",
-            cookieSecure: false,
             prometheusAuthToken: pulumi.output("test-token"),
             resources: standardApiResources,
             provider: k8sProvider,
@@ -260,7 +251,8 @@ describe("createAPIDeployment", () => {
 
     it("should set cookieSecure to 1 when explicitly enabled", async () => {
         const result = createAPIDeployment({
-            env: "production",
+            appEnv: "local",
+            imagePullPolicy: "Never",
             namespace: "prod-ns",
             replicas: 2,
             image: "ghcr.io/aphiria/aphiria.com-api@sha256:abc123",
@@ -271,8 +263,6 @@ describe("createAPIDeployment", () => {
             webUrl: "https://www.aphiria.com",
             apiUrl: "https://api.aphiria.com",
             logLevel: "warning",
-            cookieDomain: ".aphiria.com",
-            cookieSecure: true,
             prometheusAuthToken: pulumi.output("test-token"),
             resources: standardApiResources,
             provider: k8sProvider,
@@ -286,7 +276,8 @@ describe("createAPIDeployment", () => {
 
     it("should create Service for ServiceMonitor compatibility", async () => {
         const result = createAPIDeployment({
-            env: "local",
+            appEnv: "local",
+            imagePullPolicy: "Never",
             namespace: "test-ns",
             replicas: 1,
             image: "ghcr.io/aphiria/aphiria.com-api:latest",
@@ -297,8 +288,6 @@ describe("createAPIDeployment", () => {
             webUrl: "https://www.aphiria.com",
             apiUrl: "https://api.aphiria.com",
             logLevel: "debug",
-            cookieDomain: ".aphiria.com",
-            cookieSecure: false,
             prometheusAuthToken: pulumi.output("test-token"),
             resources: standardApiResources,
             provider: k8sProvider,

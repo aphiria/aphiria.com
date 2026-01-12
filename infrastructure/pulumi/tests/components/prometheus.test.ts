@@ -12,11 +12,24 @@ describe("createPrometheus", () => {
 
     it("should create all required Prometheus resources", (done) => {
         const result = createPrometheus({
-            env: "production",
             namespace: "monitoring",
+            replicas: 1,
+            resources: {
+                requests: { cpu: "100m", memory: "256Mi" },
+                limits: { cpu: "500m", memory: "512Mi" },
+            },
             retentionTime: "7d",
             storageSize: "10Gi",
             scrapeInterval: "15s",
+            evaluationInterval: "15s",
+            imageVersion: "v2.45.0",
+            environment: "test",
+            scrapeConfigs: [],
+            rules: [],
+            rbac: {
+                serviceAccountName: "prometheus",
+                clusterRoleName: "prometheus",
+            },
             provider: k8sProvider,
         });
 
@@ -33,10 +46,24 @@ describe("createPrometheus", () => {
 
     it("should create ServiceAccount with correct namespace", async () => {
         const result = createPrometheus({
-            env: "preview",
             namespace: "monitoring",
+            replicas: 1,
+            resources: {
+                requests: { cpu: "100m", memory: "256Mi" },
+                limits: { cpu: "500m", memory: "512Mi" },
+            },
             retentionTime: "7d",
             storageSize: "10Gi",
+            scrapeInterval: "15s",
+            evaluationInterval: "15s",
+            imageVersion: "v2.45.0",
+            environment: "test",
+            scrapeConfigs: [],
+            rules: [],
+            rbac: {
+                serviceAccountName: "prometheus",
+                clusterRoleName: "prometheus",
+            },
             provider: k8sProvider,
         });
 
@@ -47,10 +74,24 @@ describe("createPrometheus", () => {
 
     it("should create PVC with correct storage size", async () => {
         const result = createPrometheus({
-            env: "local",
             namespace: "monitoring",
+            replicas: 1,
+            resources: {
+                requests: { cpu: "100m", memory: "256Mi" },
+                limits: { cpu: "500m", memory: "512Mi" },
+            },
             retentionTime: "7d",
             storageSize: "20Gi",
+            scrapeInterval: "15s",
+            evaluationInterval: "15s",
+            imageVersion: "v2.45.0",
+            environment: "test",
+            scrapeConfigs: [],
+            rules: [],
+            rbac: {
+                serviceAccountName: "prometheus",
+                clusterRoleName: "prometheus",
+            },
             provider: k8sProvider,
         });
 
@@ -61,10 +102,24 @@ describe("createPrometheus", () => {
 
     it("should use default scrape interval when not specified", (done) => {
         const result = createPrometheus({
-            env: "production",
             namespace: "monitoring",
+            replicas: 1,
+            resources: {
+                requests: { cpu: "100m", memory: "256Mi" },
+                limits: { cpu: "500m", memory: "512Mi" },
+            },
             retentionTime: "7d",
             storageSize: "10Gi",
+            scrapeInterval: "30s",
+            evaluationInterval: "30s",
+            imageVersion: "v2.45.0",
+            environment: "test",
+            scrapeConfigs: [],
+            rules: [],
+            rbac: {
+                serviceAccountName: "prometheus",
+                clusterRoleName: "prometheus",
+            },
             provider: k8sProvider,
         });
 
@@ -74,10 +129,24 @@ describe("createPrometheus", () => {
 
     it("should apply custom labels to resources", async () => {
         const result = createPrometheus({
-            env: "production",
             namespace: "monitoring",
+            replicas: 1,
+            resources: {
+                requests: { cpu: "100m", memory: "256Mi" },
+                limits: { cpu: "500m", memory: "512Mi" },
+            },
             retentionTime: "7d",
             storageSize: "10Gi",
+            scrapeInterval: "30s",
+            evaluationInterval: "30s",
+            imageVersion: "v2.45.0",
+            environment: "prod",
+            scrapeConfigs: [],
+            rules: [],
+            rbac: {
+                serviceAccountName: "prometheus",
+                clusterRoleName: "prometheus",
+            },
             labels: {
                 team: "platform",
                 environment: "prod",
@@ -91,10 +160,24 @@ describe("createPrometheus", () => {
 
     it("should create ClusterRole with read-only permissions", async () => {
         const result = createPrometheus({
-            env: "production",
             namespace: "monitoring",
+            replicas: 1,
+            resources: {
+                requests: { cpu: "100m", memory: "256Mi" },
+                limits: { cpu: "500m", memory: "512Mi" },
+            },
             retentionTime: "7d",
             storageSize: "10Gi",
+            scrapeInterval: "30s",
+            evaluationInterval: "30s",
+            imageVersion: "v2.45.0",
+            environment: "test",
+            scrapeConfigs: [],
+            rules: [],
+            rbac: {
+                serviceAccountName: "prometheus",
+                clusterRoleName: "prometheus",
+            },
             provider: k8sProvider,
         });
 
@@ -104,10 +187,24 @@ describe("createPrometheus", () => {
 
     it("should create Service with correct port", async () => {
         const result = createPrometheus({
-            env: "preview",
             namespace: "monitoring",
+            replicas: 1,
+            resources: {
+                requests: { cpu: "100m", memory: "256Mi" },
+                limits: { cpu: "500m", memory: "512Mi" },
+            },
             retentionTime: "7d",
             storageSize: "10Gi",
+            scrapeInterval: "30s",
+            evaluationInterval: "30s",
+            imageVersion: "v2.45.0",
+            environment: "test",
+            scrapeConfigs: [],
+            rules: [],
+            rbac: {
+                serviceAccountName: "prometheus",
+                clusterRoleName: "prometheus",
+            },
             provider: k8sProvider,
         });
 
@@ -118,11 +215,24 @@ describe("createPrometheus", () => {
 
     it("should tag metrics with environment label", (done) => {
         const result = createPrometheus({
-            env: "local",
             namespace: "monitoring",
+            replicas: 1,
+            resources: {
+                requests: { cpu: "100m", memory: "256Mi" },
+                limits: { cpu: "500m", memory: "512Mi" },
+            },
             retentionTime: "7d",
             storageSize: "5Gi",
             scrapeInterval: "30s",
+            evaluationInterval: "30s",
+            imageVersion: "v2.45.0",
+            environment: "test",
+            scrapeConfigs: [],
+            rules: [],
+            rbac: {
+                serviceAccountName: "prometheus",
+                clusterRoleName: "prometheus",
+            },
             provider: k8sProvider,
         });
 

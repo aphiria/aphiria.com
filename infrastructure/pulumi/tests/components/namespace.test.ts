@@ -13,8 +13,8 @@ describe("createNamespace", () => {
 
     it("should create namespace with basic configuration", async () => {
         const result = createNamespace({
+            environmentLabel: "test",
             name: "test-namespace",
-            env: "preview",
             provider: k8sProvider,
         });
 
@@ -30,14 +30,14 @@ describe("createNamespace", () => {
         expect(name).toBe("test-namespace");
         expect(labels).toMatchObject({
             "app.kubernetes.io/name": "aphiria",
-            "app.kubernetes.io/environment": "preview",
+            "app.kubernetes.io/environment": "test",
         });
     });
 
     it("should create namespace with ResourceQuota", async () => {
         const result = createNamespace({
+            environmentLabel: "test",
             name: "quota-namespace",
-            env: "preview",
             resourceQuota: {
                 cpu: "2",
                 memory: "4Gi",
@@ -67,8 +67,8 @@ describe("createNamespace", () => {
 
     it("should create namespace with NetworkPolicy", async () => {
         const result = createNamespace({
+            environmentLabel: "test",
             name: "netpol-namespace",
-            env: "preview",
             networkPolicy: {
                 allowDNS: true,
                 allowHTTPS: true,
@@ -93,8 +93,8 @@ describe("createNamespace", () => {
 
     it("should create namespace with imagePullSecret", async () => {
         const result = createNamespace({
+            environmentLabel: "test",
             name: "secret-namespace",
-            env: "preview",
             imagePullSecret: {
                 registry: "ghcr.io",
                 username: pulumi.output("user"),
@@ -118,8 +118,8 @@ describe("createNamespace", () => {
 
     it("should merge custom labels with default labels", async () => {
         const result = createNamespace({
+            environmentLabel: "test",
             name: "preview-pr-123",
-            env: "preview",
             resourceQuota: {
                 cpu: "2",
                 memory: "4Gi",
@@ -160,7 +160,7 @@ describe("createNamespace", () => {
         expect(nsName).toBe("preview-pr-123");
         expect(nsLabels).toMatchObject({
             "app.kubernetes.io/name": "aphiria",
-            "app.kubernetes.io/environment": "preview",
+            "app.kubernetes.io/environment": "test",
             "pr-number": "123",
             team: "platform",
         });
@@ -171,8 +171,8 @@ describe("createNamespace", () => {
 
     it("should use Namespace.get() for default namespace instead of creating it", async () => {
         const result = createNamespace({
+            environmentLabel: "test",
             name: "default",
-            env: "production",
             imagePullSecret: {
                 registry: "ghcr.io",
                 username: pulumi.output("user"),
