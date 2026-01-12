@@ -18,7 +18,7 @@ describe("createGrafanaAlerts", () => {
             expr: 'rate(container_cpu_usage_seconds_total{namespace!="kube-system"}[5m])',
             threshold: "> 0.8",
             reduceFunction: "last",
-            for: "5m",
+            for: "10m",
             labels: { severity: "warning", environment },
             annotations: {
                 summary: "High CPU usage detected",
@@ -31,7 +31,7 @@ describe("createGrafanaAlerts", () => {
             expr: 'sum by (pod, namespace) (container_memory_working_set_bytes{namespace!="kube-system"}) / sum by (pod, namespace) (kube_pod_container_resource_limits{resource="memory", namespace!="kube-system"} > 0)',
             threshold: "> 0.9",
             reduceFunction: "last",
-            for: "5m",
+            for: "10m",
             labels: { severity: "warning", environment },
             annotations: {
                 summary: "High memory usage detected",
@@ -41,7 +41,7 @@ describe("createGrafanaAlerts", () => {
         {
             uid: "high_api_latency",
             title: "High API Latency",
-            expr: 'histogram_quantile(0.95, sum(rate(app_http_request_duration_seconds_bucket{job="api"}[5m])) by (le))',
+            expr: 'histogram_quantile(0.95, sum(rate(app_http_request_duration_seconds_bucket{job="api"}[5m])) by (le)) - 1',
             threshold: "> 0.5",
             reduceFunction: "last",
             for: "5m",
@@ -54,7 +54,7 @@ describe("createGrafanaAlerts", () => {
         {
             uid: "high_api_4xx_rate",
             title: "High API 4xx Rate",
-            expr: 'sum(rate(app_http_requests_total{status=~"4.."}[5m])) / sum(rate(app_http_requests_total[5m]))',
+            expr: '(sum(rate(app_http_requests_total{job="api",status=~"4.."}[5m])) or vector(0)) / sum(rate(app_http_requests_total{job="api"}[5m]))',
             threshold: "> 0.1",
             reduceFunction: "last",
             for: "5m",
@@ -67,7 +67,7 @@ describe("createGrafanaAlerts", () => {
         {
             uid: "high_api_5xx_rate",
             title: "High API 5xx Rate",
-            expr: 'sum(rate(app_http_requests_total{status=~"5.."}[5m])) / sum(rate(app_http_requests_total[5m]))',
+            expr: '(sum(rate(app_http_requests_total{job="api",status=~"5.."}[5m])) or vector(0)) / sum(rate(app_http_requests_total{job="api"}[5m]))',
             threshold: "> 0.05",
             reduceFunction: "last",
             for: "5m",
@@ -80,7 +80,7 @@ describe("createGrafanaAlerts", () => {
         {
             uid: "pod_crash_looping",
             title: "Pod Crash Looping",
-            expr: "rate(kube_pod_container_status_restarts_total[15m]) > 0",
+            expr: 'sum(kube_pod_container_status_waiting_reason{reason="CrashLoopBackOff", namespace!="kube-system"}) or vector(0)',
             threshold: "> 0",
             reduceFunction: "last",
             for: "5m",
@@ -93,7 +93,7 @@ describe("createGrafanaAlerts", () => {
         {
             uid: "pod_failed",
             title: "Pod Failed",
-            expr: 'kube_pod_status_phase{phase="Failed"} > 0',
+            expr: 'sum(kube_pod_status_phase{phase="Failed", namespace!="kube-system"} > 0) or vector(0)',
             threshold: "> 0",
             reduceFunction: "last",
             for: "5m",
