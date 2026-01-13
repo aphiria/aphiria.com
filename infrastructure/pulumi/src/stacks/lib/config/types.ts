@@ -254,3 +254,27 @@ export interface GrafanaConfig {
     replicas: number;
     resources: ResourceRequirements;
 }
+
+/**
+ * Utility type for creating deep partial types (all properties optional at all nesting levels)
+ */
+export type DeepPartial<T> = {
+    [P in keyof T]?: T[P] extends object ? DeepPartial<T[P]> : T[P];
+};
+
+/**
+ * Configuration overrides structure
+ *
+ * Used for stack-specific config overrides via the 'overrides' key in Pulumi.{stack}.yaml
+ * Each property is a deep partial of the corresponding config type, allowing selective
+ * override of nested properties without duplicating the entire config object.
+ */
+export interface ConfigOverrides {
+    app?: DeepPartial<AppConfig>;
+    postgresql?: DeepPartial<PostgreSQLConfig>;
+    prometheus?: DeepPartial<PrometheusConfig>;
+    grafana?: DeepPartial<GrafanaConfig>;
+    gateway?: DeepPartial<GatewayConfig>;
+    namespace?: DeepPartial<NamespaceConfig>;
+    monitoring?: DeepPartial<MonitoringConfig>;
+}

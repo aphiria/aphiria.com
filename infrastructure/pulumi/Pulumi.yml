@@ -95,7 +95,7 @@ config:
       persistentStorage: true
       storageSize: "20Gi"
       useHostPath: false
-      dbHost: "db.default.svc.cluster.local"
+      host: "db.default.svc.cluster.local"
       resources:
         requests:
           cpu: "100m"

@@ -2,40 +2,39 @@ environment:
   - aphiria.com/Preview
 
 config:
-  aphiria-com-infrastructure:cluster:
-    name: "aphiria-com-preview-cluster"
-
-  aphiria-com-infrastructure:gateway:
-    domains:
-      - "*.pr.aphiria.com"
-      - "*.pr-api.aphiria.com"
-      - "pr-grafana.aphiria.com"
-    requireRootAndWildcard: false
-    dns:
-      domain: "aphiria.com"
-      records:
-        - name: "*.pr"
-          resourceName: "preview-web-dns"
-        - name: "*.pr-api"
-          resourceName: "preview-api-dns"
-        - name: "pr-grafana"
-          resourceName: "preview-grafana-dns"
-      ttl: 300
-
-  aphiria-com-infrastructure:prometheus:
-    retentionTime: "14d"
-    resources:
-      limits:
-        cpu: "1000m"
-        memory: "1Gi"
-
-  aphiria-com-infrastructure:grafana:
-    hostname: "pr-grafana.aphiria.com"
-    defaultReceiver: "local-notifications"
-    ingressSectionName: "https-root"
-    resources:
-      requests:
-        memory: "512Mi"
-      limits:
-        cpu: "500m"
-        memory: "1Gi"
+  # Stack-specific overrides for preview-base
+  aphiria-com-infrastructure:overrides:
+    cluster:
+      name: "aphiria-com-preview-cluster"
+    gateway:
+      domains:
+        - "*.pr.aphiria.com"
+        - "*.pr-api.aphiria.com"
+        - "pr-grafana.aphiria.com"
+      requireRootAndWildcard: false
+      dns:
+        domain: "aphiria.com"
+        records:
+          - name: "*.pr"
+            resourceName: "preview-web-dns"
+          - name: "*.pr-api"
+            resourceName: "preview-api-dns"
+          - name: "pr-grafana"
+            resourceName: "preview-grafana-dns"
+        ttl: 300
+    prometheus:
+      retentionTime: "14d"
+      resources:
+        limits:
+          cpu: "1000m"
+          memory: "1Gi"
+    grafana:
+      hostname: "pr-grafana.aphiria.com"
+      defaultReceiver: "local-notifications"
+      ingressSectionName: "https-root"
+      resources:
+        requests:
+          memory: "512Mi"
+        limits:
+          cpu: "500m"
+          memory: "1Gi"
