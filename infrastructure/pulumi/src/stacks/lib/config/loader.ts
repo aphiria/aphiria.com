@@ -118,7 +118,7 @@ export function deepMerge<T>(base: T, overrides: DeepPartial<T> | undefined, pat
  * @returns Merged configuration for the current stack
  */
 export function loadConfig(): Config {
-    const config = new pulumi.Config();
+    const config = new pulumi.Config("aphiria-com-infrastructure");
 
     // Load stack-specific overrides (optional)
     const overrides = config.getObject<ConfigOverrides>("overrides") || {};
