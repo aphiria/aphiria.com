@@ -85,7 +85,7 @@ describe("createApplicationResources", () => {
     const postgresqlConfig: PostgreSQLConfig = {
         user: "postgres",
         password: "test-password",
-        dbHost: "db",
+        host: "db",
         databaseName: "postgres",
         resources: {
             requests: { cpu: "500m", memory: "512Mi" },

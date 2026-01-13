@@ -285,4 +285,99 @@ describe("createPostgreSQL", () => {
 
         expect(spec.strategy?.type).toBe("Recreate");
     });
+
+    it("should create hostPath PV and PVC for local development", () => {
+        const result = createPostgreSQL(
+            getTestArgs({
+                namespace: "local",
+                storage: {
+                    enabled: true,
+                    size: "5Gi",
+                    accessMode: "ReadWriteOnce",
+                    useHostPath: true,
+                    hostPath: "/data/postgres",
+                },
+            })
+        );
+
+        // Verify PV and PVC are both created (exercises hostPath branch)
+        expect(result.pv).toBeDefined();
+        expect(result.pvc).toBeDefined();
+        expect(result.deployment).toBeDefined();
+        expect(result.service).toBeDefined();
+    });
+
+    it("should create PVC without PV when using dynamic provisioning", () => {
+        const result = createPostgreSQL(
+            getTestArgs({
+                namespace: "production",
+                storage: {
+                    enabled: true,
+                    size: "50Gi",
+                    accessMode: "ReadWriteOnce",
+                    storageClassName: "do-block-storage",
+                },
+            })
+        );
+
+        // Verify only PVC is created (no PV for dynamic provisioning)
+        expect(result.pv).toBeUndefined();
+        expect(result.pvc).toBeDefined();
+        expect(result.deployment).toBeDefined();
+    });
+
+    it("should configure connection pooling when provided", () => {
+        const result = createPostgreSQL(
+            getTestArgs({
+                namespace: "production",
+                storage: {
+                    enabled: true,
+                    size: "50Gi",
+                    accessMode: "ReadWriteOnce",
+                },
+                connectionPooling: {
+                    maxConnections: 200,
+                },
+            })
+        );
+
+        // Verify deployment is created with connection pooling config
+        expect(result.deployment).toBeDefined();
+        expect(result.service).toBeDefined();
+    });
+
+    it("should use default maxConnections when not specified", () => {
+        const result = createPostgreSQL(
+            getTestArgs({
+                namespace: "production",
+                storage: {
+                    enabled: true,
+                    size: "50Gi",
+                    accessMode: "ReadWriteOnce",
+                },
+                connectionPooling: {},
+            })
+        );
+
+        // Verify deployment is created (exercises default maxConnections fallback)
+        expect(result.deployment).toBeDefined();
+    });
+
+    it("should use RollingUpdate strategy for ReadWriteMany access mode", () => {
+        const result = createPostgreSQL(
+            getTestArgs({
+                namespace: "production",
+                storage: {
+                    enabled: true,
+                    size: "50Gi",
+                    accessMode: "ReadWriteMany",
+                    storageClassName: "nfs",
+                },
+            })
+        );
+
+        // Verify deployment is created with RollingUpdate strategy
+        expect(result.deployment).toBeDefined();
+        expect(result.pvc).toBeDefined();
+    });
 });

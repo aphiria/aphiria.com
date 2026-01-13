@@ -27,7 +27,7 @@ describe("createDatabaseResources", () => {
         const postgresqlConfig: PostgreSQLConfig = {
             user: "postgres",
             password: "test-password",
-            dbHost: "db",
+            host: "db",
             resources: {
                 requests: { cpu: "500m", memory: "512Mi" },
                 limits: { cpu: "500m", memory: "512Mi" },
@@ -294,7 +294,7 @@ describe("createDatabaseResources", () => {
             password: "admin-password",
             createDatabase: true,
             databaseName: "aphiria_pr_123",
-            dbHost: "db.preview-base.svc.cluster.local",
+            host: "db.preview-base.svc.cluster.local",
             resources: {
                 requests: { cpu: "100m", memory: "128Mi" },
                 limits: { cpu: "200m", memory: "256Mi" },

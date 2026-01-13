@@ -40,7 +40,7 @@ describe("Types", () => {
                 user: "postgres",
                 password: "secret",
                 useHostPath: false,
-                dbHost: "db.default.svc.cluster.local",
+                host: "db.default.svc.cluster.local",
                 resources: {
                     requests: { cpu: "100m", memory: "128Mi" },
                     limits: { cpu: "200m", memory: "256Mi" },
@@ -59,7 +59,7 @@ describe("Types", () => {
                 user: "postgres",
                 password: "secret",
                 useHostPath: false,
-                dbHost: "db.default.svc.cluster.local",
+                host: "db.default.svc.cluster.local",
                 resources: {
                     requests: { cpu: "100m", memory: "128Mi" },
                     limits: { cpu: "200m", memory: "256Mi" },

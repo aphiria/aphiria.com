@@ -72,7 +72,7 @@ export function createApplicationResources(args: ApplicationResourcesArgs): Appl
 
     // Determine database connection details
     const createDatabase = postgresqlConfig.createDatabase;
-    const dbHost = postgresqlConfig.dbHost;
+    const dbHost = postgresqlConfig.host;
 
     // databaseName is required when createDatabase is true (preview-PR pattern)
     if (createDatabase && !postgresqlConfig.databaseName) {

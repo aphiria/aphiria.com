@@ -98,7 +98,7 @@ export interface PrometheusResult {
     statefulSet: pulumi.Output<k8s.types.output.meta.v1.ObjectMeta>;
     service: pulumi.Output<k8s.types.output.meta.v1.ObjectMeta>;
     pvc: pulumi.Output<k8s.types.output.meta.v1.ObjectMeta>;
-    configMap: pulumi.Output<k8s.types.output.meta.v1.ObjectMeta>;
+    configMap: k8s.core.v1.ConfigMap;
     serviceAccount: pulumi.Output<k8s.types.output.meta.v1.ObjectMeta>;
     clusterRole: pulumi.Output<k8s.types.output.meta.v1.ObjectMeta>;
     clusterRoleBinding: pulumi.Output<k8s.types.output.meta.v1.ObjectMeta>;
@@ -232,20 +232,12 @@ ${scrapeConfigs
             ) {
                 lines.push(`    ${key}: ${value}`);
             } else if (Array.isArray(value)) {
+                // All typed arrays in PrometheusScrapeConfig contain objects, not primitives
                 lines.push(`    ${key}:`);
                 value.forEach((item) => {
-                    if (typeof item === "object") {
-                        lines.push(
-                            `      - ${JSON.stringify(item).replace(/"/g, "").replace(/:/g, ": ").replace(/,/g, "\n        ")}`
-                        );
-                    } else {
-                        lines.push(`      - ${item}`);
-                    }
-                });
-            } else if (typeof value === "object" && value !== null) {
-                lines.push(`    ${key}:`);
-                Object.entries(value).forEach(([k, v]) => {
-                    lines.push(`      ${k}: ${v}`);
+                    lines.push(
+                        `      - ${JSON.stringify(item).replace(/"/g, "").replace(/:/g, ": ").replace(/,/g, "\n        ")}`
+                    );
                 });
             }
         });
@@ -416,7 +408,7 @@ ${scrapeConfigs
         statefulSet: statefulSet.metadata,
         service: service.metadata,
         pvc: pvc.metadata,
-        configMap: configMap.metadata,
+        configMap,
         serviceAccount: serviceAccount.metadata,
         clusterRole: clusterRole.metadata,
         clusterRoleBinding: clusterRoleBinding.metadata,

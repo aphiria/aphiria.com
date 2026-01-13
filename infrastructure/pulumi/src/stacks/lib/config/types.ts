@@ -51,7 +51,7 @@ export interface PostgreSQLConfig {
     storageSize: string;
     useHostPath: boolean;
     hostPath?: string;
-    dbHost: string;
+    host: string;
     resources: ResourceRequirements;
     createDatabase?: boolean;
     databaseName?: string;

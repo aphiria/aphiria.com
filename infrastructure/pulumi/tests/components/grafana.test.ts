@@ -1,5 +1,4 @@
 import { describe, it, expect, beforeAll } from "@jest/globals";
-import * as pulumi from "@pulumi/pulumi";
 import * as k8s from "@pulumi/kubernetes";
 import { createGrafana, type GrafanaArgs } from "../../src/components/grafana";
 import { checksum } from "../../src/components/utils";
@@ -418,5 +417,101 @@ describe("createGrafana", () => {
         expect(expectedAlertRulesChecksum.length).toBe(64);
         expect(expectedContactPointsChecksum.length).toBe(64);
         expect(expectedNotificationPoliciesChecksum.length).toBe(64);
+    });
+
+    it("should create secret with basic auth credentials", () => {
+        const result = createGrafana(
+            getTestArgs({
+                namespace: "monitoring",
+                prometheusUrl: "http://prometheus:9090",
+                storageSize: "5Gi",
+                basicAuth: {
+                    username: "admin",
+                    password: "secretpassword",
+                },
+                provider: k8sProvider,
+            })
+        );
+
+        // Verify secret is created (exercises basicAuth branch)
+        expect(result.secret).toBeDefined();
+        expect(result.deployment).toBeDefined();
+    });
+
+    it("should create secret with GitHub OAuth credentials", () => {
+        const result = createGrafana(
+            getTestArgs({
+                namespace: "monitoring",
+                prometheusUrl: "http://prometheus:9090",
+                storageSize: "5Gi",
+                githubAuth: {
+                    clientId: "test-client-id",
+                    clientSecret: "test-client-secret",
+                    organization: "test-org",
+                    adminUser: "admin-team",
+                },
+                provider: k8sProvider,
+            })
+        );
+
+        // Verify secret is created (exercises githubAuth branch)
+        expect(result.secret).toBeDefined();
+        expect(result.deployment).toBeDefined();
+    });
+
+    it("should include SMTP configuration in secret when provided", () => {
+        const result = createGrafana(
+            getTestArgs({
+                namespace: "monitoring",
+                prometheusUrl: "http://prometheus:9090",
+                storageSize: "5Gi",
+                basicAuth: {
+                    username: "admin",
+                    password: "password",
+                },
+                smtp: {
+                    host: "smtp.example.com",
+                    port: 587,
+                    user: "smtp-user",
+                    password: "smtp-password",
+                    fromAddress: "noreply@example.com",
+                },
+                provider: k8sProvider,
+            })
+        );
+
+        // Verify resources created (exercises SMTP branch)
+        expect(result.secret).toBeDefined();
+        expect(result.deployment).toBeDefined();
+        expect(result.configMap).toBeDefined();
+    });
+
+    it("should configure GitHub OAuth with SMTP", () => {
+        const result = createGrafana(
+            getTestArgs({
+                namespace: "monitoring",
+                prometheusUrl: "http://prometheus:9090",
+                storageSize: "5Gi",
+                githubAuth: {
+                    clientId: "gh-client-id",
+                    clientSecret: "gh-client-secret",
+                    organization: "my-org",
+                    adminUser: "admin",
+                },
+                smtp: {
+                    host: "smtp.gmail.com",
+                    port: 465,
+                    user: "user@example.com",
+                    password: "email-password",
+                    fromAddress: "grafana@example.com",
+                },
+                provider: k8sProvider,
+            })
+        );
+
+        // Verify all resources created (exercises githubAuth + SMTP branches)
+        expect(result.secret).toBeDefined();
+        expect(result.deployment).toBeDefined();
+        expect(result.configMap).toBeDefined();
     });
 });

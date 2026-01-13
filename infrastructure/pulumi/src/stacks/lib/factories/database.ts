@@ -43,7 +43,7 @@ export function createDatabaseResources(args: DatabaseResourcesArgs): DatabaseRe
         resources.dbInitJob = createDatabaseCreationJob({
             namespace,
             databaseName: postgresqlConfig.databaseName,
-            dbHost: postgresqlConfig.dbHost,
+            dbHost: postgresqlConfig.host,
             dbAdminUser: postgresqlConfig.user,
             dbAdminPassword: postgresqlConfig.password,
             provider,
