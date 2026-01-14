@@ -158,7 +158,7 @@ export function createMonitoringResources(args: MonitoringResourcesArgs): Monito
         {
             uid: "high_cpu_usage",
             title: "High CPU Usage",
-            expr: 'rate(container_cpu_usage_seconds_total{namespace!="kube-system"}[5m])',
+            expr: "rate(container_cpu_usage_seconds_total[5m])",
             threshold: "> 0.8",
             reduceFunction: "last",
             for: "10m",
@@ -175,7 +175,7 @@ export function createMonitoringResources(args: MonitoringResourcesArgs): Monito
         {
             uid: "high_memory_usage",
             title: "High Memory Usage",
-            expr: 'sum by (pod, namespace) (container_memory_working_set_bytes{namespace!="kube-system"}) / sum by (pod, namespace) (kube_pod_container_resource_limits{resource="memory", namespace!="kube-system"} > 0)',
+            expr: 'sum by (pod, namespace) (container_memory_working_set_bytes) / sum by (pod, namespace) (kube_pod_container_resource_limits{resource="memory"} > 0)',
             threshold: "> 0.9",
             reduceFunction: "last",
             for: "10m",
@@ -243,7 +243,7 @@ export function createMonitoringResources(args: MonitoringResourcesArgs): Monito
         {
             uid: "pod_crash_looping",
             title: "Pod Crash Looping",
-            expr: 'sum(kube_pod_container_status_waiting_reason{reason="CrashLoopBackOff", namespace!="kube-system"}) or vector(0)',
+            expr: 'sum(kube_pod_container_status_waiting_reason{reason="CrashLoopBackOff"}) or vector(0)',
             threshold: "> 0",
             reduceFunction: "last",
             for: "5m",
@@ -259,7 +259,7 @@ export function createMonitoringResources(args: MonitoringResourcesArgs): Monito
         {
             uid: "pod_failed",
             title: "Pod Failed",
-            expr: 'sum(kube_pod_status_phase{phase="Failed", namespace!="kube-system"} > 0) or vector(0)',
+            expr: 'sum(kube_pod_status_phase{phase="Failed"} > 0) or vector(0)',
             threshold: "> 0",
             reduceFunction: "last",
             for: "5m",
