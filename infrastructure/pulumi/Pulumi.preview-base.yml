@@ -23,7 +23,6 @@ config:
             resourceName: "preview-grafana-dns"
         ttl: 300
     prometheus:
-      retentionTime: "14d"
       resources:
         limits:
           cpu: "1000m"

@@ -20,9 +20,9 @@ config:
       surgeUpgrade: false
       ha: false
       nodeSize: "s-2vcpu-2gb"
-      nodeCount: 1
+      nodeCount: 2
       autoScale: true
-      minNodes: 1
+      minNodes: 2
       maxNodes: 4
       vpcUuid: "976f980d-dc84-11e8-80bc-3cfdfea9fba1"
 
@@ -66,10 +66,10 @@ config:
           php:
             requests:
               cpu: "100m"
-              memory: "128Mi"
+              memory: "192Mi"
             limits:
               cpu: "200m"
-              memory: "256Mi"
+              memory: "384Mi"
         podDisruptionBudget:
           minAvailable: 1
       migration:
@@ -122,16 +122,16 @@ config:
 
   prometheus:
     value:
-      scrapeInterval: "15s"
+      scrapeInterval: "60s"
       storageSize: "10Gi"
-      retentionTime: "7d"
+      retentionTime: "3d"
       resources:
         requests:
           cpu: "250m"
-          memory: "512Mi"
+          memory: "768Mi"
         limits:
           cpu: "1000m"
-          memory: "1Gi"
+          memory: "2Gi"
       operator:
         resources:
           requests:
