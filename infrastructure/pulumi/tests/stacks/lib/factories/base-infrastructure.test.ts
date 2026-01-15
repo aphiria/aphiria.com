@@ -44,10 +44,10 @@ describe("createBaseInfrastructureResources", () => {
                 provider: k8sProvider,
             });
 
-            expect(result.gatewayClass).toBeDefined();
+            expect(result.gatewayApiCrds).toBeDefined();
         });
 
-        it("should call installBaseHelmCharts with CRD and GatewayClass dependencies for local", () => {
+        it("should call installBaseHelmCharts with CRD dependencies for local", () => {
             (installBaseHelmCharts as jest.Mock).mockReturnValue({
                 certManager: {},
                 nginxGateway: {},
@@ -62,12 +62,11 @@ describe("createBaseInfrastructureResources", () => {
                 expect.objectContaining({
                     env: "local",
                     provider: k8sProvider,
-                    nginxGatewayDependencies: expect.arrayContaining([
-                        result.gatewayApiCrds,
-                        result.gatewayClass,
-                    ]),
+                    nginxGatewayDependencies: expect.arrayContaining([result.gatewayApiCrds]),
                 })
             );
+            const callArgs = (installBaseHelmCharts as jest.Mock).mock.calls[0][0];
+            expect(callArgs.nginxGatewayDependencies).toHaveLength(1);
         });
 
         it("should install Helm charts with correct environment for local", () => {
@@ -132,7 +131,7 @@ describe("createBaseInfrastructureResources", () => {
                 provider: k8sProvider,
             });
 
-            expect(result.gatewayClass).toBeUndefined();
+            expect(result.gatewayApiCrds).toBeUndefined();
         });
 
         it("should call installBaseHelmCharts without dependencies for preview", () => {
@@ -206,7 +205,7 @@ describe("createBaseInfrastructureResources", () => {
             expect(result.gatewayApiCrds).toBeUndefined();
         });
 
-        it("should not create GatewayClass for production environment", () => {
+        it("should not create GatewayClass for production environment (Helm chart creates it)", () => {
             (installBaseHelmCharts as jest.Mock).mockReturnValue({
                 certManager: {},
                 nginxGateway: {},
@@ -217,7 +216,8 @@ describe("createBaseInfrastructureResources", () => {
                 provider: k8sProvider,
             });
 
-            expect(result.gatewayClass).toBeUndefined();
+            // GatewayClass is created by Helm chart, not by Pulumi code
+            expect(result.gatewayApiCrds).toBeUndefined();
         });
 
         it("should call installBaseHelmCharts without dependencies for production", () => {

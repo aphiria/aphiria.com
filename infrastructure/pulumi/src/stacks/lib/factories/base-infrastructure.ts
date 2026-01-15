@@ -8,7 +8,6 @@ import { installBaseHelmCharts } from "../../../components";
 export interface BaseInfrastructureResources {
     helmCharts: { certManager: k8s.helm.v4.Chart; nginxGateway: k8s.helm.v4.Chart };
     gatewayApiCrds?: k8s.yaml.ConfigFile;
-    gatewayClass?: k8s.apiextensions.CustomResource;
 }
 
 /**
@@ -36,7 +35,7 @@ export function createBaseInfrastructureResources(
 
     const baseInfrastructure: Partial<BaseInfrastructureResources> = {};
 
-    // For local environment: Install Gateway API CRDs and GatewayClass first
+    // For local environment: Install Gateway API CRDs first
     // DigitalOcean Kubernetes (preview/production) pre-installs these via Cilium
     if (env === "local") {
         const gatewayApiCrds = new k8s.yaml.ConfigFile(
@@ -49,36 +48,15 @@ export function createBaseInfrastructureResources(
             }
         );
 
-        // Create GatewayClass for nginx-gateway-fabric
-        // NOTE: nginx-gateway-fabric Helm chart does NOT create the GatewayClass
-        // The controller expects it to exist and will manage Gateway resources that reference it
-        const gatewayClass = new k8s.apiextensions.CustomResource(
-            "nginx-gatewayclass",
-            {
-                apiVersion: "gateway.networking.k8s.io/v1",
-                kind: "GatewayClass",
-                metadata: {
-                    name: "nginx",
-                },
-                spec: {
-                    controllerName: "gateway.nginx.org/nginx-gateway-controller",
-                },
-            },
-            {
-                provider,
-                dependsOn: [gatewayApiCrds],
-            }
-        );
-
-        // Install Helm charts with nginx-gateway depending on CRDs and GatewayClass
+        // Install Helm charts with nginx-gateway depending on CRDs
+        // NOTE: nginx-gateway-fabric Helm chart creates the GatewayClass automatically
         baseInfrastructure.helmCharts = installBaseHelmCharts({
             env,
             provider,
-            nginxGatewayDependencies: [gatewayApiCrds, gatewayClass],
+            nginxGatewayDependencies: [gatewayApiCrds],
         });
 
         baseInfrastructure.gatewayApiCrds = gatewayApiCrds;
-        baseInfrastructure.gatewayClass = gatewayClass;
     } else {
         // Preview/Production: No CRDs needed, just install Helm charts
         baseInfrastructure.helmCharts = installBaseHelmCharts({
