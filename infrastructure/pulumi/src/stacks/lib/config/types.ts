@@ -270,6 +270,7 @@ export type DeepPartial<T> = {
  * override of nested properties without duplicating the entire config object.
  */
 export interface ConfigOverrides {
+    cluster?: DeepPartial<ClusterConfig>;
     app?: DeepPartial<AppConfig>;
     postgresql?: DeepPartial<PostgreSQLConfig>;
     prometheus?: DeepPartial<PrometheusConfig>;

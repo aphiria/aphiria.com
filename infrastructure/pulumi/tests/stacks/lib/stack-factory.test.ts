@@ -6,6 +6,7 @@ import { createStack } from "../../../src/stacks/lib/stack-factory";
 // Mock all the dependencies
 jest.mock("../../../src/stacks/lib/config/loader");
 jest.mock("../../../src/stacks/lib/factories/base-infrastructure");
+jest.mock("../../../src/stacks/lib/factories/provider");
 jest.mock("../../../src/stacks/lib/factories/gateway");
 jest.mock("../../../src/stacks/lib/factories/database");
 jest.mock("../../../src/stacks/lib/factories/applications");
@@ -14,6 +15,7 @@ jest.mock("../../../src/components");
 
 import { loadConfig } from "../../../src/stacks/lib/config/loader";
 import { createBaseInfrastructureResources } from "../../../src/stacks/lib/factories/base-infrastructure";
+import { createProvider } from "../../../src/stacks/lib/factories/provider";
 import { createGatewayResources } from "../../../src/stacks/lib/factories/gateway";
 import { createDatabaseResources } from "../../../src/stacks/lib/factories/database";
 import { createApplicationResources } from "../../../src/stacks/lib/factories/applications";
@@ -33,6 +35,12 @@ describe("createStack", () => {
         k8sProvider = new k8s.Provider("test", {});
 
         // Default mock implementations
+        (createProvider as jest.Mock).mockReturnValue({
+            provider: k8sProvider,
+            cluster: {},
+            clusterId: "test-cluster-id",
+            kubeconfig: "test-kubeconfig",
+        });
         (createBaseInfrastructureResources as jest.Mock).mockReturnValue({
             certManager: {},
             nginxGateway: {},
@@ -64,7 +72,7 @@ describe("createStack", () => {
                 prometheus: {},
             });
 
-            createStack("local", k8sProvider);
+            createStack("local");
 
             expect(createBaseInfrastructureResources).toHaveBeenCalledWith(
                 expect.objectContaining({
@@ -84,7 +92,7 @@ describe("createStack", () => {
                 prometheus: {},
             });
 
-            createStack("local", k8sProvider);
+            createStack("local");
 
             expect(createGatewayResources).toHaveBeenCalledWith(
                 expect.objectContaining({
@@ -108,7 +116,7 @@ describe("createStack", () => {
                 prometheus: {},
             });
 
-            createStack("local", k8sProvider);
+            createStack("local");
 
             expect(createDatabaseResources).toHaveBeenCalledWith(
                 expect.objectContaining({
@@ -129,7 +137,7 @@ describe("createStack", () => {
                 prometheus: { storageSize: "10Gi" },
             });
 
-            createStack("local", k8sProvider);
+            createStack("local");
 
             expect(createMonitoringResources).toHaveBeenCalledWith(
                 expect.objectContaining({
@@ -149,7 +157,7 @@ describe("createStack", () => {
                 prometheus: {},
             });
 
-            createStack("local", k8sProvider);
+            createStack("local");
 
             expect(createWWWRedirectRoute).toHaveBeenCalledWith(
                 expect.objectContaining({
@@ -171,7 +179,7 @@ describe("createStack", () => {
                 prometheus: {},
             });
 
-            createStack("local", k8sProvider);
+            createStack("local");
 
             expect(createHTTPSRedirectRoute).toHaveBeenCalledWith(
                 expect.objectContaining({
@@ -190,7 +198,7 @@ describe("createStack", () => {
                 prometheus: {},
             });
 
-            createStack("local", k8sProvider);
+            createStack("local");
 
             expect(createNamespace).not.toHaveBeenCalled();
         });
@@ -208,7 +216,7 @@ describe("createStack", () => {
                 prometheus: {},
             });
 
-            createStack("preview", k8sProvider);
+            createStack("preview");
 
             expect(createBaseInfrastructureResources).toHaveBeenCalledWith(
                 expect.objectContaining({
@@ -232,7 +240,7 @@ describe("createStack", () => {
                 prometheus: {},
             });
 
-            createStack("preview", k8sProvider);
+            createStack("preview");
 
             expect(createNamespace).toHaveBeenCalledWith(
                 expect.objectContaining({
@@ -255,7 +263,7 @@ describe("createStack", () => {
                 prometheus: {},
             });
 
-            createStack("preview", k8sProvider);
+            createStack("preview");
 
             expect(createApplicationResources).toHaveBeenCalledWith(
                 expect.objectContaining({
@@ -276,7 +284,7 @@ describe("createStack", () => {
                 prometheus: {},
             });
 
-            createStack("preview", k8sProvider);
+            createStack("preview");
 
             expect(createWWWRedirectRoute).not.toHaveBeenCalled();
         });
@@ -292,7 +300,7 @@ describe("createStack", () => {
                 prometheus: {},
             });
 
-            createStack("preview", k8sProvider);
+            createStack("preview");
 
             expect(createHTTPSRedirectRoute).toHaveBeenCalledWith(
                 expect.objectContaining({
@@ -316,7 +324,7 @@ describe("createStack", () => {
                 prometheus: {},
             });
 
-            createStack("production", k8sProvider);
+            createStack("production");
 
             expect(createBaseInfrastructureResources).not.toHaveBeenCalled();
         });
@@ -334,7 +342,7 @@ describe("createStack", () => {
                 prometheus: {},
             });
 
-            createStack("production", k8sProvider);
+            createStack("production");
 
             expect(createGatewayResources).not.toHaveBeenCalled();
         });
@@ -352,7 +360,7 @@ describe("createStack", () => {
                 prometheus: {},
             });
 
-            createStack("production", k8sProvider);
+            createStack("production");
 
             expect(createDatabaseResources).toHaveBeenCalledWith(
                 expect.objectContaining({
@@ -382,7 +390,7 @@ describe("createStack", () => {
                 prometheus: {},
             });
 
-            createStack("production", k8sProvider);
+            createStack("production");
 
             expect(createImagePullSecret).toHaveBeenCalledWith(
                 expect.objectContaining({
@@ -407,7 +415,7 @@ describe("createStack", () => {
                 prometheus: {},
             });
 
-            createStack("production", k8sProvider);
+            createStack("production");
 
             expect(createWWWRedirectRoute).not.toHaveBeenCalled();
             expect(createHTTPSRedirectRoute).not.toHaveBeenCalled();
@@ -425,7 +433,7 @@ describe("createStack", () => {
                 prometheus: {},
             });
 
-            const stack = createStack("local", k8sProvider);
+            const stack = createStack("local");
 
             expect(createApplicationResources).not.toHaveBeenCalled();
             expect(stack.applications).toBeUndefined();
@@ -445,7 +453,7 @@ describe("createStack", () => {
                 prometheus: {},
             });
 
-            createStack("local", k8sProvider);
+            createStack("local");
 
             expect(createApplicationResources).toHaveBeenCalledWith(
                 expect.objectContaining({
@@ -465,7 +473,7 @@ describe("createStack", () => {
                 postgresql: { user: "postgres", password: pulumi.output("password") },
             });
 
-            const stack = createStack("local", k8sProvider);
+            const stack = createStack("local");
 
             expect(createMonitoringResources).not.toHaveBeenCalled();
             expect(stack.monitoring).toBeUndefined();
@@ -489,7 +497,7 @@ describe("createStack", () => {
                 prometheus: {},
             });
 
-            createStack("preview", k8sProvider);
+            createStack("preview");
 
             // Should NOT call createImagePullSecret because namespace creation handles it
             expect(createImagePullSecret).not.toHaveBeenCalled();
@@ -515,7 +523,7 @@ describe("createStack", () => {
                 resourceQuota: {},
             });
 
-            createStack("preview", k8sProvider);
+            createStack("preview");
 
             // Verify namespace was passed to factories
             const dbCall = (createDatabaseResources as jest.Mock).mock.calls[0][0];
@@ -535,7 +543,7 @@ describe("createStack", () => {
                 prometheus: {},
             });
 
-            createStack("local", k8sProvider);
+            createStack("local");
 
             expect(createDatabaseResources).toHaveBeenCalledWith(
                 expect.objectContaining({

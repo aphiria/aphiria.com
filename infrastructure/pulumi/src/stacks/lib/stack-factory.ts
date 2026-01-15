@@ -1,4 +1,6 @@
+import * as pulumi from "@pulumi/pulumi";
 import * as k8s from "@pulumi/kubernetes";
+import * as digitalocean from "@pulumi/digitalocean";
 import { Environment } from "./types";
 import {
     createNamespace,
@@ -14,6 +16,7 @@ import {
 import { createGatewayResources, GatewayResources } from "./factories/gateway";
 import { createDatabaseResources, DatabaseResources } from "./factories/database";
 import { createApplicationResources, ApplicationResources } from "./factories/applications";
+import { createProvider, ProviderResult } from "./factories/provider";
 import { NamespaceResult } from "../../components/types";
 import { loadConfig } from "./config/loader";
 
@@ -21,6 +24,11 @@ import { loadConfig } from "./config/loader";
  * Stack resources returned by createStack factory
  */
 export interface StackResources {
+    // Cluster info (only populated for stacks that create clusters: preview-base, production)
+    cluster?: digitalocean.KubernetesCluster;
+    clusterId?: pulumi.Output<string>;
+    kubeconfig?: pulumi.Output<string>;
+
     baseInfrastructure?: BaseInfrastructureResources;
     gateway?: GatewayResources;
     database?: DatabaseResources;
@@ -36,17 +44,35 @@ export interface StackResources {
  * Creates a complete infrastructure stack based on configuration
  *
  * This factory function centralizes all infrastructure creation logic,
- * eliminating duplication across local, preview-base, preview-pr, and production stacks.
+ * including cluster provisioning (for environments that need it).
  *
  * @param env Environment name (local, preview, production)
- * @param k8sProvider Kubernetes provider for resource creation
+ * @param k8sProvider Optional pre-configured Kubernetes provider (for preview-pr)
  * @returns Object containing all created resources
  */
-export function createStack(env: Environment, k8sProvider: k8s.Provider): StackResources {
+export function createStack(env: Environment, k8sProvider?: k8s.Provider): StackResources {
     const resources: StackResources = {};
 
     // Load configuration
     const config = loadConfig();
+
+    // Get or create provider
+    let provider: k8s.Provider;
+    let providerResult: ProviderResult | undefined;
+
+    if (k8sProvider) {
+        // Explicit provider passed (local, preview-pr)
+        provider = k8sProvider;
+    } else {
+        // No provider - create cluster (preview-base, production)
+        providerResult = createProvider(env as "preview" | "production");
+        provider = providerResult.provider;
+
+        // Populate cluster info
+        resources.cluster = providerResult.cluster;
+        resources.clusterId = providerResult.clusterId;
+        resources.kubeconfig = providerResult.kubeconfig;
+    }
 
     const gatewayNamespace = "nginx-gateway";
 
@@ -58,7 +84,7 @@ export function createStack(env: Environment, k8sProvider: k8s.Provider): StackR
             resourceQuota: config.namespace.resourceQuota,
             networkPolicy: config.namespace.networkPolicy,
             imagePullSecret: config.namespace.imagePullSecret,
-            provider: k8sProvider,
+            provider,
         });
     }
 
@@ -74,7 +100,7 @@ export function createStack(env: Environment, k8sProvider: k8s.Provider): StackR
             registry: config.namespace.imagePullSecret.registry,
             username: config.namespace.imagePullSecret.username,
             token: config.namespace.imagePullSecret.token,
-            provider: k8sProvider,
+            provider,
         });
         resources.imagePullSecret = result.secret;
     }
@@ -86,7 +112,7 @@ export function createStack(env: Environment, k8sProvider: k8s.Provider): StackR
     if (!config.skipBaseInfrastructure) {
         resources.baseInfrastructure = createBaseInfrastructureResources({
             env,
-            provider: k8sProvider,
+            provider,
         });
     }
 
@@ -95,7 +121,7 @@ export function createStack(env: Environment, k8sProvider: k8s.Provider): StackR
     if (hasMonitoring) {
         resources.monitoring = createMonitoringResources({
             env,
-            provider: k8sProvider,
+            provider,
             monitoringConfig: config.monitoring!,
             prometheusConfig: config.prometheus!,
             grafanaConfig: config.grafana!,
@@ -105,7 +131,7 @@ export function createStack(env: Environment, k8sProvider: k8s.Provider): StackR
     // Create database (shared PostgreSQL instance OR per-PR database)
     resources.database = createDatabaseResources({
         env,
-        provider: k8sProvider,
+        provider,
         namespace,
         postgresqlConfig: config.postgresql!,
     });
@@ -114,7 +140,7 @@ export function createStack(env: Environment, k8sProvider: k8s.Provider): StackR
     if (!config.skipBaseInfrastructure) {
         resources.gateway = createGatewayResources({
             env,
-            provider: k8sProvider,
+            provider,
             gatewayConfig: config.gateway!,
             baseInfrastructure: resources.baseInfrastructure,
         });
@@ -126,7 +152,7 @@ export function createStack(env: Environment, k8sProvider: k8s.Provider): StackR
     if (hasAppConfig) {
         resources.applications = createApplicationResources({
             env,
-            provider: k8sProvider,
+            provider,
             namespace,
             isPreviewPR,
             hasNamespaceConfig: !!config.namespace,
@@ -150,7 +176,7 @@ export function createStack(env: Environment, k8sProvider: k8s.Provider): StackR
             // Skip http-root listener when WWW redirect exists to avoid conflicts
             // WWW redirect handles: http://aphiria.com → https://www.aphiria.com (single hop)
             skipRootListener: hasWWWRedirect,
-            provider: k8sProvider,
+            provider,
         });
 
         // Root domain → www redirect (only for environments using aphiria.com root domain)
@@ -161,7 +187,7 @@ export function createStack(env: Environment, k8sProvider: k8s.Provider): StackR
                 gatewayNamespace: gatewayNamespace,
                 rootDomain: "aphiria.com",
                 wwwDomain: "www.aphiria.com",
-                provider: k8sProvider,
+                provider,
             });
         }
     }

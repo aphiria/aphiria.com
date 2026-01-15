@@ -7,6 +7,7 @@ import {
     GatewayConfig,
     NamespaceConfig,
     MonitoringConfig,
+    ClusterConfig,
     ConfigOverrides,
     DeepPartial,
 } from "./types";
@@ -15,7 +16,10 @@ import {
  * All configuration read from Pulumi config
  */
 export interface Config {
-    // Domain configuration
+    // Infrastructure configuration
+    cluster?: ClusterConfig;
+
+    // Application configuration
     app?: AppConfig;
     postgresql?: PostgreSQLConfig;
     prometheus?: PrometheusConfig;
@@ -124,7 +128,10 @@ export function loadConfig(): Config {
     const overrides = config.getObject<ConfigOverrides>("overrides") || {};
 
     return {
-        // Domain configuration - merge base with overrides
+        // Infrastructure configuration - merge base with overrides
+        cluster: deepMerge(config.getObject<ClusterConfig>("cluster"), overrides.cluster),
+
+        // Application configuration - merge base with overrides
         app: deepMerge(config.getObject<AppConfig>("app"), overrides.app),
         postgresql: deepMerge(
             config.getObject<PostgreSQLConfig>("postgresql"),

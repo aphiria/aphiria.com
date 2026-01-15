@@ -37,7 +37,6 @@ const k8sProvider = new k8s.Provider(
     }
 );
 
-// Create the stack - all configuration is read from Pulumi config set by CI/CD
 createStack("preview", k8sProvider);
 
 // Export the PR URLs for GitHub Actions to post as PR comment
