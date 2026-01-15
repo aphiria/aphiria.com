@@ -167,12 +167,9 @@ export function installKubePrometheusStack(
             repositoryOpts: {
                 repo: args.repository,
             },
-            // Skip waiting for resources to be ready to avoid deadlock:
-            // Operator Deployment needs Secret from webhook Jobs, but Jobs run via Helm hooks
-            // which only execute after chart upgrade completes. Setting skipAwait breaks this cycle.
-            skipAwait: true,
             // v4 Chart installs CRDs by default (skipCrds: false is default)
             // This properly handles the CRD subchart dependency
+            // Note: Admission webhooks are disabled in monitoring.ts to avoid Helm hook issues
             values: {
                 // Enable CRD subchart dependency (required for kube-prometheus-stack)
                 // The chart has a "crds" subchart that is conditionally included
