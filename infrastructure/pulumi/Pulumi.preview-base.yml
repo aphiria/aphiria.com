@@ -2,7 +2,7 @@ environment:
   - aphiria.com/Preview
 
 config:
-  # Stack-specific overrides for preview-base
+  # Preview base-specific overrides
   aphiria-com-infrastructure:overrides:
     cluster:
       name: "aphiria-com-preview-cluster"
@@ -26,7 +26,6 @@ config:
       resources:
         limits:
           cpu: "1000m"
-          memory: "1Gi"
     grafana:
       hostname: "pr-grafana.aphiria.com"
       defaultReceiver: "local-notifications"

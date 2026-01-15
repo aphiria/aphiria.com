@@ -7,7 +7,7 @@ config:
   aphiria-com-infrastructure:baseStackReference: "organization/aphiria-com-infrastructure/preview-base"
   aphiria-com-infrastructure:skipBaseInfrastructure: true
 
-  # Stack-specific overrides for preview-pr
+  # Preview PR-specific overrides
   aphiria-com-infrastructure:overrides:
     app:
       imagePullPolicy: "Always"
