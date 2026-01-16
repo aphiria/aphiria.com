@@ -63,9 +63,9 @@ export function deepMerge<T>(base: T, overrides: DeepPartial<T> | undefined): T 
             typeof overrideValue === "object" &&
             !Array.isArray(overrideValue)
         ) {
-            // Objects: recurse
+            // Objects: recurse (if base doesn't have this key, start with empty object)
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            result[key] = deepMerge(baseValue as any, overrideValue as any);
+            result[key] = deepMerge((baseValue as any) || {}, overrideValue as any);
         } else if (overrideValue !== undefined) {
             // Primitives: replace
             // eslint-disable-next-line @typescript-eslint/no-explicit-any

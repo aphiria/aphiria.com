@@ -2,7 +2,6 @@ environment:
   - aphiria.com/Preview
 
 config:
-  # Preview-base cluster configuration
   cluster:
     value:
       name: "aphiria-com-preview-cluster"

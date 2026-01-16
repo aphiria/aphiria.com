@@ -92,6 +92,11 @@ describe("createMonitoringResources", () => {
             requests: { cpu: "100m", memory: "256Mi" },
             limits: { cpu: "200m", memory: "512Mi" },
         },
+        github: {
+            org: "aphiria",
+            clientId: "",
+            clientSecret: "",
+        },
         adminUser: "admin",
         defaultReceiver: "local-notifications",
         ingressSectionName: "https-subdomains",
@@ -479,7 +484,7 @@ describe("createMonitoringResources", () => {
             );
         });
 
-        it("should create Grafana without GitHub auth when githubClientId is not provided", () => {
+        it("should create Grafana without GitHub auth when github.clientId is not provided", () => {
             createMonitoringResources({
                 env: "local",
                 provider: k8sProvider,
@@ -495,12 +500,14 @@ describe("createMonitoringResources", () => {
             );
         });
 
-        it("should create Grafana with GitHub auth when githubClientId is provided", () => {
+        it("should create Grafana with GitHub auth when github.clientId is provided", () => {
             const grafanaConfigWithGithub = {
                 ...grafanaConfig,
-                githubClientId: "test-client-id",
-                githubClientSecret: "test-client-secret",
-                githubOrg: "aphiria",
+                github: {
+                    clientId: "test-client-id",
+                    clientSecret: "test-client-secret",
+                    org: "aphiria",
+                },
             };
 
             createMonitoringResources({

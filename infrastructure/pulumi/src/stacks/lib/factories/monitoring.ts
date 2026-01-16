@@ -332,11 +332,11 @@ export function createMonitoringResources(args: MonitoringResourcesArgs): Monito
         storageSize: grafanaConfig.storageSize,
         domain: grafanaConfig.hostname,
         imageVersion: grafanaConfig.version,
-        githubAuth: grafanaConfig.githubClientId
+        githubAuth: grafanaConfig.github.clientId
             ? {
-                  clientId: pulumi.secret(grafanaConfig.githubClientId),
-                  clientSecret: pulumi.secret(grafanaConfig.githubClientSecret),
-                  organization: grafanaConfig.githubOrg,
+                  clientId: pulumi.secret(grafanaConfig.github.clientId),
+                  clientSecret: pulumi.secret(grafanaConfig.github.clientSecret),
+                  organization: grafanaConfig.github.org,
                   adminUser: grafanaConfig.adminUser,
               }
             : undefined,

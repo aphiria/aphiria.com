@@ -504,6 +504,40 @@ describe("createStack", () => {
         });
     });
 
+    describe("provider handling", () => {
+        it("should use provided k8sProvider when passed explicitly", () => {
+            (loadConfig as jest.Mock).mockReturnValue({
+                skipBaseInfrastructure: false,
+                gateway: { tlsMode: "self-signed", domains: ["*.aphiria.com"] },
+                postgresql: { user: "postgres", password: pulumi.output("password") },
+                grafana: { hostname: "grafana.local.aphiria.com" },
+                monitoring: {},
+                prometheus: {},
+            });
+
+            createStack("local", k8sProvider);
+
+            // Should NOT call createProvider when explicit provider is passed
+            expect(createProvider).not.toHaveBeenCalled();
+        });
+
+        it("should create provider when k8sProvider is not passed", () => {
+            (loadConfig as jest.Mock).mockReturnValue({
+                skipBaseInfrastructure: false,
+                gateway: { tlsMode: "letsencrypt-prod", domains: ["*.aphiria.com"] },
+                postgresql: { user: "postgres", password: pulumi.output("password") },
+                grafana: { hostname: "grafana.preview.aphiria.com" },
+                monitoring: {},
+                prometheus: {},
+            });
+
+            createStack("preview");
+
+            // Should call createProvider when no explicit provider is passed
+            expect(createProvider).toHaveBeenCalledWith("preview");
+        });
+    });
+
     describe("namespace handling", () => {
         it("should use created namespace name for database and applications", () => {
             (loadConfig as jest.Mock).mockReturnValue({

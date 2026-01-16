@@ -2,7 +2,6 @@ environment:
   - aphiria.com/Production
 
 config:
-  # Production cluster configuration
   cluster:
     value:
       name: "aphiria-com-cluster"

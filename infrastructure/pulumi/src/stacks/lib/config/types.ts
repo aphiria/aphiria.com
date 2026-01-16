@@ -232,15 +232,22 @@ export interface GrafanaBasicAuthConfig {
 }
 
 /**
+ * Grafana GitHub OAuth configuration
+ */
+export interface GrafanaGitHubConfig {
+    org: string;
+    clientId: string;
+    clientSecret: string; // Secret - wrap with pulumi.secret()
+}
+
+/**
  * Grafana configuration
  */
 export interface GrafanaConfig {
     version: string;
     defaultReceiver: string;
     ingressSectionName: string;
-    githubClientId: string;
-    githubClientSecret: string; // Secret - wrap with pulumi.secret()
-    githubOrg: string;
+    github: GrafanaGitHubConfig;
     adminUser: string;
     smtpHost?: string; // Secret - wrap with pulumi.secret() (optional - preview doesn't have)
     smtpPort?: number; // Optional - preview doesn't have

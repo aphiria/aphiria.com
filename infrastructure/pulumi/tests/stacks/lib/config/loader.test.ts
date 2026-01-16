@@ -173,6 +173,52 @@ describe("deepMerge", () => {
             expect(result).toEqual({});
             expect(Object.keys(result).length).toBe(0);
         });
+
+        it("should add nested properties that do not exist in base", () => {
+            const base = {
+                gateway: {
+                    tlsMode: "letsencrypt",
+                    domains: ["example.com"],
+                },
+            };
+            const overrides = {
+                gateway: {
+                    dns: {
+                        domain: "example.com",
+                        records: [{ name: "www" }],
+                    },
+                },
+            };
+            const result = deepMerge(base, overrides as any);
+
+            // Base properties preserved
+            expect(result.gateway.tlsMode).toBe("letsencrypt");
+            expect(result.gateway.domains).toEqual(["example.com"]);
+            // New nested properties added
+            expect((result.gateway as any).dns.domain).toBe("example.com");
+            expect((result.gateway as any).dns.records).toEqual([{ name: "www" }]);
+        });
+
+        it("should add deeply nested properties when intermediate objects missing", () => {
+            const base = {
+                app: { web: { replicas: 3 } },
+            };
+            const overrides = {
+                app: {
+                    api: {
+                        resources: {
+                            limits: { cpu: "500m" },
+                        },
+                    },
+                },
+            };
+            const result = deepMerge(base, overrides as any);
+
+            // Base preserved
+            expect(result.app.web.replicas).toBe(3);
+            // New deeply nested structure added
+            expect((result.app as any).api.resources.limits.cpu).toBe("500m");
+        });
     });
 });
 
