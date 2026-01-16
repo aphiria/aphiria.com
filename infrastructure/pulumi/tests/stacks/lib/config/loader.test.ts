@@ -362,9 +362,22 @@ describe("validateConfig", () => {
             expect(() => validateConfig("preview-base", config)).not.toThrow();
         });
 
+        it("should pass validation with namespace config present (inherited from base)", () => {
+            const config: Config = {
+                cluster: {} as any,
+                postgresql: {} as any,
+                prometheus: {} as any,
+                grafana: {} as any,
+                gateway: { dns: {} as any } as any,
+                monitoring: {} as any,
+                namespace: { name: "test" } as any,
+            };
+
+            expect(() => validateConfig("preview-base", config)).not.toThrow();
+        });
+
         it("should fail validation with invalid config and list all errors", () => {
             const config: Config = {
-                namespace: { name: "test" } as any,
                 skipBaseInfrastructure: true,
             };
 
@@ -388,9 +401,6 @@ describe("validateConfig", () => {
             );
             expect(() => validateConfig("preview-base", config)).toThrow(
                 /monitoring configuration is required for preview-base/
-            );
-            expect(() => validateConfig("preview-base", config)).toThrow(
-                /namespace configuration should not be present in preview-base/
             );
             expect(() => validateConfig("preview-base", config)).toThrow(
                 /skipBaseInfrastructure should not be set in preview-base/
