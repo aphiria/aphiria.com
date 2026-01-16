@@ -255,11 +255,7 @@ export function validateConfig(stackName: string, config: Config): void {
         if (!config.grafana) errors.push("grafana configuration is required for local");
         if (!config.gateway) errors.push("gateway configuration is required for local");
         if (!config.monitoring) errors.push("monitoring configuration is required for local");
-        if (config.cluster) {
-            errors.push(
-                "cluster configuration should not be present in local (uses minikube or existing cluster)"
-            );
-        }
+        // Note: cluster config can be present (inherited from base) but won't be used (uses minikube)
         if (config.namespace) {
             errors.push("namespace configuration should not be present in local (uses default)");
         }

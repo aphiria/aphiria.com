@@ -2,22 +2,6 @@ environment:
   - aphiria.com/Production
 
 config:
-  # Production cluster configuration
-  aphiria-com-infrastructure:cluster:
-    value:
-      name: "aphiria-com-cluster"
-      region: "nyc3"
-      version: "1.34.1-do.2"
-      autoUpgrade: true
-      surgeUpgrade: false
-      ha: false
-      nodeSize: "s-2vcpu-2gb"
-      nodeCount: 2
-      autoScale: true
-      minNodes: 2
-      maxNodes: 4
-      vpcUuid: "976f980d-dc84-11e8-80bc-3cfdfea9fba1"
-
   # Production namespace configuration (for image pull secrets)
   aphiria-com-infrastructure:namespace:
     value:

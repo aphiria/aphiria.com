@@ -525,7 +525,6 @@ describe("validateConfig", () => {
 
         it("should fail validation with invalid config and list all errors", () => {
             const config: Config = {
-                cluster: {} as any,
                 namespace: { name: "test" } as any,
             };
 
@@ -549,9 +548,6 @@ describe("validateConfig", () => {
             );
             expect(() => validateConfig("local", config)).toThrow(
                 /monitoring configuration is required for local/
-            );
-            expect(() => validateConfig("local", config)).toThrow(
-                /cluster configuration should not be present in local/
             );
             expect(() => validateConfig("local", config)).toThrow(
                 /namespace configuration should not be present in local/
