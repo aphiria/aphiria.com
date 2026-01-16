@@ -2,7 +2,8 @@ environment:
   - aphiria.com/Production
 
 config:
-  cluster:
+  # Production cluster configuration
+  aphiria-com-infrastructure:cluster:
     value:
       name: "aphiria-com-cluster"
       region: "nyc3"
@@ -18,7 +19,7 @@ config:
       vpcUuid: "976f980d-dc84-11e8-80bc-3cfdfea9fba1"
 
   # Production namespace configuration (for image pull secrets)
-  namespace:
+  aphiria-com-infrastructure:namespace:
     value:
       imagePullSecret:
         registry: "ghcr.io"

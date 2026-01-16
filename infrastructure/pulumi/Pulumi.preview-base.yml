@@ -2,7 +2,8 @@ environment:
   - aphiria.com/Preview
 
 config:
-  cluster:
+  # Preview cluster configuration
+  aphiria-com-infrastructure:cluster:
     value:
       name: "aphiria-com-preview-cluster"
       region: "nyc3"
