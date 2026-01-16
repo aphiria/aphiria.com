@@ -6,6 +6,10 @@ on:
     - cron: "0 3 * * *"
   workflow_dispatch: # Allow manual triggers
 
+env:
+  PULUMI_ORG: davidbyoung
+  PULUMI_PROJECT: aphiria-com-infrastructure
+
 jobs:
   detect-drift:
     name: Detect Infrastructure Drift
@@ -44,7 +48,7 @@ jobs:
 
       - name: Select stack
         working-directory: infrastructure/pulumi
-        run: pulumi stack select davidbyoung/aphiria-com-infrastructure/${{ matrix.stack }}
+        run: pulumi stack select ${{ env.PULUMI_ORG }}/${{ env.PULUMI_PROJECT }}/${{ matrix.stack }}
 
       - name: Run drift detection (refresh)
         id: refresh

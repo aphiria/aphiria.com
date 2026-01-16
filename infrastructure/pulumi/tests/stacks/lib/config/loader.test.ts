@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach } from "@jest/globals";
 import * as pulumi from "@pulumi/pulumi";
-import { deepMerge, loadConfig } from "../../../../src/stacks/lib/config/loader";
+import { deepMerge, loadConfig, validateConfig } from "../../../../src/stacks/lib/config/loader";
+import { Config } from "../../../../src/stacks/lib/config/loader";
 
 describe("deepMerge", () => {
     describe("primitives", () => {
