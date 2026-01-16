@@ -10,7 +10,7 @@ describe("deepMerge", () => {
             const overrides = { name: "override" };
             const result = deepMerge(base, overrides);
 
-            expect(result.name).toBe("override");
+            expect(result!.name).toBe("override");
         });
 
         it("should override number values", () => {
@@ -18,7 +18,7 @@ describe("deepMerge", () => {
             const overrides = { count: 2 };
             const result = deepMerge(base, overrides);
 
-            expect(result.count).toBe(2);
+            expect(result!.count).toBe(2);
         });
 
         it("should override boolean values", () => {
@@ -26,7 +26,7 @@ describe("deepMerge", () => {
             const overrides = { enabled: true };
             const result = deepMerge(base, overrides);
 
-            expect(result.enabled).toBe(true);
+            expect(result!.enabled).toBe(true);
         });
 
         it("should keep base values when override is undefined", () => {
@@ -34,8 +34,8 @@ describe("deepMerge", () => {
             const overrides = { name: undefined };
             const result = deepMerge(base, overrides);
 
-            expect(result.name).toBe("base");
-            expect(result.count).toBe(1);
+            expect(result!.name).toBe("base");
+            expect(result!.count).toBe(1);
         });
     });
 
@@ -45,8 +45,8 @@ describe("deepMerge", () => {
             const overrides = { items: [4, 5] };
             const result = deepMerge(base, overrides);
 
-            expect(result.items).toEqual([4, 5]);
-            expect(result.items.length).toBe(2);
+            expect(result!.items).toEqual([4, 5]);
+            expect(result!.items.length).toBe(2);
         });
 
         it("should replace with empty array", () => {
@@ -54,8 +54,8 @@ describe("deepMerge", () => {
             const overrides = { items: [] };
             const result = deepMerge(base, overrides);
 
-            expect(result.items).toEqual([]);
-            expect(result.items.length).toBe(0);
+            expect(result!.items).toEqual([]);
+            expect(result!.items.length).toBe(0);
         });
 
         it("should replace arrays of objects", () => {
@@ -63,8 +63,8 @@ describe("deepMerge", () => {
             const overrides = { items: [{ id: 3 }] };
             const result = deepMerge(base, overrides);
 
-            expect(result.items.length).toBe(1);
-            expect(result.items[0]).toEqual({ id: 3 });
+            expect(result!.items.length).toBe(1);
+            expect(result!.items[0]).toEqual({ id: 3 });
         });
 
         it("should replace non-array base with array override", () => {
@@ -72,8 +72,8 @@ describe("deepMerge", () => {
             const overrides = { items: [1, 2, 3] };
             const result = deepMerge(base, overrides);
 
-            expect(result.items).toEqual([1, 2, 3]);
-            expect(result.items.length).toBe(3);
+            expect(result!.items).toEqual([1, 2, 3]);
+            expect(result!.items.length).toBe(3);
         });
     });
 
@@ -92,8 +92,8 @@ describe("deepMerge", () => {
             };
             const result = deepMerge(base, overrides);
 
-            expect(result.outer.inner.value).toBe(2);
-            expect(result.outer.keep).toBe("base");
+            expect(result!.outer.inner.value).toBe(2);
+            expect(result!.outer.keep).toBe("base");
         });
 
         it("should merge deeply nested objects", () => {
@@ -113,8 +113,8 @@ describe("deepMerge", () => {
             };
             const result = deepMerge(base, overrides);
 
-            expect(result.level1.level2.level3.value).toBe("override");
-            expect(result.level1.level2.level3.keep).toBe(true);
+            expect(result!.level1.level2.level3.value).toBe("override");
+            expect(result!.level1.level2.level3.keep).toBe(true);
         });
 
         it("should add new properties", () => {
@@ -122,8 +122,8 @@ describe("deepMerge", () => {
             const overrides = { existing: "override", newProp: "new" };
             const result = deepMerge(base, overrides) as typeof base & typeof overrides;
 
-            expect(result.existing).toBe("override");
-            expect(result.newProp).toBe("new");
+            expect(result!.existing).toBe("override");
+            expect(result!.newProp).toBe("new");
         });
     });
 
@@ -133,7 +133,35 @@ describe("deepMerge", () => {
             const result = deepMerge(base, undefined);
 
             expect(result).toEqual(base);
-            expect(result.name).toBe("base");
+            expect(result?.name).toBe("base");
+        });
+
+        it("should return overrides when base is undefined", () => {
+            const overrides = { name: "override", value: 123 };
+            const result = deepMerge<{ name: string; value: number }>(undefined, overrides);
+
+            expect(result).toEqual(overrides);
+            expect(result?.name).toBe("override");
+            expect(result?.value).toBe(123);
+        });
+
+        it("should return undefined when both base and overrides are undefined", () => {
+            const result = deepMerge(undefined, undefined);
+
+            expect(result).toBeUndefined();
+        });
+
+        it("should handle undefined base with nested overrides", () => {
+            const overrides = {
+                imagePullSecret: {
+                    username: "user",
+                    token: "secret",
+                },
+            };
+            const result = deepMerge<typeof overrides>(undefined, overrides);
+
+            expect(result).toEqual(overrides);
+            expect(result?.imagePullSecret?.username).toBe("user");
         });
 
         it("should not mutate base object", () => {
@@ -143,8 +171,8 @@ describe("deepMerge", () => {
 
             expect(base.name).toBe("base");
             expect(base.nested.value).toBe(1);
-            expect(result.name).toBe("override");
-            expect(result.nested.value).toBe(2);
+            expect(result?.name).toBe("override");
+            expect(result?.nested?.value).toBe(2);
         });
     });
 
@@ -154,7 +182,7 @@ describe("deepMerge", () => {
             const overrides = { name: "override" };
             const result = deepMerge(base, overrides) as typeof overrides;
 
-            expect(result.name).toBe("override");
+            expect(result!.name).toBe("override");
         });
 
         it("should handle empty overrides object", () => {
@@ -162,7 +190,7 @@ describe("deepMerge", () => {
             const overrides = {};
             const result = deepMerge(base, overrides);
 
-            expect(result.name).toBe("base");
+            expect(result!.name).toBe("base");
         });
 
         it("should handle both empty", () => {
@@ -171,7 +199,7 @@ describe("deepMerge", () => {
             const result = deepMerge(base, overrides);
 
             expect(result).toEqual({});
-            expect(Object.keys(result).length).toBe(0);
+            expect(Object.keys(result!).length).toBe(0);
         });
 
         it("should add nested properties that do not exist in base", () => {
@@ -192,11 +220,11 @@ describe("deepMerge", () => {
             const result = deepMerge(base, overrides as any);
 
             // Base properties preserved
-            expect(result.gateway.tlsMode).toBe("letsencrypt");
-            expect(result.gateway.domains).toEqual(["example.com"]);
+            expect(result!.gateway.tlsMode).toBe("letsencrypt");
+            expect(result!.gateway.domains).toEqual(["example.com"]);
             // New nested properties added
-            expect((result.gateway as any).dns.domain).toBe("example.com");
-            expect((result.gateway as any).dns.records).toEqual([{ name: "www" }]);
+            expect((result!.gateway as any).dns.domain).toBe("example.com");
+            expect((result!.gateway as any).dns.records).toEqual([{ name: "www" }]);
         });
 
         it("should add deeply nested properties when intermediate objects missing", () => {
@@ -215,9 +243,9 @@ describe("deepMerge", () => {
             const result = deepMerge(base, overrides as any);
 
             // Base preserved
-            expect(result.app.web.replicas).toBe(3);
+            expect(result!.app.web.replicas).toBe(3);
             // New deeply nested structure added
-            expect((result.app as any).api.resources.limits.cpu).toBe("500m");
+            expect((result!.app as any).api.resources.limits.cpu).toBe("500m");
         });
     });
 });

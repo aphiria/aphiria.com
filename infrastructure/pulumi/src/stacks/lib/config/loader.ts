@@ -39,14 +39,19 @@ export interface Config {
  * - Primitives (string, number, boolean): Override replaces base
  * - Arrays: Override replaces entire array (no element-wise merging)
  * - Objects: Recursively merge properties
+ * - If base is undefined: Return overrides as the result
  *
- * @param base - Base configuration object
+ * @param base - Base configuration object (may be undefined)
  * @param overrides - Override values to apply
  * @returns Merged configuration
  * @internal - Exported for testing only
  */
-export function deepMerge<T>(base: T, overrides: DeepPartial<T> | undefined): T {
+export function deepMerge<T>(
+    base: T | undefined,
+    overrides: DeepPartial<T> | undefined
+): T | undefined {
     if (!overrides) return base;
+    if (!base) return overrides as T;
 
     const result = { ...base };
 
