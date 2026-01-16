@@ -194,11 +194,7 @@ export function validateConfig(stackName: string, config: Config): void {
         }
         if (!config.monitoring)
             errors.push("monitoring configuration is required for preview-base");
-        if (config.app) {
-            errors.push(
-                "app configuration should not be present in preview-base (no app deployments)"
-            );
-        }
+        // Note: app config can be present (inherited from base) but won't be used
         if (config.namespace) {
             errors.push("namespace configuration should not be present in preview-base");
         }

@@ -364,7 +364,6 @@ describe("validateConfig", () => {
 
         it("should fail validation with invalid config and list all errors", () => {
             const config: Config = {
-                app: {} as any,
                 namespace: { name: "test" } as any,
                 skipBaseInfrastructure: true,
             };
@@ -389,9 +388,6 @@ describe("validateConfig", () => {
             );
             expect(() => validateConfig("preview-base", config)).toThrow(
                 /monitoring configuration is required for preview-base/
-            );
-            expect(() => validateConfig("preview-base", config)).toThrow(
-                /app configuration should not be present in preview-base/
             );
             expect(() => validateConfig("preview-base", config)).toThrow(
                 /namespace configuration should not be present in preview-base/
