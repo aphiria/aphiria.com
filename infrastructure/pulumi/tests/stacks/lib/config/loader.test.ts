@@ -174,53 +174,6 @@ describe("deepMerge", () => {
             expect(Object.keys(result).length).toBe(0);
         });
     });
-
-    describe("debug logging", () => {
-        let originalEnv: string | undefined;
-
-        beforeEach(() => {
-            originalEnv = process.env.PULUMI_DEBUG_MERGE;
-        });
-
-        afterEach(() => {
-            if (originalEnv === undefined) {
-                delete process.env.PULUMI_DEBUG_MERGE;
-            } else {
-                process.env.PULUMI_DEBUG_MERGE = originalEnv;
-            }
-        });
-
-        it("should log debug info for primitive changes when PULUMI_DEBUG_MERGE is set", async () => {
-            process.env.PULUMI_DEBUG_MERGE = "true";
-            jest.resetModules();
-            const { deepMerge: deepMergeDebug } =
-                await import("../../../../src/stacks/lib/config/loader");
-            const consoleSpy = jest.spyOn(console, "log").mockImplementation();
-
-            const base = { name: "base" };
-            const overrides = { name: "override" };
-            deepMergeDebug(base, overrides);
-
-            expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("[MERGE]"));
-            consoleSpy.mockRestore();
-        });
-
-        it("should log debug info for array replacements when PULUMI_DEBUG_MERGE is set", async () => {
-            process.env.PULUMI_DEBUG_MERGE = "true";
-            jest.resetModules();
-            const { deepMerge: deepMergeDebug } =
-                await import("../../../../src/stacks/lib/config/loader");
-            const consoleSpy = jest.spyOn(console, "log").mockImplementation();
-
-            const base = { items: [1, 2, 3] };
-            const overrides = { items: [4, 5] };
-            deepMergeDebug(base, overrides);
-
-            expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("[MERGE]"));
-            expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("array replaced"));
-            consoleSpy.mockRestore();
-        });
-    });
 });
 
 describe("loadConfig", () => {
@@ -228,151 +181,349 @@ describe("loadConfig", () => {
         pulumi.runtime.setAllConfig({});
     });
 
-    it("should load app config with overrides", () => {
+    it("should load and merge config with overrides for valid local stack", () => {
         pulumi.runtime.setConfig(
             "aphiria-com-infrastructure:app",
             JSON.stringify({ web: { replicas: 3, image: "prod" } })
         );
         pulumi.runtime.setConfig(
-            "aphiria-com-infrastructure:overrides",
-            JSON.stringify({ app: { web: { replicas: 1 } } })
-        );
-
-        const config = loadConfig();
-
-        expect(config.app?.web?.replicas).toBe(1);
-        expect(config.app?.web?.image).toBe("prod");
-    });
-
-    it("should load postgresql config with overrides", () => {
-        pulumi.runtime.setConfig(
             "aphiria-com-infrastructure:postgresql",
-            JSON.stringify({ user: "postgres", host: "db.svc" })
+            JSON.stringify({ host: "db.svc" })
         );
-        pulumi.runtime.setConfig(
-            "aphiria-com-infrastructure:overrides",
-            JSON.stringify({ postgresql: { host: "db" } })
-        );
-
-        const config = loadConfig();
-
-        expect(config.postgresql?.user).toBe("postgres");
-        expect(config.postgresql?.host).toBe("db");
-    });
-
-    it("should load prometheus config with overrides", () => {
         pulumi.runtime.setConfig(
             "aphiria-com-infrastructure:prometheus",
-            JSON.stringify({ authToken: "token", scrapeInterval: "15s" })
+            JSON.stringify({ authToken: "token" })
         );
-        pulumi.runtime.setConfig(
-            "aphiria-com-infrastructure:overrides",
-            JSON.stringify({ prometheus: { scrapeInterval: "30s" } })
-        );
-
-        const config = loadConfig();
-
-        expect(config.prometheus?.authToken).toBe("token");
-        expect(config.prometheus?.scrapeInterval).toBe("30s");
-    });
-
-    it("should load grafana config with overrides", () => {
         pulumi.runtime.setConfig(
             "aphiria-com-infrastructure:grafana",
-            JSON.stringify({ hostname: "grafana.prod", version: "11.0.0" })
+            JSON.stringify({ hostname: "grafana.local" })
         );
-        pulumi.runtime.setConfig(
-            "aphiria-com-infrastructure:overrides",
-            JSON.stringify({ grafana: { hostname: "grafana.local" } })
-        );
-
-        const config = loadConfig();
-
-        expect(config.grafana?.hostname).toBe("grafana.local");
-        expect(config.grafana?.version).toBe("11.0.0");
-    });
-
-    it("should load gateway config with overrides", () => {
         pulumi.runtime.setConfig(
             "aphiria-com-infrastructure:gateway",
-            JSON.stringify({ tlsMode: "letsencrypt", domains: ["example.com"] })
+            JSON.stringify({ tlsMode: "self-signed" })
         );
-        pulumi.runtime.setConfig(
-            "aphiria-com-infrastructure:overrides",
-            JSON.stringify({ gateway: { tlsMode: "self-signed" } })
-        );
-
-        const config = loadConfig();
-
-        expect(config.gateway?.tlsMode).toBe("self-signed");
-        expect(config.gateway?.domains).toEqual(["example.com"]);
-    });
-
-    it("should load namespace config with overrides", () => {
-        pulumi.runtime.setConfig(
-            "aphiria-com-infrastructure:namespace",
-            JSON.stringify({ name: "prod" })
-        );
-        pulumi.runtime.setConfig(
-            "aphiria-com-infrastructure:overrides",
-            JSON.stringify({ namespace: { name: "local" } })
-        );
-
-        const config = loadConfig();
-
-        expect(config.namespace?.name).toBe("local");
-    });
-
-    it("should load monitoring config with overrides", () => {
         pulumi.runtime.setConfig(
             "aphiria-com-infrastructure:monitoring",
-            JSON.stringify({ namespace: { resourceQuota: { cpu: "4", memory: "16Gi" } } })
+            JSON.stringify({ namespace: { resourceQuota: { cpu: "4" } } })
         );
         pulumi.runtime.setConfig(
             "aphiria-com-infrastructure:overrides",
-            JSON.stringify({ monitoring: { namespace: { resourceQuota: { cpu: "2" } } } })
+            JSON.stringify({ app: { web: { replicas: 1 } }, postgresql: { host: "db" } })
         );
 
         const config = loadConfig();
 
-        expect(config.monitoring?.namespace?.resourceQuota?.cpu).toBe("2");
-        expect(config.monitoring?.namespace?.resourceQuota?.memory).toBe("16Gi");
+        // Verify merge happened correctly
+        expect(config.app?.web?.replicas).toBe(1); // Overridden
+        expect(config.app?.web?.image).toBe("prod"); // From base
+        expect(config.postgresql?.host).toBe("db"); // Overridden
     });
 
-    it("should load skipBaseInfrastructure flag", () => {
-        pulumi.runtime.setConfig("aphiria-com-infrastructure:skipBaseInfrastructure", "true");
-
-        const config = loadConfig();
-
-        expect(config.skipBaseInfrastructure).toBe(true);
-    });
-
-    it("should return undefined when skipBaseInfrastructure not set", () => {
-        const config = loadConfig();
-
-        expect(config.skipBaseInfrastructure).toBeUndefined();
-    });
-
-    it("should handle missing overrides", () => {
+    it("should throw validation error for missing required local configuration", () => {
         pulumi.runtime.setConfig(
             "aphiria-com-infrastructure:app",
-            JSON.stringify({ web: { replicas: 3 } })
+            JSON.stringify({ web: { replicas: 1 } })
         );
+        // Missing other required config for local
 
-        const config = loadConfig();
+        expect(() => loadConfig()).toThrow(/Configuration validation failed for stack "local"/);
+        expect(() => loadConfig()).toThrow(/postgresql configuration is required for local/);
+    });
+});
 
-        expect(config.app?.web?.replicas).toBe(3);
+describe("validateConfig", () => {
+    describe("production stack", () => {
+        it("should pass validation with valid config", () => {
+            const config: Config = {
+                cluster: {} as any,
+                app: {} as any,
+                postgresql: {} as any,
+                prometheus: {} as any,
+                grafana: {} as any,
+                gateway: { dns: {} as any } as any,
+                monitoring: {} as any,
+            };
+
+            expect(() => validateConfig("production", config)).not.toThrow();
+        });
+
+        it("should fail validation with invalid config and list all errors", () => {
+            const config: Config = {
+                namespace: { name: "test" } as any,
+                skipBaseInfrastructure: true,
+            };
+
+            expect(() => validateConfig("production", config)).toThrow(
+                /Configuration validation failed for stack "production"/
+            );
+            expect(() => validateConfig("production", config)).toThrow(
+                /cluster configuration is required for production/
+            );
+            expect(() => validateConfig("production", config)).toThrow(
+                /app configuration is required for production/
+            );
+            expect(() => validateConfig("production", config)).toThrow(
+                /postgresql configuration is required for production/
+            );
+            expect(() => validateConfig("production", config)).toThrow(
+                /prometheus configuration is required for production/
+            );
+            expect(() => validateConfig("production", config)).toThrow(
+                /grafana configuration is required for production/
+            );
+            expect(() => validateConfig("production", config)).toThrow(
+                /gateway configuration is required for production/
+            );
+            expect(() => validateConfig("production", config)).toThrow(
+                /monitoring configuration is required for production/
+            );
+            expect(() => validateConfig("production", config)).toThrow(
+                /namespace configuration should not be present in production/
+            );
+            expect(() => validateConfig("production", config)).toThrow(
+                /skipBaseInfrastructure should not be set in production/
+            );
+        });
+
+        it("should fail when gateway exists but dns is missing", () => {
+            const config: Config = {
+                cluster: {} as any,
+                app: {} as any,
+                postgresql: {} as any,
+                prometheus: {} as any,
+                grafana: {} as any,
+                gateway: {} as any,
+                monitoring: {} as any,
+            };
+
+            expect(() => validateConfig("production", config)).toThrow(
+                /gateway\.dns configuration is required for production/
+            );
+        });
     });
 
-    it("should handle empty overrides", () => {
-        pulumi.runtime.setConfig(
-            "aphiria-com-infrastructure:app",
-            JSON.stringify({ web: { replicas: 3 } })
-        );
-        pulumi.runtime.setConfig("aphiria-com-infrastructure:overrides", JSON.stringify({}));
+    describe("preview-base stack", () => {
+        it("should pass validation with valid config", () => {
+            const config: Config = {
+                cluster: {} as any,
+                postgresql: {} as any,
+                prometheus: {} as any,
+                grafana: {} as any,
+                gateway: { dns: {} as any } as any,
+                monitoring: {} as any,
+            };
 
-        const config = loadConfig();
+            expect(() => validateConfig("preview-base", config)).not.toThrow();
+        });
 
-        expect(config.app?.web?.replicas).toBe(3);
+        it("should fail validation with invalid config and list all errors", () => {
+            const config: Config = {
+                app: {} as any,
+                namespace: { name: "test" } as any,
+                skipBaseInfrastructure: true,
+            };
+
+            expect(() => validateConfig("preview-base", config)).toThrow(
+                /Configuration validation failed for stack "preview-base"/
+            );
+            expect(() => validateConfig("preview-base", config)).toThrow(
+                /cluster configuration is required for preview-base/
+            );
+            expect(() => validateConfig("preview-base", config)).toThrow(
+                /postgresql configuration is required for preview-base/
+            );
+            expect(() => validateConfig("preview-base", config)).toThrow(
+                /prometheus configuration is required for preview-base/
+            );
+            expect(() => validateConfig("preview-base", config)).toThrow(
+                /grafana configuration is required for preview-base/
+            );
+            expect(() => validateConfig("preview-base", config)).toThrow(
+                /gateway configuration is required for preview-base/
+            );
+            expect(() => validateConfig("preview-base", config)).toThrow(
+                /monitoring configuration is required for preview-base/
+            );
+            expect(() => validateConfig("preview-base", config)).toThrow(
+                /app configuration should not be present in preview-base/
+            );
+            expect(() => validateConfig("preview-base", config)).toThrow(
+                /namespace configuration should not be present in preview-base/
+            );
+            expect(() => validateConfig("preview-base", config)).toThrow(
+                /skipBaseInfrastructure should not be set in preview-base/
+            );
+        });
+
+        it("should fail when gateway exists but dns is missing", () => {
+            const config: Config = {
+                cluster: {} as any,
+                postgresql: {} as any,
+                prometheus: {} as any,
+                grafana: {} as any,
+                gateway: {} as any,
+                monitoring: {} as any,
+            };
+
+            expect(() => validateConfig("preview-base", config)).toThrow(
+                /gateway\.dns configuration is required for preview-base/
+            );
+        });
+    });
+
+    describe("preview-pr stack", () => {
+        it("should pass validation with valid config", () => {
+            const config: Config = {
+                namespace: { name: "pr-123" } as any,
+                app: {} as any,
+                postgresql: { createDatabase: true, databaseName: "aphiria_pr_123" } as any,
+                prometheus: {} as any,
+                skipBaseInfrastructure: true,
+            };
+
+            expect(() => validateConfig("preview-pr-123", config)).not.toThrow();
+        });
+
+        it("should fail validation with invalid config and list all errors", () => {
+            const config: Config = {
+                cluster: {} as any,
+                gateway: {} as any,
+                grafana: {} as any,
+                monitoring: {} as any,
+            };
+
+            expect(() => validateConfig("preview-pr-456", config)).toThrow(
+                /Configuration validation failed for stack "preview-pr-456"/
+            );
+            expect(() => validateConfig("preview-pr-456", config)).toThrow(
+                /namespace configuration is required for preview-pr/
+            );
+            expect(() => validateConfig("preview-pr-456", config)).toThrow(
+                /app configuration is required for preview-pr/
+            );
+            expect(() => validateConfig("preview-pr-456", config)).toThrow(
+                /postgresql configuration is required for preview-pr/
+            );
+            expect(() => validateConfig("preview-pr-456", config)).toThrow(
+                /prometheus configuration is required for preview-pr/
+            );
+            expect(() => validateConfig("preview-pr-456", config)).toThrow(
+                /skipBaseInfrastructure must be true for preview-pr/
+            );
+            expect(() => validateConfig("preview-pr-456", config)).toThrow(
+                /cluster configuration should not be present in preview-pr/
+            );
+            expect(() => validateConfig("preview-pr-456", config)).toThrow(
+                /gateway configuration should not be present in preview-pr/
+            );
+            expect(() => validateConfig("preview-pr-456", config)).toThrow(
+                /grafana configuration should not be present in preview-pr/
+            );
+            expect(() => validateConfig("preview-pr-456", config)).toThrow(
+                /monitoring configuration should not be present in preview-pr/
+            );
+        });
+
+        it("should fail when namespace exists but name is missing", () => {
+            const config: Config = {
+                namespace: {} as any,
+                app: {} as any,
+                postgresql: { createDatabase: true, databaseName: "aphiria_pr_123" } as any,
+                prometheus: {} as any,
+                skipBaseInfrastructure: true,
+            };
+
+            expect(() => validateConfig("preview-pr-123", config)).toThrow(
+                /namespace\.name is required for preview-pr/
+            );
+        });
+
+        it("should fail when postgresql exists but createDatabase is false", () => {
+            const config: Config = {
+                namespace: { name: "pr-123" } as any,
+                app: {} as any,
+                postgresql: { createDatabase: false, databaseName: "aphiria_pr_123" } as any,
+                prometheus: {} as any,
+                skipBaseInfrastructure: true,
+            };
+
+            expect(() => validateConfig("preview-pr-123", config)).toThrow(
+                /postgresql\.createDatabase must be true for preview-pr/
+            );
+        });
+
+        it("should fail when postgresql exists but databaseName is missing", () => {
+            const config: Config = {
+                namespace: { name: "pr-123" } as any,
+                app: {} as any,
+                postgresql: { createDatabase: true } as any,
+                prometheus: {} as any,
+                skipBaseInfrastructure: true,
+            };
+
+            expect(() => validateConfig("preview-pr-123", config)).toThrow(
+                /postgresql\.databaseName is required for preview-pr/
+            );
+        });
+    });
+
+    describe("local stack", () => {
+        it("should pass validation with valid config", () => {
+            const config: Config = {
+                app: {} as any,
+                postgresql: {} as any,
+                prometheus: {} as any,
+                grafana: {} as any,
+                gateway: {} as any,
+                monitoring: {} as any,
+            };
+
+            expect(() => validateConfig("local", config)).not.toThrow();
+        });
+
+        it("should fail validation with invalid config and list all errors", () => {
+            const config: Config = {
+                cluster: {} as any,
+                namespace: { name: "test" } as any,
+            };
+
+            expect(() => validateConfig("local", config)).toThrow(
+                /Configuration validation failed for stack "local"/
+            );
+            expect(() => validateConfig("local", config)).toThrow(
+                /app configuration is required for local/
+            );
+            expect(() => validateConfig("local", config)).toThrow(
+                /postgresql configuration is required for local/
+            );
+            expect(() => validateConfig("local", config)).toThrow(
+                /prometheus configuration is required for local/
+            );
+            expect(() => validateConfig("local", config)).toThrow(
+                /grafana configuration is required for local/
+            );
+            expect(() => validateConfig("local", config)).toThrow(
+                /gateway configuration is required for local/
+            );
+            expect(() => validateConfig("local", config)).toThrow(
+                /monitoring configuration is required for local/
+            );
+            expect(() => validateConfig("local", config)).toThrow(
+                /cluster configuration should not be present in local/
+            );
+            expect(() => validateConfig("local", config)).toThrow(
+                /namespace configuration should not be present in local/
+            );
+        });
+    });
+
+    describe("unknown stack", () => {
+        it("should fail for unknown stack name", () => {
+            const config: Config = {};
+
+            expect(() => validateConfig("unknown-stack", config)).toThrow(
+                /Unknown stack: unknown-stack/
+            );
+        });
     });
 });

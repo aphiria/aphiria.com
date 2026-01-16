@@ -33,12 +33,6 @@ export interface Config {
 }
 
 /**
- * Enable debug logging for config merge operations
- * Set PULUMI_DEBUG_MERGE=true to see what config values are being overridden
- */
-const DEBUG_MERGE = process.env.PULUMI_DEBUG_MERGE === "true";
-
-/**
  * Deep merges base configuration with overrides
  *
  * Merge strategy:
@@ -48,11 +42,10 @@ const DEBUG_MERGE = process.env.PULUMI_DEBUG_MERGE === "true";
  *
  * @param base - Base configuration object
  * @param overrides - Override values to apply
- * @param path - Current property path (for debug logging)
  * @returns Merged configuration
  * @internal - Exported for testing only
  */
-export function deepMerge<T>(base: T, overrides: DeepPartial<T> | undefined, path = ""): T {
+export function deepMerge<T>(base: T, overrides: DeepPartial<T> | undefined): T {
     if (!overrides) return base;
 
     const result = { ...base };
@@ -60,16 +53,9 @@ export function deepMerge<T>(base: T, overrides: DeepPartial<T> | undefined, pat
     for (const key in overrides) {
         const overrideValue = overrides[key];
         const baseValue = base[key];
-        const currentPath = path ? `${path}.${String(key)}` : String(key);
 
         if (Array.isArray(overrideValue)) {
             // Arrays: replace entirely (don't merge elements)
-            if (DEBUG_MERGE) {
-                const baseArray = Array.isArray(baseValue) ? baseValue : [];
-                console.log(
-                    `[MERGE] ${currentPath}: [${baseArray.length} items] -> [${overrideValue.length} items] (array replaced)`
-                );
-            }
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             result[key] = overrideValue as any;
         } else if (
@@ -77,14 +63,11 @@ export function deepMerge<T>(base: T, overrides: DeepPartial<T> | undefined, pat
             typeof overrideValue === "object" &&
             !Array.isArray(overrideValue)
         ) {
-            // Objects: recurse (leaf values will log)
+            // Objects: recurse
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            result[key] = deepMerge(baseValue as any, overrideValue as any, currentPath);
+            result[key] = deepMerge(baseValue as any, overrideValue as any);
         } else if (overrideValue !== undefined) {
             // Primitives: replace
-            if (DEBUG_MERGE && baseValue !== overrideValue) {
-                console.log(`[MERGE] ${currentPath}: ${baseValue} -> ${overrideValue}`);
-            }
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             result[key] = overrideValue as any;
         }
