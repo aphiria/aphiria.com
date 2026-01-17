@@ -37,7 +37,7 @@ describe("createProvider", () => {
             (loadConfig as jest.Mock).mockReturnValue({});
 
             expect(() => createProvider("preview")).toThrow(
-                "Environment preview requires cluster configuration but none was found. Check Pulumi.preview.yml for cluster: config block."
+                "Environment preview requires cluster configuration but none was found. Check Pulumi.preview.yaml for cluster: config block."
             );
         });
 
@@ -104,7 +104,7 @@ describe("createProvider", () => {
             (loadConfig as jest.Mock).mockReturnValue({});
 
             expect(() => createProvider("production")).toThrow(
-                "Environment production requires cluster configuration but none was found. Check Pulumi.production.yml for cluster: config block."
+                "Environment production requires cluster configuration but none was found. Check Pulumi.production.yaml for cluster: config block."
             );
         });
 

@@ -111,7 +111,8 @@ export function createStack(env: Environment, k8sProvider?: k8s.Provider): Stack
     }
 
     // Determine if this is a preview-pr environment (used for Gateway listener sectionName routing)
-    const isPreviewPR = env === "preview" && !!config.namespace;
+    // preview-pr stacks are named "preview-pr-*", preview-base is named "preview-base"
+    const isPreviewPR = config.stackName.startsWith("preview-pr-");
 
     // Install base infrastructure (cert-manager, nginx-gateway) if not skipped
     if (!config.skipBaseInfrastructure) {

@@ -16,6 +16,9 @@ import {
  * All configuration read from Pulumi config
  */
 export interface Config {
+    // Stack identification
+    stackName: string;
+
     // Infrastructure configuration
     cluster?: ClusterConfig;
 
@@ -113,11 +116,15 @@ export function deepMerge<T>(
  */
 export function loadConfig(): Config {
     const config = new pulumi.Config("aphiria-com-infrastructure");
+    const stackName = pulumi.getStack();
 
     // Load stack-specific overrides (optional)
     const overrides = config.getObject<ConfigOverrides>("overrides") || {};
 
     const mergedConfig: Config = {
+        // Stack identification
+        stackName,
+
         // Infrastructure configuration - merge base with overrides
         cluster: deepMerge(config.getObject<ClusterConfig>("cluster"), overrides.cluster),
 
@@ -144,7 +151,6 @@ export function loadConfig(): Config {
     };
 
     // Validate configuration matches stack requirements
-    const stackName = pulumi.getStack();
     validateConfig(stackName, mergedConfig);
 
     return mergedConfig;

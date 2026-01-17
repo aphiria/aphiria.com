@@ -64,6 +64,7 @@ describe("createStack", () => {
     describe("local environment", () => {
         it("should create base infrastructure for local", () => {
             (loadConfig as jest.Mock).mockReturnValue({
+                stackName: "local",
                 skipBaseInfrastructure: false,
                 gateway: { tlsMode: "self-signed", domains: ["*.aphiria.com"] },
                 postgresql: { user: "postgres", password: pulumi.output("password") },
@@ -84,6 +85,7 @@ describe("createStack", () => {
 
         it("should create gateway with local config", () => {
             (loadConfig as jest.Mock).mockReturnValue({
+                stackName: "local",
                 skipBaseInfrastructure: false,
                 gateway: { tlsMode: "self-signed", domains: ["*.aphiria.com"] },
                 postgresql: { user: "postgres", password: pulumi.output("password") },
@@ -108,6 +110,7 @@ describe("createStack", () => {
 
         it("should create database in default namespace for local", () => {
             (loadConfig as jest.Mock).mockReturnValue({
+                stackName: "local",
                 skipBaseInfrastructure: false,
                 gateway: { tlsMode: "self-signed", domains: ["*.aphiria.com"] },
                 postgresql: { user: "postgres", password: pulumi.output("password") },
@@ -129,6 +132,7 @@ describe("createStack", () => {
 
         it("should create monitoring resources for local", () => {
             (loadConfig as jest.Mock).mockReturnValue({
+                stackName: "local",
                 skipBaseInfrastructure: false,
                 gateway: { tlsMode: "self-signed", domains: ["*.aphiria.com"] },
                 postgresql: { user: "postgres", password: pulumi.output("password") },
@@ -149,6 +153,7 @@ describe("createStack", () => {
 
         it("should create WWW redirect for local (non-preview)", () => {
             (loadConfig as jest.Mock).mockReturnValue({
+                stackName: "local",
                 skipBaseInfrastructure: false,
                 gateway: { tlsMode: "self-signed", domains: ["*.aphiria.com"] },
                 postgresql: { user: "postgres", password: pulumi.output("password") },
@@ -171,6 +176,7 @@ describe("createStack", () => {
 
         it("should create HTTPS redirect with skipRootListener=true when WWW redirect exists", () => {
             (loadConfig as jest.Mock).mockReturnValue({
+                stackName: "local",
                 skipBaseInfrastructure: false,
                 gateway: { tlsMode: "self-signed", domains: ["*.aphiria.com"] },
                 postgresql: { user: "postgres", password: pulumi.output("password") },
@@ -190,6 +196,7 @@ describe("createStack", () => {
 
         it("should not create namespace for local (uses default)", () => {
             (loadConfig as jest.Mock).mockReturnValue({
+                stackName: "local",
                 skipBaseInfrastructure: false,
                 gateway: { tlsMode: "self-signed", domains: ["*.aphiria.com"] },
                 postgresql: { user: "postgres", password: pulumi.output("password") },
@@ -207,6 +214,7 @@ describe("createStack", () => {
     describe("preview environment", () => {
         it("should create base infrastructure for preview", () => {
             (loadConfig as jest.Mock).mockReturnValue({
+                stackName: "preview-pr-123",
                 skipBaseInfrastructure: false,
                 gateway: { tlsMode: "letsencrypt-prod", domains: ["*.pr.aphiria.com"] },
                 postgresql: { user: "postgres", password: pulumi.output("password") },
@@ -228,6 +236,7 @@ describe("createStack", () => {
 
         it("should create namespace when configured for preview", () => {
             (loadConfig as jest.Mock).mockReturnValue({
+                stackName: "preview-pr-123",
                 skipBaseInfrastructure: false,
                 gateway: { tlsMode: "letsencrypt-prod", domains: ["*.pr.aphiria.com"] },
                 postgresql: { user: "postgres", password: pulumi.output("password") },
@@ -251,8 +260,9 @@ describe("createStack", () => {
             );
         });
 
-        it("should pass isPreviewPR=true to applications when namespace config exists", () => {
+        it("should pass isPreviewPR=true to applications when stackName starts with preview-pr-", () => {
             (loadConfig as jest.Mock).mockReturnValue({
+                stackName: "preview-pr-123",
                 skipBaseInfrastructure: false,
                 gateway: { tlsMode: "letsencrypt-prod", domains: ["*.pr.aphiria.com"] },
                 postgresql: { user: "postgres", password: pulumi.output("password") },
@@ -273,8 +283,32 @@ describe("createStack", () => {
             );
         });
 
+        it("should pass isPreviewPR=false for preview-base (does not start with preview-pr-)", () => {
+            (loadConfig as jest.Mock).mockReturnValue({
+                stackName: "preview-base",
+                skipBaseInfrastructure: false,
+                gateway: { tlsMode: "letsencrypt-prod", domains: ["*.pr.aphiria.com"] },
+                postgresql: { user: "postgres", password: pulumi.output("password") },
+                namespace: { name: "default" }, // preview-base has namespace config but uses default
+                app: { web: { url: "https://pr-grafana.aphiria.com" } },
+                grafana: { hostname: "pr-grafana.aphiria.com" },
+                monitoring: {},
+                prometheus: {},
+            });
+
+            createStack("preview");
+
+            expect(createApplicationResources).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    isPreviewPR: false, // Should be false for preview-base
+                    hasNamespaceConfig: true,
+                })
+            );
+        });
+
         it("should NOT create WWW redirect for preview", () => {
             (loadConfig as jest.Mock).mockReturnValue({
+                stackName: "preview-pr-123",
                 skipBaseInfrastructure: false,
                 gateway: { tlsMode: "letsencrypt-prod", domains: ["*.pr.aphiria.com"] },
                 postgresql: { user: "postgres", password: pulumi.output("password") },
@@ -291,6 +325,7 @@ describe("createStack", () => {
 
         it("should create HTTPS redirect with skipRootListener=false for preview (no WWW redirect)", () => {
             (loadConfig as jest.Mock).mockReturnValue({
+                stackName: "preview-pr-123",
                 skipBaseInfrastructure: false,
                 gateway: { tlsMode: "letsencrypt-prod", domains: ["*.pr.aphiria.com"] },
                 postgresql: { user: "postgres", password: pulumi.output("password") },
@@ -313,6 +348,7 @@ describe("createStack", () => {
     describe("production environment", () => {
         it("should NOT create base infrastructure for production (managed externally)", () => {
             (loadConfig as jest.Mock).mockReturnValue({
+                stackName: "production",
                 skipBaseInfrastructure: true,
                 gateway: {
                     tlsMode: "letsencrypt-prod",
@@ -331,6 +367,7 @@ describe("createStack", () => {
 
         it("should NOT create gateway when skipBaseInfrastructure=true", () => {
             (loadConfig as jest.Mock).mockReturnValue({
+                stackName: "production",
                 skipBaseInfrastructure: true,
                 gateway: {
                     tlsMode: "letsencrypt-prod",
@@ -349,6 +386,7 @@ describe("createStack", () => {
 
         it("should create database in default namespace for production", () => {
             (loadConfig as jest.Mock).mockReturnValue({
+                stackName: "production",
                 skipBaseInfrastructure: true,
                 gateway: {
                     tlsMode: "letsencrypt-prod",
@@ -372,6 +410,7 @@ describe("createStack", () => {
 
         it("should create imagePullSecret in default namespace when configured", () => {
             (loadConfig as jest.Mock).mockReturnValue({
+                stackName: "production",
                 skipBaseInfrastructure: true,
                 gateway: {
                     tlsMode: "letsencrypt-prod",
@@ -404,6 +443,7 @@ describe("createStack", () => {
 
         it("should NOT create WWW redirect when skipBaseInfrastructure=true", () => {
             (loadConfig as jest.Mock).mockReturnValue({
+                stackName: "production",
                 skipBaseInfrastructure: true,
                 gateway: {
                     tlsMode: "letsencrypt-prod",
@@ -425,6 +465,7 @@ describe("createStack", () => {
     describe("conditional resource creation", () => {
         it("should not create applications when app config is missing web.url", () => {
             (loadConfig as jest.Mock).mockReturnValue({
+                stackName: "production",
                 skipBaseInfrastructure: false,
                 gateway: { tlsMode: "self-signed", domains: ["*.aphiria.com"] },
                 postgresql: { user: "postgres", password: pulumi.output("password") },
@@ -441,6 +482,7 @@ describe("createStack", () => {
 
         it("should create applications when app.web.url is configured", () => {
             (loadConfig as jest.Mock).mockReturnValue({
+                stackName: "production",
                 skipBaseInfrastructure: false,
                 gateway: { tlsMode: "self-signed", domains: ["*.aphiria.com"] },
                 postgresql: { user: "postgres", password: pulumi.output("password") },
@@ -468,6 +510,7 @@ describe("createStack", () => {
 
         it("should not create monitoring when grafana.hostname is missing", () => {
             (loadConfig as jest.Mock).mockReturnValue({
+                stackName: "production",
                 skipBaseInfrastructure: false,
                 gateway: { tlsMode: "self-signed", domains: ["*.aphiria.com"] },
                 postgresql: { user: "postgres", password: pulumi.output("password") },
@@ -481,6 +524,7 @@ describe("createStack", () => {
 
         it("should not create imagePullSecret when namespace was already created", () => {
             (loadConfig as jest.Mock).mockReturnValue({
+                stackName: "production",
                 skipBaseInfrastructure: false,
                 gateway: { tlsMode: "letsencrypt-prod", domains: ["*.pr.aphiria.com"] },
                 postgresql: { user: "postgres", password: pulumi.output("password") },
@@ -507,6 +551,7 @@ describe("createStack", () => {
     describe("provider handling", () => {
         it("should use provided k8sProvider when passed explicitly", () => {
             (loadConfig as jest.Mock).mockReturnValue({
+                stackName: "production",
                 skipBaseInfrastructure: false,
                 gateway: { tlsMode: "self-signed", domains: ["*.aphiria.com"] },
                 postgresql: { user: "postgres", password: pulumi.output("password") },
@@ -523,6 +568,7 @@ describe("createStack", () => {
 
         it("should create provider when k8sProvider is not passed", () => {
             (loadConfig as jest.Mock).mockReturnValue({
+                stackName: "production",
                 skipBaseInfrastructure: false,
                 gateway: { tlsMode: "letsencrypt-prod", domains: ["*.aphiria.com"] },
                 postgresql: { user: "postgres", password: pulumi.output("password") },
@@ -541,6 +587,7 @@ describe("createStack", () => {
     describe("namespace handling", () => {
         it("should use created namespace name for database and applications", () => {
             (loadConfig as jest.Mock).mockReturnValue({
+                stackName: "production",
                 skipBaseInfrastructure: false,
                 gateway: { tlsMode: "letsencrypt-prod", domains: ["*.pr.aphiria.com"] },
                 postgresql: { user: "postgres", password: pulumi.output("password") },
@@ -569,6 +616,7 @@ describe("createStack", () => {
 
         it("should use default namespace when no namespace config exists", () => {
             (loadConfig as jest.Mock).mockReturnValue({
+                stackName: "production",
                 skipBaseInfrastructure: false,
                 gateway: { tlsMode: "self-signed", domains: ["*.aphiria.com"] },
                 postgresql: { user: "postgres", password: pulumi.output("password") },

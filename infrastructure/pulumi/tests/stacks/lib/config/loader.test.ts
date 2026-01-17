@@ -3,6 +3,17 @@ import * as pulumi from "@pulumi/pulumi";
 import { deepMerge, loadConfig, validateConfig } from "../../../../src/stacks/lib/config/loader";
 import { Config } from "../../../../src/stacks/lib/config/loader";
 
+/**
+ * Helper to create a partial Config object for testing validateConfig
+ * Automatically adds the required stackName field based on the test context
+ */
+function createTestConfig(stackName: string, partialConfig: Partial<Config>): Config {
+    return {
+        stackName,
+        ...partialConfig,
+    } as Config;
+}
+
 describe("deepMerge", () => {
     describe("primitives", () => {
         it("should override string values", () => {
@@ -308,7 +319,7 @@ describe("loadConfig", () => {
 describe("validateConfig", () => {
     describe("production stack", () => {
         it("should pass validation with valid config", () => {
-            const config: Config = {
+            const config = createTestConfig("production", {
                 cluster: {} as any,
                 app: {} as any,
                 postgresql: {} as any,
@@ -316,16 +327,16 @@ describe("validateConfig", () => {
                 grafana: {} as any,
                 gateway: { dns: {} as any } as any,
                 monitoring: {} as any,
-            };
+            });
 
             expect(() => validateConfig("production", config)).not.toThrow();
         });
 
         it("should fail validation with invalid config and list all errors", () => {
-            const config: Config = {
+            const config = createTestConfig("production", {
                 namespace: { name: "test" } as any,
                 skipBaseInfrastructure: true,
-            };
+            });
 
             expect(() => validateConfig("production", config)).toThrow(
                 /Configuration validation failed for stack "production"/
@@ -360,7 +371,7 @@ describe("validateConfig", () => {
         });
 
         it("should fail when gateway exists but dns is missing", () => {
-            const config: Config = {
+            const config = createTestConfig("production", {
                 cluster: {} as any,
                 app: {} as any,
                 postgresql: {} as any,
@@ -368,7 +379,7 @@ describe("validateConfig", () => {
                 grafana: {} as any,
                 gateway: {} as any,
                 monitoring: {} as any,
-            };
+            });
 
             expect(() => validateConfig("production", config)).toThrow(
                 /gateway\.dns configuration is required for production/
@@ -378,20 +389,20 @@ describe("validateConfig", () => {
 
     describe("preview-base stack", () => {
         it("should pass validation with valid config", () => {
-            const config: Config = {
+            const config = createTestConfig("preview-base", {
                 cluster: {} as any,
                 postgresql: {} as any,
                 prometheus: {} as any,
                 grafana: {} as any,
                 gateway: { dns: {} as any } as any,
                 monitoring: {} as any,
-            };
+            });
 
             expect(() => validateConfig("preview-base", config)).not.toThrow();
         });
 
         it("should pass validation with namespace config present (inherited from base)", () => {
-            const config: Config = {
+            const config = createTestConfig("preview-base", {
                 cluster: {} as any,
                 postgresql: {} as any,
                 prometheus: {} as any,
@@ -399,15 +410,15 @@ describe("validateConfig", () => {
                 gateway: { dns: {} as any } as any,
                 monitoring: {} as any,
                 namespace: { name: "test" } as any,
-            };
+            });
 
             expect(() => validateConfig("preview-base", config)).not.toThrow();
         });
 
         it("should fail validation with invalid config and list all errors", () => {
-            const config: Config = {
+            const config = createTestConfig("preview-base", {
                 skipBaseInfrastructure: true,
-            };
+            });
 
             expect(() => validateConfig("preview-base", config)).toThrow(
                 /Configuration validation failed for stack "preview-base"/
@@ -436,14 +447,14 @@ describe("validateConfig", () => {
         });
 
         it("should fail when gateway exists but dns is missing", () => {
-            const config: Config = {
+            const config = createTestConfig("preview-base", {
                 cluster: {} as any,
                 postgresql: {} as any,
                 prometheus: {} as any,
                 grafana: {} as any,
                 gateway: {} as any,
                 monitoring: {} as any,
-            };
+            });
 
             expect(() => validateConfig("preview-base", config)).toThrow(
                 /gateway\.dns configuration is required for preview-base/
@@ -453,24 +464,24 @@ describe("validateConfig", () => {
 
     describe("preview-pr stack", () => {
         it("should pass validation with valid config", () => {
-            const config: Config = {
+            const config = createTestConfig("preview-pr-123", {
                 namespace: { name: "pr-123" } as any,
                 app: {} as any,
                 postgresql: { createDatabase: true, databaseName: "aphiria_pr_123" } as any,
                 prometheus: {} as any,
                 skipBaseInfrastructure: true,
-            };
+            });
 
             expect(() => validateConfig("preview-pr-123", config)).not.toThrow();
         });
 
         it("should fail validation with invalid config and list all errors", () => {
-            const config: Config = {
+            const config = createTestConfig("preview-pr-123", {
                 cluster: {} as any,
                 gateway: {} as any,
                 grafana: {} as any,
                 monitoring: {} as any,
-            };
+            });
 
             expect(() => validateConfig("preview-pr-456", config)).toThrow(
                 /Configuration validation failed for stack "preview-pr-456"/
@@ -505,13 +516,13 @@ describe("validateConfig", () => {
         });
 
         it("should fail when namespace exists but name is missing", () => {
-            const config: Config = {
+            const config = createTestConfig("preview-pr-123", {
                 namespace: {} as any,
                 app: {} as any,
                 postgresql: { createDatabase: true, databaseName: "aphiria_pr_123" } as any,
                 prometheus: {} as any,
                 skipBaseInfrastructure: true,
-            };
+            });
 
             expect(() => validateConfig("preview-pr-123", config)).toThrow(
                 /namespace\.name is required for preview-pr/
@@ -519,13 +530,13 @@ describe("validateConfig", () => {
         });
 
         it("should fail when postgresql exists but createDatabase is false", () => {
-            const config: Config = {
+            const config = createTestConfig("preview-pr-123", {
                 namespace: { name: "pr-123" } as any,
                 app: {} as any,
                 postgresql: { createDatabase: false, databaseName: "aphiria_pr_123" } as any,
                 prometheus: {} as any,
                 skipBaseInfrastructure: true,
-            };
+            });
 
             expect(() => validateConfig("preview-pr-123", config)).toThrow(
                 /postgresql\.createDatabase must be true for preview-pr/
@@ -533,13 +544,13 @@ describe("validateConfig", () => {
         });
 
         it("should fail when postgresql exists but databaseName is missing", () => {
-            const config: Config = {
+            const config = createTestConfig("preview-pr-123", {
                 namespace: { name: "pr-123" } as any,
                 app: {} as any,
                 postgresql: { createDatabase: true } as any,
                 prometheus: {} as any,
                 skipBaseInfrastructure: true,
-            };
+            });
 
             expect(() => validateConfig("preview-pr-123", config)).toThrow(
                 /postgresql\.databaseName is required for preview-pr/
@@ -549,22 +560,22 @@ describe("validateConfig", () => {
 
     describe("local stack", () => {
         it("should pass validation with valid config", () => {
-            const config: Config = {
+            const config = createTestConfig("local", {
                 app: {} as any,
                 postgresql: {} as any,
                 prometheus: {} as any,
                 grafana: {} as any,
                 gateway: {} as any,
                 monitoring: {} as any,
-            };
+            });
 
             expect(() => validateConfig("local", config)).not.toThrow();
         });
 
         it("should fail validation with invalid config and list all errors", () => {
-            const config: Config = {
+            const config = createTestConfig("local", {
                 namespace: { name: "test" } as any,
-            };
+            });
 
             expect(() => validateConfig("local", config)).toThrow(
                 /Configuration validation failed for stack "local"/
@@ -595,7 +606,7 @@ describe("validateConfig", () => {
 
     describe("unknown stack", () => {
         it("should fail for unknown stack name", () => {
-            const config: Config = {};
+            const config = createTestConfig("unknown", {});
 
             expect(() => validateConfig("unknown-stack", config)).toThrow(
                 /Unknown stack: unknown-stack/

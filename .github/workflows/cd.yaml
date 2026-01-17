@@ -538,7 +538,7 @@ jobs:
           set +e
           if [ "$MODE" == "preview" ]; then
             # Use --config-file to merge with template for preview
-            timeout ${{ env.PULUMI_PREVIEW_TIMEOUT }} pulumi preview --stack "${STACK_NAME}" --config-file Pulumi.preview-pr.yml --non-interactive 2>&1 | tee preview.txt
+            timeout ${{ env.PULUMI_PREVIEW_TIMEOUT }} pulumi preview --stack "${STACK_NAME}" --config-file Pulumi.preview-pr.yaml --non-interactive 2>&1 | tee preview.txt
           else
             # Production doesn't need config-file
             timeout ${{ env.PULUMI_PREVIEW_TIMEOUT }} pulumi preview --stack "${STACK_NAME}" --non-interactive 2>&1 | tee preview.txt
@@ -668,10 +668,10 @@ jobs:
 
           # Retry deployment with refresh on failure to handle orphaned resources
           if [ "$MODE" == "preview" ]; then
-            if ! timeout ${{ env.PULUMI_DEPLOY_TIMEOUT }} pulumi up --stack "${STACK_NAME}" --config-file Pulumi.preview-pr.yml --yes; then
+            if ! timeout ${{ env.PULUMI_DEPLOY_TIMEOUT }} pulumi up --stack "${STACK_NAME}" --config-file Pulumi.preview-pr.yaml --yes; then
               echo "Deployment failed, refreshing state and retrying once..."
               pulumi refresh --stack "${STACK_NAME}" --yes
-              timeout ${{ env.PULUMI_DEPLOY_TIMEOUT }} pulumi up --stack "${STACK_NAME}" --config-file Pulumi.preview-pr.yml --yes
+              timeout ${{ env.PULUMI_DEPLOY_TIMEOUT }} pulumi up --stack "${STACK_NAME}" --config-file Pulumi.preview-pr.yaml --yes
             fi
           else
             if ! timeout ${{ env.PULUMI_DEPLOY_TIMEOUT }} pulumi up --stack "${STACK_NAME}" --yes; then

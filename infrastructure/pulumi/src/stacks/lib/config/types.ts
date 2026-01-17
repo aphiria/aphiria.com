@@ -1,7 +1,7 @@
 /**
  * Configuration type definitions for all Pulumi stack configuration objects
  *
- * These types define the structure of nested configuration objects read from Pulumi.*.yml files.
+ * These types define the structure of nested configuration objects read from Pulumi.*.yaml files.
  * All config objects are read using `config.requireObject<Type>('key')` from the main
  * `aphiria-com-infrastructure` namespace.
  *

@@ -33,7 +33,7 @@ export function createProvider(env: "preview" | "production"): ProviderResult {
     if (!config.cluster) {
         throw new Error(
             `Environment ${env} requires cluster configuration but none was found. ` +
-                `Check Pulumi.${env}.yml for cluster: config block.`
+                `Check Pulumi.${env}.yaml for cluster: config block.`
         );
     }
 
