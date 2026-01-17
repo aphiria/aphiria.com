@@ -44,7 +44,7 @@ jobs:
 
       # Build stage: Documentation compilation
       - name: Build documentation image cache
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: .
           file: ./infrastructure/docker/build/Dockerfile
@@ -55,7 +55,7 @@ jobs:
 
       # Runtime: Web image
       - name: Build web image cache
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: .
           file: ./infrastructure/docker/runtime/web/Dockerfile
@@ -68,7 +68,7 @@ jobs:
 
       # Runtime: API image
       - name: Build API image cache
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: .
           file: ./infrastructure/docker/runtime/api/Dockerfile

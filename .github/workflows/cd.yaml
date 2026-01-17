@@ -240,7 +240,7 @@ jobs:
 
       - name: Build documentation image
         id: build-image
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: .
           file: ./infrastructure/docker/build/Dockerfile
@@ -259,7 +259,7 @@ jobs:
 
       - name: Build web image
         id: web-image
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: .
           file: ./infrastructure/docker/runtime/web/Dockerfile
@@ -280,7 +280,7 @@ jobs:
 
       - name: Build API image
         id: api-image
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: .
           file: ./infrastructure/docker/runtime/api/Dockerfile
