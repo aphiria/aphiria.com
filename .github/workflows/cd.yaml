@@ -363,7 +363,7 @@ jobs:
           cache-dependency-path: infrastructure/pulumi/package-lock.json
 
       - name: Install Pulumi CLI
-        uses: pulumi/actions@v5
+        uses: pulumi/actions@v6
 
       - name: Install Pulumi dependencies and build
         run: |
@@ -485,7 +485,7 @@ jobs:
           cache-dependency-path: infrastructure/pulumi/package-lock.json
 
       - name: Install Pulumi CLI
-        uses: pulumi/actions@v5
+        uses: pulumi/actions@v6
 
       - name: Install dependencies and build
         run: |
@@ -622,7 +622,7 @@ jobs:
           cache-dependency-path: infrastructure/pulumi/package-lock.json
 
       - name: Install Pulumi CLI
-        uses: pulumi/actions@v5
+        uses: pulumi/actions@v6
 
       - name: Install dependencies and build
         run: |
