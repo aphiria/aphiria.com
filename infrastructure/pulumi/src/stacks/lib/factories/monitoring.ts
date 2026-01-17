@@ -338,13 +338,13 @@ export function createMonitoringResources(args: MonitoringResourcesArgs): Monito
                   adminUser: args.grafanaConfig.adminUser,
               }
             : undefined,
-        smtp: args.grafanaConfig.smtpHost
+        smtp: args.grafanaConfig.smtp
             ? {
-                  host: pulumi.secret(args.grafanaConfig.smtpHost),
-                  port: args.grafanaConfig.smtpPort!,
-                  user: pulumi.secret(args.grafanaConfig.smtpUser!),
-                  password: pulumi.secret(args.grafanaConfig.smtpPassword!),
-                  fromAddress: args.grafanaConfig.smtpFromAddress!,
+                  host: pulumi.secret(args.grafanaConfig.smtp.host),
+                  port: args.grafanaConfig.smtp.port,
+                  user: pulumi.secret(args.grafanaConfig.smtp.user),
+                  password: pulumi.secret(args.grafanaConfig.smtp.password),
+                  fromAddress: args.grafanaConfig.smtp.fromAddress,
               }
             : undefined,
         basicAuth: args.grafanaConfig.basicAuth

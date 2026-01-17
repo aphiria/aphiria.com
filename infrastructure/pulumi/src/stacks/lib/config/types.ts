@@ -241,6 +241,17 @@ export interface GrafanaGitHubConfig {
 }
 
 /**
+ * Grafana SMTP configuration for email notifications
+ */
+export interface GrafanaSmtpConfig {
+    host: string; // Secret - wrap with pulumi.secret()
+    port: number;
+    user: string; // Secret - wrap with pulumi.secret()
+    password: string; // Secret - wrap with pulumi.secret()
+    fromAddress: string;
+}
+
+/**
  * Grafana configuration
  */
 export interface GrafanaConfig {
@@ -249,12 +260,8 @@ export interface GrafanaConfig {
     ingressSectionName: string;
     github: GrafanaGitHubConfig;
     adminUser: string;
-    smtpHost?: string; // Secret - wrap with pulumi.secret() (optional - preview doesn't have)
-    smtpPort?: number; // Optional - preview doesn't have
-    smtpUser?: string; // Secret - wrap with pulumi.secret() (optional - preview doesn't have)
-    smtpPassword?: string; // Secret - wrap with pulumi.secret() (optional - preview doesn't have)
-    smtpFromAddress?: string; // Optional - preview doesn't have
-    alertEmail?: string; // Optional - preview doesn't have
+    smtp?: GrafanaSmtpConfig; // Optional - preview doesn't have
+    alertEmail?: string; // Optional - preview doesn't have (requires SMTP)
     basicAuth?: GrafanaBasicAuthConfig; // Optional - preview only
     storageSize: string;
     hostname: string;

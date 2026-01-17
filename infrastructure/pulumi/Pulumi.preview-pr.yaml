@@ -4,7 +4,7 @@ environment:
 config:
   # Set dynamically by CD workflow during deployment
   aphiria-com-infrastructure:prNumber: 123
-  aphiria-com-infrastructure:baseStackReference: "organization/aphiria-com-infrastructure/preview-base"
+  aphiria-com-infrastructure:baseStackReference: "davidbyoung/aphiria-com-infrastructure/preview-base"
   aphiria-com-infrastructure:skipBaseInfrastructure: true
 
   # Preview PR-specific overrides
