@@ -1,5 +1,5 @@
 environment:
-  - aphiria.com/Preview
+  - aphiria.com/Preview-Base
 
 config:
   # Preview base-specific overrides
