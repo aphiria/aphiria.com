@@ -18,12 +18,15 @@ import { createDatabaseResources, DatabaseResources } from "./factories/database
 import { createApplicationResources, ApplicationResources } from "./factories/applications";
 import { createProvider, ProviderResult } from "./factories/provider";
 import { NamespaceResult } from "../../components/types";
-import { loadConfig } from "./config/loader";
+import { loadConfig, Config } from "./config/loader";
 
 /**
  * Stack resources returned by createStack factory
  */
 export interface StackResources {
+    // Configuration used to create this stack
+    config: Config;
+
     // Cluster info (only populated for stacks that create clusters: preview-base, production)
     cluster?: digitalocean.KubernetesCluster;
     clusterId?: pulumi.Output<string>;
@@ -51,10 +54,12 @@ export interface StackResources {
  * @returns Object containing all created resources
  */
 export function createStack(env: Environment, k8sProvider?: k8s.Provider): StackResources {
-    const resources: StackResources = {};
-
     // Load configuration
     const config = loadConfig();
+
+    const resources: StackResources = {
+        config,
+    };
 
     // Get or create provider
     let provider: k8s.Provider;

@@ -13,10 +13,10 @@ export const clusterId = stack.clusterId;
 export const kubeconfig = pulumi.secret(stack.kubeconfig!);
 
 // Export PostgreSQL host for preview-pr stacks
-if (!stack.namespace) throw new Error("Preview-base stack must create namespace");
-export const postgresqlHost = pulumi.interpolate`db.${stack.namespace.namespace.metadata.name}.svc.cluster.local`;
+// Preview-base uses default namespace, host is defined in config
+export const postgresqlHost = stack.config.postgresql!.host;
 
 // Export monitoring endpoint for preview-pr stacks
 export const prometheusEndpoint = stack.monitoring
-    ? pulumi.interpolate`http://kube-prometheus-stack-prometheus.monitoring.svc.cluster.local:9090`
+    ? pulumi.output("http://kube-prometheus-stack-prometheus.monitoring.svc.cluster.local:9090")
     : undefined;
