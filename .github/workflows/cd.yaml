@@ -813,7 +813,7 @@ jobs:
 
       - name: Upload test artifacts
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: playwright-artifacts-${{ needs.determine-mode.outputs.mode }}
           path: |
