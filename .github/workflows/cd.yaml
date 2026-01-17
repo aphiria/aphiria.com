@@ -55,7 +55,7 @@ jobs:
     steps:
       - name: Detect build mode and extract metadata
         id: detect
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             let mode, prNumber, commitSha, isSafe;
@@ -313,7 +313,7 @@ jobs:
 
       - name: Add comment to PR with image digests
         if: needs.determine-mode.outputs.mode == 'preview'
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const prNumber = ${{ needs.determine-mode.outputs.pr-number }};
@@ -372,7 +372,7 @@ jobs:
           npm run build
 
       - name: Ensure preview-base stack exists and is deployed
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         env:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
         with:
@@ -550,7 +550,7 @@ jobs:
 
       - name: Post preview comment on PR
         if: always() && steps.preview.outcome != 'skipped' && needs.determine-mode.outputs.mode == 'preview'
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const fs = require('fs');
@@ -683,7 +683,7 @@ jobs:
 
       - name: Post deployment success comment (preview)
         if: success() && needs.determine-mode.outputs.mode == 'preview'
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const prNumber = ${{ needs.determine-mode.outputs.pr-number }};
@@ -723,7 +723,7 @@ jobs:
 
       - name: Post deployment failure comment (preview)
         if: failure() && needs.determine-mode.outputs.mode == 'preview'
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const prNumber = ${{ needs.determine-mode.outputs.pr-number }};
