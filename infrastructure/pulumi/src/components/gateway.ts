@@ -105,7 +105,13 @@ export function createGateway(args: GatewayArgs): GatewayResult {
                         "access-token": args.dnsToken,
                     },
                 },
-                { provider: args.provider }
+                {
+                    provider: args.provider,
+                    protect: false,
+                    retainOnDelete: false,
+                    replaceOnChanges: ["*"],
+                    deleteBeforeReplace: true,
+                }
             );
         }
 

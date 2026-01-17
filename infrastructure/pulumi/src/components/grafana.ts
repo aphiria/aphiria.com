@@ -113,7 +113,13 @@ export function createGrafana(args: GrafanaArgs): GrafanaResult {
             type: "Opaque",
             stringData: secretData,
         },
-        { provider: args.provider }
+        {
+            provider: args.provider,
+            protect: false,
+            retainOnDelete: false,
+            replaceOnChanges: ["*"],
+            deleteBeforeReplace: true,
+        }
     );
 
     // Calculate checksums for ConfigMap data to trigger pod restarts on changes

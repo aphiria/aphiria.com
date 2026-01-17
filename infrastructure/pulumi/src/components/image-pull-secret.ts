@@ -39,7 +39,13 @@ export function createImagePullSecret(args: ImagePullSecretArgs): ImagePullSecre
                 ".dockerconfigjson": pulumi.interpolate`{"auths":{"${args.registry}":{"username":"${args.username}","password":"${args.token}"}}}`,
             },
         },
-        { provider: args.provider }
+        {
+            provider: args.provider,
+            protect: false,
+            retainOnDelete: false,
+            replaceOnChanges: ["*"],
+            deleteBeforeReplace: true,
+        }
     );
 
     return {

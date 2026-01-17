@@ -56,7 +56,13 @@ export function createApiServiceMonitor(args: ApiServiceMonitorArgs): ApiService
                 token: args.authToken,
             },
         },
-        { provider: args.provider }
+        {
+            provider: args.provider,
+            protect: false,
+            retainOnDelete: false,
+            replaceOnChanges: ["*"],
+            deleteBeforeReplace: true,
+        }
     );
 
     // Create copy of secret in monitoring namespace for Prometheus Operator
@@ -73,7 +79,13 @@ export function createApiServiceMonitor(args: ApiServiceMonitorArgs): ApiService
                 token: args.authToken,
             },
         },
-        { provider: args.provider }
+        {
+            provider: args.provider,
+            protect: false,
+            retainOnDelete: false,
+            replaceOnChanges: ["*"],
+            deleteBeforeReplace: true,
+        }
     );
 
     // Create ServiceMonitor CRD
