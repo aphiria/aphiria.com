@@ -6,6 +6,7 @@ config:
   aphiria-com-infrastructure:overrides:
     cluster:
       name: "aphiria-com-preview-cluster"
+      minNodes: 1
     gateway:
       domains:
         - "*.pr.aphiria.com"
