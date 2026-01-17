@@ -14,14 +14,14 @@
     "author": "",
     "license": "MIT",
     "dependencies": {
-        "@pulumi/digitalocean": "^4.55.0",
-        "@pulumi/kubernetes": "^4.24.1",
+        "@pulumi/digitalocean": "^4.56.0",
+        "@pulumi/kubernetes": "^4.25.0",
         "@pulumi/postgresql": "^3.16.1",
-        "@pulumi/pulumi": "^3.213.0"
+        "@pulumi/pulumi": "^3.216.0"
     },
     "devDependencies": {
         "@jest/globals": "^29.0.0",
-        "@pulumi/pulumi": "^3.213.0",
+        "@pulumi/pulumi": "^3.216.0",
         "@types/jest": "^29.0.0",
         "@types/node": "^20.0.0",
         "jest": "^29.0.0",
