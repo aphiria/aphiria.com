@@ -1,17 +1,15 @@
-'use strict';
-
-const gulp = require('gulp');
-const fs = require('fs');
-const rev = require('gulp-rev');
-const replace = require('gulp-replace');
-const uglifyJs = require('gulp-terser');
-const uglifyCss = require('gulp-clean-css');
-const concat = require('gulp-concat');
-const del = require('del');
-const shell = require('gulp-shell');
-const sourcemaps = require('gulp-sourcemaps');
-const postcss = require('gulp-postcss');
-const postcssNested = require('postcss-nested');
+import gulp from 'gulp';
+import fs from 'fs';
+import rev from 'gulp-rev';
+import replace from 'gulp-replace';
+import uglifyJs from 'gulp-terser';
+import uglifyCss from 'gulp-clean-css';
+import concat from 'gulp-concat';
+import { deleteAsync } from 'del';
+import shell from 'gulp-shell';
+import sourcemaps from 'gulp-sourcemaps';
+import postcss from 'gulp-postcss';
+import postcssNested from 'postcss-nested';
 
 const paths = {
     'manifest': 'public/rev-manifest.json',
@@ -72,11 +70,11 @@ const minifyCss = () => {
         .pipe(gulp.dest(paths.public));
 };
 const cleanCss = () => {
-    return del([`${paths.publicCss}/*.css`, `${paths.publicCss}/*.css.map`]);
+    return deleteAsync([`${paths.publicCss}/*.css`, `${paths.publicCss}/*.css.map`]);
 };
 const cleanJs = () => {
     // Delete everything but the config.js
-    return del([`${paths.publicJs}/*.js`, `${paths.publicJs}/*.js.map`, `!${paths.publicJs}/config.js`]);
+    return deleteAsync([`${paths.publicJs}/*.js`, `${paths.publicJs}/*.js.map`, `!${paths.publicJs}/config.js`]);
 };
 
 gulp.task('clean-css', cleanCss);
