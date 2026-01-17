@@ -34,27 +34,25 @@ export interface DatabaseResourcesArgs {
  * @returns Database resources
  */
 export function createDatabaseResources(args: DatabaseResourcesArgs): DatabaseResources {
-    const { provider, namespace, postgresqlConfig } = args;
-
     const resources: DatabaseResources = {};
 
-    if (postgresqlConfig.createDatabase && postgresqlConfig.databaseName) {
+    if (args.postgresqlConfig.createDatabase && args.postgresqlConfig.databaseName) {
         // Preview-PR: Create database on shared instance
         resources.dbInitJob = createDatabaseCreationJob({
-            namespace,
-            databaseName: postgresqlConfig.databaseName,
-            dbHost: postgresqlConfig.host,
-            dbAdminUser: postgresqlConfig.user,
-            dbAdminPassword: postgresqlConfig.password,
-            provider,
+            namespace: args.namespace,
+            databaseName: args.postgresqlConfig.databaseName,
+            dbHost: args.postgresqlConfig.host,
+            dbAdminUser: args.postgresqlConfig.user,
+            dbAdminPassword: args.postgresqlConfig.password,
+            provider: args.provider,
         });
     } else {
         // Local/Preview-Base/Production: Create PostgreSQL instance
         resources.postgres = createPostgreSQL({
-            username: postgresqlConfig.user,
-            password: postgresqlConfig.password,
+            username: args.postgresqlConfig.user,
+            password: args.postgresqlConfig.password,
             replicas: 1,
-            resources: postgresqlConfig.resources,
+            resources: args.postgresqlConfig.resources,
             healthCheck: {
                 interval: "10s",
                 timeout: "5s",
@@ -64,18 +62,18 @@ export function createDatabaseResources(args: DatabaseResourcesArgs): DatabaseRe
             connectionPooling: {
                 maxConnections: 100,
             },
-            namespace,
+            namespace: args.namespace,
             storage: {
-                enabled: postgresqlConfig.persistentStorage,
-                size: postgresqlConfig.storageSize,
+                enabled: args.postgresqlConfig.persistentStorage,
+                size: args.postgresqlConfig.storageSize,
                 accessMode: "ReadWriteOnce",
                 // Use hostPath for local development
-                useHostPath: postgresqlConfig.useHostPath,
-                hostPath: postgresqlConfig.hostPath,
+                useHostPath: args.postgresqlConfig.useHostPath,
+                hostPath: args.postgresqlConfig.hostPath,
             },
-            imageTag: postgresqlConfig.version,
+            imageTag: args.postgresqlConfig.version,
             databaseName: "postgres",
-            provider,
+            provider: args.provider,
         });
     }
 

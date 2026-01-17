@@ -362,9 +362,7 @@ describe("validateConfig", () => {
             expect(() => validateConfig("production", config)).toThrow(
                 /monitoring configuration is required for production/
             );
-            expect(() => validateConfig("production", config)).toThrow(
-                /namespace configuration should not be present in production/
-            );
+            // Note: namespace validation removed - production can have namespace config for imagePullSecret
             expect(() => validateConfig("production", config)).toThrow(
                 /skipBaseInfrastructure should not be set in production/
             );

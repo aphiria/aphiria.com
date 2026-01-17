@@ -47,58 +47,56 @@ export interface MonitoringResourcesArgs {
  * @returns Monitoring resources
  */
 export function createMonitoringResources(args: MonitoringResourcesArgs): MonitoringResources {
-    const { env, provider, monitoringConfig, prometheusConfig, grafanaConfig } = args;
-
     // Create monitoring namespace with ResourceQuota
     const monitoringNamespace = createNamespace({
         name: "monitoring",
-        environmentLabel: env,
-        resourceQuota: monitoringConfig.namespace.resourceQuota,
+        environmentLabel: args.env,
+        resourceQuota: args.monitoringConfig.namespace.resourceQuota,
         labels: {
             "app.kubernetes.io/component": "monitoring",
         },
-        provider,
+        provider: args.provider,
     });
 
     // Install kube-prometheus-stack (Prometheus Operator + Prometheus + kube-state-metrics + Alertmanager)
     const kubePrometheusStack = installKubePrometheusStack(
         {
-            env,
+            env: args.env,
             chartName: "kube-prometheus-stack",
             repository: "https://prometheus-community.github.io/helm-charts",
             version: "70.10.0", // Chart version - infrastructure dependency
             namespace: "monitoring",
-            provider,
+            provider: args.provider,
             values: {
                 prometheus: {
                     prometheusSpec: {
-                        retention: prometheusConfig.retentionTime,
-                        scrapeInterval: prometheusConfig.scrapeInterval,
+                        retention: args.prometheusConfig.retentionTime,
+                        scrapeInterval: args.prometheusConfig.scrapeInterval,
                         storageSpec: {
                             volumeClaimTemplate: {
                                 spec: {
                                     accessModes: ["ReadWriteOnce"],
                                     resources: {
                                         requests: {
-                                            storage: prometheusConfig.storageSize,
+                                            storage: args.prometheusConfig.storageSize,
                                         },
                                     },
                                 },
                             },
                         },
                         externalLabels: {
-                            environment: env,
+                            environment: args.env,
                         },
                         // Resource limits for Prometheus container (required by ResourceQuota)
-                        resources: prometheusConfig.resources,
+                        resources: args.prometheusConfig.resources,
                     },
                 },
                 // Prometheus Operator resource limits (required by ResourceQuota)
                 prometheusOperator: {
-                    resources: prometheusConfig.operator.resources,
+                    resources: args.prometheusConfig.operator.resources,
                     // Resource limits for config-reloader sidecar (required by ResourceQuota)
                     prometheusConfigReloader: {
-                        resources: prometheusConfig.operator.configReloader,
+                        resources: args.prometheusConfig.operator.configReloader,
                     },
                     // Disable TLS/admission webhooks to work around Helm Chart v4 limitation
                     // Pulumi Helm Chart v4 doesn't support Helm hooks, so webhook cert Jobs never run
@@ -112,12 +110,12 @@ export function createMonitoringResources(args: MonitoringResourcesArgs): Monito
                 },
                 // Node exporter resource limits (required by ResourceQuota)
                 "prometheus-node-exporter": {
-                    resources: prometheusConfig.nodeExporter.resources,
+                    resources: args.prometheusConfig.nodeExporter.resources,
                 },
                 // kube-state-metrics resource limits (required by ResourceQuota)
                 "kube-state-metrics": {
                     enabled: true,
-                    resources: prometheusConfig.kubeStateMetrics.resources,
+                    resources: args.prometheusConfig.kubeStateMetrics.resources,
                 },
                 // Disable Grafana (we manage it separately)
                 grafana: {
@@ -150,7 +148,7 @@ export function createMonitoringResources(args: MonitoringResourcesArgs): Monito
     const dashboards = createDashboards({
         namespace: "monitoring",
         dashboards: dashboardData,
-        provider,
+        provider: args.provider,
     });
 
     // Define application-specific alert rules
@@ -164,7 +162,7 @@ export function createMonitoringResources(args: MonitoringResourcesArgs): Monito
             for: "10m",
             labels: {
                 severity: "critical",
-                environment: env,
+                environment: args.env,
             },
             annotations: {
                 summary: "High CPU usage detected",
@@ -181,7 +179,7 @@ export function createMonitoringResources(args: MonitoringResourcesArgs): Monito
             for: "10m",
             labels: {
                 severity: "critical",
-                environment: env,
+                environment: args.env,
             },
             annotations: {
                 summary: "High memory usage detected",
@@ -198,7 +196,7 @@ export function createMonitoringResources(args: MonitoringResourcesArgs): Monito
             for: "5m",
             labels: {
                 severity: "warning",
-                environment: env,
+                environment: args.env,
             },
             annotations: {
                 summary: "High API latency detected",
@@ -215,7 +213,7 @@ export function createMonitoringResources(args: MonitoringResourcesArgs): Monito
             for: "5m",
             labels: {
                 severity: "warning",
-                environment: env,
+                environment: args.env,
             },
             annotations: {
                 summary: "High API 4xx rate detected",
@@ -232,7 +230,7 @@ export function createMonitoringResources(args: MonitoringResourcesArgs): Monito
             for: "5m",
             labels: {
                 severity: "critical",
-                environment: env,
+                environment: args.env,
             },
             annotations: {
                 summary: "High API 5xx rate detected",
@@ -249,7 +247,7 @@ export function createMonitoringResources(args: MonitoringResourcesArgs): Monito
             for: "5m",
             labels: {
                 severity: "critical",
-                environment: env,
+                environment: args.env,
             },
             annotations: {
                 summary: "Pod is crash looping",
@@ -265,7 +263,7 @@ export function createMonitoringResources(args: MonitoringResourcesArgs): Monito
             for: "5m",
             labels: {
                 severity: "critical",
-                environment: env,
+                environment: args.env,
             },
             annotations: {
                 summary: "Pod has failed",
@@ -279,7 +277,7 @@ export function createMonitoringResources(args: MonitoringResourcesArgs): Monito
     // Production: email contact point for real alerts
     // Preview/Local: use Grafana's default contact point (won't send without SMTP)
     const contactPoints =
-        env === "production" && grafanaConfig.alertEmail
+        args.env === "production" && args.grafanaConfig.alertEmail
             ? [
                   {
                       name: "email-admin",
@@ -288,7 +286,7 @@ export function createMonitoringResources(args: MonitoringResourcesArgs): Monito
                               uid: "email-admin",
                               type: "email",
                               settings: {
-                                  addresses: grafanaConfig.alertEmail,
+                                  addresses: args.grafanaConfig.alertEmail,
                                   singleEmail: true,
                                   subject:
                                       '[{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .CommonLabels.environment }} {{ (index .Alerts 0).Annotations.summary }}',
@@ -316,50 +314,50 @@ export function createMonitoringResources(args: MonitoringResourcesArgs): Monito
 
     const alerts = createGrafanaAlerts({
         namespace: "monitoring",
-        environment: env,
+        environment: args.env,
         alertRules,
         contactPoints,
-        defaultReceiver: grafanaConfig.defaultReceiver,
-        provider,
+        defaultReceiver: args.grafanaConfig.defaultReceiver,
+        provider: args.provider,
     });
 
     const grafana = createGrafana({
-        replicas: grafanaConfig.replicas,
-        resources: grafanaConfig.resources,
+        replicas: args.grafanaConfig.replicas,
+        resources: args.grafanaConfig.resources,
         namespace: "monitoring",
         // kube-prometheus-stack creates Prometheus with name kube-prometheus-stack-prometheus
         prometheusUrl: "http://kube-prometheus-stack-prometheus.monitoring.svc.cluster.local:9090",
-        storageSize: grafanaConfig.storageSize,
-        domain: grafanaConfig.hostname,
-        imageVersion: grafanaConfig.version,
-        githubAuth: grafanaConfig.github.clientId
+        storageSize: args.grafanaConfig.storageSize,
+        domain: args.grafanaConfig.hostname,
+        imageVersion: args.grafanaConfig.version,
+        githubAuth: args.grafanaConfig.github.clientId
             ? {
-                  clientId: pulumi.secret(grafanaConfig.github.clientId),
-                  clientSecret: pulumi.secret(grafanaConfig.github.clientSecret),
-                  organization: grafanaConfig.github.org,
-                  adminUser: grafanaConfig.adminUser,
+                  clientId: pulumi.secret(args.grafanaConfig.github.clientId),
+                  clientSecret: pulumi.secret(args.grafanaConfig.github.clientSecret),
+                  organization: args.grafanaConfig.github.org,
+                  adminUser: args.grafanaConfig.adminUser,
               }
             : undefined,
-        smtp: grafanaConfig.smtpHost
+        smtp: args.grafanaConfig.smtpHost
             ? {
-                  host: pulumi.secret(grafanaConfig.smtpHost),
-                  port: grafanaConfig.smtpPort!,
-                  user: pulumi.secret(grafanaConfig.smtpUser!),
-                  password: pulumi.secret(grafanaConfig.smtpPassword!),
-                  fromAddress: grafanaConfig.smtpFromAddress!,
+                  host: pulumi.secret(args.grafanaConfig.smtpHost),
+                  port: args.grafanaConfig.smtpPort!,
+                  user: pulumi.secret(args.grafanaConfig.smtpUser!),
+                  password: pulumi.secret(args.grafanaConfig.smtpPassword!),
+                  fromAddress: args.grafanaConfig.smtpFromAddress!,
               }
             : undefined,
-        basicAuth: grafanaConfig.basicAuth
+        basicAuth: args.grafanaConfig.basicAuth
             ? {
-                  username: pulumi.secret(grafanaConfig.basicAuth.user),
-                  password: pulumi.secret(grafanaConfig.basicAuth.password),
+                  username: pulumi.secret(args.grafanaConfig.basicAuth.user),
+                  password: pulumi.secret(args.grafanaConfig.basicAuth.password),
               }
             : undefined,
         dashboardsConfigMap: dashboards.configMap,
         alertRulesConfigMap: alerts.alertRulesConfigMap,
         contactPointsConfigMap: alerts.contactPointsConfigMap,
         notificationPoliciesConfigMap: alerts.notificationPoliciesConfigMap,
-        provider,
+        provider: args.provider,
     });
 
     const grafanaIngress = createGrafanaIngress({
@@ -368,12 +366,12 @@ export function createMonitoringResources(args: MonitoringResourcesArgs): Monito
         servicePort: 80,
         gatewayName: "nginx-gateway",
         gatewayNamespace: "nginx-gateway",
-        hostname: grafanaConfig.hostname,
+        hostname: args.grafanaConfig.hostname,
         // Preview: pr-grafana.aphiria.com uses https-root (exact match)
         // Production: grafana.aphiria.com uses https-subdomains (*.aphiria.com wildcard)
         /* istanbul ignore next - sectionName varies by environment (preview vs production) */
-        sectionName: grafanaConfig.ingressSectionName,
-        provider,
+        sectionName: args.grafanaConfig.ingressSectionName,
+        provider: args.provider,
     });
 
     return {

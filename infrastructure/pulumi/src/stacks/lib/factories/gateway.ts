@@ -34,30 +34,28 @@ export interface GatewayResourcesArgs {
  * @returns Gateway resources
  */
 export function createGatewayResources(args: GatewayResourcesArgs): GatewayResources {
-    const { provider, gatewayConfig, baseInfrastructure } = args;
-
     const gatewayNamespace = "nginx-gateway";
 
     const gateway = createGateway({
-        requireRootAndWildcard: gatewayConfig.requireRootAndWildcard,
+        requireRootAndWildcard: args.gatewayConfig.requireRootAndWildcard,
         namespace: gatewayNamespace,
         name: "nginx-gateway",
-        tlsMode: gatewayConfig.tlsMode,
-        domains: gatewayConfig.domains,
-        dnsToken: gatewayConfig.digitaloceanDnsToken,
-        provider,
+        tlsMode: args.gatewayConfig.tlsMode,
+        domains: args.gatewayConfig.domains,
+        dnsToken: args.gatewayConfig.digitaloceanDnsToken,
+        provider: args.provider,
         // Ensure cert-manager CRDs are ready before creating ClusterIssuer/Certificate
-        certManagerDependency: baseInfrastructure?.helmCharts.certManager,
+        certManagerDependency: args.baseInfrastructure?.helmCharts.certManager,
     });
 
     // Create DNS records if configured
     // Fetch LoadBalancer IP from nginx-gateway Chart resources
     /* istanbul ignore next - Chart.resources is only populated at runtime, cannot be mocked in unit tests */
-    if (gatewayConfig.dns && baseInfrastructure?.helmCharts.nginxGateway) {
+    if (args.gatewayConfig.dns && args.baseInfrastructure?.helmCharts.nginxGateway) {
         // Workaround for Pulumi bug #16395: Service.get() doesn't respect dependsOn
         // Use Chart v4's .resources output to get the Service directly from child resources
-        const gatewayServiceOutput = baseInfrastructure.helmCharts.nginxGateway.resources.apply(
-            (chartResources) => {
+        const gatewayServiceOutput =
+            args.baseInfrastructure.helmCharts.nginxGateway.resources.apply((chartResources) => {
                 const service = chartResources.find(
                     (r) =>
                         r.__pulumiType === "kubernetes:core/v1:Service" &&
@@ -68,8 +66,7 @@ export function createGatewayResources(args: GatewayResourcesArgs): GatewayResou
                     throw new Error("Could not find nginx-gateway Service in Chart resources");
                 }
                 return service as k8s.core.v1.Service;
-            }
-        );
+            });
 
         gateway.ip = gatewayServiceOutput.status.loadBalancer.ingress[0].ip;
 
@@ -77,10 +74,10 @@ export function createGatewayResources(args: GatewayResourcesArgs): GatewayResou
             throw new Error("Gateway IP is required for DNS configuration but was not set");
         }
         const dnsResult = createDNSRecords({
-            domain: gatewayConfig.dns.domain,
+            domain: args.gatewayConfig.dns.domain,
             loadBalancerIp: gateway.ip,
-            records: gatewayConfig.dns.records,
-            ttl: gatewayConfig.dns.ttl,
+            records: args.gatewayConfig.dns.records,
+            ttl: args.gatewayConfig.dns.ttl,
         });
         gateway.dnsRecords = dnsResult.records;
     }

@@ -54,7 +54,7 @@ jobs:
         run: |
           # Get cluster name and DigitalOcean token from preview-base stack
           pulumi stack select ${{ env.PULUMI_ORG }}/${{ env.PULUMI_PROJECT }}/preview-base
-          CLUSTER_NAME=$(pulumi stack output clusterName --show-secrets)
+          CLUSTER_NAME=$(pulumi stack output clusterName)
           DO_TOKEN=$(pulumi config get digitalocean:token --show-secrets)
 
           # Install doctl CLI

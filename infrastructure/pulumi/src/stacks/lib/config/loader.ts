@@ -180,11 +180,7 @@ export function validateConfig(stackName: string, config: Config): void {
             errors.push("gateway.dns configuration is required for production (DNS records)");
         }
         if (!config.monitoring) errors.push("monitoring configuration is required for production");
-        if (config.namespace) {
-            errors.push(
-                "namespace configuration should not be present in production (uses default)"
-            );
-        }
+        // Note: namespace config can be present (for imagePullSecret) even though production uses default namespace
         if (config.skipBaseInfrastructure) {
             errors.push(
                 "skipBaseInfrastructure should not be set in production (always provisions infrastructure)"

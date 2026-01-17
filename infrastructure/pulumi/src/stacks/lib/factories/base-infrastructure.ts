@@ -31,28 +31,26 @@ export interface BaseInfrastructureResourcesArgs {
 export function createBaseInfrastructureResources(
     args: BaseInfrastructureResourcesArgs
 ): BaseInfrastructureResources {
-    const { env, provider } = args;
-
     const baseInfrastructure: Partial<BaseInfrastructureResources> = {};
 
     // For local environment: Install Gateway API CRDs first
     // DigitalOcean Kubernetes (preview/production) pre-installs these via Cilium
-    if (env === "local") {
+    if (args.env === "local") {
         const gatewayApiCrds = new k8s.yaml.ConfigFile(
             "gateway-api-crds",
             {
                 file: "https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.0.0/standard-install.yaml",
             },
             {
-                provider,
+                provider: args.provider,
             }
         );
 
         // Install Helm charts with nginx-gateway depending on CRDs
         // NOTE: nginx-gateway-fabric Helm chart creates the GatewayClass automatically
         baseInfrastructure.helmCharts = installBaseHelmCharts({
-            env,
-            provider,
+            env: args.env,
+            provider: args.provider,
             nginxGatewayDependencies: [gatewayApiCrds],
         });
 
@@ -60,8 +58,8 @@ export function createBaseInfrastructureResources(
     } else {
         // Preview/Production: No CRDs needed, just install Helm charts
         baseInfrastructure.helmCharts = installBaseHelmCharts({
-            env,
-            provider,
+            env: args.env,
+            provider: args.provider,
         });
     }
 
