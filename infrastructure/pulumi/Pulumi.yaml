@@ -8,102 +8,102 @@ description: Aphiria.com infrastructure - shared components and stacks for local
 config:
   cluster:
     value:
-      name: "aphiria-com-cluster"
-      region: "nyc3"
-      version: "1.34.1-do.2"
+      name: aphiria-com-cluster
+      region: nyc3
+      version: 1.34.1-do.2
       autoUpgrade: true
       surgeUpgrade: false
       ha: false
-      nodeSize: "s-4vcpu-8gb"
+      nodeSize: s-2vcpu-4gb
       nodeCount: 2
       autoScale: true
       minNodes: 2
       maxNodes: 3
-      vpcUuid: "976f980d-dc84-11e8-80bc-3cfdfea9fba1"
+      vpcUuid: 976f980d-dc84-11e8-80bc-3cfdfea9fba1
 
   app:
     value:
-      imagePullPolicy: "IfNotPresent"
+      imagePullPolicy: IfNotPresent
       web:
-        url: "https://www.aphiria.com"
-        cookieDomain: ".aphiria.com"
+        url: https://www.aphiria.com
+        cookieDomain: .aphiria.com
         replicas: 2
-        image: "ghcr.io/aphiria/aphiria.com-web:latest"
+        image: ghcr.io/aphiria/aphiria.com-web:latest
         resources:
           requests:
-            cpu: "50m"
-            memory: "64Mi"
+            cpu: 50m
+            memory: 64Mi
           limits:
-            cpu: "100m"
-            memory: "128Mi"
+            cpu: 100m
+            memory: 128Mi
         podDisruptionBudget:
           minAvailable: 1
       api:
-        url: "https://api.aphiria.com"
-        logLevel: "warning"
+        url: https://api.aphiria.com
+        logLevel: warning
         replicas: 2
-        image: "ghcr.io/aphiria/aphiria.com-api:latest"
+        image: ghcr.io/aphiria/aphiria.com-api:latest
         resources:
           initContainer:
             requests:
-              cpu: "50m"
-              memory: "64Mi"
+              cpu: 50m
+              memory: 64Mi
             limits:
-              cpu: "100m"
-              memory: "128Mi"
+              cpu: 100m
+              memory: 128Mi
           nginx:
             requests:
-              cpu: "50m"
-              memory: "64Mi"
+              cpu: 50m
+              memory: 64Mi
             limits:
-              cpu: "100m"
-              memory: "128Mi"
+              cpu: 100m
+              memory: 128Mi
           php:
             requests:
-              cpu: "100m"
-              memory: "192Mi"
+              cpu: 100m
+              memory: 192Mi
             limits:
-              cpu: "200m"
-              memory: "384Mi"
+              cpu: 200m
+              memory: 384Mi
         podDisruptionBudget:
           minAvailable: 1
       migration:
         resources:
           migration:
             requests:
-              cpu: "50m"
-              memory: "128Mi"
+              cpu: 50m
+              memory: 128Mi
             limits:
-              cpu: "200m"
-              memory: "256Mi"
+              cpu: 200m
+              memory: 256Mi
           initContainer:
             requests:
-              cpu: "10m"
-              memory: "32Mi"
+              cpu: 10m
+              memory: 32Mi
             limits:
-              cpu: "50m"
-              memory: "64Mi"
+              cpu: 50m
+              memory: 64Mi
 
   postgresql:
     value:
       version: "16"
       persistentStorage: true
-      storageSize: "20Gi"
+      storageSize: 20Gi
       useHostPath: false
-      host: "db.default.svc.cluster.local"
+      host: db.default.svc.cluster.local
       resources:
         requests:
-          cpu: "100m"
-          memory: "256Mi"
+          cpu: 100m
+          memory: 256Mi
         limits:
-          cpu: "200m"
-          memory: "512Mi"
+          cpu: 200m
+          memory: 512Mi
 
   gateway:
     value:
-      tlsMode: "letsencrypt-prod"
+      tlsMode: letsencrypt-prod
       domains:
-        - "aphiria.com"
+        - aphiria.com
         - "*.aphiria.com"
       requireRootAndWildcard: true
 
@@ -111,69 +111,69 @@ config:
     value:
       namespace:
         resourceQuota:
-          cpu: "4"
-          memory: "16Gi"
-          pods: "30"
+          cpu: 4
+          memory: 16Gi
+          pods: 30
 
   prometheus:
     value:
-      scrapeInterval: "60s"
-      storageSize: "10Gi"
-      retentionTime: "3d"
+      scrapeInterval: 60s
+      storageSize: 10Gi
+      retentionTime: 3d
       resources:
         requests:
-          cpu: "250m"
-          memory: "768Mi"
+          cpu: 250m
+          memory: 768Mi
         limits:
-          cpu: "1000m"
-          memory: "2Gi"
+          cpu: 1000m
+          memory: 2Gi
       operator:
         resources:
           requests:
-            cpu: "100m"
-            memory: "128Mi"
+            cpu: 100m
+            memory: 128Mi
           limits:
-            cpu: "200m"
-            memory: "256Mi"
+            cpu: 200m
+            memory: 256Mi
         configReloader:
           requests:
-            cpu: "50m"
-            memory: "50Mi"
+            cpu: 50m
+            memory: 50Mi
           limits:
-            cpu: "100m"
-            memory: "100Mi"
+            cpu: 100m
+            memory: 100Mi
       nodeExporter:
         resources:
           requests:
-            cpu: "50m"
-            memory: "64Mi"
+            cpu: 50m
+            memory: 64Mi
           limits:
-            cpu: "100m"
-            memory: "128Mi"
+            cpu: 100m
+            memory: 128Mi
       kubeStateMetrics:
         resources:
           requests:
-            cpu: "50m"
-            memory: "128Mi"
+            cpu: 50m
+            memory: 128Mi
           limits:
-            cpu: "100m"
-            memory: "256Mi"
+            cpu: 100m
+            memory: 256Mi
 
   grafana:
     value:
       version: "11.0.0"
-      defaultReceiver: "email-admin"
-      ingressSectionName: "https-subdomains"
-      storageSize: "5Gi"
-      hostname: "grafana.aphiria.com"
+      defaultReceiver: email-admin
+      ingressSectionName: https-subdomains
+      storageSize: 5Gi
+      hostname: grafana.aphiria.com
       replicas: 1
       resources:
         requests:
-          cpu: "100m"
-          memory: "256Mi"
+          cpu: 100m
+          memory: 512Mi
         limits:
-          cpu: "200m"
-          memory: "512Mi"
+          cpu: 500m
+          memory: 1Gi
       github:
-        org: "aphiria"
-      adminUser: "davidbyoung"
+        org: aphiria
+      adminUser: davidbyoung
