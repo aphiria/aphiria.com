@@ -105,7 +105,13 @@ export function createPostgreSQL(args: PostgreSQLArgs): PostgreSQLResult {
                 DB_PASSWORD: args.password,
             },
         },
-        { provider: args.provider }
+        {
+            provider: args.provider,
+            protect: false,
+            retainOnDelete: false,
+            replaceOnChanges: ["*"],
+            deleteBeforeReplace: true,
+        }
     );
 
     // Create persistent storage if enabled

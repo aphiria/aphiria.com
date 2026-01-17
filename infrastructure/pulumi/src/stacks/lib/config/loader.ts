@@ -180,11 +180,7 @@ export function validateConfig(stackName: string, config: Config): void {
             errors.push("gateway.dns configuration is required for production (DNS records)");
         }
         if (!config.monitoring) errors.push("monitoring configuration is required for production");
-        if (config.namespace) {
-            errors.push(
-                "namespace configuration should not be present in production (uses default)"
-            );
-        }
+        // Note: namespace config can be present (for imagePullSecret) even though production uses default namespace
         if (config.skipBaseInfrastructure) {
             errors.push(
                 "skipBaseInfrastructure should not be set in production (always provisions infrastructure)"
@@ -235,26 +231,7 @@ export function validateConfig(stackName: string, config: Config): void {
                 "skipBaseInfrastructure must be true for preview-pr (uses preview-base infrastructure)"
             );
         }
-        if (config.cluster) {
-            errors.push(
-                "cluster configuration should not be present in preview-pr (uses preview-base cluster)"
-            );
-        }
-        if (config.gateway) {
-            errors.push(
-                "gateway configuration should not be present in preview-pr (uses preview-base gateway)"
-            );
-        }
-        if (config.grafana) {
-            errors.push(
-                "grafana configuration should not be present in preview-pr (uses preview-base grafana)"
-            );
-        }
-        if (config.monitoring) {
-            errors.push(
-                "monitoring configuration should not be present in preview-pr (uses preview-base monitoring)"
-            );
-        }
+        // Note: cluster, gateway, grafana, monitoring config can be present (inherited from base) but won't be used
     } else if (stackName === "local") {
         // Local: minikube development environment
         if (!config.app) errors.push("app configuration is required for local");

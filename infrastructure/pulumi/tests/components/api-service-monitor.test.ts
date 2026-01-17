@@ -171,7 +171,7 @@ describe("createApiServiceMonitor", () => {
             promiseOf(result.monitoringSecret.stringData),
         ]);
 
-        expect(secretName).toBe("prometheus-api-auth");
+        expect(secretName).toBe("prometheus-api-auth-test-ns");
         expect(secretNamespace).toBe("monitoring");
         expect(secretType).toBe("Opaque");
         expect(secretData).toEqual({ token: "test-token-456" });

@@ -29,11 +29,12 @@ export function createPreviewPRProvider(): k8s.Provider {
 
     // Fetch fresh kubeconfig from DigitalOcean on every operation
     // This ensures credentials never expire (DO rotates them every 7 days)
-    const kubeconfig = clusterName.apply((name) =>
-        digitalocean
-            .getKubernetesCluster({ name })
-            .then((cluster) => cluster.kubeConfigs[0].rawConfig)
-    );
+    // Using getKubernetesClusterOutput() waits for cluster to exist in DO API
+    const kubeconfig = digitalocean
+        .getKubernetesClusterOutput({
+            name: clusterName,
+        })
+        .kubeConfigs.apply((configs) => configs[0].rawConfig);
 
     // Create provider using the preview-base cluster's kubeconfig
     return new k8s.Provider(

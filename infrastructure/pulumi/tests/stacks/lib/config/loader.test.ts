@@ -362,9 +362,7 @@ describe("validateConfig", () => {
             expect(() => validateConfig("production", config)).toThrow(
                 /monitoring configuration is required for production/
             );
-            expect(() => validateConfig("production", config)).toThrow(
-                /namespace configuration should not be present in production/
-            );
+            // Note: namespace validation removed - production can have namespace config for imagePullSecret
             expect(() => validateConfig("production", config)).toThrow(
                 /skipBaseInfrastructure should not be set in production/
             );
@@ -501,18 +499,7 @@ describe("validateConfig", () => {
             expect(() => validateConfig("preview-pr-456", config)).toThrow(
                 /skipBaseInfrastructure must be true for preview-pr/
             );
-            expect(() => validateConfig("preview-pr-456", config)).toThrow(
-                /cluster configuration should not be present in preview-pr/
-            );
-            expect(() => validateConfig("preview-pr-456", config)).toThrow(
-                /gateway configuration should not be present in preview-pr/
-            );
-            expect(() => validateConfig("preview-pr-456", config)).toThrow(
-                /grafana configuration should not be present in preview-pr/
-            );
-            expect(() => validateConfig("preview-pr-456", config)).toThrow(
-                /monitoring configuration should not be present in preview-pr/
-            );
+            // Note: cluster, gateway, grafana, monitoring can be present (inherited) but won't be used
         });
 
         it("should fail when namespace exists but name is missing", () => {

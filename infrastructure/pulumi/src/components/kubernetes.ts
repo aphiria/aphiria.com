@@ -34,14 +34,17 @@ export function createKubernetesCluster(args: KubernetesClusterArgs): Kubernetes
 
     // Fetch fresh kubeconfig from DigitalOcean on every operation
     // This ensures credentials never expire (DO rotates them every 7 days)
-    // Using .apply() with getKubernetesCluster() fetches credentials dynamically
+    // Using getKubernetesClusterOutput() waits for cluster to exist in DO API before fetching
+    // This works on both first deployment and subsequent updates
     // @internal - useStaticKubeconfig flag allows tests to use static config (prevents async issues during Jest teardown)
     /* istanbul ignore next - production dynamic kubeconfig path, tested via integration */
     const kubeconfig = args.useStaticKubeconfig
         ? cluster.kubeConfigs[0].rawConfig
-        : cluster.name.apply((name) =>
-              digitalocean.getKubernetesCluster({ name }).then((c) => c.kubeConfigs[0].rawConfig)
-          );
+        : digitalocean
+              .getKubernetesClusterOutput({
+                  name: cluster.name,
+              })
+              .kubeConfigs.apply((configs) => configs[0].rawConfig);
 
     // Create Kubernetes provider for this cluster
     const provider = new k8s.Provider(

@@ -56,122 +56,110 @@ export interface ApplicationResourcesArgs {
  * @returns Application resources
  */
 export function createApplicationResources(args: ApplicationResourcesArgs): ApplicationResources {
-    const {
-        env,
-        provider,
-        namespace,
-        isPreviewPR,
-        hasNamespaceConfig,
-        appConfig,
-        postgresqlConfig,
-        prometheusConfig,
-        namespaceConfig,
-    } = args;
-
     const gatewayNamespace = "nginx-gateway";
 
     // Determine database connection details
-    const createDatabase = postgresqlConfig.createDatabase;
-    const dbHost = postgresqlConfig.host;
+    const createDatabase = args.postgresqlConfig.createDatabase;
+    const dbHost = args.postgresqlConfig.host;
 
     // databaseName is required when createDatabase is true (preview-PR pattern)
-    if (createDatabase && !postgresqlConfig.databaseName) {
+    if (createDatabase && !args.postgresqlConfig.databaseName) {
         throw new Error("postgresqlConfig.databaseName is required when createDatabase is true");
     }
-    const dbName = postgresqlConfig.databaseName || "postgres";
+    const dbName = args.postgresqlConfig.databaseName || "postgres";
 
-    const dbUser = postgresqlConfig.user;
-    const dbPassword = postgresqlConfig.password;
+    const dbUser = args.postgresqlConfig.user;
+    const dbPassword = args.postgresqlConfig.password;
 
     // Get PR number from namespace name if it's a preview-pr
     const prNumber =
-        hasNamespaceConfig && namespaceConfig?.name
-            ? namespaceConfig.name.replace("preview-pr-", "")
+        args.hasNamespaceConfig && args.namespaceConfig?.name
+            ? args.namespaceConfig.name.replace("preview-pr-", "")
             : undefined;
 
     // Web deployment
     const web = createWebDeployment({
-        namespace,
-        replicas: appConfig.web.replicas,
-        image: appConfig.web.image,
-        imagePullPolicy: appConfig.imagePullPolicy,
-        appEnv: env,
+        namespace: args.namespace,
+        replicas: args.appConfig.web.replicas,
+        image: args.appConfig.web.image,
+        imagePullPolicy: args.appConfig.imagePullPolicy,
+        appEnv: args.env,
         jsConfigData: {
-            apiUri: appConfig.api.url,
-            cookieDomain: appConfig.web.cookieDomain,
+            apiUri: args.appConfig.api.url,
+            cookieDomain: args.appConfig.web.cookieDomain,
         },
-        baseUrl: appConfig.web.url,
-        prNumber: env === "preview" && hasNamespaceConfig ? prNumber : undefined,
-        imagePullSecrets: namespaceConfig?.imagePullSecret ? ["ghcr-pull-secret"] : undefined,
-        resources: appConfig.web.resources,
-        podDisruptionBudget: appConfig.web.podDisruptionBudget,
-        provider,
+        baseUrl: args.appConfig.web.url,
+        prNumber: args.env === "preview" && args.hasNamespaceConfig ? prNumber : undefined,
+        imagePullSecrets: args.namespaceConfig?.imagePullSecret ? ["ghcr-pull-secret"] : undefined,
+        resources: args.appConfig.web.resources,
+        podDisruptionBudget: args.appConfig.web.podDisruptionBudget,
+        provider: args.provider,
     });
 
     // API deployment
     const api = createAPIDeployment({
-        namespace,
-        replicas: appConfig.api.replicas,
-        image: appConfig.api.image,
-        imagePullPolicy: appConfig.imagePullPolicy,
-        appEnv: env,
+        namespace: args.namespace,
+        replicas: args.appConfig.api.replicas,
+        image: args.appConfig.api.image,
+        imagePullPolicy: args.appConfig.imagePullPolicy,
+        appEnv: args.env,
         dbHost,
         dbName,
         dbUser,
         dbPassword,
-        apiUrl: appConfig.api.url,
-        webUrl: appConfig.web.url,
-        logLevel: appConfig.api.logLevel,
-        prNumber: env === "preview" && hasNamespaceConfig ? prNumber : undefined,
-        imagePullSecrets: namespaceConfig?.imagePullSecret ? ["ghcr-pull-secret"] : undefined,
-        resources: appConfig.api.resources,
-        podDisruptionBudget: appConfig.api.podDisruptionBudget,
-        prometheusAuthToken: pulumi.secret(prometheusConfig.authToken),
-        provider,
+        apiUrl: args.appConfig.api.url,
+        webUrl: args.appConfig.web.url,
+        logLevel: args.appConfig.api.logLevel,
+        prNumber: args.env === "preview" && args.hasNamespaceConfig ? prNumber : undefined,
+        imagePullSecrets: args.namespaceConfig?.imagePullSecret ? ["ghcr-pull-secret"] : undefined,
+        resources: args.appConfig.api.resources,
+        podDisruptionBudget: args.appConfig.api.podDisruptionBudget,
+        prometheusAuthToken: pulumi.secret(args.prometheusConfig.authToken),
+        provider: args.provider,
     });
 
     // Database migration job
     const migration = createDBMigrationJob({
-        namespace,
-        image: appConfig.api.image,
-        imagePullPolicy: appConfig.imagePullPolicy,
+        namespace: args.namespace,
+        image: args.appConfig.api.image,
+        imagePullPolicy: args.appConfig.imagePullPolicy,
         dbHost,
         dbName,
         dbUser,
         dbPassword,
         runSeeder: true,
-        imagePullSecrets: namespaceConfig?.imagePullSecret ? ["ghcr-pull-secret"] : undefined,
-        resources: appConfig.migration.resources,
-        provider,
+        imagePullSecrets: args.namespaceConfig?.imagePullSecret ? ["ghcr-pull-secret"] : undefined,
+        resources: args.appConfig.migration.resources,
+        provider: args.provider,
     });
 
     // HTTPRoutes (always in same namespace as services to avoid cross-namespace ReferenceGrant)
     // Explicitly attach to HTTPS listeners using sectionName to prevent attaching to HTTP listeners
     // (which would prevent HTTP→HTTPS redirects from working)
     const webRoute = createHTTPRoute({
-        namespace: namespace,
+        namespace: args.namespace,
         name: "web",
-        hostname: new URL(appConfig.web.url).hostname,
+        hostname: new URL(args.appConfig.web.url).hostname,
         serviceName: "web",
-        serviceNamespace: namespace,
+        serviceNamespace: args.namespace,
         servicePort: 80,
         gatewayName: "nginx-gateway",
         gatewayNamespace: gatewayNamespace,
-        sectionName: isPreviewPR ? "https-subdomains-1" : "https-subdomains",
-        provider,
+        sectionName: args.isPreviewPR ? "https-subdomains-1" : "https-subdomains",
+        provider: args.provider,
     });
 
     const apiRoute = createHTTPRoute({
-        namespace: namespace,
+        namespace: args.namespace,
         name: "api",
-        hostname: new URL(appConfig.api.url).hostname,
+        hostname: new URL(args.appConfig.api.url).hostname,
         serviceName: "api",
-        serviceNamespace: namespace,
+        serviceNamespace: args.namespace,
         servicePort: 80,
         gatewayName: "nginx-gateway",
         gatewayNamespace: gatewayNamespace,
-        sectionName: isPreviewPR ? "https-subdomains-2" : "https-subdomains",
-        provider,
+        sectionName: args.isPreviewPR ? "https-subdomains-2" : "https-subdomains",
+        provider: args.provider,
     });
 
     const resources: ApplicationResources = {
@@ -184,27 +172,27 @@ export function createApplicationResources(args: ApplicationResourcesArgs): Appl
 
     // ServiceMonitor for API metrics (if prometheus auth token is configured)
     resources.apiServiceMonitor = createApiServiceMonitor({
-        namespace: namespace,
+        namespace: args.namespace,
         serviceName: "api",
         targetPort: 80,
         metricsPath: "/metrics",
-        scrapeInterval: prometheusConfig.scrapeInterval,
-        authToken: pulumi.secret(prometheusConfig.authToken),
-        provider,
+        scrapeInterval: args.prometheusConfig.scrapeInterval,
+        authToken: pulumi.secret(args.prometheusConfig.authToken),
+        provider: args.provider,
     });
 
     // HTTP→HTTPS redirect for preview-pr (specific hostnames beat wildcard redirects)
     // This ensures http://123.pr.aphiria.com redirects to https://123.pr.aphiria.com
-    if (env === "preview" && hasNamespaceConfig) {
-        const webHostname = new URL(appConfig.web.url).hostname;
-        const apiHostname = new URL(appConfig.api.url).hostname;
+    if (args.isPreviewPR) {
+        const webHostname = new URL(args.appConfig.web.url).hostname;
+        const apiHostname = new URL(args.appConfig.api.url).hostname;
 
         resources.httpsRedirect = createHTTPSRedirectRoute({
-            namespace: namespace,
+            namespace: args.namespace,
             gatewayName: "nginx-gateway",
             gatewayNamespace: gatewayNamespace,
             domains: [webHostname, apiHostname],
-            provider,
+            provider: args.provider,
         });
     }
 

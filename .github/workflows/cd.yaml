@@ -458,7 +458,7 @@ jobs:
             } else {
               core.info('📦 Creating and deploying base stack "preview-base"...');
               await exec.exec('pulumi', ['stack', 'init', 'preview-base'], { cwd: 'infrastructure/pulumi' });
-              await exec.exec('pulumi', ['config', 'env', 'add', 'aphiria.com/Preview', '--stack', 'preview-base', '--yes'], { cwd: 'infrastructure/pulumi' });
+              await exec.exec('pulumi', ['config', 'env', 'add', 'aphiria.com/Preview-Base', '--stack', 'preview-base', '--yes'], { cwd: 'infrastructure/pulumi' });
               core.info('🚀 Deploying preview base infrastructure (this will take 5-10 minutes)...');
               await deployWithRetry('preview-base');
             }
@@ -506,7 +506,7 @@ jobs:
           if [ "$MODE" == "preview" ]; then
             PR_NUMBER=${{ needs.determine-mode.outputs.pr-number }}
             STACK_NAME="preview-pr-${PR_NUMBER}"
-            PULUMI_ENV="aphiria.com/Preview"
+            PULUMI_ENV="aphiria.com/Preview-PR"
             BASE_STACK_REF="${PULUMI_ORG}/${PULUMI_PROJECT}/preview-base"
           else
             STACK_NAME="production"
@@ -520,29 +520,22 @@ jobs:
           pulumi config env add "${PULUMI_ENV}" --stack "${STACK_NAME}" --yes
 
           if [ "$MODE" == "preview" ]; then
-            # Set PR-specific configuration values
+            # Set PR-specific configuration values (static defaults come from ESC)
             pulumi config set prNumber "${PR_NUMBER}" --stack "${STACK_NAME}"
-            pulumi config set baseStackReference "${BASE_STACK_REF}" --stack "${STACK_NAME}"
-            pulumi config set --path 'namespace.name' "preview-pr-${PR_NUMBER}" --stack "${STACK_NAME}"
-            pulumi config set --path 'postgresql.databaseName' "aphiria_pr_${PR_NUMBER}" --stack "${STACK_NAME}"
-            pulumi config set --path 'app.web.url' "https://${PR_NUMBER}.pr.aphiria.com" --stack "${STACK_NAME}"
-            pulumi config set --path 'app.web.image' "${{ needs.build.outputs.web-digest }}" --stack "${STACK_NAME}"
-            pulumi config set --path 'app.api.url' "https://${PR_NUMBER}.pr-api.aphiria.com" --stack "${STACK_NAME}"
-            pulumi config set --path 'app.api.image' "${{ needs.build.outputs.api-digest }}" --stack "${STACK_NAME}"
+            pulumi config set --path 'overrides.namespace.name' "preview-pr-${PR_NUMBER}" --stack "${STACK_NAME}"
+            pulumi config set --path 'overrides.postgresql.databaseName' "aphiria_pr_${PR_NUMBER}" --stack "${STACK_NAME}"
+            pulumi config set --path 'overrides.app.web.url' "https://${PR_NUMBER}.pr.aphiria.com" --stack "${STACK_NAME}"
+            pulumi config set --path 'overrides.app.web.image' "${REGISTRY}/${IMAGE_PREFIX}-web@${{ needs.build.outputs.web-digest }}" --stack "${STACK_NAME}"
+            pulumi config set --path 'overrides.app.api.url' "https://${PR_NUMBER}.pr-api.aphiria.com" --stack "${STACK_NAME}"
+            pulumi config set --path 'overrides.app.api.image' "${REGISTRY}/${IMAGE_PREFIX}-api@${{ needs.build.outputs.api-digest }}" --stack "${STACK_NAME}"
           else
-            # Production uses image config paths
-            pulumi config set --path 'app.web.image' "${{ needs.build.outputs.web-digest }}" --stack "${STACK_NAME}"
-            pulumi config set --path 'app.api.image' "${{ needs.build.outputs.api-digest }}" --stack "${STACK_NAME}"
+            # Production uses image config paths under overrides
+            pulumi config set --path 'overrides.app.web.image' "${REGISTRY}/${IMAGE_PREFIX}-web@${{ needs.build.outputs.web-digest }}" --stack "${STACK_NAME}"
+            pulumi config set --path 'overrides.app.api.image' "${REGISTRY}/${IMAGE_PREFIX}-api@${{ needs.build.outputs.api-digest }}" --stack "${STACK_NAME}"
           fi
 
           set +e
-          if [ "$MODE" == "preview" ]; then
-            # Use --config-file to merge with template for preview
-            timeout ${{ env.PULUMI_PREVIEW_TIMEOUT }} pulumi preview --stack "${STACK_NAME}" --config-file Pulumi.preview-pr.yaml --non-interactive 2>&1 | tee preview.txt
-          else
-            # Production doesn't need config-file
-            timeout ${{ env.PULUMI_PREVIEW_TIMEOUT }} pulumi preview --stack "${STACK_NAME}" --non-interactive 2>&1 | tee preview.txt
-          fi
+          timeout ${{ env.PULUMI_PREVIEW_TIMEOUT }} pulumi preview --stack "${STACK_NAME}" --non-interactive 2>&1 | tee preview.txt
           PREVIEW_EXIT_CODE=${PIPESTATUS[0]}
           set -e
 
@@ -640,7 +633,7 @@ jobs:
           if [ "$MODE" == "preview" ]; then
             PR_NUMBER=${{ needs.determine-mode.outputs.pr-number }}
             STACK_NAME="preview-pr-${PR_NUMBER}"
-            PULUMI_ENV="aphiria.com/Preview"
+            PULUMI_ENV="aphiria.com/Preview-PR"
             BASE_STACK_REF="${PULUMI_ORG}/${PULUMI_PROJECT}/preview-base"
           else
             STACK_NAME="production"
@@ -651,34 +644,25 @@ jobs:
           pulumi config env add "${PULUMI_ENV}" --stack "${STACK_NAME}" --yes
 
           if [ "$MODE" == "preview" ]; then
-            # Set PR-specific configuration values
+            # Set PR-specific configuration values (static defaults come from ESC)
             pulumi config set prNumber "${PR_NUMBER}" --stack "${STACK_NAME}"
-            pulumi config set baseStackReference "${BASE_STACK_REF}" --stack "${STACK_NAME}"
-            pulumi config set --path 'namespace.name' "preview-pr-${PR_NUMBER}" --stack "${STACK_NAME}"
-            pulumi config set --path 'postgresql.databaseName' "aphiria_pr_${PR_NUMBER}" --stack "${STACK_NAME}"
-            pulumi config set --path 'app.web.url' "https://${PR_NUMBER}.pr.aphiria.com" --stack "${STACK_NAME}"
-            pulumi config set --path 'app.web.image' "${{ needs.build.outputs.web-digest }}" --stack "${STACK_NAME}"
-            pulumi config set --path 'app.api.url' "https://${PR_NUMBER}.pr-api.aphiria.com" --stack "${STACK_NAME}"
-            pulumi config set --path 'app.api.image' "${{ needs.build.outputs.api-digest }}" --stack "${STACK_NAME}"
+            pulumi config set --path 'overrides.namespace.name' "preview-pr-${PR_NUMBER}" --stack "${STACK_NAME}"
+            pulumi config set --path 'overrides.postgresql.databaseName' "aphiria_pr_${PR_NUMBER}" --stack "${STACK_NAME}"
+            pulumi config set --path 'overrides.app.web.url' "https://${PR_NUMBER}.pr.aphiria.com" --stack "${STACK_NAME}"
+            pulumi config set --path 'overrides.app.web.image' "${REGISTRY}/${IMAGE_PREFIX}-web@${{ needs.build.outputs.web-digest }}" --stack "${STACK_NAME}"
+            pulumi config set --path 'overrides.app.api.url' "https://${PR_NUMBER}.pr-api.aphiria.com" --stack "${STACK_NAME}"
+            pulumi config set --path 'overrides.app.api.image' "${REGISTRY}/${IMAGE_PREFIX}-api@${{ needs.build.outputs.api-digest }}" --stack "${STACK_NAME}"
           else
-            # Production uses image config paths
-            pulumi config set --path 'app.web.image' "${{ needs.build.outputs.web-digest }}" --stack "${STACK_NAME}"
-            pulumi config set --path 'app.api.image' "${{ needs.build.outputs.api-digest }}" --stack "${STACK_NAME}"
+            # Production uses image config paths under overrides
+            pulumi config set --path 'overrides.app.web.image' "${REGISTRY}/${IMAGE_PREFIX}-web@${{ needs.build.outputs.web-digest }}" --stack "${STACK_NAME}"
+            pulumi config set --path 'overrides.app.api.image' "${REGISTRY}/${IMAGE_PREFIX}-api@${{ needs.build.outputs.api-digest }}" --stack "${STACK_NAME}"
           fi
 
           # Retry deployment with refresh on failure to handle orphaned resources
-          if [ "$MODE" == "preview" ]; then
-            if ! timeout ${{ env.PULUMI_DEPLOY_TIMEOUT }} pulumi up --stack "${STACK_NAME}" --config-file Pulumi.preview-pr.yaml --yes; then
-              echo "Deployment failed, refreshing state and retrying once..."
-              pulumi refresh --stack "${STACK_NAME}" --yes
-              timeout ${{ env.PULUMI_DEPLOY_TIMEOUT }} pulumi up --stack "${STACK_NAME}" --config-file Pulumi.preview-pr.yaml --yes
-            fi
-          else
-            if ! timeout ${{ env.PULUMI_DEPLOY_TIMEOUT }} pulumi up --stack "${STACK_NAME}" --yes; then
-              echo "Deployment failed, refreshing state and retrying once..."
-              pulumi refresh --stack "${STACK_NAME}" --yes
-              timeout ${{ env.PULUMI_DEPLOY_TIMEOUT }} pulumi up --stack "${STACK_NAME}" --yes
-            fi
+          if ! timeout ${{ env.PULUMI_DEPLOY_TIMEOUT }} pulumi up --stack "${STACK_NAME}" --yes; then
+            echo "Deployment failed, refreshing state and retrying once..."
+            pulumi refresh --stack "${STACK_NAME}" --yes
+            timeout ${{ env.PULUMI_DEPLOY_TIMEOUT }} pulumi up --stack "${STACK_NAME}" --yes
           fi
 
       - name: Post deployment success comment (preview)

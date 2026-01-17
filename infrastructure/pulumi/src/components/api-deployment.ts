@@ -146,7 +146,13 @@ export function createAPIDeployment(args: APIDeploymentArgs): APIDeploymentResul
             type: "Opaque",
             stringData: secretData,
         },
-        { provider: args.provider }
+        {
+            provider: args.provider,
+            protect: false,
+            retainOnDelete: false,
+            replaceOnChanges: ["*"],
+            deleteBeforeReplace: true,
+        }
     );
 
     // Create ConfigMap for environment variables (built from parameters)
@@ -278,12 +284,12 @@ export function createAPIDeployment(args: APIDeploymentArgs): APIDeploymentResul
                                 envFrom: [
                                     {
                                         secretRef: {
-                                            name: "api-env-var-secrets",
+                                            name: secret.metadata.name,
                                         },
                                     },
                                     {
                                         configMapRef: {
-                                            name: "env-vars",
+                                            name: configMap.metadata.name,
                                         },
                                     },
                                 ],

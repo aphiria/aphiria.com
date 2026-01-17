@@ -528,7 +528,7 @@ describe("createMonitoringResources", () => {
             );
         });
 
-        it("should create Grafana without SMTP when smtpHost is not provided", () => {
+        it("should create Grafana without SMTP when smtp is not provided", () => {
             createMonitoringResources({
                 env: "local",
                 provider: k8sProvider,
@@ -544,14 +544,16 @@ describe("createMonitoringResources", () => {
             );
         });
 
-        it("should create Grafana with SMTP when smtpHost is provided", () => {
+        it("should create Grafana with SMTP when smtp is provided", () => {
             const grafanaConfigWithSMTP = {
                 ...grafanaConfig,
-                smtpHost: "smtp.example.com",
-                smtpPort: 587,
-                smtpUser: "noreply@aphiria.com",
-                smtpPassword: "smtp-password",
-                smtpFromAddress: "noreply@aphiria.com",
+                smtp: {
+                    host: "smtp.example.com",
+                    port: 587,
+                    user: "noreply@aphiria.com",
+                    password: "smtp-password",
+                    fromAddress: "noreply@aphiria.com",
+                },
             };
 
             createMonitoringResources({
