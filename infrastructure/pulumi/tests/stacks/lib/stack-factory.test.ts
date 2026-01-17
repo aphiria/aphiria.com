@@ -1,1954 +1,637 @@
-import { describe, it, expect, beforeAll } from "@jest/globals";
+import { describe, it, expect, beforeEach } from "@jest/globals";
 import * as pulumi from "@pulumi/pulumi";
 import * as k8s from "@pulumi/kubernetes";
 import { createStack } from "../../../src/stacks/lib/stack-factory";
-import { promiseOf } from "../../test-utils";
 
-describe("createStack factory", () => {
+// Mock all the dependencies
+jest.mock("../../../src/stacks/lib/config/loader");
+jest.mock("../../../src/stacks/lib/factories/base-infrastructure");
+jest.mock("../../../src/stacks/lib/factories/provider");
+jest.mock("../../../src/stacks/lib/factories/gateway");
+jest.mock("../../../src/stacks/lib/factories/database");
+jest.mock("../../../src/stacks/lib/factories/applications");
+jest.mock("../../../src/stacks/lib/factories/monitoring");
+jest.mock("../../../src/components");
+
+import { loadConfig } from "../../../src/stacks/lib/config/loader";
+import { createBaseInfrastructureResources } from "../../../src/stacks/lib/factories/base-infrastructure";
+import { createProvider } from "../../../src/stacks/lib/factories/provider";
+import { createGatewayResources } from "../../../src/stacks/lib/factories/gateway";
+import { createDatabaseResources } from "../../../src/stacks/lib/factories/database";
+import { createApplicationResources } from "../../../src/stacks/lib/factories/applications";
+import { createMonitoringResources } from "../../../src/stacks/lib/factories/monitoring";
+import {
+    createNamespace,
+    createImagePullSecret,
+    createHTTPSRedirectRoute,
+    createWWWRedirectRoute,
+} from "../../../src/components";
+
+describe("createStack", () => {
     let k8sProvider: k8s.Provider;
 
-    const minimalMonitoringConfig = {
-        prometheus: {
-            authToken: pulumi.output("test-token"),
-            storageSize: "2Gi",
-        },
-        grafana: {
-            storageSize: "1Gi",
-            hostname: "grafana.test.aphiria.com",
-            githubOAuth: {
-                clientId: pulumi.output("test-client-id"),
-                clientSecret: pulumi.output("test-client-secret"),
-                org: "aphiria",
-                adminUser: "test",
-            },
-            smtp: {
-                host: pulumi.output("smtp.test.com"),
-                port: 587,
-                user: pulumi.output("test@test.com"),
-                password: pulumi.output("test-password"),
-                fromAddress: "test@aphiria.com",
-                alertEmail: "test@aphiria.com",
-            },
-        },
-    };
-
-    beforeAll(() => {
+    beforeEach(() => {
+        jest.clearAllMocks();
         k8sProvider = new k8s.Provider("test", {});
+
+        // Default mock implementations
+        (createProvider as jest.Mock).mockReturnValue({
+            provider: k8sProvider,
+            cluster: {},
+            clusterId: "test-cluster-id",
+            kubeconfig: "test-kubeconfig",
+        });
+        (createBaseInfrastructureResources as jest.Mock).mockReturnValue({
+            certManager: {},
+            nginxGateway: {},
+        });
+        (createGatewayResources as jest.Mock).mockReturnValue({ gateway: {} });
+        (createDatabaseResources as jest.Mock).mockReturnValue({ deployment: {} });
+        (createApplicationResources as jest.Mock).mockReturnValue({ api: {}, web: {} });
+        (createMonitoringResources as jest.Mock).mockReturnValue({
+            prometheus: {},
+            grafana: {},
+        });
+        (createNamespace as jest.Mock).mockReturnValue({
+            namespace: { metadata: { name: pulumi.output("test-ns") } },
+            resourceQuota: {},
+        });
+        (createImagePullSecret as jest.Mock).mockReturnValue({ secret: {} });
+        (createHTTPSRedirectRoute as jest.Mock).mockReturnValue({});
+        (createWWWRedirectRoute as jest.Mock).mockReturnValue({});
     });
 
-    describe("namespace creation", () => {
-        it("should create namespace with ResourceQuota when configured", async () => {
-            const stack = createStack(
-                {
-                    env: "preview",
-                    skipBaseInfrastructure: true,
-                    namespace: {
-                        name: "preview-pr-123",
-                        resourceQuota: {
-                            cpu: "2",
-                            memory: "4Gi",
-                            pods: "10",
-                        },
-                    },
-                    database: {
-                        createDatabase: true,
-                        databaseName: "aphiria_pr_123",
-                        dbHost: pulumi.output("db.default.svc.cluster.local"),
-                        dbAdminUser: pulumi.output("postgres"),
-                        dbAdminPassword: pulumi.output("password"),
-                        persistentStorage: false,
-                        storageSize: "1Gi",
-                        dbUser: pulumi.output("postgres"),
-                        dbPassword: pulumi.output("password"),
-                        resources: {
-                            requests: { cpu: "100m", memory: "128Mi" },
-                            limits: { cpu: "200m", memory: "256Mi" },
-                        },
-                    },
-                    gateway: {
-                        tlsMode: "letsencrypt-prod",
-                        domains: ["*.pr.aphiria.com", "*.pr-api.aphiria.com"],
-                    },
-                },
-                k8sProvider
+    describe("local environment", () => {
+        it("should create base infrastructure for local", () => {
+            (loadConfig as jest.Mock).mockReturnValue({
+                stackName: "local",
+                skipBaseInfrastructure: false,
+                gateway: { tlsMode: "self-signed", domains: ["*.aphiria.com"] },
+                postgresql: { user: "postgres", password: pulumi.output("password") },
+                grafana: { hostname: "grafana.local.aphiria.com" },
+                monitoring: {},
+                prometheus: {},
+            });
+
+            createStack("local");
+
+            expect(createBaseInfrastructureResources).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    env: "local",
+                    provider: k8sProvider,
+                })
             );
-
-            expect(stack.namespace).toBeDefined();
-            expect(stack.namespace?.resourceQuota).toBeDefined();
-
-            const [nsName, quotaName] = await Promise.all([
-                promiseOf(stack.namespace!.namespace.metadata.name),
-                promiseOf(stack.namespace!.resourceQuota!.metadata.name),
-            ]);
-            expect(nsName).toBe("preview-pr-123");
-            expect(quotaName).toBe("preview-pr-123-quota");
         });
 
-        it("should not create namespace when not configured", () => {
-            const stack = createStack(
-                {
+        it("should create gateway with local config", () => {
+            (loadConfig as jest.Mock).mockReturnValue({
+                stackName: "local",
+                skipBaseInfrastructure: false,
+                gateway: { tlsMode: "self-signed", domains: ["*.aphiria.com"] },
+                postgresql: { user: "postgres", password: pulumi.output("password") },
+                grafana: { hostname: "grafana.local.aphiria.com" },
+                monitoring: {},
+                prometheus: {},
+            });
+
+            createStack("local");
+
+            expect(createGatewayResources).toHaveBeenCalledWith(
+                expect.objectContaining({
                     env: "local",
-                    skipBaseInfrastructure: true,
-                    database: {
-                        persistentStorage: false,
-                        storageSize: "1Gi",
-                        dbUser: pulumi.output("postgres"),
-                        dbPassword: pulumi.output("password"),
-                        resources: {
-                            requests: { cpu: "100m", memory: "128Mi" },
-                            limits: { cpu: "200m", memory: "256Mi" },
-                        },
-                    },
-                    gateway: {
+                    provider: k8sProvider,
+                    gatewayConfig: expect.objectContaining({
                         tlsMode: "self-signed",
                         domains: ["*.aphiria.com"],
-                    },
-                },
-                k8sProvider
+                    }),
+                })
             );
+        });
 
-            expect(stack.namespace).toBeUndefined();
+        it("should create database in default namespace for local", () => {
+            (loadConfig as jest.Mock).mockReturnValue({
+                stackName: "local",
+                skipBaseInfrastructure: false,
+                gateway: { tlsMode: "self-signed", domains: ["*.aphiria.com"] },
+                postgresql: { user: "postgres", password: pulumi.output("password") },
+                grafana: { hostname: "grafana.local.aphiria.com" },
+                monitoring: {},
+                prometheus: {},
+            });
+
+            createStack("local");
+
+            expect(createDatabaseResources).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    env: "local",
+                    provider: k8sProvider,
+                    namespace: "default",
+                })
+            );
+        });
+
+        it("should create monitoring resources for local", () => {
+            (loadConfig as jest.Mock).mockReturnValue({
+                stackName: "local",
+                skipBaseInfrastructure: false,
+                gateway: { tlsMode: "self-signed", domains: ["*.aphiria.com"] },
+                postgresql: { user: "postgres", password: pulumi.output("password") },
+                grafana: { hostname: "grafana.local.aphiria.com" },
+                monitoring: { namespace: "monitoring" },
+                prometheus: { storageSize: "10Gi" },
+            });
+
+            createStack("local");
+
+            expect(createMonitoringResources).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    env: "local",
+                    provider: k8sProvider,
+                })
+            );
+        });
+
+        it("should create WWW redirect for local (non-preview)", () => {
+            (loadConfig as jest.Mock).mockReturnValue({
+                stackName: "local",
+                skipBaseInfrastructure: false,
+                gateway: { tlsMode: "self-signed", domains: ["*.aphiria.com"] },
+                postgresql: { user: "postgres", password: pulumi.output("password") },
+                grafana: { hostname: "grafana.local.aphiria.com" },
+                monitoring: {},
+                prometheus: {},
+            });
+
+            createStack("local");
+
+            expect(createWWWRedirectRoute).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    namespace: "nginx-gateway",
+                    gatewayName: "nginx-gateway",
+                    rootDomain: "aphiria.com",
+                    wwwDomain: "www.aphiria.com",
+                })
+            );
+        });
+
+        it("should create HTTPS redirect with skipRootListener=true when WWW redirect exists", () => {
+            (loadConfig as jest.Mock).mockReturnValue({
+                stackName: "local",
+                skipBaseInfrastructure: false,
+                gateway: { tlsMode: "self-signed", domains: ["*.aphiria.com"] },
+                postgresql: { user: "postgres", password: pulumi.output("password") },
+                grafana: { hostname: "grafana.local.aphiria.com" },
+                monitoring: {},
+                prometheus: {},
+            });
+
+            createStack("local");
+
+            expect(createHTTPSRedirectRoute).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    skipRootListener: true, // WWW redirect exists for local
+                })
+            );
+        });
+
+        it("should not create namespace for local (uses default)", () => {
+            (loadConfig as jest.Mock).mockReturnValue({
+                stackName: "local",
+                skipBaseInfrastructure: false,
+                gateway: { tlsMode: "self-signed", domains: ["*.aphiria.com"] },
+                postgresql: { user: "postgres", password: pulumi.output("password") },
+                grafana: { hostname: "grafana.local.aphiria.com" },
+                monitoring: {},
+                prometheus: {},
+            });
+
+            createStack("local");
+
+            expect(createNamespace).not.toHaveBeenCalled();
         });
     });
 
-    describe("database creation", () => {
-        it("should create PostgreSQL instance when createDatabase is false", () => {
-            const stack = createStack(
-                {
-                    env: "local",
-                    skipBaseInfrastructure: true,
-                    database: {
-                        persistentStorage: false,
-                        storageSize: "1Gi",
-                        dbUser: pulumi.output("postgres"),
-                        dbPassword: pulumi.output("password"),
-                        resources: {
-                            requests: { cpu: "100m", memory: "128Mi" },
-                            limits: { cpu: "200m", memory: "256Mi" },
-                        },
-                    },
-                    gateway: {
-                        tlsMode: "self-signed",
-                        domains: ["*.aphiria.com"],
-                    },
-                },
-                k8sProvider
-            );
+    describe("preview environment", () => {
+        it("should create base infrastructure for preview", () => {
+            (loadConfig as jest.Mock).mockReturnValue({
+                stackName: "preview-pr-123",
+                skipBaseInfrastructure: false,
+                gateway: { tlsMode: "letsencrypt-prod", domains: ["*.pr.aphiria.com"] },
+                postgresql: { user: "postgres", password: pulumi.output("password") },
+                namespace: { name: "preview-pr-123" },
+                grafana: { hostname: "grafana.preview.aphiria.com" },
+                monitoring: {},
+                prometheus: {},
+            });
 
-            expect(stack.postgres).toBeDefined();
-            expect(stack.dbInitJob).toBeUndefined();
+            createStack("preview");
+
+            expect(createBaseInfrastructureResources).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    env: "preview",
+                    provider: k8sProvider,
+                })
+            );
         });
 
-        it("should create database init job when createDatabase is true", () => {
-            const stack = createStack(
-                {
-                    env: "preview",
-                    skipBaseInfrastructure: true,
-                    database: {
-                        createDatabase: true,
-                        databaseName: "aphiria_pr_123",
-                        dbHost: pulumi.output("db.default.svc.cluster.local"),
-                        dbAdminUser: pulumi.output("postgres"),
-                        dbAdminPassword: pulumi.output("password"),
-                        persistentStorage: false,
-                        storageSize: "1Gi",
-                        dbUser: pulumi.output("postgres"),
-                        dbPassword: pulumi.output("password"),
-                        resources: {
-                            requests: { cpu: "100m", memory: "128Mi" },
-                            limits: { cpu: "200m", memory: "256Mi" },
-                        },
-                    },
-                    gateway: {
-                        tlsMode: "letsencrypt-prod",
-                        domains: ["*.pr.aphiria.com"],
-                    },
+        it("should create namespace when configured for preview", () => {
+            (loadConfig as jest.Mock).mockReturnValue({
+                stackName: "preview-pr-123",
+                skipBaseInfrastructure: false,
+                gateway: { tlsMode: "letsencrypt-prod", domains: ["*.pr.aphiria.com"] },
+                postgresql: { user: "postgres", password: pulumi.output("password") },
+                namespace: {
+                    name: "preview-pr-123",
+                    resourceQuota: { cpu: "2", memory: "4Gi", pods: "10" },
                 },
-                k8sProvider
-            );
+                grafana: { hostname: "grafana.preview.aphiria.com" },
+                monitoring: {},
+                prometheus: {},
+            });
 
-            expect(stack.dbInitJob).toBeDefined();
-            expect(stack.postgres).toBeUndefined();
+            createStack("preview");
+
+            expect(createNamespace).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    name: "preview-pr-123",
+                    environmentLabel: "preview",
+                    resourceQuota: { cpu: "2", memory: "4Gi", pods: "10" },
+                })
+            );
+        });
+
+        it("should pass isPreviewPR=true to applications when stackName starts with preview-pr-", () => {
+            (loadConfig as jest.Mock).mockReturnValue({
+                stackName: "preview-pr-123",
+                skipBaseInfrastructure: false,
+                gateway: { tlsMode: "letsencrypt-prod", domains: ["*.pr.aphiria.com"] },
+                postgresql: { user: "postgres", password: pulumi.output("password") },
+                namespace: { name: "preview-pr-123" },
+                app: { web: { url: "https://pr-123.pr.aphiria.com" } },
+                grafana: { hostname: "grafana.preview.aphiria.com" },
+                monitoring: {},
+                prometheus: {},
+            });
+
+            createStack("preview");
+
+            expect(createApplicationResources).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    isPreviewPR: true,
+                    hasNamespaceConfig: true,
+                })
+            );
+        });
+
+        it("should pass isPreviewPR=false for preview-base (does not start with preview-pr-)", () => {
+            (loadConfig as jest.Mock).mockReturnValue({
+                stackName: "preview-base",
+                skipBaseInfrastructure: false,
+                gateway: { tlsMode: "letsencrypt-prod", domains: ["*.pr.aphiria.com"] },
+                postgresql: { user: "postgres", password: pulumi.output("password") },
+                namespace: { name: "default" }, // preview-base has namespace config but uses default
+                app: { web: { url: "https://pr-grafana.aphiria.com" } },
+                grafana: { hostname: "pr-grafana.aphiria.com" },
+                monitoring: {},
+                prometheus: {},
+            });
+
+            createStack("preview");
+
+            expect(createApplicationResources).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    isPreviewPR: false, // Should be false for preview-base
+                    hasNamespaceConfig: true,
+                })
+            );
+        });
+
+        it("should NOT create WWW redirect for preview", () => {
+            (loadConfig as jest.Mock).mockReturnValue({
+                stackName: "preview-pr-123",
+                skipBaseInfrastructure: false,
+                gateway: { tlsMode: "letsencrypt-prod", domains: ["*.pr.aphiria.com"] },
+                postgresql: { user: "postgres", password: pulumi.output("password") },
+                namespace: { name: "preview-pr-123" },
+                grafana: { hostname: "grafana.preview.aphiria.com" },
+                monitoring: {},
+                prometheus: {},
+            });
+
+            createStack("preview");
+
+            expect(createWWWRedirectRoute).not.toHaveBeenCalled();
+        });
+
+        it("should create HTTPS redirect with skipRootListener=false for preview (no WWW redirect)", () => {
+            (loadConfig as jest.Mock).mockReturnValue({
+                stackName: "preview-pr-123",
+                skipBaseInfrastructure: false,
+                gateway: { tlsMode: "letsencrypt-prod", domains: ["*.pr.aphiria.com"] },
+                postgresql: { user: "postgres", password: pulumi.output("password") },
+                namespace: { name: "preview-pr-123" },
+                grafana: { hostname: "grafana.preview.aphiria.com" },
+                monitoring: {},
+                prometheus: {},
+            });
+
+            createStack("preview");
+
+            expect(createHTTPSRedirectRoute).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    skipRootListener: false, // No WWW redirect for preview
+                })
+            );
         });
     });
 
-    describe("application deployment", () => {
-        it("should deploy applications when app config provided", async () => {
-            const stack = createStack(
-                {
-                    env: "local",
-                    skipBaseInfrastructure: true,
-                    database: {
-                        persistentStorage: false,
-                        storageSize: "1Gi",
-                        dbUser: pulumi.output("postgres"),
-                        dbPassword: pulumi.output("password"),
-                        resources: {
-                            requests: { cpu: "100m", memory: "128Mi" },
-                            limits: { cpu: "200m", memory: "256Mi" },
-                        },
-                    },
-                    gateway: {
-                        tlsMode: "self-signed",
-                        domains: ["*.aphiria.com"],
-                    },
-                    app: {
-                        web: {
-                            replicas: 1,
-                            url: "https://www.aphiria.com",
-                            image: "ghcr.io/aphiria/aphiria.com-web:latest",
-                            resources: {
-                                requests: { cpu: "50m", memory: "64Mi" },
-                                limits: { cpu: "100m", memory: "128Mi" },
-                            },
-                        },
-                        api: {
-                            replicas: 1,
-                            url: "https://api.aphiria.com",
-                            image: "ghcr.io/aphiria/aphiria.com-api:latest",
-                            resources: {
-                                nginx: {
-                                    requests: { cpu: "50m", memory: "64Mi" },
-                                    limits: { cpu: "100m", memory: "128Mi" },
-                                },
-                                php: {
-                                    requests: { cpu: "100m", memory: "128Mi" },
-                                    limits: { cpu: "200m", memory: "256Mi" },
-                                },
-                                initContainer: {
-                                    requests: { cpu: "50m", memory: "64Mi" },
-                                    limits: { cpu: "100m", memory: "128Mi" },
-                                },
-                            },
-                        },
-                        migration: {
-                            resources: {
-                                migration: {
-                                    requests: { cpu: "50m", memory: "128Mi" },
-                                    limits: { cpu: "200m", memory: "256Mi" },
-                                },
-                                initContainer: {
-                                    requests: { cpu: "10m", memory: "32Mi" },
-                                    limits: { cpu: "50m", memory: "64Mi" },
-                                },
-                            },
-                        },
-                        cookieDomain: ".aphiria.com",
-                    },
-                    monitoring: minimalMonitoringConfig,
+    describe("production environment", () => {
+        it("should NOT create base infrastructure for production (managed externally)", () => {
+            (loadConfig as jest.Mock).mockReturnValue({
+                stackName: "production",
+                skipBaseInfrastructure: true,
+                gateway: {
+                    tlsMode: "letsencrypt-prod",
+                    domains: ["aphiria.com", "*.aphiria.com"],
                 },
-                k8sProvider
-            );
+                postgresql: { user: "postgres", password: pulumi.output("password") },
+                grafana: { hostname: "grafana.aphiria.com" },
+                monitoring: {},
+                prometheus: {},
+            });
 
-            expect(stack.web).toBeDefined();
-            expect(stack.api).toBeDefined();
-            expect(stack.migration).toBeDefined();
-            expect(stack.webRoute).toBeDefined();
-            expect(stack.apiRoute).toBeDefined();
+            createStack("production");
 
-            const [webName, apiName, migrationName] = await Promise.all([
-                promiseOf(stack.web!.deployment.name),
-                promiseOf(stack.api!.deployment.name),
-                promiseOf(stack.migration!.metadata.name),
-            ]);
-            expect(webName).toBe("web");
-            expect(apiName).toBe("api");
-            expect(migrationName).toBe("db-migration");
+            expect(createBaseInfrastructureResources).not.toHaveBeenCalled();
         });
 
-        it("should not deploy applications when app config not provided", () => {
-            const stack = createStack(
-                {
-                    env: "preview",
-                    database: {
-                        persistentStorage: true,
-                        storageSize: "10Gi",
-                        dbUser: pulumi.output("postgres"),
-                        dbPassword: pulumi.output("password"),
-                        resources: {
-                            requests: { cpu: "100m", memory: "128Mi" },
-                            limits: { cpu: "200m", memory: "256Mi" },
-                        },
-                    },
-                    gateway: {
-                        tlsMode: "letsencrypt-prod",
-                        domains: ["*.pr.aphiria.com"],
-                        dnsToken: pulumi.output("fake-dns-token"),
-                    },
+        it("should NOT create gateway when skipBaseInfrastructure=true", () => {
+            (loadConfig as jest.Mock).mockReturnValue({
+                stackName: "production",
+                skipBaseInfrastructure: true,
+                gateway: {
+                    tlsMode: "letsencrypt-prod",
+                    domains: ["aphiria.com", "*.aphiria.com"],
                 },
-                k8sProvider
-            );
+                postgresql: { user: "postgres", password: pulumi.output("password") },
+                grafana: { hostname: "grafana.aphiria.com" },
+                monitoring: {},
+                prometheus: {},
+            });
 
-            expect(stack.web).toBeUndefined();
-            expect(stack.api).toBeUndefined();
-            expect(stack.migration).toBeUndefined();
+            createStack("production");
+
+            expect(createGatewayResources).not.toHaveBeenCalled();
         });
 
-        it("should create HTTP redirect routes for local environment", () => {
-            const stack = createStack(
-                {
-                    env: "local",
-                    skipBaseInfrastructure: false,
-                    database: {
-                        persistentStorage: false,
-                        storageSize: "1Gi",
-                        dbUser: pulumi.output("postgres"),
-                        dbPassword: pulumi.output("password"),
-                        resources: {
-                            requests: { cpu: "100m", memory: "128Mi" },
-                            limits: { cpu: "200m", memory: "256Mi" },
-                        },
-                    },
-                    gateway: {
-                        tlsMode: "self-signed",
-                        domains: ["*.aphiria.com"],
-                    },
-                    app: {
-                        web: {
-                            replicas: 1,
-                            url: "https://www.aphiria.com",
-                            image: "ghcr.io/aphiria/aphiria.com-web:latest",
-                            resources: {
-                                requests: { cpu: "50m", memory: "64Mi" },
-                                limits: { cpu: "100m", memory: "128Mi" },
-                            },
-                        },
-                        api: {
-                            replicas: 1,
-                            url: "https://api.aphiria.com",
-                            image: "ghcr.io/aphiria/aphiria.com-api:latest",
-                            resources: {
-                                nginx: {
-                                    requests: { cpu: "50m", memory: "64Mi" },
-                                    limits: { cpu: "100m", memory: "128Mi" },
-                                },
-                                php: {
-                                    requests: { cpu: "100m", memory: "128Mi" },
-                                    limits: { cpu: "200m", memory: "256Mi" },
-                                },
-                                initContainer: {
-                                    requests: { cpu: "50m", memory: "64Mi" },
-                                    limits: { cpu: "100m", memory: "128Mi" },
-                                },
-                            },
-                        },
-                        migration: {
-                            resources: {
-                                migration: {
-                                    requests: { cpu: "50m", memory: "128Mi" },
-                                    limits: { cpu: "200m", memory: "256Mi" },
-                                },
-                                initContainer: {
-                                    requests: { cpu: "10m", memory: "32Mi" },
-                                    limits: { cpu: "50m", memory: "64Mi" },
-                                },
-                            },
-                        },
-                        cookieDomain: ".aphiria.com",
-                    },
-                    monitoring: minimalMonitoringConfig,
+        it("should create database in default namespace for production", () => {
+            (loadConfig as jest.Mock).mockReturnValue({
+                stackName: "production",
+                skipBaseInfrastructure: true,
+                gateway: {
+                    tlsMode: "letsencrypt-prod",
+                    domains: ["aphiria.com", "*.aphiria.com"],
                 },
-                k8sProvider
-            );
+                postgresql: { user: "postgres", password: pulumi.output("password") },
+                grafana: { hostname: "grafana.aphiria.com" },
+                monitoring: {},
+                prometheus: {},
+            });
 
-            expect(stack.httpsRedirect).toBeDefined();
-            expect(stack.wwwRedirect).toBeDefined();
-        });
+            createStack("production");
 
-        it("should use database creation credentials when createDatabase is true", () => {
-            const stack = createStack(
-                {
-                    env: "preview",
-                    skipBaseInfrastructure: true,
-                    namespace: {
-                        name: "preview-pr-123",
-                    },
-                    database: {
-                        createDatabase: true,
-                        databaseName: "aphiria_pr_123",
-                        dbHost: pulumi.output("db.default.svc.cluster.local"),
-                        dbAdminUser: pulumi.output("admin"),
-                        dbAdminPassword: pulumi.output("admin-password"),
-                        persistentStorage: false,
-                        storageSize: "1Gi",
-                        dbUser: pulumi.output("app-user"),
-                        dbPassword: pulumi.output("app-password"),
-                        resources: {
-                            requests: { cpu: "100m", memory: "128Mi" },
-                            limits: { cpu: "200m", memory: "256Mi" },
-                        },
-                    },
-                    gateway: {
-                        tlsMode: "self-signed",
-                        domains: ["*.pr.aphiria.com"],
-                    },
-                    app: {
-                        web: {
-                            replicas: 1,
-                            url: "https://pr-123.pr.aphiria.com",
-                            image: "ghcr.io/aphiria/aphiria.com-web:latest",
-                            resources: {
-                                requests: { cpu: "50m", memory: "64Mi" },
-                                limits: { cpu: "100m", memory: "128Mi" },
-                            },
-                        },
-                        api: {
-                            replicas: 1,
-                            url: "https://pr-123.pr-api.aphiria.com",
-                            image: "ghcr.io/aphiria/aphiria.com-api:latest",
-                            resources: {
-                                nginx: {
-                                    requests: { cpu: "50m", memory: "64Mi" },
-                                    limits: { cpu: "100m", memory: "128Mi" },
-                                },
-                                php: {
-                                    requests: { cpu: "100m", memory: "128Mi" },
-                                    limits: { cpu: "200m", memory: "256Mi" },
-                                },
-                                initContainer: {
-                                    requests: { cpu: "50m", memory: "64Mi" },
-                                    limits: { cpu: "100m", memory: "128Mi" },
-                                },
-                            },
-                        },
-                        migration: {
-                            resources: {
-                                migration: {
-                                    requests: { cpu: "50m", memory: "128Mi" },
-                                    limits: { cpu: "200m", memory: "256Mi" },
-                                },
-                                initContainer: {
-                                    requests: { cpu: "10m", memory: "32Mi" },
-                                    limits: { cpu: "50m", memory: "64Mi" },
-                                },
-                            },
-                        },
-                        cookieDomain: ".pr.aphiria.com",
-                    },
-                    monitoring: minimalMonitoringConfig,
-                },
-                k8sProvider
-            );
-
-            expect(stack.api).toBeDefined();
-            expect(stack.migration).toBeDefined();
-            expect(stack.httpsRedirect).toBeDefined();
-        });
-
-        it("should use default database credentials when createDatabase is false", () => {
-            const stack = createStack(
-                {
-                    env: "local",
-                    skipBaseInfrastructure: true,
-                    database: {
-                        persistentStorage: false,
-                        storageSize: "1Gi",
-                        dbUser: pulumi.output("postgres"),
-                        dbPassword: pulumi.output("password"),
-                        resources: {
-                            requests: { cpu: "100m", memory: "128Mi" },
-                            limits: { cpu: "200m", memory: "256Mi" },
-                        },
-                    },
-                    gateway: {
-                        tlsMode: "self-signed",
-                        domains: ["*.aphiria.com"],
-                    },
-                    app: {
-                        web: {
-                            replicas: 1,
-                            url: "https://www.aphiria.com",
-                            image: "ghcr.io/aphiria/aphiria.com-web:latest",
-                            resources: {
-                                requests: { cpu: "50m", memory: "64Mi" },
-                                limits: { cpu: "100m", memory: "128Mi" },
-                            },
-                        },
-                        api: {
-                            replicas: 1,
-                            url: "https://api.aphiria.com",
-                            image: "ghcr.io/aphiria/aphiria.com-api:latest",
-                            resources: {
-                                nginx: {
-                                    requests: { cpu: "50m", memory: "64Mi" },
-                                    limits: { cpu: "100m", memory: "128Mi" },
-                                },
-                                php: {
-                                    requests: { cpu: "100m", memory: "128Mi" },
-                                    limits: { cpu: "200m", memory: "256Mi" },
-                                },
-                                initContainer: {
-                                    requests: { cpu: "50m", memory: "64Mi" },
-                                    limits: { cpu: "100m", memory: "128Mi" },
-                                },
-                            },
-                        },
-                        migration: {
-                            resources: {
-                                migration: {
-                                    requests: { cpu: "50m", memory: "128Mi" },
-                                    limits: { cpu: "200m", memory: "256Mi" },
-                                },
-                                initContainer: {
-                                    requests: { cpu: "10m", memory: "32Mi" },
-                                    limits: { cpu: "50m", memory: "64Mi" },
-                                },
-                            },
-                        },
-                        cookieDomain: ".aphiria.com",
-                    },
-                    monitoring: minimalMonitoringConfig,
-                },
-                k8sProvider
-            );
-
-            expect(stack.api).toBeDefined();
-        });
-
-        it("should use imagePullSecrets when namespace has imagePullSecret", () => {
-            const stack = createStack(
-                {
-                    env: "preview",
-                    skipBaseInfrastructure: true,
-                    namespace: {
-                        name: "preview-pr-123",
-                        imagePullSecret: {
-                            registry: "ghcr.io",
-                            username: pulumi.output("username"),
-                            token: pulumi.output("token"),
-                        },
-                    },
-                    database: {
-                        createDatabase: true,
-                        databaseName: "aphiria_pr_123",
-                        dbHost: pulumi.output("db.default.svc.cluster.local"),
-                        dbAdminUser: pulumi.output("admin"),
-                        dbAdminPassword: pulumi.output("admin-password"),
-                        persistentStorage: false,
-                        storageSize: "1Gi",
-                        dbUser: pulumi.output("postgres"),
-                        dbPassword: pulumi.output("password"),
-                        resources: {
-                            requests: { cpu: "100m", memory: "128Mi" },
-                            limits: { cpu: "200m", memory: "256Mi" },
-                        },
-                    },
-                    gateway: {
-                        tlsMode: "self-signed",
-                        domains: ["*.pr.aphiria.com"],
-                    },
-                    app: {
-                        web: {
-                            replicas: 1,
-                            url: "https://pr-123.pr.aphiria.com",
-                            image: "ghcr.io/aphiria/aphiria.com-web:latest",
-                            resources: {
-                                requests: { cpu: "50m", memory: "64Mi" },
-                                limits: { cpu: "100m", memory: "128Mi" },
-                            },
-                        },
-                        api: {
-                            replicas: 1,
-                            url: "https://pr-123.pr-api.aphiria.com",
-                            image: "ghcr.io/aphiria/aphiria.com-api:latest",
-                            resources: {
-                                nginx: {
-                                    requests: { cpu: "50m", memory: "64Mi" },
-                                    limits: { cpu: "100m", memory: "128Mi" },
-                                },
-                                php: {
-                                    requests: { cpu: "100m", memory: "128Mi" },
-                                    limits: { cpu: "200m", memory: "256Mi" },
-                                },
-                                initContainer: {
-                                    requests: { cpu: "50m", memory: "64Mi" },
-                                    limits: { cpu: "100m", memory: "128Mi" },
-                                },
-                            },
-                        },
-                        migration: {
-                            resources: {
-                                migration: {
-                                    requests: { cpu: "50m", memory: "128Mi" },
-                                    limits: { cpu: "200m", memory: "256Mi" },
-                                },
-                                initContainer: {
-                                    requests: { cpu: "10m", memory: "32Mi" },
-                                    limits: { cpu: "50m", memory: "64Mi" },
-                                },
-                            },
-                        },
-                        cookieDomain: ".pr.aphiria.com",
-                    },
-                    monitoring: minimalMonitoringConfig,
-                },
-                k8sProvider
-            );
-
-            expect(stack.web).toBeDefined();
-            expect(stack.api).toBeDefined();
-            expect(stack.migration).toBeDefined();
-        });
-
-        it("should include preview-specific envConfig for preview environment", () => {
-            const stack = createStack(
-                {
-                    env: "preview",
-                    skipBaseInfrastructure: true,
-                    namespace: {
-                        name: "preview-pr-456",
-                    },
-                    database: {
-                        createDatabase: true,
-                        databaseName: "aphiria_pr_456",
-                        dbHost: pulumi.output("db.default.svc.cluster.local"),
-                        dbAdminUser: pulumi.output("admin"),
-                        dbAdminPassword: pulumi.output("admin-password"),
-                        persistentStorage: false,
-                        storageSize: "1Gi",
-                        dbUser: pulumi.output("postgres"),
-                        dbPassword: pulumi.output("password"),
-                        resources: {
-                            requests: { cpu: "100m", memory: "128Mi" },
-                            limits: { cpu: "200m", memory: "256Mi" },
-                        },
-                    },
-                    gateway: {
-                        tlsMode: "self-signed",
-                        domains: ["*.pr.aphiria.com"],
-                    },
-                    app: {
-                        web: {
-                            replicas: 1,
-                            url: "https://pr-456.pr.aphiria.com",
-                            image: "ghcr.io/aphiria/aphiria.com-web:latest",
-                            resources: {
-                                requests: { cpu: "50m", memory: "64Mi" },
-                                limits: { cpu: "100m", memory: "128Mi" },
-                            },
-                        },
-                        api: {
-                            replicas: 1,
-                            url: "https://pr-456.pr-api.aphiria.com",
-                            image: "ghcr.io/aphiria/aphiria.com-api:latest",
-                            resources: {
-                                nginx: {
-                                    requests: { cpu: "50m", memory: "64Mi" },
-                                    limits: { cpu: "100m", memory: "128Mi" },
-                                },
-                                php: {
-                                    requests: { cpu: "100m", memory: "128Mi" },
-                                    limits: { cpu: "200m", memory: "256Mi" },
-                                },
-                                initContainer: {
-                                    requests: { cpu: "50m", memory: "64Mi" },
-                                    limits: { cpu: "100m", memory: "128Mi" },
-                                },
-                            },
-                        },
-                        migration: {
-                            resources: {
-                                migration: {
-                                    requests: { cpu: "50m", memory: "128Mi" },
-                                    limits: { cpu: "200m", memory: "256Mi" },
-                                },
-                                initContainer: {
-                                    requests: { cpu: "10m", memory: "32Mi" },
-                                    limits: { cpu: "50m", memory: "64Mi" },
-                                },
-                            },
-                        },
-                        cookieDomain: ".pr.aphiria.com",
-                    },
-                    monitoring: minimalMonitoringConfig,
-                },
-                k8sProvider
-            );
-
-            expect(stack.web).toBeDefined();
-            expect(stack.api).toBeDefined();
-        });
-
-        it("should use default database name when databaseName not provided", () => {
-            const stack = createStack(
-                {
-                    env: "local",
-                    skipBaseInfrastructure: true,
-                    database: {
-                        persistentStorage: false,
-                        storageSize: "1Gi",
-                        dbUser: pulumi.output("postgres"),
-                        dbPassword: pulumi.output("password"),
-                        resources: {
-                            requests: { cpu: "100m", memory: "128Mi" },
-                            limits: { cpu: "200m", memory: "256Mi" },
-                        },
-                    },
-                    gateway: {
-                        tlsMode: "self-signed",
-                        domains: ["*.aphiria.com"],
-                    },
-                    app: {
-                        web: {
-                            replicas: 1,
-                            url: "https://www.aphiria.com",
-                            image: "ghcr.io/aphiria/aphiria.com-web:latest",
-                            resources: {
-                                requests: { cpu: "50m", memory: "64Mi" },
-                                limits: { cpu: "100m", memory: "128Mi" },
-                            },
-                        },
-                        api: {
-                            replicas: 1,
-                            url: "https://api.aphiria.com",
-                            image: "ghcr.io/aphiria/aphiria.com-api:latest",
-                            resources: {
-                                nginx: {
-                                    requests: { cpu: "50m", memory: "64Mi" },
-                                    limits: { cpu: "100m", memory: "128Mi" },
-                                },
-                                php: {
-                                    requests: { cpu: "100m", memory: "128Mi" },
-                                    limits: { cpu: "200m", memory: "256Mi" },
-                                },
-                                initContainer: {
-                                    requests: { cpu: "50m", memory: "64Mi" },
-                                    limits: { cpu: "100m", memory: "128Mi" },
-                                },
-                            },
-                        },
-                        migration: {
-                            resources: {
-                                migration: {
-                                    requests: { cpu: "50m", memory: "128Mi" },
-                                    limits: { cpu: "200m", memory: "256Mi" },
-                                },
-                                initContainer: {
-                                    requests: { cpu: "10m", memory: "32Mi" },
-                                    limits: { cpu: "50m", memory: "64Mi" },
-                                },
-                            },
-                        },
-                        cookieDomain: ".aphiria.com",
-                    },
-                    monitoring: minimalMonitoringConfig,
-                },
-                k8sProvider
-            );
-
-            expect(stack.api).toBeDefined();
-        });
-
-        it("should create HTTP redirect routes for production environment", () => {
-            const stack = createStack(
-                {
+            expect(createDatabaseResources).toHaveBeenCalledWith(
+                expect.objectContaining({
                     env: "production",
-                    database: {
-                        persistentStorage: true,
-                        storageSize: "50Gi",
-                        dbUser: pulumi.output("postgres"),
-                        dbPassword: pulumi.output("password"),
-                        resources: {
-                            requests: { cpu: "100m", memory: "128Mi" },
-                            limits: { cpu: "200m", memory: "256Mi" },
-                        },
-                    },
-                    gateway: {
-                        tlsMode: "letsencrypt-prod",
-                        domains: ["aphiria.com", "*.aphiria.com"],
-                        dnsToken: pulumi.output("fake-dns-token"),
-                    },
-                    app: {
-                        web: {
-                            replicas: 2,
-                            url: "https://www.aphiria.com",
-                            image: "ghcr.io/aphiria/aphiria.com-web@sha256:abc123",
-                            resources: {
-                                requests: { cpu: "50m", memory: "64Mi" },
-                                limits: { cpu: "100m", memory: "128Mi" },
-                            },
-                        },
-                        api: {
-                            replicas: 2,
-                            url: "https://api.aphiria.com",
-                            image: "ghcr.io/aphiria/aphiria.com-api@sha256:def456",
-                            resources: {
-                                nginx: {
-                                    requests: { cpu: "50m", memory: "64Mi" },
-                                    limits: { cpu: "100m", memory: "128Mi" },
-                                },
-                                php: {
-                                    requests: { cpu: "100m", memory: "128Mi" },
-                                    limits: { cpu: "200m", memory: "256Mi" },
-                                },
-                                initContainer: {
-                                    requests: { cpu: "50m", memory: "64Mi" },
-                                    limits: { cpu: "100m", memory: "128Mi" },
-                                },
-                            },
-                        },
-                        migration: {
-                            resources: {
-                                migration: {
-                                    requests: { cpu: "50m", memory: "128Mi" },
-                                    limits: { cpu: "200m", memory: "256Mi" },
-                                },
-                                initContainer: {
-                                    requests: { cpu: "10m", memory: "32Mi" },
-                                    limits: { cpu: "50m", memory: "64Mi" },
-                                },
-                            },
-                        },
-                        cookieDomain: ".aphiria.com",
-                    },
-                    monitoring: minimalMonitoringConfig,
-                },
-                k8sProvider
+                    namespace: "default",
+                })
             );
-
-            expect(stack.httpsRedirect).toBeDefined();
-            expect(stack.wwwRedirect).toBeDefined();
         });
 
-        it("should create HTTPS redirect but not WWW redirect for preview-base", () => {
-            const stack = createStack(
-                {
-                    env: "preview",
-                    skipBaseInfrastructure: false,
-                    database: {
-                        persistentStorage: true,
-                        storageSize: "20Gi",
-                        dbUser: pulumi.output("postgres"),
-                        dbPassword: pulumi.output("password"),
-                        resources: {
-                            requests: { cpu: "100m", memory: "128Mi" },
-                            limits: { cpu: "200m", memory: "256Mi" },
-                        },
-                    },
-                    gateway: {
-                        tlsMode: "letsencrypt-prod",
-                        domains: ["*.pr.aphiria.com", "*.pr-api.aphiria.com"],
-                        dnsToken: pulumi.output("fake-dns-token"),
+        it("should create imagePullSecret in default namespace when configured", () => {
+            (loadConfig as jest.Mock).mockReturnValue({
+                stackName: "production",
+                skipBaseInfrastructure: true,
+                gateway: {
+                    tlsMode: "letsencrypt-prod",
+                    domains: ["aphiria.com", "*.aphiria.com"],
+                },
+                postgresql: { user: "postgres", password: pulumi.output("password") },
+                namespace: {
+                    imagePullSecret: {
+                        registry: "ghcr.io",
+                        username: "user",
+                        token: pulumi.output("ghp_token"),
                     },
                 },
-                k8sProvider
-            );
+                grafana: { hostname: "grafana.aphiria.com" },
+                monitoring: {},
+                prometheus: {},
+            });
 
-            expect(stack.httpsRedirect).toBeDefined();
-            expect(stack.wwwRedirect).toBeUndefined();
+            createStack("production");
+
+            expect(createImagePullSecret).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    name: "ghcr-pull-secret",
+                    namespace: "default",
+                    registry: "ghcr.io",
+                    username: "user",
+                })
+            );
         });
 
-        it("should not create HTTP redirect routes when skipBaseInfrastructure is true", () => {
-            const stack = createStack(
-                {
-                    env: "preview",
-                    skipBaseInfrastructure: true,
-                    namespace: {
-                        name: "preview-pr-123",
-                    },
-                    database: {
-                        createDatabase: true,
-                        databaseName: "aphiria_pr_123",
-                        dbHost: pulumi.output("db.default.svc.cluster.local"),
-                        dbAdminUser: pulumi.output("admin"),
-                        dbAdminPassword: pulumi.output("admin-password"),
-                        persistentStorage: false,
-                        storageSize: "1Gi",
-                        dbUser: pulumi.output("app-user"),
-                        dbPassword: pulumi.output("app-password"),
-                        resources: {
-                            requests: { cpu: "100m", memory: "128Mi" },
-                            limits: { cpu: "200m", memory: "256Mi" },
-                        },
-                    },
-                    gateway: {
-                        tlsMode: "letsencrypt-prod",
-                        domains: ["*.pr.aphiria.com"],
-                    },
-                    app: {
-                        web: {
-                            replicas: 1,
-                            url: "https://123.pr.aphiria.com",
-                            image: "ghcr.io/aphiria/aphiria.com-web@sha256:abc123",
-                            resources: {
-                                requests: { cpu: "50m", memory: "64Mi" },
-                                limits: { cpu: "100m", memory: "128Mi" },
-                            },
-                        },
-                        api: {
-                            replicas: 1,
-                            url: "https://123.pr-api.aphiria.com",
-                            image: "ghcr.io/aphiria/aphiria.com-api@sha256:def456",
-                            resources: {
-                                nginx: {
-                                    requests: { cpu: "50m", memory: "64Mi" },
-                                    limits: { cpu: "100m", memory: "128Mi" },
-                                },
-                                php: {
-                                    requests: { cpu: "100m", memory: "128Mi" },
-                                    limits: { cpu: "200m", memory: "256Mi" },
-                                },
-                                initContainer: {
-                                    requests: { cpu: "50m", memory: "64Mi" },
-                                    limits: { cpu: "100m", memory: "128Mi" },
-                                },
-                            },
-                        },
-                        migration: {
-                            resources: {
-                                migration: {
-                                    requests: { cpu: "50m", memory: "128Mi" },
-                                    limits: { cpu: "200m", memory: "256Mi" },
-                                },
-                                initContainer: {
-                                    requests: { cpu: "10m", memory: "32Mi" },
-                                    limits: { cpu: "50m", memory: "64Mi" },
-                                },
-                            },
-                        },
-                        cookieDomain: ".pr.aphiria.com",
-                    },
-                    monitoring: minimalMonitoringConfig,
+        it("should NOT create WWW redirect when skipBaseInfrastructure=true", () => {
+            (loadConfig as jest.Mock).mockReturnValue({
+                stackName: "production",
+                skipBaseInfrastructure: true,
+                gateway: {
+                    tlsMode: "letsencrypt-prod",
+                    domains: ["aphiria.com", "*.aphiria.com"],
                 },
-                k8sProvider
-            );
+                postgresql: { user: "postgres", password: pulumi.output("password") },
+                grafana: { hostname: "grafana.aphiria.com" },
+                monitoring: {},
+                prometheus: {},
+            });
 
-            expect(stack.httpsRedirect).toBeDefined(); // Preview-PR creates its own redirect
-            expect(stack.wwwRedirect).toBeUndefined();
+            createStack("production");
+
+            expect(createWWWRedirectRoute).not.toHaveBeenCalled();
+            expect(createHTTPSRedirectRoute).not.toHaveBeenCalled();
         });
     });
 
-    describe("base infrastructure", () => {
-        it("should install Helm charts when skipBaseInfrastructure is false", async () => {
-            const stack = createStack(
-                {
-                    env: "preview",
-                    skipBaseInfrastructure: false,
-                    database: {
-                        persistentStorage: true,
-                        storageSize: "10Gi",
-                        dbUser: pulumi.output("postgres"),
-                        dbPassword: pulumi.output("password"),
-                        resources: {
-                            requests: { cpu: "100m", memory: "128Mi" },
-                            limits: { cpu: "200m", memory: "256Mi" },
-                        },
-                    },
-                    gateway: {
-                        tlsMode: "letsencrypt-prod",
-                        domains: ["*.pr.aphiria.com"],
-                        dnsToken: pulumi.output("fake-dns-token"),
-                    },
-                },
-                k8sProvider
-            );
+    describe("conditional resource creation", () => {
+        it("should not create applications when app config is missing web.url", () => {
+            (loadConfig as jest.Mock).mockReturnValue({
+                stackName: "production",
+                skipBaseInfrastructure: false,
+                gateway: { tlsMode: "self-signed", domains: ["*.aphiria.com"] },
+                postgresql: { user: "postgres", password: pulumi.output("password") },
+                grafana: { hostname: "grafana.local.aphiria.com" },
+                monitoring: {},
+                prometheus: {},
+            });
 
-            expect(stack.helmCharts).toBeDefined();
-            expect(stack.gateway).toBeDefined();
+            const stack = createStack("local");
 
-            const [certUrn, nginxUrn, gwUrn] = await Promise.all([
-                promiseOf(stack.helmCharts!.certManager.urn),
-                promiseOf(stack.helmCharts!.nginxGateway.urn),
-                promiseOf(stack.gateway!.urn),
-            ]);
-            expect(certUrn).toContain("cert-manager");
-            expect(nginxUrn).toContain("nginx-gateway");
-            expect(gwUrn).toContain("gateway");
+            expect(createApplicationResources).not.toHaveBeenCalled();
+            expect(stack.applications).toBeUndefined();
         });
 
-        // DNS record creation requires Chart.resources which is only available at runtime
-        // This is verified through integration tests (actual deployments)
-        it.skip("should create DNS records when gateway.dns is configured", () => {
-            const stack = createStack(
-                {
-                    env: "production",
-                    skipBaseInfrastructure: false,
-                    database: {
-                        persistentStorage: true,
-                        storageSize: "20Gi",
-                        dbUser: pulumi.output("postgres"),
-                        dbPassword: pulumi.output("password"),
-                        resources: {
-                            requests: { cpu: "100m", memory: "128Mi" },
-                            limits: { cpu: "200m", memory: "256Mi" },
-                        },
-                    },
-                    gateway: {
-                        tlsMode: "letsencrypt-prod",
-                        domains: ["aphiria.com", "*.aphiria.com"],
-                        dnsToken: pulumi.output("fake-dns-token"),
-                        dns: {
-                            domain: "aphiria.com",
-                            records: [
-                                { name: "@", resourceName: "production-root-dns" },
-                                { name: "www", resourceName: "production-www-dns" },
-                                { name: "api", resourceName: "production-api-dns" },
-                            ],
-                            ttl: 300,
-                        },
-                    },
+        it("should create applications when app.web.url is configured", () => {
+            (loadConfig as jest.Mock).mockReturnValue({
+                stackName: "production",
+                skipBaseInfrastructure: false,
+                gateway: { tlsMode: "self-signed", domains: ["*.aphiria.com"] },
+                postgresql: { user: "postgres", password: pulumi.output("password") },
+                app: {
+                    web: { url: "https://www.aphiria.com" },
+                    api: { url: "https://api.aphiria.com" },
                 },
-                k8sProvider
-            );
+                grafana: { hostname: "grafana.local.aphiria.com" },
+                monitoring: {},
+                prometheus: {},
+            });
 
-            expect(stack.gateway).toBeDefined();
-            expect(stack.gateway?.ip).toBeDefined();
-            expect(stack.gateway?.dnsRecords).toBeDefined();
-            expect(stack.gateway?.dnsRecords?.length).toBe(3);
-        });
+            createStack("local");
 
-        it("should skip Helm charts when skipBaseInfrastructure is true", () => {
-            const stack = createStack(
-                {
-                    env: "preview",
-                    skipBaseInfrastructure: true,
-                    namespace: {
-                        name: "preview-pr-123",
-                    },
-                    database: {
-                        createDatabase: true,
-                        databaseName: "aphiria_pr_123",
-                        dbHost: pulumi.output("db.default.svc.cluster.local"),
-                        dbAdminUser: pulumi.output("postgres"),
-                        dbAdminPassword: pulumi.output("password"),
-                        persistentStorage: false,
-                        storageSize: "1Gi",
-                        dbUser: pulumi.output("postgres"),
-                        dbPassword: pulumi.output("password"),
-                        resources: {
-                            requests: { cpu: "100m", memory: "128Mi" },
-                            limits: { cpu: "200m", memory: "256Mi" },
-                        },
-                    },
-                    gateway: {
-                        tlsMode: "letsencrypt-prod",
-                        domains: ["*.pr.aphiria.com"],
-                    },
-                },
-                k8sProvider
-            );
-
-            expect(stack.helmCharts).toBeUndefined();
-            expect(stack.gateway).toBeUndefined();
-        });
-    });
-
-    describe("monitoring", () => {
-        it("should create monitoring namespace and components when monitoring config provided", async () => {
-            const stack = createStack(
-                {
-                    env: "production",
-                    database: {
-                        persistentStorage: true,
-                        storageSize: "20Gi",
-                        dbUser: pulumi.output("postgres"),
-                        dbPassword: pulumi.output("password"),
-                        resources: {
-                            requests: { cpu: "100m", memory: "128Mi" },
-                            limits: { cpu: "200m", memory: "256Mi" },
-                        },
-                    },
-                    gateway: {
-                        tlsMode: "letsencrypt-prod",
-                        domains: ["aphiria.com", "*.aphiria.com"],
-                        dnsToken: pulumi.output("fake-dns-token"),
-                    },
-                    monitoring: {
-                        prometheus: {
-                            authToken: pulumi.output("test-token"),
-                            storageSize: "10Gi",
-                            scrapeInterval: "15s",
-                            retentionTime: "7d",
-                        },
-                        grafana: {
-                            storageSize: "5Gi",
-                            hostname: "grafana.aphiria.com",
-                            githubOAuth: {
-                                clientId: pulumi.output("test-client-id"),
-                                clientSecret: pulumi.output("test-client-secret"),
-                                org: "aphiria",
-                                adminUser: "davidbyoung",
-                            },
-                            smtp: {
-                                host: pulumi.output("smtp.example.com"),
-                                port: 587,
-                                user: pulumi.output("user@example.com"),
-                                password: pulumi.output("password"),
-                                fromAddress: "admin@aphiria.com",
-                                alertEmail: "admin@aphiria.com",
-                            },
-                        },
-                    },
-                },
-                k8sProvider
-            );
-
-            expect(stack.monitoring).toBeDefined();
-            expect(stack.monitoring?.namespace).toBeDefined();
-            expect(stack.monitoring?.kubePrometheusStack).toBeDefined();
-            expect(stack.monitoring?.grafana).toBeDefined();
-            expect(stack.monitoring?.grafanaIngress).toBeDefined();
-
-            const [nsName, quotaName] = await Promise.all([
-                promiseOf(stack.monitoring!.namespace.namespace.metadata.name),
-                promiseOf(stack.monitoring!.namespace.resourceQuota!.metadata.name),
-            ]);
-            expect(nsName).toBe("monitoring");
-            expect(quotaName).toBe("monitoring-quota");
-        });
-
-        it("should use custom Prometheus resources when provided", async () => {
-            const stack = createStack(
-                {
-                    env: "preview",
-                    skipBaseInfrastructure: true,
-                    database: {
-                        persistentStorage: true,
-                        storageSize: "5Gi",
-                        dbUser: pulumi.output("postgres"),
-                        dbPassword: pulumi.output("password"),
-                        resources: {
-                            requests: { cpu: "100m", memory: "128Mi" },
-                            limits: { cpu: "200m", memory: "256Mi" },
-                        },
-                    },
-                    gateway: {
-                        tlsMode: "letsencrypt-prod",
-                        domains: ["*.pr.aphiria.com"],
-                    },
-                    monitoring: {
-                        prometheus: {
-                            authToken: pulumi.output("test-token"),
-                            storageSize: "5Gi",
-                            scrapeInterval: "15s",
-                            retentionTime: "7d",
-                            resources: {
-                                requests: { cpu: "100m", memory: "256Mi" },
-                                limits: { cpu: "500m", memory: "512Mi" },
-                            },
-                        },
-                        grafana: {
-                            storageSize: "2Gi",
-                            hostname: "grafana.pr.aphiria.com",
-                            githubOAuth: {
-                                clientId: pulumi.output("test-client-id"),
-                                clientSecret: pulumi.output("test-client-secret"),
-                                org: "aphiria",
-                                adminUser: "test",
-                            },
-                        },
-                    },
-                },
-                k8sProvider
-            );
-
-            expect(stack.monitoring).toBeDefined();
-            expect(stack.monitoring?.kubePrometheusStack).toBeDefined();
-        });
-
-        it("should use default Prometheus resources when not provided", async () => {
-            const stack = createStack(
-                {
-                    env: "preview",
-                    skipBaseInfrastructure: true,
-                    database: {
-                        persistentStorage: true,
-                        storageSize: "5Gi",
-                        dbUser: pulumi.output("postgres"),
-                        dbPassword: pulumi.output("password"),
-                        resources: {
-                            requests: { cpu: "100m", memory: "128Mi" },
-                            limits: { cpu: "200m", memory: "256Mi" },
-                        },
-                    },
-                    gateway: {
-                        tlsMode: "letsencrypt-prod",
-                        domains: ["*.pr.aphiria.com"],
-                    },
-                    monitoring: {
-                        prometheus: {
-                            authToken: pulumi.output("test-token"),
-                            storageSize: "5Gi",
-                            // No resources specified - should use defaults
-                        },
-                        grafana: {
-                            storageSize: "2Gi",
-                            hostname: "grafana.pr.aphiria.com",
-                            githubOAuth: {
-                                clientId: pulumi.output("test-client-id"),
-                                clientSecret: pulumi.output("test-client-secret"),
-                                org: "aphiria",
-                                adminUser: "test",
-                            },
-                        },
-                    },
-                },
-                k8sProvider
-            );
-
-            expect(stack.monitoring).toBeDefined();
-            expect(stack.monitoring?.kubePrometheusStack).toBeDefined();
-        });
-
-        it("should not create monitoring when monitoring config not provided", () => {
-            const stack = createStack(
-                {
+            expect(createApplicationResources).toHaveBeenCalledWith(
+                expect.objectContaining({
                     env: "local",
-                    skipBaseInfrastructure: true,
-                    database: {
-                        persistentStorage: false,
-                        storageSize: "1Gi",
-                        dbUser: pulumi.output("postgres"),
-                        dbPassword: pulumi.output("password"),
-                        resources: {
-                            requests: { cpu: "100m", memory: "128Mi" },
-                            limits: { cpu: "200m", memory: "256Mi" },
-                        },
-                    },
-                    gateway: {
-                        tlsMode: "self-signed",
-                        domains: ["*.aphiria.com"],
-                    },
-                },
-                k8sProvider
+                    namespace: "default",
+                    appConfig: expect.objectContaining({
+                        web: { url: "https://www.aphiria.com" },
+                    }),
+                })
             );
+        });
 
+        it("should not create monitoring when grafana.hostname is missing", () => {
+            (loadConfig as jest.Mock).mockReturnValue({
+                stackName: "production",
+                skipBaseInfrastructure: false,
+                gateway: { tlsMode: "self-signed", domains: ["*.aphiria.com"] },
+                postgresql: { user: "postgres", password: pulumi.output("password") },
+            });
+
+            const stack = createStack("local");
+
+            expect(createMonitoringResources).not.toHaveBeenCalled();
             expect(stack.monitoring).toBeUndefined();
         });
 
-        it("should use default scrapeInterval and retentionTime when not provided", () => {
-            const stack = createStack(
-                {
-                    env: "local",
-                    skipBaseInfrastructure: true,
-                    database: {
-                        persistentStorage: false,
-                        storageSize: "1Gi",
-                        dbUser: pulumi.output("postgres"),
-                        dbPassword: pulumi.output("password"),
-                        resources: {
-                            requests: { cpu: "100m", memory: "128Mi" },
-                            limits: { cpu: "200m", memory: "256Mi" },
-                        },
-                    },
-                    gateway: {
-                        tlsMode: "self-signed",
-                        domains: ["*.aphiria.com"],
-                    },
-                    monitoring: {
-                        prometheus: {
-                            authToken: pulumi.output("test-token"),
-                            storageSize: "5Gi",
-                        },
-                        grafana: {
-                            storageSize: "2Gi",
-                            hostname: "grafana.aphiria.com",
-                            githubOAuth: {
-                                clientId: pulumi.output("client-id"),
-                                clientSecret: pulumi.output("client-secret"),
-                                org: "aphiria",
-                                adminUser: "davidbyoung",
-                            },
-                        },
+        it("should not create imagePullSecret when namespace was already created", () => {
+            (loadConfig as jest.Mock).mockReturnValue({
+                stackName: "production",
+                skipBaseInfrastructure: false,
+                gateway: { tlsMode: "letsencrypt-prod", domains: ["*.pr.aphiria.com"] },
+                postgresql: { user: "postgres", password: pulumi.output("password") },
+                namespace: {
+                    name: "preview-pr-123",
+                    imagePullSecret: {
+                        registry: "ghcr.io",
+                        username: "user",
+                        token: pulumi.output("ghp_token"),
                     },
                 },
-                k8sProvider
-            );
+                grafana: { hostname: "grafana.preview.aphiria.com" },
+                monitoring: {},
+                prometheus: {},
+            });
 
-            expect(stack.monitoring).toBeDefined();
-            expect(stack.monitoring?.kubePrometheusStack).toBeDefined();
-        });
+            createStack("preview");
 
-        it("should configure kube-prometheus-stack with skipAwait for Helm v4", () => {
-            const stack = createStack(
-                {
-                    env: "production",
-                    database: {
-                        persistentStorage: true,
-                        storageSize: "20Gi",
-                        dbUser: pulumi.output("postgres"),
-                        dbPassword: pulumi.output("password"),
-                        resources: {
-                            requests: { cpu: "100m", memory: "128Mi" },
-                            limits: { cpu: "200m", memory: "256Mi" },
-                        },
-                    },
-                    gateway: {
-                        tlsMode: "letsencrypt-prod",
-                        domains: ["aphiria.com", "*.aphiria.com"],
-                        dnsToken: pulumi.output("fake-dns-token"),
-                    },
-                    monitoring: {
-                        prometheus: {
-                            authToken: pulumi.output("test-token"),
-                            storageSize: "10Gi",
-                        },
-                        grafana: {
-                            storageSize: "5Gi",
-                            hostname: "grafana.aphiria.com",
-                            githubOAuth: {
-                                clientId: pulumi.output("client-id"),
-                                clientSecret: pulumi.output("client-secret"),
-                                org: "aphiria",
-                                adminUser: "davidbyoung",
-                            },
-                        },
-                    },
-                },
-                k8sProvider
-            );
-
-            // Verify kube-prometheus-stack is created as v4.Chart
-            expect(stack.monitoring?.kubePrometheusStack).toBeDefined();
-
-            // Note: skipAwait and other Helm options are set in installKubePrometheusStack
-            // We verify the chart exists, which confirms it was installed with v4 API
-            expect(stack.monitoring?.kubePrometheusStack.urn).toBeDefined();
-        });
-
-        it("should configure Prometheus with resource limits for ResourceQuota compliance", async () => {
-            const stack = createStack(
-                {
-                    env: "production",
-                    database: {
-                        persistentStorage: true,
-                        storageSize: "20Gi",
-                        dbUser: pulumi.output("postgres"),
-                        dbPassword: pulumi.output("password"),
-                        resources: {
-                            requests: { cpu: "100m", memory: "128Mi" },
-                            limits: { cpu: "200m", memory: "256Mi" },
-                        },
-                    },
-                    gateway: {
-                        tlsMode: "letsencrypt-prod",
-                        domains: ["aphiria.com", "*.aphiria.com"],
-                        dnsToken: pulumi.output("fake-dns-token"),
-                    },
-                    monitoring: {
-                        prometheus: {
-                            authToken: pulumi.output("test-token"),
-                            storageSize: "10Gi",
-                            scrapeInterval: "30s",
-                            retentionTime: "14d",
-                        },
-                        grafana: {
-                            storageSize: "5Gi",
-                            hostname: "grafana.aphiria.com",
-                            githubOAuth: {
-                                clientId: pulumi.output("client-id"),
-                                clientSecret: pulumi.output("client-secret"),
-                                org: "aphiria",
-                                adminUser: "davidbyoung",
-                            },
-                        },
-                    },
-                },
-                k8sProvider
-            );
-
-            expect(stack.monitoring?.kubePrometheusStack).toBeDefined();
-
-            // Verify the Helm chart is created with v4 API
-            const urn = await promiseOf(stack.monitoring!.kubePrometheusStack.urn);
-            expect(urn).toContain("kube-prometheus-stack");
-        });
-
-        it("should disable TLS and admission webhooks for Helm v4 compatibility", () => {
-            const stack = createStack(
-                {
-                    env: "local",
-                    skipBaseInfrastructure: true,
-                    database: {
-                        persistentStorage: false,
-                        storageSize: "1Gi",
-                        dbUser: pulumi.output("postgres"),
-                        dbPassword: pulumi.output("password"),
-                        resources: {
-                            requests: { cpu: "100m", memory: "128Mi" },
-                            limits: { cpu: "200m", memory: "256Mi" },
-                        },
-                    },
-                    gateway: {
-                        tlsMode: "self-signed",
-                        domains: ["*.aphiria.com"],
-                    },
-                    monitoring: {
-                        prometheus: {
-                            authToken: pulumi.output("test-token"),
-                            storageSize: "5Gi",
-                        },
-                        grafana: {
-                            storageSize: "2Gi",
-                            hostname: "grafana.aphiria.com",
-                            githubOAuth: {
-                                clientId: pulumi.output("client-id"),
-                                clientSecret: pulumi.output("client-secret"),
-                                org: "aphiria",
-                                adminUser: "davidbyoung",
-                            },
-                        },
-                    },
-                },
-                k8sProvider
-            );
-
-            // Verify monitoring stack is created
-            // The TLS/webhook disabling is in the Helm values passed to installKubePrometheusStack
-            // We verify the chart was created successfully, which confirms the config works
-            expect(stack.monitoring?.kubePrometheusStack).toBeDefined();
-        });
-
-        it("should enable kube-state-metrics with resource limits", () => {
-            const stack = createStack(
-                {
-                    env: "preview",
-                    skipBaseInfrastructure: false,
-                    database: {
-                        persistentStorage: true,
-                        storageSize: "10Gi",
-                        dbUser: pulumi.output("postgres"),
-                        dbPassword: pulumi.output("password"),
-                        resources: {
-                            requests: { cpu: "100m", memory: "128Mi" },
-                            limits: { cpu: "200m", memory: "256Mi" },
-                        },
-                    },
-                    gateway: {
-                        tlsMode: "letsencrypt-prod",
-                        domains: ["*.pr.aphiria.com"],
-                        dnsToken: pulumi.output("fake-dns-token"),
-                    },
-                    monitoring: {
-                        prometheus: {
-                            authToken: pulumi.output("test-token"),
-                            storageSize: "5Gi",
-                        },
-                        grafana: {
-                            storageSize: "2Gi",
-                            hostname: "grafana.pr.aphiria.com",
-                            githubOAuth: {
-                                clientId: pulumi.output("client-id"),
-                                clientSecret: pulumi.output("client-secret"),
-                                org: "aphiria",
-                                adminUser: "davidbyoung",
-                            },
-                        },
-                    },
-                },
-                k8sProvider
-            );
-
-            // Verify kube-prometheus-stack is created with kube-state-metrics enabled
-            // Resource limits are configured in Helm values: 50m/128Mi requests, 100m/256Mi limits
-            expect(stack.monitoring?.kubePrometheusStack).toBeDefined();
-        });
-
-        it("should configure prometheus-node-exporter with resource limits", () => {
-            const stack = createStack(
-                {
-                    env: "production",
-                    database: {
-                        persistentStorage: true,
-                        storageSize: "20Gi",
-                        dbUser: pulumi.output("postgres"),
-                        dbPassword: pulumi.output("password"),
-                        resources: {
-                            requests: { cpu: "100m", memory: "128Mi" },
-                            limits: { cpu: "200m", memory: "256Mi" },
-                        },
-                    },
-                    gateway: {
-                        tlsMode: "letsencrypt-prod",
-                        domains: ["aphiria.com", "*.aphiria.com"],
-                        dnsToken: pulumi.output("fake-dns-token"),
-                    },
-                    monitoring: {
-                        prometheus: {
-                            authToken: pulumi.output("test-token"),
-                            storageSize: "10Gi",
-                        },
-                        grafana: {
-                            storageSize: "5Gi",
-                            hostname: "grafana.aphiria.com",
-                            githubOAuth: {
-                                clientId: pulumi.output("client-id"),
-                                clientSecret: pulumi.output("client-secret"),
-                                org: "aphiria",
-                                adminUser: "davidbyoung",
-                            },
-                        },
-                    },
-                },
-                k8sProvider
-            );
-
-            // Verify kube-prometheus-stack is created with node-exporter resources
-            // Resource limits: 50m/64Mi requests, 100m/128Mi limits
-            expect(stack.monitoring?.kubePrometheusStack).toBeDefined();
-        });
-
-        it("should disable Grafana and Alertmanager in kube-prometheus-stack", () => {
-            const stack = createStack(
-                {
-                    env: "local",
-                    skipBaseInfrastructure: true,
-                    database: {
-                        persistentStorage: false,
-                        storageSize: "1Gi",
-                        dbUser: pulumi.output("postgres"),
-                        dbPassword: pulumi.output("password"),
-                        resources: {
-                            requests: { cpu: "100m", memory: "128Mi" },
-                            limits: { cpu: "200m", memory: "256Mi" },
-                        },
-                    },
-                    gateway: {
-                        tlsMode: "self-signed",
-                        domains: ["*.aphiria.com"],
-                    },
-                    monitoring: {
-                        prometheus: {
-                            authToken: pulumi.output("test-token"),
-                            storageSize: "5Gi",
-                        },
-                        grafana: {
-                            storageSize: "2Gi",
-                            hostname: "grafana.aphiria.com",
-                            githubOAuth: {
-                                clientId: pulumi.output("client-id"),
-                                clientSecret: pulumi.output("client-secret"),
-                                org: "aphiria",
-                                adminUser: "davidbyoung",
-                            },
-                        },
-                    },
-                },
-                k8sProvider
-            );
-
-            // Verify we manage Grafana separately (not via kube-prometheus-stack)
-            expect(stack.monitoring?.grafana).toBeDefined();
-            expect(stack.monitoring?.kubePrometheusStack).toBeDefined();
-
-            // Grafana and Alertmanager are disabled in Helm values
-            // We verify both custom Grafana and kube-prometheus-stack coexist
-        });
-
-        it("should create ServiceMonitor when monitoring and app configs are provided", async () => {
-            const stack = createStack(
-                {
-                    env: "production",
-                    database: {
-                        persistentStorage: true,
-                        storageSize: "20Gi",
-                        dbUser: pulumi.output("postgres"),
-                        dbPassword: pulumi.output("password"),
-                        resources: {
-                            requests: { cpu: "100m", memory: "128Mi" },
-                            limits: { cpu: "200m", memory: "256Mi" },
-                        },
-                    },
-                    gateway: {
-                        tlsMode: "letsencrypt-prod",
-                        domains: ["aphiria.com", "*.aphiria.com"],
-                        dnsToken: pulumi.output("fake-dns-token"),
-                    },
-                    app: {
-                        web: {
-                            replicas: 2,
-                            url: "https://www.aphiria.com",
-                            image: "ghcr.io/aphiria/aphiria.com-web@sha256:abc123",
-                            resources: {
-                                requests: { cpu: "50m", memory: "64Mi" },
-                                limits: { cpu: "100m", memory: "128Mi" },
-                            },
-                        },
-                        api: {
-                            replicas: 2,
-                            url: "https://api.aphiria.com",
-                            image: "ghcr.io/aphiria/aphiria.com-api@sha256:def456",
-                            resources: {
-                                nginx: {
-                                    requests: { cpu: "50m", memory: "64Mi" },
-                                    limits: { cpu: "100m", memory: "128Mi" },
-                                },
-                                php: {
-                                    requests: { cpu: "100m", memory: "128Mi" },
-                                    limits: { cpu: "200m", memory: "256Mi" },
-                                },
-                                initContainer: {
-                                    requests: { cpu: "50m", memory: "64Mi" },
-                                    limits: { cpu: "100m", memory: "128Mi" },
-                                },
-                            },
-                        },
-                        migration: {
-                            resources: {
-                                migration: {
-                                    requests: { cpu: "50m", memory: "128Mi" },
-                                    limits: { cpu: "200m", memory: "256Mi" },
-                                },
-                                initContainer: {
-                                    requests: { cpu: "10m", memory: "32Mi" },
-                                    limits: { cpu: "50m", memory: "64Mi" },
-                                },
-                            },
-                        },
-                        cookieDomain: ".aphiria.com",
-                    },
-                    monitoring: {
-                        prometheus: {
-                            authToken: pulumi.output("test-token-123"),
-                            storageSize: "10Gi",
-                            scrapeInterval: "30s",
-                        },
-                        grafana: {
-                            storageSize: "5Gi",
-                            hostname: "grafana.aphiria.com",
-                            githubOAuth: {
-                                clientId: pulumi.output("client-id"),
-                                clientSecret: pulumi.output("client-secret"),
-                                org: "aphiria",
-                                adminUser: "davidbyoung",
-                            },
-                        },
-                    },
-                },
-                k8sProvider
-            );
-
-            expect(stack.apiServiceMonitor).toBeDefined();
-            expect(stack.apiServiceMonitor?.secret).toBeDefined();
-            expect(stack.apiServiceMonitor?.serviceMonitor).toBeDefined();
-
-            const [secretName, smApiVersion, smKind] = await Promise.all([
-                promiseOf(stack.apiServiceMonitor!.secret.metadata.name),
-                promiseOf(stack.apiServiceMonitor!.serviceMonitor.apiVersion),
-                promiseOf(stack.apiServiceMonitor!.serviceMonitor.kind),
-            ]);
-
-            expect(secretName).toBe("prometheus-api-auth");
-            expect(smApiVersion).toBe("monitoring.coreos.com/v1");
-            expect(smKind).toBe("ServiceMonitor");
-        });
-
-        it("should use custom scrape interval for ServiceMonitor", async () => {
-            const stack = createStack(
-                {
-                    env: "local",
-                    skipBaseInfrastructure: true,
-                    database: {
-                        persistentStorage: false,
-                        storageSize: "1Gi",
-                        dbUser: pulumi.output("postgres"),
-                        dbPassword: pulumi.output("password"),
-                        resources: {
-                            requests: { cpu: "100m", memory: "128Mi" },
-                            limits: { cpu: "200m", memory: "256Mi" },
-                        },
-                    },
-                    gateway: {
-                        tlsMode: "self-signed",
-                        domains: ["*.aphiria.com"],
-                    },
-                    app: {
-                        web: {
-                            replicas: 1,
-                            url: "https://www.aphiria.com",
-                            image: "ghcr.io/aphiria/aphiria.com-web:latest",
-                            resources: {
-                                requests: { cpu: "50m", memory: "64Mi" },
-                                limits: { cpu: "100m", memory: "128Mi" },
-                            },
-                        },
-                        api: {
-                            replicas: 1,
-                            url: "https://api.aphiria.com",
-                            image: "ghcr.io/aphiria/aphiria.com-api:latest",
-                            resources: {
-                                nginx: {
-                                    requests: { cpu: "50m", memory: "64Mi" },
-                                    limits: { cpu: "100m", memory: "128Mi" },
-                                },
-                                php: {
-                                    requests: { cpu: "100m", memory: "128Mi" },
-                                    limits: { cpu: "200m", memory: "256Mi" },
-                                },
-                                initContainer: {
-                                    requests: { cpu: "50m", memory: "64Mi" },
-                                    limits: { cpu: "100m", memory: "128Mi" },
-                                },
-                            },
-                        },
-                        migration: {
-                            resources: {
-                                migration: {
-                                    requests: { cpu: "50m", memory: "128Mi" },
-                                    limits: { cpu: "200m", memory: "256Mi" },
-                                },
-                                initContainer: {
-                                    requests: { cpu: "10m", memory: "32Mi" },
-                                    limits: { cpu: "50m", memory: "64Mi" },
-                                },
-                            },
-                        },
-                        cookieDomain: ".aphiria.com",
-                    },
-                    monitoring: {
-                        prometheus: {
-                            authToken: pulumi.output("test-token"),
-                            storageSize: "5Gi",
-                            scrapeInterval: "60s",
-                        },
-                        grafana: {
-                            storageSize: "2Gi",
-                            hostname: "grafana.aphiria.com",
-                            githubOAuth: {
-                                clientId: pulumi.output("client-id"),
-                                clientSecret: pulumi.output("client-secret"),
-                                org: "aphiria",
-                                adminUser: "davidbyoung",
-                            },
-                        },
-                    },
-                },
-                k8sProvider
-            );
-
-            expect(stack.apiServiceMonitor).toBeDefined();
-
-            // Verify ServiceMonitor was created (spec not directly accessible in CustomResource)
-            const kind = await promiseOf(stack.apiServiceMonitor!.serviceMonitor.kind);
-            expect(kind).toBe("ServiceMonitor");
-        });
-
-        it("should not create ServiceMonitor when monitoring config not provided", () => {
-            const stack = createStack(
-                {
-                    env: "local",
-                    skipBaseInfrastructure: true,
-                    database: {
-                        persistentStorage: false,
-                        storageSize: "1Gi",
-                        dbUser: pulumi.output("postgres"),
-                        dbPassword: pulumi.output("password"),
-                        resources: {
-                            requests: { cpu: "100m", memory: "128Mi" },
-                            limits: { cpu: "200m", memory: "256Mi" },
-                        },
-                    },
-                    gateway: {
-                        tlsMode: "self-signed",
-                        domains: ["*.aphiria.com"],
-                    },
-                    // No app config - so no API deployment, and no ServiceMonitor
-                },
-                k8sProvider
-            );
-
-            expect(stack.apiServiceMonitor).toBeUndefined();
-        });
-
-        it("should not create ServiceMonitor when app config not provided", () => {
-            const stack = createStack(
-                {
-                    env: "production",
-                    database: {
-                        persistentStorage: true,
-                        storageSize: "20Gi",
-                        dbUser: pulumi.output("postgres"),
-                        dbPassword: pulumi.output("password"),
-                        resources: {
-                            requests: { cpu: "100m", memory: "128Mi" },
-                            limits: { cpu: "200m", memory: "256Mi" },
-                        },
-                    },
-                    gateway: {
-                        tlsMode: "letsencrypt-prod",
-                        domains: ["aphiria.com", "*.aphiria.com"],
-                        dnsToken: pulumi.output("fake-dns-token"),
-                    },
-                    monitoring: {
-                        prometheus: {
-                            authToken: pulumi.output("test-token"),
-                            storageSize: "10Gi",
-                        },
-                        grafana: {
-                            storageSize: "5Gi",
-                            hostname: "grafana.aphiria.com",
-                            githubOAuth: {
-                                clientId: pulumi.output("client-id"),
-                                clientSecret: pulumi.output("client-secret"),
-                                org: "aphiria",
-                                adminUser: "davidbyoung",
-                            },
-                        },
-                    },
-                },
-                k8sProvider
-            );
-
-            expect(stack.apiServiceMonitor).toBeUndefined();
+            // Should NOT call createImagePullSecret because namespace creation handles it
+            expect(createImagePullSecret).not.toHaveBeenCalled();
         });
     });
 
-    describe("Gateway API CRD and GatewayClass installation", () => {
-        it("should install Gateway API CRDs and GatewayClass for local environment", () => {
-            const stack = createStack(
-                {
-                    env: "local",
-                    skipBaseInfrastructure: false,
-                    database: {
-                        persistentStorage: true,
-                        storageSize: "5Gi",
-                        dbUser: "postgres",
-                        dbPassword: "postgres",
-                        resources: {
-                            requests: { cpu: "100m", memory: "128Mi" },
-                            limits: { cpu: "200m", memory: "256Mi" },
-                        },
-                    },
-                    gateway: {
-                        tlsMode: "self-signed",
-                        domains: ["aphiria.com", "*.aphiria.com"],
-                    },
-                    app: {
-                        web: {
-                            replicas: 1,
-                            url: "https://www.aphiria.com",
-                            image: "aphiria.com-web:latest",
-                            resources: {
-                                requests: { cpu: "50m", memory: "64Mi" },
-                                limits: { cpu: "100m", memory: "128Mi" },
-                            },
-                        },
-                        api: {
-                            replicas: 1,
-                            url: "https://api.aphiria.com",
-                            image: "aphiria.com-api:latest",
-                            resources: {
-                                nginx: {
-                                    requests: { cpu: "50m", memory: "64Mi" },
-                                    limits: { cpu: "100m", memory: "128Mi" },
-                                },
-                                php: {
-                                    requests: { cpu: "100m", memory: "128Mi" },
-                                    limits: { cpu: "200m", memory: "256Mi" },
-                                },
-                                initContainer: {
-                                    requests: { cpu: "50m", memory: "64Mi" },
-                                    limits: { cpu: "100m", memory: "128Mi" },
-                                },
-                            },
-                        },
-                        migration: {
-                            resources: {
-                                migration: {
-                                    requests: { cpu: "50m", memory: "128Mi" },
-                                    limits: { cpu: "200m", memory: "256Mi" },
-                                },
-                                initContainer: {
-                                    requests: { cpu: "10m", memory: "32Mi" },
-                                    limits: { cpu: "50m", memory: "64Mi" },
-                                },
-                            },
-                        },
-                        cookieDomain: ".aphiria.com",
-                    },
-                    monitoring: minimalMonitoringConfig,
-                },
-                k8sProvider
-            );
+    describe("provider handling", () => {
+        it("should use provided k8sProvider when passed explicitly", () => {
+            (loadConfig as jest.Mock).mockReturnValue({
+                stackName: "production",
+                skipBaseInfrastructure: false,
+                gateway: { tlsMode: "self-signed", domains: ["*.aphiria.com"] },
+                postgresql: { user: "postgres", password: pulumi.output("password") },
+                grafana: { hostname: "grafana.local.aphiria.com" },
+                monitoring: {},
+                prometheus: {},
+            });
 
-            // Verify Helm charts were installed (which includes CRD and GatewayClass dependencies for local)
-            expect(stack.helmCharts).toBeDefined();
-            expect(stack.helmCharts?.certManager).toBeDefined();
-            expect(stack.helmCharts?.nginxGateway).toBeDefined();
+            createStack("local", k8sProvider);
+
+            // Should NOT call createProvider when explicit provider is passed
+            expect(createProvider).not.toHaveBeenCalled();
         });
 
-        it("should NOT install Gateway API CRDs for preview environment", () => {
-            const stack = createStack(
-                {
-                    env: "preview",
-                    skipBaseInfrastructure: true,
-                    namespace: {
-                        name: "preview-pr-123",
-                        resourceQuota: {
-                            cpu: "2",
-                            memory: "4Gi",
-                            pods: "10",
-                        },
-                    },
-                    database: {
-                        createDatabase: true,
-                        databaseName: "aphiria_pr_123",
-                        dbHost: pulumi.output("db.default.svc.cluster.local"),
-                        dbAdminUser: pulumi.output("postgres"),
-                        dbAdminPassword: pulumi.output("password"),
-                        persistentStorage: false,
-                        storageSize: "1Gi",
-                        dbUser: "postgres",
-                        dbPassword: "postgres",
-                        resources: {
-                            requests: { cpu: "100m", memory: "128Mi" },
-                            limits: { cpu: "200m", memory: "256Mi" },
-                        },
-                    },
-                    gateway: {
-                        tlsMode: "letsencrypt-prod",
-                        domains: ["*.pr.aphiria.com"],
-                    },
-                    app: {
-                        web: {
-                            replicas: 1,
-                            url: "https://123.pr.aphiria.com",
-                            image: "ghcr.io/aphiria/aphiria.com-web@sha256:abc123",
-                            resources: {
-                                requests: { cpu: "50m", memory: "64Mi" },
-                                limits: { cpu: "100m", memory: "128Mi" },
-                            },
-                        },
-                        api: {
-                            replicas: 1,
-                            url: "https://123.pr-api.aphiria.com",
-                            image: "ghcr.io/aphiria/aphiria.com-api@sha256:def456",
-                            resources: {
-                                nginx: {
-                                    requests: { cpu: "50m", memory: "64Mi" },
-                                    limits: { cpu: "100m", memory: "128Mi" },
-                                },
-                                php: {
-                                    requests: { cpu: "100m", memory: "128Mi" },
-                                    limits: { cpu: "200m", memory: "256Mi" },
-                                },
-                                initContainer: {
-                                    requests: { cpu: "50m", memory: "64Mi" },
-                                    limits: { cpu: "100m", memory: "128Mi" },
-                                },
-                            },
-                        },
-                        migration: {
-                            resources: {
-                                migration: {
-                                    requests: { cpu: "50m", memory: "128Mi" },
-                                    limits: { cpu: "200m", memory: "256Mi" },
-                                },
-                                initContainer: {
-                                    requests: { cpu: "10m", memory: "32Mi" },
-                                    limits: { cpu: "50m", memory: "64Mi" },
-                                },
-                            },
-                        },
-                        cookieDomain: ".pr.aphiria.com",
-                    },
-                    monitoring: minimalMonitoringConfig,
-                },
-                k8sProvider
-            );
+        it("should create provider when k8sProvider is not passed", () => {
+            (loadConfig as jest.Mock).mockReturnValue({
+                stackName: "production",
+                skipBaseInfrastructure: false,
+                gateway: { tlsMode: "letsencrypt-prod", domains: ["*.aphiria.com"] },
+                postgresql: { user: "postgres", password: pulumi.output("password") },
+                grafana: { hostname: "grafana.preview.aphiria.com" },
+                monitoring: {},
+                prometheus: {},
+            });
 
-            // skipBaseInfrastructure means no Helm charts (and no CRDs)
-            expect(stack.helmCharts).toBeUndefined();
+            createStack("preview");
+
+            // Should call createProvider when no explicit provider is passed
+            expect(createProvider).toHaveBeenCalledWith("preview");
+        });
+    });
+
+    describe("namespace handling", () => {
+        it("should use created namespace name for database and applications", () => {
+            (loadConfig as jest.Mock).mockReturnValue({
+                stackName: "production",
+                skipBaseInfrastructure: false,
+                gateway: { tlsMode: "letsencrypt-prod", domains: ["*.pr.aphiria.com"] },
+                postgresql: { user: "postgres", password: pulumi.output("password") },
+                namespace: { name: "preview-pr-456" },
+                app: { web: { url: "https://pr-456.pr.aphiria.com" } },
+                grafana: { hostname: "grafana.preview.aphiria.com" },
+                monitoring: {},
+                prometheus: {},
+            });
+
+            // Mock namespace creation to return the namespace name
+            (createNamespace as jest.Mock).mockReturnValue({
+                namespace: { metadata: { name: pulumi.output("preview-pr-456") } },
+                resourceQuota: {},
+            });
+
+            createStack("preview");
+
+            // Verify namespace was passed to factories
+            const dbCall = (createDatabaseResources as jest.Mock).mock.calls[0][0];
+            expect(dbCall.namespace).toBeDefined();
+
+            const appCall = (createApplicationResources as jest.Mock).mock.calls[0][0];
+            expect(appCall.namespace).toBeDefined();
+        });
+
+        it("should use default namespace when no namespace config exists", () => {
+            (loadConfig as jest.Mock).mockReturnValue({
+                stackName: "production",
+                skipBaseInfrastructure: false,
+                gateway: { tlsMode: "self-signed", domains: ["*.aphiria.com"] },
+                postgresql: { user: "postgres", password: pulumi.output("password") },
+                grafana: { hostname: "grafana.local.aphiria.com" },
+                monitoring: {},
+                prometheus: {},
+            });
+
+            createStack("local");
+
+            expect(createDatabaseResources).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    namespace: "default",
+                })
+            );
         });
     });
 });

@@ -31,6 +31,12 @@ permissions:
 env:
   REGISTRY: ghcr.io
   IMAGE_PREFIX: ${{ github.repository }}
+  PULUMI_ORG: davidbyoung
+  PULUMI_PROJECT: aphiria-com-infrastructure
+  # Pulumi operation timeouts (seconds)
+  PULUMI_PREVIEW_TIMEOUT: 300 # 5min - Fast feedback for preview
+  PULUMI_DEPLOY_TIMEOUT: 420 # 7min - Standard deployment
+  PULUMI_BASE_DEPLOY_TIMEOUT: 1200 # 20min - Base infrastructure with cluster provisioning
 
 jobs:
   determine-mode:
@@ -353,6 +359,8 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "20"
+          cache: "npm"
+          cache-dependency-path: infrastructure/pulumi/package-lock.json
 
       - name: Install Pulumi CLI
         uses: pulumi/actions@v5
@@ -360,7 +368,7 @@ jobs:
       - name: Install Pulumi dependencies and build
         run: |
           cd infrastructure/pulumi
-          npm install
+          npm ci
           npm run build
 
       - name: Ensure preview-base stack exists and is deployed
@@ -400,7 +408,7 @@ jobs:
             async function pulumiRefresh(stackName) {
               await exec.exec('pulumi', ['refresh', '--stack', stackName, '--yes'], {
                 cwd: 'infrastructure/pulumi',
-                timeout: 600000, // 10 minutes
+                timeout: process.env.PULUMI_DEPLOY_TIMEOUT * 1000,
               });
             }
 
@@ -412,7 +420,7 @@ jobs:
                 try {
                   await exec.exec('pulumi', ['up', '--stack', stackName, '--yes'], {
                     cwd: 'infrastructure/pulumi',
-                    timeout: 1200000, // 20 minutes
+                    timeout: process.env.PULUMI_BASE_DEPLOY_TIMEOUT * 1000,
                   });
 
                   core.info(`✅ ${stackName} deployed successfully`);
@@ -473,6 +481,8 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "20"
+          cache: "npm"
+          cache-dependency-path: infrastructure/pulumi/package-lock.json
 
       - name: Install Pulumi CLI
         uses: pulumi/actions@v5
@@ -480,7 +490,7 @@ jobs:
       - name: Install dependencies and build
         run: |
           cd infrastructure/pulumi
-          npm install
+          npm ci
           npm run build
 
       - name: Run Pulumi preview
@@ -497,7 +507,7 @@ jobs:
             PR_NUMBER=${{ needs.determine-mode.outputs.pr-number }}
             STACK_NAME="preview-pr-${PR_NUMBER}"
             PULUMI_ENV="aphiria.com/Preview"
-            BASE_STACK_REF="davidbyoung/aphiria-com-infrastructure/preview-base"
+            BASE_STACK_REF="${PULUMI_ORG}/${PULUMI_PROJECT}/preview-base"
           else
             STACK_NAME="production"
             PULUMI_ENV="aphiria.com/Production"
@@ -510,15 +520,29 @@ jobs:
           pulumi config env add "${PULUMI_ENV}" --stack "${STACK_NAME}" --yes
 
           if [ "$MODE" == "preview" ]; then
+            # Set PR-specific configuration values
             pulumi config set prNumber "${PR_NUMBER}" --stack "${STACK_NAME}"
             pulumi config set baseStackReference "${BASE_STACK_REF}" --stack "${STACK_NAME}"
+            pulumi config set --path 'namespace.name' "preview-pr-${PR_NUMBER}" --stack "${STACK_NAME}"
+            pulumi config set --path 'postgresql.databaseName' "aphiria_pr_${PR_NUMBER}" --stack "${STACK_NAME}"
+            pulumi config set --path 'app.web.url' "https://${PR_NUMBER}.pr.aphiria.com" --stack "${STACK_NAME}"
+            pulumi config set --path 'app.web.image' "${{ needs.build.outputs.web-digest }}" --stack "${STACK_NAME}"
+            pulumi config set --path 'app.api.url' "https://${PR_NUMBER}.pr-api.aphiria.com" --stack "${STACK_NAME}"
+            pulumi config set --path 'app.api.image' "${{ needs.build.outputs.api-digest }}" --stack "${STACK_NAME}"
+          else
+            # Production uses image config paths
+            pulumi config set --path 'app.web.image' "${{ needs.build.outputs.web-digest }}" --stack "${STACK_NAME}"
+            pulumi config set --path 'app.api.image' "${{ needs.build.outputs.api-digest }}" --stack "${STACK_NAME}"
           fi
 
-          pulumi config set webImageDigest "${{ needs.build.outputs.web-digest }}" --stack "${STACK_NAME}"
-          pulumi config set apiImageDigest "${{ needs.build.outputs.api-digest }}" --stack "${STACK_NAME}"
-
           set +e
-          timeout 300 pulumi preview --stack "${STACK_NAME}" --non-interactive 2>&1 | tee preview.txt
+          if [ "$MODE" == "preview" ]; then
+            # Use --config-file to merge with template for preview
+            timeout ${{ env.PULUMI_PREVIEW_TIMEOUT }} pulumi preview --stack "${STACK_NAME}" --config-file Pulumi.preview-pr.yaml --non-interactive 2>&1 | tee preview.txt
+          else
+            # Production doesn't need config-file
+            timeout ${{ env.PULUMI_PREVIEW_TIMEOUT }} pulumi preview --stack "${STACK_NAME}" --non-interactive 2>&1 | tee preview.txt
+          fi
           PREVIEW_EXIT_CODE=${PIPESTATUS[0]}
           set -e
 
@@ -594,6 +618,8 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "20"
+          cache: "npm"
+          cache-dependency-path: infrastructure/pulumi/package-lock.json
 
       - name: Install Pulumi CLI
         uses: pulumi/actions@v5
@@ -601,7 +627,7 @@ jobs:
       - name: Install dependencies and build
         run: |
           cd infrastructure/pulumi
-          npm install
+          npm ci
           npm run build
 
       - name: Deploy infrastructure
@@ -615,7 +641,7 @@ jobs:
             PR_NUMBER=${{ needs.determine-mode.outputs.pr-number }}
             STACK_NAME="preview-pr-${PR_NUMBER}"
             PULUMI_ENV="aphiria.com/Preview"
-            BASE_STACK_REF="davidbyoung/aphiria-com-infrastructure/preview-base"
+            BASE_STACK_REF="${PULUMI_ORG}/${PULUMI_PROJECT}/preview-base"
           else
             STACK_NAME="production"
             PULUMI_ENV="aphiria.com/Production"
@@ -625,18 +651,34 @@ jobs:
           pulumi config env add "${PULUMI_ENV}" --stack "${STACK_NAME}" --yes
 
           if [ "$MODE" == "preview" ]; then
+            # Set PR-specific configuration values
             pulumi config set prNumber "${PR_NUMBER}" --stack "${STACK_NAME}"
             pulumi config set baseStackReference "${BASE_STACK_REF}" --stack "${STACK_NAME}"
+            pulumi config set --path 'namespace.name' "preview-pr-${PR_NUMBER}" --stack "${STACK_NAME}"
+            pulumi config set --path 'postgresql.databaseName' "aphiria_pr_${PR_NUMBER}" --stack "${STACK_NAME}"
+            pulumi config set --path 'app.web.url' "https://${PR_NUMBER}.pr.aphiria.com" --stack "${STACK_NAME}"
+            pulumi config set --path 'app.web.image' "${{ needs.build.outputs.web-digest }}" --stack "${STACK_NAME}"
+            pulumi config set --path 'app.api.url' "https://${PR_NUMBER}.pr-api.aphiria.com" --stack "${STACK_NAME}"
+            pulumi config set --path 'app.api.image' "${{ needs.build.outputs.api-digest }}" --stack "${STACK_NAME}"
+          else
+            # Production uses image config paths
+            pulumi config set --path 'app.web.image' "${{ needs.build.outputs.web-digest }}" --stack "${STACK_NAME}"
+            pulumi config set --path 'app.api.image' "${{ needs.build.outputs.api-digest }}" --stack "${STACK_NAME}"
           fi
 
-          pulumi config set webImageDigest "${{ needs.build.outputs.web-digest }}" --stack "${STACK_NAME}"
-          pulumi config set apiImageDigest "${{ needs.build.outputs.api-digest }}" --stack "${STACK_NAME}"
-
           # Retry deployment with refresh on failure to handle orphaned resources
-          if ! timeout 420 pulumi up --stack "${STACK_NAME}" --yes; then
-            echo "Deployment failed, refreshing state and retrying once..."
-            pulumi refresh --stack "${STACK_NAME}" --yes
-            timeout 420 pulumi up --stack "${STACK_NAME}" --yes
+          if [ "$MODE" == "preview" ]; then
+            if ! timeout ${{ env.PULUMI_DEPLOY_TIMEOUT }} pulumi up --stack "${STACK_NAME}" --config-file Pulumi.preview-pr.yaml --yes; then
+              echo "Deployment failed, refreshing state and retrying once..."
+              pulumi refresh --stack "${STACK_NAME}" --yes
+              timeout ${{ env.PULUMI_DEPLOY_TIMEOUT }} pulumi up --stack "${STACK_NAME}" --config-file Pulumi.preview-pr.yaml --yes
+            fi
+          else
+            if ! timeout ${{ env.PULUMI_DEPLOY_TIMEOUT }} pulumi up --stack "${STACK_NAME}" --yes; then
+              echo "Deployment failed, refreshing state and retrying once..."
+              pulumi refresh --stack "${STACK_NAME}" --yes
+              timeout ${{ env.PULUMI_DEPLOY_TIMEOUT }} pulumi up --stack "${STACK_NAME}" --yes
+            fi
           fi
 
       - name: Post deployment success comment (preview)
@@ -724,7 +766,7 @@ jobs:
           node-version: "20"
 
       - name: Install root TypeScript dependencies
-        run: npm install
+        run: npm ci
 
       - name: Install e2e dependencies
         working-directory: tests/e2e
@@ -750,6 +792,20 @@ jobs:
             echo "GRAFANA_BASE_URL=https://grafana.aphiria.com" >> $GITHUB_ENV
             echo "COOKIE_DOMAIN=.aphiria.com" >> $GITHUB_ENV
           fi
+
+      - name: Validate required environment variables
+        run: |
+          required_vars=("SITE_BASE_URL" "GRAFANA_BASE_URL" "COOKIE_DOMAIN" "APP_ENV")
+
+          for var in "${required_vars[@]}"; do
+            if [ -z "${!var}" ]; then
+              echo "::error::Required environment variable $var is not set"
+              exit 1
+            fi
+            echo "✅ $var=${!var}"
+          done
+
+          echo "✅ All required environment variables validated"
 
       - name: Run smoke tests
         working-directory: tests/e2e

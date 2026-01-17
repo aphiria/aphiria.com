@@ -24,7 +24,7 @@ describe("createDBMigrationJob", () => {
 
     it("should create migration job without seeder", async () => {
         const job = createDBMigrationJob({
-            env: "local",
+            imagePullPolicy: "Never",
             namespace: "migration-ns",
             image: "ghcr.io/aphiria/aphiria.com-api:latest",
             dbHost: "db.default.svc.cluster.local",
@@ -48,7 +48,7 @@ describe("createDBMigrationJob", () => {
 
     it("should create migration job with seeder", async () => {
         const job = createDBMigrationJob({
-            env: "production",
+            imagePullPolicy: "Never",
             namespace: "prod-migration",
             image: "ghcr.io/aphiria/aphiria.com-api@sha256:abc123",
             dbHost: "db.default.svc.cluster.local",
@@ -72,7 +72,7 @@ describe("createDBMigrationJob", () => {
 
     it("should handle custom resource limits", () => {
         const job = createDBMigrationJob({
-            env: "production",
+            imagePullPolicy: "Never",
             namespace: "default",
             image: "ghcr.io/aphiria/aphiria.com-api@sha256:abc123",
             dbHost: "db.default.svc.cluster.local",
@@ -98,7 +98,7 @@ describe("createDBMigrationJob", () => {
 
     it("should handle imagePullSecrets", async () => {
         const job = createDBMigrationJob({
-            env: "production",
+            imagePullPolicy: "Never",
             namespace: "secure-ns",
             image: "ghcr.io/aphiria/aphiria.com-api@sha256:abc123",
             dbHost: "db.default.svc.cluster.local",
@@ -119,7 +119,7 @@ describe("createDBMigrationJob", () => {
 
     it("should merge custom labels with default labels", async () => {
         const job = createDBMigrationJob({
-            env: "local",
+            imagePullPolicy: "Never",
             namespace: "custom-migration",
             image: "ghcr.io/aphiria/aphiria.com-api:latest",
             dbHost: "db.default.svc.cluster.local",
@@ -149,7 +149,7 @@ describe("createDBMigrationJob", () => {
 
     it("should use IfNotPresent imagePullPolicy for digest-based images", () => {
         const job = createDBMigrationJob({
-            env: "production",
+            imagePullPolicy: "Never",
             namespace: "default",
             image: "ghcr.io/aphiria/aphiria.com-api@sha256:abc123def456",
             dbHost: "db.default.svc.cluster.local",
@@ -166,7 +166,7 @@ describe("createDBMigrationJob", () => {
 
     it("should use imagePullPolicy for tag-based images", () => {
         const job = createDBMigrationJob({
-            env: "production",
+            imagePullPolicy: "Never",
             namespace: "default",
             image: "ghcr.io/aphiria/aphiria.com-api:v1.2.3",
             dbHost: "db.default.svc.cluster.local",
@@ -183,7 +183,7 @@ describe("createDBMigrationJob", () => {
 
     it("should have patchForce and skipAwait annotations for ephemeral Job pattern", async () => {
         const job = createDBMigrationJob({
-            env: "production",
+            imagePullPolicy: "Never",
             namespace: "default",
             image: "ghcr.io/aphiria/aphiria.com-api@sha256:abc123",
             dbHost: "db.default.svc.cluster.local",
@@ -222,7 +222,7 @@ describe("createDBMigrationJob", () => {
      */
     it("should create ephemeral Job with auto-cleanup configuration", async () => {
         const job = createDBMigrationJob({
-            env: "production",
+            imagePullPolicy: "Never",
             namespace: "default",
             image: "ghcr.io/aphiria/aphiria.com-api@sha256:abc123",
             dbHost: "db.default.svc.cluster.local",
@@ -250,7 +250,7 @@ describe("createDBMigrationJob", () => {
 
     it("should use correct monorepo paths for phinx executable", async () => {
         const job = createDBMigrationJob({
-            env: "production",
+            imagePullPolicy: "Never",
             namespace: "default",
             image: "ghcr.io/aphiria/aphiria.com-api@sha256:abc123",
             dbHost: "db.default.svc.cluster.local",
@@ -280,7 +280,7 @@ describe("createDBMigrationJob", () => {
 
     it("should use correct monorepo paths when seeder is disabled", async () => {
         const job = createDBMigrationJob({
-            env: "production",
+            imagePullPolicy: "Never",
             namespace: "default",
             image: "ghcr.io/aphiria/aphiria.com-api@sha256:abc123",
             dbHost: "db.default.svc.cluster.local",
@@ -309,7 +309,7 @@ describe("createDBMigrationJob", () => {
 
     it("should have fail-fast configuration to avoid wasting CI time", async () => {
         const job = createDBMigrationJob({
-            env: "production",
+            imagePullPolicy: "Never",
             namespace: "default",
             image: "ghcr.io/aphiria/aphiria.com-api@sha256:abc123",
             dbHost: "db.default.svc.cluster.local",

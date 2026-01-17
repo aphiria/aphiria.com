@@ -1,6 +1,7 @@
 import * as pulumi from "@pulumi/pulumi";
 import * as k8s from "@pulumi/kubernetes";
-import { Environment, NamespaceResult } from "./types";
+import { NamespaceResult } from "./types";
+import { createImagePullSecret } from "./image-pull-secret";
 
 /**
  * Arguments for namespace component
@@ -8,8 +9,8 @@ import { Environment, NamespaceResult } from "./types";
 export interface NamespaceArgs {
     /** Namespace name */
     name: string;
-    /** Environment this namespace targets */
-    env: Environment;
+    /** Environment label value (e.g., "local", "preview", "production") */
+    environmentLabel: string;
     /** Optional ResourceQuota for the namespace */
     resourceQuota?: {
         cpu: string;
@@ -39,11 +40,14 @@ export interface NamespaceArgs {
 
 /**
  * Creates a Kubernetes namespace with optional ResourceQuota, NetworkPolicy, and ImagePullSecret
+ *
+ * @param args - Configuration for the namespace
+ * @returns Namespace, and optional ResourceQuota, NetworkPolicy, and ImagePullSecret
  */
 export function createNamespace(args: NamespaceArgs): NamespaceResult {
     const labels = {
         "app.kubernetes.io/name": "aphiria",
-        "app.kubernetes.io/environment": args.env,
+        "app.kubernetes.io/environment": args.environmentLabel,
         ...(args.labels || {}),
     };
 
@@ -192,21 +196,15 @@ export function createNamespace(args: NamespaceArgs): NamespaceResult {
     // Create ImagePullSecret (if specified)
     let imagePullSecret: k8s.core.v1.Secret | undefined;
     if (args.imagePullSecret) {
-        imagePullSecret = new k8s.core.v1.Secret(
-            "ghcr-pull-secret",
-            {
-                metadata: {
-                    name: "ghcr-pull-secret",
-                    namespace: namespace.metadata.name,
-                    labels,
-                },
-                type: "kubernetes.io/dockerconfigjson",
-                stringData: {
-                    ".dockerconfigjson": pulumi.interpolate`{"auths":{"${args.imagePullSecret.registry}":{"username":"${args.imagePullSecret.username}","password":"${args.imagePullSecret.token}"}}}`,
-                },
-            },
-            { provider: args.provider, parent: namespace }
-        );
+        const result = createImagePullSecret({
+            name: "ghcr-pull-secret",
+            namespace: namespace.metadata.name,
+            registry: args.imagePullSecret.registry,
+            username: args.imagePullSecret.username,
+            token: args.imagePullSecret.token,
+            provider: args.provider,
+        });
+        imagePullSecret = result.secret;
     }
 
     return {

@@ -1,6 +1,5 @@
 import * as pulumi from "@pulumi/pulumi";
 import * as k8s from "@pulumi/kubernetes";
-import { Environment } from "./types";
 import { POSTGRES_PORT } from "./constants";
 import { buildLabels } from "./labels";
 
@@ -8,12 +7,12 @@ import { buildLabels } from "./labels";
  * Arguments for database migration job component
  */
 export interface DBMigrationJobArgs {
-    /** Environment this migration targets */
-    env?: Environment;
     /** Kubernetes namespace */
     namespace: pulumi.Input<string>;
     /** Docker image containing migrations */
     image: string;
+    /** Image pull policy ("Always", "IfNotPresent", or "Never") */
+    imagePullPolicy: pulumi.Input<string>;
     /** Database host */
     dbHost: pulumi.Input<string>;
     /** Database name */
@@ -43,7 +42,12 @@ export interface DBMigrationJobArgs {
     provider: k8s.Provider;
 }
 
-/** Creates Phinx migration job (waits for DB, runs migrations, optionally runs LexemeSeeder) */
+/**
+ * Creates Phinx migration job (waits for DB, runs migrations, optionally runs LexemeSeeder)
+ *
+ * @param args - Configuration for the database migration job
+ * @returns Kubernetes Job resource
+ */
 export function createDBMigrationJob(args: DBMigrationJobArgs): k8s.batch.v1.Job {
     const labels = buildLabels("db-migration", "database", args.labels);
 
@@ -111,12 +115,7 @@ export function createDBMigrationJob(args: DBMigrationJobArgs): k8s.batch.v1.Job
                                 // - Local: Use "Never" (images loaded via minikube/docker load)
                                 // - SHA256 digest: Use "IfNotPresent" (immutable, safe to cache)
                                 // - Tag: Use "Always" (mutable, must pull to check for updates)
-                                imagePullPolicy:
-                                    args.env === "local"
-                                        ? "Never"
-                                        : args.image.includes("@sha256:")
-                                          ? "IfNotPresent"
-                                          : "Always",
+                                imagePullPolicy: args.imagePullPolicy,
                                 command: ["sh", "-c", command],
                                 env: [
                                     {

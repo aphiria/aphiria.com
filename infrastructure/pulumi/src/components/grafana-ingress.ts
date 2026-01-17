@@ -30,6 +30,9 @@ export interface GrafanaIngressResult {
 
 /**
  * Creates HTTPRoute for Grafana (HTTPS only, relies on stack-wide HTTP→HTTPS redirect)
+ *
+ * @param args - Configuration for the Grafana ingress route
+ * @returns HTTPRoute metadata
  */
 export function createGrafanaIngress(args: GrafanaIngressArgs): GrafanaIngressResult {
     // Create HTTPS route for Grafana
@@ -48,7 +51,7 @@ export function createGrafanaIngress(args: GrafanaIngressArgs): GrafanaIngressRe
         provider: args.provider,
     });
 
-    // Note: HTTP → HTTPS redirect is handled by the stack-wide redirect route
+    // Note: HTTP -> HTTPS redirect is handled by the stack-wide redirect route
     // created in stack-factory.ts. We don't create a separate redirect here
     // to avoid duplicate resource URNs.
 

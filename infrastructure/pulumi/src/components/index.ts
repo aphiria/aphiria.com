@@ -1,10 +1,19 @@
 /** Re-export all shared components */
 
-export * from "./types";
+export {
+    NamespaceResult,
+    WebDeploymentResult,
+    APIDeploymentResult,
+    GatewayResult,
+    KubernetesClusterResult,
+    KubeStateMetricsResult,
+} from "./types";
+
 export * from "./constants";
 export * from "./labels";
 export * from "./utils";
 export * from "./namespace";
+export * from "./image-pull-secret";
 export * from "./db-creation";
 export * from "./helm-charts";
 export * from "./database";

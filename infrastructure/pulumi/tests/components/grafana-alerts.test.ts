@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll } from "@jest/globals";
 import * as k8s from "@pulumi/kubernetes";
-import { createGrafanaAlerts } from "../../src/components/grafana-alerts";
+import { createGrafanaAlerts, type AlertRule } from "../../src/components/grafana-alerts";
 import { promiseOf } from "../test-utils";
 
 describe("createGrafanaAlerts", () => {
@@ -9,6 +9,101 @@ describe("createGrafanaAlerts", () => {
     beforeAll(() => {
         k8sProvider = new k8s.Provider("test", {});
     });
+
+    // Helper function to create sample alert rules
+    const getSampleAlertRules = (environment: string): AlertRule[] => [
+        {
+            uid: "high_cpu_usage",
+            title: "High CPU Usage",
+            expr: 'rate(container_cpu_usage_seconds_total{namespace!="kube-system"}[5m])',
+            threshold: "> 0.8",
+            reduceFunction: "last",
+            for: "10m",
+            labels: { severity: "warning", environment },
+            annotations: {
+                summary: "High CPU usage detected",
+                description: "Container CPU usage is above 80%",
+            },
+        },
+        {
+            uid: "high_memory_usage",
+            title: "High Memory Usage",
+            expr: 'sum by (pod, namespace) (container_memory_working_set_bytes{namespace!="kube-system"}) / sum by (pod, namespace) (kube_pod_container_resource_limits{resource="memory", namespace!="kube-system"} > 0)',
+            threshold: "> 0.9",
+            reduceFunction: "last",
+            for: "10m",
+            labels: { severity: "warning", environment },
+            annotations: {
+                summary: "High memory usage detected",
+                description: "Container memory usage is above 90%",
+            },
+        },
+        {
+            uid: "high_api_latency",
+            title: "High API Latency",
+            expr: 'histogram_quantile(0.95, sum(rate(app_http_request_duration_seconds_bucket{job="api"}[5m])) by (le)) - 1',
+            threshold: "> 0.5",
+            reduceFunction: "last",
+            for: "5m",
+            labels: { severity: "warning", environment },
+            annotations: {
+                summary: "High API latency detected",
+                description: "API p95 latency is above 500ms",
+            },
+        },
+        {
+            uid: "high_api_4xx_rate",
+            title: "High API 4xx Rate",
+            expr: '(sum(rate(app_http_requests_total{job="api",status=~"4.."}[5m])) or vector(0)) / sum(rate(app_http_requests_total{job="api"}[5m]))',
+            threshold: "> 0.1",
+            reduceFunction: "last",
+            for: "5m",
+            labels: { severity: "warning", environment },
+            annotations: {
+                summary: "High API 4xx error rate",
+                description: "API 4xx error rate is above 10%",
+            },
+        },
+        {
+            uid: "high_api_5xx_rate",
+            title: "High API 5xx Rate",
+            expr: '(sum(rate(app_http_requests_total{job="api",status=~"5.."}[5m])) or vector(0)) / sum(rate(app_http_requests_total{job="api"}[5m]))',
+            threshold: "> 0.05",
+            reduceFunction: "last",
+            for: "5m",
+            labels: { severity: "critical", environment },
+            annotations: {
+                summary: "High API 5xx error rate",
+                description: "API 5xx error rate is above 5%",
+            },
+        },
+        {
+            uid: "pod_crash_looping",
+            title: "Pod Crash Looping",
+            expr: 'sum(kube_pod_container_status_waiting_reason{reason="CrashLoopBackOff", namespace!="kube-system"}) or vector(0)',
+            threshold: "> 0",
+            reduceFunction: "last",
+            for: "5m",
+            labels: { severity: "critical", environment },
+            annotations: {
+                summary: "Pod is crash looping",
+                description: "Pod has restarted multiple times in the last 15 minutes",
+            },
+        },
+        {
+            uid: "pod_failed",
+            title: "Pod Failed",
+            expr: 'sum(kube_pod_status_phase{phase="Failed", namespace!="kube-system"} > 0) or vector(0)',
+            threshold: "> 0",
+            reduceFunction: "last",
+            for: "5m",
+            labels: { severity: "critical", environment },
+            annotations: {
+                summary: "Pod in Failed state",
+                description: "Pod is in Failed phase",
+            },
+        },
+    ];
 
     // Helper function to create production contact points
     const getProductionContactPoints = () => [
@@ -60,6 +155,7 @@ describe("createGrafanaAlerts", () => {
 
     it("should create ConfigMap for alert rules provisioning", async () => {
         const result = createGrafanaAlerts({
+            alertRules: getSampleAlertRules("production"),
             namespace: "monitoring",
             environment: "production",
             contactPoints: getProductionContactPoints(),
@@ -80,6 +176,7 @@ describe("createGrafanaAlerts", () => {
 
     it("should create ConfigMap for contact points provisioning", async () => {
         const result = createGrafanaAlerts({
+            alertRules: getSampleAlertRules("production"),
             namespace: "monitoring",
             environment: "production",
             contactPoints: getProductionContactPoints(),
@@ -100,6 +197,7 @@ describe("createGrafanaAlerts", () => {
 
     it("should create ConfigMap for notification policies provisioning", async () => {
         const result = createGrafanaAlerts({
+            alertRules: getSampleAlertRules("production"),
             namespace: "monitoring",
             environment: "production",
             contactPoints: getProductionContactPoints(),
@@ -120,6 +218,7 @@ describe("createGrafanaAlerts", () => {
 
     it("should include HighCPUUsage alert rule", async () => {
         const result = createGrafanaAlerts({
+            alertRules: getSampleAlertRules("production"),
             namespace: "monitoring",
             environment: "production",
             contactPoints: getProductionContactPoints(),
@@ -145,6 +244,7 @@ describe("createGrafanaAlerts", () => {
 
     it("should include HighMemoryUsage alert rule", async () => {
         const result = createGrafanaAlerts({
+            alertRules: getSampleAlertRules("production"),
             namespace: "monitoring",
             environment: "production",
             contactPoints: getProductionContactPoints(),
@@ -167,6 +267,7 @@ describe("createGrafanaAlerts", () => {
 
     it("should include HighAPILatency alert rule", async () => {
         const result = createGrafanaAlerts({
+            alertRules: getSampleAlertRules("production"),
             namespace: "monitoring",
             environment: "production",
             contactPoints: getProductionContactPoints(),
@@ -188,6 +289,7 @@ describe("createGrafanaAlerts", () => {
 
     it("should include HighAPI4xxRate alert rule", async () => {
         const result = createGrafanaAlerts({
+            alertRules: getSampleAlertRules("production"),
             namespace: "monitoring",
             environment: "production",
             contactPoints: getProductionContactPoints(),
@@ -209,6 +311,7 @@ describe("createGrafanaAlerts", () => {
 
     it("should include HighAPI5xxRate alert rule", async () => {
         const result = createGrafanaAlerts({
+            alertRules: getSampleAlertRules("production"),
             namespace: "monitoring",
             environment: "production",
             contactPoints: getProductionContactPoints(),
@@ -230,6 +333,7 @@ describe("createGrafanaAlerts", () => {
 
     it("should include PodCrashLooping alert rule", async () => {
         const result = createGrafanaAlerts({
+            alertRules: getSampleAlertRules("production"),
             namespace: "monitoring",
             environment: "production",
             contactPoints: getProductionContactPoints(),
@@ -250,6 +354,7 @@ describe("createGrafanaAlerts", () => {
 
     it("should include PodFailed alert rule", async () => {
         const result = createGrafanaAlerts({
+            alertRules: getSampleAlertRules("production"),
             namespace: "monitoring",
             environment: "production",
             contactPoints: getProductionContactPoints(),
@@ -270,6 +375,7 @@ describe("createGrafanaAlerts", () => {
 
     it("should configure email contact point for production environment", async () => {
         const result = createGrafanaAlerts({
+            alertRules: getSampleAlertRules("production"),
             namespace: "monitoring",
             environment: "production",
             contactPoints: getProductionContactPoints(),
@@ -287,6 +393,7 @@ describe("createGrafanaAlerts", () => {
 
     it("should configure default email contact point for preview environment", async () => {
         const result = createGrafanaAlerts({
+            alertRules: getSampleAlertRules("production"),
             namespace: "monitoring",
             environment: "preview",
             contactPoints: getPreviewContactPoints(),
@@ -305,6 +412,7 @@ describe("createGrafanaAlerts", () => {
 
     it("should configure default email contact point for local environment", async () => {
         const result = createGrafanaAlerts({
+            alertRules: getSampleAlertRules("production"),
             namespace: "monitoring",
             environment: "local",
             contactPoints: getPreviewContactPoints(),
@@ -323,6 +431,7 @@ describe("createGrafanaAlerts", () => {
 
     it("should include environment label in alert rules", async () => {
         const result = createGrafanaAlerts({
+            alertRules: getSampleAlertRules("production"),
             namespace: "monitoring",
             environment: "production",
             contactPoints: getProductionContactPoints(),
@@ -339,6 +448,7 @@ describe("createGrafanaAlerts", () => {
 
     it("should add grafana_alert label to all ConfigMaps", async () => {
         const result = createGrafanaAlerts({
+            alertRules: getSampleAlertRules("production"),
             namespace: "monitoring",
             environment: "production",
             contactPoints: getProductionContactPoints(),
@@ -359,6 +469,7 @@ describe("createGrafanaAlerts", () => {
 
     it("should create valid Grafana provisioning YAML structure", async () => {
         const result = createGrafanaAlerts({
+            alertRules: getSampleAlertRules("production"),
             namespace: "monitoring",
             environment: "production",
             contactPoints: getProductionContactPoints(),
@@ -392,6 +503,7 @@ describe("createGrafanaAlerts", () => {
         ];
 
         const result = createGrafanaAlerts({
+            alertRules: getSampleAlertRules("production"),
             namespace: "monitoring",
             environment: "production",
             contactPoints,
@@ -412,6 +524,7 @@ describe("createGrafanaAlerts", () => {
 
     it("should use vector(0) fallback for pod alerts", async () => {
         const result = createGrafanaAlerts({
+            alertRules: getSampleAlertRules("production"),
             namespace: "monitoring",
             environment: "production",
             contactPoints: getProductionContactPoints(),
@@ -433,6 +546,7 @@ describe("createGrafanaAlerts", () => {
 
     it("should use vector(0) fallback for API error rate alerts", async () => {
         const result = createGrafanaAlerts({
+            alertRules: getSampleAlertRules("production"),
             namespace: "monitoring",
             environment: "production",
             contactPoints: getProductionContactPoints(),

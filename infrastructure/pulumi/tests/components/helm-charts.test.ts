@@ -5,6 +5,7 @@ import {
     installBaseHelmCharts,
     installCertManager,
     installNginxGateway,
+    installKubePrometheusStack,
     ignoreDigitalOceanServiceAnnotationsV4,
 } from "../../src/components/helm-charts";
 import { promiseOf } from "../test-utils";
@@ -161,5 +162,52 @@ describe("ignoreDigitalOceanServiceAnnotationsV4", () => {
         const result = ignoreDigitalOceanServiceAnnotationsV4(args);
 
         expect(result).toBeUndefined();
+    });
+});
+
+describe("installKubePrometheusStack", () => {
+    let k8sProvider: k8s.Provider;
+
+    beforeAll(() => {
+        k8sProvider = new k8s.Provider("test", {});
+    });
+
+    it("should install kube-prometheus-stack with provided values", async () => {
+        const chart = installKubePrometheusStack({
+            env: "production",
+            chartName: "kube-prometheus-stack",
+            repository: "https://prometheus-community.github.io/helm-charts",
+            version: "45.0.0",
+            namespace: "monitoring",
+            provider: k8sProvider,
+            values: {
+                prometheus: {
+                    prometheusSpec: {
+                        retention: "30d",
+                    },
+                },
+            },
+        });
+
+        expect(chart).toBeDefined();
+
+        const urn = await promiseOf(chart.urn);
+        expect(urn).toContain("kube-prometheus-stack");
+    });
+
+    it("should install kube-prometheus-stack without values (exercises fallback)", async () => {
+        const chart = installKubePrometheusStack({
+            env: "production",
+            chartName: "kube-prometheus-stack",
+            repository: "https://prometheus-community.github.io/helm-charts",
+            version: "45.0.0",
+            namespace: "monitoring",
+            provider: k8sProvider,
+        });
+
+        expect(chart).toBeDefined();
+
+        const urn = await promiseOf(chart.urn);
+        expect(urn).toContain("kube-prometheus-stack");
     });
 });

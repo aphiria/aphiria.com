@@ -1,57 +1,140 @@
+/**
+ * Prometheus Component
+ */
+
 import * as pulumi from "@pulumi/pulumi";
 import * as k8s from "@pulumi/kubernetes";
-import { Environment, PrometheusResult } from "./types";
 import { buildLabels } from "./labels";
+
+/**
+ * Prometheus scrape configuration
+ */
+export interface PrometheusScrapeConfig {
+    job_name: string;
+    scrape_interval?: string;
+    scrape_timeout?: string;
+    metrics_path?: string;
+    scheme?: "http" | "https";
+    static_configs?: Array<{
+        targets: string[];
+        labels?: Record<string, string>;
+    }>;
+    kubernetes_sd_configs?: Array<{
+        role: "endpoints" | "service" | "pod" | "node" | "ingress";
+        namespaces?: {
+            names?: string[];
+        };
+    }>;
+    relabel_configs?: Array<{
+        source_labels?: string[];
+        separator?: string;
+        target_label?: string;
+        regex?: string;
+        replacement?: string;
+        action?: "replace" | "keep" | "drop" | "labelmap" | "labeldrop" | "labelkeep";
+    }>;
+}
+
+/**
+ * Prometheus rule configuration
+ */
+export interface PrometheusRule {
+    alert: string;
+    expr: string;
+    for?: string;
+    labels?: Record<string, string>;
+    annotations?: Record<string, string>;
+}
+
+/**
+ * RBAC configuration for Prometheus
+ */
+export interface PrometheusRBACConfig {
+    /** Service account name */
+    serviceAccountName: string;
+    /** Service account annotations (optional) */
+    serviceAccountAnnotations?: Record<string, string>;
+    /** Cluster role name */
+    clusterRoleName: string;
+}
 
 /**
  * Arguments for Prometheus component
  */
 export interface PrometheusArgs {
-    /** Environment this Prometheus instance targets */
-    env: Environment;
     /** Kubernetes namespace */
     namespace: pulumi.Input<string>;
+    /** Number of replicas */
+    replicas: number;
+    /** Container resource requirements */
+    resources: k8s.types.input.core.v1.ResourceRequirements;
     /** Metrics retention period (e.g., "7d") */
     retentionTime: string;
+    /** Default scrape interval (e.g., "30s") */
+    scrapeInterval: string;
+    /** Default evaluation interval for rules (e.g., "30s") */
+    evaluationInterval: string;
     /** Storage size for metrics (e.g., "10Gi") */
     storageSize: string;
-    /** Scrape interval for metrics collection (e.g., "15s") */
-    scrapeInterval?: string;
-    /** Optional resource limits for containers */
-    resources?: {
-        requests?: { cpu?: string; memory?: string };
-        limits?: { cpu?: string; memory?: string };
-    };
+    /** Storage class name (optional) */
+    storageClassName?: string;
+    /** Prometheus image version */
+    imageVersion: string;
+    /** Environment label for external_labels */
+    environment: string;
+    /** Scrape configurations */
+    scrapeConfigs: PrometheusScrapeConfig[];
+    /** Alert rules */
+    rules: PrometheusRule[];
+    /** RBAC configuration */
+    rbac: PrometheusRBACConfig;
     /** Resource labels */
     labels?: Record<string, string>;
     /** Kubernetes provider */
     provider: k8s.Provider;
 }
 
-/** Creates Prometheus StatefulSet with PersistentVolumeClaim for metrics storage */
+export interface PrometheusResult {
+    statefulSet: pulumi.Output<k8s.types.output.meta.v1.ObjectMeta>;
+    service: pulumi.Output<k8s.types.output.meta.v1.ObjectMeta>;
+    pvc: pulumi.Output<k8s.types.output.meta.v1.ObjectMeta>;
+    configMap: k8s.core.v1.ConfigMap;
+    serviceAccount: pulumi.Output<k8s.types.output.meta.v1.ObjectMeta>;
+    clusterRole: pulumi.Output<k8s.types.output.meta.v1.ObjectMeta>;
+    clusterRoleBinding: pulumi.Output<k8s.types.output.meta.v1.ObjectMeta>;
+}
+
+/**
+ * Creates Prometheus deployment as a pure function
+ *
+ * @param args - Configuration for the Prometheus deployment
+ * @returns StatefulSet, Service, PVC, ConfigMap, ServiceAccount, ClusterRole, and ClusterRoleBinding metadata
+ */
 export function createPrometheus(args: PrometheusArgs): PrometheusResult {
     const labels = buildLabels("prometheus", "monitoring", args.labels);
-    const scrapeInterval = args.scrapeInterval || "15s";
+    const scrapeInterval = args.scrapeInterval;
+    const evaluationInterval = args.evaluationInterval;
 
     // Create ServiceAccount for Prometheus
     const serviceAccount = new k8s.core.v1.ServiceAccount(
         "prometheus",
         {
             metadata: {
-                name: "prometheus",
+                name: args.rbac.serviceAccountName,
                 namespace: args.namespace,
                 labels,
+                annotations: args.rbac.serviceAccountAnnotations,
             },
         },
         { provider: args.provider }
     );
 
-    // Create ClusterRole for Prometheus (read-only access to cluster resources)
+    // Create ClusterRole with standard Prometheus permissions
     const clusterRole = new k8s.rbac.v1.ClusterRole(
         "prometheus",
         {
             metadata: {
-                name: "prometheus",
+                name: args.rbac.clusterRoleName,
                 labels,
             },
             rules: [
@@ -75,12 +158,12 @@ export function createPrometheus(args: PrometheusArgs): PrometheusResult {
         { provider: args.provider }
     );
 
-    // Create ClusterRoleBinding to bind ClusterRole to ServiceAccount
+    // Create ClusterRoleBinding
     const clusterRoleBinding = new k8s.rbac.v1.ClusterRoleBinding(
         "prometheus",
         {
             metadata: {
-                name: "prometheus",
+                name: args.rbac.clusterRoleName,
                 labels,
             },
             roleRef: {
@@ -99,6 +182,24 @@ export function createPrometheus(args: PrometheusArgs): PrometheusResult {
         { provider: args.provider, dependsOn: [clusterRole, serviceAccount] }
     );
 
+    // Build scrape configs from provided configuration
+    const scrapeConfigs = args.scrapeConfigs.map((config) => {
+        const yamlConfig: Record<string, unknown> = {
+            job_name: config.job_name,
+        };
+
+        if (config.scrape_interval) yamlConfig.scrape_interval = config.scrape_interval;
+        if (config.scrape_timeout) yamlConfig.scrape_timeout = config.scrape_timeout;
+        if (config.metrics_path) yamlConfig.metrics_path = config.metrics_path;
+        if (config.scheme) yamlConfig.scheme = config.scheme;
+        if (config.static_configs) yamlConfig.static_configs = config.static_configs;
+        if (config.kubernetes_sd_configs)
+            yamlConfig.kubernetes_sd_configs = config.kubernetes_sd_configs;
+        if (config.relabel_configs) yamlConfig.relabel_configs = config.relabel_configs;
+
+        return yamlConfig;
+    });
+
     // Create ConfigMap for Prometheus configuration
     const configMap = new k8s.core.v1.ConfigMap(
         "prometheus-config",
@@ -111,90 +212,39 @@ export function createPrometheus(args: PrometheusArgs): PrometheusResult {
             data: {
                 "prometheus.yml": `global:
   scrape_interval: ${scrapeInterval}
-  evaluation_interval: ${scrapeInterval}
+  evaluation_interval: ${evaluationInterval}
   external_labels:
-    environment: ${args.env}
+    environment: ${args.environment}
 
 scrape_configs:
-  # Scrape Prometheus itself
-  - job_name: 'prometheus'
-    static_configs:
-      - targets: ['localhost:9090']
+${scrapeConfigs
+    .map((config) => {
+        // Convert each scrape config to YAML format
+        const lines: string[] = [`  - job_name: '${config.job_name}'`];
 
-  # Kubernetes API server
-  - job_name: 'kubernetes-apiservers'
-    kubernetes_sd_configs:
-      - role: endpoints
-    scheme: https
-    tls_config:
-      ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
-    bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
-    relabel_configs:
-      - source_labels: [__meta_kubernetes_namespace, __meta_kubernetes_service_name, __meta_kubernetes_endpoint_port_name]
-        action: keep
-        regex: default;kubernetes;https
+        Object.entries(config).forEach(([key, value]) => {
+            if (key === "job_name") return;
 
-  # Kubernetes nodes
-  - job_name: 'kubernetes-nodes'
-    kubernetes_sd_configs:
-      - role: node
-    scheme: https
-    tls_config:
-      ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
-    bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
-    relabel_configs:
-      - action: labelmap
-        regex: __meta_kubernetes_node_label_(.+)
+            if (
+                typeof value === "string" ||
+                typeof value === "number" ||
+                typeof value === "boolean"
+            ) {
+                lines.push(`    ${key}: ${value}`);
+            } else if (Array.isArray(value)) {
+                // All typed arrays in PrometheusScrapeConfig contain objects, not primitives
+                lines.push(`    ${key}:`);
+                value.forEach((item) => {
+                    lines.push(
+                        `      - ${JSON.stringify(item).replace(/"/g, "").replace(/:/g, ": ").replace(/,/g, "\n        ")}`
+                    );
+                });
+            }
+        });
 
-  # Kubernetes pods
-  - job_name: 'kubernetes-pods'
-    kubernetes_sd_configs:
-      - role: pod
-    relabel_configs:
-      - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
-        action: keep
-        regex: true
-      - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
-        action: replace
-        target_label: __metrics_path__
-        regex: (.+)
-      - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]
-        action: replace
-        regex: ([^:]+)(?::\\d+)?;(\\d+)
-        replacement: $1:$2
-        target_label: __address__
-      - action: labelmap
-        regex: __meta_kubernetes_pod_label_(.+)
-      - source_labels: [__meta_kubernetes_namespace]
-        action: replace
-        target_label: kubernetes_namespace
-      - source_labels: [__meta_kubernetes_pod_name]
-        action: replace
-        target_label: kubernetes_pod_name
-
-  # Kubernetes services
-  - job_name: 'kubernetes-services'
-    kubernetes_sd_configs:
-      - role: service
-    metrics_path: /probe
-    params:
-      module: [http_2xx]
-    relabel_configs:
-      - source_labels: [__meta_kubernetes_service_annotation_prometheus_io_probe]
-        action: keep
-        regex: true
-      - source_labels: [__address__]
-        target_label: __param_target
-      - target_label: __address__
-        replacement: blackbox-exporter.monitoring.svc.cluster.local:9115
-      - source_labels: [__param_target]
-        target_label: instance
-      - action: labelmap
-        regex: __meta_kubernetes_service_label_(.+)
-      - source_labels: [__meta_kubernetes_namespace]
-        target_label: kubernetes_namespace
-      - source_labels: [__meta_kubernetes_service_name]
-        target_label: kubernetes_service_name
+        return lines.join("\n");
+    })
+    .join("\n\n")}
 `,
             },
         },
@@ -212,6 +262,7 @@ scrape_configs:
             },
             spec: {
                 accessModes: ["ReadWriteOnce"],
+                storageClassName: args.storageClassName,
                 resources: {
                     requests: {
                         storage: args.storageSize,
@@ -233,7 +284,7 @@ scrape_configs:
             },
             spec: {
                 serviceName: "prometheus",
-                replicas: 1,
+                replicas: args.replicas,
                 selector: {
                     matchLabels: {
                         app: "prometheus",
@@ -248,20 +299,18 @@ scrape_configs:
                         },
                     },
                     spec: {
-                        serviceAccountName: "prometheus",
+                        serviceAccountName: serviceAccount.metadata.name,
                         // Security context to ensure Prometheus can write to persistent volume
-                        // Matches official prometheus-community/prometheus Helm chart defaults
-                        // See: https://github.com/prometheus-community/helm-charts/blob/main/charts/prometheus/values.yaml
                         securityContext: {
                             runAsUser: 65534, // Run as 'nobody' user
-                            runAsNonRoot: true, // Prevent running as root
-                            runAsGroup: 65534, // Run as 'nobody' group
-                            fsGroup: 65534, // Set volume ownership to GID 65534
+                            runAsNonRoot: true,
+                            runAsGroup: 65534,
+                            fsGroup: 65534,
                         },
                         containers: [
                             {
                                 name: "prometheus",
-                                image: "prom/prometheus:v2.53.0",
+                                image: `prom/prometheus:${args.imageVersion}`,
                                 args: [
                                     `--config.file=/etc/prometheus/prometheus.yml`,
                                     `--storage.tsdb.path=/prometheus`,
@@ -286,16 +335,7 @@ scrape_configs:
                                         mountPath: "/prometheus",
                                     },
                                 ],
-                                resources: {
-                                    requests: {
-                                        cpu: "250m",
-                                        memory: "512Mi",
-                                    },
-                                    limits: {
-                                        cpu: "500m",
-                                        memory: "1Gi",
-                                    },
-                                },
+                                resources: args.resources,
                                 livenessProbe: {
                                     httpGet: {
                                         path: "/-/healthy",
@@ -303,14 +343,16 @@ scrape_configs:
                                     },
                                     initialDelaySeconds: 30,
                                     periodSeconds: 10,
+                                    timeoutSeconds: 5,
                                 },
                                 readinessProbe: {
                                     httpGet: {
                                         path: "/-/ready",
                                         port: "http",
                                     },
-                                    initialDelaySeconds: 5,
+                                    initialDelaySeconds: 10,
                                     periodSeconds: 5,
+                                    timeoutSeconds: 3,
                                 },
                             },
                         ],
@@ -332,7 +374,7 @@ scrape_configs:
                 },
             },
         },
-        { provider: args.provider, dependsOn: [serviceAccount, configMap, pvc] }
+        { provider: args.provider, dependsOn: [configMap, pvc, serviceAccount] }
     );
 
     // Create Service for Prometheus
@@ -363,12 +405,12 @@ scrape_configs:
     );
 
     return {
-        serviceAccount: serviceAccount.metadata,
-        clusterRole: clusterRole.metadata,
-        clusterRoleBinding: clusterRoleBinding.metadata,
         statefulSet: statefulSet.metadata,
         service: service.metadata,
         pvc: pvc.metadata,
-        configMap: configMap.metadata,
+        configMap,
+        serviceAccount: serviceAccount.metadata,
+        clusterRole: clusterRole.metadata,
+        clusterRoleBinding: clusterRoleBinding.metadata,
     };
 }

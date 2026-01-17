@@ -98,6 +98,6 @@ pulumi.runtime.setMocks(
         },
     },
     "test-project", // project name
-    "test-stack", // stack name
+    "local", // stack name (must be valid: production, preview-base, preview-pr-*, local)
     false // Use false for unit tests (not preview mode)
 );

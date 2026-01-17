@@ -3,5 +3,5 @@ dist/
 node_modules/
 coverage/
 *.log
-Pulumi.local.yml
-Pulumi.preview-*.yml
+Pulumi.local.yaml
+Pulumi.preview-pr-*.yaml

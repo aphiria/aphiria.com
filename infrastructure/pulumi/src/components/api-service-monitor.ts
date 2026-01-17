@@ -34,10 +34,13 @@ export interface ApiServiceMonitorResult {
 }
 
 /**
- * Creates a ServiceMonitor for the API /metrics endpoint with Bearer token authentication.
+ * Creates a ServiceMonitor for the API /metrics endpoint with Bearer token authentication
  *
  * Prometheus Operator watches for ServiceMonitor resources and automatically configures
  * Prometheus to scrape the specified endpoints.
+ *
+ * @param args - Configuration for the ServiceMonitor
+ * @returns Secret and ServiceMonitor metadata
  */
 export function createApiServiceMonitor(args: ApiServiceMonitorArgs): ApiServiceMonitorResult {
     // Create Secret for auth token in the app namespace

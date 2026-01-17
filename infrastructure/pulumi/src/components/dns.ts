@@ -35,30 +35,8 @@ export interface CreateDNSRecordsResult {
 /**
  * Creates DigitalOcean DNS A records pointing to a LoadBalancer IP
  *
- * @example Production domains
- * ```typescript
- * createDNSRecords({
- *   domain: "aphiria.com",
- *   loadBalancerIp: gatewayService.status.loadBalancer.ingress[0].ip,
- *   records: [
- *     { name: "@", resourceName: "production-root-dns" },
- *     { name: "www", resourceName: "production-www-dns" },
- *     { name: "api", resourceName: "production-api-dns" },
- *   ],
- * });
- * ```
- *
- * @example Preview wildcard domains
- * ```typescript
- * createDNSRecords({
- *   domain: "aphiria.com",
- *   loadBalancerIp: gatewayService.status.loadBalancer.ingress[0].ip,
- *   records: [
- *     { name: "*.pr", resourceName: "preview-web-dns" },
- *     { name: "*.pr-api", resourceName: "preview-api-dns" },
- *   ],
- * });
- * ```
+ * @param args - Configuration for DNS records including domain and IP
+ * @returns Array of DNS record resources
  */
 export function createDNSRecords(args: CreateDNSRecordsArgs): CreateDNSRecordsResult {
     const records = args.records.map(

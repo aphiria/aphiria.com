@@ -1,13 +1,29 @@
 import { describe, it, expect } from "@jest/globals";
 import { promiseOf } from "../test-utils";
 import { createKubernetesCluster } from "../../src/components/kubernetes";
+import type { KubernetesClusterArgs } from "../../src/components/types";
+
+// Helper to create default test args
+const getTestArgs = (overrides: Partial<KubernetesClusterArgs> = {}): KubernetesClusterArgs => ({
+    name: "test-cluster",
+    region: "nyc3",
+    version: "1.34.1-do.2",
+    autoUpgrade: false,
+    surgeUpgrade: false,
+    ha: false,
+    vpcUuid: "mock-vpc-uuid",
+    nodeSize: "s-2vcpu-4gb",
+    nodeCount: 2,
+    autoScale: false,
+    minNodes: 1,
+    maxNodes: 3,
+    useStaticKubeconfig: true,
+    ...overrides,
+});
 
 describe("createKubernetesCluster", () => {
     it("should create cluster with default settings", async () => {
-        const result = createKubernetesCluster({
-            name: "test-cluster",
-            useStaticKubeconfig: true,
-        });
+        const result = createKubernetesCluster(getTestArgs());
 
         expect(result.cluster).toBeDefined();
         expect(result.clusterId).toBeDefined();
@@ -23,20 +39,21 @@ describe("createKubernetesCluster", () => {
     });
 
     it("should create cluster with custom settings", async () => {
-        const result = createKubernetesCluster({
-            name: "custom-cluster",
-            useStaticKubeconfig: true,
-            region: "sfo3",
-            version: "1.34.1-do.0",
-            nodeSize: "s-4vcpu-8gb",
-            nodeCount: 3,
-            autoScale: true,
-            minNodes: 2,
-            maxNodes: 10,
-            autoUpgrade: false,
-            surgeUpgrade: true,
-            ha: true,
-        });
+        const result = createKubernetesCluster(
+            getTestArgs({
+                name: "custom-cluster",
+                region: "sfo3",
+                version: "1.34.1-do.0",
+                nodeSize: "s-4vcpu-8gb",
+                nodeCount: 3,
+                autoScale: true,
+                minNodes: 2,
+                maxNodes: 10,
+                autoUpgrade: false,
+                surgeUpgrade: true,
+                ha: true,
+            })
+        );
 
         expect(result.cluster).toBeDefined();
         expect(result.clusterId).toBeDefined();
@@ -46,15 +63,16 @@ describe("createKubernetesCluster", () => {
     });
 
     it("should create cluster with tags and labels", async () => {
-        const result = createKubernetesCluster({
-            name: "tagged-cluster",
-            useStaticKubeconfig: true,
-            tags: ["production", "k8s"],
-            labels: {
-                environment: "production",
-                team: "platform",
-            },
-        });
+        const result = createKubernetesCluster(
+            getTestArgs({
+                name: "tagged-cluster",
+                tags: ["production", "k8s"],
+                labels: {
+                    environment: "production",
+                    team: "platform",
+                },
+            })
+        );
 
         expect(result.cluster).toBeDefined();
 
@@ -63,11 +81,12 @@ describe("createKubernetesCluster", () => {
     });
 
     it("should create cluster with VPC", async () => {
-        const result = createKubernetesCluster({
-            name: "vpc-cluster",
-            useStaticKubeconfig: true,
-            vpcUuid: "mock-vpc-uuid",
-        });
+        const result = createKubernetesCluster(
+            getTestArgs({
+                name: "vpc-cluster",
+                vpcUuid: "mock-vpc-uuid",
+            })
+        );
 
         expect(result.cluster).toBeDefined();
 
@@ -76,10 +95,11 @@ describe("createKubernetesCluster", () => {
     });
 
     it("should use default values when not specified", async () => {
-        const result = createKubernetesCluster({
-            name: "minimal-cluster",
-            useStaticKubeconfig: true,
-        });
+        const result = createKubernetesCluster(
+            getTestArgs({
+                name: "minimal-cluster",
+            })
+        );
 
         expect(result.cluster).toBeDefined();
         expect(result.endpoint).toBeDefined();
@@ -104,14 +124,15 @@ describe("createKubernetesCluster", () => {
      * and confirm no drift is reported for nodeCount changes.
      */
     it("should create cluster with autoscaling configuration", async () => {
-        const result = createKubernetesCluster({
-            name: "autoscale-cluster",
-            useStaticKubeconfig: true,
-            autoScale: true,
-            nodeCount: 2,
-            minNodes: 1,
-            maxNodes: 5,
-        });
+        const result = createKubernetesCluster(
+            getTestArgs({
+                name: "autoscale-cluster",
+                autoScale: true,
+                nodeCount: 2,
+                minNodes: 1,
+                maxNodes: 5,
+            })
+        );
 
         expect(result.cluster).toBeDefined();
 
@@ -129,12 +150,13 @@ describe("createKubernetesCluster", () => {
      * Any manual changes to node count will be reported as drift (expected behavior).
      */
     it("should create cluster with fixed node count when autoscaling is disabled", async () => {
-        const result = createKubernetesCluster({
-            name: "fixed-cluster",
-            useStaticKubeconfig: true,
-            autoScale: false,
-            nodeCount: 3,
-        });
+        const result = createKubernetesCluster(
+            getTestArgs({
+                name: "fixed-cluster",
+                autoScale: false,
+                nodeCount: 3,
+            })
+        );
 
         expect(result.cluster).toBeDefined();
 
@@ -146,10 +168,11 @@ describe("createKubernetesCluster", () => {
     });
 
     it("should disable Server-Side Apply to prevent field manager conflicts", async () => {
-        const result = createKubernetesCluster({
-            name: "ssa-disabled-cluster",
-            useStaticKubeconfig: true,
-        });
+        const result = createKubernetesCluster(
+            getTestArgs({
+                name: "ssa-disabled-cluster",
+            })
+        );
 
         expect(result.provider).toBeDefined();
 

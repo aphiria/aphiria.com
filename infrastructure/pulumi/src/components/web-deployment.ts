@@ -1,23 +1,31 @@
 import * as pulumi from "@pulumi/pulumi";
 import * as k8s from "@pulumi/kubernetes";
-import { CommonDeploymentArgs, PodDisruptionBudgetConfig, WebDeploymentResult } from "./types";
+import { PodDisruptionBudgetConfig, WebDeploymentResult } from "./types";
 import { checksum } from "./utils";
 import { buildLabels } from "./labels";
 
 /**
  * Arguments for web deployment component
  */
-export interface WebDeploymentArgs extends CommonDeploymentArgs {
+export interface WebDeploymentArgs {
+    /** Kubernetes namespace to deploy into */
+    namespace: pulumi.Input<string>;
+    /** Resource labels for Kubernetes resources */
+    labels?: Record<string, string>;
+    /** Kubernetes provider */
+    provider: k8s.Provider;
     /** Number of replicas (1 for dev-local/preview, 2 for production) */
     replicas: number;
     /** Docker image reference (can be tag or digest) */
     image: string;
+    /** Image pull policy ("Always", "IfNotPresent", or "Never") */
+    imagePullPolicy: pulumi.Input<string>;
+    /** Application environment name (e.g., "local", "preview", "production") */
+    appEnv: string;
     /** JavaScript configuration data for js-config ConfigMap */
     jsConfigData: Record<string, string>;
     /** Base URL for the web application */
     baseUrl: string;
-    /** Log level (e.g., "warning", "debug", "info") */
-    logLevel: string;
     /** PR number (optional, preview environments only) */
     prNumber?: string;
     /** Additional custom environment variables */
@@ -25,16 +33,7 @@ export interface WebDeploymentArgs extends CommonDeploymentArgs {
     /** Optional image pull secrets for private registries */
     imagePullSecrets?: pulumi.Input<string>[];
     /** Resource requests and limits (required) */
-    resources: {
-        requests: {
-            cpu: string;
-            memory: string;
-        };
-        limits: {
-            cpu: string;
-            memory: string;
-        };
-    };
+    resources: k8s.types.input.core.v1.ResourceRequirements;
     /** Optional PodDisruptionBudget for high availability (production only) */
     podDisruptionBudget?: PodDisruptionBudgetConfig;
     /** @deprecated Component calculates checksum internally. ConfigMap checksum for pod annotations */
@@ -45,7 +44,12 @@ export interface WebDeploymentArgs extends CommonDeploymentArgs {
     secretRefs?: pulumi.Input<string>[];
 }
 
-/** Creates nginx deployment for static site with js-config ConfigMap */
+/**
+ * Creates nginx deployment for static site with js-config ConfigMap
+ *
+ * @param args - Configuration for the web deployment
+ * @returns Deployment, Service, ConfigMap, and optional PodDisruptionBudget metadata
+ */
 export function createWebDeployment(args: WebDeploymentArgs): WebDeploymentResult {
     const labels = buildLabels("web", "frontend", args.labels);
 
@@ -71,8 +75,7 @@ export function createWebDeployment(args: WebDeploymentArgs): WebDeploymentResul
 
     // Build environment variables from parameters
     const envConfigData: Record<string, pulumi.Input<string>> = {
-        APP_ENV: args.env,
-        LOG_LEVEL: args.logLevel,
+        APP_ENV: args.appEnv,
         ...(args.prNumber && { PR_NUMBER: args.prNumber }),
         ...(args.extraVars || {}),
     };
@@ -137,16 +140,7 @@ export function createWebDeployment(args: WebDeploymentArgs): WebDeploymentResul
                             {
                                 name: "web",
                                 image: args.image,
-                                // imagePullPolicy rules (Kubernetes-specific requirements):
-                                // - Local: Use "Never" (images loaded via minikube/docker load)
-                                // - SHA256 digest: Use "IfNotPresent" (immutable, safe to cache)
-                                // - Tag: Use "Always" (mutable, must pull to check for updates)
-                                imagePullPolicy:
-                                    args.env === "local"
-                                        ? "Never"
-                                        : args.image.includes("@sha256:")
-                                          ? "IfNotPresent"
-                                          : "Always",
+                                imagePullPolicy: args.imagePullPolicy,
                                 volumeMounts: [
                                     {
                                         name: "js-config",

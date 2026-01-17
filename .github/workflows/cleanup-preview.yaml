@@ -4,6 +4,11 @@ on:
   pull_request:
     types: [closed]
 
+env:
+  PULUMI_ORG: davidbyoung
+  PULUMI_PROJECT: aphiria-com-infrastructure
+  PULUMI_DESTROY_TIMEOUT: 600 # 10min - Cleanup operations
+
 permissions:
   contents: read
   pull-requests: write
@@ -31,13 +36,15 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "20"
+          cache: "npm"
+          cache-dependency-path: infrastructure/pulumi/package-lock.json
 
       - name: Install Pulumi CLI
         uses: pulumi/actions@v5
 
       - name: Install Pulumi dependencies
         working-directory: infrastructure/pulumi
-        run: npm install
+        run: npm ci
 
       - name: Install doctl and configure kubeconfig
         id: kubeconfig
@@ -46,7 +53,7 @@ jobs:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
         run: |
           # Get cluster name and DigitalOcean token from preview-base stack
-          pulumi stack select preview-base
+          pulumi stack select ${{ env.PULUMI_ORG }}/${{ env.PULUMI_PROJECT }}/preview-base
           CLUSTER_NAME=$(pulumi stack output clusterName --show-secrets)
           DO_TOKEN=$(pulumi config get digitalocean:token --show-secrets)
 
@@ -85,7 +92,7 @@ jobs:
             echo "Stack ${STACK_NAME} found, destroying..."
 
             # Destroy stack with timeout
-            timeout 600 pulumi destroy --stack "${STACK_NAME}" --yes
+            timeout ${{ env.PULUMI_DESTROY_TIMEOUT }} pulumi destroy --stack "${STACK_NAME}" --yes
 
             # Remove stack
             pulumi stack rm "${STACK_NAME}" --yes

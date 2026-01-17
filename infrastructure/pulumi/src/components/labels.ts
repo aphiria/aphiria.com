@@ -1,8 +1,10 @@
 /**
  * Builds standard Kubernetes labels following k8s recommended practices
- * @param app Application identifier (e.g., "api", "web", "db")
- * @param component Component type (e.g., "backend", "frontend", "database")
- * @param custom Optional custom labels to merge
+ *
+ * @param app - Application identifier (e.g., "api", "web", "db")
+ * @param component - Component type (e.g., "backend", "frontend", "database")
+ * @param custom - Optional custom labels to merge
+ * @returns Standard Kubernetes labels merged with custom labels
  */
 export function buildLabels(
     app: string,

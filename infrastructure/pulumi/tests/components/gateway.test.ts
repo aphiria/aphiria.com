@@ -13,7 +13,7 @@ describe("createGateway", () => {
 
     it("should create gateway with self-signed certificate for local environment", async () => {
         const result = createGateway({
-            env: "local",
+            requireRootAndWildcard: false,
             name: "test-gateway",
             namespace: "test-namespace",
             tlsMode: "self-signed",
@@ -34,7 +34,7 @@ describe("createGateway", () => {
 
     it("should create gateway with Let's Encrypt certificate for production", async () => {
         const result = createGateway({
-            env: "production",
+            requireRootAndWildcard: false,
             name: "prod-gateway",
             namespace: "production",
             tlsMode: "letsencrypt-prod",
@@ -53,7 +53,7 @@ describe("createGateway", () => {
     it("should require dnsToken for wildcard domains with Let's Encrypt", () => {
         expect(() => {
             createGateway({
-                env: "preview",
+                requireRootAndWildcard: false,
                 name: "gateway",
                 namespace: "default",
                 tlsMode: "letsencrypt-prod",
@@ -66,7 +66,7 @@ describe("createGateway", () => {
     it("should require root domain for production environment", () => {
         expect(() => {
             createGateway({
-                env: "production",
+                requireRootAndWildcard: true,
                 name: "gateway",
                 namespace: "default",
                 tlsMode: "letsencrypt-prod",
@@ -74,25 +74,25 @@ describe("createGateway", () => {
                 dnsToken: pulumi.output("fake-dns-token"),
                 provider: k8sProvider,
             });
-        }).toThrow("Production gateway requires a root domain");
+        }).toThrow("Gateway requires a root domain");
     });
 
     it("should require wildcard domain for production environment", () => {
         expect(() => {
             createGateway({
-                env: "production",
+                requireRootAndWildcard: true,
                 name: "gateway",
                 namespace: "default",
                 tlsMode: "letsencrypt-prod",
                 domains: ["aphiria.com"],
                 provider: k8sProvider,
             });
-        }).toThrow("Production gateway requires a wildcard domain");
+        }).toThrow("Gateway requires a wildcard domain");
     });
 
     it("should allow wildcard-only domains for preview environment", async () => {
         const result = createGateway({
-            env: "preview",
+            requireRootAndWildcard: false,
             name: "preview-gateway",
             namespace: "preview-pr-123",
             tlsMode: "letsencrypt-prod",
@@ -109,7 +109,7 @@ describe("createGateway", () => {
 
     it("should merge custom labels with default labels", async () => {
         const result = createGateway({
-            env: "local",
+            requireRootAndWildcard: false,
             name: "custom-gateway",
             namespace: "default",
             tlsMode: "self-signed",
@@ -129,7 +129,7 @@ describe("createGateway", () => {
 
     it("should handle multiple wildcard domains", async () => {
         const result = createGateway({
-            env: "production",
+            requireRootAndWildcard: false,
             name: "multi-domain-gateway",
             namespace: "default",
             tlsMode: "letsencrypt-prod",
@@ -147,7 +147,7 @@ describe("createGateway", () => {
     it("should require at least one domain for non-production environments", () => {
         expect(() => {
             createGateway({
-                env: "local",
+                requireRootAndWildcard: false,
                 name: "gateway",
                 namespace: "default",
                 tlsMode: "self-signed",
@@ -159,7 +159,7 @@ describe("createGateway", () => {
 
     it("should use HTTP-01 ACME challenge when dnsToken not provided for non-wildcard domains", async () => {
         const result = createGateway({
-            env: "preview",
+            requireRootAndWildcard: false,
             name: "http01-gateway",
             namespace: "preview-ns",
             tlsMode: "letsencrypt-prod",
@@ -176,7 +176,7 @@ describe("createGateway", () => {
 
     it("should use DNS-01 ACME challenge when dnsToken provided", async () => {
         const result = createGateway({
-            env: "production",
+            requireRootAndWildcard: false,
             name: "dns01-gateway",
             namespace: "production",
             tlsMode: "letsencrypt-prod",

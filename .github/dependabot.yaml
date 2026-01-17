@@ -1,0 +1,79 @@
+version: 2
+updates:
+  # Infrastructure (Pulumi)
+  - package-ecosystem: "npm"
+    directory: "/infrastructure/pulumi"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    labels:
+      - "dependencies"
+      - "infrastructure"
+    groups:
+      pulumi:
+        patterns:
+          - "@pulumi/*"
+      testing:
+        patterns:
+          - "jest"
+          - "ts-jest"
+          - "@types/jest"
+    open-pull-requests-limit: 10
+
+  # E2E Tests (Playwright)
+  - package-ecosystem: "npm"
+    directory: "/tests/e2e"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    labels:
+      - "dependencies"
+      - "e2e-tests"
+    groups:
+      playwright:
+        patterns:
+          - "@playwright/*"
+          - "playwright"
+    open-pull-requests-limit: 5
+
+  # Web Frontend
+  - package-ecosystem: "npm"
+    directory: "/apps/web"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    labels:
+      - "dependencies"
+      - "web"
+    open-pull-requests-limit: 5
+
+  # API Backend (PHP/Composer)
+  - package-ecosystem: "composer"
+    directory: "/apps/api"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    labels:
+      - "dependencies"
+      - "api"
+    groups:
+      aphiria:
+        patterns:
+          - "aphiria/*"
+    open-pull-requests-limit: 5
+
+  # GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    labels:
+      - "dependencies"
+      - "github-actions"
+    open-pull-requests-limit: 5
