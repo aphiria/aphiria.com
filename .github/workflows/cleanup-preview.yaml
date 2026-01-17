@@ -1,279 +1,279 @@
 name: Preview Environment Cleanup
 
 on:
-    pull_request:
-        types: [closed]
+  pull_request:
+    types: [closed]
 
 env:
-    PULUMI_ORG: davidbyoung
-    PULUMI_PROJECT: aphiria-com-infrastructure
-    PULUMI_DESTROY_TIMEOUT: 600 # 10min - Cleanup operations
+  PULUMI_ORG: davidbyoung
+  PULUMI_PROJECT: aphiria-com-infrastructure
+  PULUMI_DESTROY_TIMEOUT: 600 # 10min - Cleanup operations
 
 permissions:
-    contents: read
-    pull-requests: write
-    deployments: write
-    packages: write
+  contents: read
+  pull-requests: write
+  deployments: write
+  packages: write
 
 jobs:
-    cleanup:
-        name: Destroy Preview Environment
-        runs-on: ubuntu-latest
-        timeout-minutes: 15
+  cleanup:
+    name: Destroy Preview Environment
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
 
-        steps:
-            - name: Check out repository
-              uses: actions/checkout@v4
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
 
-            - name: Extract PR number
-              id: pr
-              run: |
-                  PR_NUMBER="${{ github.event.pull_request.number }}"
-                  echo "number=${PR_NUMBER}" >> $GITHUB_OUTPUT
-                  echo "Cleaning up preview environment for PR #${PR_NUMBER}"
+      - name: Extract PR number
+        id: pr
+        run: |
+          PR_NUMBER="${{ github.event.pull_request.number }}"
+          echo "number=${PR_NUMBER}" >> $GITHUB_OUTPUT
+          echo "Cleaning up preview environment for PR #${PR_NUMBER}"
 
-            - name: Set up Node.js
-              uses: actions/setup-node@v4
-              with:
-                  node-version: "20"
-                  cache: "npm"
-                  cache-dependency-path: infrastructure/pulumi/package-lock.json
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: infrastructure/pulumi/package-lock.json
 
-            - name: Install Pulumi CLI
-              uses: pulumi/actions@v5
+      - name: Install Pulumi CLI
+        uses: pulumi/actions@v5
 
-            - name: Install Pulumi dependencies
-              working-directory: infrastructure/pulumi
-              run: npm ci
+      - name: Install Pulumi dependencies
+        working-directory: infrastructure/pulumi
+        run: npm ci
 
-            - name: Configure kubeconfig from preview-base stack
-              id: kubeconfig
-              working-directory: infrastructure/pulumi
-              env:
-                  PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
-              run: |
-                  # Get kubeconfig from preview-base stack output
-                  pulumi stack select ${{ env.PULUMI_ORG }}/${{ env.PULUMI_PROJECT }}/preview-base
+      - name: Configure kubeconfig from preview-base stack
+        id: kubeconfig
+        working-directory: infrastructure/pulumi
+        env:
+          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
+        run: |
+          # Get kubeconfig from preview-base stack output
+          pulumi stack select ${{ env.PULUMI_ORG }}/${{ env.PULUMI_PROJECT }}/preview-base
 
-                  # Create .kube directory if it doesn't exist
-                  mkdir -p "${HOME}/.kube"
+          # Create .kube directory if it doesn't exist
+          mkdir -p "${HOME}/.kube"
 
-                  # Export kubeconfig from Pulumi stack (uses fresh credentials from getKubernetesClusterOutput)
-                  pulumi stack output kubeconfig --show-secrets > "${HOME}/.kube/config"
-                  chmod 600 "${HOME}/.kube/config"
+          # Export kubeconfig from Pulumi stack (uses fresh credentials from getKubernetesClusterOutput)
+          pulumi stack output kubeconfig --show-secrets > "${HOME}/.kube/config"
+          chmod 600 "${HOME}/.kube/config"
 
-                  echo "path=${HOME}/.kube/config" >> $GITHUB_OUTPUT
-                  echo "✅ Kubeconfig loaded from preview-base stack"
+          echo "path=${HOME}/.kube/config" >> $GITHUB_OUTPUT
+          echo "✅ Kubeconfig loaded from preview-base stack"
 
-            - name: Destroy preview environment
-              id: destroy
-              working-directory: infrastructure/pulumi
-              env:
-                  PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
-                  KUBECONFIG: ${{ steps.kubeconfig.outputs.path }}
-              run: |
-                  PR_NUMBER=${{ steps.pr.outputs.number }}
-                  STACK_NAME="preview-pr-${PR_NUMBER}"
+      - name: Destroy preview environment
+        id: destroy
+        working-directory: infrastructure/pulumi
+        env:
+          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
+          KUBECONFIG: ${{ steps.kubeconfig.outputs.path }}
+        run: |
+          PR_NUMBER=${{ steps.pr.outputs.number }}
+          STACK_NAME="preview-pr-${PR_NUMBER}"
 
-                  # Check if stack exists
-                  if pulumi stack select "${STACK_NAME}" 2>/dev/null; then
-                    echo "Stack ${STACK_NAME} found, destroying..."
+          # Check if stack exists
+          if pulumi stack select "${STACK_NAME}" 2>/dev/null; then
+            echo "Stack ${STACK_NAME} found, destroying..."
 
-                    # Destroy stack with timeout
-                    timeout ${{ env.PULUMI_DESTROY_TIMEOUT }} pulumi destroy --stack "${STACK_NAME}" --yes
+            # Destroy stack with timeout
+            timeout ${{ env.PULUMI_DESTROY_TIMEOUT }} pulumi destroy --stack "${STACK_NAME}" --yes
 
-                    # Remove stack
-                    pulumi stack rm "${STACK_NAME}" --yes
+            # Remove stack
+            pulumi stack rm "${STACK_NAME}" --yes
 
-                    echo "status=destroyed" >> $GITHUB_OUTPUT
-                    echo "✅ Preview environment destroyed successfully"
-                  else
-                    echo "Stack ${STACK_NAME} not found, nothing to clean up"
-                    echo "status=not-found" >> $GITHUB_OUTPUT
-                  fi
+            echo "status=destroyed" >> $GITHUB_OUTPUT
+            echo "✅ Preview environment destroyed successfully"
+          else
+            echo "Stack ${STACK_NAME} not found, nothing to clean up"
+            echo "status=not-found" >> $GITHUB_OUTPUT
+          fi
 
-            - name: Verify namespace cleanup
-              if: steps.destroy.outputs.status == 'destroyed'
-              env:
-                  KUBECONFIG: ${{ steps.kubeconfig.outputs.path }}
-              run: |
-                  PR_NUMBER=${{ steps.pr.outputs.number }}
-                  NAMESPACE="preview-pr-${PR_NUMBER}"
+      - name: Verify namespace cleanup
+        if: steps.destroy.outputs.status == 'destroyed'
+        env:
+          KUBECONFIG: ${{ steps.kubeconfig.outputs.path }}
+        run: |
+          PR_NUMBER=${{ steps.pr.outputs.number }}
+          NAMESPACE="preview-pr-${PR_NUMBER}"
 
-                  # Verify namespace is gone - FAIL if it still exists
-                  if kubectl get namespace "${NAMESPACE}" 2>/dev/null; then
-                    echo "::error::Namespace ${NAMESPACE} still exists after Pulumi destroy"
-                    echo "::error::This indicates a bug in Pulumi components - resources should be fully deleted"
-                    kubectl get all -n "${NAMESPACE}"
-                    exit 1
-                  else
-                    echo "✅ Namespace ${NAMESPACE} successfully deleted by Pulumi"
-                  fi
+          # Verify namespace is gone - FAIL if it still exists
+          if kubectl get namespace "${NAMESPACE}" 2>/dev/null; then
+            echo "::error::Namespace ${NAMESPACE} still exists after Pulumi destroy"
+            echo "::error::This indicates a bug in Pulumi components - resources should be fully deleted"
+            kubectl get all -n "${NAMESPACE}"
+            exit 1
+          else
+            echo "✅ Namespace ${NAMESPACE} successfully deleted by Pulumi"
+          fi
 
-            - name: Verify database cleanup
-              if: steps.destroy.outputs.status == 'destroyed'
-              continue-on-error: true
-              env:
-                  KUBECONFIG: ${{ steps.kubeconfig.outputs.path }}
-              run: |
-                  PR_NUMBER=${{ steps.pr.outputs.number }}
-                  DB_NAME="aphiria_pr_${PR_NUMBER}"
+      - name: Verify database cleanup
+        if: steps.destroy.outputs.status == 'destroyed'
+        continue-on-error: true
+        env:
+          KUBECONFIG: ${{ steps.kubeconfig.outputs.path }}
+        run: |
+          PR_NUMBER=${{ steps.pr.outputs.number }}
+          DB_NAME="aphiria_pr_${PR_NUMBER}"
 
-                  # Get PostgreSQL pod name from preview base infrastructure
-                  PG_POD=$(kubectl get pods -n preview-base -l app=postgresql -o jsonpath='{.items[0].metadata.name}' 2>/dev/null)
+          # Get PostgreSQL pod name from preview base infrastructure
+          PG_POD=$(kubectl get pods -n preview-base -l app=postgresql -o jsonpath='{.items[0].metadata.name}' 2>/dev/null)
 
-                  if [ -n "${PG_POD}" ]; then
-                    # Check if database still exists
-                    DB_EXISTS=$(kubectl exec -n preview-base "${PG_POD}" -- psql -U postgres -tAc "SELECT 1 FROM pg_database WHERE datname='${DB_NAME}'" 2>/dev/null || echo "")
+          if [ -n "${PG_POD}" ]; then
+            # Check if database still exists
+            DB_EXISTS=$(kubectl exec -n preview-base "${PG_POD}" -- psql -U postgres -tAc "SELECT 1 FROM pg_database WHERE datname='${DB_NAME}'" 2>/dev/null || echo "")
 
-                    if [ -z "${DB_EXISTS}" ]; then
-                      echo "✅ Database ${DB_NAME} successfully dropped"
-                    else
-                      echo "::warning::Database ${DB_NAME} still exists after stack destroy"
-                    fi
-                  else
-                    echo "::notice::PostgreSQL pod not found, skipping database verification"
-                  fi
+            if [ -z "${DB_EXISTS}" ]; then
+              echo "✅ Database ${DB_NAME} successfully dropped"
+            else
+              echo "::warning::Database ${DB_NAME} still exists after stack destroy"
+            fi
+          else
+            echo "::notice::PostgreSQL pod not found, skipping database verification"
+          fi
 
-            - name: Delete preview images from GHCR
-              if: steps.destroy.outputs.status == 'destroyed'
-              uses: actions/github-script@v7
-              with:
-                  script: |
-                      const prNumber = ${{ steps.pr.outputs.number }};
-                      const owner = context.repo.owner;
-                      const repo = context.repo.repo;
+      - name: Delete preview images from GHCR
+        if: steps.destroy.outputs.status == 'destroyed'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prNumber = ${{ steps.pr.outputs.number }};
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
 
-                      // Image names for this repository
-                      const imageNames = ['api', 'web', 'build'];
-                      const imageBaseName = `${owner}/${repo}`;
+            // Image names for this repository
+            const imageNames = ['api', 'web', 'build'];
+            const imageBaseName = `${owner}/${repo}`;
 
-                      core.info(`🗑️  Deleting preview images for PR #${prNumber}`);
+            core.info(`🗑️  Deleting preview images for PR #${prNumber}`);
 
-                      for (const imageName of imageNames) {
-                        const fullImageName = `${imageBaseName}-${imageName}`;
-                        const prTag = `pr-${prNumber}`;
+            for (const imageName of imageNames) {
+              const fullImageName = `${imageBaseName}-${imageName}`;
+              const prTag = `pr-${prNumber}`;
 
-                        try {
-                          // Get package versions (all tags for this image)
-                          const { data: versions } = await github.rest.packages.getAllPackageVersionsForPackageOwnedByOrg({
-                            package_type: 'container',
-                            package_name: fullImageName,
-                            org: owner,
-                            per_page: 100,
-                          });
+              try {
+                // Get package versions (all tags for this image)
+                const { data: versions } = await github.rest.packages.getAllPackageVersionsForPackageOwnedByOrg({
+                  package_type: 'container',
+                  package_name: fullImageName,
+                  org: owner,
+                  per_page: 100,
+                });
 
-                          core.info(`Found ${versions.length} total versions for ${fullImageName}`);
+                core.info(`Found ${versions.length} total versions for ${fullImageName}`);
 
-                          // Filter versions that match this PR
-                          const prVersions = versions.filter(v =>
-                            v.metadata?.container?.tags?.some(tag =>
-                              tag.startsWith(prTag)
-                            )
-                          );
+                // Filter versions that match this PR
+                const prVersions = versions.filter(v =>
+                  v.metadata?.container?.tags?.some(tag =>
+                    tag.startsWith(prTag)
+                  )
+                );
 
-                          core.info(`Found ${prVersions.length} versions for PR #${prNumber}`);
+                core.info(`Found ${prVersions.length} versions for PR #${prNumber}`);
 
-                          // Delete each matching version
-                          for (const version of prVersions) {
-                            const tags = version.metadata?.container?.tags || [];
-                            core.info(`Deleting version ${version.id} with tags: ${tags.join(', ')}`);
+                // Delete each matching version
+                for (const version of prVersions) {
+                  const tags = version.metadata?.container?.tags || [];
+                  core.info(`Deleting version ${version.id} with tags: ${tags.join(', ')}`);
 
-                            await github.rest.packages.deletePackageVersionForOrg({
-                              package_type: 'container',
-                              package_name: fullImageName,
-                              org: owner,
-                              package_version_id: version.id,
-                            });
+                  await github.rest.packages.deletePackageVersionForOrg({
+                    package_type: 'container',
+                    package_name: fullImageName,
+                    org: owner,
+                    package_version_id: version.id,
+                  });
 
-                            core.info(`✅ Deleted ${fullImageName} version ${version.id}`);
-                          }
-                        } catch (error) {
-                          if (error.status === 404) {
-                            core.info(`Package ${fullImageName} not found (may not have been built)`);
-                          } else {
-                            core.warning(`Failed to delete images for ${fullImageName}: ${error.message}`);
-                          }
-                        }
-                      }
+                  core.info(`✅ Deleted ${fullImageName} version ${version.id}`);
+                }
+              } catch (error) {
+                if (error.status === 404) {
+                  core.info(`Package ${fullImageName} not found (may not have been built)`);
+                } else {
+                  core.warning(`Failed to delete images for ${fullImageName}: ${error.message}`);
+                }
+              }
+            }
 
-                      core.info('✅ Preview image cleanup complete')
+            core.info('✅ Preview image cleanup complete')
 
-            - name: Mark GitHub Deployment as inactive
-              if: steps.destroy.outputs.status == 'destroyed'
-              uses: actions/github-script@v7
-              with:
-                  script: |
-                      const prNumber = ${{ steps.pr.outputs.number }};
-                      const environmentName = `preview-pr-${prNumber}`;
+      - name: Mark GitHub Deployment as inactive
+        if: steps.destroy.outputs.status == 'destroyed'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prNumber = ${{ steps.pr.outputs.number }};
+            const environmentName = `preview-pr-${prNumber}`;
 
-                      // Get all deployments for this environment
-                      const { data: deployments } = await github.rest.repos.listDeployments({
-                        owner: context.repo.owner,
-                        repo: context.repo.repo,
-                        environment: environmentName,
-                      });
+            // Get all deployments for this environment
+            const { data: deployments } = await github.rest.repos.listDeployments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              environment: environmentName,
+            });
 
-                      console.log(`Found ${deployments.length} deployments for environment ${environmentName}`);
+            console.log(`Found ${deployments.length} deployments for environment ${environmentName}`);
 
-                      // Mark all deployments as inactive
-                      for (const deployment of deployments) {
-                        await github.rest.repos.createDeploymentStatus({
-                          owner: context.repo.owner,
-                          repo: context.repo.repo,
-                          deployment_id: deployment.id,
-                          state: 'inactive',
-                          description: 'Preview environment destroyed',
-                        });
+            // Mark all deployments as inactive
+            for (const deployment of deployments) {
+              await github.rest.repos.createDeploymentStatus({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                deployment_id: deployment.id,
+                state: 'inactive',
+                description: 'Preview environment destroyed',
+              });
 
-                        console.log(`✅ Deployment ${deployment.id} marked as inactive`);
-                      }
+              console.log(`✅ Deployment ${deployment.id} marked as inactive`);
+            }
 
-            - name: Add comment on PR
-              uses: actions/github-script@v7
-              with:
-                  script: |
-                      const prNumber = ${{ steps.pr.outputs.number }};
-                      const status = '${{ steps.destroy.outputs.status }}';
-                      const prState = '${{ github.event.pull_request.merged }}' === 'true' ? 'merged' : 'closed';
+      - name: Add comment on PR
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prNumber = ${{ steps.pr.outputs.number }};
+            const status = '${{ steps.destroy.outputs.status }}';
+            const prState = '${{ github.event.pull_request.merged }}' === 'true' ? 'merged' : 'closed';
 
-                      let body;
+            let body;
 
-                      if (status === 'destroyed') {
-                        body = `### 🧹 Preview Environment Cleanup Complete
+            if (status === 'destroyed') {
+              body = `### 🧹 Preview Environment Cleanup Complete
 
-                        **PR**: #${prNumber} (${prState})
-                        **Status**: ✅ Successfully destroyed
+              **PR**: #${prNumber} (${prState})
+              **Status**: ✅ Successfully destroyed
 
-                        All resources have been cleaned up:
-                        - ✅ Kubernetes namespace deleted
-                        - ✅ Database dropped
-                        - ✅ Docker images deleted
-                        - ✅ Pulumi stack removed
+              All resources have been cleaned up:
+              - ✅ Kubernetes namespace deleted
+              - ✅ Database dropped
+              - ✅ Docker images deleted
+              - ✅ Pulumi stack removed
 
-                        The preview environment is no longer accessible.
-                        `;
-                      } else if (status === 'not-found') {
-                        body = `### 🧹 Preview Environment Cleanup
+              The preview environment is no longer accessible.
+              `;
+            } else if (status === 'not-found') {
+              body = `### 🧹 Preview Environment Cleanup
 
-                        **PR**: #${prNumber} (${prState})
-                        **Status**: ℹ️  No preview environment found
+              **PR**: #${prNumber} (${prState})
+              **Status**: ℹ️  No preview environment found
 
-                        No cleanup needed - preview environment was not deployed or already cleaned up.
-                        `;
-                      } else {
-                        body = `### 🧹 Preview Environment Cleanup
+              No cleanup needed - preview environment was not deployed or already cleaned up.
+              `;
+            } else {
+              body = `### 🧹 Preview Environment Cleanup
 
-                        **PR**: #${prNumber} (${prState})
-                        **Status**: ⚠️  Cleanup status unknown
+              **PR**: #${prNumber} (${prState})
+              **Status**: ⚠️  Cleanup status unknown
 
-                        Please verify manually that all resources have been cleaned up.
-                        `;
-                      }
+              Please verify manually that all resources have been cleaned up.
+              `;
+            }
 
-                      await github.rest.issues.createComment({
-                        owner: context.repo.owner,
-                        repo: context.repo.repo,
-                        issue_number: prNumber,
-                        body: body,
-                      });
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+              body: body,
+            });
