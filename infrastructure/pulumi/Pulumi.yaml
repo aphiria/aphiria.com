@@ -14,11 +14,11 @@ config:
       autoUpgrade: true
       surgeUpgrade: false
       ha: false
-      nodeSize: "s-2vcpu-2gb"
+      nodeSize: "s-4vcpu-8gb"
       nodeCount: 2
       autoScale: true
       minNodes: 2
-      maxNodes: 4
+      maxNodes: 3
       vpcUuid: "976f980d-dc84-11e8-80bc-3cfdfea9fba1"
 
   app:
