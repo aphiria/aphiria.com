@@ -20,7 +20,7 @@
         "@pulumi/pulumi": "^3.213.0"
     },
     "devDependencies": {
-        "@jest/globals": "^29.0.0",
+        "@jest/globals": "^30.2.0",
         "@pulumi/pulumi": "^3.213.0",
         "@types/jest": "^29.0.0",
         "@types/node": "^20.0.0",
