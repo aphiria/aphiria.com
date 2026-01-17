@@ -7,6 +7,7 @@ import {
     installNginxGateway,
     installKubePrometheusStack,
     ignoreDigitalOceanServiceAnnotationsV4,
+    injectPrometheusCRDWaitInitContainer,
 } from "../../src/components/helm-charts";
 import { promiseOf } from "../test-utils";
 
@@ -209,5 +210,132 @@ describe("installKubePrometheusStack", () => {
 
         const urn = await promiseOf(chart.urn);
         expect(urn).toContain("kube-prometheus-stack");
+    });
+
+    it("should conditionally apply CRD wait transformation based on NODE_ENV (skipped in test)", () => {
+        // In test environment (NODE_ENV=test), transformations are skipped to avoid
+        // "Pulumi CLI does not support transforms" error in mock runtime.
+        // In production, transformation injects init container that waits for CRDs.
+        const chart = installKubePrometheusStack({
+            env: "production",
+            chartName: "kube-prometheus-stack",
+            repository: "https://prometheus-community.github.io/helm-charts",
+            version: "45.0.0",
+            namespace: "monitoring",
+            provider: k8sProvider,
+        });
+
+        expect(chart).toBeDefined();
+    });
+});
+
+describe("injectPrometheusCRDWaitInitContainer", () => {
+    it("should inject init container into Prometheus Operator deployment", () => {
+        const deployment = {
+            kind: "Deployment",
+            metadata: {
+                name: "kube-prometheus-stack-operator",
+                namespace: "monitoring",
+            },
+            spec: {
+                template: {
+                    spec: {
+                        containers: [
+                            {
+                                name: "kube-prometheus-stack",
+                                image: "quay.io/prometheus-operator/prometheus-operator:v0.81.0",
+                            },
+                        ],
+                    },
+                },
+            },
+        };
+
+        const result = injectPrometheusCRDWaitInitContainer(deployment);
+
+        expect(result.spec.template.spec.initContainers).toBeDefined();
+        expect(result.spec.template.spec.initContainers).toHaveLength(1);
+
+        const initContainer = result.spec.template.spec.initContainers[0];
+        expect(initContainer.name).toBe("wait-for-prometheus-crds");
+        expect(initContainer.image).toBe("bitnami/kubectl:1.28");
+        expect(initContainer.command).toEqual(["sh", "-c"]);
+        expect(initContainer.args).toHaveLength(1);
+        expect(initContainer.args[0]).toContain("prometheuses.monitoring.coreos.com");
+        expect(initContainer.args[0]).toContain("servicemonitors.monitoring.coreos.com");
+        expect(initContainer.args[0]).toContain("prometheusrules.monitoring.coreos.com");
+        expect(initContainer.args[0]).toContain("kubectl wait --for condition=established");
+
+        // Verify security context
+        expect(initContainer.securityContext).toBeDefined();
+        expect(initContainer.securityContext.allowPrivilegeEscalation).toBe(false);
+        expect(initContainer.securityContext.readOnlyRootFilesystem).toBe(true);
+        expect(initContainer.securityContext.runAsNonRoot).toBe(true);
+        expect(initContainer.securityContext.runAsUser).toBe(65534);
+        expect(initContainer.securityContext.capabilities?.drop).toEqual(["ALL"]);
+    });
+
+    it("should preserve existing init containers when injecting CRD wait container", () => {
+        const deployment = {
+            kind: "Deployment",
+            metadata: {
+                name: "kube-prometheus-stack-operator",
+            },
+            spec: {
+                template: {
+                    spec: {
+                        initContainers: [
+                            {
+                                name: "existing-init-container",
+                                image: "busybox",
+                            },
+                        ],
+                        containers: [],
+                    },
+                },
+            },
+        };
+
+        const result = injectPrometheusCRDWaitInitContainer(deployment);
+
+        expect(result.spec.template.spec.initContainers).toHaveLength(2);
+        expect(result.spec.template.spec.initContainers[0].name).toBe("existing-init-container");
+        expect(result.spec.template.spec.initContainers[1].name).toBe("wait-for-prometheus-crds");
+    });
+
+    it("should not transform non-operator deployments", () => {
+        const deployment = {
+            kind: "Deployment",
+            metadata: {
+                name: "some-other-deployment",
+            },
+            spec: {
+                template: {
+                    spec: {
+                        containers: [],
+                    },
+                },
+            },
+        };
+
+        const result = injectPrometheusCRDWaitInitContainer(deployment);
+
+        expect(result.spec.template.spec.initContainers).toBeUndefined();
+    });
+
+    it("should not transform non-Deployment resources", () => {
+        const service = {
+            kind: "Service",
+            metadata: {
+                name: "kube-prometheus-stack-operator",
+            },
+            spec: {
+                ports: [],
+            },
+        };
+
+        const result = injectPrometheusCRDWaitInitContainer(service);
+
+        expect(result).toEqual(service);
     });
 });

@@ -167,7 +167,7 @@ export function createMonitoringResources(args: MonitoringResourcesArgs): Monito
             annotations: {
                 summary: "High CPU usage detected",
                 description:
-                    "Container {{ $labels.container }} in pod {{ $labels.pod }} has CPU usage above 80% (current: {{ humanizePercentage $values.B.Value }})",
+                    'Container {{ index $values.A.Labels "container" }} in pod {{ index $values.A.Labels "pod" }} has CPU usage above 80% (current: {{ humanizePercentage $values.B.Value }})',
             },
         },
         {
@@ -184,7 +184,7 @@ export function createMonitoringResources(args: MonitoringResourcesArgs): Monito
             annotations: {
                 summary: "High memory usage detected",
                 description:
-                    "Pod {{ $labels.pod }} in namespace {{ $labels.namespace }} has memory usage above 90% (current: {{ humanizePercentage $values.B.Value }})",
+                    'Pod {{ index $values.A.Labels "pod" }} in namespace {{ index $values.A.Labels "namespace" }} has memory usage above 90% (current: {{ humanizePercentage $values.B.Value }})',
             },
         },
         {
