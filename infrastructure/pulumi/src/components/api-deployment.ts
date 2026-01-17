@@ -284,12 +284,12 @@ export function createAPIDeployment(args: APIDeploymentArgs): APIDeploymentResul
                                 envFrom: [
                                     {
                                         secretRef: {
-                                            name: "api-env-var-secrets",
+                                            name: secret.metadata.name,
                                         },
                                     },
                                     {
                                         configMapRef: {
-                                            name: "env-vars",
+                                            name: configMap.metadata.name,
                                         },
                                     },
                                 ],
