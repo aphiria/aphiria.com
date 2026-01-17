@@ -1,0 +1,25 @@
+environment:
+  - aphiria.com/Production
+
+config:
+  # Production namespace configuration (for image pull secrets)
+  aphiria-com-infrastructure:namespace:
+    value:
+      imagePullSecret:
+        registry: "ghcr.io"
+
+  # Production-specific overrides
+  aphiria-com-infrastructure:overrides:
+    gateway:
+      dns:
+        domain: "aphiria.com"
+        records:
+          - name: "@"
+            resourceName: "production-root-dns"
+          - name: "www"
+            resourceName: "production-www-dns"
+          - name: "api"
+            resourceName: "production-api-dns"
+          - name: "grafana"
+            resourceName: "production-grafana-dns"
+        ttl: 300
