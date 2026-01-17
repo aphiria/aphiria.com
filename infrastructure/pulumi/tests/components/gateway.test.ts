@@ -32,6 +32,29 @@ describe("createGateway", () => {
         expect(certUrn).toBeDefined();
     });
 
+    it("should create gateway with self-signed certificate and cert-manager dependency", async () => {
+        const mockDependency = new k8s.apiextensions.CustomResource("mock-cert-manager", {
+            apiVersion: "v1",
+            kind: "MockResource",
+        });
+
+        const result = createGateway({
+            requireRootAndWildcard: false,
+            name: "test-gateway-with-dep",
+            namespace: "test-namespace",
+            tlsMode: "self-signed",
+            domains: ["*.aphiria.com"],
+            certManagerDependency: mockDependency,
+            provider: k8sProvider,
+        });
+
+        expect(result.urn).toBeDefined();
+        expect(result.certificate).toBeDefined();
+
+        const gatewayUrn = await promiseOf(result.urn);
+        expect(gatewayUrn).toContain("test-gateway-with-dep");
+    });
+
     it("should create gateway with Let's Encrypt certificate for production", async () => {
         const result = createGateway({
             requireRootAndWildcard: false,
@@ -48,6 +71,30 @@ describe("createGateway", () => {
 
         const gatewayUrn = await promiseOf(result.urn);
         expect(gatewayUrn).toContain("prod-gateway");
+    });
+
+    it("should create gateway with Let's Encrypt certificate and cert-manager dependency", async () => {
+        const mockDependency = new k8s.apiextensions.CustomResource("mock-cert-manager-le", {
+            apiVersion: "v1",
+            kind: "MockResource",
+        });
+
+        const result = createGateway({
+            requireRootAndWildcard: false,
+            name: "prod-gateway-with-dep",
+            namespace: "production",
+            tlsMode: "letsencrypt-prod",
+            domains: ["aphiria.com", "*.aphiria.com"],
+            dnsToken: pulumi.output("fake-dns-token"),
+            certManagerDependency: mockDependency,
+            provider: k8sProvider,
+        });
+
+        expect(result.urn).toBeDefined();
+        expect(result.certificate).toBeDefined();
+
+        const gatewayUrn = await promiseOf(result.urn);
+        expect(gatewayUrn).toContain("prod-gateway-with-dep");
     });
 
     it("should require dnsToken for wildcard domains with Let's Encrypt", () => {
@@ -85,6 +132,7 @@ describe("createGateway", () => {
                 namespace: "default",
                 tlsMode: "letsencrypt-prod",
                 domains: ["aphiria.com"],
+                dnsToken: pulumi.output("fake-dns-token"),
                 provider: k8sProvider,
             });
         }).toThrow("Gateway requires a wildcard domain");

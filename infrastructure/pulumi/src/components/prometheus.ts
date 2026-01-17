@@ -239,6 +239,12 @@ ${scrapeConfigs
                         `      - ${JSON.stringify(item).replace(/"/g, "").replace(/:/g, ": ").replace(/,/g, "\n        ")}`
                     );
                 });
+            } else {
+                // Should never reach here - all non-primitive fields in PrometheusScrapeConfig are arrays
+                /* istanbul ignore next */
+                throw new Error(
+                    `Unexpected value type for key "${key}" in scrape config: ${typeof value}`
+                );
             }
         });
 
