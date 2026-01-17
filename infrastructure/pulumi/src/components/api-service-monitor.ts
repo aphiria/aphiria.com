@@ -67,11 +67,12 @@ export function createApiServiceMonitor(args: ApiServiceMonitorArgs): ApiService
 
     // Create copy of secret in monitoring namespace for Prometheus Operator
     // Prometheus can only access secrets in its own namespace (monitoring)
+    // Name is suffixed with app namespace to avoid conflicts (e.g., prometheus-api-auth-preview-pr-148)
     const monitoringSecret = new k8s.core.v1.Secret(
         "prometheus-api-auth-monitoring",
         {
             metadata: {
-                name: "prometheus-api-auth",
+                name: pulumi.interpolate`prometheus-api-auth-${args.namespace}`,
                 namespace: "monitoring",
             },
             type: "Opaque",
@@ -116,14 +117,14 @@ export function createApiServiceMonitor(args: ApiServiceMonitorArgs): ApiService
                         path: args.metricsPath,
                         interval: args.scrapeInterval,
                         bearerTokenSecret: {
-                            name: secret.metadata.name,
+                            name: monitoringSecret.metadata.name,
                             key: "token",
                         },
                     },
                 ],
             },
         },
-        { provider: args.provider, dependsOn: [secret] }
+        { provider: args.provider, dependsOn: [secret, monitoringSecret] }
     );
 
     return { secret, monitoringSecret, serviceMonitor };

@@ -523,16 +523,16 @@ jobs:
             # Set PR-specific configuration values
             pulumi config set prNumber "${PR_NUMBER}" --stack "${STACK_NAME}"
             pulumi config set baseStackReference "${BASE_STACK_REF}" --stack "${STACK_NAME}"
-            pulumi config set --path 'namespace.name' "preview-pr-${PR_NUMBER}" --stack "${STACK_NAME}"
-            pulumi config set --path 'postgresql.databaseName' "aphiria_pr_${PR_NUMBER}" --stack "${STACK_NAME}"
-            pulumi config set --path 'app.web.url' "https://${PR_NUMBER}.pr.aphiria.com" --stack "${STACK_NAME}"
-            pulumi config set --path 'app.web.image' "${{ needs.build.outputs.web-digest }}" --stack "${STACK_NAME}"
-            pulumi config set --path 'app.api.url' "https://${PR_NUMBER}.pr-api.aphiria.com" --stack "${STACK_NAME}"
-            pulumi config set --path 'app.api.image' "${{ needs.build.outputs.api-digest }}" --stack "${STACK_NAME}"
+            pulumi config set --path 'overrides.namespace.name' "preview-pr-${PR_NUMBER}" --stack "${STACK_NAME}"
+            pulumi config set --path 'overrides.postgresql.databaseName' "aphiria_pr_${PR_NUMBER}" --stack "${STACK_NAME}"
+            pulumi config set --path 'overrides.app.web.url' "https://${PR_NUMBER}.pr.aphiria.com" --stack "${STACK_NAME}"
+            pulumi config set --path 'overrides.app.web.image' "${{ needs.build.outputs.web-digest }}" --stack "${STACK_NAME}"
+            pulumi config set --path 'overrides.app.api.url' "https://${PR_NUMBER}.pr-api.aphiria.com" --stack "${STACK_NAME}"
+            pulumi config set --path 'overrides.app.api.image' "${{ needs.build.outputs.api-digest }}" --stack "${STACK_NAME}"
           else
-            # Production uses image config paths
-            pulumi config set --path 'app.web.image' "${{ needs.build.outputs.web-digest }}" --stack "${STACK_NAME}"
-            pulumi config set --path 'app.api.image' "${{ needs.build.outputs.api-digest }}" --stack "${STACK_NAME}"
+            # Production uses image config paths under overrides
+            pulumi config set --path 'overrides.app.web.image' "${{ needs.build.outputs.web-digest }}" --stack "${STACK_NAME}"
+            pulumi config set --path 'overrides.app.api.image' "${{ needs.build.outputs.api-digest }}" --stack "${STACK_NAME}"
           fi
 
           set +e
@@ -654,16 +654,16 @@ jobs:
             # Set PR-specific configuration values
             pulumi config set prNumber "${PR_NUMBER}" --stack "${STACK_NAME}"
             pulumi config set baseStackReference "${BASE_STACK_REF}" --stack "${STACK_NAME}"
-            pulumi config set --path 'namespace.name' "preview-pr-${PR_NUMBER}" --stack "${STACK_NAME}"
-            pulumi config set --path 'postgresql.databaseName' "aphiria_pr_${PR_NUMBER}" --stack "${STACK_NAME}"
-            pulumi config set --path 'app.web.url' "https://${PR_NUMBER}.pr.aphiria.com" --stack "${STACK_NAME}"
-            pulumi config set --path 'app.web.image' "${{ needs.build.outputs.web-digest }}" --stack "${STACK_NAME}"
-            pulumi config set --path 'app.api.url' "https://${PR_NUMBER}.pr-api.aphiria.com" --stack "${STACK_NAME}"
-            pulumi config set --path 'app.api.image' "${{ needs.build.outputs.api-digest }}" --stack "${STACK_NAME}"
+            pulumi config set --path 'overrides.namespace.name' "preview-pr-${PR_NUMBER}" --stack "${STACK_NAME}"
+            pulumi config set --path 'overrides.postgresql.databaseName' "aphiria_pr_${PR_NUMBER}" --stack "${STACK_NAME}"
+            pulumi config set --path 'overrides.app.web.url' "https://${PR_NUMBER}.pr.aphiria.com" --stack "${STACK_NAME}"
+            pulumi config set --path 'overrides.app.web.image' "${{ needs.build.outputs.web-digest }}" --stack "${STACK_NAME}"
+            pulumi config set --path 'overrides.app.api.url' "https://${PR_NUMBER}.pr-api.aphiria.com" --stack "${STACK_NAME}"
+            pulumi config set --path 'overrides.app.api.image' "${{ needs.build.outputs.api-digest }}" --stack "${STACK_NAME}"
           else
-            # Production uses image config paths
-            pulumi config set --path 'app.web.image' "${{ needs.build.outputs.web-digest }}" --stack "${STACK_NAME}"
-            pulumi config set --path 'app.api.image' "${{ needs.build.outputs.api-digest }}" --stack "${STACK_NAME}"
+            # Production uses image config paths under overrides
+            pulumi config set --path 'overrides.app.web.image' "${{ needs.build.outputs.web-digest }}" --stack "${STACK_NAME}"
+            pulumi config set --path 'overrides.app.api.image' "${{ needs.build.outputs.api-digest }}" --stack "${STACK_NAME}"
           fi
 
           # Retry deployment with refresh on failure to handle orphaned resources
