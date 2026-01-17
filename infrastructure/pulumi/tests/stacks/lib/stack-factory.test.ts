@@ -522,6 +522,25 @@ describe("createStack", () => {
             expect(stack.monitoring).toBeUndefined();
         });
 
+        it("should not create monitoring when skipBaseInfrastructure=true (preview-pr uses preview-base monitoring)", () => {
+            (loadConfig as jest.Mock).mockReturnValue({
+                stackName: "preview-pr-148",
+                skipBaseInfrastructure: true,
+                gateway: { tlsMode: "letsencrypt-prod", domains: ["*.pr.aphiria.com"] },
+                postgresql: { user: "postgres", password: pulumi.output("password") },
+                namespace: { name: "preview-pr-148" },
+                // Grafana config inherited from base, but should not create resources
+                grafana: { hostname: "grafana.preview.aphiria.com" },
+                monitoring: { namespace: "monitoring" },
+                prometheus: { storageSize: "10Gi" },
+            });
+
+            const stack = createStack("preview");
+
+            expect(createMonitoringResources).not.toHaveBeenCalled();
+            expect(stack.monitoring).toBeUndefined();
+        });
+
         it("should not create imagePullSecret when namespace was already created", () => {
             (loadConfig as jest.Mock).mockReturnValue({
                 stackName: "production",

@@ -122,8 +122,9 @@ export function createStack(env: Environment, k8sProvider?: k8s.Provider): Stack
         });
     }
 
-    // Create monitoring stack (if configured)
-    const hasMonitoring = config.grafana?.hostname;
+    // Create monitoring stack (if configured and not skipped)
+    // Preview-PR stacks inherit monitoring config but use preview-base monitoring resources
+    const hasMonitoring = config.grafana?.hostname && !config.skipBaseInfrastructure;
     if (hasMonitoring) {
         resources.monitoring = createMonitoringResources({
             env,
