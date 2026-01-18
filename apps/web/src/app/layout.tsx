@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { Roboto, Roboto_Mono } from "next/font/google";
+import { MobileMenuToggle } from "@/components/layout/MobileMenuToggle";
+import { CopyButtons } from "@/components/docs/CopyButtons";
 import "./aphiria.css";
 import "./prism.css";
 
@@ -38,7 +40,11 @@ export default function RootLayout({
 }>) {
     return (
         <html lang="en" className={`${roboto.variable} ${robotoMono.variable}`}>
-            <body>{children}</body>
+            <body>
+                {children}
+                <MobileMenuToggle />
+                <CopyButtons />
+            </body>
         </html>
     );
 }

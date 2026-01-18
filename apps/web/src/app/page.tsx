@@ -2,6 +2,10 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
+import { Sidebar } from "@/components/layout/Sidebar";
+import { MainNavLinks } from "@/components/layout/MainNavLinks";
+import { ContextSelector } from "@/components/docs/ContextSelector";
+import { HighlightedHtml } from "@/components/docs/HighlightedHtml";
 
 export const metadata: Metadata = {
     title: "Aphiria - A simple, extensible REST API framework",
@@ -11,20 +15,22 @@ export const metadata: Metadata = {
 export default function HomePage() {
     return (
         <>
-            <script
-                dangerouslySetInnerHTML={{
-                    __html: `document.body.className = 'home';`,
-                }}
-            />
             <Header />
             <main>
+                <Sidebar id="sidebar-main-nav">
+                    <ContextSelector initialContext="framework" />
+                    <ul>
+                        <MainNavLinks />
+                    </ul>
+                </Sidebar>
                 <hgroup id="site-slogan">
                     <h1>A simple, extensible REST API framework for PHP</h1>
-                    <h2>Automatic content negotiation. No magic. No bleeding into your code.</h2>
+                    <p>Automatic content negotiation. No magic. No bleeding into your code.</p>
                 </hgroup>
-                <pre className="no-copy">
-                    <code className="language-php">
-                        {`// Define a controller endpoint
+                <HighlightedHtml>
+                    <pre className="no-copy">
+                        <code className="language-php">
+                            {`// Define a controller endpoint
 class UserController extends Controller
 {
     public function __construct(private IUserService $users) {}
@@ -56,14 +62,15 @@ $admin = new PrincipalBuilder('example.com')
     ->build();
 $getResponse = $this->actingAs($admin, fn() => $this->get("/users/$user->id"));
 $this->assertParsedBodyEquals($user, $getResponse);`}
-                    </code>
-                </pre>
-                <h2>Install Aphiria</h2>
-                <pre className="center">
-                    <code className="language-bash">
-                        {`composer create-project aphiria/app --prefer-dist --stability dev`}
-                    </code>
-                </pre>
+                        </code>
+                    </pre>
+                    <h2>Install Aphiria</h2>
+                    <pre className="center">
+                        <code className="language-bash">
+                            {`composer create-project aphiria/app --prefer-dist --stability dev`}
+                        </code>
+                    </pre>
+                </HighlightedHtml>
                 <nav className="doc-short-links-nav">
                     <h2>Get started</h2>
                     <Link

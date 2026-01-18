@@ -47,13 +47,16 @@ export function ContextSelector({ initialContext }: ContextSelectorProps) {
     };
 
     return (
-        <select
-            id="context-selector"
-            value={context}
-            onChange={(e) => handleContextChange(e.target.value as Context)}
-        >
-            <option value="framework">Framework</option>
-            <option value="library">Library</option>
-        </select>
+        <label htmlFor="context-selector" title="Choose the context to view the documentation with">
+            Context:{" "}
+            <select
+                id="context-selector"
+                value={context}
+                onChange={(e) => handleContextChange(e.target.value as Context)}
+            >
+                <option value="framework">Framework</option>
+                <option value="library">Library</option>
+            </select>
+        </label>
     );
 }

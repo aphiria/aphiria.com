@@ -24,10 +24,7 @@ interface SidebarNavProps {
 export function SidebarNav({ sections, currentSlug, version, contextSelector }: SidebarNavProps) {
     return (
         <nav className="side-nav">
-            <label title="Choose the context to view the documentation with">
-                Context:
-                {contextSelector}
-            </label>
+            {contextSelector}
             {sections.map((section) => (
                 <section key={section.title}>
                     <h3>{section.title}</h3>

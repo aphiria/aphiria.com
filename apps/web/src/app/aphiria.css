@@ -500,13 +500,15 @@ p code {
 body.home > main {
     h1,
     h2,
+    p,
     pre.center {
         text-align: center;
     }
 }
 
-hgroup#site-slogan h2 {
+hgroup#site-slogan p {
     font-size: 1.2em;
+    margin-bottom: 1em !important;
 }
 
 nav.doc-short-links-nav {
