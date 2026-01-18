@@ -25,5 +25,5 @@ config:
         ttl: 300
     grafana:
       hostname: pr-grafana.aphiria.com
-      defaultReceiver: local-notifications
+      defaultReceiver: grafana-default-email # Grafana's built-in no-op receiver (UI only, no emails)
       ingressSectionName: https-root

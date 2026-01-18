@@ -275,7 +275,7 @@ export function createMonitoringResources(args: MonitoringResourcesArgs): Monito
     // Create Grafana Unified Alerting provisioning ConfigMaps
     // Environment-specific contact point configuration
     // Production: email contact point for real alerts
-    // Preview/Local: use Grafana's default contact point (won't send without SMTP)
+    // Preview/Local: no email notifications (alerts visible in Grafana UI only, no external delivery)
     const contactPoints =
         args.env === "production" && args.grafanaConfig.alertEmail
             ? [
@@ -296,21 +296,7 @@ export function createMonitoringResources(args: MonitoringResourcesArgs): Monito
                       ],
                   },
               ]
-            : [
-                  {
-                      name: "local-notifications",
-                      receivers: [
-                          {
-                              uid: "local-notifications",
-                              type: "email",
-                              settings: {
-                                  addresses: "devnull@localhost",
-                              },
-                              disableResolveMessage: true,
-                          },
-                      ],
-                  },
-              ];
+            : [];
 
     const alerts = createGrafanaAlerts({
         namespace: "monitoring",

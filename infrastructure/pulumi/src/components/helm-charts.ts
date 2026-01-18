@@ -181,8 +181,9 @@ export function injectPrometheusCRDWaitInitContainer(
         ...(obj.spec.template.spec.initContainers || []),
         {
             name: "wait-for-prometheus-crds",
-            image: "registry.k8s.io/kubectl:v1.31.4",
-            command: ["sh", "-c"],
+            // bitnami/kubectl includes bash shell for script execution
+            image: "docker.io/bitnami/kubectl:1.31.4",
+            command: ["bash", "-c"],
             args: [
                 `
                     echo "⏳ Waiting for Prometheus CRDs to be established..."
