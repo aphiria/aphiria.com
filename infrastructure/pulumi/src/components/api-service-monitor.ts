@@ -63,7 +63,6 @@ export function createApiServiceMonitor(args: ApiServiceMonitorArgs): ApiService
         }
     );
 
-
     // Create ServiceMonitor CRD
     // Note: bearerTokenSecret is the official Kubernetes API field name
     const serviceMonitor = new k8s.apiextensions.CustomResource(

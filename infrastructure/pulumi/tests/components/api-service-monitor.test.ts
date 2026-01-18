@@ -150,5 +150,4 @@ describe("createApiServiceMonitor", () => {
         expect(result.secret).toBeDefined();
         expect(result.serviceMonitor).toBeDefined();
     });
-
 });
