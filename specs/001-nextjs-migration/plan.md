@@ -13,7 +13,7 @@ Migrate aphiria.com from PHP-rendered templating with gulp build pipeline to a m
 
 **Language/Version**: TypeScript 5.x + Node.js 20+, React 18+, Next.js 15+
 **Primary Dependencies**: Next.js (App Router), React, TypeScript, Prism.js (syntax highlighting), jsdom/cheerio (TOC generation), cookies-next (cookie management)
-**Storage**: Filesystem (documentation build artifacts at `docs-artifact/`), Browser cookies (context persistence)
+**Storage**: Filesystem (documentation build artifacts at `dist/docs/`), Browser cookies (context persistence)
 **Testing**: Jest + React Testing Library (unit tests), Playwright (E2E tests, existing suite must pass)
 **Target Platform**: Node.js server (Vercel, Docker container, or AWS Lambda)
 **Project Type**: Web application (frontend migration, API unchanged)
@@ -176,7 +176,7 @@ apps/web/                # Next.js application (replaces PHP templates + gulp)
  .prettierrc          # Prettier config
  package.json         # Dependencies
 
-docs-artifact/           # EXTERNAL build artifact (created by separate process)
+dist/docs/           # EXTERNAL build artifact (created by separate process)
  rendered/
     1.x/
         introduction.html
@@ -188,7 +188,7 @@ docs-artifact/           # EXTERNAL build artifact (created by separate process)
  meta.json
 ```
 
-**Structure Decision**: Web application structure selected because this is a frontend-only migration. The Next.js app lives in `apps/web/` (replacing the current PHP-rendered views). The PHP API in `apps/api/` remains unchanged and continues to consume the shared `docs-artifact/` for full-text search. The documentation build process (currently `gulp build-docs`) moves to a standalone script that produces `docs-artifact/` consumed by both Next.js (for rendering) and PHP (for search indexing).
+**Structure Decision**: Web application structure selected because this is a frontend-only migration. The Next.js app lives in `apps/web/` (replacing the current PHP-rendered views). The PHP API in `apps/api/` remains unchanged and continues to consume the shared `dist/docs/` for full-text search. The documentation build process (currently `gulp build-docs`) moves to a standalone script that produces `dist/docs/` consumed by both Next.js (for rendering) and PHP (for search indexing).
 
 ## Complexity Tracking
 

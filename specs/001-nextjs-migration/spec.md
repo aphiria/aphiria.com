@@ -170,7 +170,7 @@ A user needs to search documentation content by typing queries into the search b
 
 - **FR-026**: System MUST set document title to `{doc title} | Aphiria` for documentation pages
 - **FR-027**: System MUST set document title to exactly "Aphiria - A simple, extensible REST API framework" for the homepage
-- **FR-028**: System MUST insert compiled HTML fragments (from `docs-artifact/rendered/{version}/{slug}.html`) into an `<article>` element
+- **FR-028**: System MUST insert compiled HTML fragments (from `dist/docs/rendered/{version}/{slug}.html`) into an `<article>` element
 - **FR-029**: System MUST NOT include `<html>`, `<body>`, or `<article>` tags in the compiled markdown outputonly headings, paragraphs, lists, blockquotes, and other content elements
 - **FR-030**: System MUST generate a table of contents (TOC) from h2-h5 headings in the compiled fragment
 - **FR-031**: System MUST respect context visibility when generating the TOC (hidden headings excluded)
@@ -187,14 +187,14 @@ A user needs to search documentation content by typing queries into the search b
 #### Documentation Build Artifact
 
 - **FR-038**: System MUST consume a shared build artifact produced by a separate documentation build step
-- **FR-039**: System MUST read rendered HTML fragments from `docs-artifact/rendered/{version}/{slug}.html`
-- **FR-040**: System MUST read metadata from `docs-artifact/meta.json` (contains available docs, titles, etc.)
-- **FR-041**: System MUST read search index from `docs-artifact/search/lexemes.ndjson` (for API consumption, not website rendering)
+- **FR-039**: System MUST read rendered HTML fragments from `dist/docs/rendered/{version}/{slug}.html`
+- **FR-040**: System MUST read metadata from `dist/docs/meta.json` (contains available docs, titles, etc.)
+- **FR-041**: System MUST read search index from `dist/docs/search/lexemes.ndjson` (for API consumption, not website rendering)
 - **FR-042**: Documentation build artifact MUST be created by a standalone build process (NOT by Next.js)
 
 #### Search Index Artifact Format
 
-- **FR-043**: Search artifact MUST be NDJSON (newline-delimited JSON) format at `docs-artifact/search/lexemes.ndjson`
+- **FR-043**: Search artifact MUST be NDJSON (newline-delimited JSON) format at `dist/docs/search/lexemes.ndjson`
 - **FR-044**: Each search record MUST contain: `version`, `context` (global|framework|library), `link`, `html_element_type` (h1|h2|h3|h4|h5|p|li|blockquote), `inner_text`, `h1_inner_text`, `h2_inner_text` (nullable), `h3_inner_text` (nullable), `h4_inner_text` (nullable), `h5_inner_text` (nullable)
 - **FR-045**: Search artifact MUST contain ONLY semantic data (NO Postgres-specific data, NO HTML weights, NO tsvectors)
 - **FR-046**: Search index extraction MUST parse the compiled HTML fragment DOM, index only specified elements (h1-h5, p, li, blockquote), skip TOC nav blocks, derive context from ancestor classes (`.context-framework`, `.context-library`), and generate links to headings or nearest active heading
@@ -265,7 +265,7 @@ A user needs to search documentation content by typing queries into the search b
 
 8. **Mobile menu behavior**: The current mobile menu toggle logic (adding `.nav-open` class to body, triggering slide-in animation) can be replicated using React state + CSS classes.
 
-9. **Artifact availability at build time**: The documentation build artifact (`docs-artifact/`) is available in the filesystem at Next.js build time (either committed to repo or generated in a prior CI/CD step).
+9. **Artifact availability at build time**: The documentation build artifact (`dist/docs/`) is available in the filesystem at Next.js build time (either committed to repo or generated in a prior CI/CD step).
 
 10. **TOC generation logic**: Table of contents generation can parse the rendered HTML fragment on the server (using a library like jsdom or cheerio) or client-side to extract h2-h5 headings and build nested navigation.
 

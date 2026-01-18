@@ -17,7 +17,7 @@
 
 - **Web app**: `apps/web/` (Next.js application replacing PHP templates)
 - **Tests**: `apps/web/tests/` (Jest unit tests), `tests/e2e/` (Playwright E2E tests)
-- **Artifacts**: `docs-artifact/` (external build output, NOT created by Next.js)
+- **Artifacts**: `dist/docs/` (external build output, NOT created by Next.js)
 
 ---
 
@@ -29,10 +29,10 @@
 
 ### Build Artifact Contract
 
-**Output Location**: `docs-artifact/` (consumed by BOTH Next.js and PHP API)
+**Output Location**: `dist/docs/` (consumed by BOTH Next.js and PHP API)
 
 ```
-docs-artifact/
+dist/docs/
   rendered/
     1.x/
       introduction.html  # HTML fragment (NOT full document)
@@ -112,25 +112,25 @@ build-docs/
 
 **Setup and Configuration**
 
-- [ ] T001 Create `build-docs/` directory structure with TypeScript configuration (tsconfig.json, strict mode)
-- [ ] T002 [P] Install build dependencies: marked (markdown), prismjs + prismjs/components (syntax highlighting), jsdom (DOM parsing), @types/node
-- [ ] T003 [P] Create TypeScript interfaces in `build-docs/types/lexeme.ts` matching PHP contracts (LexemeRecord, Context enum: "framework" | "library" | "global")
-- [ ] T004 [P] Configure marked with GFM tables extension and `mangle: false, headerIds: true` for ID preservation
-- [ ] T005 Create CLI entry point in `build-docs/index.ts` with argument parsing (input: docs/, output: docs-artifact/)
+- [X] T001 Create `build-docs/` directory structure with TypeScript configuration (tsconfig.json, strict mode)
+- [X] T002 [P] Install build dependencies: marked (markdown), prismjs + prismjs/components (syntax highlighting), jsdom (DOM parsing), @types/node
+- [X] T003 [P] Create TypeScript interfaces in `build-docs/src/types.ts` matching PHP contracts (LexemeRecord, Context enum: "framework" | "library" | "global")
+- [X] T004 [P] Configure marked with GFM tables extension and `mangle: false, headerIds: true` for ID preservation
+- [X] T005 Create CLI entry point in `build-docs/index.ts` with argument parsing (input: docs/, output: dist/docs/)
 
 **Markdown Compilation and Syntax Highlighting**
 
-- [ ] T006 Create markdown compiler in `build-docs/lib/markdown-compiler.ts` using marked with raw HTML support (sanitize: false)
-- [ ] T007 Implement server-side Prism.js highlighting in `build-docs/lib/syntax-highlighter.ts` replicating `apps/web/src/js/server-side/highlight-code.js` logic
-- [ ] T008 [P] Load Prism languages: apacheconf, bash, http, json, markup, nginx, php, xml, yaml (matching current script line 9)
-- [ ] T009 Add copy button injection logic to syntax highlighter (skip if `<pre class="no-copy">`)
+- [X] T006 Create markdown compiler in `build-docs/src/markdown-compiler.ts` using marked with raw HTML support (sanitize: false)
+- [X] T007 Implement server-side Prism.js highlighting in `build-docs/src/syntax-highlighter.ts` replicating `apps/web/src/js/server-side/highlight-code.js` logic
+- [X] T008 [P] Load Prism languages: apacheconf, bash, http, json, markup, nginx, php, xml, yaml (matching current script line 9)
+- [X] T009 Add copy button injection logic to syntax highlighter (skip if `<pre class="no-copy">`)
 - [ ] T010 [P] Unit test: markdown with embedded HTML (`<div>`, `<h1>`) renders correctly
 - [ ] T011 [P] Unit test: GFM tables compile to `<table>` elements
 - [ ] T012 [P] Unit test: Prism.js highlights `<pre><code class="language-php">` blocks
 
 **Lexeme Extraction (LexemeSeeder Replication)**
 
-- [ ] T013 Create lexeme extractor in `build-docs/lib/lexeme-extractor.ts` with DOM parsing setup (jsdom)
+- [ ] T013 Create lexeme extractor in `build-docs/src/lexeme-extractor.ts` with DOM parsing setup (jsdom)
 - [ ] T014 Implement `processNode()` recursive DOM walker matching LexemeSeeder.php:284-342 (depth-first traversal)
 - [ ] T015 Implement heading hierarchy state tracking matching LexemeSeeder.php:299-320 (h1-h5 reset logic)
 - [ ] T016 Implement `getContext()` ancestor walk matching LexemeSeeder.php:186-205 (bubble up to find `.context-*` class)
@@ -154,8 +154,8 @@ build-docs/
 
 **Output Generation**
 
-- [ ] T031 Create NDJSON writer in `build-docs/lib/ndjson-writer.ts` (stream JSON objects with newline separator, NOT array)
-- [ ] T032 [P] Create meta.json generator in `build-docs/lib/meta-generator.ts` (extract titles from h1#doc-title, map slugs to versions)
+- [ ] T031 Create NDJSON writer in `build-docs/src/ndjson-writer.ts` (stream JSON objects with newline separator, NOT array)
+- [ ] T032 [P] Create meta.json generator in `build-docs/src/meta-generator.ts` (extract titles from h1#doc-title, map slugs to versions)
 - [ ] T033 [P] Unit test: NDJSON writer produces valid newline-delimited JSON (one object per line, no commas)
 - [ ] T034 [P] Unit test: meta.json includes all pages with correct version/slug/title mapping
 
@@ -173,8 +173,8 @@ build-docs/
 - [ ] T041 Update `infrastructure/docker/build/Dockerfile` to install Node.js 20+ and TypeScript compiler
 - [ ] T042 Replace `gulp build` command with `npm run build:docs` (runs build-docs/index.ts) in Dockerfile
 - [ ] T043 Update Dockerfile to run syntax highlighter on compiled HTML (integrate into build-docs pipeline, NOT separate step)
-- [ ] T044 [P] Add `docs-artifact/` directory COPY to runtime web Dockerfile
-- [ ] T045 [P] Add `docs-artifact/search/lexemes.ndjson` COPY to runtime API Dockerfile (for PHP LexemeSeeder consumption)
+- [ ] T044 [P] Add `dist/docs/` directory COPY to runtime web Dockerfile
+- [ ] T045 [P] Add `dist/docs/search/lexemes.ndjson` COPY to runtime API Dockerfile (for PHP LexemeSeeder consumption)
 - [ ] T046 Update PHP LexemeSeeder to READ lexemes from NDJSON artifact instead of walking DOM (change from extraction to import)
 - [ ] T047 Create new Next.js runtime Dockerfile in `infrastructure/docker/runtime/nextjs/Dockerfile` (Node.js 20+, production build)
 - [ ] T048 Update Kubernetes deployment manifests to use Next.js runtime image instead of nginx for web service
@@ -187,7 +187,7 @@ build-docs/
 
 **Purpose**: Initialize Next.js project structure and development environment
 
-**Dependencies**: Phase 0 MUST be complete (docs-artifact/ must exist for Next.js to consume)
+**Dependencies**: Phase 0 MUST be complete (dist/docs/ must exist for Next.js to consume)
 
 - [ ] T097 Create Next.js 15+ project in apps/web/ with TypeScript and App Router
 - [ ] T098 [P] Configure TypeScript with strict mode in apps/web/tsconfig.json
@@ -213,7 +213,7 @@ build-docs/
 - [ ] T107 Create TypeScript interfaces for DocumentationPage in apps/web/types/documentation.ts
 - [ ] T108 [P] Create TypeScript interfaces for NavigationSection and NavigationItem in apps/web/types/navigation.ts
 - [ ] T109 [P] Create TypeScript interfaces for ContextState in apps/web/types/context.ts
-- [ ] T110 Implement documentation artifact reader in apps/web/lib/docs/artifact-reader.ts (reads meta.json and HTML fragments from docs-artifact/)
+- [ ] T110 Implement documentation artifact reader in apps/web/lib/docs/artifact-reader.ts (reads meta.json and HTML fragments from dist/docs/)
 - [ ] T111 [P] Implement sidebar configuration in apps/web/lib/docs/sidebar-config.ts (curated navigation structure for version 1.x)
 - [ ] T112 [P] Create Header component in apps/web/components/layout/Header.tsx
 - [ ] T113 [P] Create Footer component in apps/web/components/layout/Footer.tsx
@@ -391,8 +391,8 @@ build-docs/
 
 ### Phase Dependencies
 
-- **Documentation Build Pipeline (Phase 0)**: No dependencies - MUST complete FIRST (builds docs-artifact/ consumed by all subsequent phases)
-- **Setup (Phase 1)**: Depends on Phase 0 completion (Next.js needs docs-artifact/ to exist)
+- **Documentation Build Pipeline (Phase 0)**: No dependencies - MUST complete FIRST (builds dist/docs/ consumed by all subsequent phases)
+- **Setup (Phase 1)**: Depends on Phase 0 completion (Next.js needs dist/docs/ to exist)
 - **Foundational (Phase 2)**: Depends on Phase 0 and Phase 1 completion - BLOCKS all user stories
 - **User Stories (Phase 3-7)**: All depend on Foundational phase completion
   - User Story 1 (P1): Can start after Foundational

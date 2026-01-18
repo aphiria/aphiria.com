@@ -1,0 +1,111 @@
+import { JSDOM } from "jsdom";
+import Prism from "prismjs";
+import loadLanguages from "prismjs/components/index.js";
+
+/**
+ * Track whether languages have been loaded
+ */
+let languagesLoaded = false;
+
+/**
+ * Load Prism language components
+ */
+export function loadPrismLanguages(): void {
+    if (!languagesLoaded) {
+        loadLanguages([
+            "apacheconf",
+            "bash",
+            "http",
+            "json",
+            "markup",
+            "nginx",
+            "php",
+            "xml",
+            "yaml",
+        ]);
+        languagesLoaded = true;
+    }
+}
+
+/**
+ * Apply Prism.js syntax highlighting to HTML fragment
+ * Replicates apps/web/src/js/server-side/highlight-code.js logic
+ *
+ * @param html - HTML fragment containing <pre><code> blocks
+ * @returns HTML with highlighted code blocks and copy buttons
+ */
+export function highlightCode(html: string): string {
+    loadPrismLanguages();
+
+    const dom = new JSDOM(html);
+    const document = dom.window.document;
+
+    const codeBlocks = document.querySelectorAll("pre > code");
+
+    codeBlocks.forEach((codeBlock) => {
+        const codeElement = codeBlock as HTMLElement;
+        let languageClass = Array.from(codeElement.classList).find((cls) =>
+            cls.startsWith("language-")
+        );
+
+        // Default to PHP (matching highlight-code.js line 20)
+        let lang = languageClass ? languageClass.replace("language-", "") : "php";
+
+        if (!languageClass) {
+            languageClass = "language-php";
+            codeElement.classList.add(languageClass);
+        }
+
+        // Apply Prism highlighting if language is supported
+        const grammar = Prism.languages[lang];
+        if (grammar) {
+            const code = codeElement.textContent || "";
+            const highlighted = Prism.highlight(code, grammar, lang);
+            codeElement.innerHTML = highlighted;
+
+            // Ensure <pre> has the same language class (line 32-34)
+            const preElement = codeElement.parentElement as HTMLElement;
+            if (
+                preElement &&
+                preElement.tagName.toLowerCase() === "pre" &&
+                !preElement.classList.contains(languageClass)
+            ) {
+                preElement.classList.add(languageClass);
+            }
+
+            // Add Copy button unless <pre> has 'no-copy' class (line 37-48)
+            if (preElement && !preElement.classList.contains("no-copy")) {
+                const buttonWrapper = document.createElement("div");
+                buttonWrapper.className = "button-wrapper";
+
+                const copyButton = document.createElement("button");
+                copyButton.className = "copy-button";
+                copyButton.title = "Copy to clipboard";
+                copyButton.innerHTML =
+                    '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-copy" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M4 2a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2zm2-1a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1zM2 5a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1v-1h1v1a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h1v1z"></path></svg>';
+
+                buttonWrapper.appendChild(copyButton);
+                preElement.insertBefore(buttonWrapper, preElement.firstChild);
+            }
+        }
+    });
+
+    // Return serialized HTML body content (matching line 52)
+    return dom.window.document.body.innerHTML;
+}
+
+/**
+ * Apply syntax highlighting to all compiled HTML files
+ *
+ * @param compiledFiles - Map of slug -> HTML content
+ * @returns Map of slug -> highlighted HTML content
+ */
+export function highlightAllFiles(compiledFiles: Map<string, string>): Map<string, string> {
+    const highlightedFiles = new Map<string, string>();
+
+    for (const [slug, html] of compiledFiles) {
+        highlightedFiles.set(slug, highlightCode(html));
+    }
+
+    return highlightedFiles;
+}
