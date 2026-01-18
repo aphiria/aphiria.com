@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 
-const fs = require('fs');
-const { JSDOM } = require('jsdom');
-const prism = require('prismjs');
-const loadLanguages = require('prismjs/components/');
+import fs from 'fs';
+import { JSDOM } from 'jsdom';
+import prism from 'prismjs';
+import loadLanguages from 'prismjs/components/index.js';
 
 // Note: If our documentation uses any other languages, be sure to add them here
 loadLanguages(['apacheconf', 'bash', 'http', 'json', 'markup', 'nginx', 'php','xml', 'yaml']);

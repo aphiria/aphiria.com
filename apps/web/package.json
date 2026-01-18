@@ -13,8 +13,10 @@
         "gulp-shell": "^0.8.0",
         "gulp-sourcemaps": "^3.0.0",
         "gulp-terser": "^2.1.0",
+        "jsdom": "^26.0.0",
         "merge-stream": "^2.0.0",
         "postcss": "^8.5.6",
-        "postcss-nested": "^7.0.2"
+        "postcss-nested": "^7.0.2",
+        "prismjs": "^1.29.0"
     }
 }
