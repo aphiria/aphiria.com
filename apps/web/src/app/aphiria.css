@@ -15,7 +15,7 @@
 }
 
 html {
-    font-family: roboto, arial, sans-serif;
+    font-family: var(--font-roboto), arial, sans-serif;
     font-size: var(--fontSize);
     line-height: var(--lineHeight);
     color: var(--baseFontColor);
@@ -472,7 +472,7 @@ pre div.button-wrapper {
 }
 
 code {
-    font-family: "Roboto Mono", "Consolas", monospace !important;
+    font-family: var(--font-roboto-mono), "Consolas", monospace !important;
     font-size: 0.98em !important;
 
     &[class*="language-"] {
