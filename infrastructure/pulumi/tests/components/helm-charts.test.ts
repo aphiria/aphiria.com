@@ -267,7 +267,7 @@ describe("injectPrometheusCRDWaitInitContainer", () => {
 
         const initContainer = result?.props.spec.template.spec.initContainers[0];
         expect(initContainer.name).toBe("wait-for-prometheus-crds");
-        expect(initContainer.image).toBe("docker.io/bitnami/kubectl:1.31.4");
+        expect(initContainer.image).toBe("docker.io/bitnami/kubectl:latest");
         expect(initContainer.command).toEqual(["bash", "-c"]);
         expect(initContainer.args).toHaveLength(1);
         expect(initContainer.args[0]).toContain("prometheuses.monitoring.coreos.com");
