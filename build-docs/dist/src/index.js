@@ -20,17 +20,17 @@ function validateLexemes(lexemes) {
             errors.push(`Lexeme ${index}: Missing h1_inner_text (link: ${record.link})`);
         }
         // T037: Verify all links start with /docs/ and match expected format
-        if (!record.link.startsWith('/docs/')) {
+        if (!record.link.startsWith("/docs/")) {
             errors.push(`Lexeme ${index}: Link must start with /docs/ (got: ${record.link})`);
         }
         // T038: Verify context enum values
-        const validContexts = ['framework', 'library', 'global'];
+        const validContexts = ["framework", "library", "global"];
         if (!validContexts.includes(record.context)) {
-            errors.push(`Lexeme ${index}: Invalid context value (got: ${record.context}, expected one of: ${validContexts.join(', ')})`);
+            errors.push(`Lexeme ${index}: Invalid context value (got: ${record.context}, expected one of: ${validContexts.join(", ")})`);
         }
     });
     if (errors.length > 0) {
-        throw new Error(`Lexeme validation failed:\n${errors.join('\n')}`);
+        throw new Error(`Lexeme validation failed:\n${errors.join("\n")}`);
     }
 }
 /**
@@ -41,21 +41,21 @@ async function buildDocs(config) {
     // Configure markdown compiler
     (0, markdown_compiler_1.configureMarked)();
     // Ensure output directories exist
-    const renderedDir = (0, path_1.join)(outputDir, 'rendered');
-    const searchDir = (0, path_1.join)(outputDir, 'search');
+    const renderedDir = (0, path_1.join)(outputDir, "rendered");
+    const searchDir = (0, path_1.join)(outputDir, "search");
     (0, fs_1.mkdirSync)(renderedDir, { recursive: true });
     (0, fs_1.mkdirSync)(searchDir, { recursive: true });
     // Process all markdown files
-    const markdownFiles = (0, fs_1.readdirSync)(docsSourceDir).filter(file => file.endsWith('.md'));
+    const markdownFiles = (0, fs_1.readdirSync)(docsSourceDir).filter((file) => file.endsWith(".md"));
     const allLexemes = [];
     const allMeta = [];
     const renderedFiles = [];
     for (const markdownFile of markdownFiles) {
-        const slug = (0, path_1.basename)(markdownFile, '.md');
+        const slug = (0, path_1.basename)(markdownFile, ".md");
         const markdownPath = (0, path_1.join)(docsSourceDir, markdownFile);
         const outputPath = (0, path_1.join)(renderedDir, `${slug}.html`);
         // Read markdown source
-        const markdown = (0, fs_1.readFileSync)(markdownPath, 'utf8');
+        const markdown = (0, fs_1.readFileSync)(markdownPath, "utf8");
         // Compile markdown to HTML fragment
         let htmlFragment = await (0, markdown_compiler_1.compileMarkdownWithDocTitle)(markdown);
         // Apply syntax highlighting to fragment
@@ -68,17 +68,17 @@ async function buildDocs(config) {
         // Generate metadata (needs wrapped HTML to find h1#doc-title)
         allMeta.push(...(0, meta_generator_1.generateMetaJson)([{ html: wrappedHtml, version, slug }]));
         // Write rendered HTML fragment (NOT wrapped - just the fragment for Next.js)
-        (0, fs_1.writeFileSync)(outputPath, htmlFragment, 'utf8');
+        (0, fs_1.writeFileSync)(outputPath, htmlFragment, "utf8");
         renderedFiles.push(outputPath);
     }
     // Validate lexemes before writing
     validateLexemes(allLexemes);
     // Write search index (NDJSON)
-    const lexemesPath = (0, path_1.join)(searchDir, 'lexemes.ndjson');
+    const lexemesPath = (0, path_1.join)(searchDir, "lexemes.ndjson");
     await (0, ndjson_writer_1.writeLexemesToNdjson)(allLexemes, lexemesPath);
     // Write metadata (JSON)
-    const metaPath = (0, path_1.join)(outputDir, 'meta.json');
-    (0, fs_1.writeFileSync)(metaPath, JSON.stringify(allMeta, null, 2), 'utf8');
+    const metaPath = (0, path_1.join)(outputDir, "meta.json");
+    (0, fs_1.writeFileSync)(metaPath, JSON.stringify(allMeta, null, 2), "utf8");
     return {
         documentsProcessed: markdownFiles.length,
         lexemesGenerated: allLexemes.length,
@@ -95,8 +95,8 @@ async function buildDocs(config) {
 async function main() {
     const args = process.argv.slice(2);
     if (args.length < 3) {
-        console.error('Usage: build-docs <source-dir> <output-dir> <version>');
-        console.error('Example: build-docs ./docs/1.x ./dist/docs 1.x');
+        console.error("Usage: build-docs <source-dir> <output-dir> <version>");
+        console.error("Example: build-docs ./docs/1.x ./dist/docs 1.x");
         process.exit(1);
     }
     const [docsSourceDir, outputDir, version] = args;
@@ -104,30 +104,30 @@ async function main() {
         console.error(`Error: Source directory does not exist: ${docsSourceDir}`);
         process.exit(1);
     }
-    console.log('Building documentation...');
+    console.log("Building documentation...");
     console.log(`  Source: ${docsSourceDir}`);
     console.log(`  Output: ${outputDir}`);
     console.log(`  Version: ${version}`);
-    console.log('');
+    console.log("");
     try {
         const result = await buildDocs({ docsSourceDir, outputDir, version });
-        console.log('Build complete!');
+        console.log("Build complete!");
         console.log(`  Documents processed: ${result.documentsProcessed}`);
         console.log(`  Lexemes generated: ${result.lexemesGenerated}`);
         console.log(`  Output files:`);
-        console.log(`    - Rendered HTML: ${result.outputFiles.rendered.length} files in ${(0, path_1.join)(outputDir, 'rendered')}`);
+        console.log(`    - Rendered HTML: ${result.outputFiles.rendered.length} files in ${(0, path_1.join)(outputDir, "rendered")}`);
         console.log(`    - Search index: ${result.outputFiles.lexemes}`);
         console.log(`    - Metadata: ${result.outputFiles.meta}`);
     }
     catch (error) {
-        console.error('Build failed:', error);
+        console.error("Build failed:", error);
         process.exit(1);
     }
 }
 // Run CLI if invoked directly
 if (require.main === module) {
-    main().catch(error => {
-        console.error('Fatal error:', error);
+    main().catch((error) => {
+        console.error("Fatal error:", error);
         process.exit(1);
     });
 }

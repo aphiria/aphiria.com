@@ -1,4 +1,4 @@
-import { LexemeRecord } from './types';
+import { LexemeRecord } from "./types";
 /**
  * Write lexeme records to NDJSON file
  */

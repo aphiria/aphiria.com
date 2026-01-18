@@ -7,11 +7,14 @@ import { getContextCookie } from "@/lib/cookies/context-cookie";
  * @param searchParams - URL search parameters
  * @returns Resolved context value
  */
-export function resolveContext(searchParams: URLSearchParams | Record<string, string | string[] | undefined>): Context {
+export function resolveContext(
+    searchParams: URLSearchParams | Record<string, string | string[] | undefined>
+): Context {
     // Check query parameter first
-    const queryContext = searchParams instanceof URLSearchParams
-        ? searchParams.get("context")
-        : searchParams.context;
+    const queryContext =
+        searchParams instanceof URLSearchParams
+            ? searchParams.get("context")
+            : searchParams.context;
 
     if (queryContext === "framework" || queryContext === "library") {
         return queryContext;

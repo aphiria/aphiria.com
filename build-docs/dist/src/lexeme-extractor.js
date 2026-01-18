@@ -6,7 +6,7 @@ const types_1 = require("./types");
 /**
  * Indexable HTML elements (matches the elements we extract for search)
  */
-const INDEXABLE_ELEMENTS = new Set(['h1', 'h2', 'h3', 'h4', 'h5', 'p', 'li', 'blockquote']);
+const INDEXABLE_ELEMENTS = new Set(["h1", "h2", "h3", "h4", "h5", "p", "li", "blockquote"]);
 /**
  * Extract lexemes from compiled HTML for search indexing
  *
@@ -21,7 +21,7 @@ function extractLexemes(html, version, slug) {
     const { Element } = dom.window;
     const lexemes = [];
     // Find the article element
-    const article = document.querySelector('body > main > article:first-child');
+    const article = document.querySelector("body > main > article:first-child");
     if (!article) {
         return lexemes;
     }
@@ -47,23 +47,23 @@ function processNode(node, lexemes, version, slug, state, ElementClass) {
     if (node instanceof ElementClass) {
         const nodeName = node.nodeName.toLowerCase();
         switch (nodeName) {
-            case 'h1':
+            case "h1":
                 state.h1 = node;
                 state.h2 = state.h3 = state.h4 = state.h5 = null;
                 break;
-            case 'h2':
+            case "h2":
                 state.h2 = node;
                 state.h3 = state.h4 = state.h5 = null;
                 break;
-            case 'h3':
+            case "h3":
                 state.h3 = node;
                 state.h4 = state.h5 = null;
                 break;
-            case 'h4':
+            case "h4":
                 state.h4 = node;
                 state.h5 = null;
                 break;
-            case 'h5':
+            case "h5":
                 state.h5 = node;
                 break;
         }
@@ -73,7 +73,7 @@ function processNode(node, lexemes, version, slug, state, ElementClass) {
         }
     }
     // Recursively process children
-    node.childNodes.forEach(child => {
+    node.childNodes.forEach((child) => {
         processNode(child, lexemes, version, slug, state, ElementClass);
     });
 }
@@ -85,8 +85,8 @@ function shouldSkipNode(node, ElementClass) {
         return false;
     }
     // Skip table-of-contents navigation
-    return node.nodeName.toLowerCase() === 'nav' &&
-        (node.classList.contains('toc-nav') || node.className.includes('toc-nav'));
+    return (node.nodeName.toLowerCase() === "nav" &&
+        (node.classList.contains("toc-nav") || node.className.includes("toc-nav")));
 }
 /**
  * Create lexeme record from DOM element
@@ -102,7 +102,7 @@ function createLexemeRecord(element, version, slug, state) {
         link,
         html_element_type: nodeName,
         inner_text: innerText,
-        h1_inner_text: state.h1 ? getAllChildNodeTexts(state.h1) : '',
+        h1_inner_text: state.h1 ? getAllChildNodeTexts(state.h1) : "",
         h2_inner_text: state.h2 ? getAllChildNodeTexts(state.h2) : null,
         h3_inner_text: state.h3 ? getAllChildNodeTexts(state.h3) : null,
         h4_inner_text: state.h4 ? getAllChildNodeTexts(state.h4) : null,
@@ -116,33 +116,33 @@ function buildLink(element, version, slug, state) {
     const baseLink = `/docs/${version}/${slug}`;
     const nodeName = element.nodeName.toLowerCase();
     // If h1, link to doc itself
-    if (nodeName === 'h1') {
+    if (nodeName === "h1") {
         return baseLink;
     }
     // If h2-h5, link to element's ID
-    if (['h2', 'h3', 'h4', 'h5'].includes(nodeName)) {
-        const id = element.getAttribute('id');
+    if (["h2", "h3", "h4", "h5"].includes(nodeName)) {
+        const id = element.getAttribute("id");
         return id ? `${baseLink}#${id}` : baseLink;
     }
     // Otherwise, link to nearest header's ID (h5 > h4 > h3 > h2 > h1)
     if (state.h5) {
-        const id = state.h5.getAttribute('id');
+        const id = state.h5.getAttribute("id");
         return id ? `${baseLink}#${id}` : baseLink;
     }
     if (state.h4) {
-        const id = state.h4.getAttribute('id');
+        const id = state.h4.getAttribute("id");
         return id ? `${baseLink}#${id}` : baseLink;
     }
     if (state.h3) {
-        const id = state.h3.getAttribute('id');
+        const id = state.h3.getAttribute("id");
         return id ? `${baseLink}#${id}` : baseLink;
     }
     if (state.h2) {
-        const id = state.h2.getAttribute('id');
+        const id = state.h2.getAttribute("id");
         return id ? `${baseLink}#${id}` : baseLink;
     }
     if (state.h1) {
-        const id = state.h1.getAttribute('id');
+        const id = state.h1.getAttribute("id");
         return id ? `${baseLink}#${id}` : baseLink;
     }
     return baseLink;
@@ -153,10 +153,10 @@ function buildLink(element, version, slug, state) {
 function getContext(element) {
     let current = element;
     while (current) {
-        if (current.classList.contains('context-framework')) {
+        if (current.classList.contains("context-framework")) {
             return types_1.Context.Framework;
         }
-        if (current.classList.contains('context-library')) {
+        if (current.classList.contains("context-library")) {
             return types_1.Context.Library;
         }
         current = current.parentElement;
@@ -167,10 +167,10 @@ function getContext(element) {
  * Recursively extract all text content from element
  */
 function getAllChildNodeTexts(node) {
-    let text = '';
-    node.childNodes.forEach(child => {
+    let text = "";
+    node.childNodes.forEach((child) => {
         if (child.nodeType === node.TEXT_NODE) {
-            text += child.textContent || '';
+            text += child.textContent || "";
         }
         else {
             text += getAllChildNodeTexts(child);

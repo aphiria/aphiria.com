@@ -61,7 +61,14 @@ export const sidebar1x: NavigationSection[] = [
                 title: "Dependency Injection",
                 linkText: "Dependency Injection",
                 description: "Learn about injecting your dependencies in Aphiria",
-                keywords: ["aphiria", "dependencies", "dependency injection", "container", "binders", "php"],
+                keywords: [
+                    "aphiria",
+                    "dependencies",
+                    "dependency injection",
+                    "container",
+                    "binders",
+                    "php",
+                ],
             },
             {
                 slug: "exception-handling",
@@ -160,7 +167,14 @@ export const sidebar1x: NavigationSection[] = [
                 title: "Collections",
                 linkText: "Collections",
                 description: "Learn about collections in Aphiria",
-                keywords: ["aphiria", "collections", "hash tables", "array lists", "stacks", "queues"],
+                keywords: [
+                    "aphiria",
+                    "collections",
+                    "hash tables",
+                    "array lists",
+                    "stacks",
+                    "queues",
+                ],
             },
             {
                 slug: "console",

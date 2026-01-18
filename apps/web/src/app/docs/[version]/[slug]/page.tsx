@@ -3,9 +3,12 @@ import type { Metadata } from "next";
 import { ContextSelector } from "@/components/docs/ContextSelector";
 import { SidebarNav } from "@/components/docs/SidebarNav";
 import { DocumentContent } from "@/components/docs/DocumentContent";
+import { TableOfContents } from "@/components/docs/TableOfContents";
+import { TocHighlighter } from "@/components/docs/TocHighlighter";
 import { resolveContext } from "@/lib/context/resolver";
 import { readDocumentationHtml } from "@/lib/docs/artifact-reader";
 import { getSidebarForVersion } from "@/lib/docs/sidebar-config";
+import { generateToc } from "@/lib/docs/toc-generator";
 
 interface PageProps {
     params: Promise<{
@@ -38,6 +41,9 @@ export default async function DocumentationPage({ params, searchParams }: PagePr
     // Get sidebar navigation
     const sidebarSections = getSidebarForVersion(version);
 
+    // Generate table of contents from HTML
+    const tocHeadings = generateToc(html);
+
     return (
         <>
             <SidebarNav
@@ -48,6 +54,7 @@ export default async function DocumentationPage({ params, searchParams }: PagePr
             />
             <article>
                 <div id="article-loading"></div>
+                <TableOfContents headings={tocHeadings} />
                 <DocumentContent html={html} />
                 <footer>
                     <a
@@ -60,6 +67,7 @@ export default async function DocumentationPage({ params, searchParams }: PagePr
                     </a>
                 </footer>
             </article>
+            <TocHighlighter />
             <div id="gray-out"></div>
         </>
     );

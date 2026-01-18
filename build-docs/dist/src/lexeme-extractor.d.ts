@@ -1,4 +1,4 @@
-import { LexemeRecord } from './types';
+import { LexemeRecord } from "./types";
 /**
  * Extract lexemes from compiled HTML for search indexing
  *
