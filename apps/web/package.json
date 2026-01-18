@@ -1,5 +1,8 @@
 {
     "type": "module",
+    "overrides": {
+        "postcss": "^8.5.6"
+    },
     "devDependencies": {
         "del": "^8.0.1",
         "fs": "^0.0.2",
