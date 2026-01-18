@@ -167,7 +167,7 @@ export function createMonitoringResources(args: MonitoringResourcesArgs): Monito
             annotations: {
                 summary: "High CPU usage detected",
                 description:
-                    'Container {{ index $values.A.Labels "container" }} in pod {{ index $values.A.Labels "pod" }} has CPU usage above 80% (current: {{ humanizePercentage $values.B.Value }})',
+                    "Pod {{ $labels.pod }} in namespace {{ $labels.namespace }} has CPU usage above 80% (current: {{ humanizePercentage $values.B.Value }})",
             },
         },
         {
@@ -184,7 +184,7 @@ export function createMonitoringResources(args: MonitoringResourcesArgs): Monito
             annotations: {
                 summary: "High memory usage detected",
                 description:
-                    'Pod {{ index $values.A.Labels "pod" }} in namespace {{ index $values.A.Labels "namespace" }} has memory usage above 90% (current: {{ humanizePercentage $values.B.Value }})',
+                    "Pod {{ $labels.pod }} in namespace {{ $labels.namespace }} has memory usage above 90% (current: {{ humanizePercentage $values.B.Value }})",
             },
         },
         {
@@ -275,7 +275,7 @@ export function createMonitoringResources(args: MonitoringResourcesArgs): Monito
     // Create Grafana Unified Alerting provisioning ConfigMaps
     // Environment-specific contact point configuration
     // Production: email contact point for real alerts
-    // Preview/Local: use Grafana's default contact point (won't send without SMTP)
+    // Preview/Local: no email notifications (alerts visible in Grafana UI only, no external delivery)
     const contactPoints =
         args.env === "production" && args.grafanaConfig.alertEmail
             ? [
@@ -296,21 +296,7 @@ export function createMonitoringResources(args: MonitoringResourcesArgs): Monito
                       ],
                   },
               ]
-            : [
-                  {
-                      name: "local-notifications",
-                      receivers: [
-                          {
-                              uid: "local-notifications",
-                              type: "email",
-                              settings: {
-                                  addresses: "devnull@localhost",
-                              },
-                              disableResolveMessage: true,
-                          },
-                      ],
-                  },
-              ];
+            : [];
 
     const alerts = createGrafanaAlerts({
         namespace: "monitoring",

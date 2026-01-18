@@ -102,7 +102,7 @@ describe("createMonitoringResources", () => {
             clientSecret: "",
         },
         adminUser: "admin",
-        defaultReceiver: "local-notifications",
+        defaultReceiver: "grafana-default-email",
         ingressSectionName: "https-subdomains",
     } as GrafanaConfig;
 
@@ -666,7 +666,7 @@ describe("createMonitoringResources", () => {
             );
         });
 
-        it("should create local-notifications contact point for non-production environments", () => {
+        it("should not create email contact points for non-production environments", () => {
             createMonitoringResources({
                 env: "local",
                 provider: k8sProvider,
@@ -677,16 +677,12 @@ describe("createMonitoringResources", () => {
 
             expect(createGrafanaAlerts).toHaveBeenCalledWith(
                 expect.objectContaining({
-                    contactPoints: expect.arrayContaining([
-                        expect.objectContaining({
-                            name: "local-notifications",
-                        }),
-                    ]),
+                    contactPoints: [],
                 })
             );
         });
 
-        it("should create local-notifications contact point for production when alertEmail is not configured", () => {
+        it("should not create email contact points for production when alertEmail is not configured", () => {
             createMonitoringResources({
                 env: "production",
                 provider: k8sProvider,
@@ -697,11 +693,7 @@ describe("createMonitoringResources", () => {
 
             expect(createGrafanaAlerts).toHaveBeenCalledWith(
                 expect.objectContaining({
-                    contactPoints: expect.arrayContaining([
-                        expect.objectContaining({
-                            name: "local-notifications",
-                        }),
-                    ]),
+                    contactPoints: [],
                 })
             );
         });
