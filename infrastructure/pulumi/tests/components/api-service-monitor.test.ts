@@ -151,29 +151,4 @@ describe("createApiServiceMonitor", () => {
         expect(result.serviceMonitor).toBeDefined();
     });
 
-    it("should create monitoring secret in monitoring namespace", async () => {
-        const result = createApiServiceMonitor({
-            namespace: "test-ns",
-            serviceName: "api",
-            targetPort: 80,
-            metricsPath: "/metrics",
-            scrapeInterval: "15s",
-            authToken: pulumi.output("test-token-456"),
-            provider: k8sProvider,
-        });
-
-        expect(result.monitoringSecret).toBeDefined();
-
-        const [secretName, secretNamespace, secretType, secretData] = await Promise.all([
-            promiseOf(result.monitoringSecret.metadata.name),
-            promiseOf(result.monitoringSecret.metadata.namespace),
-            promiseOf(result.monitoringSecret.type),
-            promiseOf(result.monitoringSecret.stringData),
-        ]);
-
-        expect(secretName).toBe("prometheus-api-auth-test-ns");
-        expect(secretNamespace).toBe("monitoring");
-        expect(secretType).toBe("Opaque");
-        expect(secretData).toEqual({ token: "test-token-456" });
-    });
 });

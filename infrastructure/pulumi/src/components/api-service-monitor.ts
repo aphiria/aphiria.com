@@ -25,10 +25,8 @@ export interface ApiServiceMonitorArgs {
  * Result from creating API ServiceMonitor
  */
 export interface ApiServiceMonitorResult {
-    /** Secret containing the auth token in the app namespace */
+    /** Secret containing the auth token */
     secret: k8s.core.v1.Secret;
-    /** Secret containing the auth token in the monitoring namespace (for Prometheus) */
-    monitoringSecret: k8s.core.v1.Secret;
     /** ServiceMonitor resource */
     serviceMonitor: k8s.apiextensions.CustomResource;
 }
@@ -65,29 +63,6 @@ export function createApiServiceMonitor(args: ApiServiceMonitorArgs): ApiService
         }
     );
 
-    // Create copy of secret in monitoring namespace for Prometheus Operator
-    // Prometheus can only access secrets in its own namespace (monitoring)
-    // Name is suffixed with app namespace to avoid conflicts (e.g., prometheus-api-auth-preview-pr-148)
-    const monitoringSecret = new k8s.core.v1.Secret(
-        "prometheus-api-auth-monitoring",
-        {
-            metadata: {
-                name: pulumi.interpolate`prometheus-api-auth-${args.namespace}`,
-                namespace: "monitoring",
-            },
-            type: "Opaque",
-            stringData: {
-                token: args.authToken,
-            },
-        },
-        {
-            provider: args.provider,
-            protect: false,
-            retainOnDelete: false,
-            replaceOnChanges: ["*"],
-            deleteBeforeReplace: true,
-        }
-    );
 
     // Create ServiceMonitor CRD
     // Note: bearerTokenSecret is the official Kubernetes API field name
@@ -117,15 +92,15 @@ export function createApiServiceMonitor(args: ApiServiceMonitorArgs): ApiService
                         path: args.metricsPath,
                         interval: args.scrapeInterval,
                         bearerTokenSecret: {
-                            name: monitoringSecret.metadata.name,
+                            name: "prometheus-api-auth",
                             key: "token",
                         },
                     },
                 ],
             },
         },
-        { provider: args.provider, dependsOn: [secret, monitoringSecret] }
+        { provider: args.provider, dependsOn: [secret] }
     );
 
-    return { secret, monitoringSecret, serviceMonitor };
+    return { secret, serviceMonitor };
 }
