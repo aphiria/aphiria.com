@@ -174,7 +174,7 @@ ${args.alertRules
         for: ${rule.for}
         annotations:
           summary: "${rule.annotations.summary}"
-          description: "${rule.annotations.description}"
+          description: "${rule.annotations.description.replace(/"/g, '\\"')}"
         labels:
           severity: ${rule.labels.severity}
           environment: ${rule.labels.environment}`
