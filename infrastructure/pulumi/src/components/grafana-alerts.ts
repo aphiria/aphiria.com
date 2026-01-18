@@ -169,15 +169,15 @@ ${args.alertRules
               maxDataPoints: 43200
               refId: C
               type: threshold
-          noDataState: NoData
-          execErrState: Alerting
-          for: ${rule.for}
-          annotations:
-            summary: "${rule.annotations.summary}"
-            description: "${rule.annotations.description}"
-          labels:
-            severity: ${rule.labels.severity}
-            environment: ${rule.labels.environment}`
+        noDataState: NoData
+        execErrState: Alerting
+        for: ${rule.for}
+        annotations:
+          summary: "${rule.annotations.summary}"
+          description: "${rule.annotations.description}"
+        labels:
+          severity: ${rule.labels.severity}
+          environment: ${rule.labels.environment}`
     )
     .join("\n")}
 `;
