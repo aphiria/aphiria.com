@@ -1,13 +1,13 @@
 #!/usr/bin/env node
 
-import { configureMarked, compileMarkdownWithDocTitle } from './markdown-compiler';
-import { highlightCode } from './syntax-highlighter';
-import { extractLexemes } from './lexeme-extractor';
-import { writeLexemesToNdjson } from './ndjson-writer';
-import { generateMetaJson, DocMeta } from './meta-generator';
-import { readdirSync, readFileSync, writeFileSync, mkdirSync, existsSync } from 'fs';
-import { join, basename } from 'path';
-import { LexemeRecord } from './types';
+import { configureMarked, compileMarkdownWithDocTitle } from "./markdown-compiler";
+import { highlightCode } from "./syntax-highlighter";
+import { extractLexemes } from "./lexeme-extractor";
+import { writeLexemesToNdjson } from "./ndjson-writer";
+import { generateMetaJson, DocMeta } from "./meta-generator";
+import { readdirSync, readFileSync, writeFileSync, mkdirSync, existsSync } from "fs";
+import { join, basename } from "path";
+import { LexemeRecord } from "./types";
 
 /**
  * Build configuration
@@ -44,19 +44,21 @@ function validateLexemes(lexemes: LexemeRecord[]): void {
         }
 
         // T037: Verify all links start with /docs/ and match expected format
-        if (!record.link.startsWith('/docs/')) {
+        if (!record.link.startsWith("/docs/")) {
             errors.push(`Lexeme ${index}: Link must start with /docs/ (got: ${record.link})`);
         }
 
         // T038: Verify context enum values
-        const validContexts = ['framework', 'library', 'global'];
+        const validContexts = ["framework", "library", "global"];
         if (!validContexts.includes(record.context)) {
-            errors.push(`Lexeme ${index}: Invalid context value (got: ${record.context}, expected one of: ${validContexts.join(', ')})`);
+            errors.push(
+                `Lexeme ${index}: Invalid context value (got: ${record.context}, expected one of: ${validContexts.join(", ")})`
+            );
         }
     });
 
     if (errors.length > 0) {
-        throw new Error(`Lexeme validation failed:\n${errors.join('\n')}`);
+        throw new Error(`Lexeme validation failed:\n${errors.join("\n")}`);
     }
 }
 
@@ -70,25 +72,25 @@ export async function buildDocs(config: BuildConfig): Promise<BuildResult> {
     configureMarked();
 
     // Ensure output directories exist
-    const renderedDir = join(outputDir, 'rendered');
-    const searchDir = join(outputDir, 'search');
+    const renderedDir = join(outputDir, "rendered");
+    const searchDir = join(outputDir, "search");
 
     mkdirSync(renderedDir, { recursive: true });
     mkdirSync(searchDir, { recursive: true });
 
     // Process all markdown files
-    const markdownFiles = readdirSync(docsSourceDir).filter(file => file.endsWith('.md'));
+    const markdownFiles = readdirSync(docsSourceDir).filter((file) => file.endsWith(".md"));
     const allLexemes: LexemeRecord[] = [];
     const allMeta: DocMeta[] = [];
     const renderedFiles: string[] = [];
 
     for (const markdownFile of markdownFiles) {
-        const slug = basename(markdownFile, '.md');
+        const slug = basename(markdownFile, ".md");
         const markdownPath = join(docsSourceDir, markdownFile);
         const outputPath = join(renderedDir, `${slug}.html`);
 
         // Read markdown source
-        const markdown = readFileSync(markdownPath, 'utf8');
+        const markdown = readFileSync(markdownPath, "utf8");
 
         // Compile markdown to HTML fragment
         let htmlFragment = await compileMarkdownWithDocTitle(markdown);
@@ -107,7 +109,7 @@ export async function buildDocs(config: BuildConfig): Promise<BuildResult> {
         allMeta.push(...generateMetaJson([{ html: wrappedHtml, version, slug }]));
 
         // Write rendered HTML fragment (NOT wrapped - just the fragment for Next.js)
-        writeFileSync(outputPath, htmlFragment, 'utf8');
+        writeFileSync(outputPath, htmlFragment, "utf8");
         renderedFiles.push(outputPath);
     }
 
@@ -115,12 +117,12 @@ export async function buildDocs(config: BuildConfig): Promise<BuildResult> {
     validateLexemes(allLexemes);
 
     // Write search index (NDJSON)
-    const lexemesPath = join(searchDir, 'lexemes.ndjson');
+    const lexemesPath = join(searchDir, "lexemes.ndjson");
     await writeLexemesToNdjson(allLexemes, lexemesPath);
 
     // Write metadata (JSON)
-    const metaPath = join(outputDir, 'meta.json');
-    writeFileSync(metaPath, JSON.stringify(allMeta, null, 2), 'utf8');
+    const metaPath = join(outputDir, "meta.json");
+    writeFileSync(metaPath, JSON.stringify(allMeta, null, 2), "utf8");
 
     return {
         documentsProcessed: markdownFiles.length,
@@ -140,8 +142,8 @@ async function main(): Promise<void> {
     const args = process.argv.slice(2);
 
     if (args.length < 3) {
-        console.error('Usage: build-docs <source-dir> <output-dir> <version>');
-        console.error('Example: build-docs ./docs/1.x ./dist/docs 1.x');
+        console.error("Usage: build-docs <source-dir> <output-dir> <version>");
+        console.error("Example: build-docs ./docs/1.x ./dist/docs 1.x");
         process.exit(1);
     }
 
@@ -152,32 +154,34 @@ async function main(): Promise<void> {
         process.exit(1);
     }
 
-    console.log('Building documentation...');
+    console.log("Building documentation...");
     console.log(`  Source: ${docsSourceDir}`);
     console.log(`  Output: ${outputDir}`);
     console.log(`  Version: ${version}`);
-    console.log('');
+    console.log("");
 
     try {
         const result = await buildDocs({ docsSourceDir, outputDir, version });
 
-        console.log('Build complete!');
+        console.log("Build complete!");
         console.log(`  Documents processed: ${result.documentsProcessed}`);
         console.log(`  Lexemes generated: ${result.lexemesGenerated}`);
         console.log(`  Output files:`);
-        console.log(`    - Rendered HTML: ${result.outputFiles.rendered.length} files in ${join(outputDir, 'rendered')}`);
+        console.log(
+            `    - Rendered HTML: ${result.outputFiles.rendered.length} files in ${join(outputDir, "rendered")}`
+        );
         console.log(`    - Search index: ${result.outputFiles.lexemes}`);
         console.log(`    - Metadata: ${result.outputFiles.meta}`);
     } catch (error) {
-        console.error('Build failed:', error);
+        console.error("Build failed:", error);
         process.exit(1);
     }
 }
 
 // Run CLI if invoked directly
 if (require.main === module) {
-    main().catch(error => {
-        console.error('Fatal error:', error);
+    main().catch((error) => {
+        console.error("Fatal error:", error);
         process.exit(1);
     });
 }

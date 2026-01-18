@@ -1,4 +1,4 @@
-import { JSDOM } from 'jsdom';
+import { JSDOM } from "jsdom";
 
 /**
  * Document metadata entry
@@ -17,13 +17,13 @@ export function extractDocTitle(html: string): string {
     const document = dom.window.document;
 
     // Find h1#doc-title element
-    const titleElement = document.querySelector('h1#doc-title');
+    const titleElement = document.querySelector("h1#doc-title");
 
     if (!titleElement) {
-        throw new Error('Document missing h1#doc-title element');
+        throw new Error("Document missing h1#doc-title element");
     }
 
-    return titleElement.textContent?.trim() || '';
+    return titleElement.textContent?.trim() || "";
 }
 
 /**
@@ -40,6 +40,8 @@ export function generateDocMeta(html: string, version: string, slug: string): Do
 /**
  * Generate meta.json from all compiled documents
  */
-export function generateMetaJson(documents: Array<{ html: string; version: string; slug: string }>): DocMeta[] {
-    return documents.map(doc => generateDocMeta(doc.html, doc.version, doc.slug));
+export function generateMetaJson(
+    documents: Array<{ html: string; version: string; slug: string }>
+): DocMeta[] {
+    return documents.map((doc) => generateDocMeta(doc.html, doc.version, doc.slug));
 }

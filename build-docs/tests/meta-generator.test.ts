@@ -1,8 +1,8 @@
-import { extractDocTitle, generateDocMeta, generateMetaJson } from '../src/meta-generator';
+import { extractDocTitle, generateDocMeta, generateMetaJson } from "../src/meta-generator";
 
-describe('Meta Generator', () => {
-    describe('extractDocTitle', () => {
-        it('extracts title from h1#doc-title element', () => {
+describe("Meta Generator", () => {
+    describe("extractDocTitle", () => {
+        it("extracts title from h1#doc-title element", () => {
             const html = `
 <body>
     <main>
@@ -14,10 +14,10 @@ describe('Meta Generator', () => {
 </body>
 `;
             const title = extractDocTitle(html);
-            expect(title).toBe('Installation Guide');
+            expect(title).toBe("Installation Guide");
         });
 
-        it('trims whitespace from title', () => {
+        it("trims whitespace from title", () => {
             const html = `
 <body>
     <main>
@@ -30,10 +30,10 @@ describe('Meta Generator', () => {
 </body>
 `;
             const title = extractDocTitle(html);
-            expect(title).toBe('Installation Guide');
+            expect(title).toBe("Installation Guide");
         });
 
-        it('throws error when h1#doc-title is missing', () => {
+        it("throws error when h1#doc-title is missing", () => {
             const html = `
 <body>
     <main>
@@ -43,12 +43,12 @@ describe('Meta Generator', () => {
     </main>
 </body>
 `;
-            expect(() => extractDocTitle(html)).toThrow('Document missing h1#doc-title element');
+            expect(() => extractDocTitle(html)).toThrow("Document missing h1#doc-title element");
         });
     });
 
-    describe('generateDocMeta', () => {
-        it('generates metadata with version, slug, and title', () => {
+    describe("generateDocMeta", () => {
+        it("generates metadata with version, slug, and title", () => {
             const html = `
 <body>
     <main>
@@ -58,46 +58,46 @@ describe('Meta Generator', () => {
     </main>
 </body>
 `;
-            const meta = generateDocMeta(html, '1.x', 'routing');
+            const meta = generateDocMeta(html, "1.x", "routing");
 
             expect(meta).toEqual({
-                version: '1.x',
-                slug: 'routing',
-                title: 'Routing',
+                version: "1.x",
+                slug: "routing",
+                title: "Routing",
             });
         });
     });
 
-    describe('generateMetaJson', () => {
-        it('generates metadata for all documents', () => {
+    describe("generateMetaJson", () => {
+        it("generates metadata for all documents", () => {
             const documents = [
                 {
                     html: '<h1 id="doc-title">Installation</h1>',
-                    version: '1.x',
-                    slug: 'installation',
+                    version: "1.x",
+                    slug: "installation",
                 },
                 {
                     html: '<h1 id="doc-title">Routing</h1>',
-                    version: '1.x',
-                    slug: 'routing',
+                    version: "1.x",
+                    slug: "routing",
                 },
                 {
                     html: '<h1 id="doc-title">Configuration</h1>',
-                    version: '2.x',
-                    slug: 'configuration',
+                    version: "2.x",
+                    slug: "configuration",
                 },
             ];
 
             const meta = generateMetaJson(documents);
 
             expect(meta).toEqual([
-                { version: '1.x', slug: 'installation', title: 'Installation' },
-                { version: '1.x', slug: 'routing', title: 'Routing' },
-                { version: '2.x', slug: 'configuration', title: 'Configuration' },
+                { version: "1.x", slug: "installation", title: "Installation" },
+                { version: "1.x", slug: "routing", title: "Routing" },
+                { version: "2.x", slug: "configuration", title: "Configuration" },
             ]);
         });
 
-        it('handles empty document list', () => {
+        it("handles empty document list", () => {
             const meta = generateMetaJson([]);
             expect(meta).toEqual([]);
         });

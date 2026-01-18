@@ -1,7 +1,7 @@
-import { LexemeRecord } from './types';
-import { createWriteStream, WriteStream } from 'fs';
-import { dirname } from 'path';
-import { mkdirSync } from 'fs';
+import { LexemeRecord } from "./types";
+import { createWriteStream, WriteStream } from "fs";
+import { dirname } from "path";
+import { mkdirSync } from "fs";
 
 /**
  * Write lexeme records to NDJSON file
@@ -16,7 +16,7 @@ export class NdjsonWriter {
         // Ensure directory exists
         mkdirSync(dirname(filePath), { recursive: true });
 
-        this.stream = createWriteStream(filePath, { encoding: 'utf8' });
+        this.stream = createWriteStream(filePath, { encoding: "utf8" });
     }
 
     /**
@@ -24,17 +24,17 @@ export class NdjsonWriter {
      */
     write(record: LexemeRecord): void {
         if (!this.stream) {
-            throw new Error('NDJSON writer not opened. Call open() first.');
+            throw new Error("NDJSON writer not opened. Call open() first.");
         }
 
-        this.stream.write(JSON.stringify(record) + '\n');
+        this.stream.write(JSON.stringify(record) + "\n");
     }
 
     /**
      * Write multiple lexeme records to NDJSON file
      */
     writeAll(records: LexemeRecord[]): void {
-        records.forEach(record => this.write(record));
+        records.forEach((record) => this.write(record));
     }
 
     /**
@@ -60,7 +60,10 @@ export class NdjsonWriter {
 /**
  * Write lexeme records to NDJSON file (convenience function)
  */
-export async function writeLexemesToNdjson(records: LexemeRecord[], filePath: string): Promise<void> {
+export async function writeLexemesToNdjson(
+    records: LexemeRecord[],
+    filePath: string
+): Promise<void> {
     const writer = new NdjsonWriter();
     writer.open(filePath);
     writer.writeAll(records);

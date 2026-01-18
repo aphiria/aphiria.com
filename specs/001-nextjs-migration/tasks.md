@@ -203,7 +203,7 @@ build-docs/
 - [ ] T103 [P] Copy existing CSS file from apps/web/src/css/aphiria.css to apps/web/public/css/aphiria.css
 - [ ] T104 [P] Copy existing static assets (images, fonts) from current apps/web/public/ to new apps/web/public/
 - [ ] T105 Create environment variable configuration in apps/web/.env.local with NEXT_PUBLIC_COOKIE_DOMAIN
-- [ ] T106 Create root layout component in apps/web/app/layout.tsx with global CSS import
+- [ ] T106 Create root layout component in apps/web/src/app/layout.tsx with global CSS import
 
 ---
 
@@ -215,15 +215,15 @@ build-docs/
 
 **Dependencies**: Phase 0 and Phase 1 MUST be complete
 
-- [ ] T107 Create TypeScript interfaces for DocumentationPage in apps/web/types/documentation.ts
-- [ ] T108 [P] Create TypeScript interfaces for NavigationSection and NavigationItem in apps/web/types/navigation.ts
-- [ ] T109 [P] Create TypeScript interfaces for ContextState in apps/web/types/context.ts
-- [ ] T110 Implement documentation artifact reader in apps/web/lib/docs/artifact-reader.ts (reads meta.json and HTML fragments from dist/docs/)
-- [ ] T111 [P] Implement sidebar configuration in apps/web/lib/docs/sidebar-config.ts (curated navigation structure for version 1.x)
-- [ ] T112 [P] Create Header component in apps/web/components/layout/Header.tsx
-- [ ] T113 [P] Create Footer component in apps/web/components/layout/Footer.tsx
-- [ ] T114 Implement context resolution logic in apps/web/lib/context/resolver.ts (query > cookie > default precedence)
-- [ ] T115 [P] Create cookie helper functions in apps/web/lib/cookies/context-cookie.ts
+- [ ] T107 Create TypeScript interfaces for DocumentationPage in apps/web/src/types/documentation.ts
+- [ ] T108 [P] Create TypeScript interfaces for NavigationSection and NavigationItem in apps/web/src/types/navigation.ts
+- [ ] T109 [P] Create TypeScript interfaces for ContextState in apps/web/src/types/context.ts
+- [ ] T110 Implement documentation artifact reader in apps/web/src/lib/docs/artifact-reader.ts (reads meta.json and HTML fragments from dist/docs/)
+- [ ] T111 [P] Implement sidebar configuration in apps/web/src/lib/docs/sidebar-config.ts (curated navigation structure for version 1.x)
+- [ ] T112 [P] Create Header component in apps/web/src/components/layout/Header.tsx
+- [ ] T113 [P] Create Footer component in apps/web/src/components/layout/Footer.tsx
+- [ ] T114 Implement context resolution logic in apps/web/src/lib/context/resolver.ts (query > cookie > default precedence)
+- [ ] T115 [P] Create cookie helper functions in apps/web/src/lib/cookies/context-cookie.ts
 
 **Checkpoint**: Foundation ready - user story implementation can now begin in parallel
 
@@ -243,14 +243,14 @@ build-docs/
 
 ### Implementation for User Story 1
 
-- [ ] T119 [US1] Create ContextSelector client component in apps/web/components/docs/ContextSelector.tsx with useState, useEffect, cookie management, and DOM toggling
-- [ ] T120 [P] [US1] Create SidebarNav server component in apps/web/components/docs/SidebarNav.tsx with context filtering and active link highlighting
-- [ ] T121 [P] [US1] Create DocumentContent server component in apps/web/components/docs/DocumentContent.tsx with DOMPurify sanitization and dangerouslySetInnerHTML rendering
-- [ ] T122 [US1] Create documentation layout in apps/web/app/docs/layout.tsx with sidebar and context selector integration
-- [ ] T123 [US1] Create dynamic documentation page in apps/web/app/docs/[version]/[...slug]/page.tsx with context resolution, HTML fragment loading, and metadata
-- [ ] T124 [US1] Implement DOM visibility toggling function in apps/web/lib/context/toggler.ts (display: revert vs display: none)
+- [ ] T119 [US1] Create ContextSelector client component in apps/web/src/components/docs/ContextSelector.tsx with useState, useEffect, cookie management, and DOM toggling
+- [ ] T120 [P] [US1] Create SidebarNav server component in apps/web/src/components/docs/SidebarNav.tsx with context filtering and active link highlighting
+- [ ] T121 [P] [US1] Create DocumentContent server component in apps/web/src/components/docs/DocumentContent.tsx with DOMPurify sanitization and dangerouslySetInnerHTML rendering
+- [ ] T122 [US1] Create documentation layout in apps/web/src/app/docs/layout.tsx with sidebar and context selector integration
+- [ ] T123 [US1] Create dynamic documentation page in apps/web/src/app/docs/[version]/[...slug]/page.tsx with context resolution, HTML fragment loading, and metadata
+- [ ] T124 [US1] Implement DOM visibility toggling function in apps/web/src/lib/context/toggler.ts (display: revert vs display: none)
 - [ ] T125 [US1] Add custom event dispatching for context-toggled event in ContextSelector component
-- [ ] T126 [US1] Create Prism.js client component loader in apps/web/components/docs/PrismLoader.tsx with useEffect initialization
+- [ ] T126 [US1] Create Prism.js client component loader in apps/web/src/components/docs/PrismLoader.tsx with useEffect initialization
 
 ### E2E Tests for User Story 1
 
@@ -278,7 +278,7 @@ build-docs/
 ### Implementation for User Story 2
 
 - [ ] T086 [US2] Create Next.js middleware in apps/web/middleware.ts with .html redirect logic (301 status)
-- [ ] T087 [US2] Implement redirect helper function in apps/web/lib/routing/redirects.ts with query/anchor preservation
+- [ ] T087 [US2] Implement redirect helper function in apps/web/src/lib/routing/redirects.ts with query/anchor preservation
 - [ ] T088 [US2] Configure middleware matcher in apps/web/middleware.ts to scope to /docs/:path*.html patterns only
 - [ ] T089 [US2] Add /docs redirect to /docs/1.x/introduction in middleware
 
@@ -308,11 +308,11 @@ build-docs/
 
 ### Implementation for User Story 3
 
-- [ ] T098 [P] [US3] Implement TOC generator in apps/web/lib/docs/toc-generator.ts with cheerio HTML parsing
-- [ ] T099 [P] [US3] Create TableOfContents server component in apps/web/components/docs/TableOfContents.tsx with nested list rendering
-- [ ] T100 [P] [US3] Create MobileMenu client component in apps/web/components/layout/MobileMenu.tsx with slide-in animation and gray overlay
-- [ ] T101 [US3] Update documentation page to include TOC generation and rendering in apps/web/app/docs/[version]/[...slug]/page.tsx
-- [ ] T102 [US3] Add metadata generation for document title ({doc title} | Aphiria) in apps/web/app/docs/[version]/[...slug]/page.tsx
+- [ ] T098 [P] [US3] Implement TOC generator in apps/web/src/lib/docs/toc-generator.ts with cheerio HTML parsing
+- [ ] T099 [P] [US3] Create TableOfContents server component in apps/web/src/components/docs/TableOfContents.tsx with nested list rendering
+- [ ] T100 [P] [US3] Create MobileMenu client component in apps/web/src/components/layout/MobileMenu.tsx with slide-in animation and gray overlay
+- [ ] T101 [US3] Update documentation page to include TOC generation and rendering in apps/web/src/app/docs/[version]/[...slug]/page.tsx
+- [ ] T102 [US3] Add metadata generation for document title ({doc title} | Aphiria) in apps/web/src/app/docs/[version]/[...slug]/page.tsx
 - [ ] T103 [US3] Implement active link highlighting logic in SidebarNav component (compare current path to href)
 - [ ] T104 [US3] Add responsive mobile breakpoint handling (<1024px) in sidebar and mobile menu
 
@@ -336,8 +336,8 @@ build-docs/
 
 ### Implementation for User Story 4
 
-- [ ] T110 [P] [US4] Create homepage component in apps/web/app/page.tsx with hero section, code example, and quick links
-- [ ] T111 [P] [US4] Add homepage metadata with exact title from spec in apps/web/app/page.tsx
+- [ ] T110 [P] [US4] Create homepage component in apps/web/src/app/page.tsx with hero section, code example, and quick links
+- [ ] T111 [P] [US4] Add homepage metadata with exact title from spec in apps/web/src/app/page.tsx
 - [ ] T112 [US4] Configure Prism highlighting for homepage code block (PHP and bash languages)
 
 ### E2E Tests for User Story 4
@@ -358,7 +358,7 @@ build-docs/
 
 ### Implementation for User Story 5
 
-- [ ] T116 [US5] Create SearchBar client component in apps/web/components/ui/SearchBar.tsx with fetch, debounce, and keyboard navigation
+- [ ] T116 [US5] Create SearchBar client component in apps/web/src/components/ui/SearchBar.tsx with fetch, debounce, and keyboard navigation
 - [ ] T117 [US5] Add search result rendering with heading hierarchy and context grouping
 - [ ] T118 [US5] Implement keyboard navigation (arrow keys for selection, Enter for navigation)
 - [ ] T119 [US5] Integrate SearchBar into Header component
@@ -377,7 +377,7 @@ build-docs/
 
 **Purpose**: Improvements that affect multiple user stories and final production readiness
 
-- [ ] T123 [P] Create 404 error page in apps/web/app/not-found.tsx with navigation back to docs
+- [ ] T123 [P] Create 404 error page in apps/web/src/app/not-found.tsx with navigation back to docs
 - [ ] T124 [P] Add edge case handling for invalid context cookie values (fallback to default)
 - [ ] T125 [P] Add debouncing for rapid context switching to prevent race conditions
 - [ ] T126 [P] Implement build-time artifact validation in apps/web/next.config.js (fail if docs-artifact missing)
@@ -452,8 +452,8 @@ Task: "Unit test for cookie domain handling in apps/web/tests/unit/context-cooki
 Task: "Unit test for sidebar filtering in apps/web/tests/unit/sidebar-config.test.ts"
 
 # Launch component development in parallel:
-Task: "Create SidebarNav component in apps/web/components/docs/SidebarNav.tsx"
-Task: "Create DocumentContent component in apps/web/components/docs/DocumentContent.tsx"
+Task: "Create SidebarNav component in apps/web/src/components/docs/SidebarNav.tsx"
+Task: "Create DocumentContent component in apps/web/src/components/docs/DocumentContent.tsx"
 ```
 
 ---
