@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./aphiria.css";
+import "./prism.css";
 
 export const metadata: Metadata = {
     title: "Aphiria",
