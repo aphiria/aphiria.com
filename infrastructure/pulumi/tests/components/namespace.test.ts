@@ -65,7 +65,7 @@ describe("createNamespace", () => {
         });
     });
 
-    it("should create namespace with NetworkPolicy", async () => {
+    it("should create namespace with NetworkPolicy allowing all options", async () => {
         const result = createNamespace({
             environmentLabel: "test",
             name: "netpol-namespace",
@@ -89,6 +89,64 @@ describe("createNamespace", () => {
         ]);
         expect(policyName).toBe("netpol-namespace-network-policy");
         expect(namespace).toBe("netpol-namespace");
+    });
+
+    it("should create namespace with NetworkPolicy allowing only DNS", async () => {
+        const result = createNamespace({
+            environmentLabel: "test",
+            name: "netpol-dns-only",
+            networkPolicy: {
+                allowDNS: true,
+                allowHTTPS: false,
+            },
+            provider: k8sProvider,
+        });
+
+        expect(result.namespace).toBeDefined();
+        expect(result.networkPolicy).toBeDefined();
+
+        const policyName = await promiseOf(result.networkPolicy!.metadata.name);
+        expect(policyName).toBe("netpol-dns-only-network-policy");
+    });
+
+    it("should create namespace with NetworkPolicy allowing only HTTPS", async () => {
+        const result = createNamespace({
+            environmentLabel: "test",
+            name: "netpol-https-only",
+            networkPolicy: {
+                allowDNS: false,
+                allowHTTPS: true,
+            },
+            provider: k8sProvider,
+        });
+
+        expect(result.namespace).toBeDefined();
+        expect(result.networkPolicy).toBeDefined();
+
+        const policyName = await promiseOf(result.networkPolicy!.metadata.name);
+        expect(policyName).toBe("netpol-https-only-network-policy");
+    });
+
+    it("should create namespace with NetworkPolicy allowing only PostgreSQL", async () => {
+        const result = createNamespace({
+            environmentLabel: "test",
+            name: "netpol-postgres-only",
+            networkPolicy: {
+                allowDNS: false,
+                allowHTTPS: false,
+                allowPostgreSQL: {
+                    host: "db.default.svc.cluster.local",
+                    port: 5432,
+                },
+            },
+            provider: k8sProvider,
+        });
+
+        expect(result.namespace).toBeDefined();
+        expect(result.networkPolicy).toBeDefined();
+
+        const policyName = await promiseOf(result.networkPolicy!.metadata.name);
+        expect(policyName).toBe("netpol-postgres-only-network-policy");
     });
 
     it("should create namespace with imagePullSecret", async () => {

@@ -1,19 +1,22 @@
 {
+    "type": "module",
     "devDependencies": {
-        "del": "^5.1.0",
+        "del": "^8.0.1",
         "fs": "^0.0.2",
         "glob-parent": "^6.0.2",
-        "gulp": "^4.0.2",
+        "gulp": "^5.0.1",
         "gulp-clean-css": "^4.2.0",
         "gulp-concat": "^2.6.1",
         "gulp-postcss": "^10.0.0",
-        "gulp-replace": "^1.0.0",
-        "gulp-rev": "^9.0.0",
-        "gulp-shell": "^0.7.1",
-        "gulp-sourcemaps": "^2.6.5",
-        "gulp-terser": "^1.2.0",
+        "gulp-replace": "^1.1.4",
+        "gulp-rev": "^12.0.0",
+        "gulp-shell": "^0.8.0",
+        "gulp-sourcemaps": "^3.0.0",
+        "gulp-terser": "^2.1.0",
+        "jsdom": "^26.0.0",
         "merge-stream": "^2.0.0",
         "postcss": "^8.5.6",
-        "postcss-nested": "^7.0.2"
+        "postcss-nested": "^7.0.2",
+        "prismjs": "^1.29.0"
     }
 }

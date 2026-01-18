@@ -278,6 +278,38 @@ describe("http-route components", () => {
             expect(spec.parentRefs[0].sectionName).toBe("http-subdomains-1");
             expect(spec.parentRefs[1].sectionName).toBe("http-subdomains-2");
         });
+
+        it("should attach only to web listener when only web hostname is provided", async () => {
+            const route = createHTTPSRedirectRoute({
+                namespace: "preview-pr-117",
+                gatewayName: "nginx-gateway",
+                domains: ["117.pr.aphiria.com"],
+                provider: k8sProvider,
+            });
+
+            expect(route).toBeDefined();
+
+            const spec: any = await promiseOf((route as any).spec);
+            expect(spec.parentRefs).toBeDefined();
+            expect(spec.parentRefs.length).toBe(1);
+            expect(spec.parentRefs[0].sectionName).toBe("http-subdomains-1");
+        });
+
+        it("should attach only to api listener when only api hostname is provided", async () => {
+            const route = createHTTPSRedirectRoute({
+                namespace: "preview-pr-117",
+                gatewayName: "nginx-gateway",
+                domains: ["117.pr-api.aphiria.com"],
+                provider: k8sProvider,
+            });
+
+            expect(route).toBeDefined();
+
+            const spec: any = await promiseOf((route as any).spec);
+            expect(spec.parentRefs).toBeDefined();
+            expect(spec.parentRefs.length).toBe(1);
+            expect(spec.parentRefs[0].sectionName).toBe("http-subdomains-2");
+        });
     });
 
     describe("createWWWRedirectRoute", () => {

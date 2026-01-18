@@ -5,6 +5,10 @@ import {
     GrafanaConfig,
 } from "../../../../src/stacks/lib/config/types";
 import * as k8s from "@pulumi/kubernetes";
+import * as fs from "fs";
+
+// Mock fs
+jest.mock("fs");
 
 // Mock the component functions
 jest.mock("../../../../src/components", () => ({
@@ -104,6 +108,20 @@ describe("createMonitoringResources", () => {
 
     beforeEach(() => {
         jest.clearAllMocks();
+
+        // Mock fs methods - default to dashboard directory existing with .json files
+        (fs.existsSync as jest.Mock).mockReturnValue(true);
+        (fs.readdirSync as jest.Mock).mockReturnValue([
+            "dashboard1.json",
+            "dashboard2.json",
+            "readme.md",
+        ]);
+        (fs.readFileSync as jest.Mock).mockImplementation((filePath: string) => {
+            if (filePath.toString().endsWith(".json")) {
+                return JSON.stringify({ dashboard: "config" });
+            }
+            return "";
+        });
 
         // Set up default mock return values
         (createNamespace as jest.Mock).mockReturnValue({
@@ -686,6 +704,75 @@ describe("createMonitoringResources", () => {
                     ]),
                 })
             );
+        });
+    });
+
+    describe("dashboards", () => {
+        it("should load dashboard files when dashboard directory exists", () => {
+            createMonitoringResources({
+                env: "local",
+                provider: k8sProvider,
+                monitoringConfig,
+                prometheusConfig,
+                grafanaConfig,
+            });
+
+            expect(createDashboards).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    dashboards: expect.objectContaining({
+                        "dashboard1.json": expect.any(String),
+                        "dashboard2.json": expect.any(String),
+                    }),
+                })
+            );
+        });
+
+        it("should skip loading dashboards when dashboard directory does not exist", () => {
+            (fs.existsSync as jest.Mock).mockReturnValue(false);
+
+            createMonitoringResources({
+                env: "local",
+                provider: k8sProvider,
+                monitoringConfig,
+                prometheusConfig,
+                grafanaConfig,
+            });
+
+            expect(createDashboards).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    dashboards: {},
+                })
+            );
+        });
+
+        it("should only load .json files from dashboard directory", () => {
+            (fs.readdirSync as jest.Mock).mockReturnValue([
+                "dashboard1.json",
+                "readme.md",
+                "config.txt",
+                "dashboard2.json",
+            ]);
+
+            createMonitoringResources({
+                env: "local",
+                provider: k8sProvider,
+                monitoringConfig,
+                prometheusConfig,
+                grafanaConfig,
+            });
+
+            expect(createDashboards).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    dashboards: expect.objectContaining({
+                        "dashboard1.json": expect.any(String),
+                        "dashboard2.json": expect.any(String),
+                    }),
+                })
+            );
+            // Verify non-.json files are not loaded
+            const call = (createDashboards as jest.Mock).mock.calls[0][0];
+            expect(call.dashboards["readme.md"]).toBeUndefined();
+            expect(call.dashboards["config.txt"]).toBeUndefined();
         });
     });
 
