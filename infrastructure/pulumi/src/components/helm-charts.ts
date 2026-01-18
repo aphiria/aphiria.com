@@ -209,6 +209,16 @@ export function injectPrometheusCRDWaitInitContainer(
                     echo "✅ All Prometheus CRDs are ready, operator can start"
                 `,
             ],
+            resources: {
+                requests: {
+                    cpu: "50m",
+                    memory: "64Mi",
+                },
+                limits: {
+                    cpu: "100m",
+                    memory: "128Mi",
+                },
+            },
             securityContext: {
                 allowPrivilegeEscalation: false,
                 readOnlyRootFilesystem: true,
