@@ -148,102 +148,7 @@ export interface BaseHelmChartsResult {
 }
 
 /**
- * Transform to inject init container that waits for Prometheus CRDs
- *
- * Problem: Helm installs CRDs and operator pods in parallel, causing race condition
- * where operator starts before CRDs are registered in Kubernetes API.
- *
- * Solution: Inject init container into operator deployment that blocks pod startup
- * until critical CRDs are established.
- *
- * @param args - Resource transform arguments from Pulumi transforms API
- * @returns Transform result with init container added, or undefined if not applicable
- * @internal - Exported for testing only
- */
-export function injectPrometheusCRDWaitInitContainer(
-    args: pulumi.ResourceTransformArgs
-): pulumi.ResourceTransformResult | undefined {
-    // Only transform Deployment resources
-    if (args.type !== "kubernetes:apps/v1:Deployment") {
-        return undefined;
-    }
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const obj = args.props as any;
-
-    // Only transform the Prometheus Operator deployment
-    if (!obj.metadata?.name?.includes("kube-prometheus-stack-operator")) {
-        return undefined;
-    }
-
-    // Add init container that waits for CRDs to be established
-    obj.spec.template.spec.initContainers = [
-        ...(obj.spec.template.spec.initContainers || []),
-        {
-            name: "wait-for-prometheus-crds",
-            image: "docker.io/bitnami/kubectl:latest",
-            command: ["bash", "-c"],
-            args: [
-                `
-                    echo "⏳ Waiting for Prometheus CRDs to be established..."
-                    kubectl wait --for condition=established --timeout=300s \
-                        crd/prometheuses.monitoring.coreos.com \
-                        crd/servicemonitors.monitoring.coreos.com \
-                        crd/prometheusrules.monitoring.coreos.com 2>/dev/null || {
-                        echo "⚠️  kubectl wait failed, falling back to polling..."
-                        TIMEOUT=300
-                        ELAPSED=0
-                        for crd in prometheuses.monitoring.coreos.com servicemonitors.monitoring.coreos.com prometheusrules.monitoring.coreos.com; do
-                            until kubectl get crd $crd 2>/dev/null; do
-                                if [ $ELAPSED -ge $TIMEOUT ]; then
-                                    echo "❌ Timeout waiting for CRD $crd after \${TIMEOUT}s"
-                                    exit 1
-                                fi
-                                echo "CRD $crd not ready yet, waiting... (\${ELAPSED}s elapsed)"
-                                sleep 2
-                                ELAPSED=$((ELAPSED + 2))
-                            done
-                            echo "✅ CRD $crd is ready"
-                        done
-                    }
-                    echo "✅ All Prometheus CRDs are ready, operator can start"
-                `,
-            ],
-            resources: {
-                requests: {
-                    cpu: "50m",
-                    memory: "64Mi",
-                },
-                limits: {
-                    cpu: "100m",
-                    memory: "128Mi",
-                },
-            },
-            securityContext: {
-                allowPrivilegeEscalation: false,
-                readOnlyRootFilesystem: true,
-                runAsNonRoot: true,
-                runAsUser: 65534, // nobody user
-                capabilities: {
-                    drop: ["ALL"],
-                },
-            },
-        },
-    ];
-
-    return {
-        props: obj,
-        opts: args.opts,
-    };
-}
-
-/**
  * Installs kube-prometheus-stack (Prometheus Operator + Prometheus + kube-state-metrics)
- *
- * Race condition fix: Uses Pulumi transformations to inject an init container into the
- * Prometheus Operator deployment. The init container waits for CRDs to be established
- * before allowing the operator pod to start, preventing the operator from starting
- * before CRDs are registered in the Kubernetes API.
  *
  * @param args - Helm chart configuration
  * @param dependsOn - Optional resources to wait for
@@ -253,18 +158,6 @@ export function installKubePrometheusStack(
     args: HelmChartArgs,
     dependsOn?: pulumi.Resource[]
 ): k8s.helm.v4.Chart {
-    // Build resource options with transformation
-    const resourceOptions: pulumi.CustomResourceOptions = {
-        provider: args.provider,
-        dependsOn,
-    };
-
-    // Only add transformation in non-test environments (mock runtime doesn't support them)
-    /* istanbul ignore next - production-only transformation */
-    if (process.env.NODE_ENV !== "test") {
-        resourceOptions.transforms = [injectPrometheusCRDWaitInitContainer];
-    }
-
     return new k8s.helm.v4.Chart(
         "kube-prometheus-stack",
         {
@@ -275,8 +168,7 @@ export function installKubePrometheusStack(
                 repo: args.repository,
             },
             // v4 Chart installs CRDs by default (skipCrds: false is default)
-            // Helm installs CRDs and workloads in parallel, but our transformation
-            // ensures the operator waits for CRDs via init container
+            // This properly handles the CRD subchart dependency
             // Note: Admission webhooks are disabled in monitoring.ts to avoid Helm hook issues
             values: {
                 // Enable CRD subchart dependency (required for kube-prometheus-stack)
@@ -288,7 +180,10 @@ export function installKubePrometheusStack(
                 ...(args.values || {}),
             },
         },
-        resourceOptions
+        {
+            provider: args.provider,
+            dependsOn,
+        }
     );
 }
 
