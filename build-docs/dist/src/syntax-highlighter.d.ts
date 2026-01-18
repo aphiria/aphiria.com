@@ -1,6 +1,5 @@
 /**
  * Load Prism language components
- * Matching apps/web/src/js/server-side/highlight-code.js line 9
  */
 export declare function loadPrismLanguages(): void;
 /**

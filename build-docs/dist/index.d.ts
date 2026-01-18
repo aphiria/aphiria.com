@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { BuildConfig } from './src/types';
+import { BuildConfig } from "./src/types";
 /**
  * CLI entry point for documentation build system
  * Compiles markdown → HTML fragments + NDJSON lexemes

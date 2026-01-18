@@ -53,24 +53,24 @@ const path = __importStar(require("path"));
 function parseArgs() {
     const args = process.argv.slice(2);
     const config = {
-        inputDir: path.join(process.cwd(), 'docs'),
-        outputDir: path.join(process.cwd(), 'dist', 'docs'),
+        inputDir: path.join(process.cwd(), "docs"),
+        outputDir: path.join(process.cwd(), "dist", "docs"),
         verbose: false,
     };
     for (let i = 0; i < args.length; i++) {
         switch (args[i]) {
-            case '--input':
+            case "--input":
                 config.inputDir = path.resolve(args[++i]);
                 break;
-            case '--output':
+            case "--output":
                 config.outputDir = path.resolve(args[++i]);
                 break;
-            case '--verbose':
-            case '-v':
+            case "--verbose":
+            case "-v":
                 config.verbose = true;
                 break;
-            case '--help':
-            case '-h':
+            case "--help":
+            case "-h":
                 printHelp();
                 process.exit(0);
                 break;
@@ -113,7 +113,7 @@ function validateConfig(config) {
         process.exit(1);
     }
     if (config.verbose) {
-        console.log('Configuration:');
+        console.log("Configuration:");
         console.log(`  Input:  ${config.inputDir}`);
         console.log(`  Output: ${config.outputDir}`);
     }
@@ -123,7 +123,7 @@ async function main() {
         const config = parseArgs();
         validateConfig(config);
         if (config.verbose) {
-            console.log('Starting documentation build...');
+            console.log("Starting documentation build...");
         }
         // TODO: Implement build pipeline
         // 1. Compile markdown to HTML (src/markdown-compiler.ts)
@@ -131,10 +131,10 @@ async function main() {
         // 3. Extract lexemes (src/lexeme-extractor.ts)
         // 4. Write NDJSON (src/ndjson-writer.ts)
         // 5. Generate meta.json (src/meta-generator.ts)
-        console.log('Build complete! (pipeline not yet implemented)');
+        console.log("Build complete! (pipeline not yet implemented)");
     }
     catch (error) {
-        console.error('Build failed:', error);
+        console.error("Build failed:", error);
         process.exit(1);
     }
 }

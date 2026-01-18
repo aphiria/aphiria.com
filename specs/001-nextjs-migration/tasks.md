@@ -128,16 +128,17 @@ build-docs/
 - [ ] T011 [P] Unit test: GFM tables compile to `<table>` elements
 - [ ] T012 [P] Unit test: Prism.js highlights `<pre><code class="language-php">` blocks
 
-**Lexeme Extraction (LexemeSeeder Replication)**
+**Lexeme Extraction**
 
 - [ ] T013 Create lexeme extractor in `build-docs/src/lexeme-extractor.ts` with DOM parsing setup (jsdom)
-- [ ] T014 Implement `processNode()` recursive DOM walker matching LexemeSeeder.php:284-342 (depth-first traversal)
-- [ ] T015 Implement heading hierarchy state tracking matching LexemeSeeder.php:299-320 (h1-h5 reset logic)
-- [ ] T016 Implement `getContext()` ancestor walk matching LexemeSeeder.php:186-205 (bubble up to find `.context-*` class)
-- [ ] T017 Implement `getAllChildNodeTexts()` recursive text extraction matching LexemeSeeder.php:165-178
-- [ ] T018 Implement `createIndexEntry()` link generation matching LexemeSeeder.php:120-142 (heading precedence h5>h4>h3>h2>h1)
-- [ ] T019 Implement `shouldSkipProcessingNode()` to skip `<nav class="toc-nav">` matching LexemeSeeder.php:350-356
-- [ ] T020 Filter nodes to indexable elements only: h1, h2, h3, h4, h5, p, li, blockquote (matching LexemeSeeder.php:24-34)
+- [ ] T014 Implement `processNode()` recursive DOM walker (depth-first traversal)
+- [ ] T015 Implement heading hierarchy state tracking (h1-h5 reset logic: when h1 found, clear h2-h5; when h2 found, clear h3-h5; etc.)
+- [ ] T016 Implement `getContext()` ancestor walk (bubble up DOM to find `.context-framework` or `.context-library` class, default to `global`)
+- [ ] T017 Implement `getAllChildNodeTexts()` recursive text extraction (concatenate all descendant text nodes)
+- [ ] T018 Implement `createLexemeRecord()` link generation (h1 links to `/docs/{version}/{slug}`, h2-h5 link to `#{id}`, other elements link to nearest parent heading)
+- [ ] T019 Implement `shouldSkipNode()` to skip `<nav class="toc-nav">` elements
+- [ ] T020 Filter nodes to indexable elements only: h1, h2, h3, h4, h5, p, li, blockquote
+- [ ] T020.1 Output lexeme records WITHOUT weighting (weighting A/B/C/D will be applied by PHP LexemeSeeder when reading NDJSON)
 
 **Lexeme Extraction Unit Tests**
 
@@ -175,9 +176,13 @@ build-docs/
 - [ ] T043 Update Dockerfile to run syntax highlighter on compiled HTML (integrate into build-docs pipeline, NOT separate step)
 - [ ] T044 [P] Add `dist/docs/` directory COPY to runtime web Dockerfile
 - [ ] T045 [P] Add `dist/docs/search/lexemes.ndjson` COPY to runtime API Dockerfile (for PHP LexemeSeeder consumption)
-- [ ] T046 Update PHP LexemeSeeder to READ lexemes from NDJSON artifact instead of walking DOM (change from extraction to import)
+- [ ] T046 Refactor PHP LexemeSeeder to READ lexemes from `dist/docs/search/lexemes.ndjson` instead of walking DOM (remove DOM parsing, keep weighting logic: A for h1, B for h2, C for h3, D for h4/h5/p/li/blockquote)
 - [ ] T047 Create new Next.js runtime Dockerfile in `infrastructure/docker/runtime/nextjs/Dockerfile` (Node.js 20+, production build)
 - [ ] T048 Update Kubernetes deployment manifests to use Next.js runtime image instead of nginx for web service
+- [ ] T048.1 Remove old gulp-based build system (`gulpfile.js`, `apps/web/gulp/`, `apps/web/resources/`)
+- [ ] T048.2 Remove PHP view compilation code (if any helpers compiled docs to HTML in `apps/api/`)
+- [ ] T048.3 Remove any PHP DOM parsing utilities that were used for doc compilation (keep only search-related code)
+- [ ] T048.4 Update `.gitignore` to remove old gulp artifact paths, add new `dist/docs/` artifacts
 
 **Checkpoint**: Documentation build pipeline complete - artifacts ready for BOTH Next.js (rendering) and PHP API (search indexing). Run `npm run build:docs` to verify output matches expectations.
 

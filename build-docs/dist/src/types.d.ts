@@ -14,7 +14,7 @@ export interface LexemeRecord {
     version: string;
     context: Context;
     link: string;
-    html_element_type: 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'p' | 'li' | 'blockquote';
+    html_element_type: "h1" | "h2" | "h3" | "h4" | "h5" | "p" | "li" | "blockquote";
     inner_text: string;
     h1_inner_text: string;
     h2_inner_text: string | null;

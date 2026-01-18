@@ -34,6 +34,8 @@ var __importStar = (this && this.__importStar) || (function () {
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.configureMarked = configureMarked;
+exports.compileMarkdownWithDocTitle = compileMarkdownWithDocTitle;
+exports.resetMarked = resetMarked;
 exports.compileMarkdown = compileMarkdown;
 exports.compileAllMarkdown = compileAllMarkdown;
 const marked_1 = require("marked");
@@ -49,7 +51,7 @@ const path = __importStar(require("path"));
 function configureMarked() {
     // Add GFM heading ID extension for stable anchor generation
     marked_1.marked.use((0, marked_gfm_heading_id_1.gfmHeadingId)({
-        prefix: '', // No prefix on IDs
+        prefix: "", // No prefix on IDs
     }));
     // Configure marked options
     // GFM (GitHub Flavored Markdown) is enabled by default in marked v12+
@@ -59,13 +61,26 @@ function configureMarked() {
     });
 }
 /**
+ * Compile markdown to HTML
+ * Note: Markdown files already include <h1 id="doc-title"> - we just parse them as-is
+ */
+async function compileMarkdownWithDocTitle(markdown) {
+    return await marked_1.marked.parse(markdown);
+}
+/**
+ * Reset the marked configuration (needed for tests to have independent state)
+ */
+function resetMarked() {
+    marked_1.marked.setOptions(marked_1.marked.getDefaults());
+}
+/**
  * Compile a single markdown file to HTML fragment
  *
  * @param markdownPath - Path to markdown file
  * @returns HTML fragment (NOT a full document - no <html>, <body>, etc.)
  */
 async function compileMarkdown(markdownPath) {
-    const markdown = fs.readFileSync(markdownPath, 'utf-8');
+    const markdown = fs.readFileSync(markdownPath, "utf-8");
     // Parse and render to HTML
     const html = await marked_1.marked.parse(markdown);
     return html;
@@ -83,24 +98,24 @@ async function compileAllMarkdown(inputDir, outputDir, version, verbose = false)
     configureMarked();
     const compiledFiles = new Map();
     // Find all .md files
-    const files = fs.readdirSync(inputDir).filter(f => f.endsWith('.md'));
+    const files = fs.readdirSync(inputDir).filter((f) => f.endsWith(".md"));
     if (verbose) {
         console.log(`Found ${files.length} markdown files in ${inputDir}`);
     }
     // Compile each file
     for (const file of files) {
         const markdownPath = path.join(inputDir, file);
-        const slug = path.basename(file, '.md');
+        const slug = path.basename(file, ".md");
         if (verbose) {
             console.log(`  Compiling ${file} -> ${slug}.html`);
         }
         const html = await compileMarkdown(markdownPath);
         compiledFiles.set(slug, html);
         // Write HTML fragment to output
-        const versionDir = path.join(outputDir, 'rendered', version);
+        const versionDir = path.join(outputDir, "rendered", version);
         fs.mkdirSync(versionDir, { recursive: true });
         const outputPath = path.join(versionDir, `${slug}.html`);
-        fs.writeFileSync(outputPath, html, 'utf-8');
+        fs.writeFileSync(outputPath, html, "utf-8");
     }
     if (verbose) {
         console.log(`Compiled ${compiledFiles.size} files to ${outputDir}/rendered/${version}/`);

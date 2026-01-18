@@ -6,6 +6,15 @@
  */
 export declare function configureMarked(): void;
 /**
+ * Compile markdown to HTML
+ * Note: Markdown files already include <h1 id="doc-title"> - we just parse them as-is
+ */
+export declare function compileMarkdownWithDocTitle(markdown: string): Promise<string>;
+/**
+ * Reset the marked configuration (needed for tests to have independent state)
+ */
+export declare function resetMarked(): void;
+/**
  * Compile a single markdown file to HTML fragment
  *
  * @param markdownPath - Path to markdown file

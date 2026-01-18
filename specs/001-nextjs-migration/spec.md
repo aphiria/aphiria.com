@@ -148,9 +148,9 @@ A user needs to search documentation content by typing queries into the search b
 #### Documentation Routing
 
 - **FR-011**: System MUST serve documentation at extension-less URLs: `/docs/[version]/[...slug]` (e.g., `/docs/1.x/routing`)
-- **FR-012**: System MUST 301 redirect all `/docs/**/*.html` URLs to their extension-less equivalents (e.g., `/docs/1.x/routing.html` ’ `/docs/1.x/routing`)
-- **FR-013**: System MUST preserve query parameters during `.html` redirects (e.g., `/docs/1.x/routing.html?context=library` ’ `/docs/1.x/routing?context=library`)
-- **FR-014**: System MUST preserve anchor fragments during `.html` redirects (e.g., `/docs/1.x/routing.html#constraints` ’ `/docs/1.x/routing#constraints`)
+- **FR-012**: System MUST 301 redirect all `/docs/**/*.html` URLs to their extension-less equivalents (e.g., `/docs/1.x/routing.html` ï¿½ `/docs/1.x/routing`)
+- **FR-013**: System MUST preserve query parameters during `.html` redirects (e.g., `/docs/1.x/routing.html?context=library` ï¿½ `/docs/1.x/routing?context=library`)
+- **FR-014**: System MUST preserve anchor fragments during `.html` redirects (e.g., `/docs/1.x/routing.html#constraints` ï¿½ `/docs/1.x/routing#constraints`)
 - **FR-015**: System MUST redirect `/docs` to `/docs/1.x/introduction` (default version and page)
 - **FR-016**: System MUST support versioned documentation routes with `1.x` as the current version, designed to easily add future versions (e.g., `2.x`)
 
@@ -162,7 +162,7 @@ A user needs to search documentation content by typing queries into the search b
 - **FR-020**: System MUST configure the context cookie with: domain from `COOKIE_DOMAIN` env var (default `.aphiria.com`), path `/`, `SameSite=Lax`, `Secure=true` in production, 1-year expiration
 - **FR-021**: System MUST update the URL query string to `?context={selected}` when context changes, using `history.pushState()` (no page reload)
 - **FR-022**: System MUST preserve all other query parameters when updating the `context` parameter
-- **FR-023**: System MUST toggle DOM visibility when context changes: `.context-framework` ’ `display: revert` when context=framework (else `display: none`), `.context-library` ’ `display: revert` when context=library (else `display: none`)
+- **FR-023**: System MUST toggle DOM visibility when context changes: `.context-framework` ï¿½ `display: revert` when context=framework (else `display: none`), `.context-library` ï¿½ `display: revert` when context=library (else `display: none`)
 - **FR-024**: System MUST apply context visibility toggling to ALL page elements: sidebar, document content, TOC, and any other context-scoped UI
 - **FR-025**: System MUST trigger a custom event `context-toggled` after visibility changes (for sidebar height recalculation or other dependent UI updates)
 
@@ -204,12 +204,13 @@ A user needs to search documentation content by typing queries into the search b
 - **FR-047**: System MUST eliminate all build-time coupling between PHP and JavaScript (no PHP calling JS, no JS calling PHP)
 - **FR-048**: System MUST share data ONLY via build artifacts (rendered HTML, metadata JSON, search NDJSON)
 - **FR-049**: Documentation compilation MUST happen ONCE and produce artifacts consumed by both the website (Next.js) and the API (Postgres import)
+- **FR-050**: PHP LexemeSeeder MUST be refactored to READ lexemes from NDJSON artifact instead of walking DOM, and MUST apply PostgreSQL-specific weighting (A for h1, B for h2, C for h3, D for h4/h5/p/li/blockquote) at insert time
 
 #### Testing
 
-- **FR-050**: System MUST include Jest + React Testing Library unit tests for: routing helpers, context precedence resolution, cookie domain handling, DOM toggling logic, sidebar filtering, active link state
-- **FR-051**: System MUST include Playwright E2E tests for: `.html` ’ extension-less redirects, default context behavior, context switching without reload, DOM visibility toggling, document title formatting
-- **FR-052**: Existing Playwright E2E test suite MUST continue to pass without modification (or with minimal updates for URL structure)
+- **FR-051**: System MUST include Jest + React Testing Library unit tests for: routing helpers, context precedence resolution, cookie domain handling, DOM toggling logic, sidebar filtering, active link state
+- **FR-052**: System MUST include Playwright E2E tests for: `.html` ï¿½ extension-less redirects, default context behavior, context switching without reload, DOM visibility toggling, document title formatting
+- **FR-053**: Existing Playwright E2E test suite MUST continue to pass without modification (or with minimal updates for URL structure)
 
 ### Key Entities _(include if feature involves data)_
 

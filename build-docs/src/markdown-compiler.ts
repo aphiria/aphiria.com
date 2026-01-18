@@ -26,6 +26,21 @@ export function configureMarked(): void {
 }
 
 /**
+ * Compile markdown to HTML
+ * Note: Markdown files already include <h1 id="doc-title"> - we just parse them as-is
+ */
+export async function compileMarkdownWithDocTitle(markdown: string): Promise<string> {
+    return await marked.parse(markdown);
+}
+
+/**
+ * Reset the marked configuration (needed for tests to have independent state)
+ */
+export function resetMarked(): void {
+    marked.setOptions(marked.getDefaults());
+}
+
+/**
  * Compile a single markdown file to HTML fragment
  *
  * @param markdownPath - Path to markdown file
