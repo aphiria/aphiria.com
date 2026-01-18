@@ -181,7 +181,7 @@ export function injectPrometheusCRDWaitInitContainer(
         ...(obj.spec.template.spec.initContainers || []),
         {
             name: "wait-for-prometheus-crds",
-            image: "bitnami/kubectl:1.28",
+            image: "registry.k8s.io/kubectl:v1.31.4",
             command: ["sh", "-c"],
             args: [
                 `
