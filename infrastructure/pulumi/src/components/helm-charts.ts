@@ -148,7 +148,7 @@ export interface BaseHelmChartsResult {
 }
 
 /**
- * Transformation to inject init container that waits for Prometheus CRDs
+ * Transform to inject init container that waits for Prometheus CRDs
  *
  * Problem: Helm installs CRDs and operator pods in parallel, causing race condition
  * where operator starts before CRDs are registered in Kubernetes API.
@@ -156,63 +156,75 @@ export interface BaseHelmChartsResult {
  * Solution: Inject init container into operator deployment that blocks pod startup
  * until critical CRDs are established.
  *
- * @param obj - Kubernetes resource object from Helm chart
- * @returns Transformed object with init container added to operator deployment
+ * @param args - Resource transform arguments from Pulumi transforms API
+ * @returns Transform result with init container added, or undefined if not applicable
  * @internal - Exported for testing only
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function injectPrometheusCRDWaitInitContainer(obj: any): any {
+export function injectPrometheusCRDWaitInitContainer(
+    args: pulumi.ResourceTransformArgs
+): pulumi.ResourceTransformResult | undefined {
+    // Only transform Deployment resources
+    if (args.type !== "kubernetes:apps/v1:Deployment") {
+        return undefined;
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const obj = args.props as any;
+
     // Only transform the Prometheus Operator deployment
-    if (
-        obj.kind === "Deployment" &&
-        obj.metadata?.name?.includes("kube-prometheus-stack-operator")
-    ) {
-        // Add init container that waits for CRDs to be established
-        obj.spec.template.spec.initContainers = [
-            ...(obj.spec.template.spec.initContainers || []),
-            {
-                name: "wait-for-prometheus-crds",
-                image: "bitnami/kubectl:1.28",
-                command: ["sh", "-c"],
-                args: [
-                    `
-                        echo "⏳ Waiting for Prometheus CRDs to be established..."
-                        kubectl wait --for condition=established --timeout=300s \
-                            crd/prometheuses.monitoring.coreos.com \
-                            crd/servicemonitors.monitoring.coreos.com \
-                            crd/prometheusrules.monitoring.coreos.com 2>/dev/null || {
-                            echo "⚠️  kubectl wait failed, falling back to polling..."
-                            TIMEOUT=300
-                            ELAPSED=0
-                            for crd in prometheuses.monitoring.coreos.com servicemonitors.monitoring.coreos.com prometheusrules.monitoring.coreos.com; do
-                                until kubectl get crd $crd 2>/dev/null; do
-                                    if [ $ELAPSED -ge $TIMEOUT ]; then
-                                        echo "❌ Timeout waiting for CRD $crd after \${TIMEOUT}s"
-                                        exit 1
-                                    fi
-                                    echo "CRD $crd not ready yet, waiting... (\${ELAPSED}s elapsed)"
-                                    sleep 2
-                                    ELAPSED=$((ELAPSED + 2))
-                                done
-                                echo "✅ CRD $crd is ready"
+    if (!obj.metadata?.name?.includes("kube-prometheus-stack-operator")) {
+        return undefined;
+    }
+
+    // Add init container that waits for CRDs to be established
+    obj.spec.template.spec.initContainers = [
+        ...(obj.spec.template.spec.initContainers || []),
+        {
+            name: "wait-for-prometheus-crds",
+            image: "bitnami/kubectl:1.28",
+            command: ["sh", "-c"],
+            args: [
+                `
+                    echo "⏳ Waiting for Prometheus CRDs to be established..."
+                    kubectl wait --for condition=established --timeout=300s \
+                        crd/prometheuses.monitoring.coreos.com \
+                        crd/servicemonitors.monitoring.coreos.com \
+                        crd/prometheusrules.monitoring.coreos.com 2>/dev/null || {
+                        echo "⚠️  kubectl wait failed, falling back to polling..."
+                        TIMEOUT=300
+                        ELAPSED=0
+                        for crd in prometheuses.monitoring.coreos.com servicemonitors.monitoring.coreos.com prometheusrules.monitoring.coreos.com; do
+                            until kubectl get crd $crd 2>/dev/null; do
+                                if [ $ELAPSED -ge $TIMEOUT ]; then
+                                    echo "❌ Timeout waiting for CRD $crd after \${TIMEOUT}s"
+                                    exit 1
+                                fi
+                                echo "CRD $crd not ready yet, waiting... (\${ELAPSED}s elapsed)"
+                                sleep 2
+                                ELAPSED=$((ELAPSED + 2))
                             done
-                        }
-                        echo "✅ All Prometheus CRDs are ready, operator can start"
-                    `,
-                ],
-                securityContext: {
-                    allowPrivilegeEscalation: false,
-                    readOnlyRootFilesystem: true,
-                    runAsNonRoot: true,
-                    runAsUser: 65534, // nobody user
-                    capabilities: {
-                        drop: ["ALL"],
-                    },
+                            echo "✅ CRD $crd is ready"
+                        done
+                    }
+                    echo "✅ All Prometheus CRDs are ready, operator can start"
+                `,
+            ],
+            securityContext: {
+                allowPrivilegeEscalation: false,
+                readOnlyRootFilesystem: true,
+                runAsNonRoot: true,
+                runAsUser: 65534, // nobody user
+                capabilities: {
+                    drop: ["ALL"],
                 },
             },
-        ];
-    }
-    return obj;
+        },
+    ];
+
+    return {
+        props: obj,
+        opts: args.opts,
+    };
 }
 
 /**
@@ -240,7 +252,7 @@ export function installKubePrometheusStack(
     // Only add transformation in non-test environments (mock runtime doesn't support them)
     /* istanbul ignore next - production-only transformation */
     if (process.env.NODE_ENV !== "test") {
-        resourceOptions.transformations = [injectPrometheusCRDWaitInitContainer];
+        resourceOptions.transforms = [injectPrometheusCRDWaitInitContainer];
     }
 
     return new k8s.helm.v4.Chart(

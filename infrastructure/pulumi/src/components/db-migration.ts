@@ -64,22 +64,16 @@ export function createDBMigrationJob(args: DBMigrationJobArgs): k8s.batch.v1.Job
                 namespace: args.namespace,
                 labels,
                 annotations: {
-                    // Force override Server-Side Apply conflicts when recreating Job.
-                    // Required because ttlSecondsAfterFinished=0 auto-deletes the Job after completion,
-                    // but Kubernetes Server-Side Apply (SSA) metadata persists, causing conflicts
-                    // on the next `pulumi up`. This annotation tells Pulumi to force the update.
-                    "pulumi.com/patchForce": "true",
                     // Skip await logic to prevent "Job not found" errors during preview/refresh.
-                    // The Job auto-deletes after completion (ttlSecondsAfterFinished=0), so Pulumi's
-                    // default await logic fails when trying to check Job status on subsequent runs.
+                    // The Job auto-deletes after completion (ttlSecondsAfterFinished=300), so Pulumi's
+                    // default await logic may fail when trying to check Job status if it's already deleted.
                     "pulumi.com/skipAwait": "true",
                 },
             },
             spec: {
-                // Auto-delete Job after completion to avoid clutter.
-                // Note: Combined with replaceOnChanges + deleteBeforeReplace, this creates an
-                // ephemeral pattern where the Job runs, auto-deletes, and is recreated on each deployment.
-                ttlSecondsAfterFinished: 0,
+                // Auto-delete Job 5 minutes after completion.
+                // Provides time for log inspection and Pulumi state reconciliation before cleanup.
+                ttlSecondsAfterFinished: 300,
                 // Fail fast: limit retries and total runtime to avoid wasting CI time on broken migrations
                 backoffLimit: 2,
                 activeDeadlineSeconds: 300, // 5 minutes max
@@ -152,12 +146,8 @@ export function createDBMigrationJob(args: DBMigrationJobArgs): k8s.batch.v1.Job
         },
         {
             provider: args.provider,
-            // Ephemeral Job pattern: Job auto-deletes after completion (ttlSecondsAfterFinished=0)
-            // replaceOnChanges: Always replace instead of update (Jobs are immutable anyway)
-            // deleteBeforeReplace: Delete from state before creating new Job to avoid "not found" errors
-            // This allows the Job to be recreated on each deployment without conflicts
-            replaceOnChanges: ["**"],
-            deleteBeforeReplace: true,
+            // Jobs are immutable in Kubernetes - any spec change triggers automatic replacement.
+            // No need for replaceOnChanges or deleteBeforeReplace - let Kubernetes handle it naturally.
         }
     );
 }

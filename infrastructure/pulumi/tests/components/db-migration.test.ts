@@ -199,28 +199,27 @@ describe("createDBMigrationJob", () => {
 
         const annotations = await promiseOf(job.metadata.annotations);
         expect(annotations).toBeDefined();
-        // patchForce: Handle SSA conflicts when Job is recreated
-        expect(annotations["pulumi.com/patchForce"]).toBe("true");
         // skipAwait: Prevent "Job not found" errors when Job auto-deletes
         expect(annotations["pulumi.com/skipAwait"]).toBe("true");
     });
 
     /**
      * Integration test: Verifies Job is created with ttlSecondsAfterFinished for auto-cleanup
-     * IMPORTANT: This Job uses replaceOnChanges + deleteBeforeReplace to handle the
-     * ephemeral pattern where the Job auto-deletes after completion.
+     *
+     * Jobs are immutable in Kubernetes - any spec change triggers automatic replacement.
+     * We rely on Kubernetes' natural replacement behavior instead of using replaceOnChanges.
      *
      * Behavior:
      * 1. Pulumi creates Job during deployment
      * 2. Job runs migrations/seeder and completes
-     * 3. Kubernetes deletes Job after ttlSecondsAfterFinished (0 seconds = immediate)
-     * 4. Next deployment: Pulumi deletes Job from state, then creates new Job
-     * 5. No "Job not found" errors because deleteBeforeReplace cleans up state first
+     * 3. Kubernetes deletes Job after ttlSecondsAfterFinished (300 seconds = 5 minutes)
+     * 4. TTL provides time for log inspection and Pulumi state reconciliation
+     * 5. Next deployment with spec changes: Kubernetes automatically replaces the Job
      *
      * Manual verification: Run `pulumi preview --stack production` after Job completes
-     * and confirm the Job is recreated without errors.
+     * and confirm no drift is detected.
      */
-    it("should create ephemeral Job with auto-cleanup configuration", async () => {
+    it("should create Job with auto-cleanup configuration", async () => {
         const job = createDBMigrationJob({
             imagePullPolicy: "Never",
             namespace: "default",
@@ -242,10 +241,7 @@ describe("createDBMigrationJob", () => {
             promiseOf(job.spec.ttlSecondsAfterFinished),
         ]);
         expect(name).toBe("db-migration");
-        expect(ttl).toBe(0); // Immediate cleanup after completion
-
-        // NOTE: ignoreChanges: ["*"] is set in db-migration.ts:111
-        // This prevents drift detection from reporting Job deletion as drift
+        expect(ttl).toBe(300); // 5 minutes - provides time for logs and state reconciliation
     });
 
     it("should use correct monorepo paths for phinx executable", async () => {

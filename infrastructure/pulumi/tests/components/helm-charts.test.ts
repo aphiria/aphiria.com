@@ -251,12 +251,21 @@ describe("injectPrometheusCRDWaitInitContainer", () => {
             },
         };
 
-        const result = injectPrometheusCRDWaitInitContainer(deployment);
+        const args: pulumi.ResourceTransformArgs = {
+            type: "kubernetes:apps/v1:Deployment",
+            name: "kube-prometheus-stack-operator",
+            props: deployment,
+            opts: {},
+            custom: false,
+        };
 
-        expect(result.spec.template.spec.initContainers).toBeDefined();
-        expect(result.spec.template.spec.initContainers).toHaveLength(1);
+        const result = injectPrometheusCRDWaitInitContainer(args);
 
-        const initContainer = result.spec.template.spec.initContainers[0];
+        expect(result).toBeDefined();
+        expect(result?.props.spec.template.spec.initContainers).toBeDefined();
+        expect(result?.props.spec.template.spec.initContainers).toHaveLength(1);
+
+        const initContainer = result?.props.spec.template.spec.initContainers[0];
         expect(initContainer.name).toBe("wait-for-prometheus-crds");
         expect(initContainer.image).toBe("bitnami/kubectl:1.28");
         expect(initContainer.command).toEqual(["sh", "-c"]);
@@ -296,11 +305,23 @@ describe("injectPrometheusCRDWaitInitContainer", () => {
             },
         };
 
-        const result = injectPrometheusCRDWaitInitContainer(deployment);
+        const args: pulumi.ResourceTransformArgs = {
+            type: "kubernetes:apps/v1:Deployment",
+            name: "kube-prometheus-stack-operator",
+            props: deployment,
+            opts: {},
+            custom: false,
+        };
 
-        expect(result.spec.template.spec.initContainers).toHaveLength(2);
-        expect(result.spec.template.spec.initContainers[0].name).toBe("existing-init-container");
-        expect(result.spec.template.spec.initContainers[1].name).toBe("wait-for-prometheus-crds");
+        const result = injectPrometheusCRDWaitInitContainer(args);
+
+        expect(result?.props.spec.template.spec.initContainers).toHaveLength(2);
+        expect(result?.props.spec.template.spec.initContainers[0].name).toBe(
+            "existing-init-container"
+        );
+        expect(result?.props.spec.template.spec.initContainers[1].name).toBe(
+            "wait-for-prometheus-crds"
+        );
     });
 
     it("should not transform non-operator deployments", () => {
@@ -318,9 +339,17 @@ describe("injectPrometheusCRDWaitInitContainer", () => {
             },
         };
 
-        const result = injectPrometheusCRDWaitInitContainer(deployment);
+        const args: pulumi.ResourceTransformArgs = {
+            type: "kubernetes:apps/v1:Deployment",
+            name: "some-other-deployment",
+            props: deployment,
+            opts: {},
+            custom: false,
+        };
 
-        expect(result.spec.template.spec.initContainers).toBeUndefined();
+        const result = injectPrometheusCRDWaitInitContainer(args);
+
+        expect(result).toBeUndefined();
     });
 
     it("should not transform non-Deployment resources", () => {
@@ -334,8 +363,16 @@ describe("injectPrometheusCRDWaitInitContainer", () => {
             },
         };
 
-        const result = injectPrometheusCRDWaitInitContainer(service);
+        const args: pulumi.ResourceTransformArgs = {
+            type: "kubernetes:core/v1:Service",
+            name: "kube-prometheus-stack-operator",
+            props: service,
+            opts: {},
+            custom: false,
+        };
 
-        expect(result).toEqual(service);
+        const result = injectPrometheusCRDWaitInitContainer(args);
+
+        expect(result).toBeUndefined();
     });
 });
