@@ -46,6 +46,9 @@ COPY --from=build /app/apps/api/phpunit.xml.dist ./phpunit.xml.dist
 # Copy the web files for documentation indexing and preservation of monorepo structure so paths resolve correctly both in CI (doesn't use Docker) and Docker
 COPY --from=build /app/apps/web/public           /app/apps/web/public
 
+# Copy search index (NDJSON) for PHP LexemeSeeder to consume
+COPY --from=build /app/dist/docs/search/lexemes.ndjson /app/dist/docs/search/lexemes.ndjson
+
 # Allow nginx/php-fpm user to write to tmp
 RUN chown -R www-data:www-data .
 

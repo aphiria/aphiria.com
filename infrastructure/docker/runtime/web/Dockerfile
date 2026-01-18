@@ -12,3 +12,6 @@ RUN rm -rf /usr/share/nginx/html/*
 
 # Copy the web source files from the build image
 COPY --from=build /app/apps/web/public .
+
+# Copy compiled documentation artifacts (rendered HTML, metadata)
+COPY --from=build /app/dist/docs .

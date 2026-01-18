@@ -10,7 +10,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl ca-certificates gnupg \
  && rm -rf /var/lib/apt/lists/*
 
-# Node.js + Yarn
+# Node.js 20+ for build-docs pipeline
 RUN curl -fsSL https://deb.nodesource.com/setup_23.x | bash - \
  && apt-get update && apt-get install -y --no-install-recommends nodejs \
  && corepack enable \
@@ -39,14 +39,9 @@ RUN cd apps/api && composer install --no-interaction --ignore-platform-reqs --pr
 COPY . .
 COPY apps/api/.env.dist apps/api/.env
 
-# JS deps + gulp
-RUN cd apps/web && yarn install --frozen-lockfile || yarn install \
- && yarn global add gulp
+# Install build-docs dependencies and compile documentation
+RUN cd build-docs && npm install \
+ && npm run build
 
-# Build static assets and compile docs
-RUN cd apps/web && gulp build
-
-# Server-side code highlighting
-RUN npm install prismjs jsdom \
- && chmod +x ./apps/web/src/js/server-side/highlight-code.js \
- && find ./apps/web/public -type f -name "*.html" -exec node ./apps/web/src/js/server-side/highlight-code.js {} \;
+# Build documentation artifacts (rendered HTML, search index, metadata)
+RUN node build-docs/dist/index.js docs dist/docs 1.x
