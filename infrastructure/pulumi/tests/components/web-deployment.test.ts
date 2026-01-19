@@ -229,4 +229,30 @@ describe("createWebDeployment", () => {
         const namespace = await promiseOf(result.deployment.namespace);
         expect(namespace).toBe("preview-pr-123");
     });
+
+    it("should create nginx-config ConfigMap", async () => {
+        const result = createWebDeployment({
+            imagePullPolicy: "Never",
+            appEnv: "local",
+            namespace: "web-ns",
+            replicas: 1,
+            image: "ghcr.io/aphiria/aphiria.com-web:latest",
+            baseUrl: "https://www.aphiria.com",
+            jsConfigData: {
+                apiBaseUrl: "https://api.aphiria.com",
+            },
+            resources: standardResources,
+            provider: k8sProvider,
+        });
+
+        expect(result.nginxConfigMap).toBeDefined();
+
+        const [nginxConfigName, nginxConfigNamespace] = await Promise.all([
+            promiseOf(result.nginxConfigMap.name),
+            promiseOf(result.nginxConfigMap.namespace),
+        ]);
+
+        expect(nginxConfigName).toBe("nginx-config");
+        expect(nginxConfigNamespace).toBe("web-ns");
+    });
 });

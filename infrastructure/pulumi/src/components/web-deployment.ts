@@ -53,6 +53,53 @@ export interface WebDeploymentArgs {
 export function createWebDeployment(args: WebDeploymentArgs): WebDeploymentResult {
     const labels = buildLabels("web", "frontend", args.labels);
 
+    // Create nginx configuration ConfigMap
+    const nginxConfig = new k8s.core.v1.ConfigMap(
+        "nginx-config",
+        {
+            metadata: {
+                name: "nginx-config",
+                namespace: args.namespace,
+                labels,
+            },
+            data: {
+                "default.conf": `server {
+    listen 80;
+    server_name localhost;
+    root /usr/share/nginx/html;
+    index index.html;
+
+    # Redirect /docs to /docs/1.x/introduction (302 temporary)
+    location = /docs {
+        return 302 /docs/1.x/introduction;
+    }
+
+    # Redirect .html URLs to extension-less equivalents (301 permanent)
+    location ~ ^(.+)\\.html$ {
+        return 301 $1;
+    }
+
+    # Try to serve file directly, fallback to directory index, then 404
+    location / {
+        try_files $uri $uri.html $uri/ =404;
+    }
+
+    # Security headers
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header X-XSS-Protection "1; mode=block" always;
+
+    # Cache static assets
+    location ~* \\.(css|js|jpg|jpeg|png|gif|ico|svg|woff|woff2|ttf|eot)$ {
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+    }
+}`,
+            },
+        },
+        { provider: args.provider }
+    );
+
     // Create js-config ConfigMap
     const jsConfigData = Object.entries(args.jsConfigData)
         .map(([key, value]) => `      ${key}: '${value}'`)
@@ -98,6 +145,7 @@ export function createWebDeployment(args: WebDeploymentArgs): WebDeploymentResul
     const configChecksum = checksum({
         ...args.jsConfigData,
         ...envConfigData,
+        nginxConfig: nginxConfig.data["default.conf"],
     });
 
     // Create web deployment
@@ -143,6 +191,10 @@ export function createWebDeployment(args: WebDeploymentArgs): WebDeploymentResul
                                 imagePullPolicy: args.imagePullPolicy,
                                 volumeMounts: [
                                     {
+                                        name: "nginx-config",
+                                        mountPath: "/etc/nginx/conf.d",
+                                    },
+                                    {
                                         name: "js-config",
                                         mountPath: "/usr/share/nginx/html/js/config",
                                     },
@@ -177,6 +229,12 @@ export function createWebDeployment(args: WebDeploymentArgs): WebDeploymentResul
                             },
                         ],
                         volumes: [
+                            {
+                                name: "nginx-config",
+                                configMap: {
+                                    name: "nginx-config",
+                                },
+                            },
                             {
                                 name: "js-config",
                                 configMap: {
@@ -243,6 +301,7 @@ export function createWebDeployment(args: WebDeploymentArgs): WebDeploymentResul
         deployment: deployment.metadata,
         service: service.metadata,
         configMap: configMap.metadata,
+        nginxConfigMap: nginxConfig.metadata,
         podDisruptionBudget: pdb?.metadata,
     };
 }

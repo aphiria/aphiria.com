@@ -7,10 +7,15 @@ const mockRouter = { push: vi.fn(), replace: vi.fn() };
 const mockSearchParams = new URLSearchParams();
 const mockSetContextCookie = vi.fn();
 const mockToggleContextVisibility = vi.fn();
+const mockGetCookie = vi.fn();
 
 vi.mock("next/navigation", () => ({
     useRouter: () => mockRouter,
     useSearchParams: () => mockSearchParams,
+}));
+
+vi.mock("cookies-next", () => ({
+    getCookie: (name: string) => mockGetCookie(name),
 }));
 
 vi.mock("@/lib/cookies/context-cookie.client", () => ({
@@ -35,6 +40,7 @@ describe("ContextSelector", () => {
         Object.defineProperty(window, "location", {
             value: {
                 pathname: "/docs/1.x/introduction",
+                search: "",
             },
             writable: true,
         });
@@ -100,7 +106,11 @@ describe("ContextSelector", () => {
     });
 
     it("preserves existing search params when updating URL", () => {
-        mockSearchParams.set("foo", "bar");
+        // Set window.location.search to include existing param
+        Object.defineProperty(window.location, "search", {
+            value: "?foo=bar",
+            writable: true,
+        });
 
         render(<ContextSelector initialContext="framework" />);
 
@@ -122,6 +132,41 @@ describe("ContextSelector", () => {
         const callArgs = (window.history.replaceState as any).mock.calls[0];
         const newUrl = callArgs[2];
         expect(newUrl).toContain("context=framework");
+    });
+
+    it("uses query param context if present", () => {
+        // Set query param in window.location.search
+        Object.defineProperty(window.location, "search", {
+            value: "?context=library",
+            writable: true,
+        });
+
+        render(<ContextSelector initialContext="framework" />);
+
+        const select = screen.getByRole("combobox") as HTMLSelectElement;
+        expect(select.value).toBe("library");
+        expect(mockToggleContextVisibility).toHaveBeenCalledWith("library");
+    });
+
+    it("falls back to cookie if query param not present", () => {
+        // No query param, but cookie is set to library
+        Object.defineProperty(window.location, "search", {
+            value: "",
+            writable: true,
+        });
+
+        // Mock getCookie to return library
+        mockGetCookie.mockReturnValueOnce("library");
+
+        render(<ContextSelector initialContext="framework" />);
+
+        const select = screen.getByRole("combobox") as HTMLSelectElement;
+        // Should use cookie value (library) instead of initialContext (framework)
+        expect(select.value).toBe("library");
+        expect(mockToggleContextVisibility).toHaveBeenCalledWith("library");
+        expect(window.history.replaceState).toHaveBeenCalled();
+        const callArgs = (window.history.replaceState as any).mock.calls[0];
+        expect(callArgs[2]).toContain("context=library");
     });
 
     it("applies correct title to label", () => {

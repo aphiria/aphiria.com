@@ -5,8 +5,7 @@ import { SidebarNav } from "@/components/docs/SidebarNav";
 import { DocContent } from "@/components/docs/DocContent";
 import { TableOfContents } from "@/components/docs/TableOfContents";
 import { TocHighlighter } from "@/components/docs/TocHighlighter";
-import { resolveContext } from "@/lib/context/resolver";
-import { readDocHtml } from "@/lib/docs/artifact-reader";
+import { readDocHtml, readDocMeta } from "@/lib/docs/artifact-reader";
 import { getSidebarForVersion } from "@/lib/docs/sidebar-config";
 import { generateToc } from "@/lib/docs/toc-generator";
 
@@ -25,12 +24,12 @@ interface PageProps {
  * - Sidebar navigation with context selector
  * - Sanitized HTML content
  */
-export default async function DocPage({ params, searchParams }: PageProps) {
+export default async function DocPage({ params }: PageProps) {
     const { version, slug } = await params;
-    const search = await searchParams;
 
-    // Resolve context from query param or cookie
-    const context = await resolveContext(new URLSearchParams(search as Record<string, string>));
+    // For static export, pass default context
+    // ContextSelector will resolve actual context client-side from query params/cookies
+    const context = "framework";
 
     // Load doc HTML
     const html = readDocHtml(slug);
@@ -71,6 +70,20 @@ export default async function DocPage({ params, searchParams }: PageProps) {
             <div id="gray-out"></div>
         </>
     );
+}
+
+/**
+ * Generate static params for all doc pages
+ *
+ * Required for static export (output: "export")
+ */
+export async function generateStaticParams() {
+    const allDocs = readDocMeta();
+
+    return allDocs.map((doc) => ({
+        version: doc.version,
+        slug: doc.slug,
+    }));
 }
 
 /**

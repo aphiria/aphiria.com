@@ -9,7 +9,7 @@
     },
     "scripts": {
         "build": "tsc",
-        "build:docs": "npm run build && node dist/index.js",
+        "build:docs": "npm run build && node dist/index.js --input ../../docs --output ../../dist/docs",
         "dev": "tsc && node dist/index.js --verbose",
         "test": "vitest run --coverage",
         "test:watch": "vitest"

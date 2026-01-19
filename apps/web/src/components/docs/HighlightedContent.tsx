@@ -19,7 +19,7 @@ export function HighlightedContent({ children }: HighlightedContentProps) {
     const htmlString = renderToStaticMarkup(children);
 
     // Load into cheerio for parsing
-    const $ = cheerio.load(htmlString, { decodeEntities: false });
+    const $ = cheerio.load(htmlString);
 
     // Find all code blocks with language classes
     $("code[class*='language-']").each((_, element) => {
