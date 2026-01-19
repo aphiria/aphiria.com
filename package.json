@@ -7,7 +7,9 @@
         "lint": "eslint .",
         "lint:fix": "eslint . --fix",
         "format": "prettier --write .",
-        "format:check": "prettier --check ."
+        "format:check": "prettier --check .",
+        "test": "npm test --workspace=tools/build-docs && npm test --workspace=apps/web && npm test --workspace=infrastructure/pulumi",
+        "test:watch": "echo 'Run test:watch in specific workspace: npm run test:watch --workspace=apps/web'"
     },
     "keywords": [],
     "author": "",

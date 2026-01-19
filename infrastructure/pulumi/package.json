@@ -8,8 +8,7 @@
         "build": "tsc",
         "watch": "tsc --watch",
         "test": "PULUMI_SKIP_UPDATE_CHECK=1 PULUMI_AUTOMATION_API_SKIP_VERSION_CHECK=1 vitest run --coverage",
-        "test:watch": "PULUMI_SKIP_UPDATE_CHECK=1 PULUMI_AUTOMATION_API_SKIP_VERSION_CHECK=1 vitest",
-        "test:ci": "PULUMI_SKIP_UPDATE_CHECK=1 PULUMI_AUTOMATION_API_SKIP_VERSION_CHECK=1 vitest run --coverage"
+        "test:watch": "PULUMI_SKIP_UPDATE_CHECK=1 PULUMI_AUTOMATION_API_SKIP_VERSION_CHECK=1 vitest"
     },
     "keywords": [],
     "author": "",

@@ -55,10 +55,6 @@ jobs:
           composer install --ignore-platform-reqs
           composer dump-autoload -o
           chmod -R 755 tmp
-          cd ../web
-          yarn install
-          yarn global add gulp
-          gulp build
       - name: Index documentation
         working-directory: apps/api
         run: |
@@ -74,25 +70,20 @@ jobs:
         if: matrix.php == '8.4'
         working-directory: apps/api
         run: composer psalm -- --shepherd
-      - name: Install root TypeScript dependencies
+      - name: Install TypeScript dependencies
         if: matrix.php == '8.4'
-        run: npm install
+        run: npm install --workspaces
       - name: Lint TypeScript code
         if: matrix.php == '8.4'
         run: npm run lint
       - name: Format check TypeScript code
         if: matrix.php == '8.4'
         run: npm run format:check
-      - name: Build infrastructure TypeScript code
+      - name: Build and test TypeScript code
         if: matrix.php == '8.4'
-        working-directory: infrastructure/pulumi
         run: |
-          npm install
-          npm run build
-      - name: Test infrastructure TypeScript code
-        if: matrix.php == '8.4'
-        working-directory: infrastructure/pulumi
-        run: npm run test:ci
+          npm run build --workspaces --if-present
+          npm test
       - name: Upload coverage results to Coveralls
         working-directory: apps/api
         env:
