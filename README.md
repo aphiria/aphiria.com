@@ -68,7 +68,33 @@ Add the following to your host file:
 
 ## Local Development
 
-### Running the Site Locally
+### Quick Start: Running the Site Locally (Standalone)
+
+For rapid iteration on frontend changes without deploying to Kubernetes:
+
+#### 1. Build Documentation
+
+```bash
+cd tools/build-docs
+npm install
+npm run build:docs
+```
+
+This compiles markdown documentation to HTML fragments and generates search indexes.
+
+#### 2. Run the Web App
+
+```bash
+cd apps/web
+npm install
+npm run dev
+```
+
+Visit http://localhost:3000
+
+> **Note:** Doc search won't work in standalone mode since it requires the API backend. All other features (navigation, TOC, syntax highlighting) work normally.
+
+### Running the Full Site Locally (with API)
 
 #### 1. Start Minikube
 
