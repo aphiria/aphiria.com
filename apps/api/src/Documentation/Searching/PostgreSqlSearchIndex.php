@@ -46,21 +46,47 @@ final class PostgreSqlSearchIndex implements ISearchIndex
         $tsHeadlineOptions = 'StartSel=<em>, StopSel=</em>';
         $statement = $this->pdo->prepare(
             <<<EOF
-SELECT DISTINCT ON(rank, link, html_element_type) link, html_element_type, rank, h1_highlights, h2_highlights, h3_highlights, h4_highlights, h5_highlights, inner_text_highlights FROM
-((SELECT link, html_element_type, rank, ts_headline('english', h1_inner_text, query, '{$tsHeadlineOptions}') as h1_highlights, ts_headline('english', h2_inner_text, query, '{$tsHeadlineOptions}') as h2_highlights, ts_headline('english', h3_inner_text, query, '{$tsHeadlineOptions}') as h3_highlights, ts_headline('english', h4_inner_text, query, '{$tsHeadlineOptions}') as h4_highlights, ts_headline('english', h5_inner_text, query, '{$tsHeadlineOptions}') as h5_highlights, ts_headline('english', inner_text, query, '{$tsHeadlineOptions}') as inner_text_highlights
-FROM (SELECT link, html_element_type, h1_inner_text, h2_inner_text, h3_inner_text, h4_inner_text, h5_inner_text, inner_text, ts_rank_cd(english_lexemes, query) AS rank, query
-        FROM lexemes, plainto_tsquery('english', :query) AS query
-        WHERE english_lexemes @@ query AND (context = :context OR context = 'global') AND version = :version
-        ORDER BY rank DESC
-        LIMIT :maxResults) AS english_matching_query)
-UNION
-(SELECT link, html_element_type, rank, ts_headline(h1_inner_text, query, '{$tsHeadlineOptions}') as h1_highlights, ts_headline(h2_inner_text, query, '{$tsHeadlineOptions}') as h2_highlights, ts_headline(h3_inner_text, query, '{$tsHeadlineOptions}') as h3_highlights, ts_headline(h4_inner_text, query, '{$tsHeadlineOptions}') as h4_highlights, ts_headline(h5_inner_text, query, '{$tsHeadlineOptions}') as h5_highlights, ts_headline(inner_text, query, '{$tsHeadlineOptions}') as inner_text_highlights
-    FROM (SELECT link, html_element_type, h1_inner_text, h2_inner_text, h3_inner_text, h4_inner_text, h5_inner_text, inner_text, ts_rank_cd(simple_lexemes, query) AS rank, query
-          FROM lexemes, (SELECT (SELECT (array_to_string(string_to_array(:query, ' '), ':* & ') || ':*'))::tsquery AS query) AS query
-          WHERE simple_lexemes @@ query AND (context = :context OR context = 'global') AND version = :version
-          ORDER BY rank DESC
-          LIMIT :maxResults) AS non_english_matching_query)) AS distinct_query
-ORDER BY rank DESC
+WITH ranked_results AS (
+    SELECT link, html_element_type, h1_inner_text, h2_inner_text, h3_inner_text, h4_inner_text, h5_inner_text, inner_text, ts_rank_cd(english_lexemes, query) AS rank, query,
+        CASE html_element_type WHEN 'h1' THEN 1 WHEN 'h2' THEN 2 WHEN 'h3' THEN 3 WHEN 'h4' THEN 4 WHEN 'h5' THEN 5 ELSE 99 END AS depth,
+        CASE html_element_type
+            WHEN 'h1' THEN COALESCE(POSITION(LOWER(:query) IN LOWER(h1_inner_text)), 999999)
+            WHEN 'h2' THEN COALESCE(POSITION(LOWER(:query) IN LOWER(h2_inner_text)), 999999)
+            WHEN 'h3' THEN COALESCE(POSITION(LOWER(:query) IN LOWER(h3_inner_text)), 999999)
+            WHEN 'h4' THEN COALESCE(POSITION(LOWER(:query) IN LOWER(h4_inner_text)), 999999)
+            WHEN 'h5' THEN COALESCE(POSITION(LOWER(:query) IN LOWER(h5_inner_text)), 999999)
+            ELSE COALESCE(POSITION(LOWER(:query) IN LOWER(inner_text)), 999999)
+        END AS own_match_position
+    FROM lexemes, plainto_tsquery('english', :query) AS query
+    WHERE english_lexemes @@ query AND (context = :context OR context = 'global') AND version = :version
+    UNION
+    SELECT link, html_element_type, h1_inner_text, h2_inner_text, h3_inner_text, h4_inner_text, h5_inner_text, inner_text, ts_rank_cd(simple_lexemes, query) AS rank, query,
+        CASE html_element_type WHEN 'h1' THEN 1 WHEN 'h2' THEN 2 WHEN 'h3' THEN 3 WHEN 'h4' THEN 4 WHEN 'h5' THEN 5 ELSE 99 END AS depth,
+        CASE html_element_type
+            WHEN 'h1' THEN COALESCE(POSITION(LOWER(:query) IN LOWER(h1_inner_text)), 999999)
+            WHEN 'h2' THEN COALESCE(POSITION(LOWER(:query) IN LOWER(h2_inner_text)), 999999)
+            WHEN 'h3' THEN COALESCE(POSITION(LOWER(:query) IN LOWER(h3_inner_text)), 999999)
+            WHEN 'h4' THEN COALESCE(POSITION(LOWER(:query) IN LOWER(h4_inner_text)), 999999)
+            WHEN 'h5' THEN COALESCE(POSITION(LOWER(:query) IN LOWER(h5_inner_text)), 999999)
+            ELSE COALESCE(POSITION(LOWER(:query) IN LOWER(inner_text)), 999999)
+        END AS own_match_position
+    FROM lexemes, (SELECT (SELECT (array_to_string(string_to_array(:query, ' '), ':* & ') || ':*'))::tsquery AS query) AS query
+    WHERE simple_lexemes @@ query AND (context = :context OR context = 'global') AND version = :version
+),
+deduped_results AS (
+    SELECT DISTINCT ON (link, html_element_type) *
+    FROM ranked_results
+    ORDER BY link, html_element_type, depth ASC, rank DESC, own_match_position ASC
+)
+SELECT link, html_element_type,
+    ts_headline('english', h1_inner_text, query, '{$tsHeadlineOptions}') as h1_highlights,
+    ts_headline('english', h2_inner_text, query, '{$tsHeadlineOptions}') as h2_highlights,
+    ts_headline('english', h3_inner_text, query, '{$tsHeadlineOptions}') as h3_highlights,
+    ts_headline('english', h4_inner_text, query, '{$tsHeadlineOptions}') as h4_highlights,
+    ts_headline('english', h5_inner_text, query, '{$tsHeadlineOptions}') as h5_highlights,
+    ts_headline('english', inner_text, query, '{$tsHeadlineOptions}') as inner_text_highlights
+FROM deduped_results
+ORDER BY depth ASC, rank DESC, own_match_position ASC, h1_inner_text ASC, h2_inner_text ASC NULLS LAST, h3_inner_text ASC NULLS LAST
 LIMIT :maxResults
 EOF,
         );

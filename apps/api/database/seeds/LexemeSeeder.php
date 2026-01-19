@@ -154,12 +154,38 @@ EOF,
 
     /**
      * Updates the lexemes in all our rows
+     *
+     * The tsvector includes both the element's inner_text (with its weight) and the heading hierarchy (h1-h5).
+     * This allows boosting results where the search term appears in multiple heading levels.
+     * For example, searching "routing" will rank "/docs/1.x/routing#route-attributes" (h1="Routing", h2="Route Attributes")
+     * higher than "/docs/1.x/framework-comparisons#routing" (h1="Framework Comparison", h2="Routing")
+     * because the first matches at both h1 AND h2 levels.
      */
     private function updateLexemes(): void
     {
+        $h1Weight = self::$htmlElementsToWeights['h1'];
+        $h2Weight = self::$htmlElementsToWeights['h2'];
+        $h3Weight = self::$htmlElementsToWeights['h3'];
+        $h4Weight = self::$htmlElementsToWeights['h4'];
+        $h5Weight = self::$htmlElementsToWeights['h5'];
+
         $this->execute(
             <<<EOF
-UPDATE lexemes SET english_lexemes = setweight(to_tsvector('english', COALESCE(inner_text, '')), html_element_weight::"char"), simple_lexemes = setweight(to_tsvector(COALESCE(inner_text, '')), html_element_weight::"char")
+UPDATE lexemes SET
+  english_lexemes =
+    setweight(to_tsvector('english', COALESCE(h1_inner_text, '')), '{$h1Weight}') ||
+    setweight(to_tsvector('english', COALESCE(h2_inner_text, '')), '{$h2Weight}') ||
+    setweight(to_tsvector('english', COALESCE(h3_inner_text, '')), '{$h3Weight}') ||
+    setweight(to_tsvector('english', COALESCE(h4_inner_text, '')), '{$h4Weight}') ||
+    setweight(to_tsvector('english', COALESCE(h5_inner_text, '')), '{$h5Weight}') ||
+    setweight(to_tsvector('english', COALESCE(inner_text, '')), html_element_weight::"char"),
+  simple_lexemes =
+    setweight(to_tsvector(COALESCE(h1_inner_text, '')), '{$h1Weight}') ||
+    setweight(to_tsvector(COALESCE(h2_inner_text, '')), '{$h2Weight}') ||
+    setweight(to_tsvector(COALESCE(h3_inner_text, '')), '{$h3Weight}') ||
+    setweight(to_tsvector(COALESCE(h4_inner_text, '')), '{$h4Weight}') ||
+    setweight(to_tsvector(COALESCE(h5_inner_text, '')), '{$h5Weight}') ||
+    setweight(to_tsvector(COALESCE(inner_text, '')), html_element_weight::"char")
 EOF,
         );
     }
