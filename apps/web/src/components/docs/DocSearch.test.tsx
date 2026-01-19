@@ -1,0 +1,215 @@
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { render, screen, fireEvent, waitFor, cleanup } from "@testing-library/react";
+import { DocSearch } from "./DocSearch";
+
+// Mock fetch
+global.fetch = vi.fn();
+
+describe("DocSearch", () => {
+    beforeEach(() => {
+        vi.clearAllMocks();
+        vi.useFakeTimers();
+        Object.defineProperty(window, "location", {
+            value: { hash: "", href: "" },
+            writable: true,
+        });
+    });
+
+    afterEach(() => {
+        cleanup();
+        vi.useRealTimers();
+    });
+
+    it("renders search input", () => {
+        render(<DocSearch />);
+        expect(screen.getByPlaceholderText("Search docs")).toBeInTheDocument();
+    });
+
+    it("debounces search input", async () => {
+        (global.fetch as any).mockResolvedValue({
+            json: async () => [],
+        });
+
+        render(<DocSearch />);
+        const input = screen.getByPlaceholderText("Search docs");
+
+        fireEvent.change(input, { target: { value: "test" } });
+        expect(global.fetch).not.toHaveBeenCalled();
+
+        vi.advanceTimersByTime(250);
+        await waitFor(() => expect(global.fetch).toHaveBeenCalledTimes(1));
+    });
+
+    it("shows no results message when search returns empty", async () => {
+        (global.fetch as any).mockResolvedValue({
+            json: async () => [],
+        });
+
+        render(<DocSearch />);
+        const input = screen.getByPlaceholderText("Search docs");
+
+        fireEvent.change(input, { target: { value: "test" } });
+        vi.advanceTimersByTime(250);
+
+        await waitFor(() => {
+            expect(screen.getByText(/No results for "test"/)).toBeInTheDocument();
+        });
+    });
+
+    it("displays search results", async () => {
+        const mockResults = [
+            {
+                htmlElementType: "p",
+                highlightedInnerText: "Test result",
+                link: "/docs/1.x/test",
+                highlightedH1: null,
+                highlightedH2: "Section",
+                highlightedH3: null,
+                highlightedH4: null,
+                highlightedH5: null,
+            },
+        ];
+
+        (global.fetch as any).mockResolvedValue({
+            json: async () => mockResults,
+        });
+
+        render(<DocSearch />);
+        const input = screen.getByPlaceholderText("Search docs");
+
+        fireEvent.change(input, { target: { value: "test" } });
+        vi.advanceTimersByTime(250);
+
+        await waitFor(() => {
+            expect(screen.getByText("Test result")).toBeInTheDocument();
+        });
+    });
+
+    it("shows error message on fetch failure", async () => {
+        (global.fetch as any).mockRejectedValue(new Error("Network error"));
+        const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+        render(<DocSearch />);
+        const input = screen.getByPlaceholderText("Search docs");
+
+        fireEvent.change(input, { target: { value: "test" } });
+        vi.advanceTimersByTime(250);
+
+        await waitFor(() => {
+            expect(screen.getByText("There was an error")).toBeInTheDocument();
+        });
+
+        consoleSpy.mockRestore();
+    });
+
+    it("hides results when input is cleared", async () => {
+        (global.fetch as any).mockResolvedValue({
+            json: async () => [
+                {
+                    htmlElementType: "p",
+                    highlightedInnerText: "Test",
+                    link: "/test",
+                    highlightedH1: null,
+                    highlightedH2: null,
+                    highlightedH3: null,
+                    highlightedH4: null,
+                    highlightedH5: null,
+                },
+            ],
+        });
+
+        render(<DocSearch />);
+        const input = screen.getByPlaceholderText("Search docs") as HTMLInputElement;
+
+        fireEvent.change(input, { target: { value: "test" } });
+        vi.advanceTimersByTime(250);
+
+        await waitFor(() => expect(screen.getByText("Test")).toBeInTheDocument());
+
+        fireEvent.change(input, { target: { value: "" } });
+
+        const resultsList = screen.getByRole("list");
+        expect(resultsList).toHaveStyle({ display: "none" });
+    });
+
+    it("focuses input on mount when no hash", () => {
+        render(<DocSearch />);
+        const input = screen.getByPlaceholderText("Search docs");
+        expect(input).toHaveFocus();
+    });
+
+    it("does not focus input when hash present", () => {
+        Object.defineProperty(window, "location", {
+            value: { hash: "#section" },
+            writable: true,
+        });
+
+        render(<DocSearch />);
+        const input = screen.getByPlaceholderText("Search docs");
+        expect(input).not.toHaveFocus();
+    });
+
+    it("shows results on focus when query exists", async () => {
+        (global.fetch as any).mockResolvedValue({
+            json: async () => [
+                {
+                    htmlElementType: "p",
+                    highlightedInnerText: "Test",
+                    link: "/test",
+                    highlightedH1: null,
+                    highlightedH2: null,
+                    highlightedH3: null,
+                    highlightedH4: null,
+                    highlightedH5: null,
+                },
+            ],
+        });
+
+        render(<DocSearch />);
+        const input = screen.getByPlaceholderText("Search docs");
+
+        fireEvent.change(input, { target: { value: "test" } });
+        vi.advanceTimersByTime(250);
+
+        await waitFor(() => expect(screen.getByText("Test")).toBeInTheDocument());
+
+        // Click outside to hide
+        fireEvent.click(document.body);
+
+        // Focus back to show results
+        fireEvent.focus(input);
+
+        const resultsList = screen.getByRole("list");
+        expect(resultsList).toHaveStyle({ display: "block" });
+    });
+
+    it("uses NEXT_PUBLIC_API_URI env var when available", async () => {
+        process.env.NEXT_PUBLIC_API_URI = "https://api.example.com";
+
+        (global.fetch as any).mockResolvedValue({
+            json: async () => [],
+        });
+
+        render(<DocSearch />);
+        const input = screen.getByPlaceholderText("Search docs");
+
+        fireEvent.change(input, { target: { value: "test" } });
+        vi.advanceTimersByTime(250);
+
+        await waitFor(() => {
+            expect(global.fetch).toHaveBeenCalledWith(
+                expect.stringContaining("https://api.example.com"),
+                expect.any(Object)
+            );
+        });
+
+        delete process.env.NEXT_PUBLIC_API_URI;
+    });
+
+    it("applies correct CSS classes", () => {
+        const { container } = render(<DocSearch />);
+
+        expect(container.querySelector(".doc-search")).toBeInTheDocument();
+        expect(container.querySelector(".search-results")).toBeInTheDocument();
+    });
+});

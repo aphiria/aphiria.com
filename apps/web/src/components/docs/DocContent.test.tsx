@@ -1,0 +1,40 @@
+import { describe, it, expect } from "vitest";
+import { render } from "@testing-library/react";
+import { DocContent } from "./DocContent";
+
+describe("DocContent", () => {
+    it("renders sanitized HTML", () => {
+        const html = "<h1>Test Heading</h1><p>Test paragraph</p>";
+
+        const { container } = render(<DocContent html={html} />);
+
+        const div = container.firstChild as HTMLElement;
+        expect(div).toBeInTheDocument();
+        expect(div.innerHTML).toBe(html);
+    });
+
+    it("renders empty content for empty string", () => {
+        const { container } = render(<DocContent html="" />);
+
+        const div = container.firstChild as HTMLElement;
+        expect(div).toBeInTheDocument();
+        expect(div.innerHTML).toBe("");
+    });
+
+    it("renders complex HTML with nested elements", () => {
+        const html = `
+            <div class="container">
+                <h2 id="section">Section</h2>
+                <ul>
+                    <li>Item 1</li>
+                    <li>Item 2</li>
+                </ul>
+            </div>
+        `;
+
+        const { container } = render(<DocContent html={html} />);
+
+        const div = container.firstChild as HTMLElement;
+        expect(div.innerHTML).toBe(html);
+    });
+});

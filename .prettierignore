@@ -2,7 +2,6 @@
 .next/
 .pulumi/
 apps/api/
-apps/web-old/
 coverage/
 dist/
 node_modules/
