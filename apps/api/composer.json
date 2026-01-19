@@ -31,8 +31,6 @@
         "ext-mbstring": "*",
         "ext-pdo": "*",
         "ext-pgsql": "*",
-        "league/commonmark": "^2.6",
-        "league/flysystem": "^3.0",
         "php": ">=8.4",
         "promphp/prometheus_client_php": "^2.14",
         "robmorgan/phinx": "0.x-dev",

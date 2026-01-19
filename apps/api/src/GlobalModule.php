@@ -45,7 +45,6 @@ use Aphiria\Net\Http\HttpException;
 use App\Api\Middleware\Cors;
 use App\Documentation\DocumentationModule;
 use App\Monitoring\MonitoringModule;
-use App\Web\WebModule;
 use Exception;
 use Psr\Log\LogLevel;
 
@@ -114,7 +113,6 @@ final class GlobalModule extends AphiriaModule implements IBootstrapper
             ->withModules($appBuilder, [
                 new MonitoringModule(),
                 new DocumentationModule(),
-                new WebModule(),
             ]);
     }
 
