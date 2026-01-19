@@ -102,7 +102,7 @@ export function createWebDeployment(args: WebDeploymentArgs): WebDeploymentResul
 
     // Create js-config ConfigMap
     const jsConfigData = Object.entries(args.jsConfigData)
-        .map(([key, value]) => `      ${key}: '${value}'`)
+        .map(([key, value]) => `    ${key}: '${value}'`)
         .join(",\n");
 
     const configMap = new k8s.core.v1.ConfigMap(
@@ -114,7 +114,7 @@ export function createWebDeployment(args: WebDeploymentArgs): WebDeploymentResul
                 labels,
             },
             data: {
-                "config.js": `export default {\n${jsConfigData}\n    }`,
+                "config.js": `window.__RUNTIME_CONFIG__ = {\n${jsConfigData}\n};`,
             },
         },
         { provider: args.provider }

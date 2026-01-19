@@ -1,8 +1,14 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { setCookie } from "cookies-next";
+import type { RuntimeConfig } from "@/lib/runtime-config";
 
-// Mock cookies-next
+// Mock runtime config
+const mockGetRuntimeConfig = vi.fn<[], RuntimeConfig>();
+
 vi.mock("cookies-next");
+vi.mock("@/lib/runtime-config", () => ({
+    getRuntimeConfig: () => mockGetRuntimeConfig(),
+}));
 
 // Import after mocks
 const { setContextCookie } = await import("@/lib/cookies/context-cookie.client");
@@ -10,7 +16,11 @@ const { setContextCookie } = await import("@/lib/cookies/context-cookie.client")
 describe("context-cookie (client)", () => {
     beforeEach(() => {
         vi.clearAllMocks();
-        delete process.env.NEXT_PUBLIC_COOKIE_DOMAIN;
+        // Default runtime config
+        mockGetRuntimeConfig.mockReturnValue({
+            apiUri: "https://api.aphiria.com",
+            cookieDomain: ".aphiria.com",
+        });
     });
 
     afterEach(() => {
@@ -42,8 +52,11 @@ describe("context-cookie (client)", () => {
             });
         });
 
-        it("uses NEXT_PUBLIC_COOKIE_DOMAIN from env when set", () => {
-            process.env.NEXT_PUBLIC_COOKIE_DOMAIN = ".example.com";
+        it("uses cookieDomain from runtime config", () => {
+            mockGetRuntimeConfig.mockReturnValue({
+                apiUri: "https://pr-123.pr-api.aphiria.com",
+                cookieDomain: ".pr.aphiria.com",
+            });
 
             setContextCookie("framework");
 
@@ -51,14 +64,17 @@ describe("context-cookie (client)", () => {
                 "context",
                 "framework",
                 expect.objectContaining({
-                    domain: ".example.com",
+                    domain: ".pr.aphiria.com",
                     secure: true,
                 })
             );
         });
 
         it("disables secure flag for localhost", () => {
-            process.env.NEXT_PUBLIC_COOKIE_DOMAIN = "localhost";
+            mockGetRuntimeConfig.mockReturnValue({
+                apiUri: "http://localhost:8080",
+                cookieDomain: "localhost",
+            });
 
             setContextCookie("framework");
 
