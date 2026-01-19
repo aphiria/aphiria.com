@@ -1,17 +1,17 @@
-import { describe, it, expect, beforeEach } from "@jest/globals";
+import { describe, it, expect, beforeEach, vi, Mock } from "vitest";
 import * as pulumi from "@pulumi/pulumi";
 import * as k8s from "@pulumi/kubernetes";
 import { createStack } from "../../../src/stacks/lib/stack-factory";
 
 // Mock all the dependencies
-jest.mock("../../../src/stacks/lib/config/loader");
-jest.mock("../../../src/stacks/lib/factories/base-infrastructure");
-jest.mock("../../../src/stacks/lib/factories/provider");
-jest.mock("../../../src/stacks/lib/factories/gateway");
-jest.mock("../../../src/stacks/lib/factories/database");
-jest.mock("../../../src/stacks/lib/factories/applications");
-jest.mock("../../../src/stacks/lib/factories/monitoring");
-jest.mock("../../../src/components");
+vi.mock("../../../src/stacks/lib/config/loader");
+vi.mock("../../../src/stacks/lib/factories/base-infrastructure");
+vi.mock("../../../src/stacks/lib/factories/provider");
+vi.mock("../../../src/stacks/lib/factories/gateway");
+vi.mock("../../../src/stacks/lib/factories/database");
+vi.mock("../../../src/stacks/lib/factories/applications");
+vi.mock("../../../src/stacks/lib/factories/monitoring");
+vi.mock("../../../src/components");
 
 import { loadConfig } from "../../../src/stacks/lib/config/loader";
 import { createBaseInfrastructureResources } from "../../../src/stacks/lib/factories/base-infrastructure";
@@ -31,39 +31,39 @@ describe("createStack", () => {
     let k8sProvider: k8s.Provider;
 
     beforeEach(() => {
-        jest.clearAllMocks();
+        vi.clearAllMocks();
         k8sProvider = new k8s.Provider("test", {});
 
         // Default mock implementations
-        (createProvider as jest.Mock).mockReturnValue({
+        (createProvider as Mock).mockReturnValue({
             provider: k8sProvider,
             cluster: {},
             clusterId: "test-cluster-id",
             kubeconfig: "test-kubeconfig",
         });
-        (createBaseInfrastructureResources as jest.Mock).mockReturnValue({
+        (createBaseInfrastructureResources as Mock).mockReturnValue({
             certManager: {},
             nginxGateway: {},
         });
-        (createGatewayResources as jest.Mock).mockReturnValue({ gateway: {} });
-        (createDatabaseResources as jest.Mock).mockReturnValue({ deployment: {} });
-        (createApplicationResources as jest.Mock).mockReturnValue({ api: {}, web: {} });
-        (createMonitoringResources as jest.Mock).mockReturnValue({
+        (createGatewayResources as Mock).mockReturnValue({ gateway: {} });
+        (createDatabaseResources as Mock).mockReturnValue({ deployment: {} });
+        (createApplicationResources as Mock).mockReturnValue({ api: {}, web: {} });
+        (createMonitoringResources as Mock).mockReturnValue({
             prometheus: {},
             grafana: {},
         });
-        (createNamespace as jest.Mock).mockReturnValue({
+        (createNamespace as Mock).mockReturnValue({
             namespace: { metadata: { name: pulumi.output("test-ns") } },
             resourceQuota: {},
         });
-        (createImagePullSecret as jest.Mock).mockReturnValue({ secret: {} });
-        (createHTTPSRedirectRoute as jest.Mock).mockReturnValue({});
-        (createWWWRedirectRoute as jest.Mock).mockReturnValue({});
+        (createImagePullSecret as Mock).mockReturnValue({ secret: {} });
+        (createHTTPSRedirectRoute as Mock).mockReturnValue({});
+        (createWWWRedirectRoute as Mock).mockReturnValue({});
     });
 
     describe("local environment", () => {
         it("should create base infrastructure for local", () => {
-            (loadConfig as jest.Mock).mockReturnValue({
+            (loadConfig as Mock).mockReturnValue({
                 stackName: "local",
                 skipBaseInfrastructure: false,
                 gateway: { tlsMode: "self-signed", domains: ["*.aphiria.com"] },
@@ -84,7 +84,7 @@ describe("createStack", () => {
         });
 
         it("should create gateway with local config", () => {
-            (loadConfig as jest.Mock).mockReturnValue({
+            (loadConfig as Mock).mockReturnValue({
                 stackName: "local",
                 skipBaseInfrastructure: false,
                 gateway: { tlsMode: "self-signed", domains: ["*.aphiria.com"] },
@@ -109,7 +109,7 @@ describe("createStack", () => {
         });
 
         it("should create database in default namespace for local", () => {
-            (loadConfig as jest.Mock).mockReturnValue({
+            (loadConfig as Mock).mockReturnValue({
                 stackName: "local",
                 skipBaseInfrastructure: false,
                 gateway: { tlsMode: "self-signed", domains: ["*.aphiria.com"] },
@@ -131,7 +131,7 @@ describe("createStack", () => {
         });
 
         it("should create monitoring resources for local", () => {
-            (loadConfig as jest.Mock).mockReturnValue({
+            (loadConfig as Mock).mockReturnValue({
                 stackName: "local",
                 skipBaseInfrastructure: false,
                 gateway: { tlsMode: "self-signed", domains: ["*.aphiria.com"] },
@@ -152,7 +152,7 @@ describe("createStack", () => {
         });
 
         it("should create WWW redirect for local (non-preview)", () => {
-            (loadConfig as jest.Mock).mockReturnValue({
+            (loadConfig as Mock).mockReturnValue({
                 stackName: "local",
                 skipBaseInfrastructure: false,
                 gateway: { tlsMode: "self-signed", domains: ["*.aphiria.com"] },
@@ -175,7 +175,7 @@ describe("createStack", () => {
         });
 
         it("should create HTTPS redirect with skipRootListener=true when WWW redirect exists", () => {
-            (loadConfig as jest.Mock).mockReturnValue({
+            (loadConfig as Mock).mockReturnValue({
                 stackName: "local",
                 skipBaseInfrastructure: false,
                 gateway: { tlsMode: "self-signed", domains: ["*.aphiria.com"] },
@@ -195,7 +195,7 @@ describe("createStack", () => {
         });
 
         it("should not create namespace for local (uses default)", () => {
-            (loadConfig as jest.Mock).mockReturnValue({
+            (loadConfig as Mock).mockReturnValue({
                 stackName: "local",
                 skipBaseInfrastructure: false,
                 gateway: { tlsMode: "self-signed", domains: ["*.aphiria.com"] },
@@ -213,7 +213,7 @@ describe("createStack", () => {
 
     describe("preview environment", () => {
         it("should create base infrastructure for preview", () => {
-            (loadConfig as jest.Mock).mockReturnValue({
+            (loadConfig as Mock).mockReturnValue({
                 stackName: "preview-pr-123",
                 skipBaseInfrastructure: false,
                 gateway: { tlsMode: "letsencrypt-prod", domains: ["*.pr.aphiria.com"] },
@@ -235,7 +235,7 @@ describe("createStack", () => {
         });
 
         it("should create namespace when configured for preview", () => {
-            (loadConfig as jest.Mock).mockReturnValue({
+            (loadConfig as Mock).mockReturnValue({
                 stackName: "preview-pr-123",
                 skipBaseInfrastructure: false,
                 gateway: { tlsMode: "letsencrypt-prod", domains: ["*.pr.aphiria.com"] },
@@ -261,7 +261,7 @@ describe("createStack", () => {
         });
 
         it("should pass isPreviewPR=true to applications when stackName starts with preview-pr-", () => {
-            (loadConfig as jest.Mock).mockReturnValue({
+            (loadConfig as Mock).mockReturnValue({
                 stackName: "preview-pr-123",
                 skipBaseInfrastructure: false,
                 gateway: { tlsMode: "letsencrypt-prod", domains: ["*.pr.aphiria.com"] },
@@ -284,7 +284,7 @@ describe("createStack", () => {
         });
 
         it("should pass isPreviewPR=false for preview-base (does not start with preview-pr-)", () => {
-            (loadConfig as jest.Mock).mockReturnValue({
+            (loadConfig as Mock).mockReturnValue({
                 stackName: "preview-base",
                 skipBaseInfrastructure: false,
                 gateway: { tlsMode: "letsencrypt-prod", domains: ["*.pr.aphiria.com"] },
@@ -307,7 +307,7 @@ describe("createStack", () => {
         });
 
         it("should NOT create WWW redirect for preview", () => {
-            (loadConfig as jest.Mock).mockReturnValue({
+            (loadConfig as Mock).mockReturnValue({
                 stackName: "preview-pr-123",
                 skipBaseInfrastructure: false,
                 gateway: { tlsMode: "letsencrypt-prod", domains: ["*.pr.aphiria.com"] },
@@ -324,7 +324,7 @@ describe("createStack", () => {
         });
 
         it("should create HTTPS redirect with skipRootListener=false for preview (no WWW redirect)", () => {
-            (loadConfig as jest.Mock).mockReturnValue({
+            (loadConfig as Mock).mockReturnValue({
                 stackName: "preview-pr-123",
                 skipBaseInfrastructure: false,
                 gateway: { tlsMode: "letsencrypt-prod", domains: ["*.pr.aphiria.com"] },
@@ -347,7 +347,7 @@ describe("createStack", () => {
 
     describe("production environment", () => {
         it("should NOT create base infrastructure for production (managed externally)", () => {
-            (loadConfig as jest.Mock).mockReturnValue({
+            (loadConfig as Mock).mockReturnValue({
                 stackName: "production",
                 skipBaseInfrastructure: true,
                 gateway: {
@@ -366,7 +366,7 @@ describe("createStack", () => {
         });
 
         it("should NOT create gateway when skipBaseInfrastructure=true", () => {
-            (loadConfig as jest.Mock).mockReturnValue({
+            (loadConfig as Mock).mockReturnValue({
                 stackName: "production",
                 skipBaseInfrastructure: true,
                 gateway: {
@@ -385,7 +385,7 @@ describe("createStack", () => {
         });
 
         it("should create database in default namespace for production", () => {
-            (loadConfig as jest.Mock).mockReturnValue({
+            (loadConfig as Mock).mockReturnValue({
                 stackName: "production",
                 skipBaseInfrastructure: true,
                 gateway: {
@@ -409,7 +409,7 @@ describe("createStack", () => {
         });
 
         it("should create imagePullSecret in default namespace when configured", () => {
-            (loadConfig as jest.Mock).mockReturnValue({
+            (loadConfig as Mock).mockReturnValue({
                 stackName: "production",
                 skipBaseInfrastructure: true,
                 gateway: {
@@ -442,7 +442,7 @@ describe("createStack", () => {
         });
 
         it("should NOT create WWW redirect when skipBaseInfrastructure=true", () => {
-            (loadConfig as jest.Mock).mockReturnValue({
+            (loadConfig as Mock).mockReturnValue({
                 stackName: "production",
                 skipBaseInfrastructure: true,
                 gateway: {
@@ -464,7 +464,7 @@ describe("createStack", () => {
 
     describe("conditional resource creation", () => {
         it("should not create applications when app config is missing web.url", () => {
-            (loadConfig as jest.Mock).mockReturnValue({
+            (loadConfig as Mock).mockReturnValue({
                 stackName: "production",
                 skipBaseInfrastructure: false,
                 gateway: { tlsMode: "self-signed", domains: ["*.aphiria.com"] },
@@ -481,7 +481,7 @@ describe("createStack", () => {
         });
 
         it("should create applications when app.web.url is configured", () => {
-            (loadConfig as jest.Mock).mockReturnValue({
+            (loadConfig as Mock).mockReturnValue({
                 stackName: "production",
                 skipBaseInfrastructure: false,
                 gateway: { tlsMode: "self-signed", domains: ["*.aphiria.com"] },
@@ -509,7 +509,7 @@ describe("createStack", () => {
         });
 
         it("should not create monitoring when grafana.hostname is missing", () => {
-            (loadConfig as jest.Mock).mockReturnValue({
+            (loadConfig as Mock).mockReturnValue({
                 stackName: "production",
                 skipBaseInfrastructure: false,
                 gateway: { tlsMode: "self-signed", domains: ["*.aphiria.com"] },
@@ -523,7 +523,7 @@ describe("createStack", () => {
         });
 
         it("should not create monitoring when skipBaseInfrastructure=true (preview-pr uses preview-base monitoring)", () => {
-            (loadConfig as jest.Mock).mockReturnValue({
+            (loadConfig as Mock).mockReturnValue({
                 stackName: "preview-pr-148",
                 skipBaseInfrastructure: true,
                 gateway: { tlsMode: "letsencrypt-prod", domains: ["*.pr.aphiria.com"] },
@@ -542,7 +542,7 @@ describe("createStack", () => {
         });
 
         it("should not create imagePullSecret when namespace was already created", () => {
-            (loadConfig as jest.Mock).mockReturnValue({
+            (loadConfig as Mock).mockReturnValue({
                 stackName: "production",
                 skipBaseInfrastructure: false,
                 gateway: { tlsMode: "letsencrypt-prod", domains: ["*.pr.aphiria.com"] },
@@ -569,7 +569,7 @@ describe("createStack", () => {
 
     describe("provider handling", () => {
         it("should use provided k8sProvider when passed explicitly", () => {
-            (loadConfig as jest.Mock).mockReturnValue({
+            (loadConfig as Mock).mockReturnValue({
                 stackName: "production",
                 skipBaseInfrastructure: false,
                 gateway: { tlsMode: "self-signed", domains: ["*.aphiria.com"] },
@@ -586,7 +586,7 @@ describe("createStack", () => {
         });
 
         it("should create provider when k8sProvider is not passed", () => {
-            (loadConfig as jest.Mock).mockReturnValue({
+            (loadConfig as Mock).mockReturnValue({
                 stackName: "production",
                 skipBaseInfrastructure: false,
                 gateway: { tlsMode: "letsencrypt-prod", domains: ["*.aphiria.com"] },
@@ -605,7 +605,7 @@ describe("createStack", () => {
 
     describe("namespace handling", () => {
         it("should use created namespace name for database and applications", () => {
-            (loadConfig as jest.Mock).mockReturnValue({
+            (loadConfig as Mock).mockReturnValue({
                 stackName: "production",
                 skipBaseInfrastructure: false,
                 gateway: { tlsMode: "letsencrypt-prod", domains: ["*.pr.aphiria.com"] },
@@ -618,7 +618,7 @@ describe("createStack", () => {
             });
 
             // Mock namespace creation to return the namespace name
-            (createNamespace as jest.Mock).mockReturnValue({
+            (createNamespace as Mock).mockReturnValue({
                 namespace: { metadata: { name: pulumi.output("preview-pr-456") } },
                 resourceQuota: {},
             });
@@ -626,15 +626,15 @@ describe("createStack", () => {
             createStack("preview");
 
             // Verify namespace was passed to factories
-            const dbCall = (createDatabaseResources as jest.Mock).mock.calls[0][0];
+            const dbCall = (createDatabaseResources as Mock).mock.calls[0][0];
             expect(dbCall.namespace).toBeDefined();
 
-            const appCall = (createApplicationResources as jest.Mock).mock.calls[0][0];
+            const appCall = (createApplicationResources as Mock).mock.calls[0][0];
             expect(appCall.namespace).toBeDefined();
         });
 
         it("should use default namespace when no namespace config exists", () => {
-            (loadConfig as jest.Mock).mockReturnValue({
+            (loadConfig as Mock).mockReturnValue({
                 stackName: "production",
                 skipBaseInfrastructure: false,
                 gateway: { tlsMode: "self-signed", domains: ["*.aphiria.com"] },

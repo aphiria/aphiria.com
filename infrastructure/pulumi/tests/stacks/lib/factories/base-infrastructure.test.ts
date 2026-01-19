@@ -1,10 +1,10 @@
-import { describe, it, expect, beforeEach } from "@jest/globals";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 import * as k8s from "@pulumi/kubernetes";
 import { createBaseInfrastructureResources } from "../../../../src/stacks/lib/factories/base-infrastructure";
 
 // Mock the components
-jest.mock("../../../../src/components", () => ({
-    installBaseHelmCharts: jest.fn(),
+vi.mock("../../../../src/components", () => ({
+    installBaseHelmCharts: vi.fn(),
 }));
 
 import { installBaseHelmCharts } from "../../../../src/components";
@@ -15,12 +15,12 @@ describe("createBaseInfrastructureResources", () => {
     });
 
     beforeEach(() => {
-        jest.clearAllMocks();
+        vi.clearAllMocks();
     });
 
     describe("local environment", () => {
         it("should create Gateway API CRDs for local environment", () => {
-            (installBaseHelmCharts as jest.Mock).mockReturnValue({
+            (installBaseHelmCharts as Mock).mockReturnValue({
                 certManager: {},
                 nginxGateway: {},
             });
@@ -34,7 +34,7 @@ describe("createBaseInfrastructureResources", () => {
         });
 
         it("should create GatewayClass for nginx-gateway-fabric in local environment", () => {
-            (installBaseHelmCharts as jest.Mock).mockReturnValue({
+            (installBaseHelmCharts as Mock).mockReturnValue({
                 certManager: {},
                 nginxGateway: {},
             });
@@ -48,7 +48,7 @@ describe("createBaseInfrastructureResources", () => {
         });
 
         it("should call installBaseHelmCharts with CRD dependencies for local", () => {
-            (installBaseHelmCharts as jest.Mock).mockReturnValue({
+            (installBaseHelmCharts as Mock).mockReturnValue({
                 certManager: {},
                 nginxGateway: {},
             });
@@ -65,12 +65,12 @@ describe("createBaseInfrastructureResources", () => {
                     nginxGatewayDependencies: expect.arrayContaining([result.gatewayApiCrds]),
                 })
             );
-            const callArgs = (installBaseHelmCharts as jest.Mock).mock.calls[0][0];
+            const callArgs = (installBaseHelmCharts as Mock).mock.calls[0][0];
             expect(callArgs.nginxGatewayDependencies).toHaveLength(1);
         });
 
         it("should install Helm charts with correct environment for local", () => {
-            (installBaseHelmCharts as jest.Mock).mockReturnValue({
+            (installBaseHelmCharts as Mock).mockReturnValue({
                 certManager: {},
                 nginxGateway: {},
             });
@@ -92,7 +92,7 @@ describe("createBaseInfrastructureResources", () => {
                 certManager: { id: "cert-manager-chart" },
                 nginxGateway: { id: "nginx-gateway-chart" },
             };
-            (installBaseHelmCharts as jest.Mock).mockReturnValue(mockCharts);
+            (installBaseHelmCharts as Mock).mockReturnValue(mockCharts);
 
             const result = createBaseInfrastructureResources({
                 env: "local",
@@ -107,7 +107,7 @@ describe("createBaseInfrastructureResources", () => {
 
     describe("preview environment", () => {
         it("should not create Gateway API CRDs for preview environment", () => {
-            (installBaseHelmCharts as jest.Mock).mockReturnValue({
+            (installBaseHelmCharts as Mock).mockReturnValue({
                 certManager: {},
                 nginxGateway: {},
             });
@@ -121,7 +121,7 @@ describe("createBaseInfrastructureResources", () => {
         });
 
         it("should not create GatewayClass for preview environment", () => {
-            (installBaseHelmCharts as jest.Mock).mockReturnValue({
+            (installBaseHelmCharts as Mock).mockReturnValue({
                 certManager: {},
                 nginxGateway: {},
             });
@@ -135,7 +135,7 @@ describe("createBaseInfrastructureResources", () => {
         });
 
         it("should call installBaseHelmCharts without dependencies for preview", () => {
-            (installBaseHelmCharts as jest.Mock).mockReturnValue({
+            (installBaseHelmCharts as Mock).mockReturnValue({
                 certManager: {},
                 nginxGateway: {},
             });
@@ -157,7 +157,7 @@ describe("createBaseInfrastructureResources", () => {
         });
 
         it("should install Helm charts with correct environment for preview", () => {
-            (installBaseHelmCharts as jest.Mock).mockReturnValue({
+            (installBaseHelmCharts as Mock).mockReturnValue({
                 certManager: {},
                 nginxGateway: {},
             });
@@ -179,7 +179,7 @@ describe("createBaseInfrastructureResources", () => {
                 certManager: { id: "cert-manager-preview" },
                 nginxGateway: { id: "nginx-gateway-preview" },
             };
-            (installBaseHelmCharts as jest.Mock).mockReturnValue(mockCharts);
+            (installBaseHelmCharts as Mock).mockReturnValue(mockCharts);
 
             const result = createBaseInfrastructureResources({
                 env: "preview",
@@ -192,7 +192,7 @@ describe("createBaseInfrastructureResources", () => {
 
     describe("production environment", () => {
         it("should not create Gateway API CRDs for production environment", () => {
-            (installBaseHelmCharts as jest.Mock).mockReturnValue({
+            (installBaseHelmCharts as Mock).mockReturnValue({
                 certManager: {},
                 nginxGateway: {},
             });
@@ -206,7 +206,7 @@ describe("createBaseInfrastructureResources", () => {
         });
 
         it("should not create GatewayClass for production environment (Helm chart creates it)", () => {
-            (installBaseHelmCharts as jest.Mock).mockReturnValue({
+            (installBaseHelmCharts as Mock).mockReturnValue({
                 certManager: {},
                 nginxGateway: {},
             });
@@ -221,7 +221,7 @@ describe("createBaseInfrastructureResources", () => {
         });
 
         it("should call installBaseHelmCharts without dependencies for production", () => {
-            (installBaseHelmCharts as jest.Mock).mockReturnValue({
+            (installBaseHelmCharts as Mock).mockReturnValue({
                 certManager: {},
                 nginxGateway: {},
             });
@@ -243,7 +243,7 @@ describe("createBaseInfrastructureResources", () => {
         });
 
         it("should install Helm charts with correct environment for production", () => {
-            (installBaseHelmCharts as jest.Mock).mockReturnValue({
+            (installBaseHelmCharts as Mock).mockReturnValue({
                 certManager: {},
                 nginxGateway: {},
             });
@@ -265,7 +265,7 @@ describe("createBaseInfrastructureResources", () => {
                 certManager: { id: "cert-manager-prod" },
                 nginxGateway: { id: "nginx-gateway-prod" },
             };
-            (installBaseHelmCharts as jest.Mock).mockReturnValue(mockCharts);
+            (installBaseHelmCharts as Mock).mockReturnValue(mockCharts);
 
             const result = createBaseInfrastructureResources({
                 env: "production",

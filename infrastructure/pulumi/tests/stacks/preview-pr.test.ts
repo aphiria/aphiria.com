@@ -1,21 +1,21 @@
-import { describe, it, expect, jest, beforeEach } from "@jest/globals";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 import * as pulumi from "@pulumi/pulumi";
 
 // Mock createPreviewPRProvider to prevent Pulumi config reads
-const mockCreatePreviewPRProvider = jest.fn();
-jest.mock("../../src/stacks/lib/preview-pr-provider", () => ({
+const mockCreatePreviewPRProvider = vi.fn();
+vi.mock("../../src/stacks/lib/preview-pr-provider", () => ({
     createPreviewPRProvider: mockCreatePreviewPRProvider,
 }));
 
 // Mock the createStack function
-const mockCreateStack = jest.fn();
-jest.mock("../../src/stacks/lib/stack-factory", () => ({
+const mockCreateStack = vi.fn();
+vi.mock("../../src/stacks/lib/stack-factory", () => ({
     createStack: mockCreateStack,
 }));
 
 describe("preview-pr stack", () => {
     beforeEach(() => {
-        jest.clearAllMocks();
+        vi.clearAllMocks();
         pulumi.runtime.setMocks({
             newResource: function (args: pulumi.runtime.MockResourceArgs): {
                 id: string;

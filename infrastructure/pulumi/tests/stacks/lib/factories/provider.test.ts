@@ -1,12 +1,13 @@
+import { describe, it, expect, beforeEach, vi } from "vitest";
 import { createProvider } from "../../../../src/stacks/lib/factories/provider";
 import { ClusterConfig } from "../../../../src/stacks/lib/config/types";
 
-jest.mock("../../../../src/components", () => ({
-    createKubernetesCluster: jest.fn(),
+vi.mock("../../../../src/components", () => ({
+    createKubernetesCluster: vi.fn(),
 }));
 
-jest.mock("../../../../src/stacks/lib/config/loader", () => ({
-    loadConfig: jest.fn(),
+vi.mock("../../../../src/stacks/lib/config/loader", () => ({
+    loadConfig: vi.fn(),
 }));
 
 import { createKubernetesCluster } from "../../../../src/components";
@@ -29,12 +30,12 @@ describe("createProvider", () => {
     };
 
     beforeEach(() => {
-        jest.clearAllMocks();
+        vi.clearAllMocks();
     });
 
     describe("preview environment", () => {
         it("should throw error when cluster config is missing", () => {
-            (loadConfig as jest.Mock).mockReturnValue({});
+            (loadConfig as Mock).mockReturnValue({});
 
             expect(() => createProvider("preview")).toThrow(
                 "Environment preview requires cluster configuration but none was found. Check Pulumi.preview.yaml for cluster: config block."
@@ -42,11 +43,11 @@ describe("createProvider", () => {
         });
 
         it("should create cluster with config from loadConfig", () => {
-            (loadConfig as jest.Mock).mockReturnValue({
+            (loadConfig as Mock).mockReturnValue({
                 cluster: mockClusterConfig,
             });
 
-            (createKubernetesCluster as jest.Mock).mockReturnValue({
+            (createKubernetesCluster as Mock).mockReturnValue({
                 provider: {},
                 cluster: {},
                 clusterId: "cluster-123",
@@ -77,11 +78,11 @@ describe("createProvider", () => {
             const mockClusterId = "cluster-123";
             const mockKubeconfig = "kubeconfig-content";
 
-            (loadConfig as jest.Mock).mockReturnValue({
+            (loadConfig as Mock).mockReturnValue({
                 cluster: mockClusterConfig,
             });
 
-            (createKubernetesCluster as jest.Mock).mockReturnValue({
+            (createKubernetesCluster as Mock).mockReturnValue({
                 provider: mockProvider,
                 cluster: mockCluster,
                 clusterId: mockClusterId,
@@ -101,7 +102,7 @@ describe("createProvider", () => {
 
     describe("production environment", () => {
         it("should throw error when cluster config is missing", () => {
-            (loadConfig as jest.Mock).mockReturnValue({});
+            (loadConfig as Mock).mockReturnValue({});
 
             expect(() => createProvider("production")).toThrow(
                 "Environment production requires cluster configuration but none was found. Check Pulumi.production.yaml for cluster: config block."
@@ -119,11 +120,11 @@ describe("createProvider", () => {
                 maxNodes: 5,
             };
 
-            (loadConfig as jest.Mock).mockReturnValue({
+            (loadConfig as Mock).mockReturnValue({
                 cluster: prodClusterConfig,
             });
 
-            (createKubernetesCluster as jest.Mock).mockReturnValue({
+            (createKubernetesCluster as Mock).mockReturnValue({
                 provider: {},
                 cluster: {},
                 clusterId: "cluster-456",
@@ -154,11 +155,11 @@ describe("createProvider", () => {
             const mockClusterId = "cluster-456";
             const mockKubeconfig = "kubeconfig-prod";
 
-            (loadConfig as jest.Mock).mockReturnValue({
+            (loadConfig as Mock).mockReturnValue({
                 cluster: mockClusterConfig,
             });
 
-            (createKubernetesCluster as jest.Mock).mockReturnValue({
+            (createKubernetesCluster as Mock).mockReturnValue({
                 provider: mockProvider,
                 cluster: mockCluster,
                 clusterId: mockClusterId,

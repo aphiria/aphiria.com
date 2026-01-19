@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll } from "@jest/globals";
+import { describe, it, expect, beforeAll } from "vitest";
 import * as k8s from "@pulumi/kubernetes";
 import { createKubeStateMetrics } from "../../src/components/kube-state-metrics";
 import { promiseOf } from "../test-utils";

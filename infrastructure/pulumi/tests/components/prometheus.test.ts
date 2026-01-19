@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll } from "@jest/globals";
+import { describe, it, expect, beforeAll } from "vitest";
 import * as k8s from "@pulumi/kubernetes";
 import { createPrometheus, PrometheusScrapeConfig } from "../../src/components/prometheus";
 import { promiseOf } from "../test-utils";
@@ -10,7 +10,7 @@ describe("createPrometheus", () => {
         k8sProvider = new k8s.Provider("test", {});
     });
 
-    it("should create all required Prometheus resources", (done) => {
+    it("should create all required Prometheus resources", () => {
         const result = createPrometheus({
             namespace: "monitoring",
             replicas: 1,
@@ -40,8 +40,6 @@ describe("createPrometheus", () => {
         expect(result.pvc).toBeDefined();
         expect(result.statefulSet).toBeDefined();
         expect(result.service).toBeDefined();
-
-        done();
     });
 
     it("should create ServiceAccount with correct namespace", async () => {
@@ -100,7 +98,7 @@ describe("createPrometheus", () => {
         expect(pvc.namespace).toBe("monitoring");
     });
 
-    it("should use default scrape interval when not specified", (done) => {
+    it("should use default scrape interval when not specified", () => {
         const result = createPrometheus({
             namespace: "monitoring",
             replicas: 1,
@@ -124,7 +122,6 @@ describe("createPrometheus", () => {
         });
 
         expect(result.configMap).toBeDefined();
-        done();
     });
 
     it("should apply custom labels to resources", async () => {
@@ -213,7 +210,7 @@ describe("createPrometheus", () => {
         expect(svc.namespace).toBe("monitoring");
     });
 
-    it("should tag metrics with environment label", (done) => {
+    it("should tag metrics with environment label", () => {
         const result = createPrometheus({
             namespace: "monitoring",
             replicas: 1,
@@ -237,7 +234,6 @@ describe("createPrometheus", () => {
         });
 
         expect(result.configMap).toBeDefined();
-        done();
     });
 
     it("should build scrape config with all optional fields", async () => {

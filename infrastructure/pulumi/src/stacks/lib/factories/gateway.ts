@@ -50,7 +50,7 @@ export function createGatewayResources(args: GatewayResourcesArgs): GatewayResou
 
     // Create DNS records if configured
     // Fetch LoadBalancer IP from nginx-gateway Chart resources
-    /* istanbul ignore next - Chart.resources is only populated at runtime, cannot be mocked in unit tests */
+    /* v8 ignore start - Chart.resources is only populated at runtime, cannot be mocked in unit tests */
     if (args.gatewayConfig.dns && args.baseInfrastructure?.helmCharts.nginxGateway) {
         // Workaround for Pulumi bug #16395: Service.get() doesn't respect dependsOn
         // Use Chart v4's .resources output to get the Service directly from child resources
@@ -81,6 +81,7 @@ export function createGatewayResources(args: GatewayResourcesArgs): GatewayResou
         });
         gateway.dnsRecords = dnsResult.records;
     }
+    /* v8 ignore stop */
 
     return { gateway };
 }

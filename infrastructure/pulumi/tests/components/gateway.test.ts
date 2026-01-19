@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll } from "@jest/globals";
+import { describe, it, expect, beforeAll } from "vitest";
 import * as pulumi from "@pulumi/pulumi";
 import * as k8s from "@pulumi/kubernetes";
 import { createGateway } from "../../src/components/gateway";
@@ -136,6 +136,24 @@ describe("createGateway", () => {
                 provider: k8sProvider,
             });
         }).toThrow("Gateway requires a wildcard domain");
+    });
+
+    it("should accept both root and wildcard domains when requireRootAndWildcard is true", async () => {
+        const result = createGateway({
+            requireRootAndWildcard: true,
+            name: "prod-gateway-full",
+            namespace: "production",
+            tlsMode: "letsencrypt-prod",
+            domains: ["aphiria.com", "*.aphiria.com"],
+            dnsToken: pulumi.output("fake-dns-token"),
+            provider: k8sProvider,
+        });
+
+        expect(result.urn).toBeDefined();
+        expect(result.certificate).toBeDefined();
+
+        const gatewayUrn = await promiseOf(result.urn);
+        expect(gatewayUrn).toContain("prod-gateway-full");
     });
 
     it("should allow wildcard-only domains for preview environment", async () => {

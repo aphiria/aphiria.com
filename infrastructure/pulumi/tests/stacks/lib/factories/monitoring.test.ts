@@ -1,3 +1,4 @@
+import { describe, it, expect, beforeEach, vi } from "vitest";
 import { createMonitoringResources } from "../../../../src/stacks/lib/factories/monitoring";
 import {
     MonitoringConfig,
@@ -8,28 +9,28 @@ import * as k8s from "@pulumi/kubernetes";
 import * as fs from "fs";
 
 // Mock fs
-jest.mock("fs");
+vi.mock("fs");
 
 // Mock the component functions
-jest.mock("../../../../src/components", () => ({
-    createNamespace: jest.fn(),
-    installKubePrometheusStack: jest.fn(),
+vi.mock("../../../../src/components", () => ({
+    createNamespace: vi.fn(),
+    installKubePrometheusStack: vi.fn(),
 }));
 
-jest.mock("../../../../src/components/grafana", () => ({
-    createGrafana: jest.fn(),
+vi.mock("../../../../src/components/grafana", () => ({
+    createGrafana: vi.fn(),
 }));
 
-jest.mock("../../../../src/components/grafana-ingress", () => ({
-    createGrafanaIngress: jest.fn(),
+vi.mock("../../../../src/components/grafana-ingress", () => ({
+    createGrafanaIngress: vi.fn(),
 }));
 
-jest.mock("../../../../src/components/grafana-alerts", () => ({
-    createGrafanaAlerts: jest.fn(),
+vi.mock("../../../../src/components/grafana-alerts", () => ({
+    createGrafanaAlerts: vi.fn(),
 }));
 
-jest.mock("../../../../src/components/dashboards", () => ({
-    createDashboards: jest.fn(),
+vi.mock("../../../../src/components/dashboards", () => ({
+    createDashboards: vi.fn(),
 }));
 
 import { createNamespace, installKubePrometheusStack } from "../../../../src/components";
@@ -107,16 +108,16 @@ describe("createMonitoringResources", () => {
     } as GrafanaConfig;
 
     beforeEach(() => {
-        jest.clearAllMocks();
+        vi.clearAllMocks();
 
         // Mock fs methods - default to dashboard directory existing with .json files
-        (fs.existsSync as jest.Mock).mockReturnValue(true);
-        (fs.readdirSync as jest.Mock).mockReturnValue([
+        (fs.existsSync as Mock).mockReturnValue(true);
+        (fs.readdirSync as Mock).mockReturnValue([
             "dashboard1.json",
             "dashboard2.json",
             "readme.md",
         ]);
-        (fs.readFileSync as jest.Mock).mockImplementation((filePath: string) => {
+        (fs.readFileSync as Mock).mockImplementation((filePath: string) => {
             if (filePath.toString().endsWith(".json")) {
                 return JSON.stringify({ dashboard: "config" });
             }
@@ -124,26 +125,26 @@ describe("createMonitoringResources", () => {
         });
 
         // Set up default mock return values
-        (createNamespace as jest.Mock).mockReturnValue({
+        (createNamespace as Mock).mockReturnValue({
             namespace: {},
             resourceQuota: {},
         });
 
-        (installKubePrometheusStack as jest.Mock).mockReturnValue({});
-        (createDashboards as jest.Mock).mockReturnValue({ configMap: {} });
-        (createGrafanaAlerts as jest.Mock).mockReturnValue({
+        (installKubePrometheusStack as Mock).mockReturnValue({});
+        (createDashboards as Mock).mockReturnValue({ configMap: {} });
+        (createGrafanaAlerts as Mock).mockReturnValue({
             alertRulesConfigMap: {},
             contactPointsConfigMap: {},
             notificationPoliciesConfigMap: {},
         });
-        (createGrafana as jest.Mock).mockReturnValue({
+        (createGrafana as Mock).mockReturnValue({
             deployment: {},
             service: {},
             configMap: {},
             secret: {},
             pvc: {},
         });
-        (createGrafanaIngress as jest.Mock).mockReturnValue({
+        (createGrafanaIngress as Mock).mockReturnValue({
             httproute: {},
         });
     });
@@ -720,7 +721,7 @@ describe("createMonitoringResources", () => {
         });
 
         it("should skip loading dashboards when dashboard directory does not exist", () => {
-            (fs.existsSync as jest.Mock).mockReturnValue(false);
+            (fs.existsSync as Mock).mockReturnValue(false);
 
             createMonitoringResources({
                 env: "local",
@@ -738,7 +739,7 @@ describe("createMonitoringResources", () => {
         });
 
         it("should only load .json files from dashboard directory", () => {
-            (fs.readdirSync as jest.Mock).mockReturnValue([
+            (fs.readdirSync as Mock).mockReturnValue([
                 "dashboard1.json",
                 "readme.md",
                 "config.txt",
@@ -762,7 +763,7 @@ describe("createMonitoringResources", () => {
                 })
             );
             // Verify non-.json files are not loaded
-            const call = (createDashboards as jest.Mock).mock.calls[0][0];
+            const call = (createDashboards as Mock).mock.calls[0][0];
             expect(call.dashboards["readme.md"]).toBeUndefined();
             expect(call.dashboards["config.txt"]).toBeUndefined();
         });

@@ -1,15 +1,15 @@
-import { describe, it, expect, jest, beforeEach } from "@jest/globals";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 import * as pulumi from "@pulumi/pulumi";
 
 // Mock the createStack function before importing the stack file
-const mockCreateStack = jest.fn();
-jest.mock("../../src/stacks/lib/stack-factory", () => ({
+const mockCreateStack = vi.fn();
+vi.mock("../../src/stacks/lib/stack-factory", () => ({
     createStack: mockCreateStack,
 }));
 
 describe("local stack", () => {
     beforeEach(() => {
-        jest.clearAllMocks();
+        vi.clearAllMocks();
         pulumi.runtime.setMocks({
             newResource: function (args: pulumi.runtime.MockResourceArgs): {
                 id: string;

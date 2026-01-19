@@ -115,10 +115,11 @@ export function installNginxGateway(
     };
 
     // Only add transforms in non-test environments (mock runtime doesn't support them)
-    /* istanbul ignore next - production-only transform configuration */
+    /* v8 ignore start - production-only transform configuration */
     if (process.env.NODE_ENV !== "test") {
         resourceOptions.transforms = [ignoreDigitalOceanServiceAnnotationsV4];
     }
+    /* v8 ignore stop */
 
     return new k8s.helm.v4.Chart(
         "nginx-gateway",
