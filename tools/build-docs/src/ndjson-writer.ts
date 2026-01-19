@@ -1,4 +1,4 @@
-import { LexemeRecord } from "./types";
+import { LexemeRecord } from "./types.js";
 import { createWriteStream, WriteStream } from "fs";
 import { dirname } from "path";
 import { mkdirSync } from "fs";

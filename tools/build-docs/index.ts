@@ -2,7 +2,7 @@
 
 import * as fs from "fs";
 import * as path from "path";
-import { BuildConfig } from "./src/types";
+import { BuildConfig } from "./src/types.js";
 
 /**
  * CLI entry point for documentation build system
@@ -127,7 +127,7 @@ async function main(): Promise<void> {
 }
 
 // Run if executed directly
-if (require.main === module) {
+if (import.meta.url === `file://${process.argv[1]}`) {
     main();
 }
 

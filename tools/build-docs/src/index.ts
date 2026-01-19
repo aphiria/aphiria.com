@@ -1,12 +1,12 @@
 #!/usr/bin/env node
 
-import { configureMarked, compileMarkdownWithDocTitle } from "./markdown-compiler";
-import { extractLexemes } from "./lexeme-extractor";
-import { writeLexemesToNdjson } from "./ndjson-writer";
-import { generateMetaJson, DocMeta } from "./meta-generator";
+import { configureMarked, compileMarkdownWithDocTitle } from "./markdown-compiler.js";
+import { extractLexemes } from "./lexeme-extractor.js";
+import { writeLexemesToNdjson } from "./ndjson-writer.js";
+import { generateMetaJson, DocMeta } from "./meta-generator.js";
 import { readdirSync, readFileSync, writeFileSync, mkdirSync, existsSync } from "fs";
 import { join, basename } from "path";
-import { LexemeRecord } from "./types";
+import { LexemeRecord } from "./types.js";
 
 /**
  * Build configuration
@@ -176,7 +176,7 @@ async function main(): Promise<void> {
 }
 
 // Run CLI if invoked directly
-if (require.main === module) {
+if (import.meta.url === `file://${process.argv[1]}`) {
     main().catch((error) => {
         console.error("Fatal error:", error);
         process.exit(1);

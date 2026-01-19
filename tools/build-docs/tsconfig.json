@@ -5,7 +5,9 @@
         "rootDir": "./",
         "declaration": true,
         "declarationMap": true,
-        "types": ["node"]
+        "types": ["node"],
+        "module": "nodenext",
+        "moduleResolution": "nodenext"
     },
     "include": ["**/*.ts"],
     "exclude": ["node_modules", "dist", "tests"]

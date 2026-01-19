@@ -3,6 +3,11 @@
     "version": "1.0.0",
     "description": "Aphiria.com monorepo - website, API, infrastructure, and tests",
     "private": true,
+    "workspaces": [
+        "apps/*",
+        "infrastructure/*",
+        "tools/*"
+    ],
     "scripts": {
         "lint": "eslint .",
         "lint:fix": "eslint . --fix",

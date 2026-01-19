@@ -1,6 +1,11 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { render } from "@testing-library/react";
 import { DocContent } from "./DocContent";
+
+// Mock HighlightedHtml to passthrough children
+vi.mock("./HighlightedHtml", () => ({
+    HighlightedHtml: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+}));
 
 describe("DocContent", () => {
     it("renders sanitized HTML", () => {
@@ -36,5 +41,15 @@ describe("DocContent", () => {
 
         const div = container.firstChild as HTMLElement;
         expect(div.innerHTML).toBe(html);
+    });
+
+    it("renders code blocks for syntax highlighting", () => {
+        const html = '<pre><code class="language-php">echo "Hello";</code></pre>';
+
+        const { container } = render(<DocContent html={html} />);
+
+        const code = container.querySelector("code.language-php");
+        expect(code).toBeInTheDocument();
+        expect(code?.textContent).toBe('echo "Hello";');
     });
 });

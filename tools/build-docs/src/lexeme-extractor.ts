@@ -1,5 +1,5 @@
 import { JSDOM } from "jsdom";
-import { Context, LexemeRecord } from "./types";
+import { Context, LexemeRecord } from "./types.js";
 
 /**
  * Indexable HTML elements (matches the elements we extract for search)
