@@ -92,7 +92,7 @@ EOF,
      */
     private function readLexemesFromNdjson(): array
     {
-        $ndjsonPath = __DIR__ . '/../../../dist/docs/search/lexemes.ndjson';
+        $ndjsonPath = __DIR__ . '/../../../../dist/docs/search/lexemes.ndjson';
 
         if (!\file_exists($ndjsonPath)) {
             throw new IndexingFailedException("Lexemes NDJSON file not found: $ndjsonPath");
