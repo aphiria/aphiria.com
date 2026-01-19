@@ -27,7 +27,6 @@ export function ContextSelector({ initialContext }: ContextSelectorProps) {
 
     // Initialize context visibility and URL on mount
     useEffect(() => {
-        console.log("[ContextSelector] Mount useEffect running");
         toggleContextVisibility(initialContext);
 
         // If no context query param exists, add it to the URL
