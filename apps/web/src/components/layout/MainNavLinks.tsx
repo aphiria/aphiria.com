@@ -8,7 +8,7 @@ export function MainNavLinks() {
     return (
         <>
             <li className="main-nav-link">
-                <Link href="/docs/1.x/introduction" title="Read the documentation">
+                <Link href="/docs" title="Read the documentation">
                     Docs
                 </Link>
             </li>
