@@ -1,34 +1,5 @@
 <h1 id="doc-title">PSR Adapters</h1>
 
-<nav class="toc-nav">
-
-<div class="toc-nav-contents">
-
-<h2 id="table-of-contents">Table of Contents</h2>
-
-<ol>
-<li><a href="#introduction">Introduction</a><ol>
-<li><a href="#why-doesnt-aphiria-adopt-all-the-psrs">Why Doesn&#39;t Aphiria Adopt All The PSRs?</a></li>
-</ol>
-</li>
-<li><a href="#psr-7">PSR-7</a><ol>
-<li><a href="#psr-7-requests">Requests</a></li>
-<li><a href="#psr-7-responses">Responses</a></li>
-<li><a href="#psr-7-streams">Streams</a></li>
-<li><a href="#psr-7-uris">URIs</a></li>
-<li><a href="#psr-7-uploaded-files">Uploaded Files</a></li>
-</ol>
-</li>
-<li><a href="#psr-11">PSR-11</a><ol>
-<li><a href="#creating-a-psr-11-container">Creating a PSR-11 Container</a></li>
-</ol>
-</li>
-</ol>
-
-</div>
-
-</nav>
-
 <h2 id="introduction">Introduction</h2>
 
 A group called <a href="https://www.php-fig.org/" target="_blank">The PHP Framework Interop Group</a> (FIG) came together to try and solve some of the issues with reusing components between frameworks.  For example, most frameworks tend to write their own HTTP requests, responses, DI containers, etc.  Having many different implementations to solve the same thing makes it difficult to build libraries that could work across frameworks.  So, the FIG set about introducing some standards called PSRs to simplify reusing these components across frameworks.

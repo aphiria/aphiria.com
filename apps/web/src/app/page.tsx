@@ -16,7 +16,7 @@ export default function HomePage() {
     return (
         <>
             <Header />
-            <main>
+            <main className="home">
                 <Sidebar id="sidebar-main-nav">
                     <ContextSelector initialContext="framework" />
                     <ul>

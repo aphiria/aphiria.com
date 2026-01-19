@@ -1,28 +1,5 @@
 <h1 id="doc-title">Dependency Injection</h1>
 
-<nav class="toc-nav">
-
-<div class="toc-nav-contents">
-
-<h2 id="table-of-contents">Table of Contents</h2>
-
-<ol>
-<li><a href="#basics">Basics</a></li>
-<li><a href="#bindings">Bindings</a></li>
-<li><a href="#auto-wiring">Auto-Wiring</a><ol>
-<li><a href="#targeted-bindings">Targeted Bindings</a></li>
-</ol>
-</li>
-<li><a href="#binders">Binders</a><ol>
-<li><a href="#dispatching-binders">Dispatching Binders</a></li>
-</ol>
-</li>
-</ol>
-
-</div>
-
-</nav>
-
 <h2 id="basics">Basics</h2>
 
 Dependency injection (DI) is the process of passing (injecting) dependencies that a class needs, typically done via the constructor.  Benefits to DI include:

@@ -1,35 +1,5 @@
 <h1 id="doc-title">Testing APIs</h1>
 
-<nav class="toc-nav">
-
-<div class="toc-nav-contents">
-
-<h2 id="table-of-contents">Table of Contents</h2>
-
-<ol>
-<li><a href="#introduction">Introduction</a></li>
-<li><a href="#sending-requests">Sending Requests</a><ol>
-<li><a href="#negotiating-content">Negotiating Content</a></li>
-</ol>
-</li>
-<li><a href="#mocking-authentication">Mocking Authentication</a></li>
-<li><a href="#response-assertions">Response Assertions</a><ol>
-<li><a href="#assert-cookie-equals">assertCookieEquals</a></li>
-<li><a href="#assert-has-cookie">assertHasCookie</a></li>
-<li><a href="#assert-has-header">assertHasHeader</a></li>
-<li><a href="#assert-header-equals">assertHeaderEquals</a></li>
-<li><a href="#assert-header-matches-regex">assertHeaderMatchesRegex</a></li>
-<li><a href="#assert-parsed-body-equals">assertParsedBodyEquals</a></li>
-<li><a href="#assert-parsed-body-passes-callback">assertParsedBodyPassesCallback</a></li>
-<li><a href="#assert-status-code-equals">assertStatusCodeEquals</a></li>
-</ol>
-</li>
-</ol>
-
-</div>
-
-</nav>
-
 <h2 id="introduction">Introduction</h2>
 
 Integration tests are a great way to make sure your application is working end-to-end as expected.  Aphiria, with the help of <a href="https://phpunit.de/" target="_blank">PHPUnit</a>, comes with some great tools to help you send requests to your application and parse the responses.  Aphiria uses automatic [content-negotiation](content-negotiation.md) in your integration tests, which frees you to make assertions using your app's models without worrying about how to (de)serialize data.  The integration tests won't actually send a request over HTTP, either.  Instead, it creates an in-memory instance of your application, and sends the requests to that.  The nice part about not having to go over HTTP is that you don't worry about having to set up firewall rules for testing your application in staging slots.

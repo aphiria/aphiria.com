@@ -1,28 +1,5 @@
 <h1 id="doc-title">Content Negotiation</h1>
 
-<nav class="toc-nav">
-
-<div class="toc-nav-contents">
-
-<h2 id="table-of-contents">Table of Contents</h2>
-
-<ol>
-<li><a href="#basics">Basics</a></li>
-<li><a href="#negotiating-requests">Negotiating Requests</a></li>
-<li><a href="#negotiating-responses">Negotiating Responses</a><ol>
-<li><a href="#negotiating-language">Negotiating Language</a></li>
-</ol>
-</li>
-<li><a href="#media-type-formatters">Media Type Formatters</a><ol>
-<li><a href="#customizing-deserialization">Customizing (De)Serialization</a></li>
-</ol>
-</li>
-</ol>
-
-</div>
-
-</nav>
-
 <h2 id="basics">Basics</h2>
 
 Content negotiation is a process between the client and server to determine how to best process a request and serve content back to the client.  This negotiation is typically done via headers, where the client says "Here's the type of content I'd prefer (eg JSON, XML, etc)", and the server trying to accommodate the client's preferences.  For example, the process can involve negotiating the following for requests and responses per the <a href="https://www.w3.org/Protocols/rfc2616/rfc2616-sec12.html" target="_blank">HTTP spec</a>:

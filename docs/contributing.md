@@ -1,50 +1,5 @@
 <h1 id="doc-title">Contributing</h1>
 
-<nav class="toc-nav">
-
-<div class="toc-nav-contents">
-
-<h2 id="table-of-contents">Table of Contents</h2>
-
-<ol>
-<li><a href="#basics">Basics</a><ol>
-<li><a href="#developing-in-the-framework">Developing in the Framework</a></li>
-</ol>
-</li>
-<li><a href="#bugs">Bugs</a><ol>
-<li><a href="#reporting-bug">Reporting a Bug</a></li>
-<li><a href="#fixing-bug">Fixing a Bug</a></li>
-</ol>
-</li>
-<li><a href="#features">Features</a></li>
-<li><a href="#documentation">Documentation</a></li>
-<li><a href="#security-vulnerabilities">Security Vulnerabilities</a></li>
-<li><a href="#coding-style">Coding Style</a><ol>
-<li><a href="#linter">Linter</a></li>
-<li><a href="#static-analysis">Static Analysis</a></li>
-<li><a href="#phpdoc">PHPDoc</a></li>
-</ol>
-</li>
-<li><a href="#naming-conventions">Naming Conventions</a><ol>
-<li><a href="#variables">Variables</a></li>
-<li><a href="#properties">Properties</a></li>
-<li><a href="#functions-methods">Functions/Methods</a></li>
-<li><a href="#constants">Constants</a></li>
-<li><a href="#namespaces">Namespaces</a></li>
-<li><a href="#classes">Classes</a></li>
-<li><a href="#abstract-classes">Abstract Classes</a></li>
-<li><a href="#interfaces">Interfaces</a></li>
-<li><a href="#traits">Traits</a></li>
-<li><a href="#enums">Enums</a></li>
-</ol>
-</li>
-<li><a href="#financial-support">Financial Support</a></li>
-</ol>
-
-</div>
-
-</nav>
-
 <h2 id="basics">Basics</h2>
 
 First, thank you for taking the time to contribute to Aphiria!  We use GitHub pull requests for all code contributions.  To get started on a [bug fix](#bugs) or [feature](#features), fork <a href="https://github.com/aphiria/aphiria" target="_blank">Aphiria</a>, and create a branch off of `1.x`.  Be sure to run `composer test` locally before opening the pull request to run the unit tests, [static analyzer](#static-analysis), and [linter](#linter).  Once your bug fix/feature is complete, open a pull request against `1.x`.

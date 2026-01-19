@@ -1,29 +1,5 @@
 <h1 id="doc-title">Config Files</h1>
 
-<nav class="toc-nav">
-
-<div class="toc-nav-contents">
-
-<h2 id="table-of-contents">Table of Contents</h2>
-
-<ol>
-<li><a href="#reading-from-configs">Reading From Configs</a><ol>
-<li><a href="#reading-php-files">Reading PHP Files</a></li>
-<li><a href="#reading-json-files">Reading JSON Files</a></li>
-<li><a href="#reading-yaml-files">Reading YAML Files</a></li>
-<li><a href="#custom-file-readers">Custom File Readers</a></li>
-</ol>
-</li>
-<li><a href="#global-configuration">Global Configuration</a><ol>
-<li><a href="#building-the-global-configuration">Building The Global Configuration</a></li>
-</ol>
-</li>
-</ol>
-
-</div>
-
-</nav>
-
 <h2 id="reading-from-configs">Reading From Configs</h2>
 
 Configs allow you to store changeable values that power your application.  Unlike environment variables, they do not typically change between environments.  Configurations must implement `IConfiguration`, which provides the following methods:

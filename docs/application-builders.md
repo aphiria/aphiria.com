@@ -1,35 +1,5 @@
 <h1 id="doc-title">Application Builders</h1>
 
-<nav class="toc-nav">
-
-<div class="toc-nav-contents">
-
-<h2 id="table-of-contents">Table of Contents</h2>
-
-<ol>
-<li><a href="#basics">Basics</a><ol>
-<li><a href="#modules">Modules</a></li>
-</ol>
-</li>
-<li><a href="#components">Components</a><ol>
-<li><a href="#component-binders">Binders</a></li>
-<li><a href="#component-routes">Routes</a></li>
-<li><a href="#component-middleware">Middleware</a></li>
-<li><a href="#component-console-commands">Console Commands</a></li>
-<li><a href="#component-authenticators">Authenticators</a></li>
-<li><a href="#component-authorities">Authorities</a></li>
-<li><a href="#component-validator">Validator</a></li>
-<li><a href="#component-exception-handler">Exception Handler</a></li>
-</ol>
-</li>
-<li><a href="#adding-custom-components">Adding Custom Components</a></li>
-<li><a href="#custom-applications">Custom Applications</a></li>
-</ol>
-
-</div>
-
-</nav>
-
 <h2 id="basics">Basics</h2>
 
 Application builders provide an easy way to configure your application.  They are passed into [modules](#modules) where you can decorate them with the [components](#components) a part of your business domain needs (eg routes, binders, global middleware, console commands, validators, etc).  For example, if you are running a site where users can buy books, you might have a user module, a book module, and a shopping cart module.  Each of these modules will have separate binders, routes, console commands, etc.  So, why not bundle all the configuration logic by module?

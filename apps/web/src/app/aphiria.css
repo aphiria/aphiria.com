@@ -497,7 +497,7 @@ p code {
     white-space: pre-wrap !important;
 }
 
-body.home > main {
+main.home {
     h1,
     h2,
     p,
@@ -758,7 +758,7 @@ blockquote {
         margin-top: -1em !important;
     }
 
-    body.home > main pre {
+    main.home pre {
         width: 700px;
         margin: 0 auto;
     }

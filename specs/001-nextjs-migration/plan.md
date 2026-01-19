@@ -188,7 +188,7 @@ dist/docs/           # EXTERNAL build artifact (created by separate process)
  meta.json
 ```
 
-**Structure Decision**: Web application structure selected because this is a frontend-only migration. The Next.js app lives in `apps/web/` (replacing the current PHP-rendered views). The PHP API in `apps/api/` remains unchanged and continues to consume the shared `dist/docs/` for full-text search. The documentation build process (currently `gulp build-docs`) moves to a standalone script that produces `dist/docs/` consumed by both Next.js (for rendering) and PHP (for search indexing).
+**Structure Decision**: Web application structure selected because this is a frontend-only migration. The Next.js app lives in `apps/web/` (replacing the current PHP-rendered views). The PHP API in `apps/api/` remains unchanged and continues to consume the shared `dist/docs/` for full-text search. The documentation build process (currently `gulp build-docs`) moves to a standalone script in `tools/build-docs/` that produces `dist/docs/` consumed by both Next.js (for rendering) and PHP (for search indexing).
 
 ## Complexity Tracking
 

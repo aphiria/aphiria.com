@@ -1,31 +1,5 @@
 <h1 id="doc-title">Exception Handling</h1>
 
-<nav class="toc-nav">
-
-<div class="toc-nav-contents">
-
-<h2 id="table-of-contents">Table of Contents</h2>
-
-<ol>
-<li><a href="#global-exception-handler">Global Exception Handler</a></li>
-<li><a href="#problem-details-exception-renderer">Problem Details Exception Renderer</a><ol>
-<li><a href="#custom-problem-details-mappings">Custom Problem Details Mappings</a></li>
-</ol>
-<li><a href="#custom-api-exception-renderer">Custom API Exception Renderer</a></li>
-<li><a href="#console-exception-renderer">Console Exception Renderer</a><ol>
-<li><a href="#output-writers">Output Writers</a></li>
-</ol>
-</li>
-<li><a href="#logging">Logging</a><ol>
-<li><a href="#exception-log-levels">Exception Log Levels</a></li>
-</ol>
-</li>
-</ol>
-
-</div>
-
-</nav>
-
 <h2 id="global-exception-handler">Global Exception Handler</h2>
 
 At some point, your application is going to throw an unhandled exception or shut down unexpectedly.  When this happens, it would be nice to log details about the error and present a nicely-formatted response for the user.  Aphiria provides `GlobalExceptionHandler` to do just this.  It can be used to render exceptions for both HTTP and console applications, and is framework-agnostic.

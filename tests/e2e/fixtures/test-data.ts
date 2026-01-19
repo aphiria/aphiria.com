@@ -2,6 +2,14 @@
  * Test data constants for E2E tests
  */
 export const TEST_DOCS = {
+    installation: "/docs/1.x/installation",
+    introduction: "/docs/1.x/introduction",
+} as const;
+
+/**
+ * Legacy .html URLs for redirect testing
+ */
+export const LEGACY_DOCS = {
     installation: "/docs/1.x/installation.html",
     introduction: "/docs/1.x/introduction.html",
 } as const;

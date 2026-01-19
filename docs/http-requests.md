@@ -1,45 +1,5 @@
 <h1 id="doc-title">HTTP Requests</h1>
 
-<nav class="toc-nav">
-
-<div class="toc-nav-contents">
-
-<h2 id="table-of-contents">Table of Contents</h2>
-
-<ol>
-<li><a href="#basics">Basics</a></li>
-<li><a href="#creating-requests">Creating Requests</a><ol>
-<li><a href="#creating-requests-from-superglobals">Creating Requests From Superglobals</a></li>
-<li><a href="#request-builders">Request Builders</a></li>
-</ol>
-</li>
-<li><a href="#headers">Headers</a></li>
-<li><a href="#bodies">Bodies</a><ol>
-<li><a href="#string-bodies">String Bodies</a></li>
-<li><a href="#stream-bodies">Stream Bodies</a></li>
-</ol>
-</li>
-<li><a href="#uris">URIs</a></li>
-<li><a href="#getting-post-data">Getting POST Data</a></li>
-<li><a href="#getting-query-string-data">Getting Query String Data</a></li>
-<li><a href="#json-requests">JSON Requests</a></li>
-<li><a href="#getting-request-cookies">Getting Cookies</a></li>
-<li><a href="#getting-client-ip-address">Getting Client IP Address</a></li>
-<li><a href="#header-parameters">Header Parameters</a></li>
-<li><a href="#serializing-requests">Serializing Requests</a></li>
-<li><a href="#multipart-requests">Multipart Requests</a><ol>
-<li><a href="#saving-uploaded-files">Saving Uploaded Files</a></li>
-<li><a href="#getting-mime-type-of-body">Getting the MIME Type of the Body</a></li>
-<li><a href="#creating-multipart-requests">Creating Multipart Requests</a></li>
-</ol>
-</li>
-<li><a href="#trusted-proxies">Trusted Proxies</a></li>
-</ol>
-
-</div>
-
-</nav>
-
 <h2 id="basics">Basics</h2>
 
 Requests are HTTP messages sent by clients to servers.  They contain data like the URI that was requested, the HTTP method (eg `GET`), the headers, and the body (if one was present).

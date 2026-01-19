@@ -1,40 +1,5 @@
 <h1 id="doc-title">Validation</h1>
 
-<nav class="toc-nav">
-
-<div class="toc-nav-contents">
-
-<h2 id="table-of-contents">Table of Contents</h2>
-
-<ol>
-<li><a href="#introduction">Introduction</a><ol>
-<li><a href="#creating-a-validator">Creating A Validator</a></li>
-</ol>
-</li>
-<li><a href="#validating-data">Validating Data</a><ol>
-<li><a href="#validating-objects">Validating Objects</a></li>
-<li><a href="#validating-properties">Validating Properties</a></li>
-<li><a href="#validating-methods">Validating Methods</a></li>
-<li><a href="#validating-values">Validating Values</a></li>
-</ol>
-</li>
-<li><a href="#constraints">Constraints</a><ol>
-<li><a href="#built-in-constraints">Built-In Constraints</a></li>
-<li><a href="#custom-constraints">Custom Constraints</a></li>
-</ol>
-</li>
-<li><a href="#error-messages">Error Messages</a><ol>
-<li><a href="#error-message-templates">Error Message Templates</a></li>
-<li><a href="#built-in-error-message-interpolators">Built-In Error Message Interpolators</a></li>
-</ol>
-</li>
-<li><a href="#validating-request-bodies">Validating Request Bodies</a></li>
-</ol>
-
-</div>
-
-</nav>
-
 <h2 id="introduction">Introduction</h2>
 
 Validating your data, especially input, is critical for ensuring that your application runs smoothly.  Let's take a look at how you can do this with your POPOs in Aphiria.  Assume we have the following model in your application:

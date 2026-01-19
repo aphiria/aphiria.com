@@ -10,7 +10,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl ca-certificates gnupg \
  && rm -rf /var/lib/apt/lists/*
 
-# Node.js 20+ for build-docs pipeline
+# Node.js 20+ for tools/build-docs pipeline
 RUN curl -fsSL https://deb.nodesource.com/setup_23.x | bash - \
  && apt-get update && apt-get install -y --no-install-recommends nodejs \
  && corepack enable \
@@ -39,9 +39,9 @@ RUN cd apps/api && composer install --no-interaction --ignore-platform-reqs --pr
 COPY . .
 COPY apps/api/.env.dist apps/api/.env
 
-# Install build-docs dependencies and compile documentation
-RUN cd build-docs && npm install \
+# Install tools/build-docs dependencies and compile documentation
+RUN cd tools/build-docs && npm install \
  && npm run build
 
 # Build documentation artifacts (rendered HTML, search index, metadata)
-RUN node build-docs/dist/index.js docs dist/docs 1.x
+RUN node tools/build-docs/dist/index.js docs dist/docs 1.x

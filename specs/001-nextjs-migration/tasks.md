@@ -90,10 +90,10 @@ dist/docs/
 
 ### Build Pipeline Architecture
 
-**Directory**: `build-docs/` (TypeScript Node.js scripts)
+**Directory**: `tools/build-docs/` (TypeScript Node.js scripts)
 
 ```
-build-docs/
+tools/build-docs/
 ├── index.ts                # CLI entry point
 ├── lib/
 │   ├── markdown-compiler.ts  # marked + GFM tables + raw HTML support
@@ -112,16 +112,16 @@ build-docs/
 
 **Setup and Configuration**
 
-- [X] T001 Create `build-docs/` directory structure with TypeScript configuration (tsconfig.json, strict mode)
+- [X] T001 Create `tools/build-docs/` directory structure with TypeScript configuration (tsconfig.json, strict mode)
 - [X] T002 [P] Install build dependencies: marked (markdown), prismjs + prismjs/components (syntax highlighting), jsdom (DOM parsing), @types/node
-- [X] T003 [P] Create TypeScript interfaces in `build-docs/src/types.ts` matching PHP contracts (LexemeRecord, Context enum: "framework" | "library" | "global")
+- [X] T003 [P] Create TypeScript interfaces in `tools/build-docs/src/types.ts` matching PHP contracts (LexemeRecord, Context enum: "framework" | "library" | "global")
 - [X] T004 [P] Configure marked with GFM tables extension and `mangle: false, headerIds: true` for ID preservation
-- [X] T005 Create CLI entry point in `build-docs/index.ts` with argument parsing (input: docs/, output: dist/docs/)
+- [X] T005 Create CLI entry point in `tools/build-docs/index.ts` with argument parsing (input: docs/, output: dist/docs/)
 
 **Markdown Compilation and Syntax Highlighting**
 
-- [X] T006 Create markdown compiler in `build-docs/src/markdown-compiler.ts` using marked with raw HTML support (sanitize: false)
-- [X] T007 Implement server-side Prism.js highlighting in `build-docs/src/syntax-highlighter.ts` replicating `apps/web/src/js/server-side/highlight-code.js` logic
+- [X] T006 Create markdown compiler in `tools/build-docs/src/markdown-compiler.ts` using marked with raw HTML support (sanitize: false)
+- [X] T007 Implement server-side Prism.js highlighting in `tools/build-docs/src/syntax-highlighter.ts` replicating `apps/web/src/js/server-side/highlight-code.js` logic
 - [X] T008 [P] Load Prism languages: apacheconf, bash, http, json, markup, nginx, php, xml, yaml (matching current script line 9)
 - [X] T009 Add copy button injection logic to syntax highlighter (skip if `<pre class="no-copy">`)
 - [ ] T010 [P] Unit test: markdown with embedded HTML (`<div>`, `<h1>`) renders correctly
@@ -130,7 +130,7 @@ build-docs/
 
 **Lexeme Extraction**
 
-- [ ] T013 Create lexeme extractor in `build-docs/src/lexeme-extractor.ts` with DOM parsing setup (jsdom)
+- [ ] T013 Create lexeme extractor in `tools/build-docs/src/lexeme-extractor.ts` with DOM parsing setup (jsdom)
 - [ ] T014 Implement `processNode()` recursive DOM walker (depth-first traversal)
 - [ ] T015 Implement heading hierarchy state tracking (h1-h5 reset logic: when h1 found, clear h2-h5; when h2 found, clear h3-h5; etc.)
 - [ ] T016 Implement `getContext()` ancestor walk (bubble up DOM to find `.context-framework` or `.context-library` class, default to `global`)
@@ -155,8 +155,8 @@ build-docs/
 
 **Output Generation**
 
-- [ ] T031 Create NDJSON writer in `build-docs/src/ndjson-writer.ts` (stream JSON objects with newline separator, NOT array)
-- [ ] T032 [P] Create meta.json generator in `build-docs/src/meta-generator.ts` (extract titles from h1#doc-title, map slugs to versions)
+- [ ] T031 Create NDJSON writer in `tools/build-docs/src/ndjson-writer.ts` (stream JSON objects with newline separator, NOT array)
+- [ ] T032 [P] Create meta.json generator in `tools/build-docs/src/meta-generator.ts` (extract titles from h1#doc-title, map slugs to versions)
 - [ ] T033 [P] Unit test: NDJSON writer produces valid newline-delimited JSON (one object per line, no commas)
 - [ ] T034 [P] Unit test: meta.json includes all pages with correct version/slug/title mapping
 
@@ -172,7 +172,7 @@ build-docs/
 **Docker Build Integration**
 
 - [ ] T041 Update `infrastructure/docker/build/Dockerfile` to install Node.js 20+ and TypeScript compiler
-- [ ] T042 Replace `gulp build` command with `npm run build:docs` (runs build-docs/index.ts) in Dockerfile
+- [ ] T042 Replace `gulp build` command with `npm run build:docs` (runs tools/build-docs/index.ts) in Dockerfile
 - [ ] T043 Update Dockerfile to run syntax highlighter on compiled HTML (integrate into build-docs pipeline, NOT separate step)
 - [ ] T044 [P] Add `dist/docs/` directory COPY to runtime web Dockerfile
 - [ ] T045 [P] Add `dist/docs/search/lexemes.ndjson` COPY to runtime API Dockerfile (for PHP LexemeSeeder consumption)

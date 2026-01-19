@@ -1,27 +1,5 @@
 <h1 id="doc-title">HTTP Responses</h1>
 
-<nav class="toc-nav">
-
-<div class="toc-nav-contents">
-
-<h2 id="table-of-contents">Table of Contents</h2>
-
-<ol>
-<li><a href="#basics">Basics</a></li>
-<li><a href="#json-responses">JSON Responses</a></li>
-<li><a href="#redirect-responses">Redirect Responses</a></li>
-<li><a href="#setting-response-cookies">Setting Cookies</a><ol>
-<li><a href="#deleting-response-cookies">Deleting Cookies</a></li>
-</ol>
-</li>
-<li><a href="#writing-responses">Writing Responses</a></li>
-<li><a href="#serializing-responses">Serializing Responses</a></li>
-</ol>
-
-</div>
-
-</nav>
-
 <h2 id="basics">Basics</h2>
 
 Responses are HTTP messages that are sent by servers back to the client.  They contain data like the status code, headers, and body.
