@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { generateToc } from "./toc-generator";
+import { generateToc } from "@/lib/docs/toc-generator";
 
 describe("toc-generator", () => {
     describe("generateToc", () => {

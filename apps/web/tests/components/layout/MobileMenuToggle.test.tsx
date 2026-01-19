@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render } from "@testing-library/react";
-import { MobileMenuToggle } from "./MobileMenuToggle";
+import { MobileMenuToggle } from "@/components/layout/MobileMenuToggle";
 
 // Mock usePathname
 const mockUsePathname = vi.fn(() => "/");

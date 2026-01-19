@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { toggleContextVisibility } from "./toggler";
+import { toggleContextVisibility } from "@/lib/context/toggler";
 
 describe("context toggler", () => {
     beforeEach(() => {

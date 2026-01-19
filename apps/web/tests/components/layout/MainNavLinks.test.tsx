@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
-import { MainNavLinks } from "./MainNavLinks";
+import { MainNavLinks } from "@/components/layout/MainNavLinks";
 
 describe("MainNavLinks", () => {
     it("renders all three navigation links", () => {

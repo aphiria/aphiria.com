@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen, cleanup } from "@testing-library/react";
-import { SidebarNav } from "./SidebarNav";
+import { SidebarNav } from "@/components/docs/SidebarNav";
 import { NavigationSection } from "@/types/navigation";
 
 // Mock Next.js Link

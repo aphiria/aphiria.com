@@ -1,6 +1,6 @@
 import { describe, it, expect, afterEach } from "vitest";
 import { render, screen, cleanup } from "@testing-library/react";
-import { TableOfContents } from "./TableOfContents";
+import { TableOfContents } from "@/components/docs/TableOfContents";
 import { TocHeading } from "@/lib/docs/toc-generator";
 
 describe("TableOfContents", () => {

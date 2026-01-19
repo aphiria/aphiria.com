@@ -1,8 +1,8 @@
 import { describe, it, expect } from "vitest";
 import { NextRequest, NextResponse } from "next/server";
-import { middleware } from "./middleware";
+import { middleware } from "@/proxy";
 
-describe("middleware", () => {
+describe("proxy", () => {
     describe("/docs redirect", () => {
         it("redirects /docs to /docs/1.x/introduction with 302", () => {
             const request = new NextRequest(new URL("http://localhost/docs"));

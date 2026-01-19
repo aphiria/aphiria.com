@@ -10,7 +10,7 @@ vi.mock("next/headers", () => ({
 }));
 
 // Import after mocks
-const { getContextCookie } = await import("./context-cookie.server");
+const { getContextCookie } = await import("@/lib/cookies/context-cookie.server");
 
 describe("context-cookie.server", () => {
     beforeEach(() => {

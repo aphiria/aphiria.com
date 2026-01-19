@@ -10,11 +10,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl ca-certificates gnupg \
  && rm -rf /var/lib/apt/lists/*
 
-# Node.js 20+ for tools/build-docs pipeline
-RUN curl -fsSL https://deb.nodesource.com/setup_23.x | bash - \
- && apt-get update && apt-get install -y --no-install-recommends nodejs \
- && corepack enable \
- && rm -rf /var/lib/apt/lists/*
+# Node.js 24.x for tools/build-docs pipeline (via official binaries)
+RUN curl -fsSL https://nodejs.org/dist/v24.1.0/node-v24.1.0-linux-x64.tar.xz -o /tmp/node.tar.xz \
+ && tar -xJf /tmp/node.tar.xz -C /usr/local --strip-components=1 \
+ && rm /tmp/node.tar.xz \
+ && corepack enable
 
 # Help DOM's vendored Lexbor find headers
 ENV CPPFLAGS="-I/usr/src/php"
@@ -39,9 +39,16 @@ RUN cd apps/api && composer install --no-interaction --ignore-platform-reqs --pr
 COPY . .
 COPY apps/api/.env.dist apps/api/.env
 
-# Install tools/build-docs dependencies and compile documentation
-RUN cd tools/build-docs && npm install \
+# Install tools/build-docs dependencies and compile TypeScript
+RUN cd tools/build-docs \
+ && npm install \
  && npm run build
 
-# Build documentation artifacts (rendered HTML, search index, metadata)
-RUN node tools/build-docs/dist/index.js docs dist/docs 1.x
+# Build documentation artifacts (from root so paths resolve correctly)
+RUN node tools/build-docs/dist/index.js
+
+# Build Next.js web app (with telemetry disabled)
+ENV NEXT_TELEMETRY_DISABLED=1
+RUN cd apps/web \
+ && npm install \
+ && npm run build

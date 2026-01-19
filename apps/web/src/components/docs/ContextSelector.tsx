@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { Context } from "@/types/context";
 import { setContextCookie } from "@/lib/cookies/context-cookie.client";
 import { toggleContextVisibility } from "@/lib/context/toggler";
@@ -22,7 +22,6 @@ interface ContextSelectorProps {
  */
 export function ContextSelector({ initialContext }: ContextSelectorProps) {
     const [context, setContext] = useState<Context>(initialContext);
-    const router = useRouter();
     const searchParams = useSearchParams();
 
     // Initialize context visibility and URL on mount

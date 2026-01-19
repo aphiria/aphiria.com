@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
 import { render } from "@testing-library/react";
-import { HighlightedHtml } from "./HighlightedHtml";
+import { HighlightedHtml } from "@/components/docs/HighlightedHtml";
 
 // Mock highlightCode
 const mockHighlightCode = vi.fn((html: string) => `highlighted:${html}`);

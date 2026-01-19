@@ -7,7 +7,7 @@ vi.mock("@/lib/cookies/context-cookie.server", () => ({
 }));
 
 // Import after mocks
-const { resolveContext } = await import("./resolver");
+const { resolveContext } = await import("@/lib/context/resolver");
 
 describe("context resolver", () => {
     beforeEach(() => {

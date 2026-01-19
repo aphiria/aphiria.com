@@ -1,13 +1,13 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
-import { SimpleLayout } from "./SimpleLayout";
+import { SimpleLayout } from "@/components/layout/SimpleLayout";
 
 // Mock child components
-vi.mock("./Header", () => ({
+vi.mock("@/components/layout/Header", () => ({
     Header: () => <header data-testid="header">Header</header>,
 }));
 
-vi.mock("./Footer", () => ({
+vi.mock("@/components/layout/Footer", () => ({
     Footer: () => <footer data-testid="footer">Footer</footer>,
 }));
 

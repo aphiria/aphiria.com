@@ -7,7 +7,7 @@ export default defineConfig({
     test: {
         environment: "happy-dom",
         setupFiles: ["./vitest.setup.ts"],
-        include: ["src/**/*.{test,spec}.{ts,tsx}"],
+        include: ["tests/**/*.{test,spec}.{ts,tsx}"],
         coverage: {
             provider: "v8",
             include: ["src/**/*.{ts,tsx}"],
@@ -20,8 +20,8 @@ export default defineConfig({
             ],
             reporter: ["text", "lcov", "html"],
             thresholds: {
-                // Middleware
-                "src/middleware.ts": {
+                // Proxy
+                "src/proxy.ts": {
                     statements: 100,
                     branches: 100,
                     functions: 100,

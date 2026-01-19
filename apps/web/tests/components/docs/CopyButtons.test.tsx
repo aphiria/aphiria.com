@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, cleanup } from "@testing-library/react";
-import { CopyButtons } from "./CopyButtons";
+import { CopyButtons } from "@/components/docs/CopyButtons";
 
 // Mock usePathname
 const mockUsePathname = vi.fn(() => "/docs/1.x/introduction");

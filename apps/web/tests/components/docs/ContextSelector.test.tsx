@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent, cleanup } from "@testing-library/react";
-import { ContextSelector } from "./ContextSelector";
+import { ContextSelector } from "@/components/docs/ContextSelector";
 
 // Mock dependencies
 const mockRouter = { push: vi.fn(), replace: vi.fn() };

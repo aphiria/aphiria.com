@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { getSidebarForVersion, sidebar1x } from "./sidebar-config";
+import { getSidebarForVersion, sidebar1x } from "@/lib/docs/sidebar-config";
 
 describe("sidebar-config", () => {
     describe("getSidebarForVersion", () => {

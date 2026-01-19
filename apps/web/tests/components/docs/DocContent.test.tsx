@@ -1,9 +1,9 @@
 import { describe, it, expect, vi } from "vitest";
 import { render } from "@testing-library/react";
-import { DocContent } from "./DocContent";
+import { DocContent } from "@/components/docs/DocContent";
 
 // Mock HighlightedHtml to passthrough children
-vi.mock("./HighlightedHtml", () => ({
+vi.mock("@/components/docs/HighlightedHtml", () => ({
     HighlightedHtml: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
 

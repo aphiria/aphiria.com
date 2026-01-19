@@ -5,7 +5,7 @@ import { setCookie } from "cookies-next";
 vi.mock("cookies-next");
 
 // Import after mocks
-const { setContextCookie } = await import("./context-cookie.client");
+const { setContextCookie } = await import("@/lib/cookies/context-cookie.client");
 
 describe("context-cookie (client)", () => {
     beforeEach(() => {

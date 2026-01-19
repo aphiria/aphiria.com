@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent, waitFor, cleanup } from "@testing-library/react";
-import { DocSearch } from "./DocSearch";
+import { DocSearch } from "@/components/docs/DocSearch";
 
 // Mock fetch
 global.fetch = vi.fn();

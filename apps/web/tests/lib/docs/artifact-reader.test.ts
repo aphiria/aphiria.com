@@ -19,7 +19,7 @@ vi.mock("path", () => ({
 }));
 
 // Import after mocks are set up
-const { readDocMeta, readDocHtml, getDocsForVersion } = await import("./artifact-reader");
+const { readDocMeta, readDocHtml, getDocsForVersion } = await import("@/lib/docs/artifact-reader");
 
 describe("artifact-reader", () => {
     beforeEach(() => {

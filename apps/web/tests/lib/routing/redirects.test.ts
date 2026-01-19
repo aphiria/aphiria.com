@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { createRedirectUrl } from "./redirects";
+import { createRedirectUrl } from "@/lib/routing/redirects";
 
 describe("redirects", () => {
     describe("createRedirectUrl", () => {
