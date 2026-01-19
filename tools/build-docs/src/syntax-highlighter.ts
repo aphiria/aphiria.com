@@ -49,7 +49,7 @@ export function highlightCode(html: string): string {
         );
 
         // Default to PHP (matching highlight-code.js line 20)
-        let lang = languageClass ? languageClass.replace("language-", "") : "php";
+        const lang = languageClass ? languageClass.replace("language-", "") : "php";
 
         if (!languageClass) {
             languageClass = "language-php";
