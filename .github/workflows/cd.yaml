@@ -78,6 +78,19 @@ jobs:
                 return;
               }
 
+              // 🔒 SECURITY: Block Dependabot from triggering deployments
+              const actor = workflowRun.actor.login;
+              if (actor === 'dependabot[bot]' || actor.startsWith('dependabot')) {
+                core.warning(`🚫 Skipping build - Dependabot PRs require manual approval and deployment`);
+                core.warning(`   Review the PR, then use workflow_dispatch to deploy if approved`);
+                isSafe = 'false';
+                core.setOutput('mode', '');
+                core.setOutput('pr-number', '');
+                core.setOutput('commit-sha', '');
+                core.setOutput('is-safe', 'false');
+                return;
+              }
+
               commitSha = workflowRun.head_sha;
 
               if (workflowRun.event === 'pull_request') {
