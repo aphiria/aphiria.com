@@ -230,7 +230,7 @@ describe("createWebDeployment", () => {
         expect(namespace).toBe("preview-pr-123");
     });
 
-    it("should create nginx-config ConfigMap", async () => {
+    it("should create web-nginx-config ConfigMap", async () => {
         const result = createWebDeployment({
             imagePullPolicy: "Never",
             appEnv: "local",
@@ -252,7 +252,7 @@ describe("createWebDeployment", () => {
             promiseOf(result.nginxConfigMap.namespace),
         ]);
 
-        expect(nginxConfigName).toBe("nginx-config");
+        expect(nginxConfigName).toBe("web-nginx-config");
         expect(nginxConfigNamespace).toBe("web-ns");
     });
 });

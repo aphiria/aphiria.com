@@ -55,28 +55,37 @@ export function createWebDeployment(args: WebDeploymentArgs): WebDeploymentResul
 
     // Create nginx configuration ConfigMap
     const nginxConfig = new k8s.core.v1.ConfigMap(
-        "nginx-config",
+        "web-nginx-config",
         {
             metadata: {
-                name: "nginx-config",
+                name: "web-nginx-config",
                 namespace: args.namespace,
                 labels,
             },
             data: {
-                "default.conf": `server {
+                "default.conf": `# Use X-Forwarded-Proto header if set (from Gateway/LB), otherwise fall back to $scheme
+# This ensures redirects preserve HTTPS when TLS is terminated upstream
+map $http_x_forwarded_proto $real_scheme {
+    default $http_x_forwarded_proto;
+    '' $scheme;
+}
+
+server {
     listen 80;
     server_name localhost;
     root /usr/share/nginx/html;
     index index.html;
 
     # Redirect /docs to /docs/1.x/introduction (302 temporary)
+    # Use $real_scheme to preserve HTTPS when behind Gateway/LB
     location = /docs {
-        return 302 /docs/1.x/introduction;
+        return 302 $real_scheme://$host/docs/1.x/introduction;
     }
 
     # Redirect .html URLs to extension-less equivalents (301 permanent)
+    # Use $real_scheme to preserve HTTPS when behind Gateway/LB
     location ~ ^(.+)\\.html$ {
-        return 301 $1;
+        return 301 $real_scheme://$host$1;
     }
 
     # Try to serve file directly, fallback to directory index, then 404
@@ -232,7 +241,7 @@ export function createWebDeployment(args: WebDeploymentArgs): WebDeploymentResul
                             {
                                 name: "nginx-config",
                                 configMap: {
-                                    name: "nginx-config",
+                                    name: "web-nginx-config",
                                 },
                             },
                             {

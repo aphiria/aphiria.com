@@ -11,6 +11,7 @@
     ],
     "scripts": {
         "build": "npm run build --workspace=tools/build-docs && npm run build --workspace=infrastructure/pulumi && npm run build --workspace=apps/web",
+        "build:docs": "npm run build:docs --workspace=tools/build-docs",
         "lint": "eslint .",
         "lint:fix": "eslint . --fix",
         "format": "prettier --write .",

@@ -19,6 +19,7 @@ This monorepo contains the code for both https://www.aphiria.com and https://api
 - _infrastructure_: The Docker and Pulumi infrastructure-as-code
 - _specs_: The GitHub Spec Kit specs
 - _tests_: End-to-end tests of the entire website using Playwright
+- _tools_: Tools for building and indexing the documentation
 
 ## Preview Environments
 
@@ -76,6 +77,7 @@ For rapid iteration on frontend changes without deploying to Kubernetes:
 
 ```bash
 npm run build
+npm run build:docs
 ```
 
 This builds all TypeScript code (documentation compiler, infrastructure, and web app) in the correct dependency order.

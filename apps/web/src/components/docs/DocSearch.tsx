@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { getRuntimeConfig } from "@/lib/runtime-config";
 
 interface SearchResult {
     htmlElementType: string;
@@ -107,9 +108,9 @@ export function DocSearch() {
         setError(false);
         setLoading(true);
         try {
-            const apiUri = process.env.NEXT_PUBLIC_API_URI || "http://localhost:8080";
+            const config = getRuntimeConfig();
             const response = await fetch(
-                `${apiUri}/docs/search?query=${encodeURIComponent(searchQuery)}&version=1.x`,
+                `${config.apiUri}/docs/search?query=${encodeURIComponent(searchQuery)}&version=1.x`,
                 { credentials: "include" }
             );
             const data: SearchResult[] = await response.json();

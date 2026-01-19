@@ -97,10 +97,10 @@ export function createAPIDeployment(args: APIDeploymentArgs): APIDeploymentResul
 
     // Create nginx configuration ConfigMap
     const nginxConfig = new k8s.core.v1.ConfigMap(
-        "nginx-config",
+        "api-nginx-config",
         {
             metadata: {
-                name: "nginx-config",
+                name: "api-nginx-config",
                 namespace: args.namespace,
                 labels,
             },
@@ -310,7 +310,7 @@ export function createAPIDeployment(args: APIDeploymentArgs): APIDeploymentResul
                             {
                                 name: "nginx-config",
                                 configMap: {
-                                    name: "nginx-config",
+                                    name: "api-nginx-config",
                                     items: [
                                         {
                                             key: "default.conf",

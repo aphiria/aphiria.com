@@ -8,6 +8,7 @@ import * as path from "path";
  * - GFM tables support
  * - Preserve heading IDs (mangle: false)
  * - Allow raw HTML (sanitize: false) for embedded <div>, <h1>, etc.
+ * - Transform .md links to extension-less URLs
  */
 export function configureMarked(): void {
     // Add GFM heading ID extension for stable anchor generation
@@ -16,6 +17,19 @@ export function configureMarked(): void {
             prefix: "", // No prefix on IDs
         })
     );
+
+    // Transform .md links to extension-less URLs using walkTokens
+    // walkTokens is called for every token before rendering (tokens passed by reference)
+    marked.use({
+        walkTokens(token) {
+            if (token.type === "link") {
+                // Transform .md links to extension-less (e.g., dependency-injection.md#binders -> dependency-injection#binders)
+                if (token.href && (token.href.endsWith(".md") || token.href.includes(".md#"))) {
+                    token.href = token.href.replace(/\.md(#|$)/, "$1");
+                }
+            }
+        },
+    });
 
     // Configure marked options
     // GFM (GitHub Flavored Markdown) is enabled by default in marked v12+

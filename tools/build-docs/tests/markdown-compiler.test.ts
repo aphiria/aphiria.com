@@ -97,6 +97,50 @@ Test content
             expect(html).not.toContain('id="heading-test-heading"');
         });
     });
+
+    describe("Link transformation", () => {
+        it("strips .md extension from links", async () => {
+            const markdown = `See [dependency injection](dependency-injection.md) for details.`;
+
+            const html = await compileMarkdown(createTempMarkdownFile(markdown));
+
+            expect(html).toContain('href="dependency-injection"');
+            expect(html).not.toContain('href="dependency-injection.md"');
+        });
+
+        it("strips .md extension from links with anchors", async () => {
+            const markdown = `See [binders](dependency-injection.md#binders) for details.`;
+
+            const html = await compileMarkdown(createTempMarkdownFile(markdown));
+
+            expect(html).toContain('href="dependency-injection#binders"');
+            expect(html).not.toContain('href="dependency-injection.md#binders"');
+        });
+
+        it("preserves links without .md extension", async () => {
+            const markdown = `See [routing](routing) for details.`;
+
+            const html = await compileMarkdown(createTempMarkdownFile(markdown));
+
+            expect(html).toContain('href="routing"');
+        });
+
+        it("preserves external links", async () => {
+            const markdown = `See [GitHub](https://github.com/aphiria/aphiria.com) for source.`;
+
+            const html = await compileMarkdown(createTempMarkdownFile(markdown));
+
+            expect(html).toContain('href="https://github.com/aphiria/aphiria.com"');
+        });
+
+        it("preserves anchor-only links", async () => {
+            const markdown = `See [section below](#installation) for details.`;
+
+            const html = await compileMarkdown(createTempMarkdownFile(markdown));
+
+            expect(html).toContain('href="#installation"');
+        });
+    });
 });
 
 /**

@@ -2,6 +2,9 @@
     "extends": "../../tsconfig.json",
     "compilerOptions": {
         "outDir": "dist",
+        "module": "commonjs",
+        "moduleResolution": "node",
+        "esModuleInterop": true,
         "experimentalDecorators": true,
         "pretty": true,
         "types": ["node"]
