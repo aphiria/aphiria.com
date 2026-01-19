@@ -37,17 +37,17 @@ export function validateLexemes(lexemes: LexemeRecord[]): void {
     const errors: string[] = [];
 
     lexemes.forEach((record, index) => {
-        // T036: Verify all lexeme records have non-null h1_inner_text
+        // Verify all lexeme records have non-null h1_inner_text
         if (!record.h1_inner_text) {
             errors.push(`Lexeme ${index}: Missing h1_inner_text (link: ${record.link})`);
         }
 
-        // T037: Verify all links start with /docs/ and match expected format
+        // Verify all links start with /docs/ and match expected format
         if (!record.link.startsWith("/docs/")) {
             errors.push(`Lexeme ${index}: Link must start with /docs/ (got: ${record.link})`);
         }
 
-        // T038: Verify context enum values
+        // Verify context enum values
         const validContexts = ["framework", "library", "global"];
         if (!validContexts.includes(record.context)) {
             errors.push(

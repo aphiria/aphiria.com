@@ -15,41 +15,41 @@
         }
     </style>
 </head>
-    
+
 <body>
 <div class='wrapper'>
     <div class='pad1'>
         <h1><a href="index.html">All files</a> index.ts</h1>
         <div class='clearfix'>
-            
+
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Statements</span>
                 <span class='fraction'>40/40</span>
             </div>
-        
-            
+
+
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Branches</span>
                 <span class='fraction'>8/8</span>
             </div>
-        
-            
+
+
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Functions</span>
                 <span class='fraction'>4/4</span>
             </div>
-        
-            
+
+
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Lines</span>
                 <span class='fraction'>39/39</span>
             </div>
-        
-            
+
+
         </div>
         <p class="quiet">
             Press <em>n</em> or <em>j</em> to go to the next uncovered block, <em>b</em>, <em>p</em> or <em>k</em> for the previous block.
@@ -472,17 +472,17 @@ export function validateLexemes(lexemes: LexemeRecord[]): void {
     const errors: string[] = [];
 &nbsp;
     lexemes.forEach((record, index) =&gt; {
-        // T036: Verify all lexeme records have non-null h1_inner_text
+        // Verify all lexeme records have non-null h1_inner_text
         if (!record.h1_inner_text) {
             errors.push(`Lexeme ${index}: Missing h1_inner_text (link: ${record.link})`);
         }
 &nbsp;
-        // T037: Verify all links start with /docs/ and match expected format
+        // Verify all links start with /docs/ and match expected format
         if (!record.link.startsWith("/docs/")) {
             errors.push(`Lexeme ${index}: Link must start with /docs/ (got: ${record.link})`);
         }
 &nbsp;
-        // T038: Verify context enum values
+        // Verify context enum values
         const validContexts = ["framework", "library", "global"];
         if (!validContexts.includes(record.context)) {
             errors.push(
@@ -637,4 +637,3 @@ if (import.meta.url === `file://${process.argv[1]}`) {
         <script src="block-navigation.js"></script>
     </body>
 </html>
-    
