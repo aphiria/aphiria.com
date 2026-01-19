@@ -1,3 +1,4 @@
+import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { buildDocs } from "../src/index";
 import { readFileSync, writeFileSync, mkdirSync, rmSync, existsSync } from "fs";
 import { join } from "path";

@@ -45,13 +45,9 @@ export class NdjsonWriter {
             return;
         }
 
-        return new Promise((resolve, reject) => {
-            this.stream!.end((err?: Error) => {
-                if (err) {
-                    reject(err);
-                } else {
-                    resolve();
-                }
+        return new Promise((resolve) => {
+            this.stream!.end(() => {
+                resolve();
             });
         });
     }

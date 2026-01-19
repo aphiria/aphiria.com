@@ -1,3 +1,4 @@
+import { describe, it, expect } from "vitest";
 import { extractDocTitle, generateDocMeta, generateMetaJson } from "../src/meta-generator";
 
 describe("Meta Generator", () => {

@@ -5,8 +5,7 @@
         "rootDir": "./",
         "declaration": true,
         "declarationMap": true,
-        "module": "commonjs",
-        "types": ["node", "jest"]
+        "types": ["node"]
     },
     "include": ["**/*.ts"],
     "exclude": ["node_modules", "dist", "tests"]

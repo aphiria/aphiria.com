@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect, beforeEach, vi, type Mock } from "vitest";
 import { createProvider } from "../../../../src/stacks/lib/factories/provider";
 import { ClusterConfig } from "../../../../src/stacks/lib/config/types";
 

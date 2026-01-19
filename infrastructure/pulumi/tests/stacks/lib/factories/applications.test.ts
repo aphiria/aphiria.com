@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect, beforeEach, vi, type Mock } from "vitest";
 import { createApplicationResources } from "../../../../src/stacks/lib/factories/applications";
 import {
     AppConfig,

@@ -252,7 +252,7 @@ If you want to call the other command but not write its output, use the `SilentO
 
 It's convenient to define your command alongside your command handler so you don't have to jump back and forth remembering what arguments or options your command takes.  Aphiria offers the option to do so via attributes.
 
-<h3 id="command-attribute-example">Command Attribute Example</h3>
+<h3 id="command-attribute-example">Example</h3>
 
 Let's look at an example that duplicates the [greeting example from above](#manually-registering-commands):
 

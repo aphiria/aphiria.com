@@ -1,3 +1,4 @@
+import { describe, it, expect, afterEach } from "vitest";
 import { NdjsonWriter, writeLexemesToNdjson } from "../src/ndjson-writer";
 import { Context, LexemeRecord } from "../src/types";
 import { readFileSync, unlinkSync, existsSync } from "fs";
@@ -124,5 +125,13 @@ describe("NDJSON Writer", () => {
             expect(JSON.parse(lines[0]).inner_text).toBe("First");
             expect(JSON.parse(lines[1]).inner_text).toBe("Second");
         });
+    });
+});
+
+describe("Error handling", () => {
+    it("close() returns early when stream is not opened", async () => {
+        const writer = new NdjsonWriter();
+        // Should not throw when closing without opening
+        await expect(writer.close()).resolves.toBeUndefined();
     });
 });

@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect, beforeEach, vi, type Mock } from "vitest";
 import { createDatabaseResources } from "../../../../src/stacks/lib/factories/database";
 import { PostgreSQLConfig } from "../../../../src/stacks/lib/config/types";
 import * as k8s from "@pulumi/kubernetes";

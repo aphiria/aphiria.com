@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect, beforeEach, vi, type Mock } from "vitest";
 import { createMonitoringResources } from "../../../../src/stacks/lib/factories/monitoring";
 import {
     MonitoringConfig,

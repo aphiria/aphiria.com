@@ -1,3 +1,4 @@
+import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { compileMarkdown, configureMarked } from "../src/markdown-compiler";
 import * as fs from "fs";
 import * as path from "path";
@@ -119,4 +120,74 @@ afterAll(() => {
     if (fs.existsSync(tmpDir)) {
         fs.rmSync(tmpDir, { recursive: true, force: true });
     }
+});
+
+describe("compileAllMarkdown", () => {
+    it("compiles all markdown files in a directory", async () => {
+        const { compileAllMarkdown } = await import("../src/markdown-compiler");
+        const inputDir = path.join(__dirname, "test-compile-all");
+        const outputDir = path.join(__dirname, "test-compile-all-output");
+
+        // Setup test files
+        fs.mkdirSync(inputDir, { recursive: true });
+        fs.writeFileSync(path.join(inputDir, "file1.md"), "# File 1\n\nContent for file 1.");
+        fs.writeFileSync(path.join(inputDir, "file2.md"), "# File 2\n\nContent for file 2.");
+        fs.writeFileSync(path.join(inputDir, "not-markdown.txt"), "Should be ignored");
+
+        const result = await compileAllMarkdown(inputDir, outputDir, "1.x", false);
+
+        // Should compile only .md files
+        expect(result.size).toBe(2);
+        expect(result.has("file1")).toBe(true);
+        expect(result.has("file2")).toBe(true);
+        expect(result.has("not-markdown")).toBe(false);
+
+        // Verify HTML output
+        const file1Html = result.get("file1");
+        expect(file1Html).toContain("<h1");
+        expect(file1Html).toContain("File 1");
+        expect(file1Html).toContain("Content for file 1");
+
+        // Verify files written to disk
+        expect(fs.existsSync(path.join(outputDir, "rendered", "1.x", "file1.html"))).toBe(true);
+        expect(fs.existsSync(path.join(outputDir, "rendered", "1.x", "file2.html"))).toBe(true);
+
+        // Cleanup
+        fs.rmSync(inputDir, { recursive: true, force: true });
+        fs.rmSync(outputDir, { recursive: true, force: true });
+    });
+
+    it("compiles all markdown files in verbose mode", async () => {
+        const { compileAllMarkdown } = await import("../src/markdown-compiler");
+        const inputDir = path.join(__dirname, "test-compile-verbose");
+        const outputDir = path.join(__dirname, "test-compile-verbose-output");
+
+        // Setup test files
+        fs.mkdirSync(inputDir, { recursive: true });
+        fs.writeFileSync(path.join(inputDir, "test.md"), "# Test\n\nVerbose test.");
+
+        const result = await compileAllMarkdown(inputDir, outputDir, "1.x", true);
+
+        expect(result.size).toBe(1);
+        expect(result.has("test")).toBe(true);
+
+        // Cleanup
+        fs.rmSync(inputDir, { recursive: true, force: true });
+        fs.rmSync(outputDir, { recursive: true, force: true });
+    });
+});
+
+describe("resetMarked", () => {
+    it("resets marked configuration to defaults", async () => {
+        const { resetMarked, configureMarked } = await import("../src/markdown-compiler");
+
+        // Configure marked
+        configureMarked();
+
+        // Reset to defaults
+        resetMarked();
+
+        // Verify it doesn't throw (testing that the function works)
+        expect(() => resetMarked()).not.toThrow();
+    });
 });

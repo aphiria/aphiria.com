@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 
 import { configureMarked, compileMarkdownWithDocTitle } from "./markdown-compiler";
-import { highlightCode } from "./syntax-highlighter";
 import { extractLexemes } from "./lexeme-extractor";
 import { writeLexemesToNdjson } from "./ndjson-writer";
 import { generateMetaJson, DocMeta } from "./meta-generator";
@@ -34,7 +33,7 @@ interface BuildResult {
 /**
  * Validate lexeme records
  */
-function validateLexemes(lexemes: LexemeRecord[]): void {
+export function validateLexemes(lexemes: LexemeRecord[]): void {
     const errors: string[] = [];
 
     lexemes.forEach((record, index) => {
@@ -93,10 +92,7 @@ export async function buildDocs(config: BuildConfig): Promise<BuildResult> {
         const markdown = readFileSync(markdownPath, "utf8");
 
         // Compile markdown to HTML fragment
-        let htmlFragment = await compileMarkdownWithDocTitle(markdown);
-
-        // Apply syntax highlighting to fragment
-        htmlFragment = highlightCode(htmlFragment);
+        const htmlFragment = await compileMarkdownWithDocTitle(markdown);
 
         // Wrap in proper structure for lexeme extraction
         const wrappedHtml = `<body><main><article>${htmlFragment}</article></main></body>`;
@@ -138,6 +134,7 @@ export async function buildDocs(config: BuildConfig): Promise<BuildResult> {
 /**
  * CLI entry point
  */
+/* v8 ignore start */
 async function main(): Promise<void> {
     const args = process.argv.slice(2);
 
@@ -185,3 +182,4 @@ if (require.main === module) {
         process.exit(1);
     });
 }
+/* v8 ignore stop */

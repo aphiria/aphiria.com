@@ -1,3 +1,4 @@
+import { describe, it, expect } from "vitest";
 import { extractLexemes } from "../src/lexeme-extractor";
 import { Context } from "../src/types";
 
@@ -247,5 +248,80 @@ describe("Lexeme Extractor", () => {
 
             expect(lexemes).toEqual([]);
         });
+    });
+});
+
+describe("Edge cases for link generation", () => {
+    it("generates link without anchor when heading has no id attribute", () => {
+        const html = `
+<body>
+    <main>
+        <article>
+            <h1>Title without ID</h1>
+            <h2>Section without ID</h2>
+            <p>Paragraph under h2</p>
+        </article>
+    </main>
+</body>
+`;
+        const lexemes = extractLexemes(html, "1.x", "test");
+
+        const paragraph = lexemes.find((l) => l.html_element_type === "p");
+        // Should fall back to base link when heading has no id
+        expect(paragraph?.link).toBe("/docs/1.x/test");
+    });
+
+    it("generates link for paragraph when h5 has no id", () => {
+        const html = `
+<body>
+    <main>
+        <article>
+            <h1 id="title">Title</h1>
+            <h2 id="section">Section</h2>
+            <h5>Subsection without ID</h5>
+            <p>Paragraph under h5</p>
+        </article>
+    </main>
+</body>
+`;
+        const lexemes = extractLexemes(html, "1.x", "test");
+
+        const paragraph = lexemes.find((l) => l.inner_text === "Paragraph under h5");
+        // Should use base link when h5 has no id
+        expect(paragraph?.link).toBe("/docs/1.x/test");
+    });
+
+    it("generates link for paragraph when h4 has no id", () => {
+        const html = `
+<body>
+    <main>
+        <article>
+            <h1 id="title">Title</h1>
+            <h4>Subsection without ID</h4>
+            <p>Paragraph under h4</p>
+        </article>
+    </main>
+</body>
+`;
+        const lexemes = extractLexemes(html, "1.x", "test");
+
+        const paragraph = lexemes.find((l) => l.inner_text === "Paragraph under h4");
+        expect(paragraph?.link).toBe("/docs/1.x/test");
+    });
+
+    it("returns base link when no headings exist", () => {
+        const html = `
+<body>
+    <main>
+        <article>
+            <p>Paragraph with no headings</p>
+        </article>
+    </main>
+</body>
+`;
+        const lexemes = extractLexemes(html, "1.x", "test");
+
+        const paragraph = lexemes.find((l) => l.html_element_type === "p");
+        expect(paragraph?.link).toBe("/docs/1.x/test");
     });
 });

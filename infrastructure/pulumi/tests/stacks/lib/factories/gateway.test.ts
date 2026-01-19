@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect, beforeEach, vi, type Mock } from "vitest";
 import { createGatewayResources } from "../../../../src/stacks/lib/factories/gateway";
 import { GatewayConfig } from "../../../../src/stacks/lib/config/types";
 import * as k8s from "@pulumi/kubernetes";
