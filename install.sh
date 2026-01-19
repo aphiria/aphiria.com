@@ -74,9 +74,9 @@ if [ "$install_pulumi" = true ]; then
 fi
 
 if [ "$install_nodejs" = true ]; then
-    echo "Installing Node.js 20.x (https://nodejs.org/)"
+    echo "Installing Node.js 22.x LTS (https://nodejs.org/)"
     # Using NodeSource repository for Ubuntu/Debian
-    curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+    curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
     sudo apt-get install -y nodejs
     node --version
     npm --version
@@ -89,6 +89,4 @@ echo "✅ Installation complete!"
 echo ""
 echo "Next steps:"
 echo "  1. Ensure Docker is installed and running"
-echo "  2. Review infrastructure/pulumi/DEV-LOCAL-SETUP.md for setup instructions"
-echo "  3. Start Minikube: minikube start"
-echo "  4. Deploy dev-local: cd infrastructure/pulumi && pulumi up --stack dev-local"
+echo "  2. Review README.md for more instructions"

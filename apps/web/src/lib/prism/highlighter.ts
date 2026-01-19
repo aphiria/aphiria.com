@@ -5,6 +5,10 @@ import * as cheerio from "cheerio";
 import "prismjs/components/prism-markup-templating"; // Required by PHP
 import "prismjs/components/prism-php";
 import "prismjs/components/prism-bash";
+import "prismjs/components/prism-apacheconf";
+import "prismjs/components/prism-nginx";
+import "prismjs/components/prism-http";
+import "prismjs/components/prism-json";
 
 /**
  * Server-side syntax highlighting using Prism

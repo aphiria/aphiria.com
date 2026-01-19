@@ -371,18 +371,16 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "22"
           cache: npm
-          cache-dependency-path: infrastructure/pulumi/package-lock.json
 
       - name: Install Pulumi CLI
         uses: pulumi/actions@v5
 
       - name: Install Pulumi dependencies and build
         run: |
-          cd infrastructure/pulumi
-          npm ci
-          npm run build
+          npm ci --workspace=infrastructure/pulumi
+          npm run build --workspace=infrastructure/pulumi
 
       - name: Ensure preview-base stack exists and is deployed
         uses: actions/github-script@v7
@@ -493,18 +491,16 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "22"
           cache: npm
-          cache-dependency-path: infrastructure/pulumi/package-lock.json
 
       - name: Install Pulumi CLI
         uses: pulumi/actions@v5
 
       - name: Install dependencies and build
         run: |
-          cd infrastructure/pulumi
-          npm ci
-          npm run build
+          npm ci --workspace=infrastructure/pulumi
+          npm run build --workspace=infrastructure/pulumi
 
       - name: Run Pulumi preview
         id: preview
@@ -623,18 +619,16 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "22"
           cache: npm
-          cache-dependency-path: infrastructure/pulumi/package-lock.json
 
       - name: Install Pulumi CLI
         uses: pulumi/actions@v5
 
       - name: Install dependencies and build
         run: |
-          cd infrastructure/pulumi
-          npm ci
-          npm run build
+          npm ci --workspace=infrastructure/pulumi
+          npm run build --workspace=infrastructure/pulumi
 
       - name: Deploy infrastructure
         working-directory: infrastructure/pulumi
@@ -760,16 +754,21 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
-
-      - name: Install root TypeScript dependencies
-        run: npm ci
+          node-version: "22"
+          cache: npm
 
       - name: Install e2e dependencies
-        working-directory: tests/e2e
-        run: npm ci
+        run: npm ci --workspace=tests/e2e
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        id: playwright-cache
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-browsers-${{ hashFiles('package-lock.json') }}
 
       - name: Install Playwright browsers
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
         working-directory: tests/e2e
         run: npx playwright install --with-deps chromium webkit
 

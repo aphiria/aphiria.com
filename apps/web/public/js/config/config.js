@@ -7,5 +7,5 @@
 // See: infrastructure/pulumi/src/components/web-deployment.ts
 window.__RUNTIME_CONFIG__ = {
     apiUri: "http://localhost:8080",
-    cookieDomain: "localhost"
+    cookieDomain: "localhost",
 };

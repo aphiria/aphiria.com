@@ -2,11 +2,10 @@
     "extends": "../../tsconfig.json",
     "compilerOptions": {
         "outDir": "dist",
-        "target": "es2020",
         "experimentalDecorators": true,
         "pretty": true,
         "types": ["node"]
     },
-    "include": ["src/**/*", "tests/**/*", "vitest.config.ts"],
+    "include": ["src/**/*", "tests/**/*", "vitest.config.mts"],
     "exclude": ["node_modules", "dist"]
 }

@@ -6,14 +6,17 @@
     "workspaces": [
         "apps/*",
         "infrastructure/*",
+        "tests/*",
         "tools/*"
     ],
     "scripts": {
+        "build": "npm run build --workspace=tools/build-docs && npm run build --workspace=infrastructure/pulumi && npm run build --workspace=apps/web",
         "lint": "eslint .",
         "lint:fix": "eslint . --fix",
         "format": "prettier --write .",
         "format:check": "prettier --check .",
         "test": "npm test --workspace=tools/build-docs && npm test --workspace=apps/web && npm test --workspace=infrastructure/pulumi",
+        "test:e2e": "npm test --workspace=tests/e2e",
         "test:watch": "echo 'Run test:watch in specific workspace: npm run test:watch --workspace=apps/web'"
     },
     "keywords": [],

@@ -2,8 +2,8 @@
     "compilerOptions": {
         // Shared compiler options for all TypeScript projects
         "strict": true,
-        "target": "ES2022",
-        "lib": ["ES2022"],
+        "target": "ES2024",
+        "lib": ["ES2024"],
         "module": "ESNext",
         "moduleResolution": "bundler",
         "esModuleInterop": true,
