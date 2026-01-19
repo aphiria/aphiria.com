@@ -39,16 +39,17 @@ RUN cd apps/api && composer install --no-interaction --ignore-platform-reqs --pr
 COPY . .
 COPY apps/api/.env.dist apps/api/.env
 
-# Install tools/build-docs dependencies and compile TypeScript
-RUN cd tools/build-docs \
- && npm install \
- && npm run build
+# Install TypeScript workspace dependencies (exclude e2e - not needed for build)
+# Uses root package-lock.json for consistent dependency resolution
+COPY package.json package-lock.json ./
+RUN npm ci --workspace=tools/build-docs --workspace=apps/web
+
+# Build tools/build-docs TypeScript
+RUN npm run build --workspace=tools/build-docs
 
 # Build documentation artifacts (from root so paths resolve correctly)
 RUN node tools/build-docs/dist/index.js
 
 # Build Next.js web app (with telemetry disabled)
 ENV NEXT_TELEMETRY_DISABLED=1
-RUN cd apps/web \
- && npm install \
- && npm run build
+RUN npm run build --workspace=apps/web
