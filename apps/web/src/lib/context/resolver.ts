@@ -1,5 +1,5 @@
 import { Context } from "@/types/context";
-import { getContextCookie } from "@/lib/cookies/context-cookie";
+import { getContextCookie } from "@/lib/cookies/context-cookie.server";
 
 /**
  * Resolve context with precedence: query param > cookie > default
@@ -7,9 +7,9 @@ import { getContextCookie } from "@/lib/cookies/context-cookie";
  * @param searchParams - URL search parameters
  * @returns Resolved context value
  */
-export function resolveContext(
+export async function resolveContext(
     searchParams: URLSearchParams | Record<string, string | string[] | undefined>
-): Context {
+): Promise<Context> {
     // Check query parameter first
     const queryContext =
         searchParams instanceof URLSearchParams
@@ -21,7 +21,7 @@ export function resolveContext(
     }
 
     // Fall back to cookie
-    const cookieContext = getContextCookie();
+    const cookieContext = await getContextCookie();
     if (cookieContext === "framework" || cookieContext === "library") {
         return cookieContext;
     }

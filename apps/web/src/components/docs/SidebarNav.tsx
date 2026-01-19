@@ -27,7 +27,7 @@ export function SidebarNav({ sections, currentSlug, version, contextSelector }: 
             {contextSelector}
             {sections.map((section) => (
                 <section key={section.title}>
-                    <h3>{section.title}</h3>
+                    <h5>{section.title}</h5>
                     <ul>
                         {section.items.map((item) => {
                             const href = `/docs/${version}/${item.slug}`;

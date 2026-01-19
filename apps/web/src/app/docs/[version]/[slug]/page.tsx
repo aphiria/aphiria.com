@@ -2,11 +2,11 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { ContextSelector } from "@/components/docs/ContextSelector";
 import { SidebarNav } from "@/components/docs/SidebarNav";
-import { DocumentContent } from "@/components/docs/DocumentContent";
+import { DocContent } from "@/components/docs/DocContent";
 import { TableOfContents } from "@/components/docs/TableOfContents";
 import { TocHighlighter } from "@/components/docs/TocHighlighter";
 import { resolveContext } from "@/lib/context/resolver";
-import { readDocumentationHtml } from "@/lib/docs/artifact-reader";
+import { readDocHtml } from "@/lib/docs/artifact-reader";
 import { getSidebarForVersion } from "@/lib/docs/sidebar-config";
 import { generateToc } from "@/lib/docs/toc-generator";
 
@@ -19,21 +19,21 @@ interface PageProps {
 }
 
 /**
- * Dynamic documentation page
+ * Dynamic doc page
  *
- * Renders documentation with:
+ * Renders docs with:
  * - Sidebar navigation with context selector
  * - Sanitized HTML content
  */
-export default async function DocumentationPage({ params, searchParams }: PageProps) {
+export default async function DocPage({ params, searchParams }: PageProps) {
     const { version, slug } = await params;
     const search = await searchParams;
 
     // Resolve context from query param or cookie
-    const context = resolveContext(new URLSearchParams(search as Record<string, string>));
+    const context = await resolveContext(new URLSearchParams(search as Record<string, string>));
 
-    // Load documentation HTML
-    const html = readDocumentationHtml(slug);
+    // Load doc HTML
+    const html = readDocHtml(slug);
     if (!html) {
         notFound();
     }
@@ -55,7 +55,7 @@ export default async function DocumentationPage({ params, searchParams }: PagePr
             <article>
                 <div id="article-loading"></div>
                 <TableOfContents headings={tocHeadings} />
-                <DocumentContent html={html} />
+                <DocContent html={html} />
                 <footer>
                     <a
                         href={`https://github.com/aphiria/aphiria.com/blob/master/docs/${slug}.md`}

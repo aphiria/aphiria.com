@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Context } from "@/types/context";
-import { setContextCookie } from "@/lib/cookies/context-cookie";
+import { setContextCookie } from "@/lib/cookies/context-cookie.client";
 import { toggleContextVisibility } from "@/lib/context/toggler";
 
 interface ContextSelectorProps {
@@ -25,10 +25,18 @@ export function ContextSelector({ initialContext }: ContextSelectorProps) {
     const router = useRouter();
     const searchParams = useSearchParams();
 
-    // Initialize context visibility on mount
+    // Initialize context visibility and URL on mount
     useEffect(() => {
         toggleContextVisibility(context);
-    }, []);
+
+        // If no context query param exists, add it to the URL
+        const currentContext = searchParams.get("context");
+        if (!currentContext) {
+            const params = new URLSearchParams(searchParams.toString());
+            params.set("context", context);
+            router.replace(`?${params.toString()}`, { scroll: false });
+        }
+    }, [context, searchParams, router]);
 
     const handleContextChange = (newContext: Context) => {
         // Update state

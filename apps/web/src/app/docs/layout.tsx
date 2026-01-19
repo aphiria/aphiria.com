@@ -13,7 +13,7 @@ export default function DocsLayout({ children }: DocsLayoutProps) {
     return (
         <>
             <Header />
-            <main>{children}</main>
+            <main className="docs">{children}</main>
             <Footer />
         </>
     );

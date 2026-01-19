@@ -30,7 +30,7 @@ body {
     margin: 0;
     overflow-x: hidden;
 
-    &.docs.loading > main article #article-loading {
+    &.loading > main.docs article #article-loading {
         display: flex;
         opacity: 1;
         visibility: visible;
@@ -379,7 +379,7 @@ body > main {
     }
 }
 
-body.docs > main article {
+main.docs article {
     position: relative;
 
     #article-loading {
@@ -676,7 +676,7 @@ blockquote {
         }
     }
 
-    body.docs > main article {
+    main.docs article {
         h1,
         h2,
         h3,
@@ -767,8 +767,8 @@ blockquote {
         display: none;
     }
 
-    /* Don't display the sidebar except on the docs where it acts as the doc nav bar */
-    body:not(.docs) nav.side-nav {
+    /* Don't display the sidebar on homepage in full-screen mode (only show on mobile) */
+    main.home nav.side-nav {
         display: none;
     }
 

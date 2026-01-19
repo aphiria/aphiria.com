@@ -1,4 +1,4 @@
-import { getCookie, setCookie } from "cookies-next";
+import { setCookie } from "cookies-next";
 import { Context } from "@/types/context";
 
 const COOKIE_NAME = "context";
@@ -14,31 +14,18 @@ function getCookieDomain(): string {
 }
 
 /**
- * Get the current context from cookie
- *
- * @returns Context value or null if not set
- */
-export function getContextCookie(): Context | null {
-    const value = getCookie(COOKIE_NAME);
-
-    if (value === "framework" || value === "library") {
-        return value;
-    }
-
-    return null;
-}
-
-/**
- * Set the context cookie
+ * Set the context cookie (client-side)
  *
  * @param context - Context value to set
  */
 export function setContextCookie(context: Context): void {
+    const domain = getCookieDomain();
+
     setCookie(COOKIE_NAME, context, {
         maxAge: COOKIE_MAX_AGE,
         path: "/",
-        domain: getCookieDomain(),
-        secure: true,
+        domain,
+        secure: domain !== "localhost", // Secure everywhere except localhost
         sameSite: "lax",
     });
 }

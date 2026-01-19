@@ -100,14 +100,26 @@ async function main(): Promise<void> {
             console.log("Starting documentation build...");
         }
 
-        // TODO: Implement build pipeline
-        // 1. Compile markdown to HTML (src/markdown-compiler.ts)
-        // 2. Apply syntax highlighting (src/syntax-highlighter.ts)
-        // 3. Extract lexemes (src/lexeme-extractor.ts)
-        // 4. Write NDJSON (src/ndjson-writer.ts)
-        // 5. Generate meta.json (src/meta-generator.ts)
+        // Use default version for now (can be made configurable later)
+        const version = "1.x";
 
-        console.log("Build complete! (pipeline not yet implemented)");
+        // Import and run the build pipeline from src/index.ts
+        const { buildDocs } = await import("./src/index.js");
+        const result = await buildDocs({
+            docsSourceDir: config.inputDir,
+            outputDir: config.outputDir,
+            version: version,
+        });
+
+        console.log("Build complete!");
+        console.log(`  Documents processed: ${result.documentsProcessed}`);
+        console.log(`  Lexemes generated: ${result.lexemesGenerated}`);
+        console.log(`  Output files:`);
+        console.log(
+            `    - Rendered HTML: ${result.outputFiles.rendered.length} files in ${path.join(config.outputDir, "rendered")}`
+        );
+        console.log(`    - Search index: ${result.outputFiles.lexemes}`);
+        console.log(`    - Metadata: ${result.outputFiles.meta}`);
     } catch (error) {
         console.error("Build failed:", error);
         process.exit(1);
