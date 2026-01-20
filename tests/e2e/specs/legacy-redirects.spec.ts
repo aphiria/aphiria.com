@@ -5,10 +5,18 @@ test.describe("legacy .html URL redirects", () => {
     test("redirects /docs/1.x/introduction.html to /docs/1.x/introduction with 301 status", async ({
         page,
     }) => {
-        const response = await page.goto(LEGACY_DOCS.introduction);
+        // Capture the redirect response by listening to response events
+        let redirectStatus: number | undefined;
+        page.on("response", (response) => {
+            if (response.url().includes(".html") && response.status() >= 300 && response.status() < 400) {
+                redirectStatus = response.status();
+            }
+        });
 
-        // Verify 301 permanent redirect
-        expect(response?.status()).toBe(301);
+        await page.goto(LEGACY_DOCS.introduction);
+
+        // Verify 301 permanent redirect occurred
+        expect(redirectStatus).toBe(301);
 
         // Verify final URL has no .html extension
         expect(page.url()).toContain(TEST_DOCS.introduction);
@@ -18,10 +26,17 @@ test.describe("legacy .html URL redirects", () => {
     test("redirects /docs/1.x/installation.html to /docs/1.x/installation with 301 status", async ({
         page,
     }) => {
-        const response = await page.goto(LEGACY_DOCS.installation);
+        let redirectStatus: number | undefined;
+        page.on("response", (response) => {
+            if (response.url().includes(".html") && response.status() >= 300 && response.status() < 400) {
+                redirectStatus = response.status();
+            }
+        });
 
-        // Verify 301 permanent redirect
-        expect(response?.status()).toBe(301);
+        await page.goto(LEGACY_DOCS.installation);
+
+        // Verify 301 permanent redirect occurred
+        expect(redirectStatus).toBe(301);
 
         // Verify final URL has no .html extension
         expect(page.url()).toContain(TEST_DOCS.installation);
@@ -29,11 +44,21 @@ test.describe("legacy .html URL redirects", () => {
     });
 
     test("preserves query parameters during redirect", async ({ page }) => {
-        const urlWithQuery = `${LEGACY_DOCS.introduction}?context=library`;
-        const response = await page.goto(urlWithQuery);
+        let redirectStatus: number | undefined;
+        page.on("response", (response) => {
+            if (response.url().includes(".html") && response.status() >= 300 && response.status() < 400) {
+                redirectStatus = response.status();
+            }
+        });
 
-        // Verify 301 redirect
-        expect(response?.status()).toBe(301);
+        const urlWithQuery = `${LEGACY_DOCS.introduction}?context=library`;
+        await page.goto(urlWithQuery);
+
+        // Verify 301 redirect occurred
+        expect(redirectStatus).toBe(301);
+
+        // Wait for client-side JS to finish executing before checking URL
+        await page.waitForLoadState("networkidle");
 
         // Verify query parameter preserved
         expect(page.url()).toContain("context=library");
@@ -50,11 +75,21 @@ test.describe("legacy .html URL redirects", () => {
     });
 
     test("preserves both query parameters and anchors during redirect", async ({ page }) => {
-        const complexUrl = `${LEGACY_DOCS.introduction}?context=library#routing`;
-        const response = await page.goto(complexUrl);
+        let redirectStatus: number | undefined;
+        page.on("response", (response) => {
+            if (response.url().includes(".html") && response.status() >= 300 && response.status() < 400) {
+                redirectStatus = response.status();
+            }
+        });
 
-        // Verify 301 redirect
-        expect(response?.status()).toBe(301);
+        const complexUrl = `${LEGACY_DOCS.introduction}?context=library#routing`;
+        await page.goto(complexUrl);
+
+        // Verify 301 redirect occurred
+        expect(redirectStatus).toBe(301);
+
+        // Wait for client-side JS to finish executing before checking URL
+        await page.waitForLoadState("networkidle");
 
         // Verify both preserved
         expect(page.url()).toContain("context=library");
@@ -65,10 +100,17 @@ test.describe("legacy .html URL redirects", () => {
 
 test.describe("/docs root redirect", () => {
     test("redirects /docs to /docs/1.x/introduction with 302 status", async ({ page }) => {
-        const response = await page.goto("/docs");
+        let redirectStatus: number | undefined;
+        page.on("response", (response) => {
+            if (response.url().endsWith("/docs") && response.status() >= 300 && response.status() < 400) {
+                redirectStatus = response.status();
+            }
+        });
 
-        // Verify 302 temporary redirect
-        expect(response?.status()).toBe(302);
+        await page.goto("/docs");
+
+        // Verify 302 temporary redirect occurred
+        expect(redirectStatus).toBe(302);
 
         // Verify redirected to introduction page
         expect(page.url()).toContain("/docs/1.x/introduction");

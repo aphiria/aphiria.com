@@ -6,7 +6,7 @@ test("homepage loads successfully", async ({ homePage }) => {
 
 test("main navigation structure is visible", async ({ homePage }) => {
     const navItems = homePage.mainNav.navItems;
-    await expect(navItems).toHaveCount(4);
+    await expect(navItems).toHaveCount(3);
 
     await expect(homePage.mainNav.docsLink).toBeVisible();
     await expect(homePage.mainNav.gitHubLink).toBeVisible();

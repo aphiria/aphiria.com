@@ -124,65 +124,65 @@ tools/build-docs/
 - [X] T007 Implement server-side Prism.js highlighting in `tools/build-docs/src/syntax-highlighter.ts` replicating `apps/web/src/js/server-side/highlight-code.js` logic
 - [X] T008 [P] Load Prism languages: apacheconf, bash, http, json, markup, nginx, php, xml, yaml (matching current script line 9)
 - [X] T009 Add copy button injection logic to syntax highlighter (skip if `<pre class="no-copy">`)
-- [ ] T010 [P] Unit test: markdown with embedded HTML (`<div>`, `<h1>`) renders correctly
-- [ ] T011 [P] Unit test: GFM tables compile to `<table>` elements
-- [ ] T012 [P] Unit test: Prism.js highlights `<pre><code class="language-php">` blocks
+- [X] T010 [P] Unit test: markdown with embedded HTML (`<div>`, `<h1>`) renders correctly
+- [X] T011 [P] Unit test: GFM tables compile to `<table>` elements
+- [X] T012 [P] Unit test: Prism.js highlights `<pre><code class="language-php">` blocks
 
 **Lexeme Extraction**
 
-- [ ] T013 Create lexeme extractor in `tools/build-docs/src/lexeme-extractor.ts` with DOM parsing setup (jsdom)
-- [ ] T014 Implement `processNode()` recursive DOM walker (depth-first traversal)
-- [ ] T015 Implement heading hierarchy state tracking (h1-h5 reset logic: when h1 found, clear h2-h5; when h2 found, clear h3-h5; etc.)
-- [ ] T016 Implement `getContext()` ancestor walk (bubble up DOM to find `.context-framework` or `.context-library` class, default to `global`)
-- [ ] T017 Implement `getAllChildNodeTexts()` recursive text extraction (concatenate all descendant text nodes)
-- [ ] T018 Implement `createLexemeRecord()` link generation (h1 links to `/docs/{version}/{slug}`, h2-h5 link to `#{id}`, other elements link to nearest parent heading)
-- [ ] T019 Implement `shouldSkipNode()` to skip `<nav class="toc-nav">` elements
-- [ ] T020 Filter nodes to indexable elements only: h1, h2, h3, h4, h5, p, li, blockquote
-- [ ] T020.1 Output lexeme records WITHOUT weighting (weighting A/B/C/D will be applied by PHP LexemeSeeder when reading NDJSON)
+- [X] T013 Create lexeme extractor in `tools/build-docs/src/lexeme-extractor.ts` with DOM parsing setup (jsdom)
+- [X] T014 Implement `processNode()` recursive DOM walker (depth-first traversal)
+- [X] T015 Implement heading hierarchy state tracking (h1-h5 reset logic: when h1 found, clear h2-h5; when h2 found, clear h3-h5; etc.)
+- [X] T016 Implement `getContext()` ancestor walk (bubble up DOM to find `.context-framework` or `.context-library` class, default to `global`)
+- [X] T017 Implement `getAllChildNodeTexts()` recursive text extraction (concatenate all descendant text nodes)
+- [X] T018 Implement `createLexemeRecord()` link generation (h1 links to `/docs/{version}/{slug}`, h2-h5 link to `#{id}`, other elements link to nearest parent heading)
+- [X] T019 Implement `shouldSkipNode()` to skip `<nav class="toc-nav">` elements
+- [X] T020 Filter nodes to indexable elements only: h1, h2, h3, h4, h5, p, li, blockquote
+- [X] T020.1 Output lexeme records WITHOUT weighting (weighting A/B/C/D will be applied by PHP LexemeSeeder when reading NDJSON)
 
 **Lexeme Extraction Unit Tests**
 
-- [ ] T021 [P] Unit test: DOM walking skips `<nav class="toc-nav">` elements completely
-- [ ] T022 [P] Unit test: context detection walks up DOM tree and finds ancestor `.context-framework` class
-- [ ] T023 [P] Unit test: context defaults to "global" when no ancestor has context class
-- [ ] T024 [P] Unit test: link generation for h1 produces `/docs/{version}/{filename}` (no anchor)
-- [ ] T025 [P] Unit test: link generation for h2-h5 produces `/docs/{version}/{filename}#{id}`
-- [ ] T026 [P] Unit test: link generation for p/li/blockquote uses nearest parent heading's id (h5>h4>h3>h2>h1 precedence)
-- [ ] T027 [P] Unit test: heading hierarchy resets correctly (h2 sets h2, nulls h3-h5; h1 sets h1, nulls h2-h5)
-- [ ] T028 [P] Unit test: recursive text extraction concatenates all descendant text nodes (not just direct children)
-- [ ] T029 [P] Unit test: only h1/h2/h3/h4/h5/p/li/blockquote elements create lexeme records
-- [ ] T030 [P] Unit test: NDJSON output format matches spec (all fields: version, context, link, html_element_type, inner_text, h1_inner_text through h5_inner_text)
+- [X] T021 [P] Unit test: DOM walking skips `<nav class="toc-nav">` elements completely
+- [X] T022 [P] Unit test: context detection walks up DOM tree and finds ancestor `.context-framework` class
+- [X] T023 [P] Unit test: context defaults to "global" when no ancestor has context class
+- [X] T024 [P] Unit test: link generation for h1 produces `/docs/{version}/{filename}` (no anchor)
+- [X] T025 [P] Unit test: link generation for h2-h5 produces `/docs/{version}/{filename}#{id}`
+- [X] T026 [P] Unit test: link generation for p/li/blockquote uses nearest parent heading's id (h5>h4>h3>h2>h1 precedence)
+- [X] T027 [P] Unit test: heading hierarchy resets correctly (h2 sets h2, nulls h3-h5; h1 sets h1, nulls h2-h5)
+- [X] T028 [P] Unit test: recursive text extraction concatenates all descendant text nodes (not just direct children)
+- [X] T029 [P] Unit test: only h1/h2/h3/h4/h5/p/li/blockquote elements create lexeme records
+- [X] T030 [P] Unit test: NDJSON output format matches spec (all fields: version, context, link, html_element_type, inner_text, h1_inner_text through h5_inner_text)
 
 **Output Generation**
 
-- [ ] T031 Create NDJSON writer in `tools/build-docs/src/ndjson-writer.ts` (stream JSON objects with newline separator, NOT array)
-- [ ] T032 [P] Create meta.json generator in `tools/build-docs/src/meta-generator.ts` (extract titles from h1#doc-title, map slugs to versions)
-- [ ] T033 [P] Unit test: NDJSON writer produces valid newline-delimited JSON (one object per line, no commas)
-- [ ] T034 [P] Unit test: meta.json includes all pages with correct version/slug/title mapping
+- [X] T031 Create NDJSON writer in `tools/build-docs/src/ndjson-writer.ts` (stream JSON objects with newline separator, NOT array)
+- [X] T032 [P] Create meta.json generator in `tools/build-docs/src/meta-generator.ts` (extract titles from h1#doc-title, map slugs to versions)
+- [X] T033 [P] Unit test: NDJSON writer produces valid newline-delimited JSON (one object per line, no commas)
+- [X] T034 [P] Unit test: meta.json includes all pages with correct version/slug/title mapping
 
 **Integration and Validation**
 
-- [ ] T035 Integrate all components: markdown compilation → syntax highlighting → lexeme extraction → NDJSON output
-- [ ] T036 [P] Add build validation: verify all lexeme records have non-null h1_inner_text
-- [ ] T037 [P] Add build validation: verify all links start with `/docs/` and match expected format
-- [ ] T038 [P] Add build validation: verify context enum values are exactly "framework" | "library" | "global"
-- [ ] T039 [P] Integration test: compile full docs directory, verify output structure (rendered/, search/, meta.json)
-- [ ] T040 [P] Integration test: compare sample output against current PHP LexemeSeeder output (field-by-field match)
+- [X] T035 Integrate all components: markdown compilation → syntax highlighting → lexeme extraction → NDJSON output
+- [X] T036 [P] Add build validation: verify all lexeme records have non-null h1_inner_text
+- [X] T037 [P] Add build validation: verify all links start with `/docs/` and match expected format
+- [X] T038 [P] Add build validation: verify context enum values are exactly "framework" | "library" | "global"
+- [X] T039 [P] Integration test: compile full docs directory, verify output structure (rendered/, search/, meta.json)
+- [X] T040 [P] Integration test: compare sample output against current PHP LexemeSeeder output (field-by-field match)
 
 **Docker Build Integration**
 
-- [ ] T041 Update `infrastructure/docker/build/Dockerfile` to install Node.js 20+ and TypeScript compiler
-- [ ] T042 Replace `gulp build` command with `npm run build:docs` (runs tools/build-docs/index.ts) in Dockerfile
-- [ ] T043 Update Dockerfile to run syntax highlighter on compiled HTML (integrate into build-docs pipeline, NOT separate step)
-- [ ] T044 [P] Add `dist/docs/` directory COPY to runtime web Dockerfile
-- [ ] T045 [P] Add `dist/docs/search/lexemes.ndjson` COPY to runtime API Dockerfile (for PHP LexemeSeeder consumption)
-- [ ] T046 Refactor PHP LexemeSeeder to READ lexemes from `dist/docs/search/lexemes.ndjson` instead of walking DOM (remove DOM parsing, keep weighting logic: A for h1, B for h2, C for h3, D for h4/h5/p/li/blockquote)
-- [ ] T047 Create new Next.js runtime Dockerfile in `infrastructure/docker/runtime/nextjs/Dockerfile` (Node.js 20+, production build)
-- [ ] T048 Update Kubernetes deployment manifests to use Next.js runtime image instead of nginx for web service
-- [ ] T048.1 Remove old gulp-based build system (`gulpfile.js`, `apps/web/gulp/`, `apps/web/resources/`)
-- [ ] T048.2 Remove PHP view compilation code (if any helpers compiled docs to HTML in `apps/api/`)
-- [ ] T048.3 Remove any PHP DOM parsing utilities that were used for doc compilation (keep only search-related code)
-- [ ] T048.4 Update `.gitignore` to remove old gulp artifact paths, add new `dist/docs/` artifacts
+- [X] T041 Update `infrastructure/docker/build/Dockerfile` to install Node.js 20+ and TypeScript compiler
+- [X] T042 Replace `gulp build` command with `npm run build:docs` (runs tools/build-docs/index.ts) in Dockerfile
+- [X] T043 Update Dockerfile to run syntax highlighter on compiled HTML (integrate into build-docs pipeline, NOT separate step)
+- [X] T044 [P] Add `dist/docs/` directory COPY to runtime web Dockerfile
+- [X] T045 [P] Add `dist/docs/search/lexemes.ndjson` COPY to runtime API Dockerfile (for PHP LexemeSeeder consumption)
+- [X] T046 Refactor PHP LexemeSeeder to READ lexemes from `dist/docs/search/lexemes.ndjson` instead of walking DOM (remove DOM parsing, keep weighting logic: A for h1, B for h2, C for h3, D for h4/h5/p/li/blockquote)
+- [X] T047 Create new Next.js runtime Dockerfile in `infrastructure/docker/runtime/nextjs/Dockerfile` (Node.js 20+, production build)
+- [X] T048 Update Kubernetes deployment manifests to use Next.js runtime image instead of nginx for web service
+- [X] T048.1 Remove old gulp-based build system (`gulpfile.js`, `apps/web/gulp/`, `apps/web/resources/`)
+- [X] T048.2 Remove PHP view compilation code (if any helpers compiled docs to HTML in `apps/api/`)
+- [X] T048.3 Remove any PHP DOM parsing utilities that were used for doc compilation (keep only search-related code)
+- [X] T048.4 Update `.gitignore` to remove old gulp artifact paths, add new `dist/docs/` artifacts
 
 **Checkpoint**: Documentation build pipeline complete - artifacts ready for BOTH Next.js (rendering) and PHP API (search indexing). Run `npm run build:docs` to verify output matches expectations.
 
@@ -194,16 +194,16 @@ tools/build-docs/
 
 **Dependencies**: Phase 0 MUST be complete (dist/docs/ must exist for Next.js to consume)
 
-- [ ] T097 Create Next.js 15+ project in apps/web/ with TypeScript and App Router
-- [ ] T098 [P] Configure TypeScript with strict mode in apps/web/tsconfig.json
-- [ ] T099 [P] Configure ESLint and Prettier in apps/web/.eslintrc.json and apps/web/.prettierrc
-- [ ] T100 [P] Configure PostCSS with postcss-nested plugin in apps/web/postcss.config.js
-- [ ] T101 [P] Configure Jest for unit testing in apps/web/jest.config.js
-- [ ] T102 [P] Install core dependencies: react, next, typescript, cookies-next, isomorphic-dompurify, cheerio, prismjs
-- [ ] T103 [P] Copy existing CSS file from apps/web/src/css/aphiria.css to apps/web/public/css/aphiria.css
-- [ ] T104 [P] Copy existing static assets (images, fonts) from current apps/web/public/ to new apps/web/public/
-- [ ] T105 Create environment variable configuration in apps/web/.env.local with NEXT_PUBLIC_COOKIE_DOMAIN
-- [ ] T106 Create root layout component in apps/web/src/app/layout.tsx with global CSS import
+- [X] T097 Create Next.js 15+ project in apps/web/ with TypeScript and App Router
+- [X] T098 [P] Configure TypeScript with strict mode in apps/web/tsconfig.json
+- [X] T099 [P] Configure ESLint and Prettier in apps/web/.eslintrc.json and apps/web/.prettierrc
+- [X] T100 [P] Configure PostCSS with postcss-nested plugin in apps/web/postcss.config.js
+- [X] T101 [P] Configure Jest for unit testing in apps/web/jest.config.js
+- [X] T102 [P] Install core dependencies: react, next, typescript, cookies-next, isomorphic-dompurify, cheerio, prismjs
+- [X] T103 [P] Copy existing CSS file from apps/web/src/css/aphiria.css to apps/web/public/css/aphiria.css
+- [X] T104 [P] Copy existing static assets (images, fonts) from current apps/web/public/ to new apps/web/public/
+- [X] T105 Create environment variable configuration in apps/web/.env.local with NEXT_PUBLIC_COOKIE_DOMAIN
+- [X] T106 Create root layout component in apps/web/src/app/layout.tsx with global CSS import
 
 ---
 
@@ -215,15 +215,15 @@ tools/build-docs/
 
 **Dependencies**: Phase 0 and Phase 1 MUST be complete
 
-- [ ] T107 Create TypeScript interfaces for DocumentationPage in apps/web/src/types/documentation.ts
-- [ ] T108 [P] Create TypeScript interfaces for NavigationSection and NavigationItem in apps/web/src/types/navigation.ts
-- [ ] T109 [P] Create TypeScript interfaces for ContextState in apps/web/src/types/context.ts
-- [ ] T110 Implement documentation artifact reader in apps/web/src/lib/docs/artifact-reader.ts (reads meta.json and HTML fragments from dist/docs/)
-- [ ] T111 [P] Implement sidebar configuration in apps/web/src/lib/docs/sidebar-config.ts (curated navigation structure for version 1.x)
-- [ ] T112 [P] Create Header component in apps/web/src/components/layout/Header.tsx
-- [ ] T113 [P] Create Footer component in apps/web/src/components/layout/Footer.tsx
-- [ ] T114 Implement context resolution logic in apps/web/src/lib/context/resolver.ts (query > cookie > default precedence)
-- [ ] T115 [P] Create cookie helper functions in apps/web/src/lib/cookies/context-cookie.ts
+- [X] T107 Create TypeScript interfaces for DocumentationPage in apps/web/src/types/documentation.ts
+- [X] T108 [P] Create TypeScript interfaces for NavigationSection and NavigationItem in apps/web/src/types/navigation.ts
+- [X] T109 [P] Create TypeScript interfaces for ContextState in apps/web/src/types/context.ts
+- [X] T110 Implement documentation artifact reader in apps/web/src/lib/docs/artifact-reader.ts (reads meta.json and HTML fragments from dist/docs/)
+- [X] T111 [P] Implement sidebar configuration in apps/web/src/lib/docs/sidebar-config.ts (curated navigation structure for version 1.x)
+- [X] T112 [P] Create Header component in apps/web/src/components/layout/Header.tsx
+- [X] T113 [P] Create Footer component in apps/web/src/components/layout/Footer.tsx
+- [X] T114 Implement context resolution logic in apps/web/src/lib/context/resolver.ts (query > cookie > default precedence)
+- [X] T115 [P] Create cookie helper functions in apps/web/src/lib/cookies/context-cookie.ts
 
 **Checkpoint**: Foundation ready - user story implementation can now begin in parallel
 
@@ -237,27 +237,27 @@ tools/build-docs/
 
 ### Unit Tests for User Story 1
 
-- [ ] T116 [P] [US1] Unit test for context resolver (precedence: query > cookie > default) in apps/web/tests/unit/context-resolver.test.ts
-- [ ] T117 [P] [US1] Unit test for cookie domain handling (env var fallback) in apps/web/tests/unit/context-cookie.test.ts
-- [ ] T118 [P] [US1] Unit test for sidebar filtering by context in apps/web/tests/unit/sidebar-config.test.ts
+- [X] T116 [P] [US1] Unit test for context resolver (precedence: query > cookie > default) in apps/web/tests/unit/context-resolver.test.ts
+- [X] T117 [P] [US1] Unit test for cookie domain handling (env var fallback) in apps/web/tests/unit/context-cookie.test.ts
+- [X] T118 [P] [US1] Unit test for sidebar filtering by context in apps/web/tests/unit/sidebar-config.test.ts
 
 ### Implementation for User Story 1
 
-- [ ] T119 [US1] Create ContextSelector client component in apps/web/src/components/docs/ContextSelector.tsx with useState, useEffect, cookie management, and DOM toggling
-- [ ] T120 [P] [US1] Create SidebarNav server component in apps/web/src/components/docs/SidebarNav.tsx with context filtering and active link highlighting
-- [ ] T121 [P] [US1] Create DocumentContent server component in apps/web/src/components/docs/DocumentContent.tsx with DOMPurify sanitization and dangerouslySetInnerHTML rendering
-- [ ] T122 [US1] Create documentation layout in apps/web/src/app/docs/layout.tsx with sidebar and context selector integration
-- [ ] T123 [US1] Create dynamic documentation page in apps/web/src/app/docs/[version]/[...slug]/page.tsx with context resolution, HTML fragment loading, and metadata
-- [ ] T124 [US1] Implement DOM visibility toggling function in apps/web/src/lib/context/toggler.ts (display: revert vs display: none)
-- [ ] T125 [US1] Add custom event dispatching for context-toggled event in ContextSelector component
-- [ ] T126 [US1] Create Prism.js client component loader in apps/web/src/components/docs/PrismLoader.tsx with useEffect initialization
+- [X] T119 [US1] Create ContextSelector client component in apps/web/src/components/docs/ContextSelector.tsx with useState, useEffect, cookie management, and DOM toggling
+- [X] T120 [P] [US1] Create SidebarNav server component in apps/web/src/components/docs/SidebarNav.tsx with context filtering and active link highlighting
+- [X] T121 [P] [US1] Create DocumentContent server component in apps/web/src/components/docs/DocumentContent.tsx with DOMPurify sanitization and dangerouslySetInnerHTML rendering
+- [X] T122 [US1] Create documentation layout in apps/web/src/app/docs/layout.tsx with sidebar and context selector integration
+- [X] T123 [US1] Create dynamic documentation page in apps/web/src/app/docs/[version]/[...slug]/page.tsx with context resolution, HTML fragment loading, and metadata
+- [X] T124 [US1] Implement DOM visibility toggling function in apps/web/src/lib/context/toggler.ts (display: revert vs display: none)
+- [X] T125 [US1] Add custom event dispatching for context-toggled event in ContextSelector component
+- [X] T126 [US1] Create Prism.js client component loader in apps/web/src/components/docs/PrismLoader.tsx with useEffect initialization
 
 ### E2E Tests for User Story 1
 
-- [ ] T127 [P] [US1] E2E test: default context behavior (no query param, no cookie → defaults to framework) in tests/e2e/tests/context-switching.spec.ts
-- [ ] T128 [P] [US1] E2E test: query parameter precedence (URL ?context=library overrides cookie) in tests/e2e/tests/context-switching.spec.ts
-- [ ] T129 [P] [US1] E2E test: context switching without reload (dropdown change updates URL, cookie, and DOM instantly) in tests/e2e/tests/context-switching.spec.ts
-- [ ] T130 [P] [US1] E2E test: DOM visibility toggling (.context-framework vs .context-library display properties) in tests/e2e/tests/context-switching.spec.ts
+- [X] T127 [P] [US1] E2E test: default context behavior (no query param, no cookie → defaults to framework) in tests/e2e/tests/context-switching.spec.ts
+- [X] T128 [P] [US1] E2E test: query parameter precedence (URL ?context=library overrides cookie) in tests/e2e/tests/context-switching.spec.ts
+- [X] T129 [P] [US1] E2E test: context switching without reload (dropdown change updates URL, cookie, and DOM instantly) in tests/e2e/tests/context-switching.spec.ts
+- [X] T130 [P] [US1] E2E test: DOM visibility toggling (.context-framework vs .context-library display properties) in tests/e2e/tests/context-switching.spec.ts
 
 **Checkpoint**: At this point, User Story 1 should be fully functional - users can browse docs and switch contexts instantly
 
@@ -271,23 +271,23 @@ tools/build-docs/
 
 ### Unit Tests for User Story 2
 
-- [ ] T083 [P] [US2] Unit test for redirect middleware (extension removal) in apps/web/tests/unit/middleware.test.ts
-- [ ] T084 [P] [US2] Unit test for query parameter preservation during redirects in apps/web/tests/unit/middleware.test.ts
-- [ ] T085 [P] [US2] Unit test for anchor fragment preservation in apps/web/tests/unit/middleware.test.ts
+- [X] T083 [P] [US2] Unit test for redirect middleware (extension removal) in apps/web/tests/unit/middleware.test.ts
+- [X] T084 [P] [US2] Unit test for query parameter preservation during redirects in apps/web/tests/unit/middleware.test.ts
+- [X] T085 [P] [US2] Unit test for anchor fragment preservation in apps/web/tests/unit/middleware.test.ts
 
 ### Implementation for User Story 2
 
-- [ ] T086 [US2] Create Next.js middleware in apps/web/middleware.ts with .html redirect logic (301 status)
-- [ ] T087 [US2] Implement redirect helper function in apps/web/src/lib/routing/redirects.ts with query/anchor preservation
-- [ ] T088 [US2] Configure middleware matcher in apps/web/middleware.ts to scope to /docs/:path*.html patterns only
-- [ ] T089 [US2] Add /docs redirect to /docs/1.x/introduction in middleware
+- [X] T086 [US2] Create Next.js middleware in apps/web/middleware.ts with .html redirect logic (301 status)
+- [X] T087 [US2] Implement redirect helper function in apps/web/src/lib/routing/redirects.ts with query/anchor preservation
+- [X] T088 [US2] Configure middleware matcher in apps/web/middleware.ts to scope to /docs/:path*.html patterns only
+- [X] T089 [US2] Add /docs redirect to /docs/1.x/introduction in middleware
 
 ### E2E Tests for User Story 2
 
-- [ ] T090 [P] [US2] E2E test: .html to extension-less redirect in tests/e2e/tests/legacy-redirects.spec.ts
-- [ ] T091 [P] [US2] E2E test: query parameter preservation during redirect in tests/e2e/tests/legacy-redirects.spec.ts
-- [ ] T092 [P] [US2] E2E test: anchor fragment preservation during redirect in tests/e2e/tests/legacy-redirects.spec.ts
-- [ ] T093 [P] [US2] E2E test: complex query params with special characters preserved in tests/e2e/tests/legacy-redirects.spec.ts
+- [X] T090 [P] [US2] E2E test: .html to extension-less redirect in tests/e2e/tests/legacy-redirects.spec.ts
+- [X] T091 [P] [US2] E2E test: query parameter preservation during redirect in tests/e2e/tests/legacy-redirects.spec.ts
+- [X] T092 [P] [US2] E2E test: anchor fragment preservation during redirect in tests/e2e/tests/legacy-redirects.spec.ts
+- [X] T093 [P] [US2] E2E test: complex query params with special characters preserved in tests/e2e/tests/legacy-redirects.spec.ts
 
 **Checkpoint**: At this point, User Stories 1 AND 2 should both work independently - docs browsing + legacy URL support
 
@@ -301,28 +301,28 @@ tools/build-docs/
 
 ### Unit Tests for User Story 3
 
-- [ ] T094 [P] [US3] Unit test for TOC generation from HTML (heading extraction) in apps/web/tests/unit/toc-generator.test.ts
-- [ ] T095 [P] [US3] Unit test for TOC context filtering (skip hidden headings) in apps/web/tests/unit/toc-generator.test.ts
-- [ ] T096 [P] [US3] Unit test for hierarchical TOC nesting (h2 > h3 > h4) in apps/web/tests/unit/toc-generator.test.ts
-- [ ] T097 [P] [US3] Unit test for sidebar active link detection in apps/web/tests/unit/sidebar-config.test.ts
+- [X] T094 [P] [US3] Unit test for TOC generation from HTML (heading extraction) in apps/web/tests/unit/toc-generator.test.ts
+- [X] T095 [P] [US3] Unit test for TOC context filtering (skip hidden headings) in apps/web/tests/unit/toc-generator.test.ts
+- [X] T096 [P] [US3] Unit test for hierarchical TOC nesting (h2 > h3 > h4) in apps/web/tests/unit/toc-generator.test.ts
+- [X] T097 [P] [US3] Unit test for sidebar active link detection in apps/web/tests/unit/sidebar-config.test.ts
 
 ### Implementation for User Story 3
 
-- [ ] T098 [P] [US3] Implement TOC generator in apps/web/src/lib/docs/toc-generator.ts with cheerio HTML parsing
-- [ ] T099 [P] [US3] Create TableOfContents server component in apps/web/src/components/docs/TableOfContents.tsx with nested list rendering
-- [ ] T100 [P] [US3] Create MobileMenu client component in apps/web/src/components/layout/MobileMenu.tsx with slide-in animation and gray overlay
-- [ ] T101 [US3] Update documentation page to include TOC generation and rendering in apps/web/src/app/docs/[version]/[...slug]/page.tsx
-- [ ] T102 [US3] Add metadata generation for document title ({doc title} | Aphiria) in apps/web/src/app/docs/[version]/[...slug]/page.tsx
-- [ ] T103 [US3] Implement active link highlighting logic in SidebarNav component (compare current path to href)
-- [ ] T104 [US3] Add responsive mobile breakpoint handling (<1024px) in sidebar and mobile menu
+- [X] T098 [P] [US3] Implement TOC generator in apps/web/src/lib/docs/toc-generator.ts with cheerio HTML parsing
+- [X] T099 [P] [US3] Create TableOfContents server component in apps/web/src/components/docs/TableOfContents.tsx with nested list rendering
+- [X] T100 [P] [US3] Create MobileMenu client component in apps/web/src/components/layout/MobileMenu.tsx with slide-in animation and gray overlay
+- [X] T101 [US3] Update documentation page to include TOC generation and rendering in apps/web/src/app/docs/[version]/[...slug]/page.tsx
+- [X] T102 [US3] Add metadata generation for document title ({doc title} | Aphiria) in apps/web/src/app/docs/[version]/[...slug]/page.tsx
+- [X] T103 [US3] Implement active link highlighting logic in SidebarNav component (compare current path to href)
+- [X] T104 [US3] Add responsive mobile breakpoint handling (<1024px) in sidebar and mobile menu
 
 ### E2E Tests for User Story 3
 
-- [ ] T105 [P] [US3] E2E test: document title formatting in tests/e2e/tests/docs-rendering.spec.ts
-- [ ] T106 [P] [US3] E2E test: sidebar active link highlighting in tests/e2e/tests/docs-rendering.spec.ts
-- [ ] T107 [P] [US3] E2E test: TOC generation from headings in tests/e2e/tests/docs-rendering.spec.ts
-- [ ] T108 [P] [US3] E2E test: mobile menu toggle behavior in tests/e2e/tests/mobile-nav.spec.ts
-- [ ] T109 [P] [US3] E2E test: context filtering in sidebar navigation in tests/e2e/tests/docs-rendering.spec.ts
+- [X] T105 [P] [US3] E2E test: document title formatting in tests/e2e/tests/docs-rendering.spec.ts
+- [X] T106 [P] [US3] E2E test: sidebar active link highlighting in tests/e2e/tests/docs-rendering.spec.ts
+- [X] T107 [P] [US3] E2E test: TOC generation from headings in tests/e2e/tests/docs-rendering.spec.ts
+- [X] T108 [P] [US3] E2E test: mobile menu toggle behavior in tests/e2e/tests/mobile-nav.spec.ts
+- [X] T109 [P] [US3] E2E test: context filtering in sidebar navigation in tests/e2e/tests/docs-rendering.spec.ts
 
 **Checkpoint**: All P1 user stories (1, 2, 3) are now complete and independently functional - core documentation experience is MVP-ready
 
@@ -336,15 +336,15 @@ tools/build-docs/
 
 ### Implementation for User Story 4
 
-- [ ] T110 [P] [US4] Create homepage component in apps/web/src/app/page.tsx with hero section, code example, and quick links
-- [ ] T111 [P] [US4] Add homepage metadata with exact title from spec in apps/web/src/app/page.tsx
-- [ ] T112 [US4] Configure Prism highlighting for homepage code block (PHP and bash languages)
+- [X] T110 [P] [US4] Create homepage component in apps/web/src/app/page.tsx with hero section, code example, and quick links
+- [X] T111 [P] [US4] Add homepage metadata with exact title from spec in apps/web/src/app/page.tsx
+- [X] T112 [US4] Configure Prism highlighting for homepage code block (PHP and bash languages)
 
 ### E2E Tests for User Story 4
 
-- [ ] T113 [P] [US4] E2E test: homepage title and h1 text in tests/e2e/tests/homepage.spec.ts
-- [ ] T114 [P] [US4] E2E test: hero code block has .no-copy class in tests/e2e/tests/homepage.spec.ts
-- [ ] T115 [P] [US4] E2E test: quick link buttons navigate to extension-less URLs in tests/e2e/tests/homepage.spec.ts
+- [X] T113 [P] [US4] E2E test: homepage title and h1 text in tests/e2e/tests/homepage.spec.ts
+- [X] T114 [P] [US4] E2E test: hero code block has .no-copy class in tests/e2e/tests/homepage.spec.ts
+- [X] T115 [P] [US4] E2E test: quick link buttons navigate to extension-less URLs in tests/e2e/tests/homepage.spec.ts
 
 **Checkpoint**: Homepage is complete - user Stories 1-4 are functional
 
@@ -358,16 +358,16 @@ tools/build-docs/
 
 ### Implementation for User Story 5
 
-- [ ] T116 [US5] Create SearchBar client component in apps/web/src/components/ui/SearchBar.tsx with fetch, debounce, and keyboard navigation
-- [ ] T117 [US5] Add search result rendering with heading hierarchy and context grouping
-- [ ] T118 [US5] Implement keyboard navigation (arrow keys for selection, Enter for navigation)
-- [ ] T119 [US5] Integrate SearchBar into Header component
+- [X] T116 [US5] Create SearchBar client component in apps/web/src/components/ui/SearchBar.tsx with fetch, debounce, and keyboard navigation
+- [X] T117 [US5] Add search result rendering with heading hierarchy and context grouping
+- [X] T118 [US5] Implement keyboard navigation (arrow keys for selection, Enter for navigation)
+- [X] T119 [US5] Integrate SearchBar into Header component
 
 ### E2E Tests for User Story 5
 
-- [ ] T120 [P] [US5] E2E test: search query triggers API call in tests/e2e/tests/search.spec.ts
-- [ ] T121 [P] [US5] E2E test: results display with context highlighting in tests/e2e/tests/search.spec.ts
-- [ ] T122 [P] [US5] E2E test: keyboard navigation (arrow keys, Enter) in tests/e2e/tests/search.spec.ts
+- [X] T120 [P] [US5] E2E test: search query triggers API call in tests/e2e/tests/search.spec.ts
+- [X] T121 [P] [US5] E2E test: results display with context highlighting in tests/e2e/tests/search.spec.ts
+- [X] T122 [P] [US5] E2E test: keyboard navigation (arrow keys, Enter) in tests/e2e/tests/search.spec.ts
 
 **Checkpoint**: All user stories complete - full feature parity with current site
 
@@ -377,18 +377,18 @@ tools/build-docs/
 
 **Purpose**: Improvements that affect multiple user stories and final production readiness
 
-- [ ] T123 [P] Create 404 error page in apps/web/src/app/not-found.tsx with navigation back to docs
-- [ ] T124 [P] Add edge case handling for invalid context cookie values (fallback to default)
-- [ ] T125 [P] Add debouncing for rapid context switching to prevent race conditions
-- [ ] T126 [P] Implement build-time artifact validation in apps/web/next.config.js (fail if docs-artifact missing)
-- [ ] T127 [P] Add loading states for documentation pages (Suspense boundaries)
-- [ ] T128 [P] Optimize Prism.js with lazy loading (IntersectionObserver for code blocks)
-- [ ] T129 Run existing Playwright E2E test suite and fix any regressions
-- [ ] T130 [P] Run ESLint and Prettier, fix all errors and warnings
-- [ ] T131 Run Jest unit test suite, ensure 100% pass rate
-- [ ] T132 Run Next.js production build, verify <100MB bundle size
-- [ ] T133 [P] Update package.json scripts for dev, build, test, lint
-- [ ] T134 Create developer quickstart documentation in specs/001-nextjs-migration/quickstart.md
+- [X] T123 [P] Create 404 error page in apps/web/src/app/not-found.tsx with navigation back to docs
+- [X] T124 [P] Add edge case handling for invalid context cookie values (fallback to default)
+- [X] T125 [P] Add debouncing for rapid context switching to prevent race conditions
+- [X] T126 [P] Implement build-time artifact validation in apps/web/next.config.js (fail if docs-artifact missing)
+- [X] T127 [P] Add loading states for documentation pages (Suspense boundaries)
+- [X] T128 [P] Optimize Prism.js with lazy loading (IntersectionObserver for code blocks)
+- [X] T129 Run existing Playwright E2E test suite and fix any regressions
+- [X] T130 [P] Run ESLint and Prettier, fix all errors and warnings
+- [X] T131 Run Jest unit test suite, ensure 100% pass rate
+- [X] T132 Run Next.js production build, verify <100MB bundle size
+- [X] T133 [P] Update package.json scripts for dev, build, test, lint
+- [X] T134 Create developer quickstart documentation in specs/001-nextjs-migration/quickstart.md
 
 ---
 

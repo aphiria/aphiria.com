@@ -14,8 +14,8 @@ export class MainNavBar {
     constructor(page: Page) {
         this.page = page;
         this.nav = page.locator("ul.main-nav");
-        this.navItems = this.nav.locator("li:visible");
-        this.docsLink = this.nav.locator('a[href="/docs/1.x/introduction"]');
+        this.navItems = this.nav.locator("li.main-nav-link:visible");
+        this.docsLink = this.nav.locator('a[href="/docs"]');
         this.gitHubLink = this.nav.locator('a[href="https://github.com/aphiria/aphiria"]');
         this.discussionsLink = this.nav.locator(
             'a[href="https://github.com/aphiria/aphiria/discussions"]'

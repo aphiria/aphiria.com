@@ -7,7 +7,7 @@ test("changing context updates URL and sets cookie", async ({ page, docsPage }) 
 
     // Default should be framework
     await expect(docsPage.contextSelector.select).toHaveValue(TEST_CONTEXTS.framework);
-    expect(page.url()).toContain(`?context=${TEST_CONTEXTS.framework}`);
+    await assertUrlContainsContext(page, TEST_CONTEXTS.framework);
 
     // Change to library
     await docsPage.contextSelector.selectContext(TEST_CONTEXTS.library);
@@ -34,8 +34,8 @@ test("context cookie persists across navigation", async ({ page, docsPage }) => 
     // Navigate to installation page again
     await docsPage.goto(TEST_DOCS.installation);
 
-    // URL should contain context=library from cookie
-    expect(page.url()).toContain(`?context=${TEST_CONTEXTS.library}`);
+    // URL should contain context=library from cookie (wait for useEffect to update URL)
+    await assertUrlContainsContext(page, TEST_CONTEXTS.library);
 
     // Select should have library selected
     await expect(docsPage.contextSelector.select).toHaveValue(TEST_CONTEXTS.library);
