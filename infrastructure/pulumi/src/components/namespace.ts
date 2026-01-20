@@ -1,6 +1,6 @@
 import * as pulumi from "@pulumi/pulumi";
 import * as k8s from "@pulumi/kubernetes";
-import { NamespaceResult } from "./types";
+import { NamespaceResult } from "./types/kubernetes";
 import { createImagePullSecret } from "./image-pull-secret";
 
 /**

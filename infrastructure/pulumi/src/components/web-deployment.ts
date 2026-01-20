@@ -1,6 +1,7 @@
 import * as pulumi from "@pulumi/pulumi";
 import * as k8s from "@pulumi/kubernetes";
-import { PodDisruptionBudgetConfig, WebDeploymentResult } from "./types";
+import { PodDisruptionBudgetConfig } from "./types/kubernetes";
+import { WebDeploymentResult } from "./types/application";
 import { checksum } from "./utils";
 import { buildLabels } from "./labels";
 

@@ -1,7 +1,7 @@
 import * as pulumi from "@pulumi/pulumi";
 import * as k8s from "@pulumi/kubernetes";
 import * as digitalocean from "@pulumi/digitalocean";
-import { Environment } from "./types";
+import { Environment } from "../../types/environment";
 import {
     createNamespace,
     createImagePullSecret,
@@ -17,7 +17,7 @@ import { createGatewayResources, GatewayResources } from "./factories/gateway";
 import { createDatabaseResources, DatabaseResources } from "./factories/database";
 import { createApplicationResources, ApplicationResources } from "./factories/applications";
 import { createProvider, ProviderResult } from "./factories/provider";
-import { NamespaceResult } from "../../components/types";
+import { NamespaceResult } from "../../components/types/kubernetes";
 import { loadConfig, Config } from "./config/loader";
 
 /**

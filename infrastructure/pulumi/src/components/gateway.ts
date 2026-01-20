@@ -1,6 +1,6 @@
 import * as pulumi from "@pulumi/pulumi";
 import * as k8s from "@pulumi/kubernetes";
-import { GatewayResult } from "./types";
+import { GatewayResult } from "./types/networking";
 
 /**
  * Arguments for Gateway component

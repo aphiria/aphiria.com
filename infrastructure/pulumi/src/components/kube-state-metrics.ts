@@ -1,6 +1,6 @@
 import * as pulumi from "@pulumi/pulumi";
 import * as k8s from "@pulumi/kubernetes";
-import { KubeStateMetricsResult } from "./types";
+import { KubeStateMetricsResult } from "./types/kubernetes";
 import { buildLabels } from "./labels";
 
 /**

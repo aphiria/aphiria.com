@@ -768,7 +768,6 @@ jobs:
           key: playwright-browsers-${{ hashFiles('package-lock.json') }}
 
       - name: Install Playwright browsers
-        if: steps.playwright-cache.outputs.cache-hit != 'true'
         working-directory: tests/e2e
         run: npx playwright install --with-deps chromium webkit
 

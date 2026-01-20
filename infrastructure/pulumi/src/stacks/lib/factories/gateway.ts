@@ -1,7 +1,7 @@
 import * as k8s from "@pulumi/kubernetes";
-import { Environment } from "../types";
+import { Environment } from "../../../types/environment";
 import { createGateway, createDNSRecords } from "../../../components";
-import { GatewayResult } from "../../../components/types";
+import { GatewayResult } from "../../../components/types/networking";
 import { BaseInfrastructureResources } from "./base-infrastructure";
 import { GatewayConfig } from "../config/types";
 

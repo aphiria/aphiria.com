@@ -1,5 +1,5 @@
 import * as k8s from "@pulumi/kubernetes";
-import { Environment } from "../types";
+import { Environment } from "../../../types/environment";
 import { installBaseHelmCharts } from "../../../components";
 
 /**
