@@ -177,4 +177,66 @@ describe("ContextSelector", () => {
         );
         expect(label).toBeInTheDocument();
     });
+
+    it("preserves URL hash when updating context", () => {
+        // Set window.location with hash
+        Object.defineProperty(window.location, "hash", {
+            value: "#scanning-for-attributes",
+            writable: true,
+        });
+
+        render(<ContextSelector initialContext="framework" />);
+
+        const select = screen.getByRole("combobox");
+        fireEvent.change(select, { target: { value: "library" } });
+
+        const callArgs = (window.history.replaceState as any).mock.calls[1];
+        const newUrl = callArgs[2];
+        expect(newUrl).toContain("context=library");
+        expect(newUrl).toContain("#scanning-for-attributes");
+    });
+
+    it("preserves URL hash when adding context param on mount from cookie", () => {
+        // Set window.location with hash but no context param
+        Object.defineProperty(window.location, "search", {
+            value: "",
+            writable: true,
+        });
+        Object.defineProperty(window.location, "hash", {
+            value: "#route-attributes",
+            writable: true,
+        });
+
+        // Mock getCookie to return library
+        mockGetCookie.mockReturnValueOnce("library");
+
+        render(<ContextSelector initialContext="framework" />);
+
+        const callArgs = (window.history.replaceState as any).mock.calls[0];
+        const newUrl = callArgs[2];
+        expect(newUrl).toContain("context=library");
+        expect(newUrl).toContain("#route-attributes");
+    });
+
+    it("preserves URL hash when adding context param on mount from initialContext", () => {
+        // Set window.location with hash but no context param or cookie
+        Object.defineProperty(window.location, "search", {
+            value: "",
+            writable: true,
+        });
+        Object.defineProperty(window.location, "hash", {
+            value: "#introduction",
+            writable: true,
+        });
+
+        // No cookie value
+        mockGetCookie.mockReturnValueOnce(undefined);
+
+        render(<ContextSelector initialContext="framework" />);
+
+        const callArgs = (window.history.replaceState as any).mock.calls[0];
+        const newUrl = callArgs[2];
+        expect(newUrl).toContain("context=framework");
+        expect(newUrl).toContain("#introduction");
+    });
 });

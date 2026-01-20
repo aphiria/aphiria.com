@@ -44,7 +44,7 @@ export function ContextSelector({ initialContext }: ContextSelectorProps) {
             toggleContextVisibility(cookieContext as Context);
             // Add to URL
             urlParams.set("context", cookieContext as string);
-            const newUrl = `${window.location.pathname}?${urlParams.toString()}`;
+            const newUrl = `${window.location.pathname}?${urlParams.toString()}${window.location.hash}`;
             window.history.replaceState(
                 { ...window.history.state, as: newUrl, url: newUrl },
                 "",
@@ -57,7 +57,7 @@ export function ContextSelector({ initialContext }: ContextSelectorProps) {
         toggleContextVisibility(initialContext);
         // Add to URL
         urlParams.set("context", initialContext);
-        const newUrl = `${window.location.pathname}?${urlParams.toString()}`;
+        const newUrl = `${window.location.pathname}?${urlParams.toString()}${window.location.hash}`;
         window.history.replaceState(
             { ...window.history.state, as: newUrl, url: newUrl },
             "",
@@ -76,10 +76,10 @@ export function ContextSelector({ initialContext }: ContextSelectorProps) {
         // Toggle DOM visibility
         toggleContextVisibility(newContext);
 
-        // Update URL without triggering re-render (preserve existing params)
+        // Update URL without triggering re-render (preserve existing params and hash)
         const urlParams = new URLSearchParams(window.location.search);
         urlParams.set("context", newContext);
-        const newUrl = `${window.location.pathname}?${urlParams.toString()}`;
+        const newUrl = `${window.location.pathname}?${urlParams.toString()}${window.location.hash}`;
         window.history.replaceState(
             { ...window.history.state, as: newUrl, url: newUrl },
             "",
