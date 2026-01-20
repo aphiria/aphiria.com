@@ -82,7 +82,7 @@ export function DocSearch() {
                 setSelectedIndex((prev) => (prev + 1) % results.length);
             } else if (e.key === "ArrowUp") {
                 e.preventDefault();
-                setSelectedIndex((prev) => (prev - 1 + results.length) % results.length);
+                setSelectedIndex((prev) => (prev <= 0 ? results.length - 1 : prev - 1));
             } else if (e.key === "Enter") {
                 e.preventDefault();
                 if (selectedIndex >= 0) {
