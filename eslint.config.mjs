@@ -51,7 +51,7 @@ export default [
         languageOptions: {
             parserOptions: {
                 project: "./infrastructure/pulumi/tsconfig.json",
-                ecmaVersion: 2020,
+                ecmaVersion: 2024,
                 sourceType: "module",
             },
         },
@@ -70,7 +70,7 @@ export default [
         languageOptions: {
             parserOptions: {
                 project: "./tests/e2e/tsconfig.json",
-                ecmaVersion: 2020,
+                ecmaVersion: 2024,
                 sourceType: "module",
             },
         },
