@@ -18,12 +18,12 @@ export class EditDocLink {
 
     /**
      * Converts a documentation page path to expected GitHub edit URL
-     * Example: /docs/1.x/introduction.html -> https://github.com/aphiria/aphiria.com/blob/master/docs/introduction.md
+     * Example: /docs/1.x/introduction -> https://github.com/aphiria/aphiria.com/blob/master/docs/introduction.md
      */
     static getExpectedGitHubUrl(docPath: string): string {
         const pathWithoutDocsPrefix = docPath.replace(/^\/docs\//, "");
         const pathWithoutVersion = pathWithoutDocsPrefix.replace(/^[^/]+\//, "");
-        const mdPath = pathWithoutVersion.replace(/\.html$/, ".md");
+        const mdPath = `${pathWithoutVersion}.md`;
         return `https://github.com/aphiria/aphiria.com/blob/master/docs/${mdPath}`;
     }
 }
