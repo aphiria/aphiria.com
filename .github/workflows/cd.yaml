@@ -55,7 +55,7 @@ jobs:
     steps:
       - name: Detect build mode and extract metadata
         id: detect
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             let mode, prNumber, commitSha, isSafe;
@@ -196,7 +196,7 @@ jobs:
 
     steps:
       - name: Check out exact commit
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           ref: ${{ needs.determine-mode.outputs.commit-sha }}
 
@@ -253,7 +253,7 @@ jobs:
 
       - name: Build documentation image
         id: build-image
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: .
           file: ./infrastructure/docker/build/Dockerfile
@@ -272,7 +272,7 @@ jobs:
 
       - name: Build web image
         id: web-image
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: .
           file: ./infrastructure/docker/runtime/web/Dockerfile
@@ -293,7 +293,7 @@ jobs:
 
       - name: Build API image
         id: api-image
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: .
           file: ./infrastructure/docker/runtime/api/Dockerfile
@@ -326,7 +326,7 @@ jobs:
 
       - name: Add comment to PR with image digests
         if: needs.determine-mode.outputs.mode == 'preview'
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const prNumber = ${{ needs.determine-mode.outputs.pr-number }};
@@ -366,16 +366,16 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: "22"
           cache: npm
 
       - name: Install Pulumi CLI
-        uses: pulumi/actions@v5
+        uses: pulumi/actions@v6
 
       - name: Install Pulumi dependencies and build
         run: |
@@ -383,7 +383,7 @@ jobs:
           npm run build --workspace=infrastructure/pulumi
 
       - name: Ensure preview-base stack exists and is deployed
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         env:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
         with:
@@ -486,16 +486,16 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: "22"
           cache: npm
 
       - name: Install Pulumi CLI
-        uses: pulumi/actions@v5
+        uses: pulumi/actions@v6
 
       - name: Install dependencies and build
         run: |
@@ -552,7 +552,7 @@ jobs:
 
       - name: Post preview comment on PR
         if: always() && steps.preview.outcome != 'skipped' && needs.determine-mode.outputs.mode == 'preview'
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const fs = require('fs');
@@ -614,16 +614,16 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: "22"
           cache: npm
 
       - name: Install Pulumi CLI
-        uses: pulumi/actions@v5
+        uses: pulumi/actions@v6
 
       - name: Install dependencies and build
         run: |
@@ -674,7 +674,7 @@ jobs:
 
       - name: Post deployment success comment (preview)
         if: success() && needs.determine-mode.outputs.mode == 'preview'
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const prNumber = ${{ needs.determine-mode.outputs.pr-number }};
@@ -714,7 +714,7 @@ jobs:
 
       - name: Post deployment failure comment (preview)
         if: failure() && needs.determine-mode.outputs.mode == 'preview'
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const prNumber = ${{ needs.determine-mode.outputs.pr-number }};
@@ -749,10 +749,10 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: "22"
           cache: npm
@@ -761,7 +761,7 @@ jobs:
         run: npm ci --workspace=tests/e2e
 
       - name: Cache Playwright browsers
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         id: playwright-cache
         with:
           path: ~/.cache/ms-playwright
@@ -809,7 +809,7 @@ jobs:
 
       - name: Upload test artifacts
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: playwright-artifacts-${{ needs.determine-mode.outputs.mode }}
           path: |
