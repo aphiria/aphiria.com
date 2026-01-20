@@ -13,6 +13,7 @@ export default [
             "**/playwright-report/",
             "**/test-results/",
             "apps/api/",
+            "apps/web/**", // Linted separately with its own config
             "bin/",
             "node_modules/",
             "vendor/",
