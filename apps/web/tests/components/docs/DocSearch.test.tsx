@@ -5,6 +5,13 @@ import { DocSearch } from "@/components/docs/DocSearch";
 // Mock fetch
 global.fetch = vi.fn();
 
+// Mock runtime config
+vi.mock("@/lib/runtime-config", () => ({
+    getRuntimeConfig: vi.fn(() => ({
+        apiUri: "http://localhost:8080",
+    })),
+}));
+
 describe("DocSearch", () => {
     beforeEach(() => {
         vi.clearAllMocks();
@@ -215,7 +222,10 @@ describe("DocSearch", () => {
     });
 
     it("uses NEXT_PUBLIC_API_URI env var when available", async () => {
-        process.env.NEXT_PUBLIC_API_URI = "https://api.example.com";
+        const { getRuntimeConfig } = await import("@/lib/runtime-config");
+        vi.mocked(getRuntimeConfig).mockReturnValue({
+            apiUri: "https://api.example.com",
+        });
 
         (global.fetch as any).mockResolvedValue({
             json: async () => [],
@@ -231,8 +241,6 @@ describe("DocSearch", () => {
             expect.stringContaining("https://api.example.com"),
             expect.any(Object)
         );
-
-        delete process.env.NEXT_PUBLIC_API_URI;
     });
 
     it("applies correct CSS classes", () => {
