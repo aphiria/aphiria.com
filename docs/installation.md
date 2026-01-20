@@ -129,7 +129,7 @@ server {
 
 Add the following to your Caddyfile config:
 
-```
+```nginx
 YOUR_SITE_DOMAIN:8080 {
     rewrite {
         r .*
