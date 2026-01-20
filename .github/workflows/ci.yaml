@@ -93,6 +93,7 @@ jobs:
           files: ./apps/api/.coverage/clover.xml
           flags: api
           name: API
+          slug: aphiria/aphiria.com
           token: ${{ secrets.CODECOV_TOKEN }}
       - name: Upload Web coverage to Codecov
         if: matrix.php == '8.4'
@@ -101,6 +102,7 @@ jobs:
           files: ./apps/web/coverage/lcov.info
           flags: web
           name: Web
+          slug: aphiria/aphiria.com
           token: ${{ secrets.CODECOV_TOKEN }}
       - name: Upload Pulumi coverage to Codecov
         if: matrix.php == '8.4'
@@ -109,6 +111,7 @@ jobs:
           files: ./infrastructure/pulumi/coverage/lcov.info
           flags: pulumi
           name: Pulumi
+          slug: aphiria/aphiria.com
           token: ${{ secrets.CODECOV_TOKEN }}
       - name: Upload Build Tools coverage to Codecov
         if: matrix.php == '8.4'
@@ -117,4 +120,5 @@ jobs:
           files: ./tools/build-docs/coverage/lcov.info
           flags: tools
           name: Tools
+          slug: aphiria/aphiria.com
           token: ${{ secrets.CODECOV_TOKEN }}
