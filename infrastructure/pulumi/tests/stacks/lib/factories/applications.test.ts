@@ -1,3 +1,4 @@
+import { describe, it, expect, beforeEach, vi, type Mock } from "vitest";
 import { createApplicationResources } from "../../../../src/stacks/lib/factories/applications";
 import {
     AppConfig,
@@ -8,16 +9,16 @@ import {
 import * as k8s from "@pulumi/kubernetes";
 
 // Mock the component functions
-jest.mock("../../../../src/components", () => ({
-    createWebDeployment: jest.fn(),
-    createAPIDeployment: jest.fn(),
-    createDBMigrationJob: jest.fn(),
-    createHTTPRoute: jest.fn(),
-    createHTTPSRedirectRoute: jest.fn(),
+vi.mock("../../../../src/components", () => ({
+    createWebDeployment: vi.fn(),
+    createAPIDeployment: vi.fn(),
+    createDBMigrationJob: vi.fn(),
+    createHTTPRoute: vi.fn(),
+    createHTTPSRedirectRoute: vi.fn(),
 }));
 
-jest.mock("../../../../src/components/api-service-monitor", () => ({
-    createApiServiceMonitor: jest.fn(),
+vi.mock("../../../../src/components/api-service-monitor", () => ({
+    createApiServiceMonitor: vi.fn(),
 }));
 
 import {
@@ -105,26 +106,26 @@ describe("createApplicationResources", () => {
     } as PrometheusConfig;
 
     beforeEach(() => {
-        jest.clearAllMocks();
+        vi.clearAllMocks();
 
         // Set up default mock return values
-        (createWebDeployment as jest.Mock).mockReturnValue({
+        (createWebDeployment as Mock).mockReturnValue({
             deployment: {},
             service: {},
             configMap: {},
         });
 
-        (createAPIDeployment as jest.Mock).mockReturnValue({
+        (createAPIDeployment as Mock).mockReturnValue({
             deployment: {},
             service: {},
             configMap: {},
             secret: {},
         });
 
-        (createDBMigrationJob as jest.Mock).mockReturnValue({});
-        (createHTTPRoute as jest.Mock).mockReturnValue({});
-        (createHTTPSRedirectRoute as jest.Mock).mockReturnValue({});
-        (createApiServiceMonitor as jest.Mock).mockReturnValue({ serviceMonitor: {} });
+        (createDBMigrationJob as Mock).mockReturnValue({});
+        (createHTTPRoute as Mock).mockReturnValue({});
+        (createHTTPSRedirectRoute as Mock).mockReturnValue({});
+        (createApiServiceMonitor as Mock).mockReturnValue({ serviceMonitor: {} });
     });
 
     describe("web deployment", () => {

@@ -10,11 +10,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl ca-certificates gnupg \
  && rm -rf /var/lib/apt/lists/*
 
-# Node.js + Yarn
-RUN curl -fsSL https://deb.nodesource.com/setup_23.x | bash - \
- && apt-get update && apt-get install -y --no-install-recommends nodejs \
- && corepack enable \
- && rm -rf /var/lib/apt/lists/*
+# Node.js 24.x for tools/build-docs pipeline (via official binaries)
+RUN curl -fsSL https://nodejs.org/dist/v24.1.0/node-v24.1.0-linux-x64.tar.xz -o /tmp/node.tar.xz \
+ && tar -xJf /tmp/node.tar.xz -C /usr/local --strip-components=1 \
+ && rm /tmp/node.tar.xz \
+ && corepack enable
 
 # Help DOM's vendored Lexbor find headers
 ENV CPPFLAGS="-I/usr/src/php"
@@ -39,14 +39,17 @@ RUN cd apps/api && composer install --no-interaction --ignore-platform-reqs --pr
 COPY . .
 COPY apps/api/.env.dist apps/api/.env
 
-# JS deps + gulp
-RUN cd apps/web && yarn install --frozen-lockfile || yarn install \
- && yarn global add gulp
+# Install TypeScript workspace dependencies (exclude e2e - not needed for build)
+# Uses root package-lock.json for consistent dependency resolution
+COPY package.json package-lock.json ./
+RUN npm ci --workspace=tools/build-docs --workspace=apps/web
 
-# Build static assets and compile docs
-RUN cd apps/web && gulp build
+# Build tools/build-docs TypeScript
+RUN npm run build --workspace=tools/build-docs
 
-# Server-side code highlighting
-RUN npm install prismjs jsdom \
- && chmod +x ./apps/web/src/js/server-side/highlight-code.js \
- && find ./apps/web/public -type f -name "*.html" -exec node ./apps/web/src/js/server-side/highlight-code.js {} \;
+# Build documentation artifacts (from root so paths resolve correctly)
+RUN node tools/build-docs/dist/index.js
+
+# Build Next.js web app (with telemetry disabled)
+ENV NEXT_TELEMETRY_DISABLED=1
+RUN npm run build --workspace=apps/web

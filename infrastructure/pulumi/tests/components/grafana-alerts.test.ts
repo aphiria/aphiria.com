@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll } from "@jest/globals";
+import { describe, it, expect, beforeAll } from "vitest";
 import * as k8s from "@pulumi/kubernetes";
 import { createGrafanaAlerts, type AlertRule } from "../../src/components/grafana-alerts";
 import { promiseOf } from "../test-utils";

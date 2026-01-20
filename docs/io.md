@@ -1,28 +1,5 @@
 <h1 id="doc-title">Input/Output</h1>
 
-<nav class="toc-nav">
-
-<div class="toc-nav-contents">
-
-<h2 id="table-of-contents">Table of Contents</h2>
-
-<ol>
-<li><a href="#streams">Streams</a><ol>
-<li><a href="#reading-from-stream">Reading from a Stream</a></li>
-<li><a href="#writing-to-stream">Writing to a Stream</a></li>
-<li><a href="#seeking">Seeking</a></li>
-<li><a href="#getting-length-of-stream">Getting the Length of a Stream</a></li>
-<li><a href="#copying-to-another-stream">Copying to Another Stream</a></li>
-<li><a href="#closing-stream">Closing a Stream</a></li>
-<li><a href="#multi-streams">Multi-Streams</a></li>
-</ol>
-</li>
-</ol>
-
-</div>
-
-</nav>
-
 <h2 id="streams">Streams</h2>
 
 Streams allow you to read and write data in a memory-efficient way.  PHP has built-in support for streams, but the syntax is clunky, and it requires a bit of boilerplate code to work with.  Aphiria wraps PHP's streaming functionality into a simple interface: `Aphiria\IO\Streams\IStream`.  Creating a stream is easy.

@@ -37,7 +37,7 @@ export function createKubernetesCluster(args: KubernetesClusterArgs): Kubernetes
     // Using getKubernetesClusterOutput() waits for cluster to exist in DO API before fetching
     // This works on both first deployment and subsequent updates
     // @internal - useStaticKubeconfig flag allows tests to use static config (prevents async issues during Jest teardown)
-    /* istanbul ignore next - production dynamic kubeconfig path, tested via integration */
+    /* v8 ignore start - production dynamic kubeconfig path, tested via integration */
     const kubeconfig = args.useStaticKubeconfig
         ? cluster.kubeConfigs[0].rawConfig
         : digitalocean
@@ -45,6 +45,7 @@ export function createKubernetesCluster(args: KubernetesClusterArgs): Kubernetes
                   name: cluster.name,
               })
               .kubeConfigs.apply((configs) => configs[0].rawConfig);
+    /* v8 ignore stop */
 
     // Create Kubernetes provider for this cluster
     const provider = new k8s.Provider(

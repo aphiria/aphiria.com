@@ -19,7 +19,7 @@ export class DocsSideNav {
     }
 
     sectionNav(section: Locator): Locator {
-        return section.locator("ul.doc-sidebar-nav");
+        return section.locator("ul");
     }
 
     async getAllInternalLinks(): Promise<string[]> {

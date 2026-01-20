@@ -1,6 +1,8 @@
 .claude/
+.next/
 .pulumi/
-apps/
+apps/api/
+apps/web/out/
 coverage/
 dist/
 node_modules/

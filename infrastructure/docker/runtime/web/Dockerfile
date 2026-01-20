@@ -10,5 +10,5 @@ WORKDIR /usr/share/nginx/html
 # Remove the default content from the Nginx default web root
 RUN rm -rf /usr/share/nginx/html/*
 
-# Copy the web source files from the build image
-COPY --from=build /app/apps/web/public .
+# Copy the Next.js static export from the build image (includes embedded documentation)
+COPY --from=build /app/apps/web/out .

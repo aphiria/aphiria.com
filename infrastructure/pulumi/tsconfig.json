@@ -1,20 +1,14 @@
 {
+    "extends": "../../tsconfig.json",
     "compilerOptions": {
-        "strict": true,
         "outDir": "dist",
-        "target": "es2020",
         "module": "commonjs",
         "moduleResolution": "node",
-        "sourceMap": true,
+        "esModuleInterop": true,
         "experimentalDecorators": true,
         "pretty": true,
-        "noFallthroughCasesInSwitch": true,
-        "noImplicitReturns": true,
-        "forceConsistentCasingInFileNames": true,
-        "esModuleInterop": true,
-        "skipLibCheck": true,
-        "types": ["node", "jest"]
+        "types": ["node"]
     },
-    "include": ["src/**/*", "tests/**/*"],
+    "include": ["src/**/*", "tests/**/*", "vitest.config.mts"],
     "exclude": ["node_modules", "dist"]
 }

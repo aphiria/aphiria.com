@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll } from "@jest/globals";
+import { describe, it, expect, beforeAll } from "vitest";
 import * as pulumi from "@pulumi/pulumi";
 import * as k8s from "@pulumi/kubernetes";
 import { createGrafanaIngress } from "../../src/components/grafana-ingress";
@@ -10,7 +10,7 @@ describe("createGrafanaIngress", () => {
         k8sProvider = new k8s.Provider("test", {});
     });
 
-    it("should create both HTTPS route and HTTP redirect", (done) => {
+    it("should create both HTTPS route and HTTP redirect", () => {
         const result = createGrafanaIngress({
             namespace: "monitoring",
             serviceName: "grafana",
@@ -24,11 +24,9 @@ describe("createGrafanaIngress", () => {
 
         expect(result.httpsRoute).toBeDefined();
         expect(result.httpRedirectRoute).toBeDefined();
-
-        done();
     });
 
-    it("should create HTTPS route with correct hostname", (done) => {
+    it("should create HTTPS route with correct hostname", () => {
         const result = createGrafanaIngress({
             namespace: "monitoring",
             serviceName: "grafana",
@@ -41,10 +39,9 @@ describe("createGrafanaIngress", () => {
         });
 
         expect(result.httpsRoute).toBeDefined();
-        done();
     });
 
-    it("should create route for preview environment", (done) => {
+    it("should create route for preview environment", () => {
         const result = createGrafanaIngress({
             namespace: "monitoring",
             serviceName: "grafana",
@@ -58,10 +55,9 @@ describe("createGrafanaIngress", () => {
 
         expect(result.httpsRoute).toBeDefined();
         expect(result.httpRedirectRoute).toBeDefined();
-        done();
     });
 
-    it("should create route for local environment", (done) => {
+    it("should create route for local environment", () => {
         const result = createGrafanaIngress({
             namespace: "monitoring",
             serviceName: "grafana",
@@ -77,10 +73,9 @@ describe("createGrafanaIngress", () => {
         });
 
         expect(result.httpsRoute).toBeDefined();
-        done();
     });
 
-    it("should apply custom labels to routes", (done) => {
+    it("should apply custom labels to routes", () => {
         const result = createGrafanaIngress({
             namespace: "monitoring",
             serviceName: "grafana",
@@ -98,10 +93,9 @@ describe("createGrafanaIngress", () => {
 
         expect(result.httpsRoute).toBeDefined();
         expect(result.httpRedirectRoute).toBeDefined();
-        done();
     });
 
-    it("should route to correct service port", (done) => {
+    it("should route to correct service port", () => {
         const result = createGrafanaIngress({
             namespace: "monitoring",
             serviceName: "grafana",
@@ -114,6 +108,5 @@ describe("createGrafanaIngress", () => {
         });
 
         expect(result.httpsRoute).toBeDefined();
-        done();
     });
 });

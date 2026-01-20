@@ -1,29 +1,5 @@
 <h1 id="doc-title">Controllers</h1>
 
-<nav class="toc-nav">
-
-<div class="toc-nav-contents">
-
-<h2 id="table-of-contents">Table of Contents</h2>
-
-<ol>
-<li><a href="#basics">Basics</a></li>
-<li><a href="#parameter-resolution">Parameter Resolution</a><ol>
-<li><a href="#request-body-parameters">Request Bodies</a></li>
-<li><a href="#request-parameters">Request Parameters</a></li>
-<li><a href="#arrays-in-request-bodies">Arrays in Request Bodies</a></li>
-<li><a href="#validating-request-bodies">Validating Request Bodies</a></li>
-</ol>
-</li>
-<li><a href="#parsing-request-data">Parsing Request Data</a></li>
-<li><a href="#formatting-response-data">Formatting Response Data</a></li>
-<li><a href="#getting-the-current-user">Getting the Current User</a></li>
-</ol>
-
-</div>
-
-</nav>
-
 <h2 id="basics">Basics</h2>
 
 A controller contains the methods that are invoked when your app [handles a request](routing.md).  Your controllers must extend `Controller`.  Let's say you needed an endpoint to get a user.  Simple:

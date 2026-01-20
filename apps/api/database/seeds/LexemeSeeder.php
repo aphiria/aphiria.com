@@ -10,13 +10,9 @@
 
 declare(strict_types=1);
 
-use Aphiria\DependencyInjection\Container;
 use App\Documentation\Searching\Context;
 use App\Documentation\Searching\IndexEntry;
 use App\Documentation\Searching\IndexingFailedException;
-use League\Flysystem\FilesystemException;
-use League\Flysystem\FilesystemOperator;
-use League\Flysystem\StorageAttributes;
 use Phinx\Seed\AbstractSeed;
 
 class LexemeSeeder extends AbstractSeed
@@ -45,38 +41,7 @@ class LexemeSeeder extends AbstractSeed
         $this->execute('TRUNCATE TABLE lexemes');
 
         try {
-            $indexEntries = [];
-            $dom = new DOMDocument();
-
-            if (($container = Container::$globalInstance) === null) {
-                throw new IndexingFailedException('Global instance of the DI container is not set');
-            }
-
-            $fileSystem = $container->resolve(FilesystemOperator::class);
-
-            foreach ($this->getHtmlDocPaths($fileSystem) as $version => $htmlPaths) {
-                foreach ($htmlPaths as $htmlPath) {
-                    $this->output->writeln("<info>Lexing $htmlPath for version $version</info>");
-                    \libxml_use_internal_errors(true);
-                    $html = $fileSystem->read($htmlPath);
-
-                    if (empty($html) || $dom->loadHTML($html) === false) {
-                        throw new Exception("Failed to load HTML for $htmlPath: " . \strip_tags(\libxml_get_last_error()->message));
-                    }
-
-                    \libxml_clear_errors();
-                    $h1 = $h2 = $h3 = $h4 = $h5 = null;
-
-                    // Scan the documentation and index the elements
-                    $article = new DOMXPath($dom)->query('//body/main/article[1]')->item(0);
-
-                    if ($article === null) {
-                        throw new IndexingFailedException('Indexing failed - no article found');
-                    }
-
-                    $this->processNode($version, $article, $indexEntries, $htmlPath, $h1, $h2, $h3, $h4, $h5);
-                }
-            }
+            $indexEntries = $this->readLexemesFromNdjson();
 
             foreach ($indexEntries as $indexEntry) {
                 $this->insertIndexEntry($indexEntry);
@@ -89,155 +54,6 @@ class LexemeSeeder extends AbstractSeed
 
             throw new IndexingFailedException('Failed to index document: ' . $ex->getMessage(), 0, $ex);
         }
-    }
-
-    /**
-     * Creates an index entry
-     *
-     * @param string $version The version of the documentation
-     * @param string $filename The filename of the doc being indexed
-     * @param DOMNode $currNode The current node
-     * @param Context $context The context the entry is in
-     * @param DOMNode $h1 The current H1 node
-     * @param DOMNode|null $h2 The current H2 node
-     * @param DOMNode|null $h3 The current H3 node
-     * @param DOMNode|null $h4 The current H4 node
-     * @param DOMNode|null $h5 The current H5 node
-     * @return IndexEntry The index entry
-     * @psalm-suppress NullReference This is due to the DOM stub issues - https://github.com/vimeo/psalm/issues/5665
-     */
-    private function createIndexEntry(
-        string $version,
-        string $filename,
-        DOMNode $currNode,
-        Context $context,
-        DOMNode $h1,
-        ?DOMNode $h2,
-        ?DOMNode $h3,
-        ?DOMNode $h4,
-        ?DOMNode $h5,
-    ): IndexEntry {
-        $link = "/docs/$version/";
-
-        /**
-         * If the current node is the h1 tag, then just link to the doc itself, not a section
-         * If the current node is a h2, h3, h4, or h5 tag, then link to the tag's ID
-         * Otherwise, find the nearest non-null header tag and link to its ID
-         */
-        if ($currNode->nodeName === 'h1') {
-            $link .= $filename;
-        } elseif (\in_array($currNode->nodeName, ['h2', 'h3', 'h4', 'h5'])) {
-            $link .= "$filename#{$currNode->attributes->getNamedItem('id')?->nodeValue}";
-        } elseif ($h5 !== null) {
-            $link .= "$filename#{$h5->attributes->getNamedItem('id')?->nodeValue}";
-        } elseif ($h4 !== null) {
-            $link .= "$filename#{$h4->attributes->getNamedItem('id')?->nodeValue}";
-        } elseif ($h3 !== null) {
-            $link .= "$filename#{$h3->attributes->getNamedItem('id')?->nodeValue}";
-        } elseif ($h2 !== null) {
-            $link .= "$filename#{$h2->attributes->getNamedItem('id')?->nodeValue}";
-        } else {
-            // h1 will never be null
-            $link .= "$filename#{$h1->attributes->getNamedItem('id')?->nodeValue}";
-        }
-
-        return new IndexEntry(
-            $version,
-            $currNode->nodeName,
-            $this->getAllChildNodeTexts($currNode),
-            $link,
-            self::$htmlElementsToWeights[$currNode->nodeName],
-            $context,
-            $this->getAllChildNodeTexts($h1),
-            $h2 === null ? null : $this->getAllChildNodeTexts($h2),
-            $h3 === null ? null : $this->getAllChildNodeTexts($h3),
-            $h4 === null ? null : $this->getAllChildNodeTexts($h4),
-            $h5 === null ? null : $this->getAllChildNodeTexts($h5),
-        );
-    }
-
-    /**
-     * Recursively searches a node for all of its children's texts
-     *
-     * @param DOMNode $node The node to search
-     * @return string The children nodes' texts
-     */
-    private function getAllChildNodeTexts(DOMNode $node): string
-    {
-        $text = '';
-
-        foreach ($node->childNodes as $childNode) {
-            if ($childNode->nodeType === \XML_TEXT_NODE) {
-                $text .= $childNode->textContent;
-            } else {
-                $text .= $this->getAllChildNodeTexts($childNode);
-            }
-        }
-
-        return $text;
-    }
-
-    /**
-     * Gets the context for a node
-     *
-     * @param DOMNode $node The node whose context we want
-     * @return Context The current context
-     */
-    private function getContext(DOMNode $node): Context
-    {
-        while ($node !== null) {
-            if ($node instanceof DOMElement && $node->hasAttribute('class')) {
-                $classes = \explode(' ', $node->getAttribute('class'));
-
-                if (\in_array('context-framework', $classes, true)) {
-                    return Context::Framework;
-                }
-
-                if (\in_array('context-library', $classes, true)) {
-                    return Context::Library;
-                }
-            }
-
-            $node = $node->parentElement;
-        }
-
-        return Context::Global;
-    }
-
-    /**
-     * Gets the paths to the built HTML documentation
-     *
-     * @param FilesystemOperator $fileSystem The file system to use to read files
-     * @return array<string, list<string>> The map of documentation versions to HTML file paths that contain built documentation
-     * @throws IndexingFailedException Thrown if there were no HTML files
-     * @throws FilesystemException Thrown if the documentation could not be read
-     */
-    private function getHtmlDocPaths(FilesystemOperator $fileSystem): array
-    {
-        // Recursively search all subdirectories (which are split by documentation version) for HTML files
-        $htmlPaths = $fileSystem
-            ->listContents('/apps/web/public/docs', true)
-            ->filter(fn(StorageAttributes $attributes) => $attributes->isFile() && \str_ends_with($attributes->path(), '.html'))
-            ->map(fn(StorageAttributes $attributes) => $attributes->path())
-            ->toArray();
-
-        if (empty($htmlPaths)) {
-            throw new IndexingFailedException('Indexing failed - no HTML files were found');
-        }
-
-        $htmlFilesByVersion = [];
-
-        foreach ($htmlPaths as $htmlPath) {
-            $pathParts = \explode(DIRECTORY_SEPARATOR, $htmlPath);
-            $version = $pathParts[4]; // /apps/web/public/docs/[VERSION]/file.html
-
-            if (!isset($htmlFilesByVersion[$version])) {
-                $htmlFilesByVersion[$version] = [];
-            }
-            $htmlFilesByVersion[$version][] = $htmlPath;
-        }
-
-        return $htmlFilesByVersion;
     }
 
     /**
@@ -269,100 +85,110 @@ EOF,
     }
 
     /**
-     * Processes a node and its children recursively, creating index entries for valid elements
+     * Read lexemes from NDJSON artifact generated by build-docs pipeline
      *
-     * @param string $version The documentation version
-     * @param DOMNode $node The node to process
-     * @param list<IndexEntry> $indexEntries The list of index entries to update
-     * @param string $htmlPath The path to the current HTML file
-     * @param DOMNode|null $h1 The current H1 node
-     * @param DOMNode|null $h2 The current H2 node
-     * @param DOMNode|null $h3 The current H3 node
-     * @param DOMNode|null $h4 The current H4 node
-     * @param DOMNode|null $h5 The current H5 node
+     * @return list<IndexEntry> The index entries
+     * @throws IndexingFailedException Thrown if the NDJSON file cannot be read
      */
-    private function processNode(
-        string $version,
-        DOMNode $node,
-        array &$indexEntries,
-        string $htmlPath,
-        ?DOMNode &$h1,
-        ?DOMNode &$h2,
-        ?DOMNode &$h3,
-        ?DOMNode &$h4,
-        ?DOMNode &$h5,
-    ): void {
-        if ($this->shouldSkipProcessingNode($node)) {
-            return;
+    private function readLexemesFromNdjson(): array
+    {
+        // Use test fixtures when running in test environment
+        $ndjsonPath = (string) \getenv('APP_ENV') === 'testing'
+            ? __DIR__ . '/../../tests/Fixtures/docs/search/lexemes.ndjson'
+            : __DIR__ . '/../../../../dist/docs/search/lexemes.ndjson';
+
+        if (!\file_exists($ndjsonPath)) {
+            throw new IndexingFailedException("Lexemes NDJSON file not found: $ndjsonPath");
         }
 
-        // Update headers based on the node type
-        switch ($node->nodeName) {
-            case 'h1':
-                $h1 = $node;
-                $h2 = $h3 = $h4 = $h5 = null;
-                break;
-            case 'h2':
-                $h2 = $node;
-                $h3 = $h4 = $h5 = null;
-                break;
-            case 'h3':
-                $h3 = $node;
-                $h4 = $h5 = null;
-                break;
-            case 'h4':
-                $h4 = $node;
-                $h5 = null;
-                break;
-            case 'h5':
-                $h5 = $node;
-                break;
+        $this->output->writeln("<info>Reading lexemes from $ndjsonPath</info>");
+        $lines = \file($ndjsonPath, \FILE_IGNORE_NEW_LINES | \FILE_SKIP_EMPTY_LINES);
+
+        if ($lines === false) {
+            throw new IndexingFailedException("Failed to read NDJSON file: $ndjsonPath");
         }
 
-        // Only create an index entry for valid elements
-        if (isset(self::$htmlElementsToWeights[$node->nodeName])) {
-            $filename = \basename($htmlPath);
-            $indexEntries[] = $this->createIndexEntry(
-                $version,
-                $filename,
-                $node,
-                $this->getContext($node),
-                $h1,
-                $h2,
-                $h3,
-                $h4,
-                $h5,
+        $indexEntries = [];
+
+        foreach ($lines as $lineNumber => $line) {
+            $lexeme = \json_decode($line, true);
+
+            if ($lexeme === null) {
+                throw new IndexingFailedException('Failed to parse JSON on line ' . ($lineNumber + 1) . ": $line");
+            }
+
+            // Map NDJSON lexeme record to IndexEntry
+            // Apply weighting based on html_element_type
+            $htmlElementType = $lexeme['html_element_type'];
+
+            if (!isset(self::$htmlElementsToWeights[$htmlElementType])) {
+                throw new IndexingFailedException("Unknown HTML element type: $htmlElementType");
+            }
+
+            $weight = self::$htmlElementsToWeights[$htmlElementType];
+
+            // Map context string to enum
+            $context = match ($lexeme['context']) {
+                'framework' => Context::Framework,
+                'library' => Context::Library,
+                'global' => Context::Global,
+                default => throw new IndexingFailedException("Unknown context: {$lexeme['context']}"),
+            };
+
+            $indexEntries[] = new IndexEntry(
+                $lexeme['version'],
+                $htmlElementType,
+                $lexeme['inner_text'],
+                $lexeme['link'],
+                $weight,
+                $context,
+                $lexeme['h1_inner_text'],
+                $lexeme['h2_inner_text'],
+                $lexeme['h3_inner_text'],
+                $lexeme['h4_inner_text'],
+                $lexeme['h5_inner_text'],
             );
         }
 
-        // Recursively process child nodes
-        foreach ($node->childNodes as $childNode) {
-            $this->processNode($version, $childNode, $indexEntries, $htmlPath, $h1, $h2, $h3, $h4, $h5);
-        }
-    }
+        $this->output->writeln('<info>Loaded ' . \count($indexEntries) . ' lexemes</info>');
 
-    /**
-     * Returns whether or not we should skip processing a node and its children for lexemes
-     *
-     * @param DOMNode $node The node to check
-     * @return bool True if we should skip processing the node for lexemes, otherwise false
-     */
-    private function shouldSkipProcessingNode(DOMNode $node): bool
-    {
-        // We do not want to index the table-of-contents nav because its contents simply reflect those in the <h*> tags
-        return $node instanceof DOMElement
-            && $node->nodeName === 'nav'
-            && \str_contains($node->getAttribute('class'), 'toc-nav');
+        return $indexEntries;
     }
 
     /**
      * Updates the lexemes in all our rows
+     *
+     * The tsvector includes both the element's inner_text (with its weight) and the heading hierarchy (h1-h5).
+     * This allows boosting results where the search term appears in multiple heading levels.
+     * For example, searching "routing" will rank "/docs/1.x/routing#route-attributes" (h1="Routing", h2="Route Attributes")
+     * higher than "/docs/1.x/framework-comparisons#routing" (h1="Framework Comparison", h2="Routing")
+     * because the first matches at both h1 AND h2 levels.
      */
     private function updateLexemes(): void
     {
+        $h1Weight = self::$htmlElementsToWeights['h1'];
+        $h2Weight = self::$htmlElementsToWeights['h2'];
+        $h3Weight = self::$htmlElementsToWeights['h3'];
+        $h4Weight = self::$htmlElementsToWeights['h4'];
+        $h5Weight = self::$htmlElementsToWeights['h5'];
+
         $this->execute(
             <<<EOF
-UPDATE lexemes SET english_lexemes = setweight(to_tsvector('english', COALESCE(inner_text, '')), html_element_weight::"char"), simple_lexemes = setweight(to_tsvector(COALESCE(inner_text, '')), html_element_weight::"char")
+UPDATE lexemes SET
+  english_lexemes =
+    setweight(to_tsvector('english', COALESCE(h1_inner_text, '')), '{$h1Weight}') ||
+    setweight(to_tsvector('english', COALESCE(h2_inner_text, '')), '{$h2Weight}') ||
+    setweight(to_tsvector('english', COALESCE(h3_inner_text, '')), '{$h3Weight}') ||
+    setweight(to_tsvector('english', COALESCE(h4_inner_text, '')), '{$h4Weight}') ||
+    setweight(to_tsvector('english', COALESCE(h5_inner_text, '')), '{$h5Weight}') ||
+    setweight(to_tsvector('english', COALESCE(inner_text, '')), html_element_weight::"char"),
+  simple_lexemes =
+    setweight(to_tsvector(COALESCE(h1_inner_text, '')), '{$h1Weight}') ||
+    setweight(to_tsvector(COALESCE(h2_inner_text, '')), '{$h2Weight}') ||
+    setweight(to_tsvector(COALESCE(h3_inner_text, '')), '{$h3Weight}') ||
+    setweight(to_tsvector(COALESCE(h4_inner_text, '')), '{$h4Weight}') ||
+    setweight(to_tsvector(COALESCE(h5_inner_text, '')), '{$h5Weight}') ||
+    setweight(to_tsvector(COALESCE(inner_text, '')), html_element_weight::"char")
 EOF,
         );
     }

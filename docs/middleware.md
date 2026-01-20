@@ -1,25 +1,5 @@
 <h1 id="doc-title">Middleware</h1>
 
-<nav class="toc-nav">
-
-<div class="toc-nav-contents">
-
-<h2 id="table-of-contents">Table of Contents</h2>
-
-<ol>
-<li><a href="#basics">Basics</a><ol>
-<li><a href="#manipulating-the-request">Manipulating the Request</a></li>
-<li><a href="#manipulating-the-response">Manipulating the Response</a></li>
-<li><a href="#middleware-parameters">Middleware Parameters</a></li>
-</ol>
-</li>
-<li><a href="#executing-middleware">Executing Middleware</a></li>
-</ol>
-
-</div>
-
-</nav>
-
 <h2 id="basics">Basics</h2>
 
 The middleware library provides developers a way of defining route middleware for their applications.  Middleware are simply layers of request and response processing before and after a controller action is invoked.  This is extremely useful for actions like authorization, logging, and request/response decoration.

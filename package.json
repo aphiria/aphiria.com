@@ -3,11 +3,22 @@
     "version": "1.0.0",
     "description": "Aphiria.com monorepo - website, API, infrastructure, and tests",
     "private": true,
+    "workspaces": [
+        "apps/*",
+        "infrastructure/*",
+        "tests/*",
+        "tools/*"
+    ],
     "scripts": {
+        "build": "npm run build --workspace=tools/build-docs && npm run build --workspace=infrastructure/pulumi && npm run build --workspace=apps/web",
+        "build:docs": "npm run build:docs --workspace=tools/build-docs",
         "lint": "eslint .",
         "lint:fix": "eslint . --fix",
         "format": "prettier --write .",
-        "format:check": "prettier --check ."
+        "format:check": "prettier --check .",
+        "test": "npm test --workspace=tools/build-docs && npm test --workspace=apps/web && npm test --workspace=infrastructure/pulumi",
+        "test:e2e": "npm run test:e2e --workspace=tests/e2e",
+        "test:watch": "echo 'Run test:watch in specific workspace: npm run test:watch --workspace=apps/web'"
     },
     "keywords": [],
     "author": "",

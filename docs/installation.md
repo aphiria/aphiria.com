@@ -1,32 +1,5 @@
 <h1 id="doc-title">Installing</h1>
 
-<nav class="toc-nav">
-
-<div class="toc-nav-contents">
-
-<h2 id="table-of-contents">Table of Contents</h2>
-
-<ol>
-<li><a href="#requirements">Requirements</a></li>
-<li><a href="#installing">Installing</a><ol>
-<li><a href="#libraries">Libraries</a></li>
-</ol>
-</li>
-<li><a href="#server-config">Server Config</a><ol>
-<li><a href="#docker-compose">Docker Compose</a></li>
-<li><a href="#built-in-php-web-server-config">Built-in PHP Web Server Config</a></li>
-<li><a href="#apache-config">Apache Config</a></li>
-<li><a href="#nginx-config">nginx Config</a></li>
-<li><a href="#caddy-config">Caddy Config</a></li>
-</ol>
-</li>
-<li><a href="#versioning">Versioning</a></li>
-</ol>
-
-</div>
-
-</nav>
-
 <h2 id="requirements">Requirements</h2>
 
 * PHP 8.4.0 or greater

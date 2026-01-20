@@ -1,59 +1,5 @@
 <h1 id="doc-title">Console</h1>
 
-<nav class="toc-nav">
-
-<div class="toc-nav-contents">
-
-<h2 id="table-of-contents">Table of Contents</h2>
-
-<ol>
-<li><a href="#basics">Basics</a><ol>
-<li><a href="#why-is-this-library-included">Why Is This Library Included?</a></li>
-</ol>
-</li>
-<li><a href="#running-commands">Running Commands</a><ol>
-<li><a href="#getting-help">Getting Help</a></li>
-</ol>
-</li>
-<li><a href="#creating-commands">Creating Commands</a><ol>
-<li><a href="#input">Input</a></li>
-<li><a href="#arguments">Arguments</a></li>
-<li><a href="#options">Options</a></li>
-<li><a href="#output">Output</a></li>
-<li><a href="#manually-registering-commands">Manually Registering Commands</a></li>
-<li><a href="#calling-from-code">Calling From Code</a></li>
-</ol>
-</li>
-<li><a href="#command-attributes">Command Attributes</a><ol>
-<li><a href="#command-attribute-example">Example</a></li>
-<li><a href="#scanning-for-attributes">Scanning For Attributes</a></li>
-</ol>
-</li>
-<li><a href="#prompts">Prompts</a><ol>
-<li><a href="#confirmation">Confirmation</a></li>
-<li><a href="#multiple-choice">Multiple Choice</a></li>
-<li><a href="#hiding-input">Hiding Input</a></li>
-</ol>
-</li>
-<li><a href="#formatters">Formatters</a><ol>
-<li><a href="#padding">Padding</a></li>
-<li><a href="#tables">Tables</a></li>
-<li><a href="#progress-bars">Progress Bars</a></li>
-</ol>
-</li>
-<li><a href="#style-elements">Style Elements</a><ol>
-<li><a href="#built-in-elements">Built-In Elements</a></li>
-<li><a href="#custom-elements">Custom Elements</a></li>
-<li><a href="#overriding-built-in-elements">Overriding Built-In Elements</a></li>
-</ol>
-</li>
-<li><a href="#built-in-commands">Built-In Commands</a></li>
-</ol>
-
-</div>
-
-</nav>
-  
 <h2 id="basics">Basics</h2>
 
 Console applications are great for administrative tasks and code generation.  With Aphiria, you can easily create your own console commands, display question prompts, and use HTML-like syntax for output styling.
@@ -306,7 +252,7 @@ If you want to call the other command but not write its output, use the `SilentO
 
 It's convenient to define your command alongside your command handler so you don't have to jump back and forth remembering what arguments or options your command takes.  Aphiria offers the option to do so via attributes.
 
-<h3 id="command-attribute-example">Command Attribute Example</h3>
+<h3 id="command-attribute-example">Example</h3>
 
 Let's look at an example that duplicates the [greeting example from above](#manually-registering-commands):
 

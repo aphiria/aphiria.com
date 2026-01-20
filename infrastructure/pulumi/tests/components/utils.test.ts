@@ -1,4 +1,4 @@
-import { describe, it, expect } from "@jest/globals";
+import { describe, it, expect } from "vitest";
 import * as pulumi from "@pulumi/pulumi";
 import { checksum } from "../../src/components/utils";
 

@@ -1,23 +1,5 @@
 <h1 id="doc-title">Authorization</h1>
 
-<nav class="toc-nav">
-
-<div class="toc-nav-contents">
-
-<h2 id="table-of-contents">Table of Contents</h2>
-
-<ol>
-<li><a href="#introduction">Introduction</a></li>
-<li><a href="#policies">Policies</a></li>
-<li><a href="#resource-authorization">Resource Authorization</a></li>
-<li><a href="#authorization-results">Authorization Results</a></li>
-<li><a href="#customizing-failed-authorization-responses">Customizing Failed Authorization Responses</a></li>
-</ol>
-
-</div>
-
-</nav>
-
 <h2 id="introduction">Introduction</h2>
 
 Authorization is the act of checking whether or not an action is permitted, and typically goes hand-in-hand with [authentication](authentication.md).  Aphiria provides policy-based authorization.  A policy is a definition of requirements that must be passed for authorization to succeed.  One such example of a requirement is whether or not a user has a particular role.

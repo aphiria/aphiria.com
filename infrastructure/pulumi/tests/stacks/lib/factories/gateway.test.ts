@@ -1,11 +1,12 @@
+import { describe, it, expect, beforeEach, vi, type Mock } from "vitest";
 import { createGatewayResources } from "../../../../src/stacks/lib/factories/gateway";
 import { GatewayConfig } from "../../../../src/stacks/lib/config/types";
 import * as k8s from "@pulumi/kubernetes";
 
 // Mock the component functions
-jest.mock("../../../../src/components", () => ({
-    createGateway: jest.fn(),
-    createDNSRecords: jest.fn(),
+vi.mock("../../../../src/components", () => ({
+    createGateway: vi.fn(),
+    createDNSRecords: vi.fn(),
 }));
 
 import { createGateway, createDNSRecords } from "../../../../src/components";
@@ -16,7 +17,7 @@ describe("createGatewayResources", () => {
     });
 
     beforeEach(() => {
-        jest.clearAllMocks();
+        vi.clearAllMocks();
     });
 
     describe("gateway creation", () => {
@@ -27,7 +28,7 @@ describe("createGatewayResources", () => {
                 domains: ["local.aphiria.com"],
             };
 
-            (createGateway as jest.Mock).mockReturnValue({
+            (createGateway as Mock).mockReturnValue({
                 gateway: {},
                 httproutes: [],
             });
@@ -53,7 +54,7 @@ describe("createGatewayResources", () => {
                 domains: ["local.aphiria.com"],
             };
 
-            (createGateway as jest.Mock).mockReturnValue({
+            (createGateway as Mock).mockReturnValue({
                 gateway: {},
                 httproutes: [],
             });
@@ -78,7 +79,7 @@ describe("createGatewayResources", () => {
                 domains: ["aphiria.com"],
             };
 
-            (createGateway as jest.Mock).mockReturnValue({
+            (createGateway as Mock).mockReturnValue({
                 gateway: {},
                 httproutes: [],
             });
@@ -103,7 +104,7 @@ describe("createGatewayResources", () => {
                 domains: ["local.aphiria.com", "*.local.aphiria.com"],
             };
 
-            (createGateway as jest.Mock).mockReturnValue({
+            (createGateway as Mock).mockReturnValue({
                 gateway: {},
                 httproutes: [],
             });
@@ -129,7 +130,7 @@ describe("createGatewayResources", () => {
                 digitaloceanDnsToken: "test-token",
             };
 
-            (createGateway as jest.Mock).mockReturnValue({
+            (createGateway as Mock).mockReturnValue({
                 gateway: {},
                 httproutes: [],
             });
@@ -156,7 +157,7 @@ describe("createGatewayResources", () => {
 
             const mockCertManagerChart = {} as k8s.helm.v4.Chart;
 
-            (createGateway as jest.Mock).mockReturnValue({
+            (createGateway as Mock).mockReturnValue({
                 gateway: {},
                 httproutes: [],
             });
@@ -189,7 +190,7 @@ describe("createGatewayResources", () => {
                 domains: ["local.aphiria.com"],
             };
 
-            (createGateway as jest.Mock).mockReturnValue({
+            (createGateway as Mock).mockReturnValue({
                 gateway: {},
                 httproutes: [],
             });
@@ -218,7 +219,7 @@ describe("createGatewayResources", () => {
                 },
             };
 
-            (createGateway as jest.Mock).mockReturnValue({
+            (createGateway as Mock).mockReturnValue({
                 gateway: {},
                 httproutes: [],
             });

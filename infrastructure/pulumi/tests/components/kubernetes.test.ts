@@ -1,4 +1,4 @@
-import { describe, it, expect } from "@jest/globals";
+import { describe, it, expect } from "vitest";
 import { promiseOf } from "../test-utils";
 import { createKubernetesCluster } from "../../src/components/kubernetes";
 import type { KubernetesClusterArgs } from "../../src/components/types";

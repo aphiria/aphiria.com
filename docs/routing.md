@@ -1,59 +1,5 @@
 <h1 id="doc-title">Routing</h1>
 
-<nav class="toc-nav">
-
-<div class="toc-nav-contents">
-
-<h2 id="table-of-contents">Table of Contents</h2>
-
-<ol>
-<li><a href="#basics">Basics</a><ol>
-<li><a href="#route-variables">Route Variables</a></li>
-<li><a href="#optional-route-parts">Optional Route Parts</a></li>
-<li><a href="#route-groups">Route Groups</a></li>
-<li><a href="#middleware">Middleware</a></li>
-<li><a href="#route-constraints">Route Constraints</a></li>
-</ol>
-</li>
-<li><a href="#route-attributes">Route Attributes</a><ol>
-<li><a href="#scanning-for-attributes">Scanning For Attributes</a></li>
-<li><a href="#route-attributes-example">Example</a></li>
-<li><a href="#route-attributes-groups">Route Groups</a></li>
-<li><a href="#route-attributes-middleware">Middleware</a></li>
-<li><a href="#route-attributes-constraints">Route Constraints</a></li>
-</ol>
-</li>
-<li><a href="#route-builders">Route Builders</a><ol>
-<li><a href="#route-builders-groups">Route Groups</a></li>
-<li><a href="#route-builders-middleware">Middleware</a></li>
-<li><a href="#route-builders-constraints">Route Constraints</a></li>
-</ol>
-</li>
-<li><a href="#versioned-api-example">Versioned API Example</a><ol>
-<li class="context-library"><a href="#getting-php-headers">Getting Headers in PHP</a></li>
-</ol>
-</li>
-<li><a href="#route-variable-constraints">Route Variable Constraints</a><ol>
-<li><a href="#built-in-constraints">Built-In Constraints</a></li>
-<li><a href="#making-your-own-custom-constraints">Making Your Own Custom Constraints</a></li>
-</ol>
-</li>
-<li><a href="#creating-route-uris">Creating Route URIs</a><ol>
-<li><a href="#creating-route-requests">Creating Route Requests</a></li>
-</ol></li>
-<li><a href="#caching">Caching</a><ol>
-<li class="context-library"><a href="#route-caching">Route Caching</a></li>
-<li class="context-library"><a href="#trie-caching">Trie Caching</a></li>
-</ol>
-</li>
-<li class="context-library"><a href="#using-aphirias-net-library">Using Aphiria&#39;s Net Library</a></li>
-<li><a href="#matching-algorithm">Matching Algorithm</a></li>
-</ol>
-
-</div>
-
-</nav>
-
 <h2 id="basics">Basics</h2>
 
 Routing is the process of mapping HTTP requests to actions.  You can check out what makes Aphiria's routing library different [here](framework-comparisons.md#aphiria-routing) as well as the [server configuration](installation.md#server-config) necessary to use it.

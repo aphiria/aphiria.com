@@ -1,55 +1,5 @@
 <h1 id="doc-title">Framework Comparison</h1>
 
-<nav class="toc-nav">
-
-<div class="toc-nav-contents">
-
-<h2 id="table-of-contents">Table of Contents</h2>
-
-<ol>
-<li><a href="#preface">Preface</a></li>
-<li><a href="#general">General</a><ol>
-<li><a href="#aphiria-general">Aphiria</a></li>
-<li><a href="#symfony-general">Symfony</a></li>
-<li><a href="#laravel-general">Laravel</a></li>
-</ol>
-</li>
-<li><a href="#routing">Routing</a><ol>
-<li><a href="#aphiria-routing">Aphiria</a></li>
-<li><a href="#symfony-routing">Symfony</a></li>
-<li><a href="#laravel-routing">Laravel</a></li>
-</ol>
-</li>
-<li><a href="#controllers">Controllers</a><ol>
-<li><a href="#aphiria-controllers">Aphiria</a></li>
-<li><a href="#symfony-controllers">Symfony</a></li>
-<li><a href="#laravel-controllers">Laravel</a></li>
-</ol>
-</li>
-<li><a href="#http-library">HTTP Library</a><ol>
-<li><a href="#aphiria-http-library">Aphiria</a></li>
-<li><a href="#symfony-http-library">Symfony</a></li>
-<li><a href="#laravel-http-library">Laravel</a></li>
-</ol>
-</li>
-<li><a href="#di-container">Dependency Injection Container</a><ol>
-<li><a href="#aphiria-di-container">Aphiria</a></li>
-<li><a href="#symfony-di-container">Symfony</a></li>
-<li><a href="#laravel-di-container">Laravel</a></li>
-</ol>
-</li>
-<li><a href="#console">Console</a><ol>
-<li><a href="#aphiria-console">Aphiria</a></li>
-<li><a href="#symfony-console">Symfony</a></li>
-<li><a href="#laravel-console">Laravel</a></li>
-</ol>
-</li>
-</ol>
-
-</div>
-
-</nav>
-
 <h2 id="preface">Preface</h2>
 
 Before we get into comparing Aphiria against other frameworks, remember that each framework is just a tool.  Some tools are better suited to some problems than others.  This sort of comparison is inherently subjective, although we will do our best to keep things objective.  If you feel we've misconstrued or missed anything, please feel free to <a href="https://github.com/aphiria/aphiria.com/blob/master/docs/framework-comparisons.md" target="_blank">submit an issue or pull request to the documentation</a> to improve it or update its examples as other frameworks update their features.

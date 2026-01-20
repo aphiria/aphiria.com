@@ -29,6 +29,7 @@ jobs:
           - 5432:5432
     # Need to make sure we're using the right environment variables when compiling the views
     env:
+      APP_ENV: testing
       APP_WEB_URL: https://www.aphiria.com
       APP_API_URL: https://api.aphiria.com
       DB_HOST: localhost
@@ -55,10 +56,6 @@ jobs:
           composer install --ignore-platform-reqs
           composer dump-autoload -o
           chmod -R 755 tmp
-          cd ../web
-          yarn install
-          yarn global add gulp
-          gulp build
       - name: Index documentation
         working-directory: apps/api
         run: |
@@ -74,7 +71,7 @@ jobs:
         if: matrix.php == '8.4'
         working-directory: apps/api
         run: composer psalm -- --shepherd
-      - name: Install root TypeScript dependencies
+      - name: Install TypeScript dependencies
         if: matrix.php == '8.4'
         run: npm install
       - name: Lint TypeScript code
@@ -83,16 +80,12 @@ jobs:
       - name: Format check TypeScript code
         if: matrix.php == '8.4'
         run: npm run format:check
-      - name: Build infrastructure TypeScript code
+      - name: Build and test TypeScript code
         if: matrix.php == '8.4'
-        working-directory: infrastructure/pulumi
         run: |
-          npm install
+          npm run build:docs
           npm run build
-      - name: Test infrastructure TypeScript code
-        if: matrix.php == '8.4'
-        working-directory: infrastructure/pulumi
-        run: npm run test:ci
+          npm test
       - name: Upload coverage results to Coveralls
         working-directory: apps/api
         env:

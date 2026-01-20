@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from "@jest/globals";
+import { describe, it, expect, beforeEach } from "vitest";
 import * as pulumi from "@pulumi/pulumi";
 import { deepMerge, loadConfig, validateConfig } from "../../../../src/stacks/lib/config/loader";
 import { Config } from "../../../../src/stacks/lib/config/loader";

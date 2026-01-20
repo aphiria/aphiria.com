@@ -1,21 +1,5 @@
 <h1 id="doc-title">Introduction</h1>
 
-<nav class="toc-nav">
-
-<div class="toc-nav-contents">
-
-<h2 id="table-of-contents">Table of Contents</h2>
-
-<ol>
-<li><a href="#what-is-it">What Is It?</a></li>
-<li><a href="#getting-started">Getting Started</a></li>
-<li><a href="#another-php-framework">Another PHP Framework?</a></li>
-</ol>
-
-</div>
-
-</nav>
-
 <h2 id="what-is-it">What Is It?</h2>
 
 Aphiria is a suite of decoupled libraries that help you write expressive REST APIs without bleeding into your code base.  Let's look at an example controller.

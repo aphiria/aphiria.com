@@ -1,35 +1,5 @@
 <h1 id="doc-title">Authentication</h1>
 
-<nav class="toc-nav">
-
-<div class="toc-nav-contents">
-
-<h2 id="table-of-contents">Table of Contents</h2>
-
-<ol>
-<li><a href="#introduction">Introduction</a><ol>
-<li><a href="#principals">Principals</a> </li>
-<li><a href="#claims">Claims</a></li>
-<li><a href="#builder">Builder</a></li>
-</ol>
-</li>
-<li><a href="#authentication-schemes">Authentication Schemes</a><ol>
-<li><a href="#default-scheme">Default Scheme</a></li>
-<li><a href="#scheme-options">Options</a></li>
-<li><a href="#basic-authentication">Basic Authentication</a></li>
-<li><a href="#cookie-authentication">Cookie Authentication</a></li>
-</ol>
-</li>
-<li><a href="#authentication-results">Authentication Results</a></li>
-<li><a href="#customizing-authentication-failure-responses">Customizing Authentication Failure Responses</a></li>
-<li class="context-framework"><a href="#user-accessors">User Accessors</a></li>
-<li class="context-framework"><a href="#mocking-authentication">Mocking Authentication</a></li>
-</ol>
-
-</div>
-
-</nav>
-
 <h2 id="introduction">Introduction</h2>
 
 Authentication is the process of verifying an identity.  Aphiria's authentication library allows for full customization to suit your application's needs.  At a high level, authentication uses named [schemes](#authentication-schemes) to authenticate [principals](#principals).  Each scheme gets a handler that actually performs the authentication logic, along with options for things like cookie names and lifetimes, login page paths to redirect to on authentication failure, etc.

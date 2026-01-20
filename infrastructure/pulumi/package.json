@@ -6,9 +6,8 @@
     "scripts": {
         "build": "tsc",
         "watch": "tsc --watch",
-        "test": "PULUMI_SKIP_UPDATE_CHECK=1 PULUMI_AUTOMATION_API_SKIP_VERSION_CHECK=1 jest --coverage --runInBand",
-        "test:watch": "PULUMI_SKIP_UPDATE_CHECK=1 PULUMI_AUTOMATION_API_SKIP_VERSION_CHECK=1 jest --watch",
-        "test:ci": "PULUMI_SKIP_UPDATE_CHECK=1 PULUMI_AUTOMATION_API_SKIP_VERSION_CHECK=1 jest --ci --coverage --maxWorkers=1"
+        "test": "PULUMI_SKIP_UPDATE_CHECK=1 PULUMI_AUTOMATION_API_SKIP_VERSION_CHECK=1 vitest run --coverage",
+        "test:watch": "PULUMI_SKIP_UPDATE_CHECK=1 PULUMI_AUTOMATION_API_SKIP_VERSION_CHECK=1 vitest"
     },
     "keywords": [],
     "author": "",
@@ -20,11 +19,10 @@
         "@pulumi/pulumi": "^3.216.0"
     },
     "devDependencies": {
-        "@jest/globals": "^30.2.0",
         "@pulumi/pulumi": "^3.216.0",
-        "@types/jest": "^30.0.0",
         "@types/node": "^25.0.9",
-        "jest": "^30.2.0",
-        "ts-jest": "^29.0.0"
+        "@vitest/coverage-v8": "^4.0.17",
+        "ts-node": "^10.9.2",
+        "vitest": "^4.0.17"
     }
 }

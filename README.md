@@ -19,6 +19,7 @@ This monorepo contains the code for both https://www.aphiria.com and https://api
 - _infrastructure_: The Docker and Pulumi infrastructure-as-code
 - _specs_: The GitHub Spec Kit specs
 - _tests_: End-to-end tests of the entire website using Playwright
+- _tools_: Tools for building and indexing the documentation
 
 ## Preview Environments
 
@@ -68,7 +69,31 @@ Add the following to your host file:
 
 ## Local Development
 
-### Running the Site Locally
+### Quick Start: Running the Site Locally (Standalone)
+
+For rapid iteration on frontend changes without deploying to Kubernetes:
+
+#### 1. Build All TypeScript Projects
+
+```bash
+npm run build
+npm run build:docs
+```
+
+This builds all TypeScript code (documentation compiler, infrastructure, and web app) in the correct dependency order.
+
+#### 2. Run the Web App
+
+```bash
+cd apps/web
+npm run dev
+```
+
+Visit http://localhost:3000
+
+> **Note:** Doc search won't work in standalone mode since it requires the API backend. All other features (navigation, TOC, syntax highlighting) work normally.
+
+### Running the Full Site Locally (with API)
 
 #### 1. Start Minikube
 
@@ -99,9 +124,8 @@ docker build -t aphiria.com-web:latest -f ./infrastructure/docker/runtime/web/Do
 #### 3. Deploy with Pulumi
 
 ```bash
-cd infrastructure/pulumi
-npm install
 npm run build
+cd infrastructure/pulumi
 pulumi login --local
 export PULUMI_CONFIG_PASSPHRASE="password"
 pulumi up --stack local
@@ -141,6 +165,21 @@ psql -h localhost -U aphiria -d postgres
 
 ### Testing
 
+#### All TypeScript Tests
+
+Run all tests (web, infrastructure, build tools) from the root:
+
+```bash
+npm test
+```
+
+Or run individual workspace tests:
+
+```bash
+cd infrastructure/pulumi
+npm test
+```
+
 #### PHP Tests
 
 ```bash
@@ -148,23 +187,15 @@ cd apps/api
 composer phpunit
 ```
 
-#### Pulumi Tests
-
-```bash
-cd infrastructure/pulumi
-npm test
-```
-
 #### E2E Tests
 
-**Prerequisites**: Ensure root dependencies are installed (`npm install` from repo root).
+**Prerequisites**: Ensure all dependencies are installed (`npm install` from repo root installs all workspaces including e2e).
 
 **Against local minikube** (accepts self-signed certificates):
 
 ```bash
 cd tests/e2e
 cp .env.dist .env
-npm install
 npx playwright install --with-deps chromium webkit
 npm run test:e2e:local
 ```

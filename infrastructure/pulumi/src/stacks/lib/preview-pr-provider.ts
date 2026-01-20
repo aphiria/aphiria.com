@@ -19,7 +19,7 @@ import * as pulumi from "@pulumi/pulumi";
  *
  * @returns Kubernetes provider configured for preview-base cluster
  */
-/* istanbul ignore next */
+/* v8 ignore start */
 export function createPreviewPRProvider(): k8s.Provider {
     const config = new pulumi.Config();
     const baseStackReference = new pulumi.StackReference(config.require("baseStackReference"));
@@ -50,3 +50,4 @@ export function createPreviewPRProvider(): k8s.Provider {
         }
     );
 }
+/* v8 ignore stop */

@@ -241,10 +241,11 @@ ${scrapeConfigs
                 });
             } else {
                 // Should never reach here - all non-primitive fields in PrometheusScrapeConfig are arrays
-                /* istanbul ignore next */
+                /* v8 ignore start */
                 throw new Error(
                     `Unexpected value type for key "${key}" in scrape config: ${typeof value}`
                 );
+                /* v8 ignore stop */
             }
         });
 

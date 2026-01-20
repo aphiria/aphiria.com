@@ -54,6 +54,7 @@ export interface WebDeploymentResult {
     deployment: pulumi.Output<k8s.types.output.meta.v1.ObjectMeta>;
     service: pulumi.Output<k8s.types.output.meta.v1.ObjectMeta>;
     configMap: pulumi.Output<k8s.types.output.meta.v1.ObjectMeta>;
+    nginxConfigMap: pulumi.Output<k8s.types.output.meta.v1.ObjectMeta>;
     podDisruptionBudget?: pulumi.Output<k8s.types.output.meta.v1.ObjectMeta>;
 }
 

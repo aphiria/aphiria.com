@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll } from "@jest/globals";
+import { describe, it, expect, beforeAll } from "vitest";
 import * as k8s from "@pulumi/kubernetes";
 import { createGrafana, type GrafanaArgs } from "../../src/components/grafana";
 import { checksum } from "../../src/components/utils";

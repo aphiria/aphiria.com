@@ -1,35 +1,5 @@
 <h1 id="doc-title">Sessions</h1>
 
-<nav class="toc-nav">
-
-<div class="toc-nav-contents">
-
-<h2 id="table-of-contents">Table of Contents</h2>
-
-<ol>
-<li><a href="#introduction">Introduction</a></li>
-<li><a href="#basic-usage">Basic Usage</a><ol>
-<li><a href="#setting-data">Setting Data</a></li>
-<li><a href="#getting-data">Getting Data</a></li>
-<li><a href="#getting-all-data">Getting All Data</a></li>
-<li><a href="#checking-if-session-has-variable">Checking if a Session Has a Variable</a></li>
-<li><a href="#deleting-data">Deleting Data</a></li>
-<li><a href="#flushing-all-data">Flushing All Data</a></li>
-<li><a href="#flashing-data">Flashing Data</a></li>
-<li><a href="#regenerating-the-id">Regenerating the ID</a></li>
-</ol>
-</li>
-<li><a href="#session-handlers">Session Handlers</a></li>
-<li><a href="#using-sessions-in-controllers">Using Sessions In Controllers</a></li>
-<li><a href="#middleware">Middleware</a></li>
-<li><a href="#id-generators">ID Generators</a></li>
-<li><a href="#encrypting-session-data">Encrypting Session Data</a></li>
-</ol>
-
-</div>
-
-</nav>
-
 <h2 id="introduction">Introduction</h2>
 
 HTTP is a stateless protocol.  What that means is that each request has no memory of previous requests.  If you've ever used the web, though, you've probably noticed that websites are able to remember information across requests.  For example, a "shopping cart" on an e-commerce website remembers what items you've added to your cart.  How'd they do that?  Sessions.

@@ -53,9 +53,74 @@ export interface WebDeploymentArgs {
 export function createWebDeployment(args: WebDeploymentArgs): WebDeploymentResult {
     const labels = buildLabels("web", "frontend", args.labels);
 
+    // Create nginx configuration ConfigMap
+    const nginxConfig = new k8s.core.v1.ConfigMap(
+        "web-nginx-config",
+        {
+            metadata: {
+                name: "web-nginx-config",
+                namespace: args.namespace,
+                labels,
+            },
+            data: {
+                "default.conf": `# Use X-Forwarded-Proto header if set (from Gateway/LB), otherwise default to https
+# Gateway always terminates TLS, so we default to https when header is not set
+map $http_x_forwarded_proto $real_scheme {
+    default $http_x_forwarded_proto;
+    '' https;
+}
+
+server {
+    listen 80;
+    server_name localhost;
+    root /usr/share/nginx/html;
+    index index.html;
+
+    # Serve custom 404 page (will be resolved to /404.html by try_files)
+    error_page 404 /404;
+
+    # Exact match for root - highest priority, bypasses redirect rule
+    # Ensures health probes get 200 OK instead of 301 redirect
+    location = / {
+        try_files /index.html =404;
+    }
+
+    # Redirect /docs to /docs/1.x/introduction (302 temporary)
+    # Use $real_scheme to preserve HTTPS when behind Gateway/LB
+    location = /docs {
+        return 302 $real_scheme://$host/docs/1.x/introduction;
+    }
+
+    # Redirect .html URLs to extension-less equivalents (301 permanent)
+    # Use $real_scheme to preserve HTTPS when behind Gateway/LB
+    location ~ ^(.+)\\.html$ {
+        return 301 $real_scheme://$host$1;
+    }
+
+    # Try to serve file directly, fallback to directory index, then 404
+    location / {
+        try_files $uri $uri.html $uri/ =404;
+    }
+
+    # Security headers
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header X-XSS-Protection "1; mode=block" always;
+
+    # Cache static assets
+    location ~* \\.(css|js|jpg|jpeg|png|gif|ico|svg|woff|woff2|ttf|eot)$ {
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+    }
+}`,
+            },
+        },
+        { provider: args.provider }
+    );
+
     // Create js-config ConfigMap
     const jsConfigData = Object.entries(args.jsConfigData)
-        .map(([key, value]) => `      ${key}: '${value}'`)
+        .map(([key, value]) => `    ${key}: '${value}'`)
         .join(",\n");
 
     const configMap = new k8s.core.v1.ConfigMap(
@@ -67,7 +132,7 @@ export function createWebDeployment(args: WebDeploymentArgs): WebDeploymentResul
                 labels,
             },
             data: {
-                "config.js": `export default {\n${jsConfigData}\n    }`,
+                "config.js": `window.__RUNTIME_CONFIG__ = {\n${jsConfigData}\n};`,
             },
         },
         { provider: args.provider }
@@ -98,6 +163,7 @@ export function createWebDeployment(args: WebDeploymentArgs): WebDeploymentResul
     const configChecksum = checksum({
         ...args.jsConfigData,
         ...envConfigData,
+        nginxConfig: nginxConfig.data["default.conf"],
     });
 
     // Create web deployment
@@ -143,6 +209,10 @@ export function createWebDeployment(args: WebDeploymentArgs): WebDeploymentResul
                                 imagePullPolicy: args.imagePullPolicy,
                                 volumeMounts: [
                                     {
+                                        name: "nginx-config",
+                                        mountPath: "/etc/nginx/conf.d",
+                                    },
+                                    {
                                         name: "js-config",
                                         mountPath: "/usr/share/nginx/html/js/config",
                                     },
@@ -177,6 +247,12 @@ export function createWebDeployment(args: WebDeploymentArgs): WebDeploymentResul
                             },
                         ],
                         volumes: [
+                            {
+                                name: "nginx-config",
+                                configMap: {
+                                    name: "web-nginx-config",
+                                },
+                            },
                             {
                                 name: "js-config",
                                 configMap: {
@@ -243,6 +319,7 @@ export function createWebDeployment(args: WebDeploymentArgs): WebDeploymentResul
         deployment: deployment.metadata,
         service: service.metadata,
         configMap: configMap.metadata,
+        nginxConfigMap: nginxConfig.metadata,
         podDisruptionBudget: pdb?.metadata,
     };
 }

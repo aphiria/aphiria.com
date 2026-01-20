@@ -1,0 +1,33 @@
+{
+    "name": "build-docs",
+    "version": "1.0.0",
+    "type": "module",
+    "description": "",
+    "main": "index.js",
+    "directories": {
+        "test": "tests"
+    },
+    "scripts": {
+        "build": "tsc",
+        "build:docs": "npm run build && node dist/index.js --input ../../docs --output ../../dist/docs",
+        "dev": "tsc && node dist/index.js --verbose",
+        "test": "vitest run --coverage",
+        "test:watch": "vitest"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "dependencies": {
+        "@types/jsdom": "^21.1.7",
+        "@types/node": "^25.0.9",
+        "jsdom": "^22.1.0",
+        "marked": "^4.3.0",
+        "marked-gfm-heading-id": "^3.0.4",
+        "typescript": "^5.9.3"
+    },
+    "devDependencies": {
+        "@types/marked": "^4.3.2",
+        "@vitest/coverage-v8": "^4.0.17",
+        "vitest": "^4.0.17"
+    }
+}

@@ -1,16 +1,16 @@
-import { describe, it, expect, jest, beforeEach } from "@jest/globals";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 import * as pulumi from "@pulumi/pulumi";
 import { promiseOf } from "../test-utils";
 
 // Mock the createStack function before importing the stack file
-const mockCreateStack = jest.fn();
-jest.mock("../../src/stacks/lib/stack-factory", () => ({
+const mockCreateStack = vi.fn();
+vi.mock("../../src/stacks/lib/stack-factory", () => ({
     createStack: mockCreateStack,
 }));
 
 describe("preview-base stack", () => {
     beforeEach(() => {
-        jest.clearAllMocks();
+        vi.clearAllMocks();
         pulumi.runtime.setMocks({
             newResource: function (args: pulumi.runtime.MockResourceArgs): {
                 id: string;
@@ -113,7 +113,7 @@ describe("preview-base stack", () => {
 
     it("should not export prometheus endpoint when monitoring is not present", async () => {
         // Clear module cache to ensure fresh import
-        jest.resetModules();
+        vi.resetModules();
 
         mockCreateStack.mockReturnValue({
             config: {

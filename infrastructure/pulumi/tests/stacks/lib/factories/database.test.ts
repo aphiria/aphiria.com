@@ -1,14 +1,15 @@
+import { describe, it, expect, beforeEach, vi, type Mock } from "vitest";
 import { createDatabaseResources } from "../../../../src/stacks/lib/factories/database";
 import { PostgreSQLConfig } from "../../../../src/stacks/lib/config/types";
 import * as k8s from "@pulumi/kubernetes";
 
 // Mock the component functions
-jest.mock("../../../../src/components", () => ({
-    createDatabaseCreationJob: jest.fn(),
+vi.mock("../../../../src/components", () => ({
+    createDatabaseCreationJob: vi.fn(),
 }));
 
-jest.mock("../../../../src/components/database", () => ({
-    createPostgreSQL: jest.fn(),
+vi.mock("../../../../src/components/database", () => ({
+    createPostgreSQL: vi.fn(),
 }));
 
 import { createDatabaseCreationJob } from "../../../../src/components";
@@ -20,7 +21,7 @@ describe("createDatabaseResources", () => {
     });
 
     beforeEach(() => {
-        jest.clearAllMocks();
+        vi.clearAllMocks();
     });
 
     describe("shared PostgreSQL instance pattern", () => {
@@ -39,7 +40,7 @@ describe("createDatabaseResources", () => {
         };
 
         it("should create PostgreSQL instance with username and password from config", () => {
-            (createPostgreSQL as jest.Mock).mockReturnValue({
+            (createPostgreSQL as Mock).mockReturnValue({
                 deployment: {},
                 service: {},
                 pvc: {},
@@ -61,7 +62,7 @@ describe("createDatabaseResources", () => {
         });
 
         it("should create PostgreSQL instance with 1 replica", () => {
-            (createPostgreSQL as jest.Mock).mockReturnValue({
+            (createPostgreSQL as Mock).mockReturnValue({
                 deployment: {},
                 service: {},
             });
@@ -81,7 +82,7 @@ describe("createDatabaseResources", () => {
         });
 
         it("should configure PostgreSQL with resource limits from config", () => {
-            (createPostgreSQL as jest.Mock).mockReturnValue({
+            (createPostgreSQL as Mock).mockReturnValue({
                 deployment: {},
                 service: {},
             });
@@ -104,7 +105,7 @@ describe("createDatabaseResources", () => {
         });
 
         it("should configure PostgreSQL with health check (pg_isready)", () => {
-            (createPostgreSQL as jest.Mock).mockReturnValue({
+            (createPostgreSQL as Mock).mockReturnValue({
                 deployment: {},
                 service: {},
             });
@@ -129,7 +130,7 @@ describe("createDatabaseResources", () => {
         });
 
         it("should configure PostgreSQL with connection pooling (max 100 connections)", () => {
-            (createPostgreSQL as jest.Mock).mockReturnValue({
+            (createPostgreSQL as Mock).mockReturnValue({
                 deployment: {},
                 service: {},
             });
@@ -151,7 +152,7 @@ describe("createDatabaseResources", () => {
         });
 
         it("should enable persistent storage with size from config when persistentStorage is true", () => {
-            (createPostgreSQL as jest.Mock).mockReturnValue({
+            (createPostgreSQL as Mock).mockReturnValue({
                 deployment: {},
                 service: {},
             });
@@ -175,7 +176,7 @@ describe("createDatabaseResources", () => {
         });
 
         it("should disable persistent storage when persistentStorage is false", () => {
-            (createPostgreSQL as jest.Mock).mockReturnValue({
+            (createPostgreSQL as Mock).mockReturnValue({
                 deployment: {},
                 service: {},
             });
@@ -202,7 +203,7 @@ describe("createDatabaseResources", () => {
         });
 
         it("should use hostPath storage when useHostPath is true", () => {
-            (createPostgreSQL as jest.Mock).mockReturnValue({
+            (createPostgreSQL as Mock).mockReturnValue({
                 deployment: {},
                 service: {},
                 pv: {},
@@ -232,7 +233,7 @@ describe("createDatabaseResources", () => {
         });
 
         it("should use PostgreSQL version from config as imageTag", () => {
-            (createPostgreSQL as jest.Mock).mockReturnValue({
+            (createPostgreSQL as Mock).mockReturnValue({
                 deployment: {},
                 service: {},
             });
@@ -252,7 +253,7 @@ describe("createDatabaseResources", () => {
         });
 
         it("should create PostgreSQL with default database name 'postgres'", () => {
-            (createPostgreSQL as jest.Mock).mockReturnValue({
+            (createPostgreSQL as Mock).mockReturnValue({
                 deployment: {},
                 service: {},
             });
@@ -272,7 +273,7 @@ describe("createDatabaseResources", () => {
         });
 
         it("should not create database creation job when createDatabase is not set", () => {
-            (createPostgreSQL as jest.Mock).mockReturnValue({
+            (createPostgreSQL as Mock).mockReturnValue({
                 deployment: {},
                 service: {},
             });
@@ -306,7 +307,7 @@ describe("createDatabaseResources", () => {
         };
 
         it("should create database on shared instance using admin credentials when createDatabase is true", () => {
-            (createDatabaseCreationJob as jest.Mock).mockReturnValue({});
+            (createDatabaseCreationJob as Mock).mockReturnValue({});
 
             createDatabaseResources({
                 env: "preview",
@@ -326,7 +327,7 @@ describe("createDatabaseResources", () => {
         });
 
         it("should not create PostgreSQL instance when createDatabase is true", () => {
-            (createDatabaseCreationJob as jest.Mock).mockReturnValue({});
+            (createDatabaseCreationJob as Mock).mockReturnValue({});
 
             createDatabaseResources({
                 env: "preview",
