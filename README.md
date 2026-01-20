@@ -3,10 +3,10 @@
 <p align="center">
 <a href="https://github.com/aphiria/aphiria.com/actions"><img src="https://github.com/aphiria/aphiria.com/workflows/CI/badge.svg"></a>
 <a href="https://github.com/aphiria/aphiria.com/actions"><img src="https://github.com/aphiria/aphiria.com/workflows/CD/badge.svg"></a>
-<a href="https://codecov.io/gh/aphiria/aphiria.com/tree/master/apps/api"><img src="https://img.shields.io/codecov/c/github/aphiria/aphiria.com/master?flag=api&label=API%20Coverage" alt="API Coverage"></a>
-<a href="https://codecov.io/gh/aphiria/aphiria.com/tree/master/apps/web"><img src="https://img.shields.io/codecov/c/github/aphiria/aphiria.com/master?flag=web&label=Web%20Coverage" alt="Web Coverage"></a>
-<a href="https://codecov.io/gh/aphiria/aphiria.com/tree/master/infrastructure/pulumi"><img src="https://img.shields.io/codecov/c/github/aphiria/aphiria.com/master?flag=pulumi&label=Pulumi%20Coverage" alt="Pulumi Coverage"></a>
-<a href="https://codecov.io/gh/aphiria/aphiria.com/tree/master/tools/build-docs"><img src="https://img.shields.io/codecov/c/github/aphiria/aphiria.com/master?flag=tools&label=Tools%20Coverage" alt="Tools Coverage"></a>
+<a href="https://codecov.io/gh/aphiria/aphiria.com/tree/master/apps/api"><img src="https://img.shields.io/codecov/c/github/aphiria/aphiria.com/master?flag=api&label=API&logo=codecov" alt="API Coverage"></a>
+<a href="https://codecov.io/gh/aphiria/aphiria.com/tree/master/apps/web"><img src="https://img.shields.io/codecov/c/github/aphiria/aphiria.com/master?flag=web&label=Web&logo=codecov" alt="Web Coverage"></a>
+<a href="https://codecov.io/gh/aphiria/aphiria.com/tree/master/infrastructure/pulumi"><img src="https://img.shields.io/codecov/c/github/aphiria/aphiria.com/master?flag=pulumi&label=Pulumi&logo=codecov" alt="Pulumi Coverage"></a>
+<a href="https://codecov.io/gh/aphiria/aphiria.com/tree/master/tools/build-docs"><img src="https://img.shields.io/codecov/c/github/aphiria/aphiria.com/master?flag=tools&label=Tools&logo=codecov" alt="Tools Coverage"></a>
 <a href="https://psalm.dev"><img src="https://shepherd.dev/github/aphiria/aphiria.com/level.svg"></a>
 </p>
 
