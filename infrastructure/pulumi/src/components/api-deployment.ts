@@ -1,6 +1,7 @@
 import * as pulumi from "@pulumi/pulumi";
 import * as k8s from "@pulumi/kubernetes";
-import { PodDisruptionBudgetConfig, APIDeploymentResult } from "./types";
+import { PodDisruptionBudgetConfig } from "./types/kubernetes";
+import { APIDeploymentResult } from "./types/application";
 import { checksum } from "./utils";
 import { POSTGRES_PORT } from "./constants";
 import { buildLabels } from "./labels";

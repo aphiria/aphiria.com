@@ -1,6 +1,6 @@
 import * as k8s from "@pulumi/kubernetes";
 import * as pulumi from "@pulumi/pulumi";
-import { Environment } from "../types";
+import { Environment } from "../../../types/environment";
 import {
     createWebDeployment,
     createAPIDeployment,
@@ -9,7 +9,7 @@ import {
     createHTTPSRedirectRoute,
 } from "../../../components";
 import { createApiServiceMonitor } from "../../../components/api-service-monitor";
-import { WebDeploymentResult, APIDeploymentResult } from "../../../components/types";
+import { WebDeploymentResult, APIDeploymentResult } from "../../../components/types/application";
 import { ApiServiceMonitorResult } from "../../../components/api-service-monitor";
 import { AppConfig, PostgreSQLConfig, PrometheusConfig, NamespaceConfig } from "../config/types";
 

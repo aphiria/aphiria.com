@@ -10,7 +10,7 @@ import {
     ClusterConfig,
     ConfigOverrides,
     DeepPartial,
-} from "./types";
+} from "./types/index";
 
 /**
  * All configuration read from Pulumi config

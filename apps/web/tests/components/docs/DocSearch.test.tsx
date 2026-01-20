@@ -3,7 +3,7 @@ import { render, screen, fireEvent, waitFor, cleanup } from "@testing-library/re
 import { DocSearch } from "@/components/docs/DocSearch";
 
 // Mock fetch
-global.fetch = vi.fn();
+global.fetch = vi.fn() as ReturnType<typeof vi.fn>;
 
 // Mock runtime config
 vi.mock("@/lib/runtime-config", () => ({
@@ -33,9 +33,9 @@ describe("DocSearch", () => {
     });
 
     it("debounces search input", async () => {
-        (global.fetch as any).mockResolvedValue({
+        vi.mocked(global.fetch).mockResolvedValue({
             json: async () => [],
-        });
+        } as Response);
 
         render(<DocSearch />);
         const input = screen.getByPlaceholderText("Search docs");
@@ -48,9 +48,9 @@ describe("DocSearch", () => {
     });
 
     it("shows no results message when search returns empty", async () => {
-        (global.fetch as any).mockResolvedValue({
+        vi.mocked(global.fetch).mockResolvedValue({
             json: async () => [],
-        });
+        } as Response);
 
         render(<DocSearch />);
         const input = screen.getByPlaceholderText("Search docs");
@@ -77,9 +77,9 @@ describe("DocSearch", () => {
             },
         ];
 
-        (global.fetch as any).mockResolvedValue({
+        vi.mocked(global.fetch).mockResolvedValue({
             json: async () => mockResults,
-        });
+        } as Response);
 
         render(<DocSearch />);
         const input = screen.getByPlaceholderText("Search docs");
@@ -99,7 +99,7 @@ describe("DocSearch", () => {
     it("shows error message on fetch failure", async () => {
         vi.useRealTimers();
 
-        (global.fetch as any).mockRejectedValue(new Error("Network error"));
+        vi.mocked(global.fetch).mockRejectedValue(new Error("Network error"));
         const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
 
         render(<DocSearch />);
@@ -121,7 +121,7 @@ describe("DocSearch", () => {
     it("hides results when input is cleared", async () => {
         vi.useRealTimers();
 
-        (global.fetch as any).mockResolvedValue({
+        vi.mocked(global.fetch).mockResolvedValue({
             json: async () => [
                 {
                     htmlElementType: "p",
@@ -182,7 +182,7 @@ describe("DocSearch", () => {
     it("shows results on focus when query exists", async () => {
         vi.useRealTimers();
 
-        (global.fetch as any).mockResolvedValue({
+        vi.mocked(global.fetch).mockResolvedValue({
             json: async () => [
                 {
                     htmlElementType: "p",
@@ -227,9 +227,9 @@ describe("DocSearch", () => {
             apiUri: "https://api.example.com",
         });
 
-        (global.fetch as any).mockResolvedValue({
+        vi.mocked(global.fetch).mockResolvedValue({
             json: async () => [],
-        });
+        } as Response);
 
         render(<DocSearch />);
         const input = screen.getByPlaceholderText("Search docs");

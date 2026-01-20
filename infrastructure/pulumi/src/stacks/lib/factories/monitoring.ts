@@ -2,13 +2,13 @@ import * as k8s from "@pulumi/kubernetes";
 import * as pulumi from "@pulumi/pulumi";
 import * as path from "path";
 import * as fs from "fs";
-import { Environment } from "../types";
+import { Environment } from "../../../types/environment";
 import { installKubePrometheusStack, createNamespace } from "../../../components";
 import { createGrafana, GrafanaResult } from "../../../components/grafana";
 import { createGrafanaIngress, GrafanaIngressResult } from "../../../components/grafana-ingress";
 import { createGrafanaAlerts, AlertRule } from "../../../components/grafana-alerts";
 import { createDashboards } from "../../../components/dashboards";
-import { NamespaceResult } from "../../../components/types";
+import { NamespaceResult } from "../../../components/types/kubernetes";
 import { MonitoringConfig, PrometheusConfig, GrafanaConfig } from "../config/types";
 
 /**

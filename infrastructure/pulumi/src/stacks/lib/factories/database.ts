@@ -1,6 +1,6 @@
 import * as k8s from "@pulumi/kubernetes";
 import * as pulumi from "@pulumi/pulumi";
-import { Environment } from "../types";
+import { Environment } from "../../../types/environment";
 import { createDatabaseCreationJob } from "../../../components";
 import { createPostgreSQL, PostgreSQLResult } from "../../../components/database";
 import { PostgreSQLConfig } from "../config/types";

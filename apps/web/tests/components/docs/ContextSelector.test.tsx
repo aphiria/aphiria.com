@@ -117,7 +117,8 @@ describe("ContextSelector", () => {
         const select = screen.getByRole("combobox");
         fireEvent.change(select, { target: { value: "library" } });
 
-        const callArgs = (window.history.replaceState as any).mock.calls[1];
+        const replaceState = window.history.replaceState as unknown as ReturnType<typeof vi.fn>;
+        const callArgs = replaceState.mock.calls[1];
         const newUrl = callArgs[2];
         expect(newUrl).toContain("context=library");
         expect(newUrl).toContain("foo=bar");
@@ -129,7 +130,8 @@ describe("ContextSelector", () => {
         render(<ContextSelector initialContext="framework" />);
 
         expect(window.history.replaceState).toHaveBeenCalled();
-        const callArgs = (window.history.replaceState as any).mock.calls[0];
+        const replaceState = window.history.replaceState as unknown as ReturnType<typeof vi.fn>;
+        const callArgs = replaceState.mock.calls[0];
         const newUrl = callArgs[2];
         expect(newUrl).toContain("context=framework");
     });
@@ -165,7 +167,8 @@ describe("ContextSelector", () => {
         expect(select.value).toBe("library");
         expect(mockToggleContextVisibility).toHaveBeenCalledWith("library");
         expect(window.history.replaceState).toHaveBeenCalled();
-        const callArgs = (window.history.replaceState as any).mock.calls[0];
+        const replaceState = window.history.replaceState as unknown as ReturnType<typeof vi.fn>;
+        const callArgs = replaceState.mock.calls[0];
         expect(callArgs[2]).toContain("context=library");
     });
 
@@ -190,7 +193,8 @@ describe("ContextSelector", () => {
         const select = screen.getByRole("combobox");
         fireEvent.change(select, { target: { value: "library" } });
 
-        const callArgs = (window.history.replaceState as any).mock.calls[1];
+        const replaceState = window.history.replaceState as unknown as ReturnType<typeof vi.fn>;
+        const callArgs = replaceState.mock.calls[1];
         const newUrl = callArgs[2];
         expect(newUrl).toContain("context=library");
         expect(newUrl).toContain("#scanning-for-attributes");
@@ -212,7 +216,8 @@ describe("ContextSelector", () => {
 
         render(<ContextSelector initialContext="framework" />);
 
-        const callArgs = (window.history.replaceState as any).mock.calls[0];
+        const replaceState = window.history.replaceState as unknown as ReturnType<typeof vi.fn>;
+        const callArgs = replaceState.mock.calls[0];
         const newUrl = callArgs[2];
         expect(newUrl).toContain("context=library");
         expect(newUrl).toContain("#route-attributes");
@@ -234,7 +239,8 @@ describe("ContextSelector", () => {
 
         render(<ContextSelector initialContext="framework" />);
 
-        const callArgs = (window.history.replaceState as any).mock.calls[0];
+        const replaceState = window.history.replaceState as unknown as ReturnType<typeof vi.fn>;
+        const callArgs = replaceState.mock.calls[0];
         const newUrl = callArgs[2];
         expect(newUrl).toContain("context=framework");
         expect(newUrl).toContain("#introduction");

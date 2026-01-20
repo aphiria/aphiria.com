@@ -27,7 +27,7 @@ export class DocsSideNav {
 
         const sectionCount = await this.sections.count();
         for (let i = 0; i < sectionCount; i++) {
-            const links = this.sections.nth(i).locator("ul.doc-sidebar-nav li a");
+            const links = this.sections.nth(i).locator("ul li a");
             const linkCount = await links.count();
 
             for (let j = 0; j < linkCount; j++) {

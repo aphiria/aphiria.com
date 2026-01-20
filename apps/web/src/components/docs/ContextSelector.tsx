@@ -63,7 +63,6 @@ export function ContextSelector({ initialContext }: ContextSelectorProps) {
             "",
             newUrl
         );
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []); // Only run on mount
 
     const handleContextChange = (newContext: Context) => {

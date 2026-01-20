@@ -2,12 +2,13 @@
 
 export {
     NamespaceResult,
-    WebDeploymentResult,
-    APIDeploymentResult,
-    GatewayResult,
     KubernetesClusterResult,
     KubeStateMetricsResult,
-} from "./types";
+} from "./types/kubernetes";
+
+export { WebDeploymentResult, APIDeploymentResult } from "./types/application";
+
+export { GatewayResult } from "./types/networking";
 
 export * from "./constants";
 export * from "./labels";

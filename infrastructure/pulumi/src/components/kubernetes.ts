@@ -1,6 +1,6 @@
 import * as digitalocean from "@pulumi/digitalocean";
 import * as k8s from "@pulumi/kubernetes";
-import { KubernetesClusterArgs, KubernetesClusterResult } from "./types";
+import { KubernetesClusterArgs, KubernetesClusterResult } from "./types/kubernetes";
 
 /** Creates DigitalOcean Kubernetes cluster with auto-scaling node pool */
 export function createKubernetesCluster(args: KubernetesClusterArgs): KubernetesClusterResult {

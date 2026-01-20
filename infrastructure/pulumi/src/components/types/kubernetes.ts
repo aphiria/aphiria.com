@@ -1,7 +1,6 @@
 import * as pulumi from "@pulumi/pulumi";
 import * as k8s from "@pulumi/kubernetes";
 import * as digitalocean from "@pulumi/digitalocean";
-import { Environment } from "../stacks/lib/types";
 
 /**
  * PodDisruptionBudget configuration for high availability
@@ -12,72 +11,6 @@ export interface PodDisruptionBudgetConfig {
     minAvailable?: number;
     /** Maximum number of pods that can be unavailable (e.g., 1) */
     maxUnavailable?: number;
-}
-
-// Component-specific Args have been moved to their respective component files.
-// Only shared types remain in this file.
-
-/**
- * Arguments for Helm chart component
- */
-export interface HelmChartArgs {
-    /** Environment this chart targets */
-    env: Environment;
-    /** Chart name */
-    chartName: string;
-    /** Chart repository URL or OCI registry */
-    repository: string;
-    /** Chart version */
-    version: string;
-    /** Kubernetes namespace */
-    namespace: pulumi.Input<string>;
-    /** Helm values */
-    values?: Record<string, unknown>;
-    /** Kubernetes provider */
-    provider: k8s.Provider;
-}
-
-/**
- * Return type for namespace component
- */
-export interface NamespaceResult {
-    namespace: k8s.core.v1.Namespace;
-    resourceQuota?: k8s.core.v1.ResourceQuota;
-    networkPolicy?: k8s.networking.v1.NetworkPolicy;
-    imagePullSecret?: k8s.core.v1.Secret;
-}
-
-/**
- * Return type for web deployment component
- */
-export interface WebDeploymentResult {
-    deployment: pulumi.Output<k8s.types.output.meta.v1.ObjectMeta>;
-    service: pulumi.Output<k8s.types.output.meta.v1.ObjectMeta>;
-    configMap: pulumi.Output<k8s.types.output.meta.v1.ObjectMeta>;
-    nginxConfigMap: pulumi.Output<k8s.types.output.meta.v1.ObjectMeta>;
-    podDisruptionBudget?: pulumi.Output<k8s.types.output.meta.v1.ObjectMeta>;
-}
-
-/**
- * Return type for API deployment component
- */
-export interface APIDeploymentResult {
-    deployment: pulumi.Output<k8s.types.output.meta.v1.ObjectMeta>;
-    service: pulumi.Output<k8s.types.output.meta.v1.ObjectMeta>;
-    secret: pulumi.Output<k8s.types.output.meta.v1.ObjectMeta>;
-    podDisruptionBudget?: pulumi.Output<k8s.types.output.meta.v1.ObjectMeta>;
-}
-
-/**
- * Return type for Gateway component
- */
-export interface GatewayResult {
-    name: pulumi.Output<string>;
-    namespace: pulumi.Output<string>;
-    urn: pulumi.Output<string>;
-    certificate?: pulumi.Output<string>; // Only present for non-self-signed
-    ip?: pulumi.Output<string>; // LoadBalancer IP (populated by factory after gateway creation)
-    dnsRecords?: digitalocean.DnsRecord[]; // DNS records pointing to gateway IP (populated by factory if configured)
 }
 
 /**
@@ -129,6 +62,16 @@ export interface KubernetesClusterResult {
     kubeconfig: pulumi.Output<string>;
     clusterCaCertificate: pulumi.Output<string>;
     provider: k8s.Provider;
+}
+
+/**
+ * Return type for namespace component
+ */
+export interface NamespaceResult {
+    namespace: k8s.core.v1.Namespace;
+    resourceQuota?: k8s.core.v1.ResourceQuota;
+    networkPolicy?: k8s.networking.v1.NetworkPolicy;
+    imagePullSecret?: k8s.core.v1.Secret;
 }
 
 /**

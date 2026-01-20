@@ -1,14 +1,17 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen, cleanup } from "@testing-library/react";
+import { ReactNode } from "react";
 import { Header } from "@/components/layout/Header";
 
 // Mock Next.js components
 vi.mock("next/image", () => ({
-    default: ({ src, alt, ...props }: any) => <img src={src} alt={alt} {...props} />,
+    default: ({ src, alt, ...props }: { src: string; alt: string }) => (
+        <img src={src} alt={alt} {...props} />
+    ),
 }));
 
 vi.mock("next/link", () => ({
-    default: ({ href, children, ...props }: any) => (
+    default: ({ href, children, ...props }: { href: string; children: ReactNode }) => (
         <a href={href} {...props}>
             {children}
         </a>
