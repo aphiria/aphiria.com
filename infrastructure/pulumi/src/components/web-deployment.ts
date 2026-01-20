@@ -63,11 +63,11 @@ export function createWebDeployment(args: WebDeploymentArgs): WebDeploymentResul
                 labels,
             },
             data: {
-                "default.conf": `# Use X-Forwarded-Proto header if set (from Gateway/LB), otherwise fall back to $scheme
-# This ensures redirects preserve HTTPS when TLS is terminated upstream
+                "default.conf": `# Use X-Forwarded-Proto header if set (from Gateway/LB), otherwise default to https
+# Gateway always terminates TLS, so we default to https when header is not set
 map $http_x_forwarded_proto $real_scheme {
     default $http_x_forwarded_proto;
-    '' $scheme;
+    '' https;
 }
 
 server {
@@ -75,6 +75,12 @@ server {
     server_name localhost;
     root /usr/share/nginx/html;
     index index.html;
+
+    # Exact match for root - highest priority, bypasses redirect rule
+    # Ensures health probes get 200 OK instead of 301 redirect
+    location = / {
+        try_files /index.html =404;
+    }
 
     # Redirect /docs to /docs/1.x/introduction (302 temporary)
     # Use $real_scheme to preserve HTTPS when behind Gateway/LB
