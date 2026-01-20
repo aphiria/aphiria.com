@@ -3,7 +3,10 @@
 <p align="center">
 <a href="https://github.com/aphiria/aphiria.com/actions"><img src="https://github.com/aphiria/aphiria.com/workflows/CI/badge.svg"></a>
 <a href="https://github.com/aphiria/aphiria.com/actions"><img src="https://github.com/aphiria/aphiria.com/workflows/CD/badge.svg"></a>
-<a href="https://coveralls.io/github/aphiria/aphiria.com?branch=master"><img src="https://coveralls.io/repos/github/aphiria/aphiria.com/badge.svg?branch=master" alt="Coverage Status"></a>
+<a href="https://codecov.io/gh/aphiria/aphiria.com"><img src="https://codecov.io/gh/aphiria/aphiria.com/branch/master/graph/badge.svg?flag=api" alt="API Coverage"></a>
+<a href="https://codecov.io/gh/aphiria/aphiria.com"><img src="https://codecov.io/gh/aphiria/aphiria.com/branch/master/graph/badge.svg?flag=web" alt="Web Coverage"></a>
+<a href="https://codecov.io/gh/aphiria/aphiria.com"><img src="https://codecov.io/gh/aphiria/aphiria.com/branch/master/graph/badge.svg?flag=pulumi" alt="Pulumi Coverage"></a>
+<a href="https://codecov.io/gh/aphiria/aphiria.com"><img src="https://codecov.io/gh/aphiria/aphiria.com/branch/master/graph/badge.svg?flag=tools" alt="Tools Coverage"></a>
 <a href="https://psalm.dev"><img src="https://shepherd.dev/github/aphiria/aphiria.com/level.svg"></a>
 </p>
 

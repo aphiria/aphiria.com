@@ -86,10 +86,35 @@ jobs:
           npm run build:docs
           npm run build
           npm test
-      - name: Upload coverage results to Coveralls
-        working-directory: apps/api
-        env:
-          COVERALLS_REPO_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          composer global require php-coveralls/php-coveralls
-          php-coveralls --coverage_clover=./.coverage/clover.xml --json_path=./coveralls-upload.json -v
+      - name: Upload PHP coverage to Codecov
+        if: matrix.php == '8.4'
+        uses: codecov/codecov-action@v5
+        with:
+          files: ./apps/api/.coverage/clover.xml
+          flags: api
+          name: API
+          token: ${{ secrets.CODECOV_TOKEN }}
+      - name: Upload Web coverage to Codecov
+        if: matrix.php == '8.4'
+        uses: codecov/codecov-action@v5
+        with:
+          files: ./apps/web/coverage/lcov.info
+          flags: web
+          name: Web
+          token: ${{ secrets.CODECOV_TOKEN }}
+      - name: Upload Pulumi coverage to Codecov
+        if: matrix.php == '8.4'
+        uses: codecov/codecov-action@v5
+        with:
+          files: ./infrastructure/pulumi/coverage/lcov.info
+          flags: pulumi
+          name: Pulumi
+          token: ${{ secrets.CODECOV_TOKEN }}
+      - name: Upload Build Tools coverage to Codecov
+        if: matrix.php == '8.4'
+        uses: codecov/codecov-action@v5
+        with:
+          files: ./tools/build-docs/coverage/lcov.info
+          flags: tools
+          name: Tools
+          token: ${{ secrets.CODECOV_TOKEN }}
