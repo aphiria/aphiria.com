@@ -83,6 +83,7 @@ jobs:
       - name: Build and test TypeScript code
         if: matrix.php == '8.4'
         run: |
+          npm run build:docs
           npm run build
           npm test
       - name: Upload coverage results to Coveralls
