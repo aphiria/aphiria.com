@@ -92,7 +92,10 @@ EOF,
      */
     private function readLexemesFromNdjson(): array
     {
-        $ndjsonPath = __DIR__ . '/../../../../dist/docs/search/lexemes.ndjson';
+        // Use test fixtures when running in test environment
+        $ndjsonPath = (string) \getenv('APP_ENV') === 'testing'
+            ? __DIR__ . '/../../tests/Fixtures/docs/search/lexemes.ndjson'
+            : __DIR__ . '/../../../../dist/docs/search/lexemes.ndjson';
 
         if (!\file_exists($ndjsonPath)) {
             throw new IndexingFailedException("Lexemes NDJSON file not found: $ndjsonPath");
