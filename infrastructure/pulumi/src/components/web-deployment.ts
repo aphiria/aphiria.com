@@ -76,6 +76,9 @@ server {
     root /usr/share/nginx/html;
     index index.html;
 
+    # Serve custom 404 page (will be resolved to /404.html by try_files)
+    error_page 404 /404;
+
     # Exact match for root - highest priority, bypasses redirect rule
     # Ensures health probes get 200 OK instead of 301 redirect
     location = / {
