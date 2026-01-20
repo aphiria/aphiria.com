@@ -1,11 +1,12 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen, cleanup } from "@testing-library/react";
+import { ReactNode } from "react";
 import { SidebarNav } from "@/components/docs/SidebarNav";
 import { NavigationSection } from "@/types/navigation";
 
 // Mock Next.js Link
 vi.mock("next/link", () => ({
-    default: ({ href, children, ...props }: any) => (
+    default: ({ href, children, ...props }: { href: string; children: ReactNode }) => (
         <a href={href} {...props}>
             {children}
         </a>
@@ -95,9 +96,7 @@ describe("SidebarNav", () => {
     });
 
     it("applies correct CSS class to nav", () => {
-        const { container } = render(
-            <SidebarNav sections={mockSections} version="1.x" contextSelector={null} />
-        );
+        render(<SidebarNav sections={mockSections} version="1.x" contextSelector={null} />);
 
         const nav = screen.getByRole("navigation");
         expect(nav).toHaveClass("side-nav");

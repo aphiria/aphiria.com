@@ -1,10 +1,11 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen, cleanup } from "@testing-library/react";
+import { ReactNode } from "react";
 import NotFound from "@/app/not-found";
 
 // Mock Next.js components
 vi.mock("next/link", () => ({
-    default: ({ href, children, ...props }: any) => (
+    default: ({ href, children, ...props }: { href: string; children: ReactNode }) => (
         <a href={href} {...props}>
             {children}
         </a>
@@ -13,11 +14,13 @@ vi.mock("next/link", () => ({
 
 // Mock child components
 vi.mock("@/components/layout/SimpleLayout", () => ({
-    SimpleLayout: ({ children }: any) => <div data-testid="simple-layout">{children}</div>,
+    SimpleLayout: ({ children }: { children: ReactNode }) => (
+        <div data-testid="simple-layout">{children}</div>
+    ),
 }));
 
 vi.mock("@/components/layout/Sidebar", () => ({
-    Sidebar: ({ children, id }: any) => (
+    Sidebar: ({ children, id }: { children: ReactNode; id: string }) => (
         <nav data-testid="sidebar" id={id}>
             {children}
         </nav>
