@@ -29,6 +29,7 @@ jobs:
           - 5432:5432
     # Need to make sure we're using the right environment variables when compiling the views
     env:
+      APP_ENV: testing
       APP_WEB_URL: https://www.aphiria.com
       APP_API_URL: https://api.aphiria.com
       DB_HOST: localhost
