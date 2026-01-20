@@ -73,7 +73,7 @@ jobs:
         run: composer psalm -- --shepherd
       - name: Install TypeScript dependencies
         if: matrix.php == '8.4'
-        run: npm install --workspaces
+        run: npm install
       - name: Lint TypeScript code
         if: matrix.php == '8.4'
         run: npm run lint
