@@ -188,6 +188,7 @@ describe("http-route components", () => {
             const route = createHTTPSRedirectRoute({
                 namespace: "default",
                 gatewayName: "gateway",
+                gatewayNamespace: "default",
                 domains: ["*.pr.aphiria.com", "*.pr-api.aphiria.com"],
                 provider: k8sProvider,
             });
@@ -207,6 +208,7 @@ describe("http-route components", () => {
             const route = createHTTPSRedirectRoute({
                 namespace: "default",
                 gatewayName: "gateway",
+                gatewayNamespace: "default",
                 domains: ["*.example.com"],
                 provider: k8sProvider,
             });
@@ -226,6 +228,7 @@ describe("http-route components", () => {
             const route = createHTTPSRedirectRoute({
                 namespace: "default",
                 gatewayName: "gateway",
+                gatewayNamespace: "default",
                 domains: ["aphiria.com", "*.aphiria.com"],
                 skipRootListener: true,
                 provider: k8sProvider,
@@ -246,6 +249,7 @@ describe("http-route components", () => {
             const route = createHTTPSRedirectRoute({
                 namespace: "preview-pr-117",
                 gatewayName: "nginx-gateway",
+                gatewayNamespace: "nginx-gateway",
                 domains: ["117.pr.aphiria.com", "117.pr-api.aphiria.com"],
                 provider: k8sProvider,
             });
@@ -265,6 +269,7 @@ describe("http-route components", () => {
             const route = createHTTPSRedirectRoute({
                 namespace: "preview-pr-117",
                 gatewayName: "nginx-gateway",
+                gatewayNamespace: "nginx-gateway",
                 domains: ["117.pr.aphiria.com", "117.pr-api.aphiria.com"],
                 provider: k8sProvider,
             });
@@ -283,6 +288,7 @@ describe("http-route components", () => {
             const route = createHTTPSRedirectRoute({
                 namespace: "preview-pr-117",
                 gatewayName: "nginx-gateway",
+                gatewayNamespace: "nginx-gateway",
                 domains: ["117.pr.aphiria.com"],
                 provider: k8sProvider,
             });
@@ -299,6 +305,7 @@ describe("http-route components", () => {
             const route = createHTTPSRedirectRoute({
                 namespace: "preview-pr-117",
                 gatewayName: "nginx-gateway",
+                gatewayNamespace: "nginx-gateway",
                 domains: ["117.pr-api.aphiria.com"],
                 provider: k8sProvider,
             });
@@ -338,6 +345,7 @@ describe("http-route components", () => {
             const route = createWWWRedirectRoute({
                 namespace: "default",
                 gatewayName: "gateway",
+                gatewayNamespace: "default",
                 rootDomain: "aphiria.com",
                 wwwDomain: "www.aphiria.com",
                 provider: k8sProvider,

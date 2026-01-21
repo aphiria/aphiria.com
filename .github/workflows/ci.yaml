@@ -95,6 +95,7 @@ jobs:
           name: API
           slug: aphiria/aphiria.com
           token: ${{ secrets.CODECOV_TOKEN }}
+          disable_search: true
       - name: Upload Web coverage to Codecov
         if: matrix.php == '8.4'
         uses: codecov/codecov-action@v5
@@ -104,6 +105,7 @@ jobs:
           name: Web
           slug: aphiria/aphiria.com
           token: ${{ secrets.CODECOV_TOKEN }}
+          disable_search: true
       - name: Upload Pulumi coverage to Codecov
         if: matrix.php == '8.4'
         uses: codecov/codecov-action@v5
@@ -113,6 +115,7 @@ jobs:
           name: Pulumi
           slug: aphiria/aphiria.com
           token: ${{ secrets.CODECOV_TOKEN }}
+          disable_search: true
       - name: Upload Build Tools coverage to Codecov
         if: matrix.php == '8.4'
         uses: codecov/codecov-action@v5
@@ -122,3 +125,4 @@ jobs:
           name: Tools
           slug: aphiria/aphiria.com
           token: ${{ secrets.CODECOV_TOKEN }}
+          disable_search: true

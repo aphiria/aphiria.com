@@ -111,7 +111,7 @@ export function createHTTPRoute(args: HTTPRouteArgs): k8s.apiextensions.CustomRe
 export interface HTTPSRedirectArgs {
     namespace: pulumi.Input<string>;
     gatewayName: string;
-    gatewayNamespace?: pulumi.Input<string>;
+    gatewayNamespace: pulumi.Input<string>;
     domains: string[];
     /** Skip http-root listener (used when WWW redirect handles root domain) */
     skipRootListener?: boolean;
@@ -150,7 +150,7 @@ export function createHTTPSRedirectRoute(
         if (specificHostnames.some((h) => !h.includes("pr-api"))) {
             parentRefs.push({
                 name: args.gatewayName,
-                namespace: args.gatewayNamespace || args.namespace,
+                namespace: args.gatewayNamespace,
                 sectionName: "http-subdomains-1", // HTTP listener for *.pr.aphiria.com
             });
         }
@@ -159,7 +159,7 @@ export function createHTTPSRedirectRoute(
         if (specificHostnames.some((h) => h.includes("pr-api"))) {
             parentRefs.push({
                 name: args.gatewayName,
-                namespace: args.gatewayNamespace || args.namespace,
+                namespace: args.gatewayNamespace,
                 sectionName: "http-subdomains-2", // HTTP listener for *.pr-api.aphiria.com
             });
         }
@@ -208,7 +208,7 @@ export function createHTTPSRedirectRoute(
     if (rootDomain && !args.skipRootListener) {
         parentRefs.push({
             name: args.gatewayName,
-            namespace: args.gatewayNamespace || args.namespace,
+            namespace: args.gatewayNamespace,
             sectionName: "http-root",
         });
     }
@@ -217,7 +217,7 @@ export function createHTTPSRedirectRoute(
     wildcardDomains.forEach((_, index) => {
         parentRefs.push({
             name: args.gatewayName,
-            namespace: args.gatewayNamespace || args.namespace,
+            namespace: args.gatewayNamespace,
             sectionName:
                 wildcardDomains.length === 1 ? "http-subdomains" : `http-subdomains-${index + 1}`,
         });
@@ -257,7 +257,7 @@ export function createHTTPSRedirectRoute(
 export interface WWWRedirectArgs {
     namespace: pulumi.Input<string>;
     gatewayName: string;
-    gatewayNamespace?: pulumi.Input<string>;
+    gatewayNamespace: pulumi.Input<string>;
     rootDomain: string;
     wwwDomain: string;
     provider: k8s.Provider;
@@ -283,12 +283,12 @@ export function createWWWRedirectRoute(args: WWWRedirectArgs): k8s.apiextensions
                 parentRefs: [
                     {
                         name: args.gatewayName,
-                        namespace: args.gatewayNamespace || args.namespace,
+                        namespace: args.gatewayNamespace,
                         sectionName: "https-root",
                     },
                     {
                         name: args.gatewayName,
-                        namespace: args.gatewayNamespace || args.namespace,
+                        namespace: args.gatewayNamespace,
                         sectionName: "http-root",
                     },
                 ],
