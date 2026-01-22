@@ -150,6 +150,19 @@ describe("ContextSelector", () => {
         expect(mockToggleContextVisibility).toHaveBeenCalledWith("library");
     });
 
+    it("sets cookie when initialized from query param", () => {
+        // Set query param in window.location.search
+        Object.defineProperty(window.location, "search", {
+            value: "?context=library",
+            writable: true,
+        });
+
+        render(<ContextSelector initialContext="framework" />);
+
+        // Cookie should be set to persist the query param value
+        expect(mockSetContextCookie).toHaveBeenCalledWith("library");
+    });
+
     it("falls back to cookie if query param not present", () => {
         // No query param, but cookie is set to library
         Object.defineProperty(window.location, "search", {
@@ -166,10 +179,6 @@ describe("ContextSelector", () => {
         // Should use cookie value (library) instead of initialContext (framework)
         expect(select.value).toBe("library");
         expect(mockToggleContextVisibility).toHaveBeenCalledWith("library");
-        expect(window.history.replaceState).toHaveBeenCalled();
-        const replaceState = window.history.replaceState as unknown as ReturnType<typeof vi.fn>;
-        const callArgs = replaceState.mock.calls[0];
-        expect(callArgs[2]).toContain("context=library");
     });
 
     it("applies correct title to label", () => {
@@ -200,14 +209,10 @@ describe("ContextSelector", () => {
         expect(newUrl).toContain("#scanning-for-attributes");
     });
 
-    it("preserves URL hash when adding context param on mount from cookie", () => {
-        // Set window.location with hash but no context param
+    it("does not update URL when initializing from cookie", () => {
+        // Set window.location with no context param
         Object.defineProperty(window.location, "search", {
             value: "",
-            writable: true,
-        });
-        Object.defineProperty(window.location, "hash", {
-            value: "#route-attributes",
             writable: true,
         });
 
@@ -216,11 +221,10 @@ describe("ContextSelector", () => {
 
         render(<ContextSelector initialContext="framework" />);
 
-        const replaceState = window.history.replaceState as unknown as ReturnType<typeof vi.fn>;
-        const callArgs = replaceState.mock.calls[0];
-        const newUrl = callArgs[2];
-        expect(newUrl).toContain("context=library");
-        expect(newUrl).toContain("#route-attributes");
+        const select = screen.getByRole("combobox") as HTMLSelectElement;
+        expect(select.value).toBe("library");
+        // URL should NOT be updated when loading from cookie
+        // (only updated when user changes context or when loaded from query param)
     });
 
     it("preserves URL hash when adding context param on mount from initialContext", () => {
@@ -244,5 +248,19 @@ describe("ContextSelector", () => {
         const newUrl = callArgs[2];
         expect(newUrl).toContain("context=framework");
         expect(newUrl).toContain("#introduction");
+    });
+
+    it("sets cookie when initialized from initialContext with no query param or cookie", () => {
+        // No query param, no cookie
+        Object.defineProperty(window.location, "search", {
+            value: "",
+            writable: true,
+        });
+        mockGetCookie.mockReturnValueOnce(undefined);
+
+        render(<ContextSelector initialContext="framework" />);
+
+        // Cookie should be set to persist the initialContext
+        expect(mockSetContextCookie).toHaveBeenCalledWith("framework");
     });
 });

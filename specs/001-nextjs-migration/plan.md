@@ -14,7 +14,7 @@ Migrate aphiria.com from PHP-rendered templating with gulp build pipeline to a m
 **Language/Version**: TypeScript 5.x + Node.js 20+, React 18+, Next.js 15+
 **Primary Dependencies**: Next.js (App Router), React, TypeScript, Prism.js (syntax highlighting), jsdom/cheerio (TOC generation), cookies-next (cookie management)
 **Storage**: Filesystem (documentation build artifacts at `dist/docs/`), Browser cookies (context persistence)
-**Testing**: Jest + React Testing Library (unit tests), Playwright (E2E tests, existing suite must pass)
+**Testing**: Vitest + React Testing Library (unit tests), Playwright (E2E tests, existing suite must pass)
 **Target Platform**: Node.js server (Vercel, Docker container, or AWS Lambda)
 **Project Type**: Web application (frontend migration, API unchanged)
 **Performance Goals**: Initial page load <1.5s on 3G, subsequent navigation <500ms, context switching <50ms, redirect processing <100ms
@@ -85,7 +85,7 @@ _GATE: Must pass before Phase 0 research. Re-check after Phase 1 design._
  **PASS** - Quality gates defined:
 - TypeScript compilation must succeed
 - ESLint + Prettier zero errors/warnings
-- Jest test suite 100% pass
+- Vitest test suite 100% pass
 - Playwright E2E suite 100% pass
 - Next.js production build succeeds
 - Documentation build artifact exists and is valid
@@ -152,7 +152,7 @@ apps/web/                # Next.js application (replaces PHP templates + gulp)
     js/
     images/
     fonts/
- tests/               # Jest unit tests
+ tests/               # Vitest unit tests
     unit/
        context-resolver.test.ts
        artifact-reader.test.ts
@@ -170,7 +170,7 @@ apps/web/                # Next.js application (replaces PHP templates + gulp)
         mobile-nav.spec.ts
  next.config.js       # Next.js configuration
  tsconfig.json        # TypeScript configuration
- jest.config.js       # Jest configuration
+ vitest.config.ts     # Vitest configuration
  playwright.config.ts # Playwright configuration
  .eslintrc.json       # ESLint rules
  .prettierrc          # Prettier config
@@ -344,7 +344,7 @@ npm run dev
 # Visit: http://localhost:3000
 
 # 4. Run tests
-npm test                # Jest unit tests
+npm test                # Vitest unit tests
 npm run test:e2e        # Playwright E2E tests
 
 # 5. Build for production

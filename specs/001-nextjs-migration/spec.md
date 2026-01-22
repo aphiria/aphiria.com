@@ -208,7 +208,7 @@ A user needs to search documentation content by typing queries into the search b
 
 #### Testing
 
-- **FR-051**: System MUST include Jest + React Testing Library unit tests for: routing helpers, context precedence resolution, cookie domain handling, DOM toggling logic, sidebar filtering, active link state
+- **FR-051**: System MUST include Vitest + React Testing Library unit tests for: routing helpers, context precedence resolution, cookie domain handling, DOM toggling logic, sidebar filtering, active link state
 - **FR-052**: System MUST include Playwright E2E tests for: `.html` � extension-less redirects, default context behavior, context switching without reload, DOM visibility toggling, document title formatting
 - **FR-053**: Existing Playwright E2E test suite MUST continue to pass without modification (or with minimal updates for URL structure)
 

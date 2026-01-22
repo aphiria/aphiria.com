@@ -5,8 +5,18 @@ import { Header } from "@/components/layout/Header";
 
 // Mock Next.js components
 vi.mock("next/image", () => ({
-    default: ({ src, alt, ...props }: { src: string; alt: string }) => (
-        <img src={src} alt={alt} {...props} />
+    default: ({
+        src,
+        alt,
+        priority,
+        ...props
+    }: {
+        src: string;
+        alt: string;
+        priority?: boolean;
+    }) => (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={src} alt={alt} data-priority={priority} {...props} />
     ),
 }));
 
