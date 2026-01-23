@@ -34,7 +34,7 @@ describe("prism highlighter", () => {
 
             const result = highlightCode(html);
 
-            expect(result).toBe("<html><head></head><body><code>plain text</code></body></html>");
+            expect(result).toBe("<code>plain text</code>");
         });
 
         it("skips code blocks with invalid language match", () => {

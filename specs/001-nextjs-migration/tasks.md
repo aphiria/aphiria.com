@@ -16,7 +16,7 @@
 ## Path Conventions
 
 - **Web app**: `apps/web/` (Next.js application replacing PHP templates)
-- **Tests**: `apps/web/tests/` (Jest unit tests), `tests/e2e/` (Playwright E2E tests)
+- **Tests**: `apps/web/tests/` (Vitest unit tests), `tests/e2e/` (Playwright E2E tests)
 - **Artifacts**: `dist/docs/` (external build output, NOT created by Next.js)
 
 ---
@@ -198,7 +198,7 @@ tools/build-docs/
 - [X] T098 [P] Configure TypeScript with strict mode in apps/web/tsconfig.json
 - [X] T099 [P] Configure ESLint and Prettier in apps/web/.eslintrc.json and apps/web/.prettierrc
 - [X] T100 [P] Configure PostCSS with postcss-nested plugin in apps/web/postcss.config.js
-- [X] T101 [P] Configure Jest for unit testing in apps/web/jest.config.js
+- [X] T101 [P] Configure Vitest for unit testing in apps/web/vitest.config.js
 - [X] T102 [P] Install core dependencies: react, next, typescript, cookies-next, isomorphic-dompurify, cheerio, prismjs
 - [X] T103 [P] Copy existing CSS file from apps/web/src/css/aphiria.css to apps/web/public/css/aphiria.css
 - [X] T104 [P] Copy existing static assets (images, fonts) from current apps/web/public/ to new apps/web/public/
@@ -385,7 +385,7 @@ tools/build-docs/
 - [X] T128 [P] Optimize Prism.js with lazy loading (IntersectionObserver for code blocks)
 - [X] T129 Run existing Playwright E2E test suite and fix any regressions
 - [X] T130 [P] Run ESLint and Prettier, fix all errors and warnings
-- [X] T131 Run Jest unit test suite, ensure 100% pass rate
+- [X] T131 Run Vitest unit test suite, ensure 100% pass rate
 - [X] T132 Run Next.js production build, verify <100MB bundle size
 - [X] T133 [P] Update package.json scripts for dev, build, test, lint
 - [X] T134 Create developer quickstart documentation in specs/001-nextjs-migration/quickstart.md
@@ -539,7 +539,7 @@ With multiple developers:
 - All tasks include exact file paths for implementation
 - [P] tasks target different files or have no dependencies
 - [Story] labels enable tracking which user story each task delivers
-- Unit tests use Jest + React Testing Library
+- Unit tests use Vitest + React Testing Library
 - E2E tests use existing Playwright suite (must maintain zero regressions)
 - Commit after each task or logical group
 - Stop at any checkpoint to validate story independently

@@ -19,7 +19,7 @@ This monorepo contains the code for both https://www.aphiria.com and https://api
 - [apps](apps): The source code for the web and API applications
   - [api](apps/api): The API code
   - [web](apps/web): The website code
-- [docs](docs): The documentation for <the Aphiria framework
+- [docs](docs): The documentation for the Aphiria framework
 - [infrastructure](infrastructure): The applications' infrastructure code
   - [docker](infrastructure/docker): The Docker files to build and run the applications
   - [pulumi](infrastructure/pulumi): The Pulumi code to provision the applications
@@ -91,7 +91,6 @@ This builds all TypeScript code (documentation compiler, infrastructure, and web
 #### 2. Run the Web App
 
 ```bash
-cd apps/web
 npm run dev
 ```
 
@@ -240,7 +239,7 @@ composer psalm
 
 #### TypeScript/GitHub Workflow Linting & Formatting
 
-All TypeScript code (infrastructure and tests) and GitHub workflow code is linted and formatted from the root:
+All TypeScript code (we, infrastructure, tools, and tests) and GitHub workflow code is linted and formatted from the root:
 
 ```bash
 npm run lint:fix
