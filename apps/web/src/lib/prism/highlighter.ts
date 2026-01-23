@@ -16,7 +16,7 @@ import "prismjs/components/prism-json";
  * Scans HTML for code blocks with language-* classes and highlights them
  */
 export function highlightCode(html: string): string {
-    const $ = cheerio.load(html);
+    const $ = cheerio.load(html, null, false);
 
     $("code[class*='language-']").each((_, element) => {
         const $code = $(element);
