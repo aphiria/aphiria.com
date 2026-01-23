@@ -240,7 +240,7 @@ composer psalm
 
 #### TypeScript/GitHub Workflow Linting & Formatting
 
-All TypeScript code (infrastructure and tests) and GitHub workflow code is linted and formatted from the root:
+All TypeScript code (we, infrastructure, tools, and tests) and GitHub workflow code is linted and formatted from the root:
 
 ```bash
 npm run lint:fix
