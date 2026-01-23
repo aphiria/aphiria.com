@@ -91,7 +91,6 @@ This builds all TypeScript code (documentation compiler, infrastructure, and web
 #### 2. Run the Web App
 
 ```bash
-cd apps/web
 npm run dev
 ```
 
