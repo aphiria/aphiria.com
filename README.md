@@ -19,7 +19,7 @@ This monorepo contains the code for both https://www.aphiria.com and https://api
 - [apps](apps): The source code for the web and API applications
   - [api](apps/api): The API code
   - [web](apps/web): The website code
-- [docs](docs): The documentation for <the Aphiria framework
+- [docs](docs): The documentation for the Aphiria framework
 - [infrastructure](infrastructure): The applications' infrastructure code
   - [docker](infrastructure/docker): The Docker files to build and run the applications
   - [pulumi](infrastructure/pulumi): The Pulumi code to provision the applications
