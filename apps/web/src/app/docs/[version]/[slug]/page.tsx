@@ -66,7 +66,6 @@ export default async function DocPage({ params, searchParams }: PageProps) {
                 contextSelector={<ContextSelector initialContext={context} />}
             />
             <article>
-                <div id="article-loading"></div>
                 <TableOfContents headings={tocHeadings} />
                 <DocContent html={html} />
                 <footer>

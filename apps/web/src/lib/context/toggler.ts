@@ -27,12 +27,6 @@ export function toggleContextVisibility(context: Context): void {
         });
     }
 
-    // Hide loading indicator once context is set
-    const loadingDiv = document.getElementById("article-loading");
-    if (loadingDiv) {
-        loadingDiv.style.display = "none";
-    }
-
     // Dispatch custom event for side effects (e.g., sticky nav recalculation)
     document.dispatchEvent(new CustomEvent("context-toggled"));
 }

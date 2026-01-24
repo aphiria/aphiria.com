@@ -6,6 +6,10 @@ import { MainNavLinks } from "@/components/layout/MainNavLinks";
 import { ContextSelector } from "@/components/docs/ContextSelector";
 import { HighlightedHtml } from "@/components/docs/HighlightedHtml";
 
+// Force dynamic rendering to read runtime environment variables at request time
+// Without this, the homepage is statically prerendered at build time with fallback env vars
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
     title: "Aphiria - A simple, extensible REST API framework",
     description: "A simple, extensible REST API framework for PHP",
