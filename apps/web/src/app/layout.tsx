@@ -7,6 +7,9 @@ import { getServerConfig } from "@/lib/config/server-config";
 import "./aphiria.css";
 import "./prism.css";
 
+// Cache layout for 1 hour (env vars don't change during runtime)
+export const revalidate = 3600;
+
 const roboto = Roboto({
     weight: ["300"],
     style: ["normal", "italic"],

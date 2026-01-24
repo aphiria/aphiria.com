@@ -4,14 +4,25 @@ import { ContextSelector } from "@/components/docs/ContextSelector";
 
 // Mock dependencies
 const mockSetContextCookie = vi.fn();
+const mockGetContextCookie = vi.fn();
 const mockToggleContextVisibility = vi.fn();
+const mockRouterReplace = vi.fn();
+const mockRouterPush = vi.fn();
 
 vi.mock("@/lib/cookies/context-cookie.client", () => ({
     setContextCookie: (ctx: string) => mockSetContextCookie(ctx),
+    getContextCookie: () => mockGetContextCookie(),
 }));
 
 vi.mock("@/lib/context/toggler", () => ({
     toggleContextVisibility: (ctx: string) => mockToggleContextVisibility(ctx),
+}));
+
+vi.mock("next/navigation", () => ({
+    useRouter: () => ({
+        replace: mockRouterReplace,
+        push: mockRouterPush,
+    }),
 }));
 
 describe("ContextSelector", () => {

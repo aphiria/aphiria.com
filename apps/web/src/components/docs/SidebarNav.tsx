@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ReactNode } from "react";
 import { NavigationSection } from "@/types/navigation";
+import { Context } from "@/types/context";
 
 interface SidebarNavProps {
     /** Navigation sections to display */
@@ -12,6 +13,9 @@ interface SidebarNavProps {
     /** Version for building hrefs */
     version: string;
 
+    /** Current context for link generation */
+    context: Context;
+
     /** Context selector component (client component) */
     contextSelector: ReactNode;
 }
@@ -21,7 +25,7 @@ interface SidebarNavProps {
  *
  * Server component that renders navigation sections with active link highlighting
  */
-export function SidebarNav({ sections, currentSlug, version, contextSelector }: SidebarNavProps) {
+export function SidebarNav({ sections, currentSlug, version, context, contextSelector }: SidebarNavProps) {
     return (
         <nav className="side-nav">
             {contextSelector}
@@ -30,7 +34,7 @@ export function SidebarNav({ sections, currentSlug, version, contextSelector }: 
                     <h5>{section.title}</h5>
                     <ul>
                         {section.items.map((item) => {
-                            const href = `/docs/${version}/${item.slug}`;
+                            const href = `/docs/${version}/${item.slug}?context=${context}`;
                             const isActive = item.slug === currentSlug;
 
                             return (

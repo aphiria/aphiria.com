@@ -1,9 +1,24 @@
-import { setCookie } from "cookies-next";
+import { setCookie, getCookie } from "cookies-next";
 import { Context } from "@/types/context";
 import { getRuntimeConfig } from "@/lib/runtime-config";
 
 const COOKIE_NAME = "context";
 const COOKIE_MAX_AGE = 365 * 24 * 60 * 60; // 1 year in seconds
+
+/**
+ * Get the context cookie (client-side)
+ *
+ * @returns Context value from cookie or null if not set
+ */
+export function getContextCookie(): Context | null {
+    const value = getCookie(COOKIE_NAME);
+
+    if (value === "framework" || value === "library") {
+        return value;
+    }
+
+    return null;
+}
 
 /**
  * Set the context cookie (client-side)

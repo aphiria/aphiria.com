@@ -1,5 +1,4 @@
 import { notFound } from "next/navigation";
-import { cookies } from "next/headers";
 import type { Metadata } from "next";
 import { ContextSelector } from "@/components/docs/ContextSelector";
 import { SidebarNav } from "@/components/docs/SidebarNav";
@@ -9,7 +8,9 @@ import { TocHighlighter } from "@/components/docs/TocHighlighter";
 import { readDocHtml } from "@/lib/docs/artifact-reader";
 import { getSidebarForVersion } from "@/lib/docs/sidebar-config";
 import { generateToc } from "@/lib/docs/toc-generator";
-import { resolveContext } from "@/lib/cookies/context-cookie.server";
+
+// Cache docs pages for 1 hour
+export const revalidate = 3600;
 
 interface PageProps {
     params: Promise<{
@@ -30,20 +31,18 @@ interface PageProps {
  */
 export default async function DocPage({ params, searchParams }: PageProps) {
     const { version, slug } = await params;
-
-    // Resolve context server-side from cookies/URL params
-    const cookieStore = await cookies();
     const resolvedSearchParams = await searchParams;
 
-    // Convert searchParams object to URLSearchParams
-    const urlParams = new URLSearchParams();
-    for (const [key, value] of Object.entries(resolvedSearchParams)) {
-        if (value) {
-            urlParams.set(key, Array.isArray(value) ? value[0] : value);
-        }
-    }
+    // Get context from URL param only (server-side, cacheable)
+    // Client-side JS will sync cookie → URL on initial load
+    const context = resolvedSearchParams.context === "library" ? "library" : "framework";
 
-    const context = await resolveContext(cookieStore, urlParams);
+    // CSS to hide context-specific content based on URL param
+    // This prevents flicker by applying correct visibility from first paint
+    const contextCss =
+        context === "framework"
+            ? `.context-library { display: none; }`
+            : `.context-framework { display: none; }`;
 
     // Load doc HTML
     const html = readDocHtml(slug);
@@ -59,10 +58,12 @@ export default async function DocPage({ params, searchParams }: PageProps) {
 
     return (
         <>
+            <style dangerouslySetInnerHTML={{ __html: contextCss }} />
             <SidebarNav
                 sections={sidebarSections}
                 currentSlug={slug}
                 version={version}
+                context={context}
                 contextSelector={<ContextSelector initialContext={context} />}
             />
             <article>
