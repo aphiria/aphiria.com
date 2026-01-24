@@ -10,9 +10,6 @@ import { getSidebarForVersion } from "@/lib/docs/sidebar-config";
 import { generateToc } from "@/lib/docs/toc-generator";
 import { parseContext } from "@/lib/context/resolver";
 
-// Cache docs pages for 1 hour
-export const revalidate = 3600;
-
 interface PageProps {
     params: Promise<{
         version: string;

@@ -7,8 +7,9 @@ import { getServerConfig } from "@/lib/config/server-config";
 import "./aphiria.css";
 import "./prism.css";
 
-// Cache layout for 1 hour (env vars don't change during runtime)
-export const revalidate = 3600;
+// Force dynamic rendering to ensure runtime environment variables are read on each request
+// This is necessary because env vars (API_URI, COOKIE_DOMAIN) are injected by Kubernetes at runtime
+export const dynamic = "force-dynamic";
 
 const roboto = Roboto({
     weight: ["300"],

@@ -350,7 +350,7 @@ ALL containers MUST have resource requests and limits:
 
 - Jobs/Init: 100m CPU / 128Mi memory (requests), 200m / 256Mi (limits)
 - API: 250m CPU / 512Mi memory
-- Web: 100m CPU / 256Mi memory
+- Web: 250m CPU / 256Mi memory
 
 **Why**: ResourceQuotas reject pods without limits, costs run away, cluster stability issues.
 
@@ -472,12 +472,12 @@ npm run build
 npm test  # 100% coverage thresholds
 ```
 
-**Jest Coverage Thresholds** (from `jest.config.js`):
+**Vitest Coverage Thresholds** (from `vitest.config.mts`):
 
 ```javascript
 coverageThreshold: {
     global: {
-        branches: 97,
+        branches: 99,
         functions: 100,
         lines: 100,
         statements: 100
