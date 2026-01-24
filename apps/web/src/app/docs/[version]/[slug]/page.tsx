@@ -63,7 +63,6 @@ export default async function DocPage({ params, searchParams }: PageProps) {
                 sections={sidebarSections}
                 currentSlug={slug}
                 version={version}
-                context={context}
                 contextSelector={<ContextSelector initialContext={context} />}
             />
             <article>

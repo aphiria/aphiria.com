@@ -3,7 +3,6 @@ import Link from "next/link";
 import { SimpleLayout } from "@/components/layout/SimpleLayout";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { MainNavLinks } from "@/components/layout/MainNavLinks";
-import { ContextSelector } from "@/components/docs/ContextSelector";
 import { HighlightedHtml } from "@/components/docs/HighlightedHtml";
 
 // Cache homepage for 1 hour
@@ -14,16 +13,10 @@ export const metadata: Metadata = {
     description: "A simple, extensible REST API framework for PHP",
 };
 
-export default async function HomePage(props: {
-    searchParams: Promise<{ context?: string }>;
-}) {
-    const searchParams = await props.searchParams;
-    const context = (searchParams.context === "library" ? "library" : "framework") as "framework" | "library";
-
+export default async function HomePage() {
     return (
         <SimpleLayout>
             <Sidebar id="sidebar-main-nav">
-                <ContextSelector initialContext={context} />
                 <ul>
                     <MainNavLinks />
                 </ul>
@@ -80,45 +73,45 @@ $this->assertParsedBodyEquals($user, $getResponse);`}
                 <h2>Get started</h2>
                 <Link
                     className="button"
-                    href={`/docs/1.x/installation?context=${context}`}
+                    href="/docs/1.x/installation"
                     title="Learn how to install Aphiria"
                 >
                     Installing
                 </Link>
                 <Link
                     className="button"
-                    href={`/docs/1.x/application-builders?context=${context}`}
+                    href="/docs/1.x/application-builders"
                     title="Learn how to build your app"
                 >
                     Application Builders
                 </Link>
-                <Link className="button" href={`/docs/1.x/routing?context=${context}`} title="Learn about routing">
+                <Link className="button" href="/docs/1.x/routing" title="Learn about routing">
                     Routing
                 </Link>
                 <Link
                     className="button"
-                    href={`/docs/1.x/controllers?context=${context}`}
+                    href="/docs/1.x/controllers"
                     title="Learn how to write controllers"
                 >
                     Controllers
                 </Link>
                 <Link
                     className="button"
-                    href={`/docs/1.x/dependency-injection?context=${context}`}
+                    href="/docs/1.x/dependency-injection"
                     title="Learn about dependency injection"
                 >
                     DI
                 </Link>
                 <Link
                     className="button"
-                    href={`/docs/1.x/authentication?context=${context}`}
+                    href="/docs/1.x/authentication"
                     title="Learn about authentication"
                 >
                     Authentication
                 </Link>
                 <Link
                     className="button"
-                    href={`/docs/1.x/authorization?context=${context}`}
+                    href="/docs/1.x/authorization"
                     title="Learn about authorization"
                 >
                     Authorization

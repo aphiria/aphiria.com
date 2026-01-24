@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { ReactNode } from "react";
 import { NavigationSection } from "@/types/navigation";
-import { Context } from "@/types/context";
 
 interface SidebarNavProps {
     /** Navigation sections to display */
@@ -13,9 +12,6 @@ interface SidebarNavProps {
     /** Version for building hrefs */
     version: string;
 
-    /** Current context for link generation */
-    context: Context;
-
     /** Context selector component (client component) */
     contextSelector: ReactNode;
 }
@@ -24,8 +20,9 @@ interface SidebarNavProps {
  * Sidebar navigation component
  *
  * Server component that renders navigation sections with active link highlighting
+ * Note: Middleware adds ?context= param based on cookie, so links don't need it
  */
-export function SidebarNav({ sections, currentSlug, version, context, contextSelector }: SidebarNavProps) {
+export function SidebarNav({ sections, currentSlug, version, contextSelector }: SidebarNavProps) {
     return (
         <nav className="side-nav">
             {contextSelector}
@@ -34,7 +31,7 @@ export function SidebarNav({ sections, currentSlug, version, context, contextSel
                     <h5>{section.title}</h5>
                     <ul>
                         {section.items.map((item) => {
-                            const href = `/docs/${version}/${item.slug}?context=${context}`;
+                            const href = `/docs/${version}/${item.slug}`;
                             const isActive = item.slug === currentSlug;
 
                             return (
