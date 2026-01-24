@@ -1,9 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-    // Use static export for production builds, standard mode for development
-    // This allows middleware/proxy to work in dev, while generating static files for deployment
-    ...(process.env.NODE_ENV === "production" && { output: "export" }),
+    // Use standalone output for SSR with optimized Docker deployments
+    // This enables server-side rendering while creating minimal production bundles
+    output: "standalone",
 };
 
 export default nextConfig;

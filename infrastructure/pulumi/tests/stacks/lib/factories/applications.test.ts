@@ -205,7 +205,7 @@ describe("createApplicationResources", () => {
             );
         });
 
-        it("should create web deployment with jsConfigData from config", () => {
+        it("should create web deployment with apiUri and cookieDomain from config", () => {
             createApplicationResources({
                 env: "local",
                 provider: k8sProvider,
@@ -219,10 +219,8 @@ describe("createApplicationResources", () => {
 
             expect(createWebDeployment).toHaveBeenCalledWith(
                 expect.objectContaining({
-                    jsConfigData: {
-                        apiUri: "https://api.local.aphiria.com",
-                        cookieDomain: ".local.aphiria.com",
-                    },
+                    apiUri: "https://api.local.aphiria.com",
+                    cookieDomain: ".local.aphiria.com",
                 })
             );
         });

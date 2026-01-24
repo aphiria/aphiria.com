@@ -84,10 +84,8 @@ export function createApplicationResources(args: ApplicationResourcesArgs): Appl
         image: args.appConfig.web.image,
         imagePullPolicy: args.appConfig.imagePullPolicy,
         appEnv: args.env,
-        jsConfigData: {
-            apiUri: args.appConfig.api.url,
-            cookieDomain: args.appConfig.web.cookieDomain,
-        },
+        apiUri: args.appConfig.api.url,
+        cookieDomain: args.appConfig.web.cookieDomain,
         baseUrl: args.appConfig.web.url,
         prNumber: args.env === "preview" && args.hasNamespaceConfig ? prNumber : undefined,
         imagePullSecrets: args.namespaceConfig?.imagePullSecret ? ["ghcr-pull-secret"] : undefined,
