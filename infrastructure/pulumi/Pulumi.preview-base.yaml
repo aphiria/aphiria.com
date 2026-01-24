@@ -4,6 +4,13 @@ environment:
 config:
   # Preview base-specific overrides
   aphiria-com-infrastructure:overrides:
+    app:
+      web:
+        env:
+          # Preview URLs are dynamic per PR: pr-123.pr.aphiria.com
+          # API_URI will be interpolated in the stack code
+          COOKIE_DOMAIN: .pr.aphiria.com
+          NODE_ENV: production
     cluster:
       name: aphiria-com-preview-cluster
       minNodes: 1

@@ -125,6 +125,11 @@ describe("Types", () => {
                     url: "https://www.aphiria.com",
                     image: "ghcr.io/aphiria/aphiria.com-web@sha256:abc123",
                     cookieDomain: ".aphiria.com",
+                    env: {
+                        API_URI: "https://api.aphiria.com",
+                        COOKIE_DOMAIN: ".aphiria.com",
+                        NODE_ENV: "production",
+                    },
                     resources: {
                         requests: { cpu: "100m", memory: "256Mi" },
                         limits: { cpu: "200m", memory: "512Mi" },

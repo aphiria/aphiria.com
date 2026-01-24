@@ -4,6 +4,12 @@ environment:
 config:
   # Production-specific overrides
   aphiria-com-infrastructure:overrides:
+    app:
+      web:
+        env:
+          API_URI: https://api.aphiria.com
+          COOKIE_DOMAIN: .aphiria.com
+          NODE_ENV: production
     gateway:
       dns:
         domain: aphiria.com
