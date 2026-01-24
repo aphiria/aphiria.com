@@ -1,13 +1,15 @@
 import { notFound } from "next/navigation";
+import { cookies } from "next/headers";
 import type { Metadata } from "next";
 import { ContextSelector } from "@/components/docs/ContextSelector";
 import { SidebarNav } from "@/components/docs/SidebarNav";
 import { DocContent } from "@/components/docs/DocContent";
 import { TableOfContents } from "@/components/docs/TableOfContents";
 import { TocHighlighter } from "@/components/docs/TocHighlighter";
-import { readDocHtml, readDocMeta } from "@/lib/docs/artifact-reader";
+import { readDocHtml } from "@/lib/docs/artifact-reader";
 import { getSidebarForVersion } from "@/lib/docs/sidebar-config";
 import { generateToc } from "@/lib/docs/toc-generator";
+import { resolveContext } from "@/lib/cookies/context-cookie.server";
 
 interface PageProps {
     params: Promise<{
@@ -23,13 +25,25 @@ interface PageProps {
  * Renders docs with:
  * - Sidebar navigation with context selector
  * - Sanitized HTML content
+ *
+ * SSR: Resolves context server-side to eliminate flicker
  */
-export default async function DocPage({ params }: PageProps) {
+export default async function DocPage({ params, searchParams }: PageProps) {
     const { version, slug } = await params;
 
-    // For static export, pass default context
-    // ContextSelector will resolve actual context client-side from query params/cookies
-    const context = "framework";
+    // Resolve context server-side from cookies/URL params
+    const cookieStore = await cookies();
+    const resolvedSearchParams = await searchParams;
+
+    // Convert searchParams object to URLSearchParams
+    const urlParams = new URLSearchParams();
+    for (const [key, value] of Object.entries(resolvedSearchParams)) {
+        if (value) {
+            urlParams.set(key, Array.isArray(value) ? value[0] : value);
+        }
+    }
+
+    const context = await resolveContext(cookieStore, urlParams);
 
     // Load doc HTML
     const html = readDocHtml(slug);
@@ -70,20 +84,6 @@ export default async function DocPage({ params }: PageProps) {
             <div id="gray-out"></div>
         </>
     );
-}
-
-/**
- * Generate static params for all doc pages
- *
- * Required for static export (output: "export")
- */
-export async function generateStaticParams() {
-    const allDocs = readDocMeta();
-
-    return allDocs.map((doc) => ({
-        version: doc.version,
-        slug: doc.slug,
-    }));
 }
 
 /**
