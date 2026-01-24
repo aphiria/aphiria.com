@@ -3,6 +3,7 @@ import { Roboto, Roboto_Mono } from "next/font/google";
 import Script from "next/script";
 import { MobileMenuToggle } from "@/components/layout/MobileMenuToggle";
 import { CopyButtons } from "@/components/docs/CopyButtons";
+import { getServerConfig } from "@/lib/config/server-config";
 import "./aphiria.css";
 import "./prism.css";
 
@@ -39,10 +40,14 @@ export default function RootLayout({
 }: Readonly<{
     children: React.ReactNode;
 }>) {
+    const config = getServerConfig();
+
     return (
         <html lang="en" className={`${roboto.variable} ${robotoMono.variable}`}>
             <head>
-                <Script src="/js/config/config.js" strategy="beforeInteractive" />
+                <Script id="runtime-config" strategy="beforeInteractive">
+                    {`window.__RUNTIME_CONFIG__ = ${JSON.stringify(config)};`}
+                </Script>
             </head>
             <body>
                 {children}

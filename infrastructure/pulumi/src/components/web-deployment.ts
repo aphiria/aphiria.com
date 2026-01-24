@@ -60,7 +60,7 @@ export function createWebDeployment(args: WebDeploymentArgs): WebDeploymentResul
         APP_ENV: args.appEnv,
         ...(args.prNumber && { PR_NUMBER: args.prNumber }),
         ...(args.extraVars || {}),
-    }
+    };
 
     // Create env-config ConfigMap
     const envConfigMap = new k8s.core.v1.ConfigMap(

@@ -220,5 +220,4 @@ describe("createWebDeployment", () => {
         const namespace = await promiseOf(result.deployment.namespace);
         expect(namespace).toBe("preview-pr-123");
     });
-
 });

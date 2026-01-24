@@ -72,10 +72,10 @@ describe("NotFound", () => {
         expect(screen.getByTestId("main-nav-links")).toBeInTheDocument();
     });
 
-    it("applies error-404 class to error container", () => {
+    it("applies error-page class to error container", () => {
         const { container } = render(<NotFound />);
 
-        const errorDiv = container.querySelector(".error-404");
+        const errorDiv = container.querySelector(".error-page");
         expect(errorDiv).toBeInTheDocument();
         expect(errorDiv).toHaveTextContent("404");
     });

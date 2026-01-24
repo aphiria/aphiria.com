@@ -17,7 +17,7 @@ export default function NotFound() {
                     <MainNavLinks />
                 </ul>
             </Sidebar>
-            <div className="error-404">
+            <div className="error-page">
                 <h1>404</h1>
                 <p>The page you are looking for could not be found.</p>
                 <Link href="/docs" className="button" title="Go back to documentation">

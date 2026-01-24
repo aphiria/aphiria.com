@@ -10,6 +10,7 @@
 export interface RuntimeConfig {
     apiUri: string;
     cookieDomain: string;
+    appEnv: string;
 }
 
 // Extend Window interface for TypeScript
@@ -22,7 +23,7 @@ declare global {
 /**
  * Get runtime configuration (client-side only)
  *
- * Loaded from /js/config/config.js which is mounted by Kubernetes at deploy time.
+ * Injected via inline script in layout.tsx from server environment variables.
  * This allows the same static build to work across environments.
  *
  * @returns Runtime configuration or development defaults
@@ -33,6 +34,7 @@ export function getRuntimeConfig(): RuntimeConfig {
         return {
             apiUri: "http://localhost:8080",
             cookieDomain: "localhost",
+            appEnv: "development",
         };
     }
 

@@ -140,7 +140,7 @@ export function createApplicationResources(args: ApplicationResourcesArgs): Appl
         hostname: new URL(args.appConfig.web.url).hostname,
         serviceName: "web",
         serviceNamespace: args.namespace,
-        servicePort: 80,
+        servicePort: 3000, // Next.js SSR server port
         gatewayName: "nginx-gateway",
         gatewayNamespace: gatewayNamespace,
         sectionName: args.isPreviewPR ? "https-subdomains-1" : "https-subdomains",

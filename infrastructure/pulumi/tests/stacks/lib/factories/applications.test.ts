@@ -557,6 +557,7 @@ describe("createApplicationResources", () => {
                 expect.objectContaining({
                     name: "web",
                     hostname: "www.aphiria.com",
+                    servicePort: 3000,
                 })
             );
         });

@@ -19,19 +19,20 @@ function isValidContext(value: unknown): value is Context {
  *
  * Precedence: URL param > Cookie > Default
  *
+ * NOTE: This function only READS state during SSR. Cookies are set client-side
+ * when the user changes context, or via the useEffect in ContextSelector.
+ *
  * @param cookieStore - Read-only cookie store from next/headers
  * @param searchParams - URL search parameters
  * @returns Validated context value ("framework" or "library")
  */
 export async function resolveContext(
     cookieStore: ReadonlyRequestCookies,
-    searchParams: URLSearchParams,
+    searchParams: URLSearchParams
 ): Promise<Context> {
     // Check URL parameter first (highest priority)
     const urlContext = searchParams.get("context");
     if (urlContext && isValidContext(urlContext)) {
-        // Set cookie to persist URL override
-        await setContextCookie(urlContext);
         return urlContext;
     }
 
@@ -57,7 +58,7 @@ export async function setContextCookie(context: Context): Promise<void> {
     // Warn if using default
     if (!process.env.COOKIE_DOMAIN) {
         console.warn(
-            `COOKIE_DOMAIN environment variable not set - using default: "${cookieDomain}"`,
+            `COOKIE_DOMAIN environment variable not set - using default: "${cookieDomain}"`
         );
     }
 

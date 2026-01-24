@@ -917,8 +917,8 @@ blockquote {
     }
 }
 
-/* 404 Error Page */
-.error-404 {
+/* Error Pages (404, 500, etc.) */
+.error-page {
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -933,5 +933,12 @@ blockquote {
 
     p {
         margin: 1rem 0 2rem;
+    }
+
+    .error-actions {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+        justify-content: center;
     }
 }

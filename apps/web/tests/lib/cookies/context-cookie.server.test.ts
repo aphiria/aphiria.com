@@ -12,9 +12,8 @@ vi.mock("next/headers", () => ({
 }));
 
 // Import after mocks
-const { getContextCookie, resolveContext, setContextCookie } = await import(
-    "@/lib/cookies/context-cookie.server"
-);
+const { getContextCookie, resolveContext, setContextCookie } =
+    await import("@/lib/cookies/context-cookie.server");
 
 describe("context-cookie.server", () => {
     beforeEach(() => {
@@ -79,14 +78,9 @@ describe("context-cookie.server", () => {
             const result = await resolveContext(mockCookieStore, searchParams);
 
             expect(result).toBe("library");
-            expect(mockSet).toHaveBeenCalledWith(
-                "context",
-                "library",
-                expect.objectContaining({
-                    path: "/",
-                    sameSite: "lax",
-                }),
-            );
+            // Note: cookies are NOT set during SSR (resolveContext only reads)
+            // Cookies are set client-side when user changes context
+            expect(mockSet).not.toHaveBeenCalled();
         });
 
         it("returns cookie value when no URL parameter", async () => {
@@ -145,7 +139,7 @@ describe("context-cookie.server", () => {
                     sameSite: "lax",
                     secure: true,
                     httpOnly: false,
-                }),
+                })
             );
         });
 
@@ -159,7 +153,7 @@ describe("context-cookie.server", () => {
                 "framework",
                 expect.objectContaining({
                     domain: "localhost",
-                }),
+                })
             );
         });
 
@@ -173,7 +167,7 @@ describe("context-cookie.server", () => {
                 "framework",
                 expect.objectContaining({
                     secure: false,
-                }),
+                })
             );
         });
     });

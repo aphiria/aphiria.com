@@ -37,7 +37,7 @@ export function ContextSelector({ initialContext }: ContextSelectorProps) {
             url.searchParams.set("context", context);
             window.history.replaceState({}, "", url.toString());
         }
-    }, [context])
+    }, [context]);
 
     const handleContextChange = (newContext: Context) => {
         // Update state (useEffect will handle DOM visibility toggle and URL update)
