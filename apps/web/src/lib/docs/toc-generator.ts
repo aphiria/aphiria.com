@@ -17,16 +17,39 @@ export interface TocHeading {
     children?: TocHeading[];
 }
 
+// In-memory cache for TOC (static during runtime, keyed by HTML hash)
+const tocCache = new Map<string, TocHeading[]>();
+
+/**
+ * Simple hash function for caching TOC by HTML content
+ */
+function hashString(str: string): string {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+        const char = str.charCodeAt(i);
+        hash = (hash << 5) - hash + char;
+        hash = hash & hash; // Convert to 32bit integer
+    }
+    return hash.toString(36);
+}
+
 /**
  * Generate hierarchical table of contents from HTML
  *
  * Extracts h2 and h3 headings, nesting h3 under their parent h2
  * Detects context classes from ancestor divs
+ * Cached in memory after first generation (static content)
  *
  * @param html - Rendered HTML content
  * @returns Array of h2 headings with nested h3 children
  */
 export function generateToc(html: string): TocHeading[] {
+    const cacheKey = hashString(html);
+
+    if (tocCache.has(cacheKey)) {
+        return tocCache.get(cacheKey)!;
+    }
+
     const $ = cheerio.load(html);
     const headings: TocHeading[] = [];
     let currentH2: TocHeading | null = null;
@@ -64,5 +87,15 @@ export function generateToc(html: string): TocHeading[] {
         }
     });
 
+    tocCache.set(cacheKey, headings);
     return headings;
+}
+
+/**
+ * Clear TOC cache (for testing)
+ *
+ * @internal
+ */
+export function clearTocCache(): void {
+    tocCache.clear();
 }
