@@ -8,6 +8,7 @@ import { TocHighlighter } from "@/components/docs/TocHighlighter";
 import { readDocHtml } from "@/lib/docs/artifact-reader";
 import { getSidebarForVersion } from "@/lib/docs/sidebar-config";
 import { generateToc } from "@/lib/docs/toc-generator";
+import { parseContext } from "@/lib/context/resolver";
 
 // Cache docs pages for 1 hour
 export const revalidate = 3600;
@@ -35,7 +36,7 @@ export default async function DocPage({ params, searchParams }: PageProps) {
 
     // Get context from URL param only (server-side, cacheable)
     // Client-side JS will sync cookie → URL on initial load
-    const context = resolvedSearchParams.context === "library" ? "library" : "framework";
+    const context = parseContext(resolvedSearchParams.context);
 
     // CSS to hide context-specific content based on URL param
     // This prevents flicker by applying correct visibility from first paint

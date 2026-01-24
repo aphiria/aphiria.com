@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createRedirectUrl } from "@/lib/routing/redirects";
+import { parseContext } from "@/lib/context/resolver";
 
 /**
  * Next.js middleware for URL redirects and query param injection
@@ -26,7 +27,7 @@ export default function proxy(request: NextRequest) {
     // Ensure all /docs/* URLs have explicit ?context= parameter
     if (url.pathname.startsWith("/docs/") && !url.searchParams.has("context")) {
         const contextCookie = request.cookies.get("context");
-        const contextValue = contextCookie?.value === "library" ? "library" : "framework";
+        const contextValue = parseContext(contextCookie?.value);
 
         const redirectUrl = url.clone();
         redirectUrl.searchParams.set("context", contextValue);

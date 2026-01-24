@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { usePathname, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { Context } from "@/types/context";
+import { parseContext } from "@/lib/context/resolver";
 import { setContextCookie } from "@/lib/cookies/context-cookie.client";
 import { toggleContextVisibility } from "@/lib/context/toggler";
 
@@ -21,17 +22,11 @@ interface ContextSelectorProps {
  * - Visibility toggles instantly via DOM manipulation
  */
 export function ContextSelector({ initialContext }: ContextSelectorProps) {
-    const pathname = usePathname();
     const searchParams = useSearchParams();
 
     // Derive initial context from URL on each navigation
     const urlDerivedContext = useMemo(() => {
-        const urlContext = searchParams.get("context");
-        return urlContext === "library"
-            ? "library"
-            : urlContext === "framework"
-              ? "framework"
-              : initialContext;
+        return parseContext(searchParams.get("context"), initialContext);
     }, [searchParams, initialContext]);
 
     // Local state tracks current context (may differ from URL during user interaction)
