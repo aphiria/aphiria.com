@@ -29,10 +29,6 @@ config:
         cookieDomain: .aphiria.com
         replicas: 2
         image: ghcr.io/aphiria/aphiria.com-web:latest
-        env:
-          API_URI: https://api.aphiria.com
-          COOKIE_DOMAIN: .aphiria.com
-          NODE_ENV: production
         resources:
           requests:
             cpu: 250m
