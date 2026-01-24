@@ -25,13 +25,22 @@ export function ContextSelector({ initialContext }: ContextSelectorProps) {
     // Use server-resolved context directly (no client-side resolution needed)
     const [context, setContext] = useState<Context>(initialContext);
 
-    // Apply DOM visibility on mount and when context changes
+    // Apply DOM visibility and ensure URL has context parameter
     useEffect(() => {
         toggleContextVisibility(context);
+
+        // Ensure URL has context query parameter
+        const url = new URL(window.location.href);
+        const urlContext = url.searchParams.get("context");
+
+        if (urlContext !== context) {
+            url.searchParams.set("context", context);
+            window.history.replaceState({}, "", url.toString());
+        }
     }, [context])
 
     const handleContextChange = (newContext: Context) => {
-        // Update state (useEffect will handle DOM visibility toggle)
+        // Update state (useEffect will handle DOM visibility toggle and URL update)
         setContext(newContext);
 
         // Persist to cookie
