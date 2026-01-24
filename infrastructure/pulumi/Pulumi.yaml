@@ -35,11 +35,11 @@ config:
           NODE_ENV: production
         resources:
           requests:
-            cpu: 50m
-            memory: 64Mi
+            cpu: 250m
+            memory: 256Mi
           limits:
-            cpu: 100m
-            memory: 128Mi
+            cpu: 500m
+            memory: 512Mi
         podDisruptionBudget:
           minAvailable: 1
       api:
