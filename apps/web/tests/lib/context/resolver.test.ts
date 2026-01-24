@@ -1,124 +1,60 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-
-// Mock the server-side cookie module
-const mockGetContextCookie = vi.fn();
-vi.mock("@/lib/cookies/context-cookie.server", () => ({
-    getContextCookie: mockGetContextCookie,
-}));
-
-// Import after mocks
-const { resolveContext } = await import("@/lib/context/resolver");
+import { describe, it, expect } from "vitest";
+import { parseContext, DEFAULT_CONTEXT } from "@/lib/context/resolver";
 
 describe("context resolver", () => {
-    beforeEach(() => {
-        vi.clearAllMocks();
-        mockGetContextCookie.mockResolvedValue(null);
+    describe("DEFAULT_CONTEXT", () => {
+        it('is set to "framework"', () => {
+            expect(DEFAULT_CONTEXT).toBe("framework");
+        });
     });
 
-    describe("resolveContext", () => {
-        it("returns query param context when set to framework", async () => {
-            const searchParams = new URLSearchParams("context=framework");
-
-            const result = await resolveContext(searchParams);
-
-            expect(result).toBe("framework");
-            expect(mockGetContextCookie).not.toHaveBeenCalled();
+    describe("parseContext", () => {
+        it("returns framework when value is framework", () => {
+            expect(parseContext("framework")).toBe("framework");
         });
 
-        it("returns query param context when set to library", async () => {
-            const searchParams = new URLSearchParams("context=library");
-
-            const result = await resolveContext(searchParams);
-
-            expect(result).toBe("library");
-            expect(mockGetContextCookie).not.toHaveBeenCalled();
+        it("returns library when value is library", () => {
+            expect(parseContext("library")).toBe("library");
         });
 
-        it("ignores invalid query param and falls back to cookie", async () => {
-            const searchParams = new URLSearchParams("context=invalid");
-            mockGetContextCookie.mockResolvedValue("library");
-
-            const result = await resolveContext(searchParams);
-
-            expect(result).toBe("library");
-            expect(mockGetContextCookie).toHaveBeenCalled();
+        it("returns fallback for invalid string value", () => {
+            expect(parseContext("invalid")).toBe("framework");
         });
 
-        it("returns cookie value when query param not set", async () => {
-            const searchParams = new URLSearchParams();
-            mockGetContextCookie.mockResolvedValue("framework");
-
-            const result = await resolveContext(searchParams);
-
-            expect(result).toBe("framework");
-            expect(mockGetContextCookie).toHaveBeenCalled();
+        it("returns fallback for null value", () => {
+            expect(parseContext(null)).toBe("framework");
         });
 
-        it("defaults to framework when neither query nor cookie set", async () => {
-            const searchParams = new URLSearchParams();
-            mockGetContextCookie.mockResolvedValue(null);
-
-            const result = await resolveContext(searchParams);
-
-            expect(result).toBe("framework");
+        it("returns fallback for undefined value", () => {
+            expect(parseContext(undefined)).toBe("framework");
         });
 
-        it("handles Record-style search params (Next.js page props)", async () => {
-            const searchParams = { context: "library" };
-
-            const result = await resolveContext(searchParams);
-
-            expect(result).toBe("library");
+        it("uses custom fallback when provided", () => {
+            expect(parseContext("invalid", "library")).toBe("library");
         });
 
-        it("handles Record-style with array value (uses first item)", async () => {
-            const searchParams = { context: ["framework", "library"] };
-
-            // Array value is truthy but not "framework" or "library" string
-            // So it falls back to cookie
-            mockGetContextCookie.mockResolvedValue("library");
-            const result = await resolveContext(searchParams);
-
-            expect(result).toBe("library");
+        it("handles array value (uses first item)", () => {
+            expect(parseContext(["framework", "library"])).toBe("framework");
         });
 
-        it("handles Record-style with undefined value", async () => {
-            const searchParams = { context: undefined };
-            mockGetContextCookie.mockResolvedValue("framework");
-
-            const result = await resolveContext(searchParams);
-
-            expect(result).toBe("framework");
+        it("handles array with library as first item", () => {
+            expect(parseContext(["library", "framework"])).toBe("library");
         });
 
-        it("query param takes precedence over cookie", async () => {
-            const searchParams = new URLSearchParams("context=library");
-            mockGetContextCookie.mockResolvedValue("framework");
-
-            const result = await resolveContext(searchParams);
-
-            expect(result).toBe("library");
-            expect(mockGetContextCookie).not.toHaveBeenCalled();
+        it("handles empty array (returns fallback)", () => {
+            expect(parseContext([])).toBe("framework");
         });
 
-        it("cookie takes precedence over default", async () => {
-            const searchParams = new URLSearchParams();
-            mockGetContextCookie.mockResolvedValue("library");
-
-            const result = await resolveContext(searchParams);
-
-            expect(result).toBe("library");
+        it("handles array with invalid first item (returns fallback)", () => {
+            expect(parseContext(["invalid", "framework"])).toBe("framework");
         });
 
-        it("ignores invalid cookie value and uses default", async () => {
-            const searchParams = new URLSearchParams();
-            // TypeScript prevents this, but test runtime behavior
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            mockGetContextCookie.mockResolvedValue("invalid" as any);
+        it("prefers valid value over fallback", () => {
+            expect(parseContext("library", "framework")).toBe("library");
+        });
 
-            const result = await resolveContext(searchParams);
-
-            expect(result).toBe("framework");
+        it("handles empty string (returns fallback)", () => {
+            expect(parseContext("")).toBe("framework");
         });
     });
 });

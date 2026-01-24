@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { setCookie } from "cookies-next";
+import { setCookie, getCookie } from "cookies-next";
 import type { RuntimeConfig } from "@/lib/runtime-config";
 
 // Mock runtime config
@@ -11,7 +11,7 @@ vi.mock("@/lib/runtime-config", () => ({
 }));
 
 // Import after mocks
-const { setContextCookie } = await import("@/lib/cookies/context-cookie.client");
+const { setContextCookie, getContextCookie } = await import("@/lib/cookies/context-cookie.client");
 
 describe("context-cookie (client)", () => {
     beforeEach(() => {
@@ -122,6 +122,38 @@ describe("context-cookie (client)", () => {
                     path: "/",
                 })
             );
+        });
+    });
+
+    describe("getContextCookie", () => {
+        it("returns framework when cookie value is framework", () => {
+            vi.mocked(getCookie).mockReturnValue("framework");
+
+            expect(getContextCookie()).toBe("framework");
+        });
+
+        it("returns library when cookie value is library", () => {
+            vi.mocked(getCookie).mockReturnValue("library");
+
+            expect(getContextCookie()).toBe("library");
+        });
+
+        it("returns null when cookie is not set", () => {
+            vi.mocked(getCookie).mockReturnValue(undefined);
+
+            expect(getContextCookie()).toBe(null);
+        });
+
+        it("returns null when cookie value is invalid", () => {
+            vi.mocked(getCookie).mockReturnValue("invalid");
+
+            expect(getContextCookie()).toBe(null);
+        });
+
+        it("returns null when cookie value is empty string", () => {
+            vi.mocked(getCookie).mockReturnValue("");
+
+            expect(getContextCookie()).toBe(null);
         });
     });
 });

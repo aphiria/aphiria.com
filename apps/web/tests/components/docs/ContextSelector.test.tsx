@@ -1,17 +1,15 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent, cleanup } from "@testing-library/react";
 import { ContextSelector } from "@/components/docs/ContextSelector";
+import { ReadonlyURLSearchParams } from "next/navigation";
 
 // Mock dependencies
 const mockSetContextCookie = vi.fn();
-const mockGetContextCookie = vi.fn();
 const mockToggleContextVisibility = vi.fn();
-const mockRouterReplace = vi.fn();
-const mockRouterPush = vi.fn();
+const mockSearchParams = new URLSearchParams();
 
 vi.mock("@/lib/cookies/context-cookie.client", () => ({
     setContextCookie: (ctx: string) => mockSetContextCookie(ctx),
-    getContextCookie: () => mockGetContextCookie(),
 }));
 
 vi.mock("@/lib/context/toggler", () => ({
@@ -19,19 +17,20 @@ vi.mock("@/lib/context/toggler", () => ({
 }));
 
 vi.mock("next/navigation", () => ({
-    useRouter: () => ({
-        replace: mockRouterReplace,
-        push: mockRouterPush,
-    }),
+    useSearchParams: () => mockSearchParams as ReadonlyURLSearchParams,
 }));
 
 describe("ContextSelector", () => {
     beforeEach(() => {
         vi.clearAllMocks();
+        mockSearchParams.delete("context");
+        // Mock history.replaceState
+        vi.spyOn(window.history, "replaceState").mockImplementation(() => {});
     });
 
     afterEach(() => {
         cleanup();
+        vi.restoreAllMocks();
     });
 
     it("renders context selector with label and dropdown", () => {
@@ -67,7 +66,7 @@ describe("ContextSelector", () => {
         expect(mockToggleContextVisibility).toHaveBeenCalledWith("framework");
     });
 
-    it("updates cookie and visibility when user changes selection", () => {
+    it("updates cookie, visibility, and URL when user changes selection", () => {
         render(<ContextSelector initialContext="framework" />);
 
         const select = screen.getByRole("combobox");
@@ -75,6 +74,7 @@ describe("ContextSelector", () => {
 
         expect(mockSetContextCookie).toHaveBeenCalledWith("library");
         expect(mockToggleContextVisibility).toHaveBeenCalledWith("library");
+        expect(window.history.replaceState).toHaveBeenCalled();
     });
 
     it("updates select value when user changes selection", () => {
