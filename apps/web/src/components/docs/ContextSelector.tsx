@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { Context } from "@/types/context";
 import { setContextCookie } from "@/lib/cookies/context-cookie.client";
@@ -15,41 +15,47 @@ interface ContextSelectorProps {
  * Context selector dropdown for switching between framework and library modes
  *
  * Strategy:
- * - State derives from URL param on every render (single source of truth)
- * - Dropdown change updates URL via history.pushState + forces re-render
+ * - Local state for instant UI updates (no network calls)
+ * - URL updated via history.replaceState (no navigation)
  * - Cookie syncs from state for persistence
- * - DOM updates (visibility, links) happen on state change
+ * - Visibility toggles instantly via DOM manipulation
  */
 export function ContextSelector({ initialContext }: ContextSelectorProps) {
     const pathname = usePathname();
     const searchParams = useSearchParams();
 
-    // Derive context from current URL (or use initialContext as fallback)
-    const urlContext = searchParams.get("context");
-    const context: Context =
-        urlContext === "library"
+    // Derive initial context from URL on each navigation
+    const urlDerivedContext = useMemo(() => {
+        const urlContext = searchParams.get("context");
+        return urlContext === "library"
             ? "library"
             : urlContext === "framework"
               ? "framework"
               : initialContext;
+    }, [searchParams, initialContext]);
 
-    // Note: Middleware ensures all /docs/* URLs have ?context= param
-    // No client-side redirect needed
+    // Local state tracks current context (may differ from URL during user interaction)
+    const [context, setContext] = useState<Context>(urlDerivedContext);
+
+    // Sync state when URL changes (from navigation)
+    useEffect(() => {
+        setContext(urlDerivedContext);
+    }, [urlDerivedContext]);
 
     // Update visibility and cookie whenever context changes
     useEffect(() => {
-        // Save to cookie
         setContextCookie(context);
-
-        // Toggle visibility
         toggleContextVisibility(context);
-    }, [context, pathname]);
+    }, [context]);
 
     const handleContextChange = (newContext: Context) => {
-        // Update URL and force page navigation to ensure Next.js updates
+        // Update local state (triggers visibility toggle via effect)
+        setContext(newContext);
+
+        // Update URL without navigation
         const url = new URL(window.location.href);
         url.searchParams.set("context", newContext);
-        window.location.href = url.toString();
+        window.history.replaceState({}, "", url.toString());
     };
 
     return (
