@@ -5,6 +5,7 @@ import { SidebarNav } from "@/components/docs/SidebarNav";
 import { DocContent } from "@/components/docs/DocContent";
 import { TableOfContents } from "@/components/docs/TableOfContents";
 import { TocHighlighter } from "@/components/docs/TocHighlighter";
+import { ContextStyleInjector } from "@/components/docs/ContextStyleInjector";
 import { readDocHtml } from "@/lib/docs/artifact-reader";
 import { getSidebarForVersion } from "@/lib/docs/sidebar-config";
 import { generateToc } from "@/lib/docs/toc-generator";
@@ -35,13 +36,6 @@ export default async function DocPage({ params, searchParams }: PageProps) {
     // Client-side JS will sync cookie → URL on initial load
     const context = parseContext(resolvedSearchParams.context);
 
-    // CSS to hide context-specific content based on URL param
-    // This prevents flicker by applying correct visibility from first paint
-    const contextCss =
-        context === "framework"
-            ? `.context-library { display: none; }`
-            : `.context-framework { display: none; }`;
-
     // Load doc HTML
     const html = readDocHtml(slug);
     if (!html) {
@@ -56,7 +50,7 @@ export default async function DocPage({ params, searchParams }: PageProps) {
 
     return (
         <>
-            <style dangerouslySetInnerHTML={{ __html: contextCss }} />
+            <ContextStyleInjector context={context} />
             <SidebarNav
                 sections={sidebarSections}
                 currentSlug={slug}
