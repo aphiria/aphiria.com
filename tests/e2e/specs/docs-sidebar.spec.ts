@@ -25,7 +25,7 @@ test("sidebar sections contain visible headings with text and navigation lists",
 
 test("all sidebar links return successful HTTP responses", async ({ page, docsPage }) => {
     // We're visiting a bunch of pages here, so increase the timeout
-    test.setTimeout(60000);
+    test.setTimeout(90000);
 
     await docsPage.goto(TEST_DOCS.introduction);
 

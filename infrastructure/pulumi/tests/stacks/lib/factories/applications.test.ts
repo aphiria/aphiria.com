@@ -40,8 +40,13 @@ describe("createApplicationResources", () => {
         web: {
             replicas: 2,
             image: "ghcr.io/aphiria/web:latest",
-            url: "https://local.aphiria.com",
-            cookieDomain: ".local.aphiria.com",
+            url: "https://www.aphiria.com",
+            cookieDomain: ".aphiria.com",
+            env: {
+                API_URI: "https://api.aphiria.com",
+                COOKIE_DOMAIN: ".aphiria.com",
+                NODE_ENV: "production",
+            },
             resources: {
                 requests: { cpu: "100m", memory: "128Mi" },
                 limits: { cpu: "200m", memory: "256Mi" },
@@ -51,7 +56,7 @@ describe("createApplicationResources", () => {
         api: {
             replicas: 2,
             image: "ghcr.io/aphiria/api:latest",
-            url: "https://api.local.aphiria.com",
+            url: "https://api.aphiria.com",
             logLevel: "debug",
             resources: {
                 initContainer: {
@@ -205,7 +210,7 @@ describe("createApplicationResources", () => {
             );
         });
 
-        it("should create web deployment with jsConfigData from config", () => {
+        it("should create web deployment with apiUri and cookieDomain from config", () => {
             createApplicationResources({
                 env: "local",
                 provider: k8sProvider,
@@ -219,10 +224,8 @@ describe("createApplicationResources", () => {
 
             expect(createWebDeployment).toHaveBeenCalledWith(
                 expect.objectContaining({
-                    jsConfigData: {
-                        apiUri: "https://api.local.aphiria.com",
-                        cookieDomain: ".local.aphiria.com",
-                    },
+                    apiUri: "https://api.aphiria.com",
+                    cookieDomain: ".aphiria.com",
                 })
             );
         });
@@ -399,8 +402,8 @@ describe("createApplicationResources", () => {
 
             expect(createAPIDeployment).toHaveBeenCalledWith(
                 expect.objectContaining({
-                    apiUrl: "https://api.local.aphiria.com",
-                    webUrl: "https://local.aphiria.com",
+                    apiUrl: "https://api.aphiria.com",
+                    webUrl: "https://www.aphiria.com",
                 })
             );
         });
@@ -553,7 +556,8 @@ describe("createApplicationResources", () => {
             expect(createHTTPRoute).toHaveBeenCalledWith(
                 expect.objectContaining({
                     name: "web",
-                    hostname: "local.aphiria.com",
+                    hostname: "www.aphiria.com",
+                    servicePort: 3000,
                 })
             );
         });
@@ -573,7 +577,7 @@ describe("createApplicationResources", () => {
             expect(createHTTPRoute).toHaveBeenCalledWith(
                 expect.objectContaining({
                     name: "api",
-                    hostname: "api.local.aphiria.com",
+                    hostname: "api.aphiria.com",
                 })
             );
         });
@@ -772,7 +776,7 @@ describe("createApplicationResources", () => {
 
             expect(createHTTPSRedirectRoute).toHaveBeenCalledWith(
                 expect.objectContaining({
-                    domains: ["local.aphiria.com", "api.local.aphiria.com"],
+                    domains: ["www.aphiria.com", "api.aphiria.com"],
                 })
             );
         });

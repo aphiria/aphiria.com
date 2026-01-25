@@ -5,9 +5,11 @@ import { SidebarNav } from "@/components/docs/SidebarNav";
 import { DocContent } from "@/components/docs/DocContent";
 import { TableOfContents } from "@/components/docs/TableOfContents";
 import { TocHighlighter } from "@/components/docs/TocHighlighter";
-import { readDocHtml, readDocMeta } from "@/lib/docs/artifact-reader";
+import { ContextStyleInjector } from "@/components/docs/ContextStyleInjector";
+import { readDocHtml } from "@/lib/docs/artifact-reader";
 import { getSidebarForVersion } from "@/lib/docs/sidebar-config";
 import { generateToc } from "@/lib/docs/toc-generator";
+import { parseContext } from "@/lib/context/resolver";
 
 interface PageProps {
     params: Promise<{
@@ -23,13 +25,16 @@ interface PageProps {
  * Renders docs with:
  * - Sidebar navigation with context selector
  * - Sanitized HTML content
+ *
+ * SSR: Resolves context server-side to eliminate flicker
  */
-export default async function DocPage({ params }: PageProps) {
+export default async function DocPage({ params, searchParams }: PageProps) {
     const { version, slug } = await params;
+    const resolvedSearchParams = await searchParams;
 
-    // For static export, pass default context
-    // ContextSelector will resolve actual context client-side from query params/cookies
-    const context = "framework";
+    // Get context from URL param only (server-side, cacheable)
+    // Client-side JS will sync cookie → URL on initial load
+    const context = parseContext(resolvedSearchParams.context);
 
     // Load doc HTML
     const html = readDocHtml(slug);
@@ -45,6 +50,7 @@ export default async function DocPage({ params }: PageProps) {
 
     return (
         <>
+            <ContextStyleInjector context={context} />
             <SidebarNav
                 sections={sidebarSections}
                 currentSlug={slug}
@@ -52,7 +58,6 @@ export default async function DocPage({ params }: PageProps) {
                 contextSelector={<ContextSelector initialContext={context} />}
             />
             <article>
-                <div id="article-loading"></div>
                 <TableOfContents headings={tocHeadings} />
                 <DocContent html={html} />
                 <footer>
@@ -70,20 +75,6 @@ export default async function DocPage({ params }: PageProps) {
             <div id="gray-out"></div>
         </>
     );
-}
-
-/**
- * Generate static params for all doc pages
- *
- * Required for static export (output: "export")
- */
-export async function generateStaticParams() {
-    const allDocs = readDocMeta();
-
-    return allDocs.map((doc) => ({
-        version: doc.version,
-        slug: doc.slug,
-    }));
 }
 
 /**

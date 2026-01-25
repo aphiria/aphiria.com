@@ -31,11 +31,11 @@ config:
         image: ghcr.io/aphiria/aphiria.com-web:latest
         resources:
           requests:
-            cpu: 50m
-            memory: 64Mi
+            cpu: 500m
+            memory: 512Mi
           limits:
-            cpu: 100m
-            memory: 128Mi
+            cpu: "1"
+            memory: 1Gi
         podDisruptionBudget:
           minAvailable: 1
       api:

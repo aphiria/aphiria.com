@@ -82,8 +82,8 @@ For rapid iteration on frontend changes without deploying to Kubernetes:
 #### 1. Build All TypeScript Projects
 
 ```bash
-npm run build
 npm run build:docs
+npm run build
 ```
 
 This builds all TypeScript code (documentation compiler, infrastructure, and web app) in the correct dependency order.

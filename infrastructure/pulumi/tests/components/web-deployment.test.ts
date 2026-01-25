@@ -23,9 +23,8 @@ describe("createWebDeployment", () => {
             replicas: 1,
             image: "ghcr.io/aphiria/aphiria.com-web:latest",
             baseUrl: "https://www.aphiria.com",
-            jsConfigData: {
-                apiBaseUrl: "https://api.aphiria.com",
-            },
+            apiUri: "https://api.aphiria.com",
+            cookieDomain: "aphiria.com",
             resources: standardResources,
             provider: k8sProvider,
         });
@@ -42,7 +41,7 @@ describe("createWebDeployment", () => {
         ]);
         expect(deploymentName).toBe("web");
         expect(serviceName).toBe("web");
-        expect(configMapName).toBe("js-config");
+        expect(configMapName).toBe("env-config");
         expect(namespace).toBe("web-ns");
     });
 
@@ -54,9 +53,8 @@ describe("createWebDeployment", () => {
             replicas: 2,
             image: "ghcr.io/aphiria/aphiria.com-web@sha256:abc123",
             baseUrl: "https://www.aphiria.com",
-            jsConfigData: {
-                apiBaseUrl: "https://api.aphiria.com",
-            },
+            apiUri: "https://api.aphiria.com",
+            cookieDomain: "aphiria.com",
             podDisruptionBudget: {
                 minAvailable: 1,
             },
@@ -82,9 +80,8 @@ describe("createWebDeployment", () => {
             replicas: 1,
             image: "ghcr.io/aphiria/aphiria.com-web:latest",
             baseUrl: "https://www.aphiria.com",
-            jsConfigData: {
-                apiBaseUrl: "https://api.aphiria.com",
-            },
+            apiUri: "https://api.aphiria.com",
+            cookieDomain: "aphiria.com",
             resources: standardResources,
             provider: k8sProvider,
         });
@@ -100,9 +97,8 @@ describe("createWebDeployment", () => {
             replicas: 1,
             image: "ghcr.io/aphiria/aphiria.com-web:latest",
             baseUrl: "https://pr-123.pr.aphiria.com",
-            jsConfigData: {
-                apiBaseUrl: "https://pr-123.pr-api.aphiria.com",
-            },
+            apiUri: "https://pr-123.pr-api.aphiria.com",
+            cookieDomain: "pr.aphiria.com",
             prNumber: "123",
             resources: standardResources,
             provider: k8sProvider,
@@ -122,9 +118,8 @@ describe("createWebDeployment", () => {
             replicas: 2,
             image: "ghcr.io/aphiria/aphiria.com-web@sha256:abc123",
             baseUrl: "https://www.aphiria.com",
-            jsConfigData: {
-                apiBaseUrl: "https://api.aphiria.com",
-            },
+            apiUri: "https://api.aphiria.com",
+            cookieDomain: "aphiria.com",
             resources: {
                 requests: { cpu: "100m", memory: "256Mi" },
                 limits: { cpu: "200m", memory: "512Mi" },
@@ -143,9 +138,8 @@ describe("createWebDeployment", () => {
             replicas: 2,
             image: "ghcr.io/aphiria/aphiria.com-web@sha256:abc123",
             baseUrl: "https://www.aphiria.com",
-            jsConfigData: {
-                apiBaseUrl: "https://api.aphiria.com",
-            },
+            apiUri: "https://api.aphiria.com",
+            cookieDomain: "aphiria.com",
             imagePullSecrets: ["ghcr-pull-secret"],
             resources: standardResources,
             provider: k8sProvider,
@@ -162,9 +156,8 @@ describe("createWebDeployment", () => {
             replicas: 1,
             image: "ghcr.io/aphiria/aphiria.com-web:latest",
             baseUrl: "https://www.aphiria.com",
-            jsConfigData: {
-                apiBaseUrl: "https://api.aphiria.com",
-            },
+            apiUri: "https://api.aphiria.com",
+            cookieDomain: "aphiria.com",
             labels: {
                 "custom-label": "custom-value",
                 environment: "testing",
@@ -193,9 +186,8 @@ describe("createWebDeployment", () => {
             replicas: 2,
             image: "ghcr.io/aphiria/aphiria.com-web@sha256:abc123",
             baseUrl: "https://www.aphiria.com",
-            jsConfigData: {
-                apiBaseUrl: "https://api.aphiria.com",
-            },
+            apiUri: "https://api.aphiria.com",
+            cookieDomain: "aphiria.com",
             resources: standardResources,
             provider: k8sProvider,
         });
@@ -214,9 +206,8 @@ describe("createWebDeployment", () => {
             replicas: 1,
             image: "ghcr.io/aphiria/aphiria.com-web:latest",
             baseUrl: "https://pr-123.pr.aphiria.com",
-            jsConfigData: {
-                apiBaseUrl: "https://pr-123.pr-api.aphiria.com",
-            },
+            apiUri: "https://pr-123.pr-api.aphiria.com",
+            cookieDomain: "pr.aphiria.com",
             extraVars: {
                 CUSTOM_VAR: "custom-value",
             },
@@ -228,31 +219,5 @@ describe("createWebDeployment", () => {
 
         const namespace = await promiseOf(result.deployment.namespace);
         expect(namespace).toBe("preview-pr-123");
-    });
-
-    it("should create web-nginx-config ConfigMap", async () => {
-        const result = createWebDeployment({
-            imagePullPolicy: "Never",
-            appEnv: "local",
-            namespace: "web-ns",
-            replicas: 1,
-            image: "ghcr.io/aphiria/aphiria.com-web:latest",
-            baseUrl: "https://www.aphiria.com",
-            jsConfigData: {
-                apiBaseUrl: "https://api.aphiria.com",
-            },
-            resources: standardResources,
-            provider: k8sProvider,
-        });
-
-        expect(result.nginxConfigMap).toBeDefined();
-
-        const [nginxConfigName, nginxConfigNamespace] = await Promise.all([
-            promiseOf(result.nginxConfigMap.name),
-            promiseOf(result.nginxConfigMap.namespace),
-        ]);
-
-        expect(nginxConfigName).toBe("web-nginx-config");
-        expect(nginxConfigNamespace).toBe("web-ns");
     });
 });

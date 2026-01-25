@@ -1,7 +1,11 @@
-import { describe, it, expect } from "vitest";
-import { generateToc } from "@/lib/docs/toc-generator";
+import { describe, it, expect, beforeEach } from "vitest";
+import { generateToc, clearTocCache } from "@/lib/docs/toc-generator";
 
 describe("toc-generator", () => {
+    beforeEach(() => {
+        clearTocCache(); // Clear cache between tests
+    });
+
     describe("generateToc", () => {
         it("extracts h2 and h3 headings with hierarchy", () => {
             const html = `
@@ -188,6 +192,32 @@ describe("toc-generator", () => {
             const result = generateToc(html);
 
             expect(result[0].context).toBe("context-framework");
+        });
+
+        it("caches result after first generation", () => {
+            const html = `
+                <h2 id="intro">Introduction</h2>
+                <h3 id="setup">Setup</h3>
+            `;
+
+            // Call twice with same HTML
+            const result1 = generateToc(html);
+            const result2 = generateToc(html);
+
+            // Should return same cached result
+            expect(result1).toBe(result2); // Same reference
+        });
+
+        it("generates different cache for different HTML", () => {
+            const html1 = `<h2 id="intro">Introduction</h2>`;
+            const html2 = `<h2 id="features">Features</h2>`;
+
+            const result1 = generateToc(html1);
+            const result2 = generateToc(html2);
+
+            expect(result1).not.toBe(result2); // Different references
+            expect(result1[0].id).toBe("intro");
+            expect(result2[0].id).toBe("features");
         });
     });
 });

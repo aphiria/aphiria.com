@@ -20,6 +20,7 @@ interface SidebarNavProps {
  * Sidebar navigation component
  *
  * Server component that renders navigation sections with active link highlighting
+ * Note: Middleware adds ?context= param based on cookie, so links don't need it
  */
 export function SidebarNav({ sections, currentSlug, version, contextSelector }: SidebarNavProps) {
     return (

@@ -68,19 +68,6 @@ describe("context toggler", () => {
             });
         });
 
-        it("hides loading indicator when context is set", () => {
-            document.body.innerHTML = `
-                <div id="article-loading" style="display: block;">Loading...</div>
-                <div class="context-framework">Framework</div>
-            `;
-
-            const loadingEl = document.getElementById("article-loading")!;
-
-            toggleContextVisibility("framework");
-
-            expect(loadingEl.style.display).toBe("none");
-        });
-
         it("handles missing loading indicator gracefully", () => {
             document.body.innerHTML = `
                 <div class="context-framework">Framework</div>
@@ -127,6 +114,24 @@ describe("context toggler", () => {
             toggleContextVisibility("library");
             expect(frameworkEl.style.display).toBe("none");
             expect(libraryEl.style.display).toBe("revert");
+        });
+
+        it("does nothing when context is invalid", () => {
+            document.body.innerHTML = `
+                <div class="context-framework" style="display: revert;">Framework</div>
+                <div class="context-library" style="display: none;">Library</div>
+            `;
+
+            // TypeScript prevents this, but test runtime behavior
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            toggleContextVisibility("invalid" as any);
+
+            const frameworkEl = document.querySelector(".context-framework") as HTMLElement;
+            const libraryEl = document.querySelector(".context-library") as HTMLElement;
+
+            // Elements should remain unchanged
+            expect(frameworkEl.style.display).toBe("revert");
+            expect(libraryEl.style.display).toBe("none");
         });
     });
 });

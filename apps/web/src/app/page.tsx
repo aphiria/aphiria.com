@@ -3,19 +3,20 @@ import Link from "next/link";
 import { SimpleLayout } from "@/components/layout/SimpleLayout";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { MainNavLinks } from "@/components/layout/MainNavLinks";
-import { ContextSelector } from "@/components/docs/ContextSelector";
 import { HighlightedHtml } from "@/components/docs/HighlightedHtml";
+
+// Cache homepage for 1 hour
+export const revalidate = 3600;
 
 export const metadata: Metadata = {
     title: "Aphiria - A simple, extensible REST API framework",
     description: "A simple, extensible REST API framework for PHP",
 };
 
-export default function HomePage() {
+export default async function HomePage() {
     return (
         <SimpleLayout>
             <Sidebar id="sidebar-main-nav">
-                <ContextSelector initialContext="framework" />
                 <ul>
                     <MainNavLinks />
                 </ul>

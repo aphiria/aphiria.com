@@ -283,27 +283,25 @@ describe("createStack", () => {
             );
         });
 
-        it("should pass isPreviewPR=false for preview-base (does not start with preview-pr-)", () => {
+        it("should NOT deploy applications for preview-base infrastructure-only stack", () => {
             (loadConfig as Mock).mockReturnValue({
                 stackName: "preview-base",
                 skipBaseInfrastructure: false,
                 gateway: { tlsMode: "letsencrypt-prod", domains: ["*.pr.aphiria.com"] },
                 postgresql: { user: "postgres", password: pulumi.output("password") },
-                namespace: { name: "default" }, // preview-base has namespace config but uses default
-                app: { web: { url: "https://pr-grafana.aphiria.com" } },
+                namespace: { name: "default" },
+                // App config is inherited from base Pulumi.yaml but should be ignored for preview-base
+                app: { web: { url: "https://www.aphiria.com" } },
                 grafana: { hostname: "pr-grafana.aphiria.com" },
                 monitoring: {},
                 prometheus: {},
             });
 
-            createStack("preview");
+            const stack = createStack("preview");
 
-            expect(createApplicationResources).toHaveBeenCalledWith(
-                expect.objectContaining({
-                    isPreviewPR: false, // Should be false for preview-base
-                    hasNamespaceConfig: true,
-                })
-            );
+            // Preview-base should NOT deploy applications (infrastructure only)
+            expect(createApplicationResources).not.toHaveBeenCalled();
+            expect(stack.applications).toBeUndefined();
         });
 
         it("should NOT create WWW redirect for preview", () => {
@@ -463,6 +461,37 @@ describe("createStack", () => {
     });
 
     describe("conditional resource creation", () => {
+        it("should deploy applications for preview-pr stacks even with inherited app config", () => {
+            (loadConfig as Mock).mockReturnValue({
+                stackName: "preview-pr-456",
+                skipBaseInfrastructure: true,
+                gateway: { tlsMode: "letsencrypt-prod", domains: ["*.pr.aphiria.com"] },
+                postgresql: { user: "postgres", password: pulumi.output("password") },
+                namespace: { name: "preview-pr-456" },
+                // App config inherited from base - should deploy for preview-PR
+                app: {
+                    web: { url: "https://456.pr.aphiria.com" },
+                    api: { url: "https://456.pr-api.aphiria.com" },
+                },
+                grafana: { hostname: "pr-grafana.aphiria.com" },
+                monitoring: {},
+                prometheus: {},
+            });
+
+            createStack("preview");
+
+            // Preview-PR should deploy applications (not infrastructure-only)
+            expect(createApplicationResources).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    env: "preview",
+                    isPreviewPR: true,
+                    appConfig: expect.objectContaining({
+                        web: { url: "https://456.pr.aphiria.com" },
+                    }),
+                })
+            );
+        });
+
         it("should not create applications when app config is missing web.url", () => {
             (loadConfig as Mock).mockReturnValue({
                 stackName: "production",

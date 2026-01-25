@@ -1,12 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createRedirectUrl } from "@/lib/routing/redirects";
+import { parseContext } from "@/lib/context/resolver";
 
 /**
- * Next.js proxy for URL redirects
+ * Next.js middleware for URL redirects and query param injection
  *
  * Handles:
  * - Legacy .html URLs → extension-less URLs (301)
  * - /docs → /docs/1.x/introduction (302)
+ * - /docs/* without ?context= → adds ?context=framework (or cookie value)
  */
 export default function proxy(request: NextRequest) {
     const url = request.nextUrl;
@@ -22,12 +24,23 @@ export default function proxy(request: NextRequest) {
         return NextResponse.redirect(new URL(redirectUrl, request.url), 301);
     }
 
+    // Ensure all /docs/* URLs have explicit ?context= parameter
+    if (url.pathname.startsWith("/docs/") && !url.searchParams.has("context")) {
+        const contextCookie = request.cookies.get("context");
+        const contextValue = parseContext(contextCookie?.value);
+
+        const redirectUrl = url.clone();
+        redirectUrl.searchParams.set("context", contextValue);
+
+        return NextResponse.redirect(redirectUrl);
+    }
+
     return NextResponse.next();
 }
 
 /**
- * Configure proxy to run only on specific routes
+ * Configure proxy to run on /docs routes
  */
 export const config = {
-    matcher: ["/docs/:path*.html", "/docs"],
+    matcher: ["/docs/:path*"],
 };

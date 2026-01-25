@@ -153,10 +153,11 @@ export function createStack(env: Environment, k8sProvider?: k8s.Provider): Stack
         });
     }
 
-    // Deploy applications (skip for preview-base)
-    // Check if app config exists
-    const hasAppConfig = config.app?.web?.url;
-    if (hasAppConfig) {
+    // Deploy applications (skip for preview-base infrastructure-only stack)
+    // Preview-base only provisions shared infrastructure; preview-PR and other stacks deploy applications
+    // Must explicitly check stackName because all stacks inherit app config from base Pulumi.yaml
+    const shouldDeployApplications = config.app?.web?.url && config.stackName !== "preview-base";
+    if (shouldDeployApplications) {
         resources.applications = createApplicationResources({
             env,
             provider,

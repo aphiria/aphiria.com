@@ -12,6 +12,11 @@ export interface WebAppConfig {
     podDisruptionBudget?: {
         minAvailable: number;
     };
+    env: {
+        API_URI: string;
+        COOKIE_DOMAIN: string;
+        NODE_ENV: string;
+    };
 }
 
 /**

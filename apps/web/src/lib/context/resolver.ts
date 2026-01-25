@@ -1,31 +1,29 @@
 import { Context } from "@/types/context";
-import { getContextCookie } from "@/lib/cookies/context-cookie.server";
 
 /**
- * Resolve context with precedence: query param > cookie > default
- *
- * @param searchParams - URL search parameters
- * @returns Resolved context value
+ * Default context value
  */
-export async function resolveContext(
-    searchParams: URLSearchParams | Record<string, string | string[] | undefined>
-): Promise<Context> {
-    // Check query parameter first
-    const queryContext =
-        searchParams instanceof URLSearchParams
-            ? searchParams.get("context")
-            : searchParams.context;
+export const DEFAULT_CONTEXT: Context = "framework";
 
-    if (queryContext === "framework" || queryContext === "library") {
-        return queryContext;
+/**
+ * Parse a string value into a valid Context, returning fallback if invalid
+ *
+ * Client-safe: Can be used in both server and client components
+ *
+ * @param value - Value to parse (from URL param, cookie, etc.)
+ * @param fallback - Fallback context if value is invalid
+ * @returns Valid context value
+ */
+export function parseContext(
+    value: string | string[] | null | undefined,
+    fallback: Context = DEFAULT_CONTEXT
+): Context {
+    // Handle array values (from Next.js searchParams)
+    const stringValue = Array.isArray(value) ? value[0] : value;
+
+    if (stringValue === "framework" || stringValue === "library") {
+        return stringValue;
     }
 
-    // Fall back to cookie
-    const cookieContext = await getContextCookie();
-    if (cookieContext === "framework" || cookieContext === "library") {
-        return cookieContext;
-    }
-
-    // Default to framework
-    return "framework";
+    return fallback;
 }

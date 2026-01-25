@@ -19,11 +19,13 @@ vi.mock("path", () => ({
 }));
 
 // Import after mocks are set up
-const { readDocMeta, readDocHtml, getDocsForVersion } = await import("@/lib/docs/artifact-reader");
+const { readDocMeta, readDocHtml, getDocsForVersion, clearCaches } =
+    await import("@/lib/docs/artifact-reader");
 
 describe("artifact-reader", () => {
     beforeEach(() => {
         vi.clearAllMocks();
+        clearCaches(); // Clear module-level caches
         // Reset mocks to default behavior
         mockJoin.mockImplementation((...args: string[]) => args.join("/"));
         // Mock process.cwd()
@@ -79,6 +81,22 @@ describe("artifact-reader", () => {
             expect(result).toEqual([]);
             expect(consoleErrorSpy).toHaveBeenCalled();
         });
+
+        it("caches result after first read", () => {
+            const mockMetaData = [{ version: "1.x", slug: "installation", title: "Installation" }];
+
+            mockReadFileSync.mockReturnValue(JSON.stringify(mockMetaData));
+
+            // First call
+            const result1 = readDocMeta();
+            expect(mockReadFileSync).toHaveBeenCalledTimes(1);
+
+            // Second call should use cache
+            const result2 = readDocMeta();
+            expect(mockReadFileSync).toHaveBeenCalledTimes(1); // Still 1, not 2
+
+            expect(result1).toEqual(result2);
+        });
     });
 
     describe("readDocHtml", () => {
@@ -110,6 +128,43 @@ describe("artifact-reader", () => {
                 "Failed to read doc HTML for nonexistent:",
                 expect.any(Error)
             );
+        });
+
+        it("caches HTML after first read", () => {
+            const mockHtml = "<h1>Installation</h1>";
+
+            mockReadFileSync.mockReturnValue(mockHtml);
+
+            // First call
+            const result1 = readDocHtml("installation");
+            expect(mockReadFileSync).toHaveBeenCalledTimes(1);
+
+            // Second call should use cache
+            const result2 = readDocHtml("installation");
+            expect(mockReadFileSync).toHaveBeenCalledTimes(1); // Still 1, not 2
+
+            expect(result1).toEqual(result2);
+        });
+
+        it("caches null results for missing files", () => {
+            mockReadFileSync.mockImplementation(() => {
+                throw new Error("File not found");
+            });
+
+            const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+            // First call
+            const result1 = readDocHtml("missing");
+            expect(mockReadFileSync).toHaveBeenCalledTimes(1);
+
+            // Second call should use cached null
+            const result2 = readDocHtml("missing");
+            expect(mockReadFileSync).toHaveBeenCalledTimes(1); // Still 1, not 2
+
+            expect(result1).toBe(null);
+            expect(result2).toBe(null);
+
+            consoleErrorSpy.mockRestore();
         });
     });
 

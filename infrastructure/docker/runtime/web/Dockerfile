@@ -2,13 +2,30 @@
 ARG BUILD_IMAGE=davidbyoung/aphiria.com-build:latest
 FROM ${BUILD_IMAGE} AS build
 
-# Stage 2: Nginx image for serving content
-FROM nginx:alpine
+# Stage 2: Node.js runtime for SSR
+FROM node:20-alpine AS runner
 
-WORKDIR /usr/share/nginx/html
+WORKDIR /app
 
-# Remove the default content from the Nginx default web root
-RUN rm -rf /usr/share/nginx/html/*
+# Set production environment
+ENV NODE_ENV=production
+ENV PORT=3000
+ENV HOSTNAME="0.0.0.0"
 
-# Copy the Next.js static export from the build image (includes embedded documentation)
-COPY --from=build /app/apps/web/out .
+# Create non-root user
+RUN addgroup --system --gid 1001 nodejs && \
+    adduser --system --uid 1001 nextjs
+
+# Copy standalone build output from build image
+COPY --from=build --chown=nextjs:nodejs /app/apps/web/.next/standalone ./
+COPY --from=build --chown=nextjs:nodejs /app/apps/web/.next/static ./apps/web/.next/static
+COPY --from=build --chown=nextjs:nodejs /app/apps/web/public ./apps/web/public
+
+# Switch to non-root user
+USER nextjs
+
+# Expose port
+EXPOSE 3000
+
+# Start Next.js server
+CMD ["node", "apps/web/server.js"]

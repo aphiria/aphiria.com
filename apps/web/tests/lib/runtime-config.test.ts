@@ -15,12 +15,14 @@ describe("runtime-config", () => {
             window.__RUNTIME_CONFIG__ = {
                 apiUri: "https://api.aphiria.com",
                 cookieDomain: ".aphiria.com",
+                appEnv: "production",
             };
 
             const config = getRuntimeConfig();
 
             expect(config.apiUri).toBe("https://api.aphiria.com");
             expect(config.cookieDomain).toBe(".aphiria.com");
+            expect(config.appEnv).toBe("production");
         });
 
         it("returns development defaults when window.__RUNTIME_CONFIG__ not set", () => {
@@ -28,30 +30,35 @@ describe("runtime-config", () => {
 
             expect(config.apiUri).toBe("http://localhost:8080");
             expect(config.cookieDomain).toBe("localhost");
+            expect(config.appEnv).toBe("development");
         });
 
         it("returns preview environment config", () => {
             window.__RUNTIME_CONFIG__ = {
                 apiUri: "https://pr-123.pr-api.aphiria.com",
                 cookieDomain: ".pr.aphiria.com",
+                appEnv: "preview",
             };
 
             const config = getRuntimeConfig();
 
             expect(config.apiUri).toBe("https://pr-123.pr-api.aphiria.com");
             expect(config.cookieDomain).toBe(".pr.aphiria.com");
+            expect(config.appEnv).toBe("preview");
         });
 
         it("returns production environment config", () => {
             window.__RUNTIME_CONFIG__ = {
                 apiUri: "https://api.aphiria.com",
                 cookieDomain: ".aphiria.com",
+                appEnv: "production",
             };
 
             const config = getRuntimeConfig();
 
             expect(config.apiUri).toBe("https://api.aphiria.com");
             expect(config.cookieDomain).toBe(".aphiria.com");
+            expect(config.appEnv).toBe("production");
         });
     });
 });

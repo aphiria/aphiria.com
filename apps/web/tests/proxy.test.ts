@@ -76,18 +76,66 @@ describe("proxy", () => {
         });
     });
 
-    describe("pass-through", () => {
-        it("allows non-.html docs URLs to pass through", () => {
+    describe("context param injection", () => {
+        it("redirects /docs/* URLs without context param to add ?context=framework by default", () => {
             const request = new NextRequest(new URL("http://localhost/docs/1.x/introduction"));
 
             const response = proxy(request);
 
             expect(response).toBeInstanceOf(NextResponse);
+            expect(response.status).toBe(307);
+            expect(response.headers.get("location")).toBe(
+                "http://localhost/docs/1.x/introduction?context=framework"
+            );
+        });
+
+        it("redirects /docs/* URLs without context param to add ?context=library when cookie is library", () => {
+            const request = new NextRequest(new URL("http://localhost/docs/1.x/routing"));
+            request.cookies.set("context", "library");
+
+            const response = proxy(request);
+
+            expect(response.status).toBe(307);
+            expect(response.headers.get("location")).toBe(
+                "http://localhost/docs/1.x/routing?context=library"
+            );
+        });
+
+        it("allows /docs/* URLs with context param to pass through", () => {
+            const request = new NextRequest(
+                new URL("http://localhost/docs/1.x/introduction?context=framework")
+            );
+
+            const response = proxy(request);
+
             expect(response.status).toBe(200);
         });
 
+        it("preserves existing query params when adding context", () => {
+            const request = new NextRequest(
+                new URL("http://localhost/docs/1.x/routing?foo=bar#anchor")
+            );
+
+            const response = proxy(request);
+
+            expect(response.status).toBe(307);
+            expect(response.headers.get("location")).toBe(
+                "http://localhost/docs/1.x/routing?foo=bar&context=framework#anchor"
+            );
+        });
+    });
+
+    describe("pass-through", () => {
         it("allows root path to pass through", () => {
             const request = new NextRequest(new URL("http://localhost/"));
+
+            const response = proxy(request);
+
+            expect(response.status).toBe(200);
+        });
+
+        it("allows non-docs URLs to pass through", () => {
+            const request = new NextRequest(new URL("http://localhost/about"));
 
             const response = proxy(request);
 
