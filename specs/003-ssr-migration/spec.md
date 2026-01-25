@@ -2,7 +2,7 @@
 
 **Feature Branch**: `003-ssr-migration`
 **Created**: 2026-01-22
-**Status**: Draft
+**Status**: Completed
 **Input**: User description: "i want to convert my react site to use ssr. this will simplify things like context selection and other logic that we we forcing into ssg. we will need to update our pulumi code (eg remove the nginx config) and use env vars instead for things like apiUri and cookieDomain to pass in from pulumi so that the website can run in minikube, our preview infra, and prod. we should try to reuse our docker workflow (build -> runtime) as much as possible, although i understand it'll require changing the web runtime image to support nodejs. we must ensure we've updated unit tests for the web code and any pulumi changes."
 
 ## User Scenarios & Testing
