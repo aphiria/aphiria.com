@@ -275,7 +275,7 @@ export function createMonitoringResources(args: MonitoringResourcesArgs): Monito
     // Create Grafana Unified Alerting provisioning ConfigMaps
     // Environment-specific contact point configuration
     // Production: email contact point for real alerts
-    // Preview/Local: webhook to localhost (discards all alerts, no external delivery)
+    // Preview/Local: webhook to httpbin.org (public no-op service, always returns 200 OK)
     const contactPoints =
         args.env === "production" && args.grafanaConfig.alertEmail
             ? [
@@ -304,7 +304,8 @@ export function createMonitoringResources(args: MonitoringResourcesArgs): Monito
                               uid: "local-webhook",
                               type: "webhook",
                               settings: {
-                                  url: "http://localhost:9999/webhook",
+                                  url: "https://httpbin.org/status/200",
+                                  httpMethod: "POST",
                               },
                               disableResolveMessage: false,
                           },

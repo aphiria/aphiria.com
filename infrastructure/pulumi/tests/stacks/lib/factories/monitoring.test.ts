@@ -686,7 +686,8 @@ describe("createMonitoringResources", () => {
                                     uid: "local-webhook",
                                     type: "webhook",
                                     settings: {
-                                        url: "http://localhost:9999/webhook",
+                                        url: "https://httpbin.org/status/200",
+                                        httpMethod: "POST",
                                     },
                                     disableResolveMessage: false,
                                 },
@@ -716,7 +717,8 @@ describe("createMonitoringResources", () => {
                                     uid: "local-webhook",
                                     type: "webhook",
                                     settings: {
-                                        url: "http://localhost:9999/webhook",
+                                        url: "https://httpbin.org/status/200",
+                                        httpMethod: "POST",
                                     },
                                     disableResolveMessage: false,
                                 },
