@@ -44,25 +44,15 @@ Pull requests automatically generate ephemeral preview environments for testing 
 
 ### 1. Install System Dependencies
 
-First, [install Docker](https://docs.docker.com/engine/install/). Then, run the following command to install kubectl, Minikube, Pulumi, and Node.js:
-
 ```bash
-./install.sh
+make install
 ```
 
-> **Note:** You may have to run `chmod +x ./install.sh` to make the script executable.
+This installs Docker, kubectl, Minikube, Pulumi, Node.js, and all npm dependencies.
 
-### 2. Install Root Dependencies
+> **Note:** You may need to run `chmod +x ./install.sh` first if the script isn't executable.
 
-Install TypeScript tooling dependencies (required for both infrastructure deployment and E2E testing):
-
-```bash
-npm install
-```
-
-This installs ESLint, Prettier, and TypeScript dependencies used across the monorepo.
-
-### 3. Update Your Host File
+### 2. Update Your Host File
 
 Add the following to your host file:
 
@@ -79,19 +69,8 @@ Add the following to your host file:
 
 For rapid iteration on frontend changes without deploying to Kubernetes:
 
-#### 1. Build All TypeScript Projects
-
 ```bash
-npm run build:docs
-npm run build
-```
-
-This builds all TypeScript code (documentation compiler, infrastructure, and web app) in the correct dependency order.
-
-#### 2. Run the Web App
-
-```bash
-npm run dev
+make web-dev
 ```
 
 Visit http://localhost:3000
@@ -103,8 +82,7 @@ Visit http://localhost:3000
 #### 1. Start Minikube
 
 ```bash
-minikube start
-minikube addons enable metrics-server
+make minikube-start
 ```
 
 > **Note:** The `metrics-server` addon is required for Grafana dashboards to display CPU/memory metrics.
@@ -112,42 +90,36 @@ minikube addons enable metrics-server
 In a separate terminal, run Minikube tunnel (required for LoadBalancer access):
 
 ```bash
-minikube tunnel
+make minikube-tunnel
 ```
 
 > **Note:** You'll need to enter your sudo password. Keep this terminal running.
 
-#### 2. Build Docker Images
+#### 2. Deploy with Pulumi
 
 ```bash
-eval $(minikube -p minikube docker-env)
-docker build -t aphiria.com-base -f ./infrastructure/docker/base/Dockerfile .
-docker build -t aphiria.com-build -f ./infrastructure/docker/build/Dockerfile . --build-arg BASE_IMAGE=aphiria.com-base
-docker build -t aphiria.com-api:latest -f ./infrastructure/docker/runtime/api/Dockerfile . --build-arg BASE_IMAGE=aphiria.com-base --build-arg BUILD_IMAGE=aphiria.com-build
-docker build -t aphiria.com-web:latest -f ./infrastructure/docker/runtime/web/Dockerfile . --build-arg BUILD_IMAGE=aphiria.com-build
+make pulumi-deploy
 ```
 
-#### 3. Deploy with Pulumi
+This will:
+- Build all Docker images (base, build, API, web)
+- Deploy infrastructure to Kubernetes
+- Run database migrations
+
+> **Note:** The local stack uses passphrase `"password"` for encryption (safe to share - no actual secrets in local stack). Set it with:
 
 ```bash
-npm run build
-cd infrastructure/pulumi
-pulumi login --local
 export PULUMI_CONFIG_PASSPHRASE="password"
-pulumi up --stack local
 ```
-
-> **Note:** `pulumi login --local` stores state on your machine in `~/.pulumi` and doesn't require a Pulumi Cloud account. The local stack uses passphrase `"password"` for encryption (safe to share - no actual secrets in local stack).
 
 > **Note:** If you need to log back into the cloud instance, run `pulumi logout`, then `pulumi login` to authenticate with Pulumi Cloud.
 
 ### Making Changes
 
-After modifying code, rebuild the Docker images (step 2 above), then update the running cluster:
+After modifying code, rebuild and restart deployments:
 
 ```bash
-kubectl rollout restart deployment api
-kubectl rollout restart deployment web
+make pulumi-redeploy
 ```
 
 > **Note:** This picks up new Docker image changes without re-running `pulumi up`.
@@ -160,117 +132,73 @@ kubectl rollout restart deployment web
 
 > **Note:** You'll see a certificate warning (self-signed cert). In Chrome, type `thisisunsafe` (there is no input - just type that phrase with the page displayed) to bypass. In other browsers, click advanced and accept the certificate.
 
-### Connecting to the Database
-
-```bash
-kubectl port-forward service/db 5432:5432
-psql -h localhost -U aphiria -d postgres
-```
-
 ## Development Workflows
 
 ### Testing
 
-#### All TypeScript Tests
+#### All Unit Tests
 
-Run all tests (web, infrastructure, build tools) from the root:
+Run all unit tests (TypeScript and PHP):
 
 ```bash
-npm test
+make test
 ```
 
 Or run individual workspace tests:
 
 ```bash
-cd infrastructure/pulumi
-npm test
-```
-
-#### PHP Tests
-
-```bash
-cd apps/api
-composer phpunit
+make test-ts    # TypeScript tests (web, infrastructure, tools)
+make test-php   # PHP tests
 ```
 
 #### E2E Tests
 
-**Prerequisites**: Ensure all dependencies are installed (`npm install` from repo root installs all workspaces including e2e).
-
-**Against local minikube** (accepts self-signed certificates):
-
 ```bash
-cd tests/e2e
-cp .env.dist .env
-npx playwright install --with-deps chromium webkit
-npm run test:e2e:local
-```
-
-**Against preview**:
-
-```bash
-cd tests/e2e
-SITE_BASE_URL=https://{PR}.pr.aphiria.com \
-GRAFANA_BASE_URL=https://pr-grafana.aphiria.com \
-COOKIE_DOMAIN=".pr.aphiria.com" \
-npm run test:e2e
-```
-
-**Against production:
-
-```bash
-cd tests/e2e
-SITE_BASE_URL=https://www.aphiria.com \
-GRAFANA_BASE_URL=https://grafana.aphiria.com \
-COOKIE_DOMAIN=".aphiria.com" \
-npm run test:e2e
+make test-e2e-local              # Against local minikube (accepts self-signed certs)
+make test-e2e-preview PR=123     # Against preview environment
+make test-e2e-production         # Against production
 ```
 
 > **Note:** E2E tests run automatically after deployments via GitHub Actions. See `.github/workflows/cd.yml` for the full workflow.
 
 ### Code Quality
 
-#### PHP Linting & Static Analysis
+Run all quality gates (same checks as CI):
 
 ```bash
-cd apps/api
-composer phpcs-fix
-composer psalm
+make quality-gates
 ```
 
-#### TypeScript/GitHub Workflow Linting & Formatting
-
-All TypeScript code (we, infrastructure, tools, and tests) and GitHub workflow code is linted and formatted from the root:
+Or run individual checks:
 
 ```bash
-npm run lint:fix
-npm run format
+make lint          # Run all linters (TypeScript + PHP)
+make format        # Auto-format all code (TypeScript + PHP)
+make format-check  # Verify formatting without changes
 ```
 
 ## Infrastructure
 
 ### Common Pulumi Commands
 
-```bash
-cd infrastructure/pulumi
+All Pulumi commands accept a `STACK` parameter (defaults to `local`):
 
+```bash
 # Set passphrase for Pulumi commands (required for local stack)
 export PULUMI_CONFIG_PASSPHRASE="password"
 
 # Preview changes before applying
-pulumi preview --stack local
+make pulumi-preview              # Local stack
+make pulumi-preview STACK=prod   # Production stack
 
 # Apply infrastructure changes
-pulumi up --stack local
+make pulumi-deploy
 
 # Tear down the local environment
-pulumi destroy --stack local
+make pulumi-destroy
 
 # Sync Pulumi state with actual cluster state
-pulumi refresh --stack local
-
-# Cancel a stuck deployment
-pulumi cancel --stack local
+make pulumi-refresh
 ```
 
 ### Minikube Dashboard
@@ -278,14 +206,14 @@ pulumi cancel --stack local
 View the cluster state visually:
 
 ```bash
-minikube dashboard
+make minikube-dashboard
 ```
 
 ## Monitoring (Optional)
 
 ### Grafana Configuration
 
-The local stack includes Grafana monitoring. Before running `pulumi up`, configure these values:
+The local stack includes Grafana monitoring. Before running `make pulumi-deploy`, configure these values:
 
 ```bash
 cd infrastructure/pulumi
@@ -310,12 +238,6 @@ pulumi config set grafana:alertEmail "admin@example.com" --stack local
 
 > **Note:** For local development, you can use placeholder values. GitHub OAuth won't work with dummy credentials, but Grafana will still deploy. For production setup, see [SECRETS.md](SECRETS.md).
 
-### Prometheus
+## Available Commands
 
-To view the Prometheus dashboard, configure port forwarding in a separate console:
-
-```bash
-kubectl port-forward -n monitoring svc/prometheus 9090
-```
-
-Then, visit http://localhost:9090/ in your browser.
+Run `make help` to see all available commands.
