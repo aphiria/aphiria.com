@@ -48,6 +48,8 @@ jobs:
         with:
           context: .
           file: ./infrastructure/docker/build/Dockerfile
+          build-args: |
+            BASE_IMAGE=${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-base:latest
           push: true
           cache-from: type=gha,scope=build-master
           cache-to: type=gha,mode=max,scope=build-master
