@@ -6,6 +6,18 @@
 /apps/api/tmp/logs/errors.txt
 /apps/api/vendor/
 /apps/web/node_modules/
+/apps/web/.next/
+/coverage/
+/dist/
 # Note: We keep the database infrastructure directory so it can be copied to run migrations against
 /infrastructure/docker
 /infrastructure/pulumi
+/LICENSE.md
+/node_modules/
+/README.md
+/specs/
+/tests/e2e/node_modules/
+/tests/e2e/playwright-report/
+/tests/e2e/test-results/
+/tools/build-docs/node_modules/
+/tools/build-docs/dist/
