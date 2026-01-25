@@ -224,12 +224,25 @@ jobs:
           COMMIT_SHA_SHORT="${COMMIT_SHA:0:7}"
 
           if [ "${{ steps.check.outputs.should-build }}" == "true" ]; then
-            # Build new base image with commit-specific tag + latest
+            # Build new base image with commit-specific tag
             BASE_IMAGE_REF="${REGISTRY}/${IMAGE_PREFIX}-base:sha-${COMMIT_SHA_SHORT}"
-            BASE_TAGS="${REGISTRY}/${IMAGE_PREFIX}-base:latest,${REGISTRY}/${IMAGE_PREFIX}-base:sha-${COMMIT_SHA_SHORT}"
+
+            if [ "$MODE" == "production" ]; then
+              # Production: Tag with :latest + SHA
+              BASE_TAGS="${REGISTRY}/${IMAGE_PREFIX}-base:latest,${REGISTRY}/${IMAGE_PREFIX}-base:sha-${COMMIT_SHA_SHORT}"
+            else
+              # Preview: Tag with SHA only (no :latest)
+              BASE_TAGS="${REGISTRY}/${IMAGE_PREFIX}-base:sha-${COMMIT_SHA_SHORT}"
+            fi
           else
-            # Use existing latest base image
-            BASE_IMAGE_REF="${REGISTRY}/${IMAGE_PREFIX}-base:latest"
+            # Use existing base image (no rebuild needed)
+            if [ "$MODE" == "production" ]; then
+              # Production: Use :latest tag
+              BASE_IMAGE_REF="${REGISTRY}/${IMAGE_PREFIX}-base:latest"
+            else
+              # Preview: Use SHA-tagged image from current commit
+              BASE_IMAGE_REF="${REGISTRY}/${IMAGE_PREFIX}-base:sha-${COMMIT_SHA_SHORT}"
+            fi
             BASE_TAGS=""
           fi
 
