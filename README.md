@@ -48,9 +48,14 @@ Pull requests automatically generate ephemeral preview environments for testing 
 make install
 ```
 
-This installs Docker, kubectl, Minikube, Pulumi, Node.js, and all npm dependencies.
+This installs Docker, kubectl, Minikube, Pulumi, Node.js, npm dependencies, and PHP dependencies.
 
 > **Note:** You may need to run `chmod +x ./install.sh` first if the script isn't executable.
+
+> **Note:** To install only specific tools, pass arguments to `install.sh`:
+> ```bash
+> make install INSTALL_ARGS="--install-pulumi"  # Only install Pulumi
+> ```
 
 ### 2. Update Your Host File
 
@@ -176,7 +181,7 @@ make test-e2e-production         # Against production
 
 ### Code Quality
 
-Run all quality gates (same checks as CI):
+Run all quality gates (linting, formatting, and tests - the same checks as CI):
 
 ```bash
 make quality-gates

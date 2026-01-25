@@ -9,7 +9,7 @@ on:
     - cron: "0 0 * * *"
 
 jobs:
-  test:
+  quality-gates:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     strategy:
@@ -34,12 +34,13 @@ jobs:
       APP_API_URL: https://api.aphiria.com
       DB_HOST: localhost
       DB_PASSWORD: password
-    name: Test PHP ${{ matrix.php }}
+    name: Quality Gates (PHP ${{ matrix.php }})
     steps:
       - name: Check out code
         uses: actions/checkout@v6
         with:
           fetch-depth: 0
+
       - name: Set up PHP
         uses: shivammathur/setup-php@v2
         with:
@@ -48,45 +49,31 @@ jobs:
           tools: composer:v2
           coverage: xdebug
           ini-values: apc.enable_cli=1
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+          cache: npm
+
       - name: Install dependencies
         run: |
           chmod +x ./install.sh
-          ./install.sh --install-pulumi
-          cd ./apps/api
-          composer install --ignore-platform-reqs
-          composer dump-autoload -o
-          chmod -R 755 tmp
-      - name: Index documentation
-        working-directory: apps/api
-        run: |
-          vendor/bin/phinx migrate
-          vendor/bin/phinx seed:run
-      - name: Lint PHP code
-        working-directory: apps/api
-        run: composer phpcs-test
+          make install INSTALL_ARGS="--install-pulumi"
+          chmod -R 755 apps/api/tmp
+
+      - name: Setup database
+        run: make db-setup
+
+      - name: Run quality gates
+        if: matrix.php == '8.4'
+        run: make quality-gates
+
       - name: Run PHP tests
-        working-directory: apps/api
-        run: composer phpunit
-      - name: Run PHP static analysis
-        if: matrix.php == '8.4'
-        working-directory: apps/api
-        run: composer psalm -- --shepherd
-      - name: Install TypeScript dependencies
-        if: matrix.php == '8.4'
-        run: npm ci
-      - name: Lint TypeScript code
-        if: matrix.php == '8.4'
-        run: npm run lint
-      - name: Format check TypeScript code
-        if: matrix.php == '8.4'
-        run: npm run format:check
-      - name: Build and test TypeScript code
-        if: matrix.php == '8.4'
-        run: |
-          npm run build:docs
-          npm run build
-          npm test
-      - name: Upload PHP coverage to Codecov
+        if: matrix.php != '8.4'
+        run: make test-php
+
+      - name: Upload PHP coverage
         if: matrix.php == '8.4'
         uses: codecov/codecov-action@v5
         with:
@@ -96,7 +83,8 @@ jobs:
           slug: aphiria/aphiria.com
           token: ${{ secrets.CODECOV_TOKEN }}
           disable_search: true
-      - name: Upload Web coverage to Codecov
+
+      - name: Upload Web coverage
         if: matrix.php == '8.4'
         uses: codecov/codecov-action@v5
         with:
@@ -106,7 +94,8 @@ jobs:
           slug: aphiria/aphiria.com
           token: ${{ secrets.CODECOV_TOKEN }}
           disable_search: true
-      - name: Upload Pulumi coverage to Codecov
+
+      - name: Upload Pulumi coverage
         if: matrix.php == '8.4'
         uses: codecov/codecov-action@v5
         with:
@@ -116,7 +105,8 @@ jobs:
           slug: aphiria/aphiria.com
           token: ${{ secrets.CODECOV_TOKEN }}
           disable_search: true
-      - name: Upload Build Tools coverage to Codecov
+
+      - name: Upload Build Tools coverage
         if: matrix.php == '8.4'
         uses: codecov/codecov-action@v5
         with:

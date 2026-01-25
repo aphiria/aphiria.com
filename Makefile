@@ -17,6 +17,7 @@ STACK ?= local
 NAMESPACE ?= default
 KUBECTL_ARGS ?= -n $(NAMESPACE)
 PULUMI_ARGS ?=
+INSTALL_ARGS ?=
 BASE_IMAGE := aphiria.com-base
 BUILD_IMAGE := aphiria.com-build
 API_IMAGE := aphiria.com-api:latest
@@ -27,10 +28,10 @@ help: ## Show available commands
 
 ## Setup
 
-install: ## Install system dependencies and project dependencies
-	./install.sh
+install: ## Install system dependencies and project dependencies (INSTALL_ARGS=...)
+	./install.sh $(INSTALL_ARGS)
 	npm ci
-	cd apps/api && composer install --no-interaction
+	cd apps/api && composer install --no-interaction && composer dump-autoload -o
 
 ## Database
 

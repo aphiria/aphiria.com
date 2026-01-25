@@ -463,10 +463,8 @@ jobs:
       - name: Install Pulumi CLI
         uses: pulumi/actions@v6
 
-      - name: Install Pulumi dependencies and build
-        run: |
-          npm ci --workspace=infrastructure/pulumi
-          npm run build --workspace=infrastructure/pulumi
+      - name: Build Pulumi code
+        run: make pulumi-build
 
       - name: Ensure preview-base stack exists and is deployed
         uses: actions/github-script@v8
@@ -583,10 +581,8 @@ jobs:
       - name: Install Pulumi CLI
         uses: pulumi/actions@v6
 
-      - name: Install dependencies and build
-        run: |
-          npm ci --workspace=infrastructure/pulumi
-          npm run build --workspace=infrastructure/pulumi
+      - name: Build Pulumi code
+        run: make pulumi-build
 
       - name: Run Pulumi preview
         id: preview
@@ -711,10 +707,8 @@ jobs:
       - name: Install Pulumi CLI
         uses: pulumi/actions@v6
 
-      - name: Install dependencies and build
-        run: |
-          npm ci --workspace=infrastructure/pulumi
-          npm run build --workspace=infrastructure/pulumi
+      - name: Build Pulumi code
+        run: make pulumi-build
 
       - name: Deploy infrastructure
         working-directory: infrastructure/pulumi
@@ -854,8 +848,7 @@ jobs:
           key: playwright-browsers-${{ hashFiles('package-lock.json') }}
 
       - name: Install Playwright browsers
-        working-directory: tests/e2e
-        run: npx playwright install --with-deps chromium webkit
+        run: make test-e2e-install
 
       - name: Construct URLs
         run: |
