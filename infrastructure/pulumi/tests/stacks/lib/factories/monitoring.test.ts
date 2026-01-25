@@ -103,7 +103,7 @@ describe("createMonitoringResources", () => {
             clientSecret: "",
         },
         adminUser: "admin",
-        defaultReceiver: "grafana-default-email",
+        defaultReceiver: "local-notifications",
         ingressSectionName: "https-subdomains",
     } as GrafanaConfig;
 
@@ -667,7 +667,7 @@ describe("createMonitoringResources", () => {
             );
         });
 
-        it("should not create email contact points for non-production environments", () => {
+        it("should create webhook contact point for non-production environments", () => {
             createMonitoringResources({
                 env: "local",
                 provider: k8sProvider,
@@ -678,12 +678,27 @@ describe("createMonitoringResources", () => {
 
             expect(createGrafanaAlerts).toHaveBeenCalledWith(
                 expect.objectContaining({
-                    contactPoints: [],
+                    contactPoints: [
+                        {
+                            name: "local-notifications",
+                            receivers: [
+                                {
+                                    uid: "local-webhook",
+                                    type: "webhook",
+                                    settings: {
+                                        url: "https://httpbin.org/status/200",
+                                        httpMethod: "POST",
+                                    },
+                                    disableResolveMessage: false,
+                                },
+                            ],
+                        },
+                    ],
                 })
             );
         });
 
-        it("should not create email contact points for production when alertEmail is not configured", () => {
+        it("should create webhook contact point for production when alertEmail is not configured", () => {
             createMonitoringResources({
                 env: "production",
                 provider: k8sProvider,
@@ -694,7 +709,22 @@ describe("createMonitoringResources", () => {
 
             expect(createGrafanaAlerts).toHaveBeenCalledWith(
                 expect.objectContaining({
-                    contactPoints: [],
+                    contactPoints: [
+                        {
+                            name: "local-notifications",
+                            receivers: [
+                                {
+                                    uid: "local-webhook",
+                                    type: "webhook",
+                                    settings: {
+                                        url: "https://httpbin.org/status/200",
+                                        httpMethod: "POST",
+                                    },
+                                    disableResolveMessage: false,
+                                },
+                            ],
+                        },
+                    ],
                 })
             );
         });
