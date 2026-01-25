@@ -132,7 +132,7 @@ make pulumi-redeploy
 ### Accessing the Site
 
 - https://www.aphiria.com (web)
-- https://api.aphiria.com/docs (API documentation)
+- https://api.aphiria.com (API documentation)
 - https://grafana.aphiria.com (monitoring dashboards)
 
 > **Note:** You'll see a certificate warning (self-signed cert). In Chrome, type `thisisunsafe` (there is no input - just type that phrase with the page displayed) to bypass. In other browsers, click advanced and accept the certificate.

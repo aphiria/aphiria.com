@@ -6,7 +6,7 @@ SHELL := /bin/bash
 .PHONY: help install build-images build-images-minikube \
 	minikube-start minikube-tunnel minikube-stop minikube-dashboard \
 	db-setup \
-	pulumi-build pulumi-preview pulumi-deploy pulumi-redeploy pulumi-destroy pulumi-refresh \
+	pulumi-build pulumi-preview pulumi-deploy pulumi-redeploy-apps pulumi-destroy pulumi-refresh \
 	test test-ts test-php test-e2e-install test-e2e-local test-e2e-preview test-e2e-production \
 	format format-ts format-php format-check format-check-ts format-check-php \
 	lint lint-ts lint-php quality-gates \
@@ -124,7 +124,7 @@ pulumi-destroy: pulumi-build ## Destroy infrastructure (STACK=local, requires CO
 pulumi-preview: pulumi-build ## Preview infrastructure changes (STACK=local, PULUMI_ARGS=...)
 	cd infrastructure/pulumi && pulumi preview --stack $(STACK) $(PULUMI_ARGS)
 
-pulumi-redeploy: build-images-minikube ## Rebuild images and restart deployments (NAMESPACE=default)
+pulumi-redeploy-apps: build-images-minikube ## Rebuild app images and restart app deployments (NAMESPACE=default)
 	kubectl $(KUBECTL_ARGS) rollout restart deployment api
 	kubectl $(KUBECTL_ARGS) rollout restart deployment web
 
