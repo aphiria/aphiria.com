@@ -102,7 +102,7 @@ make pulumi-deploy
 ```
 
 This will:
-- Build all Docker images (base, build, API, web)
+- Build all Docker images in Minikube's Docker daemon (base, build, API, web)
 - Deploy infrastructure to Kubernetes
 - Run database migrations
 
@@ -111,6 +111,11 @@ This will:
 ```bash
 export PULUMI_CONFIG_PASSPHRASE="password"
 ```
+
+> **Note:** For non-interactive deployment (useful in scripts), add Pulumi flags:
+> ```bash
+> make pulumi-deploy PULUMI_ARGS="--yes --skip-preview"
+> ```
 
 > **Note:** If you need to log back into the cloud instance, run `pulumi logout`, then `pulumi login` to authenticate with Pulumi Cloud.
 
@@ -153,6 +158,14 @@ make test-php   # PHP tests
 
 #### E2E Tests
 
+**First-time setup** (installs Playwright browsers):
+
+```bash
+make test-e2e-install
+```
+
+**Run tests**:
+
 ```bash
 make test-e2e-local              # Against local minikube (accepts self-signed certs)
 make test-e2e-preview PR=123     # Against preview environment
@@ -181,21 +194,24 @@ make format-check  # Verify formatting without changes
 
 ### Common Pulumi Commands
 
-All Pulumi commands accept a `STACK` parameter (defaults to `local`):
+All Pulumi commands accept `STACK` and `PULUMI_ARGS` parameters:
 
 ```bash
 # Set passphrase for Pulumi commands (required for local stack)
 export PULUMI_CONFIG_PASSPHRASE="password"
 
 # Preview changes before applying
-make pulumi-preview              # Local stack
-make pulumi-preview STACK=prod   # Production stack
+make pulumi-preview                          # Local stack (interactive)
+make pulumi-preview STACK=prod               # Production stack
+make pulumi-preview PULUMI_ARGS="--diff"     # Show detailed diff
 
 # Apply infrastructure changes
-make pulumi-deploy
+make pulumi-deploy                                        # Local stack (interactive)
+make pulumi-deploy PULUMI_ARGS="--yes --skip-preview"    # Non-interactive (for CI)
 
-# Tear down the local environment
-make pulumi-destroy
+# Tear down the local environment (requires confirmation)
+make pulumi-destroy CONFIRM=yes
+make pulumi-destroy STACK=preview-pr-123 CONFIRM=yes
 
 # Sync Pulumi state with actual cluster state
 make pulumi-refresh

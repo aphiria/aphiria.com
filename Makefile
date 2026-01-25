@@ -1,92 +1,147 @@
 # Makefile for Aphiria.com Development
 
-.PHONY: help install build-images test lint format quality-gates
+SHELL := /bin/bash
+.DEFAULT_GOAL := help
+
+.PHONY: help install build-images build-images-minikube \
+	minikube-start minikube-tunnel minikube-stop minikube-dashboard \
+	db-setup \
+	pulumi-build pulumi-preview pulumi-deploy pulumi-redeploy pulumi-destroy pulumi-refresh \
+	test test-ts test-php test-e2e-install test-e2e-local test-e2e-preview test-e2e-production \
+	format format-ts format-php format-check format-check-ts format-check-php \
+	lint lint-ts lint-php quality-gates \
+	web-dev
 
 # Configuration
 STACK ?= local
+NAMESPACE ?= default
+KUBECTL_ARGS ?= -n $(NAMESPACE)
+PULUMI_ARGS ?=
 BASE_IMAGE := aphiria.com-base
 BUILD_IMAGE := aphiria.com-build
 API_IMAGE := aphiria.com-api:latest
 WEB_IMAGE := aphiria.com-web:latest
-MINIKUBE_DOCKER := eval $$(minikube -p minikube docker-env)
 
 help: ## Show available commands
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-25s\033[0m %s\n", $$1, $$2}'
 
 ## Setup
 
-install: ## Install system dependencies and npm packages
-	chmod +x ./install.sh
+install: ## Install system dependencies and project dependencies
 	./install.sh
-	npm install
-
-## Docker
-
-build-images: ## Build all Docker images (base, build, api, web)
-	$(MINIKUBE_DOCKER) && \
-	docker build -t $(BASE_IMAGE) -f ./infrastructure/docker/base/Dockerfile . && \
-	docker build -t $(BUILD_IMAGE) -f ./infrastructure/docker/build/Dockerfile . --build-arg BASE_IMAGE=$(BASE_IMAGE) && \
-	docker build -t $(API_IMAGE) -f ./infrastructure/docker/runtime/api/Dockerfile . --build-arg BASE_IMAGE=$(BASE_IMAGE) --build-arg BUILD_IMAGE=$(BUILD_IMAGE) && \
-	docker build -t $(WEB_IMAGE) -f ./infrastructure/docker/runtime/web/Dockerfile . --build-arg BUILD_IMAGE=$(BUILD_IMAGE)
-
-## Minikube
-
-minikube-start: ## Start minikube with metrics-server addon
-	minikube start
-	minikube addons enable metrics-server
-	@echo "\n⚠️  Run 'make minikube-tunnel' in a separate terminal"
-
-minikube-tunnel: ## Run minikube tunnel (requires sudo)
-	minikube tunnel
-
-minikube-stop: ## Stop minikube
-	minikube stop
-
-minikube-dashboard: ## Open Kubernetes dashboard
-	minikube dashboard
+	npm ci
+	cd apps/api && composer install --no-interaction
 
 ## Database
 
 db-setup: ## Run database migrations and seed data
 	cd apps/api && vendor/bin/phinx migrate && vendor/bin/phinx seed:run
 
+## Development
+
+web-dev: ## Run Next.js dev server (standalone, no API)
+	npm run dev
+
+## Docker
+
+build-images: ## Build all Docker images (for CI/registry workflows)
+	docker build -t $(BASE_IMAGE) -f ./infrastructure/docker/base/Dockerfile .
+	docker build -t $(BUILD_IMAGE) -f ./infrastructure/docker/build/Dockerfile . --build-arg BASE_IMAGE=$(BASE_IMAGE)
+	docker build -t $(API_IMAGE) -f ./infrastructure/docker/runtime/api/Dockerfile . --build-arg BASE_IMAGE=$(BASE_IMAGE) --build-arg BUILD_IMAGE=$(BUILD_IMAGE)
+	docker build -t $(WEB_IMAGE) -f ./infrastructure/docker/runtime/web/Dockerfile . --build-arg BUILD_IMAGE=$(BUILD_IMAGE)
+
+build-images-minikube: ## Build all Docker images in minikube's Docker daemon (for local dev)
+	@eval "$$(minikube -p minikube docker-env)" && $(MAKE) build-images
+
+## Formatting
+
+format: format-ts format-php ## Format all code
+
+format-check: format-check-ts format-check-php ## Check code formatting
+
+format-check-php: ## Check PHP formatting
+	cd apps/api && composer phpcs-test
+
+format-check-ts: ## Check TypeScript formatting
+	npm run format:check
+
+format-php: ## Format PHP code
+	cd apps/api && composer phpcs-fix
+
+format-ts: ## Format TypeScript code
+	npm run format
+
+## Linting & Static Analysis
+
+lint: lint-ts lint-php ## Run all linters
+
+lint-php: ## Run PHP static analysis
+	cd apps/api && composer psalm
+
+lint-ts: ## Lint TypeScript code
+	npm run lint
+
+quality-gates: lint format-check test ## Run all quality checks (CI equivalent)
+
+## Minikube
+
+minikube-dashboard: ## Open Kubernetes dashboard
+	minikube dashboard
+
+minikube-start: ## Start minikube with metrics-server addon
+	minikube start
+	minikube addons enable metrics-server
+	@echo "\n⚠️  Run 'make minikube-tunnel' in a separate terminal"
+
+minikube-stop: ## Stop minikube
+	minikube stop
+
+minikube-tunnel: ## Run minikube tunnel (requires sudo, long-running - use separate terminal)
+	@echo "⚠️  This is a long-running foreground process. Keep this terminal open."
+	@echo "⚠️  You will be prompted for your sudo password."
+	@echo ""
+	minikube tunnel
+
 ## Pulumi
 
 pulumi-build: ## Build Pulumi TypeScript code
 	npm run build --workspace=infrastructure/pulumi
 
-pulumi-preview: pulumi-build ## Preview infrastructure changes (STACK=local)
-	cd infrastructure/pulumi && pulumi preview --stack $(STACK)
+pulumi-deploy: build-images-minikube pulumi-build ## Build images and deploy infrastructure (STACK=local, PULUMI_ARGS=...)
+	cd infrastructure/pulumi && pulumi up --stack $(STACK) $(PULUMI_ARGS)
 
-pulumi-deploy: build-images pulumi-build ## Build images and deploy infrastructure (STACK=local)
-	cd infrastructure/pulumi && pulumi up --stack $(STACK)
+pulumi-destroy: pulumi-build ## Destroy infrastructure (STACK=local, requires CONFIRM=yes, PULUMI_ARGS=...)
+	@if [ "$(CONFIRM)" != "yes" ]; then \
+		echo "❌ Refusing to destroy infrastructure without confirmation."; \
+		echo "   This is a destructive operation. Re-run with CONFIRM=yes"; \
+		echo ""; \
+		echo "   Example: make pulumi-destroy CONFIRM=yes"; \
+		echo "   Example: make pulumi-destroy STACK=preview-pr-123 CONFIRM=yes"; \
+		exit 1; \
+	fi
+	cd infrastructure/pulumi && pulumi destroy --stack $(STACK) $(PULUMI_ARGS)
 
-pulumi-redeploy: build-images ## Rebuild images and restart deployments (STACK=local)
-	kubectl rollout restart deployment api
-	kubectl rollout restart deployment web
+pulumi-preview: pulumi-build ## Preview infrastructure changes (STACK=local, PULUMI_ARGS=...)
+	cd infrastructure/pulumi && pulumi preview --stack $(STACK) $(PULUMI_ARGS)
 
-pulumi-destroy: pulumi-build ## Destroy infrastructure (STACK=local)
-	cd infrastructure/pulumi && pulumi destroy --stack $(STACK)
+pulumi-redeploy: build-images-minikube ## Rebuild images and restart deployments (NAMESPACE=default)
+	kubectl $(KUBECTL_ARGS) rollout restart deployment api
+	kubectl $(KUBECTL_ARGS) rollout restart deployment web
 
-pulumi-refresh: pulumi-build ## Sync Pulumi state with cluster (STACK=local)
-	cd infrastructure/pulumi && pulumi refresh --stack $(STACK)
+pulumi-refresh: pulumi-build ## Sync Pulumi state with cluster (STACK=local, PULUMI_ARGS=...)
+	cd infrastructure/pulumi && pulumi refresh --stack $(STACK) $(PULUMI_ARGS)
 
 ## Testing
 
 test: test-ts test-php ## Run all tests
 
-test-ts: ## Run TypeScript tests
-	npm run build:docs
-	npm run build
-	npm test
-
-test-php: ## Run PHP tests
-	cd apps/api && composer phpunit
+test-e2e-install: ## Install Playwright browsers and dependencies
+	cd tests/e2e && \
+	npx playwright install --with-deps chromium webkit
 
 test-e2e-local: ## Run E2E tests against local minikube
 	cd tests/e2e && \
-	cp .env.dist .env && \
-	npx playwright install --with-deps chromium webkit && \
+	test -f .env || cp .env.dist .env && \
 	npm run test:e2e:local
 
 test-e2e-preview: ## Run E2E tests against preview environment (PR=123)
@@ -107,37 +162,10 @@ test-e2e-production: ## Run E2E tests against production
 	COOKIE_DOMAIN=".aphiria.com" \
 	npm run test:e2e
 
-## Formatting
+test-php: ## Run PHP tests
+	cd apps/api && composer phpunit
 
-format: format-ts format-php ## Format all code
-
-format-ts: ## Format TypeScript code
-	npm run format
-
-format-php: ## Format PHP code
-	cd apps/api && composer phpcs-fix
-
-format-check: format-check-ts format-check-php ## Check code formatting
-
-format-check-ts: ## Check TypeScript formatting
-	npm run format:check
-
-format-check-php: ## Check PHP formatting
-	cd apps/api && composer phpcs-test
-
-## Linting & Static Analysis
-
-lint: lint-ts lint-php ## Run all linters
-
-lint-ts: ## Lint TypeScript code
-	npm run lint
-
-lint-php: ## Run PHP static analysis
-	cd apps/api && composer psalm
-
-quality-gates: lint format-check test ## Run all quality checks (CI equivalent)
-
-## Development
-
-web-dev: ## Run Next.js dev server (standalone, no API)
-	npm run dev
+test-ts: ## Run TypeScript tests
+	npm run build:docs
+	npm run build
+	npm test
