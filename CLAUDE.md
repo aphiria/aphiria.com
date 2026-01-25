@@ -448,31 +448,46 @@ const kubeconfig = args.useStaticKubeconfig
 
 # QUALITY GATES (MUST PASS 100%)
 
-## PHP
+**IMPORTANT**: Use Makefile commands from repository root when available. They handle all workspace/directory management.
+
+## All Quality Gates (Recommended)
 
 ```bash
-cd apps/api
-composer phpcs-fix
-composer phpunit
-composer psalm
+make quality-gates  # Runs linting, formatting checks, and all tests
 ```
 
-## TypeScript (from repository root)
+## Individual Checks
+
+### PHP
 
 ```bash
-npm run lint          # 0 errors, 0 warnings
-npm run format:check  # 0 errors, 0 warnings
+# Via Makefile (recommended - from repo root)
+make test-php
+make lint-php
+make format-check-php
+
+# Direct commands (if needed)
+cd apps/api && composer phpunit && composer psalm && composer phpcs-fix
 ```
 
-## Pulumi Infrastructure
+### TypeScript
 
 ```bash
-cd infrastructure/pulumi
-npm run build
-npm test  # 100% coverage thresholds
+# Via Makefile (recommended - from repo root)
+make lint-ts           # 0 errors, 0 warnings
+make format-check-ts   # 0 errors, 0 warnings
+make test-ts           # All TypeScript tests (web, pulumi, build-docs)
+
+# Via npm (from repo root)
+npm run lint
+npm run format:check
+npm test
+
+# Direct commands (if needed for specific workspace)
+cd infrastructure/pulumi && npm run build && npm test
 ```
 
-**Vitest Coverage Thresholds** (from `vitest.config.mts`):
+**Pulumi Coverage Thresholds** (from `vitest.config.mts`):
 
 ```javascript
 coverageThreshold: {
@@ -485,11 +500,14 @@ coverageThreshold: {
 }
 ```
 
-## E2E Tests
+### E2E Tests
 
 ```bash
-cd tests/e2e
-npm test  # Playwright smoke tests
+# Via npm (recommended - from repo root)
+npm run test:e2e
+
+# Direct command (if needed)
+cd tests/e2e && npm test
 ```
 
 **NON-NEGOTIABLE**:
@@ -1002,12 +1020,39 @@ Failed updates don't persist state changes. Last SUCCESSFUL update matters.
 
 # COMMON TASKS
 
+## Makefile Usage
+
+**Preferred approach**: Use Makefile commands from repository root. They encapsulate best practices and handle directory/workspace management.
+
+```bash
+make help  # List all available commands with descriptions
+```
+
+**Common commands**:
+
+```bash
+make install              # Install all dependencies
+make quality-gates        # Run all linters, formatters, and tests (CI equivalent)
+make test                 # Run all tests (PHP + TypeScript)
+make lint                 # Lint all code
+make format               # Format all code
+make format-check         # Check formatting without changes
+make pulumi-build         # Build Pulumi TypeScript
+make pulumi-deploy        # Deploy to local minikube (STACK=local by default)
+make build-images-minikube # Build Docker images in minikube
+```
+
+**Only use direct commands** (cd + npm/composer) when:
+- Debugging a specific workspace issue
+- The Makefile command doesn't exist yet
+- You need to pass custom flags not supported by Makefile
+
 ## Adding Feature
 
 1. Branch: `git checkout -b feature-name`
 2. Write tests first (TDD)
 3. Implement
-4. Quality gates
+4. Quality gates: `make quality-gates`
 5. Update docs
 6. Commit + PR
 
@@ -1092,5 +1137,5 @@ If complexity feels high, question it.
 
 ---
 
-Last Updated: 2026-01-06
+Last Updated: 2026-01-25
 This file is authoritative.

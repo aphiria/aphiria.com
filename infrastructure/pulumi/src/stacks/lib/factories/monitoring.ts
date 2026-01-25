@@ -275,7 +275,7 @@ export function createMonitoringResources(args: MonitoringResourcesArgs): Monito
     // Create Grafana Unified Alerting provisioning ConfigMaps
     // Environment-specific contact point configuration
     // Production: email contact point for real alerts
-    // Preview/Local: no email notifications (alerts visible in Grafana UI only, no external delivery)
+    // Preview/Local: webhook to localhost (discards all alerts, no external delivery)
     const contactPoints =
         args.env === "production" && args.grafanaConfig.alertEmail
             ? [
@@ -296,7 +296,21 @@ export function createMonitoringResources(args: MonitoringResourcesArgs): Monito
                       ],
                   },
               ]
-            : [];
+            : [
+                  {
+                      name: "local-notifications",
+                      receivers: [
+                          {
+                              uid: "local-webhook",
+                              type: "webhook",
+                              settings: {
+                                  url: "http://localhost:9999/webhook",
+                              },
+                              disableResolveMessage: false,
+                          },
+                      ],
+                  },
+              ];
 
     const alerts = createGrafanaAlerts({
         namespace: "monitoring",
