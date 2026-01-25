@@ -99,9 +99,9 @@ This is a monorepo with:
 - [X] T023 [P] [US3] Configure local environment variables in Pulumi local stack in infrastructure/pulumi/Pulumi.local.yaml (API_URI: https://api.aphiria.com, COOKIE_DOMAIN: .aphiria.com, NODE_ENV: production)
 - [X] T024 [P] [US3] Configure preview environment variables in Pulumi preview stack in infrastructure/pulumi/Pulumi.preview-base.yaml (COOKIE_DOMAIN: .pr.aphiria.com, API_URI interpolated per PR, NODE_ENV: production)
 - [X] T025 [P] [US3] Configure production environment variables in Pulumi production stack in infrastructure/pulumi/Pulumi.production.yaml (API_URI: https://api.aphiria.com, COOKIE_DOMAIN: .aphiria.com, NODE_ENV: production)
-- [ ] T026 [US3] Deploy to minikube (local) and verify environment-specific config
-- [ ] T027 [US3] Deploy to preview environment and verify API endpoint matches preview
-- [ ] T028 [US3] Verify production configuration (do NOT deploy yet, just validate config values)
+- [X] T026 [US3] Deploy to minikube (local) and verify environment-specific config
+- [X] T027 [US3] Deploy to preview environment and verify API endpoint matches preview
+- [X] T028 [US3] Verify production configuration (do NOT deploy yet, just validate config values)
 
 **Checkpoint**: All three environments configured correctly, same Docker image works everywhere
 
@@ -115,12 +115,12 @@ This is a monorepo with:
 
 ### Implementation for User Story 4
 
-- [ ] T029 [P] [US4] Remove obsolete client-side config loading (window.__RUNTIME_CONFIG__) in apps/web/src/lib/runtime-config.ts
-- [ ] T030 [P] [US4] Remove obsolete ConfigMap mounting logic from Pulumi web component in infrastructure/pulumi/src/components/web-deployment.ts
-- [ ] T031 [P] [US4] Remove public/js/config/config.js file (no longer needed) in apps/web/public/js/config/config.js
-- [ ] T032 [P] [US4] Remove article-loading flicker hack: div from apps/web/src/app/docs/[version]/[slug]/page.tsx, logic from apps/web/src/lib/context/toggler.ts, CSS from apps/web/src/app/aphiria.css
-- [ ] T033 [US4] Update Pulumi unit tests to reflect ConfigMap removal in infrastructure/pulumi/tests/components/web-deployment.test.ts
-- [ ] T034 [US4] Code review: verify ContextSelector complexity reduced by at least 30% (measure lines of code, cyclomatic complexity)
+- [X] T029 [P] [US4] Remove obsolete client-side config loading (window.__RUNTIME_CONFIG__) in apps/web/src/lib/runtime-config.ts
+- [X] T030 [P] [US4] Remove obsolete ConfigMap mounting logic from Pulumi web component in infrastructure/pulumi/src/components/web-deployment.ts
+- [X] T031 [P] [US4] Remove public/js/config/config.js file (no longer needed) in apps/web/public/js/config/config.js
+- [X] T032 [P] [US4] Remove article-loading flicker hack: div from apps/web/src/app/docs/[version]/[slug]/page.tsx, logic from apps/web/src/lib/context/toggler.ts, CSS from apps/web/src/app/aphiria.css
+- [X] T033 [US4] Update Pulumi unit tests to reflect ConfigMap removal in infrastructure/pulumi/tests/components/web-deployment.test.ts
+- [X] T034 [US4] Code review: verify ContextSelector complexity reduced by at least 30% (measure lines of code, cyclomatic complexity)
 
 **Checkpoint**: Client-side code simplified, no window.__RUNTIME_CONFIG__ hacks remaining
 
@@ -130,15 +130,15 @@ This is a monorepo with:
 
 **Purpose**: Deploy to all environments and validate SSR functionality
 
-- [ ] T035 Update CI/CD workflow to build SSR image in .github/workflows/cd.yaml
-- [ ] T036 [P] Update resource limits for Node.js container (100m/256Mi requests, 250m/512Mi limits) in infrastructure/pulumi/src/components/web-deployment.ts
-- [ ] T037 [P] Update health check probes for Node.js (port 3000, longer initial delay) in infrastructure/pulumi/src/components/web-deployment.ts
-- [ ] T038 Deploy to local (minikube) and run full E2E test suite in tests/e2e/
-- [ ] T039 Deploy to preview environment and run full E2E test suite
-- [ ] T040 Performance test: Compare SSR vs SSG response times (within 10% threshold)
-- [ ] T041 Performance test: Verify container memory usage under 1GB per pod
-- [ ] T042 Deploy to production with monitoring (use gradual rollout if available)
-- [ ] T043 Monitor production for 24 hours: error rates, response times, memory usage
+- [X] T035 Update CI/CD workflow to build SSR image in .github/workflows/cd.yaml
+- [X] T036 [P] Update resource limits for Node.js container (100m/256Mi requests, 250m/512Mi limits) in infrastructure/pulumi/src/components/web-deployment.ts
+- [X] T037 [P] Update health check probes for Node.js (port 3000, longer initial delay) in infrastructure/pulumi/src/components/web-deployment.ts
+- [X] T038 Deploy to local (minikube) and run full E2E test suite in tests/e2e/
+- [X] T039 Deploy to preview environment and run full E2E test suite
+- [X] T040 Performance test: Compare SSR vs SSG response times (within 10% threshold)
+- [X] T041 Performance test: Verify container memory usage under 1GB per pod
+- [X] T042 Deploy to production with monitoring (use gradual rollout if available)
+- [X] T043 Monitor production for 24 hours: error rates, response times, memory usage
 
 ---
 
@@ -146,13 +146,13 @@ This is a monorepo with:
 
 **Purpose**: Final cleanup, documentation, and validation
 
-- [ ] T044 [P] Run ESLint and Prettier on all modified web code (zero errors, zero warnings) in apps/web/
-- [ ] T045 [P] Run Pulumi unit tests and verify 97%+ coverage thresholds in infrastructure/pulumi/
-- [ ] T046 [P] Update CLAUDE.md with SSR patterns if not already done
-- [ ] T047 Verify all E2E tests pass in all environments (local, preview, production)
-- [ ] T048 Verify quickstart.md instructions are accurate (test locally)
-- [ ] T049 Code review: Anti-pattern detection, SOLID compliance, naming audit (per constitution)
-- [ ] T050 Final checkpoint: All success criteria met (SC-001 through SC-010 from spec.md)
+- [X] T044 [P] Run ESLint and Prettier on all modified web code (zero errors, zero warnings) in apps/web/
+- [X] T045 [P] Run Pulumi unit tests and verify 97%+ coverage thresholds in infrastructure/pulumi/
+- [X] T046 [P] Update CLAUDE.md with SSR patterns if not already done
+- [X] T047 Verify all E2E tests pass in all environments (local, preview, production)
+- [X] T048 Verify quickstart.md instructions are accurate (test locally)
+- [X] T049 Code review: Anti-pattern detection, SOLID compliance, naming audit (per constitution)
+- [X] T050 Final checkpoint: All success criteria met (SC-001 through SC-010 from spec.md)
 
 ---
 
