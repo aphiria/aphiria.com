@@ -37,7 +37,7 @@ Documentation changes MUST be treated as first-class features:
 
 - Documentation accuracy is critical - it directly impacts framework adoption
 - All framework API changes require corresponding documentation updates
-- Documentation builds (Gulp) must complete successfully before deployment
+- Documentation builds (build-docs tool) must complete successfully before deployment
 - Search functionality must remain operational and accurate
 
 **Rationale**: This project exists to document the Aphiria framework. Incorrect or outdated documentation undermines the entire purpose of the site.
@@ -177,7 +177,7 @@ Before any deployment, validate:
 1. Docker images build successfully
 2. Kubernetes manifests apply without errors
 3. Database migrations execute cleanly (test in dev cluster)
-4. Documentation builds without errors (`gulp build`)
+4. Documentation builds without errors (`npm run build:docs --workspace=tools/build-docs`)
 5. Search index updates complete successfully
 
 ### Review Requirements

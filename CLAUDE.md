@@ -828,31 +828,48 @@ No exceptions.
 ## Project
 
 - **Aphiria.com**: Documentation website for the Aphiria PHP framework
-- **Language**: PHP 8.4+
-- **Framework**: Aphiria
+- **Language**: PHP 8.4+, TypeScript, Node.js
+- **Framework**: Aphiria (API), Next.js (Web)
 - **Repository**: https://github.com/aphiria/aphiria.com
 
 ## Monorepo Structure
 
-1. **Web Frontend** (`./apps/web`): Static HTML/CSS/JS documentation
+1. **Web Frontend** (`./apps/web`): Next.js SSR application with TypeScript
 2. **API Backend** (`./apps/api`): PHP REST API with full-text search (PostgreSQL TSVectors)
+3. **Documentation** (`./docs`): Markdown documentation files stored in repository
+4. **Build Tools** (`./tools/build-docs`): TypeScript CLI tool for compiling markdown to HTML + NDJSON
 
 ## Build Pipeline
 
-1. **Build Image**: Clones docs repo → Compiles Markdown→HTML → Runs `gulp build` → Produces static assets
-2. **Runtime Images**:
-   - API: nginx + PHP-FPM + compiled docs
-   - Web: nginx + static files
-3. **Database Init**: Kubernetes Job runs Phinx migrations + LexemeSeeder (indexes docs for search)
+1. **Build Image** (`infrastructure/docker/build/Dockerfile`):
+   - Installs dependencies (Composer, npm)
+   - Compiles `build-docs` TypeScript tool
+   - Runs `build-docs` to process markdown → HTML fragments + lexemes.ndjson
+   - Builds Next.js web app with `next build` (standalone output)
 
-**Critical**: API search requires LexemeSeeder completion. Build failures break both web AND API.
+2. **Build Artifacts** (`dist/docs/`):
+   - `rendered/*.html`: HTML fragments (inserted into Next.js components)
+   - `search/lexemes.ndjson`: NDJSON file containing search lexemes
+   - `meta.json`: Page metadata
+
+3. **Runtime Images**:
+   - **API** (`infrastructure/docker/runtime/api/Dockerfile`): nginx + PHP-FPM + lexemes.ndjson
+   - **Web** (`infrastructure/docker/runtime/web/Dockerfile`): Node.js 20 + Next.js standalone build
+
+4. **Database Init**: Kubernetes Job runs Phinx migrations + LexemeSeeder (consumes lexemes.ndjson)
+
+**Critical**:
+- Documentation is stored in the repository (`./docs/`), NOT cloned from external repo
+- Build tools compile markdown using `marked` library
+- Lexemes are extracted during build and consumed by API LexemeSeeder
+- Build failures break both web AND API
 
 ## Deployment Architecture
 
-- **Web**: nginx + static HTML
-- **API**: nginx + PHP-FPM + Aphiria + compiled docs
+- **Web**: Node.js 20 + Next.js SSR server (port 3000)
+- **API**: nginx + PHP-FPM + Aphiria + search functionality
 - **Database**: PostgreSQL with TSVector indexes
-- **Init**: Kubernetes Job (migrations + seeder)
+- **Init**: Kubernetes Job (migrations + seeder consumes lexemes.ndjson)
 
 ---
 
