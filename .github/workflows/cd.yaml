@@ -479,6 +479,9 @@ jobs:
           node-version: "22"
           cache: npm
 
+      - name: Install dependencies
+        run: npm ci
+
       - name: Install Pulumi CLI
         uses: pulumi/actions@v6
 
@@ -596,6 +599,9 @@ jobs:
         with:
           node-version: "22"
           cache: npm
+
+      - name: Install dependencies
+        run: npm ci
 
       - name: Install Pulumi CLI
         uses: pulumi/actions@v6
@@ -722,6 +728,9 @@ jobs:
         with:
           node-version: "22"
           cache: npm
+
+      - name: Install dependencies
+        run: npm ci
 
       - name: Install Pulumi CLI
         uses: pulumi/actions@v6
