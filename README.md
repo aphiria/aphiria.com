@@ -176,7 +176,7 @@ make test-e2e-preview PR=123     # Against preview environment
 make test-e2e-production         # Against production
 ```
 
-> **Note:** E2E tests run automatically after deployments via GitHub Actions. See `.github/workflows/cd.yml` for the full workflow.
+> **Note:** E2E tests run automatically after deployments via GitHub Actions. See `.github/workflows/cd.yaml` for the full workflow.
 
 ### Code Quality
 
