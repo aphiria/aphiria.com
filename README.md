@@ -121,8 +121,9 @@ minikube tunnel
 
 ```bash
 eval $(minikube -p minikube docker-env)
-docker build -t aphiria.com-build -f ./infrastructure/docker/build/Dockerfile .
-docker build -t aphiria.com-api:latest -f ./infrastructure/docker/runtime/api/Dockerfile . --build-arg BUILD_IMAGE=aphiria.com-build
+docker build -t aphiria.com-base -f ./infrastructure/docker/base/Dockerfile .
+docker build -t aphiria.com-build -f ./infrastructure/docker/build/Dockerfile . --build-arg BASE_IMAGE=aphiria.com-base
+docker build -t aphiria.com-api:latest -f ./infrastructure/docker/runtime/api/Dockerfile . --build-arg BASE_IMAGE=aphiria.com-base --build-arg BUILD_IMAGE=aphiria.com-build
 docker build -t aphiria.com-web:latest -f ./infrastructure/docker/runtime/web/Dockerfile . --build-arg BUILD_IMAGE=aphiria.com-build
 ```
 

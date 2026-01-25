@@ -2,30 +2,10 @@
 ARG BUILD_IMAGE=davidbyoung/aphiria.com-build:latest
 FROM ${BUILD_IMAGE} AS build
 
-# Stage 2: base PHP with compiled extensions
-FROM php:8.4-fpm AS base
+# Stage 2: base PHP with compiled extensions (use the same base image as build)
+ARG BASE_IMAGE=ghcr.io/davidbyoung/aphiria.com-base:latest
+FROM ${BASE_IMAGE} AS base
 WORKDIR /app/apps/api
-
-# Build deps for PHP 8.4 extensions
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    $PHPIZE_DEPS \
-    git cmake unzip \
-    libxml2-dev libpq-dev libzip-dev zlib1g-dev libicu-dev \
- && rm -rf /var/lib/apt/lists/*
-
-# Make sure PHP source root is in the compiler include path (helps DOM+Lexbor on some setups)
-ENV CPPFLAGS="-I/usr/src/php"
-
-# Build bundled extensions
-RUN docker-php-ext-install -j"$(nproc)" \
-    dom intl opcache zip pdo pdo_pgsql pgsql
-
-# Install APCu for Prometheus metrics storage
-RUN pecl install apcu && docker-php-ext-enable apcu
-
-# Configure APCu with sufficient shared memory for metrics (64MB)
-RUN echo "apc.shm_size=64M" >> /usr/local/etc/php/conf.d/docker-php-ext-apcu.ini \
- && echo "apc.enable_cli=1" >> /usr/local/etc/php/conf.d/docker-php-ext-apcu.ini
 
 # Stage 3: Copy over files
 FROM base

@@ -183,11 +183,94 @@ jobs:
             core.setOutput('commit-sha', commitSha);
             core.setOutput('is-safe', String(isSafe));
 
+  build-base:
+    name: Build Base Image
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: determine-mode
+    if: needs.determine-mode.outputs.is-safe == 'true'
+
+    outputs:
+      base-image-ref: ${{ steps.meta.outputs.BASE_IMAGE_REF }}
+      should-build: ${{ steps.check.outputs.should-build }}
+
+    steps:
+      - name: Check out exact commit
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ needs.determine-mode.outputs.commit-sha }}
+          fetch-depth: 2
+
+      - name: Check if base Dockerfile changed
+        id: check
+        run: |
+          MODE="${{ needs.determine-mode.outputs.mode }}"
+          CHANGED=$(git diff --name-only HEAD~1 HEAD | grep -c "infrastructure/docker/base/Dockerfile" || true)
+
+          # Build base image if Dockerfile changed OR if production mode
+          if [ "$CHANGED" -gt 0 ] || [ "$MODE" == "production" ]; then
+            echo "should-build=true" >> $GITHUB_OUTPUT
+            echo "🔨 Base image will be built (Dockerfile changed or production mode)"
+          else
+            echo "should-build=false" >> $GITHUB_OUTPUT
+            echo "♻️  Using existing base image (no Dockerfile changes)"
+          fi
+
+      - name: Generate base image metadata
+        id: meta
+        run: |
+          MODE="${{ needs.determine-mode.outputs.mode }}"
+          COMMIT_SHA="${{ needs.determine-mode.outputs.commit-sha }}"
+          COMMIT_SHA_SHORT="${COMMIT_SHA:0:7}"
+
+          if [ "${{ steps.check.outputs.should-build }}" == "true" ]; then
+            # Build new base image with commit-specific tag + latest
+            BASE_IMAGE_REF="${REGISTRY}/${IMAGE_PREFIX}-base:sha-${COMMIT_SHA_SHORT}"
+            BASE_TAGS="${REGISTRY}/${IMAGE_PREFIX}-base:latest,${REGISTRY}/${IMAGE_PREFIX}-base:sha-${COMMIT_SHA_SHORT}"
+          else
+            # Use existing latest base image
+            BASE_IMAGE_REF="${REGISTRY}/${IMAGE_PREFIX}-base:latest"
+            BASE_TAGS=""
+          fi
+
+          echo "BASE_IMAGE_REF=${BASE_IMAGE_REF}" >> $GITHUB_OUTPUT
+          echo "BASE_TAGS=${BASE_TAGS}" >> $GITHUB_OUTPUT
+
+      - name: Set up Docker Buildx
+        if: steps.check.outputs.should-build == 'true'
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to container registry
+        if: steps.check.outputs.should-build == 'true'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push base image
+        if: steps.check.outputs.should-build == 'true'
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./infrastructure/docker/base/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.BASE_TAGS }}
+          cache-from: |
+            type=gha,scope=base
+          cache-to: |
+            type=gha,mode=max,scope=base
+          labels: |
+            org.opencontainers.image.source=${{ github.event.repository.html_url }}
+            org.opencontainers.image.revision=${{ needs.determine-mode.outputs.commit-sha }}
+
   build:
     name: Build Docker Images
     runs-on: ubuntu-latest
     timeout-minutes: 45
-    needs: determine-mode
+    needs:
+      - determine-mode
+      - build-base
     if: needs.determine-mode.outputs.is-safe == 'true'
 
     outputs:
@@ -257,6 +340,8 @@ jobs:
         with:
           context: .
           file: ./infrastructure/docker/build/Dockerfile
+          build-args: |
+            BASE_IMAGE=${{ needs.build-base.outputs.base-image-ref }}
           push: true
           tags: ${{ steps.meta.outputs.BUILD_TAGS }}
           cache-from: |
@@ -299,6 +384,7 @@ jobs:
           file: ./infrastructure/docker/runtime/api/Dockerfile
           build-args: |
             BUILD_IMAGE=${{ steps.meta.outputs.BUILD_IMAGE_REF }}
+            BASE_IMAGE=${{ needs.build-base.outputs.base-image-ref }}
           push: true
           tags: ${{ steps.meta.outputs.API_TAGS }}
           cache-from: |
