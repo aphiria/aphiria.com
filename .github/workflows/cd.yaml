@@ -207,13 +207,23 @@ jobs:
           MODE="${{ needs.determine-mode.outputs.mode }}"
           CHANGED=$(git diff --name-only HEAD~1 HEAD | grep -c "infrastructure/docker/base/Dockerfile" || true)
 
-          # Build base image if Dockerfile changed OR if production mode
-          if [ "$CHANGED" -gt 0 ] || [ "$MODE" == "production" ]; then
+          # Always build base image for production
+          # For preview: build if Dockerfile changed OR if :latest doesn't exist yet
+          if [ "$MODE" == "production" ]; then
             echo "should-build=true" >> $GITHUB_OUTPUT
-            echo "🔨 Base image will be built (Dockerfile changed or production mode)"
+            echo "🔨 Base image will be built (production mode)"
+          elif [ "$CHANGED" -gt 0 ]; then
+            echo "should-build=true" >> $GITHUB_OUTPUT
+            echo "🔨 Base image will be built (Dockerfile changed)"
           else
-            echo "should-build=false" >> $GITHUB_OUTPUT
-            echo "♻️  Using existing base image (no Dockerfile changes)"
+            # Check if :latest exists in registry (for preview fallback)
+            if docker manifest inspect ghcr.io/${{ env.IMAGE_PREFIX }}-base:latest >/dev/null 2>&1; then
+              echo "should-build=false" >> $GITHUB_OUTPUT
+              echo "♻️  Using existing base image :latest (no Dockerfile changes)"
+            else
+              echo "should-build=true" >> $GITHUB_OUTPUT
+              echo "🔨 Base image will be built (no :latest tag exists yet - first build)"
+            fi
           fi
 
       - name: Generate base image metadata
@@ -236,13 +246,9 @@ jobs:
             fi
           else
             # Use existing base image (no rebuild needed)
-            if [ "$MODE" == "production" ]; then
-              # Production: Use :latest tag
-              BASE_IMAGE_REF="${REGISTRY}/${IMAGE_PREFIX}-base:latest"
-            else
-              # Preview: Use SHA-tagged image from current commit
-              BASE_IMAGE_REF="${REGISTRY}/${IMAGE_PREFIX}-base:sha-${COMMIT_SHA_SHORT}"
-            fi
+            # Both production and preview use :latest when base Dockerfile hasn't changed
+            # Production maintains :latest, preview just uses it without updating
+            BASE_IMAGE_REF="${REGISTRY}/${IMAGE_PREFIX}-base:latest"
             BASE_TAGS=""
           fi
 
