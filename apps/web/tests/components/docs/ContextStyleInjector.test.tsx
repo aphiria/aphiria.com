@@ -3,31 +3,59 @@ import { render } from "@testing-library/react";
 import { ContextStyleInjector } from "@/components/docs/ContextStyleInjector";
 
 describe("ContextStyleInjector", () => {
-    it("renders a style element for framework context", () => {
-        const { container } = render(<ContextStyleInjector context="framework" />);
+    it("renders wrapper with data-context attribute for framework", () => {
+        const { container } = render(
+            <ContextStyleInjector context="framework">
+                <div>Test content</div>
+            </ContextStyleInjector>
+        );
 
-        const style = container.querySelector("style");
-        expect(style).not.toBeNull();
-        expect(style?.textContent).toBe(".context-library { display: none; }");
+        const wrapper = container.querySelector("[data-context]");
+        expect(wrapper).not.toBeNull();
+        expect(wrapper?.getAttribute("data-context")).toBe("framework");
     });
 
-    it("renders a style element for library context", () => {
-        const { container } = render(<ContextStyleInjector context="library" />);
+    it("renders wrapper with data-context attribute for library", () => {
+        const { container } = render(
+            <ContextStyleInjector context="library">
+                <div>Test content</div>
+            </ContextStyleInjector>
+        );
 
-        const style = container.querySelector("style");
-        expect(style).not.toBeNull();
-        expect(style?.textContent).toBe(".context-framework { display: none; }");
+        const wrapper = container.querySelector("[data-context]");
+        expect(wrapper).not.toBeNull();
+        expect(wrapper?.getAttribute("data-context")).toBe("library");
     });
 
-    it("updates style content when context changes", () => {
-        const { container, rerender } = render(<ContextStyleInjector context="framework" />);
+    it("renders children inside the wrapper", () => {
+        const { container } = render(
+            <ContextStyleInjector context="framework">
+                <div className="test-child">Test content</div>
+            </ContextStyleInjector>
+        );
 
-        let style = container.querySelector("style");
-        expect(style?.textContent).toBe(".context-library { display: none; }");
+        const child = container.querySelector(".test-child");
+        expect(child).not.toBeNull();
+        expect(child?.textContent).toBe("Test content");
+    });
 
-        rerender(<ContextStyleInjector context="library" />);
+    it("updates data-context when context changes", () => {
+        const { container, rerender } = render(
+            <ContextStyleInjector context="framework">
+                <div>Test content</div>
+            </ContextStyleInjector>
+        );
 
-        style = container.querySelector("style");
-        expect(style?.textContent).toBe(".context-framework { display: none; }");
+        let wrapper = container.querySelector("[data-context]");
+        expect(wrapper?.getAttribute("data-context")).toBe("framework");
+
+        rerender(
+            <ContextStyleInjector context="library">
+                <div>Test content</div>
+            </ContextStyleInjector>
+        );
+
+        wrapper = container.querySelector("[data-context]");
+        expect(wrapper?.getAttribute("data-context")).toBe("library");
     });
 });

@@ -920,3 +920,12 @@ blockquote {
         justify-content: center;
     }
 }
+
+/* Context-specific content visibility */
+[data-context="framework"] .context-library {
+    display: none;
+}
+
+[data-context="library"] .context-framework {
+    display: none;
+}

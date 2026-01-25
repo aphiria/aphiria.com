@@ -49,8 +49,7 @@ export default async function DocPage({ params, searchParams }: PageProps) {
     const tocHeadings = generateToc(html);
 
     return (
-        <>
-            <ContextStyleInjector context={context} />
+        <ContextStyleInjector context={context}>
             <SidebarNav
                 sections={sidebarSections}
                 currentSlug={slug}
@@ -73,7 +72,7 @@ export default async function DocPage({ params, searchParams }: PageProps) {
             </article>
             <TocHighlighter />
             <div id="gray-out"></div>
-        </>
+        </ContextStyleInjector>
     );
 }
 

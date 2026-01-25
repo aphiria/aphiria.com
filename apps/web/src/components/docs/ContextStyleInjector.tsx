@@ -1,18 +1,16 @@
+import { ReactNode } from "react";
+
 interface ContextStyleInjectorProps {
     context: "framework" | "library";
+    children: ReactNode;
 }
 
 /**
- * Server component that renders context-specific CSS into <head>
+ * Wrapper component that applies context-specific visibility via data attribute
  *
- * This prevents flicker by hiding context-specific content during SSR.
- * The <style> tag is rendered directly in <head> by Next.js.
+ * Combined with CSS in aphiria.css ([data-context="framework"] .context-library { display: none; }),
+ * this hides context-specific content during SSR without flicker and with valid HTML.
  */
-export function ContextStyleInjector({ context }: ContextStyleInjectorProps) {
-    const css =
-        context === "framework"
-            ? ".context-library { display: none; }"
-            : ".context-framework { display: none; }";
-
-    return <style dangerouslySetInnerHTML={{ __html: css }} />;
+export function ContextStyleInjector({ context, children }: ContextStyleInjectorProps) {
+    return <div data-context={context}>{children}</div>;
 }
