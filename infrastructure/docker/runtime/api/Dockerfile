@@ -1,9 +1,11 @@
+# Global ARGs (available to all FROM statements)
+ARG BUILD_IMAGE=aphiria.com-build:latest
+ARG BASE_IMAGE=aphiria.com-base:latest
+
 # Stage 1: build
-ARG BUILD_IMAGE=davidbyoung/aphiria.com-build:latest
 FROM ${BUILD_IMAGE} AS build
 
 # Stage 2: base PHP with compiled extensions (use the same base image as build)
-ARG BASE_IMAGE=ghcr.io/davidbyoung/aphiria.com-base:latest
 FROM ${BASE_IMAGE} AS base
 WORKDIR /app/apps/api
 

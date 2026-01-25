@@ -1,5 +1,7 @@
+# Global ARGs (available to all FROM statements)
+ARG BUILD_IMAGE=aphiria.com-build:latest
+
 # Stage 1: Use the build image to copy necessary files
-ARG BUILD_IMAGE=davidbyoung/aphiria.com-build:latest
 FROM ${BUILD_IMAGE} AS build
 
 # Stage 2: Node.js runtime for SSR

@@ -18,8 +18,8 @@ NAMESPACE ?= default
 KUBECTL_ARGS ?= -n $(NAMESPACE)
 PULUMI_ARGS ?=
 INSTALL_ARGS ?=
-BASE_IMAGE := aphiria.com-base
-BUILD_IMAGE := aphiria.com-build
+BASE_IMAGE := aphiria.com-base:latest
+BUILD_IMAGE := aphiria.com-build:latest
 API_IMAGE := aphiria.com-api:latest
 WEB_IMAGE := aphiria.com-web:latest
 

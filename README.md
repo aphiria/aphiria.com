@@ -112,10 +112,9 @@ This will:
 - Run database migrations
 
 > **Note:** The local stack uses passphrase `"password"` for encryption (safe to share - no actual secrets in local stack). Set it with:
-
-```bash
-export PULUMI_CONFIG_PASSPHRASE="password"
-```
+> ```bash
+> export PULUMI_CONFIG_PASSPHRASE="password"
+> ```
 
 > **Note:** For non-interactive deployment (useful in scripts), add Pulumi flags:
 > ```bash
