@@ -1054,9 +1054,11 @@ make test                 # Run all tests (PHP + TypeScript)
 make lint                 # Lint all code
 make format               # Format all code
 make format-check         # Check formatting without changes
-make pulumi-build         # Build Pulumi TypeScript
-make pulumi-deploy        # Deploy to local minikube (STACK=local by default)
-make build-images-minikube # Build Docker images in minikube
+make build                # Build all TypeScript projects (web, pulumi, build-docs)
+make build PROJECT=pulumi # Build specific project (web|pulumi|build-docs)
+make docs                 # Build documentation (generate HTML from Markdown)
+make up                   # Build images and deploy infrastructure (STACK=local by default)
+make minikube-images      # Build Docker images in minikube
 ```
 
 **Only use direct commands** (cd + npm/composer) when:

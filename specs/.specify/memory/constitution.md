@@ -177,7 +177,7 @@ Before any deployment, validate:
 1. Docker images build successfully
 2. Kubernetes manifests apply without errors
 3. Database migrations execute cleanly (test in dev cluster)
-4. Documentation builds without errors (`npm run build:docs --workspace=tools/build-docs`)
+4. Documentation builds without errors (`make docs`)
 5. Search index updates complete successfully
 
 ### Review Requirements

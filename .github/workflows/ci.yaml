@@ -70,8 +70,8 @@ jobs:
           make install INSTALL_ARGS="--install-pulumi"
           chmod -R 755 apps/api/tmp
 
-      - name: Setup database
-        run: make db-setup
+      - name: Seed database
+        run: make db-seed
 
       - name: Run quality gates
         if: matrix.php == '8.4'

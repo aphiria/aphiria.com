@@ -486,7 +486,7 @@ jobs:
         uses: pulumi/actions@v6
 
       - name: Build Pulumi code
-        run: make pulumi-build
+        run: make build PROJECT=pulumi
 
       - name: Ensure preview-base stack exists and is deployed
         uses: actions/github-script@v8
@@ -607,7 +607,7 @@ jobs:
         uses: pulumi/actions@v6
 
       - name: Build Pulumi code
-        run: make pulumi-build
+        run: make build PROJECT=pulumi
 
       - name: Run Pulumi preview
         id: preview
@@ -736,7 +736,7 @@ jobs:
         uses: pulumi/actions@v6
 
       - name: Build Pulumi code
-        run: make pulumi-build
+        run: make build PROJECT=pulumi
 
       - name: Deploy infrastructure
         working-directory: infrastructure/pulumi

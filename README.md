@@ -103,7 +103,7 @@ make minikube-tunnel
 #### 2. Deploy with Pulumi
 
 ```bash
-make pulumi-deploy
+make up
 ```
 
 This will:
@@ -118,7 +118,7 @@ This will:
 
 > **Note:** For non-interactive deployment (useful in scripts), add Pulumi flags:
 > ```bash
-> make pulumi-deploy PULUMI_ARGS="--yes --skip-preview"
+> make up PULUMI_ARGS="--yes --skip-preview"
 > ```
 
 > **Note:** If you need to log back into the cloud instance, run `pulumi logout`, then `pulumi login` to authenticate with Pulumi Cloud.
@@ -128,7 +128,7 @@ This will:
 After modifying code, rebuild and restart deployments:
 
 ```bash
-make pulumi-redeploy
+make minikube-redeploy-apps
 ```
 
 > **Note:** This picks up new Docker image changes without re-running `pulumi up`.
@@ -196,29 +196,29 @@ make format-check  # Verify formatting without changes
 
 ## Infrastructure
 
-### Common Pulumi Commands
+### Common Infrastructure Commands
 
-All Pulumi commands accept `STACK` and `PULUMI_ARGS` parameters:
+All infrastructure commands accept `STACK` and `PULUMI_ARGS` parameters:
 
 ```bash
 # Set passphrase for Pulumi commands (required for local stack)
 export PULUMI_CONFIG_PASSPHRASE="password"
 
 # Preview changes before applying
-make pulumi-preview                          # Local stack (interactive)
-make pulumi-preview STACK=prod               # Production stack
-make pulumi-preview PULUMI_ARGS="--diff"     # Show detailed diff
+make preview                          # Local stack (interactive)
+make preview STACK=production         # Production stack
+make preview PULUMI_ARGS="--diff"     # Show detailed diff
 
 # Apply infrastructure changes
-make pulumi-deploy                                        # Local stack (interactive)
-make pulumi-deploy PULUMI_ARGS="--yes --skip-preview"    # Non-interactive (for CI)
+make up                                        # Local stack (interactive)
+make up PULUMI_ARGS="--yes --skip-preview"    # Non-interactive (for CI)
 
 # Tear down the local environment (requires confirmation)
-make pulumi-destroy CONFIRM=yes
-make pulumi-destroy STACK=preview-pr-123 CONFIRM=yes
+make destroy CONFIRM=yes
+make destroy STACK=preview-pr-123 CONFIRM=yes
 
 # Sync Pulumi state with actual cluster state
-make pulumi-refresh
+make refresh
 ```
 
 ### Minikube Dashboard
@@ -233,7 +233,7 @@ make minikube-dashboard
 
 ### Grafana Configuration
 
-The local stack includes Grafana monitoring. Before running `make pulumi-deploy`, configure these values:
+The local stack includes Grafana monitoring. Before running `make up`, configure these values:
 
 ```bash
 cd infrastructure/pulumi
