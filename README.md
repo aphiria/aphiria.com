@@ -153,11 +153,19 @@ Run all unit tests (TypeScript and PHP):
 make test
 ```
 
-Or run individual workspace tests:
+Or run tests by stack:
 
 ```bash
-make test-ts    # TypeScript tests (web, infrastructure, tools)
+make test-ts    # TypeScript tests (web, pulumi, tools)
 make test-php   # PHP tests
+```
+
+For TypeScript tests, you can also pass in `web`, `pulumi`, or `build-docs` as the `PROJECT` parameter to `make test-ts`:
+
+```bash
+make test-ts PROJECT=web
+make test-ts PROJECT=pulumi
+make test-ts PROJECT=build-docs
 ```
 
 #### E2E Tests
