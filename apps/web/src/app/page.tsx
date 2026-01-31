@@ -22,7 +22,7 @@ export default async function HomePage() {
                 </ul>
             </Sidebar>
             <hgroup id="site-slogan">
-                <h1>A simple, extensible REST API framework for PHP</h1>
+                <h1>Test for Justin - A simple, extensible REST API framework for PHP</h1>
                 <p>Automatic content negotiation. No magic. No bleeding into your code.</p>
             </hgroup>
             <HighlightedHtml>
