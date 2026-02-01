@@ -85,3 +85,13 @@ body {
     outline: 2px solid var(--color-accent);
     outline-offset: 2px;
 }
+
+/**
+ * Dark mode overrides for documentation headings
+ */
+:root[data-theme="dark"] main.docs article h2,
+:root[data-theme="dark"] main.docs article h3,
+:root[data-theme="dark"] main.docs article h4,
+:root[data-theme="dark"] main.docs article h5 {
+    color: #999;
+}

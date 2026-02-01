@@ -4,6 +4,7 @@ import { LEGACY_DOCS } from "../fixtures/test-data";
 
 test.describe("Theme Toggle", () => {
     test("toggles theme from light to dark", async ({ homePage }) => {
+        await expect(homePage.themeToggle.button).toBeVisible();
         await expect(homePage.page.locator("html")).toHaveAttribute("data-theme", "light");
         await expect(homePage.themeToggle.button).toHaveAttribute("aria-label", "Switch to dark mode");
 
@@ -16,10 +17,14 @@ test.describe("Theme Toggle", () => {
     });
 
     test("toggles theme from dark to light", async ({ homePage }) => {
-        await homePage.page.evaluate(() => {
-            document.cookie = "theme-preference=dark; path=/";
-            document.documentElement.setAttribute("data-theme", "dark");
-        });
+        await homePage.page.context().addCookies([
+            {
+                name: "theme-preference",
+                value: "dark",
+                domain: "localhost",
+                path: "/",
+            },
+        ]);
 
         await homePage.page.reload();
 
@@ -94,9 +99,14 @@ test.describe("Theme Toggle", () => {
     });
 
     test("no FOUC on page load with cookie preference", async ({ page }) => {
-        await page.addInitScript(() => {
-            document.cookie = "theme-preference=dark; path=/";
-        });
+        await page.context().addCookies([
+            {
+                name: "theme-preference",
+                value: "dark",
+                domain: "localhost",
+                path: "/",
+            },
+        ]);
 
         await page.goto(process.env.SITE_BASE_URL!);
 
