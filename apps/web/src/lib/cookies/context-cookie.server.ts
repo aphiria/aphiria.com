@@ -2,9 +2,9 @@ import { cookies } from "next/headers";
 import type { ReadonlyRequestCookies } from "next/dist/server/web/spec-extension/adapters/request-cookies";
 import { Context } from "@/types/context";
 
-const COOKIE_NAME = "context";
-const DEFAULT_CONTEXT: Context = "framework";
-const COOKIE_MAX_AGE = 365 * 24 * 60 * 60; // 1 year in seconds
+const cookieName = "context";
+const defaultContext: Context = "framework";
+const cookieMaxAge = 365 * 24 * 60 * 60; // 1 year in seconds
 
 /**
  * Type guard to validate context values
@@ -37,13 +37,13 @@ export async function resolveContext(
     }
 
     // Check cookie (second priority)
-    const cookieValue = cookieStore.get(COOKIE_NAME)?.value;
+    const cookieValue = cookieStore.get(cookieName)?.value;
     if (cookieValue && isValidContext(cookieValue)) {
         return cookieValue;
     }
 
     // Default fallback
-    return DEFAULT_CONTEXT;
+    return defaultContext;
 }
 
 /**
@@ -62,8 +62,8 @@ export async function setContextCookie(context: Context): Promise<void> {
         );
     }
 
-    cookieStore.set(COOKIE_NAME, context, {
-        maxAge: COOKIE_MAX_AGE,
+    cookieStore.set(cookieName, context, {
+        maxAge: cookieMaxAge,
         path: "/",
         domain: cookieDomain,
         sameSite: "lax",
@@ -79,7 +79,7 @@ export async function setContextCookie(context: Context): Promise<void> {
  */
 export async function getContextCookie(): Promise<Context | null> {
     const cookieStore = await cookies();
-    const cookie = cookieStore.get(COOKIE_NAME);
+    const cookie = cookieStore.get(cookieName);
     const value = cookie?.value;
 
     if (value === "framework" || value === "library") {

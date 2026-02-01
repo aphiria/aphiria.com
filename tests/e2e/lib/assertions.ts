@@ -98,3 +98,16 @@ export async function assertUrlContainsContext(
         new RegExp(`\\?context=${context}`)
     );
 }
+
+/**
+ * Assert that a theme cookie exists with expected value
+ */
+export async function assertThemeCookie(page: Page, expectedValue: string): Promise<void> {
+    const cookies = await page.context().cookies();
+    const themeCookie = cookies.find((c) => c.name === "theme-preference");
+
+    expect(themeCookie, "Expected theme-preference cookie to exist").toBeDefined();
+    expect(themeCookie?.value, `Expected theme cookie value to be ${expectedValue}`).toBe(
+        expectedValue
+    );
+}

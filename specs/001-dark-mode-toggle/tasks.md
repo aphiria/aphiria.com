@@ -24,8 +24,8 @@
 
 **Purpose**: Create type definitions and constants that all user stories depend on
 
-- [ ] T001 [P] Create theme type definitions in apps/web/src/types/theme.ts (Theme, ThemeContextValue, ThemeProviderProps, constants, validation functions)
-- [ ] T002 [P] Create theme constants file in apps/web/src/lib/theme/constants.ts (THEMES, STORAGE_KEY, DEFAULT_THEME, DATA_ATTRIBUTE)
+- [X] T001 [P] Create theme type definitions in apps/web/src/types/theme.ts (Theme, ThemeContextValue, ThemeProviderProps, constants, validation functions)
+- [X] T002 [P] Create theme constants file in apps/web/src/lib/theme/constants.ts (THEMES, STORAGE_KEY, DEFAULT_THEME, DATA_ATTRIBUTE)
 
 ---
 
@@ -35,13 +35,13 @@
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T003 Create useLocalStorage hook in apps/web/src/lib/theme/useLocalStorage.ts (generic hook for localStorage persistence with validation and error handling)
-- [ ] T004 Create ThemeProvider component in apps/web/src/components/theme/ThemeProvider.tsx (React Context provider with state management, localStorage integration, and SSR support)
-- [ ] T005 Create useTheme hook in apps/web/src/lib/theme/useTheme.ts (custom hook to consume ThemeContext)
-- [ ] T006 Add CSS custom properties for light theme in apps/web/src/app/globals.css (:root[data-theme="light"] with color variables)
-- [ ] T007 Add CSS custom properties for dark theme in apps/web/src/app/globals.css (:root[data-theme="dark"] with WCAG AA compliant colors)
-- [ ] T008 Add inline SSR script to apps/web/src/app/layout.tsx in <head> (prevents FOUC by setting data-theme before React hydration)
-- [ ] T009 Wrap app with ThemeProvider in apps/web/src/app/layout.tsx (integrate ThemeProvider into root layout)
+- [X] T003 Create useLocalStorage hook in apps/web/src/lib/theme/useLocalStorage.ts (generic hook for localStorage persistence with validation and error handling)
+- [X] T004 Create ThemeProvider component in apps/web/src/components/theme/ThemeProvider.tsx (React Context provider with state management, localStorage integration, and SSR support)
+- [X] T005 Create useTheme hook in apps/web/src/lib/theme/useTheme.ts (custom hook to consume ThemeContext)
+- [X] T006 Add CSS custom properties for light theme in apps/web/src/app/globals.css (:root[data-theme="light"] with color variables)
+- [X] T007 Add CSS custom properties for dark theme in apps/web/src/app/globals.css (:root[data-theme="dark"] with WCAG AA compliant colors)
+- [X] T008 Add inline SSR script to apps/web/src/app/layout.tsx in <head> (prevents FOUC by setting data-theme before React hydration)
+- [X] T009 Wrap app with ThemeProvider in apps/web/src/app/layout.tsx (integrate ThemeProvider into root layout)
 
 **Checkpoint**: Foundation ready - user story implementation can now begin in parallel
 
@@ -57,20 +57,20 @@
 
 > **NOTE: Write these tests FIRST, ensure they FAIL before implementation**
 
-- [ ] T010 [P] [US1] Unit test for ThemeProvider in apps/web/__tests__/unit/ThemeProvider.test.tsx (test context value, toggleTheme, setTheme)
-- [ ] T011 [P] [US1] Unit test for useTheme hook in apps/web/__tests__/unit/useTheme.test.ts (test hook returns correct context, throws outside provider)
-- [ ] T012 [P] [US1] Unit test for useLocalStorage hook in apps/web/__tests__/unit/useLocalStorage.test.ts (test read/write, validation, error handling)
-- [ ] T013 [P] [US1] Unit test for ThemeToggle component in apps/web/__tests__/unit/ThemeToggle.test.tsx (test rendering, click handler, icon switching)
-- [ ] T014 [P] [US1] Integration test for theme application in apps/web/__tests__/integration/theme-application.test.tsx (test theme changes apply to all components)
-- [ ] T015 [P] [US1] E2E test for theme toggle interaction in tests/e2e/tests/theme/theme-toggle.spec.ts (test click toggle, verify UI changes)
+- [X] T010 [P] [US1] Unit test for ThemeProvider in apps/web/tests/components/theme/ThemeProvider.test.tsx (test context value, toggleTheme, setTheme)
+- [X] T011 [P] [US1] Unit test for useTheme hook in apps/web/tests/lib/theme/useTheme.test.ts (test hook returns correct context, throws outside provider)
+- [X] T012 [P] [US1] Unit test for useLocalStorage hook in apps/web/tests/lib/theme/useLocalStorage.test.ts (test read/write, validation, error handling)
+- [X] T013 [P] [US1] Unit test for ThemeToggle component in apps/web/tests/components/theme/ThemeToggle.test.tsx (test rendering, click handler, icon switching)
+- [X] T014 [P] [US1] Integration test for theme application in apps/web/tests/integration/theme-application.test.tsx (test theme changes apply to all components)
+- [X] T015 [P] [US1] E2E test for theme toggle interaction in tests/e2e/specs/theme/theme-toggle.spec.ts (test click toggle, verify UI changes)
 
 ### Implementation for User Story 1
 
-- [ ] T016 [US1] Create ThemeToggle component in apps/web/src/components/theme/ThemeToggle.tsx (icon button with sun/moon icons, ARIA labels, keyboard support)
-- [ ] T017 [US1] Integrate ThemeToggle into Footer component in apps/web/src/components/layout/Footer.tsx (add centered toggle above "Aphiria was created by David Young")
-- [ ] T018 [US1] Update all existing component styles to use CSS custom properties (replace hardcoded colors with var(--color-*) in all component CSS files)
-- [ ] T019 [US1] Verify instant theme switching with no transitions in apps/web/src/app/globals.css (ensure no CSS transition properties on theme-related styles)
-- [ ] T020 [US1] Verify WCAG AA contrast ratios for both themes using WebAIM Contrast Checker (validate all color combinations meet 4.5:1 for text, 3:1 for UI)
+- [X] T016 [US1] Create ThemeToggle component in apps/web/src/components/theme/ThemeToggle.tsx (icon button with sun/moon icons, ARIA labels, keyboard support)
+- [X] T017 [US1] Integrate ThemeToggle into Footer component in apps/web/src/components/layout/Footer.tsx (add centered toggle above "Aphiria was created by David Young")
+- [X] T018 [US1] Update all existing component styles to use CSS custom properties (replace hardcoded colors with var(--color-*) in all component CSS files)
+- [X] T019 [US1] Verify instant theme switching with no transitions in apps/web/src/app/globals.css (ensure no CSS transition properties on theme-related styles)
+- [X] T020 [US1] Verify WCAG AA contrast ratios for both themes using WebAIM Contrast Checker (validate all color combinations meet 4.5:1 for text, 3:1 for UI)
 
 **Checkpoint**: At this point, User Story 1 should be fully functional - users can toggle themes and see instant visual changes
 

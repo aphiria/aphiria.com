@@ -1,0 +1,87 @@
+/**
+ * Theme CSS Custom Properties
+ *
+ * These variables are scoped by the [data-theme] attribute on the <html> element
+ * and provide WCAG AA compliant colors for both light and dark modes.
+ */
+
+:root[data-theme="light"] {
+    --color-background: #ffffff;
+    --color-text-primary: #000000;
+    --color-text-secondary: #4a4a4a;
+    --color-border: #e0e0e0;
+    --color-border-secondary: #cccccc;
+    --color-accent: #0066cc;
+    --color-code-background: #f9f9f9;
+    --color-footer-background: #f7f7f7;
+    --color-sidebar-background: #f6f6f6;
+    --color-link: #0066cc;
+    --color-link-hover: #004499;
+    --color-search-hover: #eef7ff;
+    --color-search-hover-context: #e3f3ff;
+    --color-syntax-comment: #708090;
+    --color-syntax-punctuation: #999;
+    --color-syntax-tag: #905;
+    --color-syntax-string: #6a0;
+    --color-syntax-operator: #005cc5;
+    --color-syntax-keyword: #007ce5;
+    --color-syntax-function: #e63a3c;
+    --color-syntax-class-name: #333;
+    --color-syntax-variable: #07b;
+    --color-blockquote-background: #e7f7ff;
+    --color-blockquote-border: #ccd9dd;
+    --color-input-border: #bbbbbb;
+    --color-input-border-focus: #555555;
+    --color-scrollbar-background: #ffffff;
+    --color-scrollbar-thumb: #babac0;
+    --color-scrollbar-thumb-hover: #aaaab0;
+}
+
+:root[data-theme="dark"] {
+    --color-background: #1a1a1a;
+    --color-text-primary: #f0f0f0;
+    --color-text-secondary: #b0b0b0;
+    --color-border: #404040;
+    --color-border-secondary: #555555;
+    --color-accent: #4d9fff;
+    --color-code-background: #2d2d2d;
+    --color-footer-background: #242424;
+    --color-sidebar-background: #1e1e1e;
+    --color-link: #4d9fff;
+    --color-link-hover: #80b3ff;
+    --color-search-hover: #2a4a6a;
+    --color-search-hover-context: #1f3a55;
+    --color-syntax-comment: #9ca3af;
+    --color-syntax-punctuation: #d1d5db;
+    --color-syntax-tag: #ff79c6;
+    --color-syntax-string: #a8cc8c;
+    --color-syntax-operator: #e9c062;
+    --color-syntax-keyword: #66d9ef;
+    --color-syntax-function: #f07178;
+    --color-syntax-class-name: #ffd700;
+    --color-syntax-variable: #ffcc66;
+    --color-blockquote-background: #2a3f4f;
+    --color-blockquote-border: #4a5f6f;
+    --color-input-border: #606060;
+    --color-input-border-focus: #aaaaaa;
+    --color-scrollbar-background: #2a2a2a;
+    --color-scrollbar-thumb: #555555;
+    --color-scrollbar-thumb-hover: #666666;
+}
+
+/**
+ * Apply theme colors to body
+ */
+body {
+    background-color: var(--color-background);
+    color: var(--color-text-primary);
+}
+
+/**
+ * Focus styles for accessibility
+ * Ensures 3:1 contrast ratio for focus indicators (WCAG AA)
+ */
+:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+}

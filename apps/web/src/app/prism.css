@@ -2,9 +2,9 @@
 https://prismjs.com/download.html#themes=prism&languages=markup+css+clike+javascript+markup-templating+php&plugins=toolbar+copy-to-clipboard */
 code[class*="language-"],
 pre[class*="language-"] {
-    color: #000;
+    color: var(--color-text-primary);
     background: 0 0;
-    text-shadow: 0 1px #fff;
+    text-shadow: none;
     font-family: Consolas, Monaco, "Andale Mono", "Ubuntu Mono", monospace;
     font-size: 1em;
     text-align: left;
@@ -26,14 +26,14 @@ code[class*="language-"]::-moz-selection,
 pre[class*="language-"] ::-moz-selection,
 pre[class*="language-"]::-moz-selection {
     text-shadow: none;
-    background: #b3d4fc;
+    background: var(--color-search-hover);
 }
 code[class*="language-"] ::selection,
 code[class*="language-"]::selection,
 pre[class*="language-"] ::selection,
 pre[class*="language-"]::selection {
     text-shadow: none;
-    background: #b3d4fc;
+    background: var(--color-search-hover);
 }
 @media print {
     code[class*="language-"],
@@ -59,10 +59,10 @@ pre[class*="language-"] {
 .token.comment,
 .token.doctype,
 .token.prolog {
-    color: #708090;
+    color: var(--color-syntax-comment) !important;
 }
 .token.punctuation {
-    color: #999;
+    color: var(--color-syntax-punctuation) !important;
 }
 .token.namespace {
     opacity: 0.7;
@@ -74,7 +74,7 @@ pre[class*="language-"] {
 .token.property,
 .token.symbol,
 .token.tag {
-    color: #905;
+    color: var(--color-syntax-tag) !important;
 }
 .token.attr-name,
 .token.builtin,
@@ -82,29 +82,32 @@ pre[class*="language-"] {
 .token.inserted,
 .token.selector,
 .token.string {
-    color: #690;
+    color: var(--color-syntax-string) !important;
 }
 .language-css .token.string,
 .style .token.string,
 .token.entity,
 .token.operator,
 .token.url {
-    color: #9a6e3a;
-    background: hsla(0, 0%, 100%, 0.5);
+    color: var(--color-syntax-operator) !important;
+    background: transparent !important;
 }
 .token.atrule,
 .token.attr-value,
 .token.keyword {
-    color: #07a;
+    color: var(--color-syntax-keyword) !important;
 }
 .token.class-name,
+.token.type-hint {
+    color: var(--color-syntax-class-name) !important;
+}
 .token.function {
-    color: #dd4a68;
+    color: var(--color-syntax-function) !important;
 }
 .token.important,
 .token.regex,
 .token.variable {
-    color: #e90;
+    color: var(--color-syntax-variable) !important;
 }
 .token.bold,
 .token.important {
