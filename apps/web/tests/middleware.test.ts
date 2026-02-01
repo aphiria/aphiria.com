@@ -1,13 +1,13 @@
 import { describe, it, expect } from "vitest";
 import { NextRequest, NextResponse } from "next/server";
-import proxy from "@/proxy";
+import middleware from "../middleware";
 
-describe("proxy", () => {
+describe("middleware", () => {
     describe("/docs redirect", () => {
         it("redirects /docs to /docs/1.x/introduction with 302", () => {
             const request = new NextRequest(new URL("http://localhost/docs"));
 
-            const response = proxy(request);
+            const response = middleware(request);
 
             expect(response).toBeInstanceOf(NextResponse);
             expect(response.status).toBe(302);
@@ -17,7 +17,7 @@ describe("proxy", () => {
         it("redirects /docs with query params (query params not preserved)", () => {
             const request = new NextRequest(new URL("http://localhost/docs?context=library"));
 
-            const response = proxy(request);
+            const response = middleware(request);
 
             expect(response.status).toBe(302);
             // Note: NextResponse.redirect doesn't preserve query params from source URL
@@ -29,7 +29,7 @@ describe("proxy", () => {
         it("redirects .html URLs to extension-less with 301", () => {
             const request = new NextRequest(new URL("http://localhost/docs/1.x/routing.html"));
 
-            const response = proxy(request);
+            const response = middleware(request);
 
             expect(response).toBeInstanceOf(NextResponse);
             expect(response.status).toBe(301);
@@ -41,7 +41,7 @@ describe("proxy", () => {
                 new URL("http://localhost/docs/1.x/routing.html?context=framework")
             );
 
-            const response = proxy(request);
+            const response = middleware(request);
 
             expect(response.status).toBe(301);
             expect(response.headers.get("location")).toBe(
@@ -54,7 +54,7 @@ describe("proxy", () => {
                 new URL("http://localhost/docs/1.x/routing.html#basic-routing")
             );
 
-            const response = proxy(request);
+            const response = middleware(request);
 
             expect(response.status).toBe(301);
             expect(response.headers.get("location")).toBe(
@@ -67,7 +67,7 @@ describe("proxy", () => {
                 new URL("http://localhost/docs/1.x/routing.html?context=library#basic-routing")
             );
 
-            const response = proxy(request);
+            const response = middleware(request);
 
             expect(response.status).toBe(301);
             expect(response.headers.get("location")).toBe(
@@ -80,7 +80,7 @@ describe("proxy", () => {
         it("redirects /docs/* URLs without context param to add ?context=framework by default", () => {
             const request = new NextRequest(new URL("http://localhost/docs/1.x/introduction"));
 
-            const response = proxy(request);
+            const response = middleware(request);
 
             expect(response).toBeInstanceOf(NextResponse);
             expect(response.status).toBe(307);
@@ -93,7 +93,7 @@ describe("proxy", () => {
             const request = new NextRequest(new URL("http://localhost/docs/1.x/routing"));
             request.cookies.set("context", "library");
 
-            const response = proxy(request);
+            const response = middleware(request);
 
             expect(response.status).toBe(307);
             expect(response.headers.get("location")).toBe(
@@ -106,7 +106,7 @@ describe("proxy", () => {
                 new URL("http://localhost/docs/1.x/introduction?context=framework")
             );
 
-            const response = proxy(request);
+            const response = middleware(request);
 
             expect(response.status).toBe(200);
         });
@@ -116,7 +116,7 @@ describe("proxy", () => {
                 new URL("http://localhost/docs/1.x/routing?foo=bar#anchor")
             );
 
-            const response = proxy(request);
+            const response = middleware(request);
 
             expect(response.status).toBe(307);
             expect(response.headers.get("location")).toBe(
@@ -129,7 +129,7 @@ describe("proxy", () => {
         it("allows root path to pass through", () => {
             const request = new NextRequest(new URL("http://localhost/"));
 
-            const response = proxy(request);
+            const response = middleware(request);
 
             expect(response.status).toBe(200);
         });
@@ -137,7 +137,7 @@ describe("proxy", () => {
         it("allows non-docs URLs to pass through", () => {
             const request = new NextRequest(new URL("http://localhost/about"));
 
-            const response = proxy(request);
+            const response = middleware(request);
 
             expect(response.status).toBe(200);
         });
