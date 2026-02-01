@@ -17,24 +17,22 @@ test.describe("Theme Toggle", () => {
     });
 
     test("toggles theme from dark to light", async ({ homePage }) => {
-        await homePage.page.context().addCookies([
-            {
-                name: "theme-preference",
-                value: "dark",
-                domain: "localhost",
-                path: "/",
-            },
-        ]);
-
-        await homePage.page.reload();
-
+        // First toggle to dark mode
+        await homePage.themeToggle.toggle();
         await expect(homePage.page.locator("html")).toHaveAttribute("data-theme", "dark");
         await expect(homePage.themeToggle.button).toHaveAttribute("aria-label", "Switch to light mode");
 
+        // Verify cookie was set
+        await assertThemeCookie(homePage.page, "dark");
+
+        // Then toggle back to light
         await homePage.themeToggle.toggle();
 
         await expect(homePage.page.locator("html")).toHaveAttribute("data-theme", "light");
         await expect(homePage.themeToggle.button).toHaveAttribute("aria-label", "Switch to dark mode");
+
+        // Verify cookie was updated
+        await assertThemeCookie(homePage.page, "light");
     });
 
     test("theme toggle is visible in footer", async ({ homePage }) => {
@@ -98,22 +96,20 @@ test.describe("Theme Toggle", () => {
         await expect(homePage.themeToggle.button).toHaveAttribute("aria-label", "Switch to light mode");
     });
 
-    test("no FOUC on page load with cookie preference", async ({ page }) => {
-        await page.context().addCookies([
-            {
-                name: "theme-preference",
-                value: "dark",
-                domain: "localhost",
-                path: "/",
-            },
-        ]);
+    test("no FOUC on page load with cookie preference", async ({ homePage }) => {
+        // Toggle to dark mode to set the cookie
+        await homePage.themeToggle.toggle();
+        await expect(homePage.page.locator("html")).toHaveAttribute("data-theme", "dark");
 
-        await page.goto(process.env.SITE_BASE_URL!);
+        // Reload the page - theme should persist from cookie
+        await homePage.page.reload();
 
-        const themeAttr = await page.locator("html").getAttribute("data-theme");
+        // Verify dark theme loaded immediately (no FOUC)
+        const themeAttr = await homePage.page.locator("html").getAttribute("data-theme");
         expect(themeAttr).toBe("dark");
 
-        await expect(page.locator("body")).toBeVisible();
+        await expect(homePage.page.locator("body")).toBeVisible();
+        await expect(homePage.themeToggle.button).toHaveAttribute("aria-label", "Switch to light mode");
     });
 
     test("dark theme applies dark background", async ({ homePage }) => {
