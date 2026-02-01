@@ -173,7 +173,7 @@ export function createMonitoringResources(args: MonitoringResourcesArgs): Monito
         {
             uid: "high_memory_usage",
             title: "High Memory Usage",
-            expr: 'sum by (pod, namespace) (container_memory_working_set_bytes) / sum by (pod, namespace) (kube_pod_container_resource_limits{resource="memory"} > 0)',
+            expr: 'sum by (pod, namespace) (container_memory_working_set_bytes{pod!~"cilium-.*"}) / sum by (pod, namespace) (kube_pod_container_resource_limits{resource="memory",pod!~"cilium-.*"} > 0)',
             threshold: "> 0.9",
             reduceFunction: "last",
             for: "10m",

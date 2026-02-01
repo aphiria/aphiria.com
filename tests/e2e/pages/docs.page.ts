@@ -3,6 +3,7 @@ import { SearchBar } from "./components/search-bar.component";
 import { DocsSideNav } from "./components/docs-side-nav.component";
 import { ContextSelector } from "./components/context-selector.component";
 import { EditDocLink } from "./components/edit-doc-link.component";
+import { ThemeToggle } from "./components/theme-toggle.component";
 import { assertPageOk } from "../lib/assertions";
 import { Navigable } from "./navigable.interface";
 
@@ -15,6 +16,7 @@ export class DocsPage implements Navigable {
     readonly sideNav: DocsSideNav;
     readonly contextSelector: ContextSelector;
     readonly editDocLink: EditDocLink;
+    readonly themeToggle: ThemeToggle;
 
     constructor(page: Page) {
         this.page = page;
@@ -22,6 +24,7 @@ export class DocsPage implements Navigable {
         this.sideNav = new DocsSideNav(page);
         this.contextSelector = new ContextSelector(page);
         this.editDocLink = new EditDocLink(page);
+        this.themeToggle = new ThemeToggle(page);
     }
 
     async goto(docPath?: string): Promise<void> {

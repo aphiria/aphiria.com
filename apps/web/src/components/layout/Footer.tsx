@@ -1,9 +1,12 @@
+import { ThemeToggle } from "@/components/theme/ThemeToggle";
+
 /**
  * Main site footer
  */
 export function Footer() {
     return (
         <footer>
+            <ThemeToggle />
             Aphiria&reg; was created by{" "}
             <a
                 href="https://github.com/davidbyoung"

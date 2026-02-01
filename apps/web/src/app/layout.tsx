@@ -4,6 +4,9 @@ import Script from "next/script";
 import { MobileMenuToggle } from "@/components/layout/MobileMenuToggle";
 import { CopyButtons } from "@/components/docs/CopyButtons";
 import { getServerConfig } from "@/lib/config/server-config";
+import { ThemeProvider } from "@/components/theme/ThemeProvider";
+import { resolveTheme } from "@/lib/cookies/theme-cookie.server";
+import "./globals.css";
 import "./aphiria.css";
 import "./prism.css";
 
@@ -39,24 +42,27 @@ export const metadata: Metadata = {
     },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
     children,
 }: Readonly<{
     children: React.ReactNode;
 }>) {
     const config = getServerConfig();
+    const theme = await resolveTheme();
 
     return (
-        <html lang="en" className={`${roboto.variable} ${robotoMono.variable}`}>
+        <html lang="en" className={`${roboto.variable} ${robotoMono.variable}`} data-theme={theme}>
             <head>
                 <Script id="runtime-config" strategy="beforeInteractive">
                     {`window.__RUNTIME_CONFIG__ = ${JSON.stringify(config)};`}
                 </Script>
             </head>
             <body>
-                {children}
-                <MobileMenuToggle />
-                <CopyButtons />
+                <ThemeProvider defaultTheme={theme}>
+                    {children}
+                    <MobileMenuToggle />
+                    <CopyButtons />
+                </ThemeProvider>
             </body>
         </html>
     );

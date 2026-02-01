@@ -1,11 +1,11 @@
 :root {
     --fullExperienceSiteWidth: 1024px;
-    --baseFontColor: #000;
+    --baseFontColor: var(--color-text-primary);
     --docSidebarWidth: 240px;
     --fontSize: 16px;
-    --codeBackgroundColor: #f9f9f9;
+    --codeBackgroundColor: var(--color-code-background);
     --inputVerticalPadding: 0.25em;
-    --footerBackgroundColor: #f7f7f7;
+    --footerBackgroundColor: var(--color-footer-background);
     --pageSideMargin: 5%;
     --lineHeight: 1.8;
 }
@@ -73,13 +73,13 @@ a {
     &:link,
     &:active,
     &:visited {
-        color: #07c;
+        color: var(--color-link);
         text-decoration: none;
-        transition: color 0.3s ease;
+        transition: none; /* No transitions to prevent flicker on theme change */
     }
 
     &:hover {
-        color: var(--baseFontColor);
+        color: var(--color-link-hover);
     }
 }
 
@@ -88,21 +88,19 @@ a.button {
     &:link,
     &:active,
     &:visited {
-        color: #fff;
-        background: #07c;
+        color: var(--color-background);
+        background: var(--color-accent);
         padding: 10px 20px;
         display: inline-block;
         font-weight: bolder;
         /* Try to make the button widths consistent */
         min-width: 140px;
         text-align: center;
-        transition:
-            color 0.3s ease,
-            background-color 0.3s ease;
+        transition: none; /* No transitions to prevent flicker */
     }
 
     &:hover {
-        background: #06b;
+        background: var(--color-link-hover);
     }
 }
 
@@ -137,15 +135,17 @@ input {
     &[type="text"] {
         border-width: 0 0 1px 0;
         border-style: solid;
-        border-color: #bbb;
+        border-color: var(--color-input-border);
         transition: border-color 0.3s ease;
         font-size: 1em;
         box-shadow: none;
         outline: none;
         padding: var(--inputVerticalPadding) 0;
+        background: transparent;
+        color: var(--color-text-primary);
 
         &:focus {
-            border-bottom-color: #555;
+            border-bottom-color: var(--color-input-border-focus);
         }
     }
 }
@@ -172,7 +172,7 @@ body > header {
     position: fixed;
     left: 0;
     right: 0;
-    background: #fff;
+    background: var(--color-background);
     z-index: 1;
 
     & > nav {
@@ -195,20 +195,28 @@ body > header {
         }
 
         div.doc-search {
-            img.search-icon {
-                height: 20px;
+            position: relative;
+
+            &::before {
+                content: "";
                 position: absolute;
                 left: 0;
-                /* Get this to line up with the text in the input */
-                top: var(--inputVerticalPadding);
-                bottom: 0;
+                top: 50%;
+                transform: translateY(-50%);
+                width: 20px;
+                height: 20px;
+                background-color: var(--color-text-primary);
+                -webkit-mask: url("/images/search-icon.svg") no-repeat center;
+                -webkit-mask-size: 20px 20px;
+                mask: url("/images/search-icon.svg") no-repeat center;
+                mask-size: 20px 20px;
+                pointer-events: none;
+                z-index: 1;
             }
 
             input#search-query {
                 width: 100%;
                 padding-left: 25px;
-                background: url("/images/search-icon.svg") no-repeat 0 25%;
-                background-size: 20px 20px;
             }
 
             ul.search-results {
@@ -222,12 +230,12 @@ body > header {
                 max-height: 500px;
                 border-width: 0 1px 1px 1px;
                 border-style: solid;
-                border-color: #ccc;
+                border-color: var(--color-border);
                 border-radius: 0 0 5px 5px;
-                background: #fff;
+                background: var(--color-background);
                 z-index: 1;
                 padding: 0;
-                box-shadow: 2px 2px 5px #ddd;
+                box-shadow: 2px 2px 5px var(--color-border);
 
                 li {
                     font-size: 0.9rem;
@@ -236,12 +244,12 @@ body > header {
 
                     &.selected a,
                     a:hover {
-                        background: #eef7ff;
+                        background: var(--color-search-hover);
 
                         p,
                         blockquote {
                             /* Make the element less washed out looking when mousing over */
-                            background-color: #e3f3ff;
+                            background-color: var(--color-search-hover-context);
                         }
                     }
 
@@ -276,13 +284,13 @@ body > header {
 
                     p,
                     blockquote {
-                        background-color: #f7f7f7;
+                        background-color: var(--color-code-background);
                         margin: 10px;
                         padding: 10px;
                     }
 
                     .search-result-context {
-                        border-bottom: 1px solid #ccc;
+                        border-bottom: 1px solid var(--color-border);
 
                         h1,
                         h2,
@@ -310,7 +318,7 @@ body > header {
                     }
 
                     &:not(:last-of-type) {
-                        border-bottom: 1px solid #ccc;
+                        border-bottom: 1px solid var(--color-border);
                     }
                 }
             }
@@ -323,15 +331,9 @@ body > footer {
     /* Using vertical padding allows us to vertically center the footer text */
     padding: 30px 20px;
     margin: 0 var(--pageSideMargin);
-    background: linear-gradient(
-        0.25turn,
-        #fff 0%,
-        var(--footerBackgroundColor) 10%,
-        var(--footerBackgroundColor) 90%,
-        #fff 100%
-    );
-    border-top: 1px solid #ddd;
-    color: #555;
+    background: var(--color-footer-background);
+    border-top: 1px solid var(--color-border);
+    color: var(--color-text-secondary);
 
     & > nav > ul li {
         display: inline-block;
@@ -499,8 +501,8 @@ nav.doc-short-links-nav {
 }
 
 blockquote {
-    background: #e7f7ff;
-    border: 1px solid #ccd9dd;
+    background: var(--color-blockquote-background);
+    border: 1px solid var(--color-blockquote-border);
     padding: 20px;
     margin: 10px 30px;
 
@@ -509,40 +511,17 @@ blockquote {
     }
 }
 
-.token {
-    &.variable {
-        color: rgb(0, 119, 187) !important;
-    }
+select {
+    background: var(--color-background);
+    color: var(--color-text-primary);
+    border: 1px solid var(--color-border);
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 1em;
 
-    &.property {
-        color: rgb(0, 92, 197) !important;
-    }
-
-    &.keyword,
-    &.constant {
-        color: rgb(0, 124, 229) !important;
-    }
-
-    &.function {
-        color: rgb(230, 58, 60) !important;
-    }
-
-    &.string {
-        color: #6a0 !important;
-    }
-
-    &.class-name,
-    &.type-hint {
-        color: #333 !important;
-    }
-
-    &.operator {
-        color: rgb(0, 92, 197) !important;
-        background: none !important;
-    }
-
-    &.boolean {
-        color: rgb(107, 159, 191) !important;
+    option {
+        background: var(--color-background);
+        color: var(--color-text-primary);
     }
 }
 
@@ -585,10 +564,10 @@ blockquote {
         padding: calc(var(--headerHeight) + 10px) 10px 10px 10px;
 
         nav.side-nav {
-            --sideNavBackgroundColor: #f6f6f6;
+            --sideNavBackgroundColor: var(--color-sidebar-background);
 
             position: fixed;
-            border-top: 1px solid #ccc;
+            border-top: 1px solid var(--color-border-secondary);
             border-left: 1px solid var(--sideNavBackgroundColor);
             left: 100%;
             /* We want this to appear just below the main nav. The additional 20px is the padding in the nav bar. */
@@ -685,41 +664,44 @@ blockquote {
 }
 
 /* =========================
+   Scrollbar styles (all viewports)
+   ========================= */
+* {
+    &::-webkit-scrollbar {
+        background-color: var(--color-scrollbar-background);
+        width: 16px;
+    }
+
+    /* The background of the scrollbar except button or resizer */
+    &::-webkit-scrollbar-track {
+        background-color: var(--color-scrollbar-background);
+    }
+
+    /* The scrollbar itself */
+    &::-webkit-scrollbar-thumb {
+        background-color: var(--color-scrollbar-thumb);
+        border-radius: 16px;
+        border: 4px solid var(--color-scrollbar-background);
+
+        &:hover {
+            background-color: var(--color-scrollbar-thumb-hover);
+        }
+    }
+
+    /* Remove scrollbar buttons */
+    &::-webkit-scrollbar-button {
+        display: none;
+    }
+}
+
+/* =========================
    Full experience site settings
    ========================= */
 @media screen and (min-width: 1024px) {
     :root {
         --headerLogoHeight: 40px;
         --headerHeight: calc(var(--headerLogoHeight) + 20px);
-        --pageBorderColor: #ddd;
-    }
-
-    * {
-        &::-webkit-scrollbar {
-            background-color: #fff;
-            width: 16px;
-        }
-
-        /* The background of the scrollbar except button or resizer */
-        &::-webkit-scrollbar-track {
-            background-color: #fff;
-        }
-
-        /* The scrollbar itself */
-        &::-webkit-scrollbar-thumb {
-            background-color: #babac0;
-            border-radius: 16px;
-            border: 4px solid #fff;
-
-            &:hover {
-                background-color: #aaaab0;
-            }
-        }
-
-        /* Remove scrollbar buttons */
-        &::-webkit-scrollbar-button {
-            display: none;
-        }
+        --pageBorderColor: var(--color-border);
     }
 
     p,

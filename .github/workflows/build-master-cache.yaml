@@ -76,6 +76,7 @@ jobs:
           file: ./infrastructure/docker/runtime/api/Dockerfile
           build-args: |
             BUILD_IMAGE=${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-build:master
+            BASE_IMAGE=${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}-base:latest
           push: true
           cache-from: type=gha,scope=api-master
           cache-to: type=gha,mode=max,scope=api-master
