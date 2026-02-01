@@ -10,7 +10,7 @@ import { parseContext } from "@/lib/context/resolver";
  * - /docs → /docs/1.x/introduction (302)
  * - /docs/* without ?context= → adds ?context=framework (or cookie value)
  */
-export default function proxy(request: NextRequest) {
+export default function middleware(request: NextRequest) {
     const url = request.nextUrl;
 
     // Redirect /docs to /docs/1.x/introduction
@@ -39,7 +39,7 @@ export default function proxy(request: NextRequest) {
 }
 
 /**
- * Configure proxy to run on /docs routes
+ * Configure middleware to run on /docs routes
  */
 export const config = {
     matcher: ["/docs/:path*"],
