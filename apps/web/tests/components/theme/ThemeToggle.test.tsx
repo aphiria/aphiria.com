@@ -64,10 +64,8 @@ describe("ThemeToggle", () => {
         });
 
         it("shows sun icon when theme is dark", () => {
-            document.documentElement.setAttribute("data-theme", "dark");
-
             render(
-                <ThemeProvider defaultTheme="light">
+                <ThemeProvider defaultTheme="dark">
                     <ThemeToggle />
                 </ThemeProvider>
             );
@@ -95,10 +93,8 @@ describe("ThemeToggle", () => {
         });
 
         it("has aria-label when theme is dark", () => {
-            document.documentElement.setAttribute("data-theme", "dark");
-
             render(
-                <ThemeProvider defaultTheme="light">
+                <ThemeProvider defaultTheme="dark">
                     <ThemeToggle />
                 </ThemeProvider>
             );
@@ -154,10 +150,9 @@ describe("ThemeToggle", () => {
 
         it("toggles theme from dark to light on click", async () => {
             const user = userEvent.setup();
-            document.documentElement.setAttribute("data-theme", "dark");
 
             render(
-                <ThemeProvider defaultTheme="light">
+                <ThemeProvider defaultTheme="dark">
                     <ThemeToggle />
                 </ThemeProvider>
             );

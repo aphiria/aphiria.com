@@ -83,7 +83,7 @@ describe("useTheme", () => {
         it("returns Theme type ('light' | 'dark')", () => {
             const { result } = renderHook(() => useTheme(), {
                 wrapper: ({ children }: { children: ReactNode }) => (
-                    <ThemeProvider>{children}</ThemeProvider>
+                    <ThemeProvider defaultTheme="light">{children}</ThemeProvider>
                 ),
             });
 

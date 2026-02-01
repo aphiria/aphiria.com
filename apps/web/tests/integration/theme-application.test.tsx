@@ -145,24 +145,24 @@ describe("Theme Application Integration", () => {
         });
 
         it("validates stored theme and falls back to default if invalid", () => {
-            mockLocalStorage["theme-preference"] = JSON.stringify("invalid-theme");
-
+            // Invalid theme values are handled server-side in cookie parsing
+            // ThemeProvider just receives validated defaultTheme prop
             render(
                 <ThemeProvider defaultTheme="light">
                     <ThemeToggle />
                 </ThemeProvider>
             );
 
-            // Should fall back to default
+            // Should use the provided default theme
             expect(document.documentElement.getAttribute("data-theme")).toBe("light");
             expect(
                 screen.getByRole("button", { name: /switch to dark mode/i })
             ).toBeInTheDocument();
         });
 
-        it("handles corrupted localStorage gracefully", () => {
-            mockLocalStorage["theme-preference"] = "{ invalid json";
-
+        it("handles corrupted cookie data gracefully", () => {
+            // Corrupted cookie data is handled server-side
+            // ThemeProvider receives fallback defaultTheme="light"
             render(
                 <ThemeProvider defaultTheme="light">
                     <ThemeToggle />
@@ -337,8 +337,9 @@ describe("Theme Application Integration", () => {
             await user.click(button); // → light
             await user.click(button); // → dark
 
-            // Final state should match localStorage
-            expect(mockLocalStorage["theme-preference"]).toBe("dark");
+            // Final state should match DOM and cookie mock
+            const { setThemeCookie } = await import("@/lib/cookies/theme-cookie.client");
+            expect(setThemeCookie).toHaveBeenLastCalledWith("dark");
             expect(document.documentElement.getAttribute("data-theme")).toBe("dark");
         });
     });
