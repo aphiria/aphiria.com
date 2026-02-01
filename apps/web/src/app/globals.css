@@ -95,3 +95,15 @@ body {
 :root[data-theme="dark"] main.docs article h5 {
     color: #999;
 }
+
+/**
+ * Dark mode overrides for tables
+ */
+:root[data-theme="dark"] table td,
+:root[data-theme="dark"] table th {
+    border-color: #404040;
+}
+
+:root[data-theme="dark"] table tr:nth-child(even) td {
+    background-color: #2a2a2a;
+}
