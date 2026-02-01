@@ -1,6 +1,6 @@
 import { cookies } from "next/headers";
 import type { Theme } from "@/types/theme";
-import { STORAGE_KEY, DEFAULT_THEME } from "@/lib/theme/constants";
+import { COOKIE_NAME, DEFAULT_THEME } from "@/lib/theme/constants";
 
 const cookieMaxAge = 365 * 24 * 60 * 60; // 1 year in seconds
 
@@ -27,7 +27,7 @@ export async function setThemeCookie(theme: Theme): Promise<void> {
         );
     }
 
-    cookieStore.set(STORAGE_KEY, theme, {
+    cookieStore.set(COOKIE_NAME, theme, {
         maxAge: cookieMaxAge,
         path: "/",
         domain: cookieDomain,
@@ -44,7 +44,7 @@ export async function setThemeCookie(theme: Theme): Promise<void> {
  */
 export async function getThemeCookie(): Promise<Theme | null> {
     const cookieStore = await cookies();
-    const cookie = cookieStore.get(STORAGE_KEY);
+    const cookie = cookieStore.get(COOKIE_NAME);
     const value = cookie?.value;
 
     if (isValidTheme(value)) {

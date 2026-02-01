@@ -15,9 +15,9 @@ export const THEMES = {
 } as const;
 
 /**
- * Default localStorage key for theme preference
+ * Cookie name for theme preference
  */
-export const STORAGE_KEY = "theme-preference";
+export const COOKIE_NAME = "theme-preference";
 
 /**
  * Default theme (fallback when no preference stored)

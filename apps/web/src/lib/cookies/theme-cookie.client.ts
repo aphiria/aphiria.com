@@ -1,6 +1,6 @@
 import { setCookie, getCookie } from "cookies-next";
 import type { Theme } from "@/types/theme";
-import { STORAGE_KEY } from "@/lib/theme/constants";
+import { COOKIE_NAME } from "@/lib/theme/constants";
 import { getRuntimeConfig } from "@/lib/runtime-config";
 
 const cookieMaxAge = 365 * 24 * 60 * 60; // 1 year in seconds
@@ -11,7 +11,7 @@ const cookieMaxAge = 365 * 24 * 60 * 60; // 1 year in seconds
  * @returns Theme value from cookie or null if not set
  */
 export function getThemeCookie(): Theme | null {
-    const value = getCookie(STORAGE_KEY);
+    const value = getCookie(COOKIE_NAME);
 
     if (value === "light" || value === "dark") {
         return value;
@@ -29,7 +29,7 @@ export function setThemeCookie(theme: Theme): void {
     const config = getRuntimeConfig();
     const domain = config.cookieDomain;
 
-    setCookie(STORAGE_KEY, theme, {
+    setCookie(COOKIE_NAME, theme, {
         maxAge: cookieMaxAge,
         path: "/",
         domain,
