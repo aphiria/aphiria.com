@@ -97,9 +97,14 @@ export function DocSearch() {
         return () => window.removeEventListener("keydown", handleKeyDown);
     }, [visible, results, selectedIndex, error]);
 
-    // Focus input on mount (if no hash)
+    // Focus input on mount (desktop only, if no hash)
+    // Skip autofocus on touch-first devices to prevent unwanted keyboard popup
     useEffect(() => {
-        if (!window.location.hash && inputRef.current) {
+        const isTouchFirst =
+            window.matchMedia?.("(pointer: coarse)").matches ||
+            window.matchMedia?.("(hover: none)").matches;
+
+        if (!window.location.hash && !isTouchFirst && inputRef.current) {
             inputRef.current.focus();
         }
     }, []);

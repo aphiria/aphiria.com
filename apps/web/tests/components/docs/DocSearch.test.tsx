@@ -162,7 +162,18 @@ describe("DocSearch", () => {
         vi.useFakeTimers();
     });
 
-    it("focuses input on mount when no hash", () => {
+    it("focuses input on mount when no hash (desktop)", () => {
+        // Mock desktop device (fine pointer, hover support)
+        Object.defineProperty(window, "matchMedia", {
+            writable: true,
+            value: vi.fn().mockImplementation((query) => ({
+                matches: false, // Both pointer:coarse and hover:none return false
+                media: query,
+                addEventListener: vi.fn(),
+                removeEventListener: vi.fn(),
+            })),
+        });
+
         render(<DocSearch />);
         const input = screen.getByPlaceholderText("Search docs");
         expect(input).toHaveFocus();
@@ -172,6 +183,40 @@ describe("DocSearch", () => {
         Object.defineProperty(window, "location", {
             value: { hash: "#section" },
             writable: true,
+        });
+
+        render(<DocSearch />);
+        const input = screen.getByPlaceholderText("Search docs");
+        expect(input).not.toHaveFocus();
+    });
+
+    it("does not focus input on touch-first devices (coarse pointer)", () => {
+        // Mock touch device with coarse pointer
+        Object.defineProperty(window, "matchMedia", {
+            writable: true,
+            value: vi.fn().mockImplementation((query) => ({
+                matches: query === "(pointer: coarse)", // Coarse pointer = true
+                media: query,
+                addEventListener: vi.fn(),
+                removeEventListener: vi.fn(),
+            })),
+        });
+
+        render(<DocSearch />);
+        const input = screen.getByPlaceholderText("Search docs");
+        expect(input).not.toHaveFocus();
+    });
+
+    it("does not focus input on touch-first devices (no hover)", () => {
+        // Mock touch device with no hover support
+        Object.defineProperty(window, "matchMedia", {
+            writable: true,
+            value: vi.fn().mockImplementation((query) => ({
+                matches: query === "(hover: none)", // No hover = true
+                media: query,
+                addEventListener: vi.fn(),
+                removeEventListener: vi.fn(),
+            })),
         });
 
         render(<DocSearch />);
