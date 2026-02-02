@@ -17,6 +17,7 @@ export function MobileMenuToggle() {
     useEffect(() => {
         const mobileMenuLink = document.querySelector("#mobile-menu a");
         const grayOut = document.getElementById("gray-out");
+        const sideNav = document.querySelector("nav.side-nav") as HTMLElement;
 
         function toggleMenu(e: Event) {
             e.preventDefault();
@@ -32,6 +33,13 @@ export function MobileMenuToggle() {
 
         // Close menu on this navigation
         document.body.classList.remove("nav-open");
+
+        // Clear any inline styles set by TocHighlighter on docs pages
+        // This ensures side nav height is correct when navigating to non-docs pages
+        if (sideNav) {
+            sideNav.style.bottom = "";
+            sideNav.style.top = "";
+        }
 
         return () => {
             mobileMenuLink?.removeEventListener("click", toggleMenu);

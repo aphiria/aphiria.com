@@ -95,4 +95,30 @@ describe("MobileMenuToggle", () => {
         mobileMenuLink.click();
         expect(document.body.classList.contains("nav-open")).toBe(false);
     });
+
+    it("clears inline styles on side nav when pathname changes", () => {
+        document.body.innerHTML = `
+            <div id="mobile-menu"><a href="#">Menu</a></div>
+            <div id="gray-out"></div>
+            <nav class="side-nav" style="bottom: 100px; top: 50px;"></nav>
+        `;
+
+        render(<MobileMenuToggle />);
+
+        const sideNav = document.querySelector("nav.side-nav") as HTMLElement;
+
+        // Inline styles should be cleared
+        expect(sideNav.style.bottom).toBe("");
+        expect(sideNav.style.top).toBe("");
+    });
+
+    it("handles missing side nav gracefully when clearing styles", () => {
+        document.body.innerHTML = `
+            <div id="mobile-menu"><a href="#">Menu</a></div>
+            <div id="gray-out"></div>
+        `;
+
+        // No side nav in DOM - should not throw
+        expect(() => render(<MobileMenuToggle />)).not.toThrow();
+    });
 });

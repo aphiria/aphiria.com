@@ -3,14 +3,14 @@ import { createRedirectUrl } from "@/lib/routing/redirects";
 import { parseContext } from "@/lib/context/resolver";
 
 /**
- * Next.js middleware for URL redirects and query param injection
+ * Next.js proxy for URL redirects and query param injection
  *
  * Handles:
  * - Legacy .html URLs → extension-less URLs (301)
  * - /docs → /docs/1.x/introduction (302)
  * - /docs/* without ?context= → adds ?context=framework (or cookie value)
  */
-export default function middleware(request: NextRequest) {
+export default function proxy(request: NextRequest) {
     const url = request.nextUrl;
 
     // Redirect /docs to /docs/1.x/introduction
@@ -39,7 +39,7 @@ export default function middleware(request: NextRequest) {
 }
 
 /**
- * Configure middleware to run on /docs routes
+ * Configure proxy to run on /docs routes
  */
 export const config = {
     matcher: ["/docs/:path*"],

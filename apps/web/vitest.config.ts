@@ -10,7 +10,7 @@ export default defineConfig({
         include: ["tests/**/*.{test,spec}.{ts,tsx}"],
         coverage: {
             provider: "v8",
-            include: ["src/**/*.{ts,tsx}", "middleware.ts"],
+            include: ["src/**/*.{ts,tsx}"],
             exclude: [
                 "**/*.d.ts",
                 "**/node_modules/**",
@@ -20,8 +20,8 @@ export default defineConfig({
             ],
             reporter: ["text", "lcov", "html"],
             thresholds: {
-                // Middleware
-                "middleware.ts": {
+                // Proxy
+                "src/proxy.ts": {
                     statements: 100,
                     branches: 100,
                     functions: 100,

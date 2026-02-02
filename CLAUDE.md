@@ -19,6 +19,41 @@ If any instruction conflicts with this section, this section wins.
 
 ---
 
+## Framework Best Practices Verification (MANDATORY)
+
+When reviewing code, refactoring, or proposing changes involving frameworks/libraries:
+
+1. **Check deprecation notices FIRST**
+   - Search for "[framework] [feature] deprecated"
+   - Check official migration guides
+   - Look for codemod tools (e.g., `@next/codemod`)
+
+2. **Verify current best practices**
+   - Don't rely on general knowledge or common patterns
+   - Check framework-specific documentation for "latest" or "recommended" approaches
+   - Look for messages/warnings pages (e.g., Next.js `/docs/messages/`)
+
+3. **Before recommending refactors**
+   - Verify the proposed pattern is NOT deprecated
+   - Check if framework recommends a different approach
+   - Cite the specific documentation URL confirming the recommendation
+
+4. **Red flags requiring verification**
+   - File naming conventions (middleware.ts vs proxy.ts)
+   - API changes (function signatures, exports)
+   - Configuration patterns
+   - Any recommendation to "follow framework convention" without citing docs
+
+**Example failure**: Recommending `middleware.ts` over `proxy.ts` in Next.js without checking https://nextjs.org/docs/messages/middleware-to-proxy
+
+**Correct approach**:
+1. User has `proxy.ts` file
+2. Before suggesting rename to `middleware.ts`: Check Next.js docs
+3. Discover deprecation warning favoring `proxy.ts`
+4. Either leave as-is or verify current recommendation
+
+---
+
 ## CRITICAL ENGAGEMENT STANDARDS
 
 Claude acts as a senior peer reviewer, not a subordinate or rubber stamp.
