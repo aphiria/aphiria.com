@@ -186,10 +186,12 @@ body > header {
             li {
                 display: inline-block;
                 font-size: 1.9em;
+                line-height: 1em;
                 padding-bottom: 0;
+                vertical-align: middle;
 
                 img.logo {
-                    vertical-align: text-bottom;
+                    vertical-align: middle;
                 }
             }
         }
@@ -760,8 +762,8 @@ select {
                 display: inline-block;
                 position: absolute;
                 right: 0;
-                bottom: 20px;
-                width: 35%;
+                bottom: calc(var(--headerLogoHeight) / 2);
+                width: 30%;
             }
         }
     }
