@@ -74,6 +74,28 @@ describe("createDatabaseCreationJob", () => {
         expect(namespace).toBe("preview-pr-456");
     });
 
+    it("should use a command that only tolerates 'already exists' errors", async () => {
+        const job = createDatabaseCreationJob({
+            namespace: "preview-pr-123",
+            databaseName: "aphiria_pr_123",
+            dbHost: "db.default.svc.cluster.local",
+            dbAdminUser: pulumi.output("postgres"),
+            dbAdminPassword: pulumi.output("admin-password"),
+            provider: k8sProvider,
+        });
+
+        const spec = await promiseOf(job.spec);
+        const command = spec!.template.spec!.containers[0].command!;
+        const shellCommand = command[2] as string;
+
+        // Must capture psql output and exit code
+        expect(shellCommand).toContain('output=$(psql -c "CREATE DATABASE aphiria_pr_123;"');
+        // Must check for "already exists" specifically
+        expect(shellCommand).toContain('grep -q "already exists"');
+        // Must exit non-zero on unexpected errors
+        expect(shellCommand).toContain("exit 1");
+    });
+
     it("should merge custom labels with default labels", async () => {
         const job = createDatabaseCreationJob({
             namespace: "preview-pr-789",
