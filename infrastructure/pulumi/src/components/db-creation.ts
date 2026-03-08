@@ -105,7 +105,14 @@ export function createDatabaseCreationJob(args: DatabaseCreationJobArgs): k8s.ba
                                 command: [
                                     "sh",
                                     "-c",
-                                    `psql -c "CREATE DATABASE ${args.databaseName};" || echo "Database already exists (this is normal on re-runs)"`,
+                                    [
+                                        `output=$(psql -c "CREATE DATABASE ${args.databaseName};" 2>&1)`,
+                                        "rc=$?",
+                                        'if [ $rc -eq 0 ]; then echo "Database created successfully"',
+                                        'elif echo "$output" | grep -q "already exists"; then echo "Database already exists (this is normal on re-runs)"',
+                                        'else echo "FATAL: Failed to create database: $output" >&2; exit 1',
+                                        "fi",
+                                    ].join("; "),
                                 ],
                                 resources: DEFAULT_RESOURCES,
                             },
