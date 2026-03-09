@@ -30,7 +30,7 @@
         "@types/react-dom": "^19.2.3",
         "@vitejs/plugin-react": "^5.1.2",
         "@vitest/coverage-v8": "^4.0.17",
-        "eslint": "^9",
+        "eslint": "^10",
         "eslint-config-next": "16.1.6",
         "eslint-config-prettier": "^10.1.8",
         "happy-dom": "^20.3.3",
