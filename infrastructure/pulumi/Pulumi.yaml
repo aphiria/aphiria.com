@@ -10,7 +10,7 @@ config:
     value:
       name: aphiria-com-cluster
       region: nyc3
-      version: 1.34.5-do.0
+      version: 1.34.5-do.1
       autoUpgrade: true
       surgeUpgrade: false
       ha: false
