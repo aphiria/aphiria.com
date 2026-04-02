@@ -83,7 +83,7 @@ jobs:
 
       - name: Upload PHP coverage
         if: matrix.php == '8.4'
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@v6
         with:
           files: ./apps/api/.coverage/clover.xml
           flags: api
@@ -94,7 +94,7 @@ jobs:
 
       - name: Upload Web coverage
         if: matrix.php == '8.4'
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@v6
         with:
           files: ./apps/web/coverage/lcov.info
           flags: web
@@ -105,7 +105,7 @@ jobs:
 
       - name: Upload Pulumi coverage
         if: matrix.php == '8.4'
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@v6
         with:
           files: ./infrastructure/pulumi/coverage/lcov.info
           flags: pulumi
@@ -116,7 +116,7 @@ jobs:
 
       - name: Upload Build Tools coverage
         if: matrix.php == '8.4'
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@v6
         with:
           files: ./tools/build-docs/coverage/lcov.info
           flags: tools
