@@ -17,8 +17,8 @@
         "isomorphic-dompurify": "^3.0.0",
         "next": "16.2.3",
         "prismjs": "^1.30.0",
-        "react": "19.2.4",
-        "react-dom": "19.2.4"
+        "react": "19.2.5",
+        "react-dom": "19.2.5"
     },
     "devDependencies": {
         "@testing-library/jest-dom": "^6.9.1",
@@ -28,15 +28,15 @@
         "@types/prismjs": "^1.26.5",
         "@types/react": "^19.2.8",
         "@types/react-dom": "^19.2.3",
-        "@vitejs/plugin-react": "^5.1.2",
+        "@vitejs/plugin-react": "^6.0.1",
         "@vitest/coverage-v8": "^4.0.17",
-        "eslint": "^9",
-        "eslint-config-next": "16.1.6",
+        "eslint": "^10",
+        "eslint-config-next": "16.2.3",
         "eslint-config-prettier": "^10.1.8",
         "happy-dom": "^20.8.9",
         "postcss": "^8.5.6",
         "postcss-nested": "^7.0.2",
-        "typescript": "^5",
+        "typescript": "^6",
         "vitest": "^4.0.17"
     }
 }
