@@ -38,7 +38,7 @@ jobs:
           node-version: "22"
 
       - name: Install Pulumi CLI
-        uses: pulumi/actions@v6
+        uses: pulumi/actions@v7
 
       - name: Install Pulumi dependencies
         working-directory: infrastructure/pulumi
