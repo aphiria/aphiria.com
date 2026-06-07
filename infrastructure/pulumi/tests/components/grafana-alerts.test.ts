@@ -28,7 +28,7 @@ describe("createGrafanaAlerts", () => {
         {
             uid: "high_memory_usage",
             title: "High Memory Usage",
-            expr: 'sum by (pod, namespace) (container_memory_working_set_bytes{namespace!="kube-system"}) / sum by (pod, namespace) (kube_pod_container_resource_limits{resource="memory", namespace!="kube-system"} > 0)',
+            expr: 'sum by (pod, namespace) (container_memory_working_set_bytes{pod!~"cilium-.*|cpc-bridge-proxy-.*"}) / sum by (pod, namespace) (kube_pod_container_resource_limits{resource="memory",pod!~"cilium-.*|cpc-bridge-proxy-.*"} > 0)',
             threshold: "> 0.9",
             reduceFunction: "last",
             for: "10m",
@@ -258,7 +258,7 @@ describe("createGrafanaAlerts", () => {
         expect(rulesYaml).toContain("High Memory Usage");
         expect(rulesYaml).toContain("uid: high_memory_usage");
         expect(rulesYaml).toContain(
-            'expr: sum by (pod, namespace) (container_memory_working_set_bytes{namespace!="kube-system"}) / sum by (pod, namespace) (kube_pod_container_resource_limits{resource="memory", namespace!="kube-system"} > 0)'
+            'expr: sum by (pod, namespace) (container_memory_working_set_bytes{pod!~"cilium-.*|cpc-bridge-proxy-.*"}) / sum by (pod, namespace) (kube_pod_container_resource_limits{resource="memory",pod!~"cilium-.*|cpc-bridge-proxy-.*"} > 0)'
         );
         expect(rulesYaml).toContain("expression: B");
         expect(rulesYaml).toContain("- 0.9");
