@@ -20,7 +20,7 @@
     },
     "devDependencies": {
         "@pulumi/pulumi": "^3.216.0",
-        "@types/node": "^25.0.9",
+        "@types/node": "^26.0.1",
         "@vitest/coverage-v8": "^4.0.17",
         "ts-node": "^10.9.2",
         "vitest": "^4.0.17"
