@@ -5,7 +5,7 @@ ARG BUILD_IMAGE=aphiria.com-build:latest
 FROM ${BUILD_IMAGE} AS build
 
 # Stage 2: Node.js runtime for SSR
-FROM node:20-alpine AS runner
+FROM node:24-alpine AS runner
 
 WORKDIR /app
 

@@ -889,7 +889,7 @@ No exceptions.
 
 3. **Runtime Images**:
    - **API** (`infrastructure/docker/runtime/api/Dockerfile`): nginx + PHP-FPM + lexemes.ndjson
-   - **Web** (`infrastructure/docker/runtime/web/Dockerfile`): Node.js 20 + Next.js standalone build
+   - **Web** (`infrastructure/docker/runtime/web/Dockerfile`): Node.js 24 + Next.js standalone build
 
 4. **Database Init**: Kubernetes Job runs Phinx migrations + LexemeSeeder (consumes lexemes.ndjson)
 
@@ -901,7 +901,7 @@ No exceptions.
 
 ## Deployment Architecture
 
-- **Web**: Node.js 20 + Next.js SSR server (port 3000)
+- **Web**: Node.js 24 + Next.js SSR server (port 3000)
 - **API**: nginx + PHP-FPM + Aphiria + search functionality
 - **Database**: PostgreSQL with TSVector indexes
 - **Init**: Kubernetes Job (migrations + seeder consumes lexemes.ndjson)
