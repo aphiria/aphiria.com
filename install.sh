@@ -74,9 +74,9 @@ if [ "$install_pulumi" = true ]; then
 fi
 
 if [ "$install_nodejs" = true ]; then
-    echo "Installing Node.js 22.x LTS (https://nodejs.org/)"
+    echo "Installing Node.js 24.x LTS (https://nodejs.org/)"
     # Using NodeSource repository for Ubuntu/Debian
-    curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
+    curl -fsSL https://deb.nodesource.com/setup_24.x | sudo -E bash -
     sudo apt-get install -y nodejs
     node --version
     npm --version
